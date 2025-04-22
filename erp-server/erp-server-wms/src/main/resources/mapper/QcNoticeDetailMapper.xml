@@ -15,7 +15,7 @@
        <result column="main_id" property="mainId" />
        <result column="sku_id" property="skuId" />
        <result column="sku_no" property="skuNo" />
-       <result column="sku_name" property="skuName" />
+       <result column="product_name" property="productName" />
        <result column="qc_notice_qty" property="qcNoticeQty" />
        <result column="qc_qty" property="qcQty" />
        <result column="qc_diff_qty" property="qcDiffQty" />
@@ -46,7 +46,7 @@
             qnd.main_id,
             qnd.sku_id,
             qnd.sku_no,
-            qnd.sku_name,
+            qnd.product_name,
             qnd.qc_notice_qty,
             qnd.qc_qty,
             qnd.qc_diff_qty,

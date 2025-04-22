@@ -311,7 +311,6 @@ public class QcNoticeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<QcNoticeEntity> list = qcNoticeService.lambdaQuery().in(QcNoticeEntity::getId, ids).list();
         Map<String, QcNoticeEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcNoticeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -347,8 +346,43 @@ public class QcNoticeController extends BaseController {
             serviceClass = QcNoticeService.class,
             keyIdName = "id")
     @LogViewService
-    public ApiResult<QcNoticeDTO.ViewDTO> view(@RequestParam("id") String id) {
+    public ApiResult<QcNoticeDTO.ViewDTO> view(@RequestParam(value = "id" , required = true) String id) {
         return success(qcNoticeService.view(id));
+    }
+
+    /**
+     * 下推质检单详情
+     * @author jack
+     * @date:  2025-04-21
+     * @param dto
+     * @return ApiResult<QcNoticeDTO.ViewDTO>>
+     */
+    @GetMapping("/generateQcInfoView")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:generateQcInfoView",
+            serviceClass = QcNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<List<QcNoticeDTO.QcInfoView>> generateQcInfoView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(qcNoticeService.generateQcInfoView(dto.getIds()));
+    }
+
+    /**
+     * 完成质检
+     * @author jack
+     * @date:  2025-04-21
+     * @param dto
+     * @return ApiResult<QcNoticeDTO.ViewDTO>>
+     */
+    @GetMapping("/generateQcInfo")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:generateQcInfo",
+            serviceClass = QcNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<Object> generateQcInfo(@RequestBody @Validated List<QcNoticeDTO.QcInfoView> dto) {
+        qcNoticeService.generateQcInfo(dto);
+        return success();
     }
 
     /**
@@ -363,7 +397,7 @@ public class QcNoticeController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "wms:qcNotice:export",
-            tableAlias = ""
+            tableAlias = "qn"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检通知单导出Excel数据")
     public void exportList(@RequestBody @Validated QcNoticeDTO.ExportDTO dto, HttpServletResponse response) {

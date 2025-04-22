@@ -143,4 +143,7 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     */
     Boolean approveEnd(ApproveOneDTO dto, QcNoticeEntity entity);
 
+    List<QcNoticeDTO.QcInfoView> generateQcInfoView(List<String> ids);
+
+    void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto);
 }

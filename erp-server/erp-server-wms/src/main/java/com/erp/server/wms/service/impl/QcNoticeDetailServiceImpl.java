@@ -122,7 +122,7 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
             ProductDetailEntity productDetailEntity = skuMap.get(e.getSkuId());
             if (Objects.nonNull(productDetailEntity)) {
                 e.setSkuNo(productDetailEntity.getSkuNo());
-                e.setSkuName(productDetailEntity.getName());
+                e.setProductName(productDetailEntity.getName());
             }
 
             //校验是否是修改，如果是就新增修改日志

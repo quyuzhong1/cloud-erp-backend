@@ -43,8 +43,8 @@ public class QcNoticeDetailEntity extends BaseEntity<QcNoticeDetailEntity> {
     /**
     * sku_name
     */
-    @TableField("sku_name")
-    private String skuName;
+    @TableField("product_name")
+    private String productName;
     /**
     * 质检通知数量
     */
@@ -121,7 +121,7 @@ public class QcNoticeDetailEntity extends BaseEntity<QcNoticeDetailEntity> {
 
     public static final String SKU_ID = "sku_id";
 
-    public static final String SKU_NO = "sku_no";
+    public static final String PRODUCT_NAME = "product_name";
 
     public static final String SKU_NAME = "sku_name";
 

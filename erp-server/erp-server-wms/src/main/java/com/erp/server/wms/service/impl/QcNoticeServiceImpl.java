@@ -1,23 +1,22 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.wms.dto.QcNoticeDetailDTO;
-import com.erp.model.wms.dto.WmsAttachmentDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
-import com.erp.model.wms.enums.PutawayStatusEnum;
-import com.erp.model.wms.enums.QcBillStatusEnum;
-import com.erp.model.wms.enums.QcNoticeStatusEnum;
-import com.erp.model.wms.enums.QcTypeEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.QcNoticeMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -32,7 +31,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.QcNoticeDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -50,6 +48,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
@@ -97,6 +96,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Resource
     private QcRemarkService qcRemarkService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -426,21 +430,16 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        // TODO 撤销流程
         log.info("撤销 开始撤销流程，id：【{}】", id);
-
         log.info("撤销 开始修改质检通知单状态，id：【{}】", id);
         updateApproveStatus(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "质检通知单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.QC_NOTICE.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
-        // TODO 此处的null需修改为日志模块类型，BusinessKey查看SourceTypeEnum枚举类
-        revokeDTO.setBusinessKey(null);
+        revokeDTO.setBusinessKey(SourceTypeEnum.QC_NOTICE.getCode());
         revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
@@ -455,6 +454,82 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<QcNoticeDTO.QcInfoView> generateQcInfoView(List<String> ids) {
+        List<QcNoticeEntity> qcNoticeEntities = listByIds(ids);
+        if(CollUtil.isEmpty(qcNoticeEntities)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "质检通知单");
+        }
+
+        qcNoticeEntities.forEach(e -> {
+            if(!e.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode())){
+                throw new ServiceException( ApiError.ERROR_92270);
+            }
+        });
+        return baseMapper.listQcInfoView(ids);
+    }
+
+    @Override
+    public void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto) {
+        if(CollUtil.isEmpty(dto)){
+            throw new ServiceException( ApiError.ERROR_92271);
+        }
+
+        List<String> userIds = dto.stream().map(QcNoticeDTO.QcInfoView::getQcUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<FindUserDTO> userInfoList = sysUserFeign.getUserListByUserIds(userIds);
+        Map<String, String> userInfoMap = userInfoList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getDepartmentId));
+
+        List<String> skuIds = dto.stream().map(QcNoticeDTO.QcInfoView::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+//        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
+//        Map<String, ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
+
+        List<ProductVO.ProductPackVO> productPackList = plmTaskFeign.getProductPackBySkuIds(skuIds);
+        Map<String, ProductVO.ProductPackVO> productPactMap = productPackList.stream().collect(Collectors.toMap(ProductVO.ProductPackVO::getSkuId, t -> t));
+
+        for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
+            //质检通知单审核通过自动生成质检单
+            QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
+            //来源
+            addDto.setSourceCode(qcInfoView.getCode());
+            addDto.setSourceId(qcInfoView.getId());
+            addDto.setSourceType(SourceTypeEnum.QC_NOTICE.getCode());
+            addDto.setSourceDetailId(qcInfoView.getDetailId());
+            //质检日期
+            addDto.setQcDate(qcInfoView.getQcDate());
+            //质检仓库
+            addDto.setWarehouseId(qcInfoView.getQcWarehouseId());
+            //质检人
+            addDto.setQcUserId(qcInfoView.getQcUserId());
+            //质检部门
+            addDto.setQcDeptId(userInfoMap.get(qcInfoView.getQcUserId()));
+
+            //产品信息
+            if(!productPactMap.containsKey(qcInfoView.getSkuId())){
+                throw new ServiceException( ApiError.ERROR_95162, qcInfoView.getSkuNo());
+            }else {
+                QcProductDTO.AddDTO qcProduct = new QcProductDTO.AddDTO();
+                ProductVO.ProductPackVO productPackVO = productPactMap.get(qcInfoView.getSkuId());
+                BeanMapper.copy(productPackVO, qcProduct);
+                addDto.setQcProduct(qcProduct);
+            }
+
+            //质检信息
+            QcResultDTO.AddDTO qcInfo = new QcResultDTO.AddDTO();
+            BeanMapper.copy(qcInfoView, qcInfo);
+            qcInfo.setTotalQty(qcInfoView.getQcQty());
+            qcInfo.setBadDescription(qcInfoView.getBadDesc());
+            qcInfo.setQcResult(QcResultEnum.CONFORMITY.getCode());//默认OK
+            qcInfo.setHandleModeDict("waitHandle");//默认待定
+            qcInfo.setIsInsideQc(Boolean.FALSE);
+            //不良图片
+            qcInfo.setBadImageNameList(qcInfoView.getAttachNameList());
+            qcInfo.setBadImageUrlList(qcInfoView.getAttachUrlList());
+            addDto.setQcInfo(qcInfo);
+            //新增质检单
+            qcInfoService.add(addDto);
+        }
     }
 
     @Override

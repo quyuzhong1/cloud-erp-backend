@@ -29,6 +29,9 @@ public interface QcInfoService extends SuperService<QcInfoEntity> {
      * @return
      */
     QcInfoEntity add(QcInfoDTO.SaveOrUpdateDTO dto);
+
+    QcInfoEntity generateQcInfo(QcInfoDTO.SaveOrUpdateDTO dto);
+
     /**
      * 根据采购id查询
      */

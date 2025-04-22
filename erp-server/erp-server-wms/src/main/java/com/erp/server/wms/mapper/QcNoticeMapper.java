@@ -53,4 +53,6 @@ public interface QcNoticeMapper extends BaseMapper<QcNoticeEntity> {
     */
     List<QcNoticeDTO.TabListDTO> tabList(@Param("params") QcNoticeDTO.PagingParamDTO searchParam);
     List<QcNoticeDTO.TabListDTO> tabQcStatusList(@Param("params") QcNoticeDTO.PagingParamDTO searchParam);
+
+    List<QcNoticeDTO.QcInfoView> listQcInfoView(@Param("ids") List<String> ids);
 }

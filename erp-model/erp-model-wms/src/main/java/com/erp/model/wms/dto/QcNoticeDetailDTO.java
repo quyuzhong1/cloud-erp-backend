@@ -57,7 +57,7 @@ public class QcNoticeDetailDTO implements Serializable {
         /**
         * sku_name
         */
-        private String skuName;
+        private String productName;
 
         /**
         * 质检通知数量
@@ -181,7 +181,7 @@ public class QcNoticeDetailDTO implements Serializable {
         /**
         * sku_name
         */
-        private String skuName;
+        private String productName;
 
         /**
         * 质检通知数量
@@ -224,7 +224,7 @@ public class QcNoticeDetailDTO implements Serializable {
         * 不良备注
         */
 //        @NotBlank(message = "不良备注不能为空")
-        @Size(max = 500,message = "不良备注最大长度不能超过500位")
+        @Size(max = 255,message = "不良备注最大长度不能超过255位")
         private String badDesc;
 
         /**

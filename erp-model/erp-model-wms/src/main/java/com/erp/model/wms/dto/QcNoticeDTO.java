@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
@@ -11,10 +12,8 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.*;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import java.util.Map;
 
@@ -178,7 +177,7 @@ public class QcNoticeDTO implements Serializable {
         /**
          * sku_name
          */
-        private String skuName;
+        private String productName;
 
         /**
          * 质检通知数量
@@ -321,6 +320,96 @@ public class QcNoticeDTO implements Serializable {
     }
 
     /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class QcInfoView  {
+        /**
+         *
+         */
+        private String id;
+        /**
+         *
+         */
+        private String detailId;
+        /**
+         * 通知单号
+         */
+        private String code;
+        /**
+         *
+         */
+        private String qcType;
+        /**
+         *
+         */
+        private String skuId;
+        /**
+         *
+         */
+        private String skuNo;
+        /**
+         *
+         */
+        private String productName;
+        /**
+         *
+         */
+        private String qcWarehouseId;
+        /**
+         * 质检通知数量
+         */
+        private Integer qcNoticeQty;
+        /**
+         * 质检数量
+         */
+        private Integer qcQty;
+        /**
+         *差异数量
+         */
+        private Integer qcDiffQty;
+        /**
+         *
+         */
+        @NotBlank(message = "良品数量不能为空")
+        @Min(value = 0, message = "良品数量不能小于0")
+        private Integer qcGoodQty;
+        /**
+         *
+         */
+        @NotBlank(message = "不良品数量不能为空")
+        @Min(value = 0, message = "不良品数量不能小于0")
+        private Integer qcBadQty;
+        /**
+         *问题属性
+         */
+        private String qcProblemDict;
+        private String qcProblemDictName;
+        /**
+         * 不良描述
+         */
+        private String badDesc;
+        /**
+         *
+         */
+        @NotBlank(message = "质检员不能为空")
+        private String qcUserId;
+        private String qcUserName;
+        /**
+         *
+         */
+        @NotBlank(message = "质检日期不能为空")
+        private LocalDate qcDate;
+        /**
+         *
+         */
+        private List<String> attachNameList;
+        private List<String> attachUrlList;
+
+    }
+
+    /**
     * 新增
     */
     @Data
@@ -378,4 +467,7 @@ public class QcNoticeDTO implements Serializable {
         private String remark;
 
     }
+
+
+
 }

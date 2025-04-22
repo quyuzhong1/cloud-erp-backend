@@ -1209,6 +1209,8 @@ public enum ApiError implements Serializable {
     WAREHOUSE_NOT_EDIT(92253, "所属仓库禁止修改"),
     ERROR_92268(92268, "【%s】库存不足,质检通知数量%s，可用库存%s"),
     ERROR_92269(92269, "【%s】已质检完成，不允许操作反审核"),
+    ERROR_92270(92270, "请先审核通过质检通知单"),
+    ERROR_92271(92271, "请至少选择一条明细"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
