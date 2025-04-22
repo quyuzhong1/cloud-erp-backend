@@ -234,8 +234,11 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:printPickingView",
             tableAlias = "sbd"
     )
-    public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(soB2cDeliveryService.printPickingView(dto.getIds()));
+    public ApiResult<SoB2cDeliveryDTO.PrintPickingDTO> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        SoB2cDeliveryDTO.PrintPickingDTO printPickingDTO = new SoB2cDeliveryDTO.PrintPickingDTO();
+        printPickingDTO.setPrintPickingViewDTOList(soB2cDeliveryService.printPickingView(dto.getIds(), false));
+        printPickingDTO.setCombinationPrintDetailList(soB2cDeliveryService.getDeliveryDetail(dto.getIds()));
+        return success(printPickingDTO);
     }
 
     /**
@@ -254,7 +257,7 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 取消打印拣货单
-     * 1.24。2版本调整为取消打印（拣货单，物流单）
+     * 1.24。2版本调整为取消打印（拣货单，物流单，SKU条码）
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
@@ -555,5 +558,39 @@ public class SoB2cDeliveryController extends BaseController {
             resultDTOS.add(resultDTO);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 打印条码列表展示
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintSkuBarcodeDTO>>
+     * @Author zdy
+     * @Date 2025/02/13 20:13
+     **/
+    @PostMapping("/printSkuBarcodeView")
+    public ApiResult<List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO>> printSkuBarcodeView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soB2cDeliveryService.printSkuBarcodeView(dto.getIds()));
+    }
+
+    /**
+     * 打印SKU条码确认
+     *
+     * @param dto
+     * @return
+     * @Author zdy
+     * @Date 2025/02/13 20:13
+     **/
+    @PostMapping("/printSkuBarcodeConfirm")
+    @Idempotent
+    public void printSkuBarcodeConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintSkuBarcodeConfirmDTO dto, HttpServletResponse response) {
+        soB2cDeliveryService.printSkuBarcodeConfirm(dto, response);
+    }
+    /**
+     * 完成打印（SKU条码）
+     */
+    @PostMapping("/printSkuBarcodeFinish")
+    public ApiResult<?> printSkuBarcodeFinish(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        return soB2cDeliveryService.printSkuBarcodeFinish(idsDTO);
     }
 }

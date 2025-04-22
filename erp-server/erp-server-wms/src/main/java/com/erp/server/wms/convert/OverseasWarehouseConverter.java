@@ -68,6 +68,7 @@ public interface OverseasWarehouseConverter {
             @Mapping(target = "shippedQty", source = "shipped"),
             @Mapping(target = "downloadTime", source = "downloadTime"),
             @Mapping(target = "saleReturnInTransitQty", source = "saleReturnInTransitQty"),
+            @Mapping(target = "overseasProviderId", source = "providerErpId"),
     })
     OverseasInventoryEntity inventoryDtoToDb(PlatformInventoryDTO dto);
 

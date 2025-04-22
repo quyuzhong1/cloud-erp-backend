@@ -9,6 +9,7 @@ import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -42,5 +43,9 @@ public class TypeConversionWorker {
             return IdUtils.fastSimpleUUID() + ".pdf";
         }
         return orderCode + ".pdf";
+    }
+    @Named("getIsGift")
+    public Integer getIsGift(Boolean isGift) {
+        return Objects.isNull(isGift) || !isGift ? 2 : 1;
     }
 }

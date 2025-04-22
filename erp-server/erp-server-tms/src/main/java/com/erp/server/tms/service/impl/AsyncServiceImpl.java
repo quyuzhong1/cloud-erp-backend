@@ -48,6 +48,9 @@ public class AsyncServiceImpl implements AsyncService {
         try {
             LogisticsService service = logisticsRegistry.getHandler(authMap.get(LOGISTICS_PLATFORM));
             String logisticsPlatform = authMap.get(LOGISTICS_PLATFORM);
+            if (LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
+                return;
+            }
             //虾皮的授权 调整
             ChanelQueryVO chanelQueryVO = new ChanelQueryVO();
             chanelQueryVO.setAuthMap(authMap);

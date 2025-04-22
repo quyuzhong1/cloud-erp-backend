@@ -168,32 +168,7 @@ public class Track123LogisticsApiInitHandler implements DmpInputApiInitHandler {
      * 分页查询
      */
     private List<LogisticsTrackDTO.UpdateTrackDTO> pageDmpLogisticsTrack(LogisticsBillDetailQueryDTO query) {
-        // 缓存获取上次执行最后的页码
-//        int currentPage = 1;
-//        Object lastPageObj = redisUtil.get(RedisCacheConstants.DMP_LOGISTICS_TRACK);
-//        if (null != lastPageObj) {
-//            currentPage = (Integer) lastPageObj;
-//        }
-//        query.setCurrent(currentPage);
-
-        List<LogisticsTrackDTO.UpdateTrackDTO> list = foreignService.listTrackDto(query);
-//        if (CollectionUtils.isEmpty(list)) {
-//            if (null != lastPageObj){
-//                // 移除缓存 等下次任务从最小时间开始
-//                redisUtil.del(RedisCacheConstants.DMP_LOGISTICS_TRACK);
-//            }
-//            return Collections.emptyList();
-//        }
-//
-//        if (list.size() < query.getSize()) {
-//            // 移除缓存 等下次任务
-//            redisUtil.del(RedisCacheConstants.DMP_LOGISTICS_TRACK);
-//        } else {
-//            currentPage = currentPage + 1;
-//            // 缓存页数,等下次任务执行带页码
-//            redisUtil.set(RedisCacheConstants.DMP_LOGISTICS_TRACK, currentPage);
-//        }
-        return list;
+        return foreignService.listTrackDto(query);
     }
 
     private static int getPageSizeValue(DmpInputApiInitRequest dmpInputApiInitRequest) {

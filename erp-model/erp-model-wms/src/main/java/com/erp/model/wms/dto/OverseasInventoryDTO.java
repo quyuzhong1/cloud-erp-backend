@@ -122,6 +122,10 @@ public class OverseasInventoryDTO implements Serializable {
         private String  id;
 
         /**
+         * 三方仓简称
+         */
+        private String provideShortName;
+        /**
          * 平台仓库编码
          */
         private String warehouseCode;
