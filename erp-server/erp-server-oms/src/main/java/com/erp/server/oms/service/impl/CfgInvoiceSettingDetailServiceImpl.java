@@ -27,6 +27,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.*;
@@ -85,6 +87,9 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             // 没查到name就用value兜底
             viewDTO.setPlatformName(valueNameMap.getOrDefault(dictPlatform, dictPlatform));
             List<CfgInvoiceSettingDetailDTO.DetailDTO> detailDTOS = BeanUtil.copyToList(details, CfgInvoiceSettingDetailDTO.DetailDTO.class);
+            detailDTOS.forEach(detail -> {
+                detail.setRatio(detail.getRatio().multiply(new BigDecimal("100")));
+            });
             viewDTO.setDetailDTOList(detailDTOS);
             viewDTOS.add(viewDTO);
         }
@@ -260,8 +265,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                             if (idsWithChangedShopIdSet.contains(detail.getId())) {
                                 detail.setId(null);
                             }
-
                             CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(detail, CfgInvoiceSettingDetailEntity.class);
+                            entity.setRatio(entity.getRatio().divide(new BigDecimal("100")));
                             entity.setDictPlatform(item.getPlatformValue());
                             return entity;
                         }))
