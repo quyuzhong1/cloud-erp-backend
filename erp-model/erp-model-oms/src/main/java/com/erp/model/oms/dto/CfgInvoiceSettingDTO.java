@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -154,14 +155,14 @@ public class CfgInvoiceSettingDTO implements Serializable {
          * 附件地址
          */
         @NotBlank(message = "证书地址不能为空")
-        @Size(max = 100, message = "证书地址最大长度不能超过100位")
+        @Valid
         private List<String> attachmentUrlList;
 
         /**
          * 附件名
          */
         @NotBlank(message = "证书名不能为空")
-        @Size(max = 100, message = "证书名最大长度不能超过100位")
+        @Valid
         private List<String> attachmentNameList;
 
     }
