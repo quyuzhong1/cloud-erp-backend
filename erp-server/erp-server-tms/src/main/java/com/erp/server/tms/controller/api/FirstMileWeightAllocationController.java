@@ -74,7 +74,7 @@ public class FirstMileWeightAllocationController extends BaseController {
     /**
      * 统计tab数量
      */
-    @GetMapping("/tabList")
+    @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             shopTableField = "wa.shop_id",
@@ -82,7 +82,7 @@ public class FirstMileWeightAllocationController extends BaseController {
             menuCode = "tms:firstMileWeightAllocation:paging",
             tableAlias = "a"
     )
-    public ApiResult<List<FirstMileWeightAllocationDTO.TabDTO>> tabList(@RequestParam(required = false) FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO){
+    public ApiResult<List<FirstMileWeightAllocationDTO.TabDTO>> tabList(@RequestBody FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO){
         List<FirstMileWeightAllocationDTO.TabDTO> list = firstMileWeightAllocationService.tabList(pagingParamDTO);
         return ApiResult.success(list);
     }

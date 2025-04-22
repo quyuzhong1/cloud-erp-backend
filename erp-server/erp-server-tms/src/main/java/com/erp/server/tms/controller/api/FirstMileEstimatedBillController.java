@@ -63,12 +63,12 @@ public class FirstMileEstimatedBillController extends BaseController {
     /**
      * 统计tab数量
      */
-    @GetMapping("/tabList")
+    @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "lb.shop_id",
             menuCode = "tms:firstMileEstimatedBill:paging"
     )
-    public ApiResult<List<FirstMileEstimatedBillDTO.Tab>> tabList(@RequestParam(required = false) FirstMileEstimatedBillDTO.PagingParam dto){
+    public ApiResult<List<FirstMileEstimatedBillDTO.Tab>> tabList(@RequestBody FirstMileEstimatedBillDTO.PagingParam dto){
         List<FirstMileEstimatedBillDTO.Tab> list = firstMileEstimatedBillService.tabList(dto);
         return ApiResult.success(list);
     }
