@@ -44,6 +44,7 @@ import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
@@ -502,6 +503,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if(CollUtil.isEmpty(dto)){
             throw new ServiceException( ApiError.ERROR_92271);
         }
+        LocalDate billDate = LocalDate.now();
+        LocalDateTime nowTime = LocalDateTime.now();
 
         List<String> qcNoticeIdList = dto.stream().map(QcNoticeDTO.QcInfoView::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         //质检通知单
@@ -593,6 +596,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
             qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
             qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getQcProblemDict());
+            qcNoticeDetailEntity.setQcDate(nowTime);
             //该sku已完成质检
             qcNoticeDetailEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
             //该sku待上架
@@ -607,11 +611,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             // 记录主单完成质检操作
             operateLogService.addModuleOperateLog(String.format("【%s】", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
         }
-
         Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = new ArrayList<>(detailMap.values()).stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
 
         //以单据维度生成分布式调出单。
-        LocalDate billDate = LocalDate.now();
         String remark ="关联质检单号【{}】";
         String mainRemark ="质检通知单完成质检自动生成";
         for (QcNoticeEntity qcNoticeEntity : qcNoticeList) {
@@ -660,13 +662,31 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         for (QcNoticeEntity qcNoticeEntity : qcNoticeList) {
             List<QcNoticeDetailEntity> left = leftDetailMap.get(qcNoticeEntity.getId());
             boolean allMatch = left.stream().allMatch(e -> e.getQcStatus().equals(QcNoticeStatusEnum.FINISH.getCode()));
+            LocalDateTime approveTime = qcNoticeEntity.getApproveTime();
             if(allMatch){
+                // 求LocalDateTime nowTime 跟 LocalDateTime approveTime 时间差 。  精确到小时，不足30分钟时舍弃，大于等于30时进1
+                int hoursDiff = getHoursDiff(approveTime, nowTime);
                 qcNoticeEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
+                qcNoticeEntity.setQcTImeliness(hoursDiff);
             }else {
+                int hoursDiff = getHoursDiff(approveTime, nowTime);
                 qcNoticeEntity.setQcStatus(QcNoticeStatusEnum.PART.getCode());
+                qcNoticeEntity.setQcTImeliness(hoursDiff);
             }
             updateById(qcNoticeEntity);
         }
+    }
+
+    private static int getHoursDiff(LocalDateTime approveTime, LocalDateTime nowTime) {
+        // 计算两个时间点之间的分钟差
+        long minutesDiff = Duration.between(approveTime, nowTime).toMinutes();
+        // 处理分钟差的进位规则
+        int hoursDiff = (int) (minutesDiff / 60); // 计算完整小时数
+        int remainingMinutes = (int) (minutesDiff % 60); // 剩余分钟数
+        if (remainingMinutes >= 30) {
+            hoursDiff += 1; // 大于等于 30 分钟时进位
+        }
+        return hoursDiff;
     }
 
 

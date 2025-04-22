@@ -75,6 +75,11 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     */
     @TableField("remark")
     private String remark;
+    /**
+    * 备注
+    */
+    @TableField("qc_timeliness")
+    private Integer qcTImeliness;
 
 
     public static final String APPROVE_STATUS = "approve_status";
