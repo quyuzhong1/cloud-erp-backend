@@ -471,25 +471,41 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         return baseMapper.listQcInfoView(ids);
     }
 
+
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto) {
         if(CollUtil.isEmpty(dto)){
             throw new ServiceException( ApiError.ERROR_92271);
         }
+        //质检通知单明细
+        List<String> qcNoticeIdList = dto.stream().map(QcNoticeDTO.QcInfoView::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<QcNoticeDetailEntity> noticeDetailList = qcNoticeDetailService.listByMainIds(qcNoticeIdList);
+        Map<String, QcNoticeDetailEntity> detailMap = noticeDetailList.stream().collect(Collectors.toMap(QcNoticeDetailEntity::getId, t -> t));
 
+        //质检员
         List<String> userIds = dto.stream().map(QcNoticeDTO.QcInfoView::getQcUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<FindUserDTO> userInfoList = sysUserFeign.getUserListByUserIds(userIds);
         Map<String, String> userInfoMap = userInfoList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getDepartmentId));
 
+        //sku包装信息
         List<String> skuIds = dto.stream().map(QcNoticeDTO.QcInfoView::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-//        List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
-//        Map<String, ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-
         List<ProductVO.ProductPackVO> productPackList = plmTaskFeign.getProductPackBySkuIds(skuIds);
         Map<String, ProductVO.ProductPackVO> productPactMap = productPackList.stream().collect(Collectors.toMap(ProductVO.ProductPackVO::getSkuId, t -> t));
-
         for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
-            //质检通知单审核通过自动生成质检单
+            StringBuffer sb = new StringBuffer();
+            if(!productPactMap.containsKey(qcInfoView.getSkuId())){
+                sb.append("qcInfoView.getSkuNo()");
+                sb.append(";");
+            }
+            String str = sb.toString();
+            if(StringUtils.isNotBlank(str)){
+                throw new ServiceException( ApiError.ERROR_92272, str);
+            }
+        }
+
+        //质检通知单审核通过自动生成质检单
+        for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
             QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
             //来源
             addDto.setSourceCode(qcInfoView.getCode());
@@ -506,14 +522,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             addDto.setQcDeptId(userInfoMap.get(qcInfoView.getQcUserId()));
 
             //产品信息
-            if(!productPactMap.containsKey(qcInfoView.getSkuId())){
-                throw new ServiceException( ApiError.ERROR_95162, qcInfoView.getSkuNo());
-            }else {
-                QcProductDTO.AddDTO qcProduct = new QcProductDTO.AddDTO();
-                ProductVO.ProductPackVO productPackVO = productPactMap.get(qcInfoView.getSkuId());
-                BeanMapper.copy(productPackVO, qcProduct);
-                addDto.setQcProduct(qcProduct);
-            }
+            QcProductDTO.AddDTO qcProduct = new QcProductDTO.AddDTO();
+            ProductVO.ProductPackVO productPackVO = productPactMap.get(qcInfoView.getSkuId());
+            BeanMapper.copy(productPackVO, qcProduct);
+            addDto.setQcProduct(qcProduct);
 
             //质检信息
             QcResultDTO.AddDTO qcInfo = new QcResultDTO.AddDTO();
@@ -529,6 +541,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             addDto.setQcInfo(qcInfo);
             //新增质检单
             qcInfoService.add(addDto);
+
+            //回写质检通知单
+            QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
+            qcNoticeDetailEntity.setQcQty(qcInfoView.getQcQty());
+            qcNoticeDetailEntity.setQcGoodQty(qcInfoView.getQcGoodQty());
+            qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
+            qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
+            qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getQcProblemDict());
+            qcNoticeDetailService.updateById(qcNoticeDetailEntity);
         }
     }
 
