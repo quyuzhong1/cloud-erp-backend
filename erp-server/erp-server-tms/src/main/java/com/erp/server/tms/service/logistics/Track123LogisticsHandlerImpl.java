@@ -89,7 +89,7 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
                 List<TrackDetail> accepted = track.getData().getAccepted().getContent();
                 if (CollectionUtils.isNotEmpty(accepted)) {
                     accepted.forEach(trackDetail -> {
-                        String trackingStatus = trackDetail.getTrackingStatus();
+                        String trackingStatus = trackDetail.getTransitStatus();
                         List<TrackingDetail> trackingDetails = trackDetail.getLocalLogisticsInfo().getTrackingDetails();
                         if(CollectionUtils.isNotEmpty(trackingDetails)){
                             //本地物流

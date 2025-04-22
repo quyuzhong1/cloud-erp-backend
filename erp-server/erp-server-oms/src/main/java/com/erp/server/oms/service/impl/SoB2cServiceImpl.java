@@ -125,6 +125,8 @@ import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
+import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
+import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -360,6 +362,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
     @Resource
     private AliExpressOrderService aliExpressOrderService;
     @Resource
@@ -569,7 +572,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (isFullyManagedOrder(dictPlatform)){
                 businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSBH);
             }else {
-                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             }
             soB2cEntity.setCode(businessNo);
         }
