@@ -139,14 +139,15 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @return void
      */
     private void processOrderType(String orderType) {
+        List<String> ignoreSkuIds = getIgnoreSkuIds();
         if (VirtualFlowRefactorEnum.B2B.getCode().equals(orderType)) {
-            rebuildB2bFlow();
+            rebuildB2bFlow(ignoreSkuIds);
         } else if (VirtualFlowRefactorEnum.B2C.getCode().equals(orderType)) {
-            rebuildB2cFlow();
+            rebuildB2cFlow(ignoreSkuIds);
         } else if (VirtualFlowRefactorEnum.FIRST_MILE.getCode().equals(orderType)) {
-            rebuildFirstMileFlow();
+            rebuildFirstMileFlow(ignoreSkuIds);
         } else if (VirtualFlowRefactorEnum.WAREHOUSE_ALLOCATION.getCode().equals(orderType)) {
-            rebuildVirtualWarehouseAllocationFlow();
+            rebuildVirtualWarehouseAllocationFlow(ignoreSkuIds);
         }
     }
 
@@ -155,14 +156,14 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @author will
      * @date 2025/4/2 16:17
      */
-    private void rebuildVirtualWarehouseAllocationFlow() {
+    private void rebuildVirtualWarehouseAllocationFlow(List<String> ignoreSkuIds) {
         List<VirtualWarehouseAllocationEntity> list =  virtualWarehouseAllocationService.rebuildVirtualWarehouseAllocationFlow();
         if (CollUtil.isEmpty(list)) {
             return;
         }
         // 使用自定义线程池处理订单类型
         List<CompletableFuture<Void>> futures = list.stream()
-                .map(allocationEntity -> CompletableFuture.runAsync(() -> handleAllocation(allocationEntity)
+                .map(allocationEntity -> CompletableFuture.runAsync(() -> handleAllocation(allocationEntity,ignoreSkuIds)
                 , allocationVirtualFlowRefactorPool))
                 .collect(Collectors.toList());
         // 等待所有任务完成
@@ -176,7 +177,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @param allocationEntity
      * @return void
      */
-    private void handleAllocation (VirtualWarehouseAllocationEntity allocationEntity) {
+    private void handleAllocation (VirtualWarehouseAllocationEntity allocationEntity,List<String> ignoreSkuIds) {
         //查找所有明细
         List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.listByMainIdList(Collections.singletonList(allocationEntity.getId()));
         if (CollectionUtils.isNotEmpty(detailList)) {
@@ -185,16 +186,16 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 case ALLOCATION:
                     VirtualInventoryStockDTO.StockParamDTO allocationDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.IN_USABLE, detailList, allocationEntity);
                     allocationDto.setIsSplitBom(Boolean.FALSE);
-                    getSelfBean().approve(allocationDto);
+                    getSelfBean().approve(allocationDto,ignoreSkuIds);
                     break;
                 case TRANSFER:
                     VirtualInventoryStockDTO.TransferParamDTO dto = getTransferDTO(allocationEntity, detailList);
-                    getSelfBean().approveTransfer(dto);
+                    getSelfBean().approveTransfer(dto,ignoreSkuIds);
                     break;
                 case CANCEL:
                     VirtualInventoryStockDTO.StockParamDTO cancelDto = getCancelDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
                     cancelDto.setIsSplitBom(Boolean.FALSE);
-                    getSelfBean().approve(cancelDto);
+                    getSelfBean().approve(cancelDto,ignoreSkuIds);
                     break;
                 default:
                     throw new ServiceException(ApiError.ERROR_400);
@@ -304,7 +305,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @author will
      * @date 2025/3/31 10:52
      */
-    private void rebuildB2bFlow() {
+    private void rebuildB2bFlow(List<String> ignoreSkuIds) {
        List<VirtualFlowRefactorDTO.OutInStockDTO> list =  soDeliveryNoticeService.rebuildB2bVirtualFlow();
        if (CollUtil.isEmpty(list)) {
            return;
@@ -350,7 +351,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_OUT_STOCK.getCode());
             }
             //更新库存
-            getSelfBean().approve(dto);
+            getSelfBean().approve(dto,ignoreSkuIds);
         }, b2bVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -362,7 +363,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @author will
      * @date 2025/3/31 10:52
      */
-    private void rebuildB2cFlow() {
+    private void rebuildB2cFlow(List<String> ignoreSkuIds) {
         List<VirtualFlowRefactorDTO.OutInStockDTO> list =  soB2cDeliveryService.rebuildB2cVirtualFlow();
         if (CollUtil.isEmpty(list)) {
             return;
@@ -394,7 +395,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
             }
             //更新库存
-            getSelfBean().approve(dto);
+            getSelfBean().approve(dto,ignoreSkuIds);
         }, b2cVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -405,7 +406,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
      * @author will
      * @date 2025/3/31 10:52
      */
-    private void rebuildFirstMileFlow() {
+    private void rebuildFirstMileFlow(List<String> ignoreSkuIds) {
         List<VirtualFlowRefactorDTO.OutInStockDTO> list =  requisitionApplicationService.rebuildFirstMileVirtualFlow();
         if (CollUtil.isEmpty(list)) {
             return;
@@ -443,7 +444,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 dto.setBusinessType(VirtualInventoryBusinessTypeEnum.TRANSFER_INFO_APPROVE.getCode());
             }
             //更新库存
-            getSelfBean().approve(dto);
+            getSelfBean().approve(dto,ignoreSkuIds);
         }, firstMileVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
@@ -468,12 +469,12 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 //---------------------------------------------------------------------------调拨流水---------------------------------------------------------------------------------
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approveTransfer(VirtualInventoryStockDTO.TransferParamDTO dto) {
+    public void approveTransfer(VirtualInventoryStockDTO.TransferParamDTO dto,List<String> ignoreSkuIds) {
         ValidatorUtil.validateEntity(dto);
-        this.approveTransfer(dto.getParamList(), dto.getRules(), VirtualInventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), CollUtil.isEmpty(dto.getRules()) ? true : false);
+        this.approveTransfer(dto.getParamList(), dto.getRules(), VirtualInventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), CollUtil.isEmpty(dto.getRules()) ? true : false,ignoreSkuIds);
     }
 
-    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void approveTransfer(List<T> paramList, List<VirtualTransRuleDTO.StockParamDTO> ruleList, VirtualInventoryBusinessTypeEnum businessType, Boolean byType) {
+    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void approveTransfer(List<T> paramList, List<VirtualTransRuleDTO.StockParamDTO> ruleList, VirtualInventoryBusinessTypeEnum businessType, Boolean byType,List<String> ignoreSkuIds) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         log.warn("》》》库存交易按【{}】，入参：{}，业务类型：{}", Objects.equals(byType, Boolean.TRUE) ? "业务类型" : "自定义规则", JSON.toJSONString(paramList), businessType.getName());
         // 1.验证参数
@@ -484,15 +485,13 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }
         // 2.业务处理，同一个操作产生的交易流水使用同一个关联交易号
         String transactionNo =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLS);
-        this.stockHandlerTransfer(paramList, businessType, stockParamList, transactionNo);
+        this.stockHandlerTransfer(paramList, businessType, stockParamList, transactionNo,ignoreSkuIds);
 
         stopwatch.stop();
         log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
     }
 
-    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void stockHandlerTransfer(List<T> paramList, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRuleParams, String transactionNo) {
-        // 获取忽略库存计算的sku
-        List<String> ignoreInventorySkuIds = this.getIgnoreSkuIds();
+    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void stockHandlerTransfer(List<T> paramList, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRuleParams, String transactionNo,List<String> ignoreSkuIds) {
         // 通过对sku id 仓库id 仓位 顺序执行, 避免多线程死锁
         Comparator<VirtualInventoryStockDTO.StockBaseDTO> comparing = Comparator.comparing(VirtualInventoryStockDTO.StockBaseDTO::getSkuId)
                 .thenComparing(VirtualInventoryStockDTO.StockBaseDTO::getVirtualWarehouseId)
@@ -504,7 +503,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             VirtualInventoryStockDTO.TransferStockDTO param = (VirtualInventoryStockDTO.TransferStockDTO)baseParam;
 
             VirtualInventoryStockDTO.TransferDTO curWareInOrOutStock = this.wrapInOutStockByTransfer(param, InventoryWarehouseOptionEnum.WAREHOUSE_CURRENT, InventoryOperationModeEnum.APPROVE);
-            if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+            if(ignoreSkuIds.contains(param.getSkuId())) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库", param.getSkuId(), param.getSkuNo());
                 continue;
             }
@@ -598,14 +597,14 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void approve(VirtualInventoryStockDTO.StockParamDTO dto) {
+    public void approve(VirtualInventoryStockDTO.StockParamDTO dto,List<String> ignoreSkuIds) {
         ValidatorUtil.validateEntity(dto);
         //BOM拆分
         List<VirtualInventoryStockDTO.OutInStockDTO> outInStockList = splitBom(dto.getParamList(), dto.getIsSplitBom());
         if (CollUtil.isEmpty(outInStockList)) {
             outInStockList = dto.getParamList();
         }
-        this.approve(outInStockList, dto.getRules(), VirtualInventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), CollUtil.isEmpty(dto.getRules()) ? true : false);
+        this.approve(outInStockList, dto.getRules(), VirtualInventoryBusinessTypeEnum.getByCode(dto.getBusinessType()), CollUtil.isEmpty(dto.getRules()) ? true : false,ignoreSkuIds);
     }
 
     /**
@@ -664,7 +663,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         return resultList;
     }
 
-    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void approve(List<T> paramList, List<VirtualTransRuleDTO.StockParamDTO> ruleList, VirtualInventoryBusinessTypeEnum businessType, Boolean byType) {
+    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void approve(List<T> paramList, List<VirtualTransRuleDTO.StockParamDTO> ruleList, VirtualInventoryBusinessTypeEnum businessType, Boolean byType,List<String> ignoreSkuIds) {
         Stopwatch stopwatch = Stopwatch.createStarted();
         log.warn("》》》库存交易按【{}】，入参：{}，业务类型：{}", Objects.equals(byType, Boolean.TRUE) ? "业务类型" : "自定义规则", JSON.toJSONString(paramList), businessType.getName());
         // 1.验证参数
@@ -675,15 +674,13 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }
         // 2.业务处理，同一个操作产生的交易流水使用同一个关联交易号
         String transactionNo =  docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XLS);
-        this.stockHandler(paramList, businessType, stockParamList, transactionNo);
+        this.stockHandler(paramList, businessType, stockParamList, transactionNo,ignoreSkuIds);
 
         stopwatch.stop();
         log.warn("结束库存交易，耗时【{}】秒", stopwatch.elapsed(TimeUnit.SECONDS));
     }
 
-    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void stockHandler(List<T> paramList, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRuleParams, String transactionNo) {
-        // 获取忽略库存计算的sku
-        List<String> ignoreInventorySkuIds = this.getIgnoreSkuIds();
+    public <T extends VirtualInventoryStockDTO.StockBaseDTO> void stockHandler(List<T> paramList, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRuleParams, String transactionNo,List<String> ignoreSkuIds) {
         // 通过对sku id顺序执行, 避免多线程死锁
         Comparator<VirtualInventoryStockDTO.StockBaseDTO> comparing = Comparator.comparing(VirtualInventoryStockDTO.StockBaseDTO::getSkuId)
                 .thenComparing(VirtualInventoryStockDTO.StockBaseDTO::getVirtualWarehouseId)
@@ -691,7 +688,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         paramList = paramList.stream().sorted(comparing).collect(Collectors.toList());
         for(VirtualInventoryStockDTO.StockBaseDTO baseParam : paramList) {
             VirtualInventoryStockDTO.OutInStockDTO param = (VirtualInventoryStockDTO.OutInStockDTO)baseParam;
-            if(ignoreInventorySkuIds.contains(param.getSkuId())) {
+            if(ignoreSkuIds.contains(param.getSkuId())) {
                 log.warn("sku id: {}，sku编号：{}产品属性是费用或服务，不参与库存出入库", param.getSkuId(), param.getSkuNo());
                 continue;
             }
