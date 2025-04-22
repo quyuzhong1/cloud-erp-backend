@@ -96,19 +96,19 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
     private VirtualWarehouseAllocationDetailService virtualWarehouseAllocationDetailService;
 
     @Resource
-    @Qualifier("virtualFlowRefactorPool")
+    @Qualifier("b2bVirtualFlowRefactorPool")
     private ExecutorService b2bVirtualFlowRefactorPool;
 
     @Resource
-    @Qualifier("virtualFlowRefactorPool")
+    @Qualifier("b2cVirtualFlowRefactorPool")
     private ExecutorService b2cVirtualFlowRefactorPool;
 
     @Resource
-    @Qualifier("virtualFlowRefactorPool")
+    @Qualifier("firstMileVirtualFlowRefactorPool")
     private ExecutorService firstMileVirtualFlowRefactorPool;
 
     @Resource
-    @Qualifier("virtualFlowRefactorPool")
+    @Qualifier("allocationVirtualFlowRefactorPool")
     private ExecutorService allocationVirtualFlowRefactorPool;
 
     @Resource
@@ -309,11 +309,24 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
        if (CollUtil.isEmpty(list)) {
            return;
        }
-        Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
+        //销售出库单只出单品sku
+        List<String> skuIdList = list.stream().filter(obj ->SourceTypeEnum.SO_OUTSTOCK.getCode().equals(obj.getSourceType().getCode())).map(VirtualFlowRefactorDTO.OutInStockDTO::getSkuId).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildList = CollUtil.isEmpty(skuIdList) ? Collections.emptyList() : plmTaskFeign.listBomChildBySkuIds(skuIdList);
+        Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildList.stream().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}", obj.getType(), obj.getParentSkuId())));
+        List<VirtualFlowRefactorDTO.OutInStockDTO> singleList = list.stream().filter(obj -> {
+            String key = CharSequenceUtil.format("{}-{}", BomTypeEnum.COMBINATION.getType(), obj.getSkuId());
+            //销售出库单过滤组合品
+            if (SourceTypeEnum.SO_OUTSTOCK.getCode().equals(obj.getSourceType().getCode()) && CollUtil.isNotEmpty(bomMap.get(key))) {
+                return Boolean.FALSE;
+            }
+            return Boolean.TRUE;
+        }).collect(Collectors.toList());
 
-        List<CompletableFuture<Void>> futures = map.entrySet().stream().map(entry -> CompletableFuture.runAsync(() -> {
-            String sourceType = entry.getValue().get(0).getSourceType().getCode();
-            List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(entry.getValue(), VirtualInventoryStockDTO.OutInStockDTO.class);
+        Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = CollUtil.isEmpty(singleList) ? new HashMap<>() : singleList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
+
+        List<CompletableFuture<Void>> futures = map.values().stream().map(value -> CompletableFuture.runAsync(() -> {
+            String sourceType = value.get(0).getSourceType().getCode();
+            List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(params);
             //b2b需冻结
@@ -354,8 +367,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             return;
         }
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId()).concat(obj.getBusinessType())));
-        List<CompletableFuture<Void>> futures = map.entrySet().stream().map(entry -> CompletableFuture.runAsync(() -> {
-            List<VirtualFlowRefactorDTO.OutInStockDTO> value = entry.getValue();
+        List<CompletableFuture<Void>> futures = map.values().stream().map(value -> CompletableFuture.runAsync(() -> {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -412,8 +424,7 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }).collect(Collectors.toList());
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = CollUtil.isEmpty(singleList) ? new HashMap<>() : singleList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
-        List<CompletableFuture<Void>> futures = map.entrySet().stream().map(entry -> CompletableFuture.runAsync(() -> {
-            List<VirtualFlowRefactorDTO.OutInStockDTO> value = entry.getValue();
+        List<CompletableFuture<Void>> futures = map.values().stream().map(value -> CompletableFuture.runAsync(() -> {
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
