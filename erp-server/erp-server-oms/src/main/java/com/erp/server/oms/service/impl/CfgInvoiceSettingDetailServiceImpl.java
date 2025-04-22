@@ -235,10 +235,10 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                 .collect(Collectors.toSet());
         // 将两种情况合并
         idsToDelete.addAll(idsWithChangedShopIdSet);
-        if (CollUtil.isNotEmpty(existingIds)) {
-            log.info("开始删除以下发票设置明细: {}", existingIds);
+        if (CollUtil.isNotEmpty(idsToDelete)) {
+            log.info("开始删除以下发票设置明细: {}", idsToDelete);
             boolean removed = this.lambdaUpdate()
-                    .in(CfgInvoiceSettingDetailEntity::getId, existingIds)
+                    .in(CfgInvoiceSettingDetailEntity::getId, idsToDelete)
                     .remove();
             if (!removed) {
                 throw new ServiceException("删除发票设置明细失败");
@@ -259,10 +259,10 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         // 处理数据
         List<CfgInvoiceSettingDetailEntity> saveList = createList.stream()
                 .flatMap(item -> item.getDetailDTOList().stream()
-                        .filter(detail -> ObjectUtil.isEmpty(detail.getId()) || idsWithChangedShopIdSet.contains(detail.getId()))
+                        .filter(detail -> ObjectUtil.isEmpty(detail.getId()) || (ObjectUtil.isNotEmpty(idsWithChangedShopIdSet) && idsWithChangedShopIdSet.contains(detail.getId())))
                         .map(detail -> {
                             // 如果 id 在变更集合中，则置空
-                            if (idsWithChangedShopIdSet.contains(detail.getId())) {
+                            if (ObjectUtil.isNotEmpty(idsWithChangedShopIdSet) && idsWithChangedShopIdSet.contains(detail.getId())) {
                                 detail.setId(null);
                             }
                             CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(detail, CfgInvoiceSettingDetailEntity.class);
