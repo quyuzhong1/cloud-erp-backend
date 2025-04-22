@@ -716,7 +716,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             Integer noticeQty = detail.getQcNoticeQty();
             Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
             if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                results.add(BatchResultDTO.fail(skuId, skuNo, String.format(ApiError.ERROR_92268.msg, skuNo, noticeQty, inventoryQty)));
+                results.add(BatchResultDTO.fail(skuId, skuNo, String.format(ApiError.ERROR_92273.msg, skuNo, noticeQty, inventoryQty)));
             }
         }
         if(results.size() == 0){
