@@ -728,4 +728,51 @@ public class TransferOutDTO implements Serializable {
     }
 
 
+    /**
+     * 下推的分步式调入单选择产品结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PutawayDetailDTO implements Serializable {
+        /**
+         *
+         */
+        private String outCode;
+        /**
+         *
+         */
+        private LocalDateTime outApproveTime;
+        /**
+         *
+         */
+        private Integer outQty ;
+        /**
+         *
+         */
+        private String outWarehouseId;
+        private String outWarehouseName;
+        /**
+         *
+         */
+        private String outId;
+
+        /**
+         *
+         */
+        private LocalDateTime inApproveTime;
+        /**
+         *
+         */
+        private Integer inQty ;
+        /**
+         *
+         */
+        private String inWarehouseId;
+        private String inWarehouseName;
+
+
+
+    }
+
+
 }

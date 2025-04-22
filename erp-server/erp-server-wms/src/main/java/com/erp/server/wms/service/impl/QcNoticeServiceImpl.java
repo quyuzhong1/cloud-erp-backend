@@ -52,6 +52,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -509,8 +511,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<String> qcNoticeDetailIdList = dto.stream().map(QcNoticeDTO.QcInfoView::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<QcNoticeDetailEntity> noticeDetailList = qcNoticeDetailService.listByIds(qcNoticeDetailIdList);
         Map<String, QcNoticeDetailEntity> detailMap = noticeDetailList.stream().collect(Collectors.toMap(QcNoticeDetailEntity::getId, t -> t));
-
-        Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = noticeDetailList.stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
+        //不参与本次质检的明细
+        List<QcNoticeDetailEntity> leftDetailList = qcNoticeDetailService.lambdaQuery().notIn(QcNoticeDetailEntity::getId, qcNoticeDetailIdList).list();
 
         //仓库
         List<String> qcWarehouseId = qcNoticeList.stream().map(QcNoticeEntity::getQcWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -591,14 +593,22 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
             qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
             qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getQcProblemDict());
+            //该sku已完成质检
+            qcNoticeDetailEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
+            //该sku待上架
+            qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.WAIT.getCode());
             qcNoticeDetailService.updateById(qcNoticeDetailEntity);
             //等下用来生成分布式调出单
             detailMap.put(qcInfoView.getDetailId(), qcNoticeDetailEntity);
+            //等下用于回填主表状态
+            leftDetailList.add(qcNoticeDetailEntity);
             //质检通知单日志
             operateLogService.addModuleOperateLogByObj(detailMap.get(qcInfoView.getDetailId()), qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(),"", String.format("【%s】", qcNoticeDetailEntity.getSkuNo()));
             // 记录主单完成质检操作
             operateLogService.addModuleOperateLog(String.format("【%s】", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
         }
+
+        Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = new ArrayList<>(detailMap.values()).stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
 
         //以单据维度生成分布式调出单。
         LocalDate billDate = LocalDate.now();
@@ -643,6 +653,19 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 addOutDTO.setDetailList(detailList);
                 transferOutService.add(addOutDTO);
             }
+        }
+
+        //主表回写
+        Map<String, List<QcNoticeDetailEntity>> leftDetailMap = leftDetailList.stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
+        for (QcNoticeEntity qcNoticeEntity : qcNoticeList) {
+            List<QcNoticeDetailEntity> left = leftDetailMap.get(qcNoticeEntity.getId());
+            boolean allMatch = left.stream().allMatch(e -> e.getQcStatus().equals(QcNoticeStatusEnum.FINISH.getCode()));
+            if(allMatch){
+                qcNoticeEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
+            }else {
+                qcNoticeEntity.setQcStatus(QcNoticeStatusEnum.PART.getCode());
+            }
+            updateById(qcNoticeEntity);
         }
     }
 

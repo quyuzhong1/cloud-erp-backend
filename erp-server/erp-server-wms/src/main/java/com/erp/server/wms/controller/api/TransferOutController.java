@@ -308,4 +308,13 @@ public class TransferOutController extends BaseController {
         return success(transferOutService.listTransferOut(param));
     }
 
+    /**
+     *上架详情弹窗
+     * @return
+     */
+    @GetMapping("/listPutawayDetail")
+    public ApiResult<List<TransferOutDTO.PutawayDetailDTO>> listPutawayDetail(@RequestParam("id") String id) {
+        return success(transferOutService.listPutawayDetail(id));
+    }
+
 }

@@ -52,4 +52,5 @@ public interface TransferOutMapper extends BaseMapper<TransferOutEntity> {
      */
     List<TransferOutDTO.ViewGenerateTransferInDTO> viewGenerateTransfer(@Param("ids") List<String> ids);
 
+    List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(@Param("ids") String id);
 }

@@ -165,7 +165,6 @@ public class QcNoticeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<QcNoticeEntity> list = qcNoticeService.lambdaQuery().in(QcNoticeEntity::getId, ids).list();
 		Map<String, QcNoticeEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcNoticeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -242,7 +241,6 @@ public class QcNoticeController extends BaseController {
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<QcNoticeEntity> list = qcNoticeService.lambdaQuery().in(QcNoticeEntity::getId, ids).list();
 		Map<String, QcNoticeEntity> idEntityMap = list.stream().collect(Collectors.toMap(QcNoticeEntity::getId, w -> w));
         for (String id : dto.getIds()) {
