@@ -434,7 +434,6 @@
 
     <!-- 查询头程流水数据 -->
     <select id="rebuildFirstMileVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
-        select firstMile.* from (
         --要货申请冻结
         select
             rad.sku_id,
@@ -449,7 +448,7 @@
             ra.handle_time as trade_time,
             rad.virtual_frozen_qty as qty
         from requisition_application ra
-        inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false and rad.from_virtual_warehouse_id != '' and ra.status in ('handleIng','handle')
+        inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false and rad.from_virtual_warehouse_id != '' and ra.status in ('handleIng','handle') and rad.virtual_frozen_qty > 0
         where ra.is_deleted = false
         --加工单出库(海外仓/不走货件的fba)
         union all
@@ -470,7 +469,7 @@
         INNER JOIN first_mile_delivery fmd ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.approve_status = 'approve'
         INNER JOIN first_mile_delivery_detail fmdd ON  fmdd.is_deleted = false and fmdd.source_detail_id = rad.id and fmd.id = fmdd.main_id
         inner join machine_ref_so mrs on fmd.id = mrs.so_id and fmdd.id = mrs.so_detail_id and mrs.is_deleted = false
-        inner join machine_detail md on mrs.machine_detail_id = md.id and md.is_deleted = false
+        inner join machine_detail md on mrs.machine_detail_id = md.id and md.is_deleted = false and md.qty > 0
         inner join machine_info mi on mi.id = md.main_id and mi.is_deleted = false and mi.approve_status = 'approve'
         WHERE ra.is_deleted = false
         --加工单出库(fba)
@@ -496,7 +495,7 @@
             where fmdd.is_deleted = false
         ) fmdd on fmd.id = fmdd.main_id and rad.sku_id = fmdd.sku_id and rad.platform_fn_sku = fmdd.fn_sku
             inner join machine_ref_so mrs on fmd.id = mrs.so_id and fmdd.id = mrs.so_detail_id and mrs.is_deleted = false
-            inner join machine_detail md on mrs.machine_detail_id = md.id and md.is_deleted = false
+            inner join machine_detail md on mrs.machine_detail_id = md.id and md.is_deleted = false and md.qty > 0
             inner join machine_info mi on mi.id = md.main_id and mi.is_deleted = false and mi.approve_status = 'approve'
         WHERE ra.is_deleted = false
         --直接调拨单出库(海外仓)
@@ -517,7 +516,7 @@
         INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false  AND rad.from_virtual_warehouse_id != ''
         INNER JOIN first_mile_delivery fmd ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.approve_status = 'approve'
         INNER JOIN first_mile_delivery_detail fmdd ON  fmdd.is_deleted = false and fmdd.source_detail_id = rad.id and fmd.id = fmdd.main_id
-        inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false and fmd.delivery_warehouse_id = tid.out_warehouse_id
+        inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false and fmd.delivery_warehouse_id = tid.out_warehouse_id and tid.qty > 0
         inner join transfer_info ti on ti.id = tid.main_id and ti.is_deleted = false and ti.approve_status = 'approve'
         WHERE ra.is_deleted = false
         --直接调拨单出库(fba)
@@ -542,9 +541,8 @@
             inner join fba_shipment_detail fsd on fsd.is_deleted = false and fmdd.source_detail_id = fsd.id
             where fmdd.is_deleted = false
             ) fmdd on fmd.id = fmdd.main_id and rad.sku_id = fmdd.sku_id and rad.platform_fn_sku = fmdd.fn_sku
-        inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false and fmd.delivery_warehouse_id = tid.out_warehouse_id
+        inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false and fmd.delivery_warehouse_id = tid.out_warehouse_id and tid.qty > 0
         inner join transfer_info ti on ti.id = tid.main_id and ti.is_deleted = false and ti.approve_status = 'approve'
         WHERE ra.is_deleted = false
-        ) firstMile where firstMile.qty > 0 order by firstMile.bill_date asc
     </select>
 </mapper>
