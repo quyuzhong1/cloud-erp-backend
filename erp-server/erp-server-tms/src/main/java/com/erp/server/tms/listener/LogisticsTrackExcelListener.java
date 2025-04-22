@@ -20,6 +20,7 @@ import com.erp.model.tms.dto.excel.LogisticsTrackExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
+import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -61,11 +62,11 @@ public class LogisticsTrackExcelListener extends AnalysisEventListener<Logistics
             errorMsgList.add("状态时间格式错误");
         }
         try {
-            FmLogisticTrackStatusEnum trackStatusEnum = FmLogisticTrackStatusEnum.getByName(excelDTO.getTrackStatusName());
-            if (Objects.nonNull(trackStatusEnum)){
-                excelDTO.setTrackStatus(trackStatusEnum.getCode());
+            String trackStatus = LogisticTrackStatusEnum.getCode(excelDTO.getTrackStatusName());
+            if (CharSequenceUtil.isNotBlank(trackStatus)){
+                excelDTO.setTrackStatus(trackStatus);
             }else {
-                errorMsgList.add("运输状态错误");
+                errorMsgList.add("运输状态名称错误");
             }
         }catch (Exception e){
             errorMsgList.add("运输状态错误");
@@ -147,38 +148,37 @@ public class LogisticsTrackExcelListener extends AnalysisEventListener<Logistics
                 continue;
             }
             if(StringUtils.isNotBlank(excelDTO.getTrackStatusName())){
-                FmLogisticTrackStatusEnum logisticTrackStatusEnum = FmLogisticTrackStatusEnum.getByName(excelDTO.getTrackStatusName());
-                if(Objects.nonNull(logisticTrackStatusEnum)){
+                String trackStatus = LogisticTrackStatusEnum.getCode(excelDTO.getTrackStatusName());
+                if(CharSequenceUtil.isNotBlank(trackStatus)){
                     //待下单不用封装轨迹，其他状态需要
-                    if(logisticTrackStatusEnum == FmLogisticTrackStatusEnum.WAIT_ORDER){
+                    if(LogisticTrackStatusEnum.WAIT_ORDER.getCode().equals(trackStatus)){
                         entity.setOrderTime(null);
-                    }else if (logisticTrackStatusEnum == FmLogisticTrackStatusEnum.ORDERED){
+                    }else if (LogisticTrackStatusEnum.ORDERED.getCode().equals(trackStatus)){
 
                         entity.setOrderTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
 
                         LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
                         trackEntity.setTrackNo(entity.getTransportNo());
                         trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
-                        trackEntity.setStatus(logisticTrackStatusEnum.getCode());
+                        trackEntity.setStatus(trackStatus);
                         trackEntity.setContent(StringUtils.isBlank(excelDTO.getTrackDesc())?"已下单":excelDTO.getTrackDesc());
                         trackEntity.setMd5(getDataMd5(trackEntity));
                         addTrackList.add(trackEntity);
                     }else{
-                        if(StringUtils.isNotBlank(excelDTO.getTrackDesc())){
-                            LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
-                            trackEntity.setTrackNo(entity.getTransportNo());
-                            trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
-                            trackEntity.setStatus(logisticTrackStatusEnum.getCode());
-                            trackEntity.setContent(excelDTO.getTrackDesc());
-                            trackEntity.setMd5(getDataMd5(trackEntity));
-                            addTrackList.add(trackEntity);
-                        }
+                        LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
+                        trackEntity.setTrackNo(entity.getTransportNo());
+                        trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
+                        trackEntity.setStatus(trackStatus);
+                        trackEntity.setContent(CharSequenceUtil.isNotBlank(excelDTO.getTrackDesc()) ? excelDTO.getTrackDesc() : "");
+                        trackEntity.setMd5(getDataMd5(trackEntity));
+                        addTrackList.add(trackEntity);
                     }
-                    if (logisticTrackStatusEnum == FmLogisticTrackStatusEnum.SIGN){
+                    if (LogisticTrackStatusEnum.SIGN.getCode().equals(trackStatus)){
                         detailEntity.setSignTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
                     }
+                    detailEntity.setTrackContent(excelDTO.getTrackDesc());
                     detailEntity.setTrackTime((excelDTO.getStatusTime()));
-                    detailEntity.setTrackStatus(logisticTrackStatusEnum.getCode());
+                    detailEntity.setTrackStatus(trackStatus);
                     updateDetailList.add(detailEntity);
                 }
             }

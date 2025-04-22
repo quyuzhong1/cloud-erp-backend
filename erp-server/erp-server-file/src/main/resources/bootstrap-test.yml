@@ -2,10 +2,10 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 172.16.100.12
+        server-addr: 172.16.100.60:32570
         namespace: test
       config:
-        server-addr: 172.16.100.12
+        server-addr: 172.16.100.60:32570
         namespace: test
         shared-configs: common.yml,db-file.yml,druid-common.yml,erp-third-party.yml
 

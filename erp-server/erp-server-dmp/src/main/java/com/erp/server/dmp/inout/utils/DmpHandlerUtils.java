@@ -439,7 +439,7 @@ public class DmpHandlerUtils {
             ResultSetMetaData metaData = resultSet.getMetaData();
             int columnCount = metaData.getColumnCount();
 
-            if (resultSet.next()) {
+            while (resultSet.next()) {
             	Map<String, Object> resultMap = new HashMap<>();
             	String dataIdValue = "";
                 for (int i = 1; i <= columnCount; i++) {
@@ -478,4 +478,49 @@ public class DmpHandlerUtils {
 
         return result;
     }
+    
+    public static List<Map<String, Object>> queryDB(DataSource dataSource, String sqlQuery) throws SQLException {
+		List<Map<String, Object>> result = new ArrayList<>();
+        Connection connection = null;
+        Statement statement = null;
+        ResultSet resultSet = null;
+
+        try {
+            connection = dataSource.getConnection();
+            statement = connection.createStatement();
+            resultSet = statement.executeQuery(sqlQuery);
+
+            ResultSetMetaData metaData = resultSet.getMetaData();
+            int columnCount = metaData.getColumnCount();
+
+            while (resultSet.next()) {
+            	Map<String, Object> resultMap = new HashMap<>();
+                for (int i = 1; i <= columnCount; i++) {
+                    String columnName = metaData.getColumnName(i);
+                    Object columnValue = resultSet.getObject(i);
+                    resultMap.put(columnName, columnValue);
+                }
+                result.add(resultMap);
+            }
+
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            try {
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+                if (statement != null) {
+                    statement.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                log.error("关闭dmpCfgDbEntity查询的连接异常" , e);
+            }
+        }
+        return result;
+
+	}
 }

@@ -41,6 +41,7 @@ import com.erp.server.oms.service.CfgRuleOrderHandleService;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.bcel.generic.I2F;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -357,7 +358,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         }
                         break;
                     case CUSTOMIZE:
-                        receiverInfoVO.setProvince(addressHandleContent.getProvinceFillText());
+                        receiverInfoVO.setProvince(CharSequenceUtil.isNotBlank(receiverInfoVO.getProvince()) ? receiverInfoVO.getProvince() : addressHandleContent.getProvinceFillText());
                         break;
                     default:
                         break;
@@ -382,7 +383,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         }
                         break;
                     case CUSTOMIZE:
-                        receiverInfoVO.setCity(addressHandleContent.getCityFillText());
+                        receiverInfoVO.setCity(CharSequenceUtil.isNotBlank(receiverInfoVO.getCity()) ? receiverInfoVO.getCity() : addressHandleContent.getCityFillText());
                         break;
                     default:
                         break;
@@ -490,7 +491,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
                         receiverInfoVO.setContact(receiverInfoVO.getBuyerName());
                         break;
                     case CUSTOMIZE:
-                        receiverInfoVO.setContact(receiveHandleContent.getReceiveFillText());
+                        receiverInfoVO.setContact(CharSequenceUtil.isNotBlank(receiverInfoVO.getContact()) ? receiverInfoVO.getContact() : receiveHandleContent.getReceiveFillText());
                         break;
                     default:
                         break;

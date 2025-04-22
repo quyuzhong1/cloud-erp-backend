@@ -45,7 +45,7 @@ public interface WmsFbaInventoryConverter {
             @Mapping(target = "msku", source = "oldEntity.msku"),
             @Mapping(target = "fnSku", source = "oldEntity.fnSku"),
             @Mapping(target = "deliveryChannels", expression = "java(cn.hutool.core.text.CharSequenceUtil.isBlank(newEntity.getDeliveryChannels())? oldEntity.getDeliveryChannels() : newEntity.getDeliveryChannels())"),
-            @Mapping(target = "fbmFulfillableQty", expression = "java(null == newEntity.getFulfillableQty() ? oldEntity.getFulfillableQty() : newEntity.getFulfillableQty())"),
+            @Mapping(target = "fbmFulfillableQty", expression = "java(null == newEntity.getFbmFulfillableQty() ? oldEntity.getFbmFulfillableQty() : newEntity.getFbmFulfillableQty())"),
             @Mapping(target = "inboundWorkingQty", expression = "java(null == newEntity.getInboundWorkingQty() ? oldEntity.getInboundWorkingQty() : newEntity.getInboundWorkingQty())"),
             @Mapping(target = "inboundShippedQty", expression = "java(null == newEntity.getInboundShippedQty() ? oldEntity.getInboundShippedQty() : newEntity.getInboundShippedQty())"),
             @Mapping(target = "inboundReceivingQty", expression = "java(null == newEntity.getInboundReceivingQty() ? oldEntity.getInboundReceivingQty() : newEntity.getInboundReceivingQty())"),

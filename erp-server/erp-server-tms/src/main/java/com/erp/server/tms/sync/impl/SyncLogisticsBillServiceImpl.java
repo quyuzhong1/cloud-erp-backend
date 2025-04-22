@@ -10,6 +10,10 @@ import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
 import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
+import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
+import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
@@ -127,6 +131,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         viewDto.setThirdUpdateTime(entity.getUpdateTime());
         viewDto.setDeliveryTime(entity.getDeliveryTime());
         viewDto.setOutstockCode(entity.getOutstockCode());
+        viewDto.setSignTime(logisticsBillDetailEntity.getSignTime());
 
         if (CharSequenceUtil.isBlank(supplierName)) {
         	viewDto.setLogisticCompanyName("无");

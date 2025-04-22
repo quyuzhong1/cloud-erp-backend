@@ -13,6 +13,10 @@ import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.dto.DmpReturnInstockDTO;
 import com.erp.model.dmp.dto.DmpReturnInstockDetailDTO;
+import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.dto.DmpReturnInstockDTO;
+import com.erp.model.dmp.dto.DmpReturnInstockDetailDTO;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -652,14 +656,14 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             wmsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
             if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            	map = this.syncNewDataToSdyFieldHandler(entity, detailEntity, operate, new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), "", "", "", new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-            }else {
             	map.put("isQuerySync", Boolean.TRUE);
                 map.put("detailId", detailEntity.getId());
                 map.put("operate", operate);
+            }else {
+                map = this.syncNewDataToSdyFieldHandler(entity, detailEntity, operate, new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), "", "", "", new ArrayList<>(), new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             }
             wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             wmsPushMsgService.save(wmsPushMsgEntity);

@@ -2081,7 +2081,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
             if(rulePromptWordEntityMap.containsKey(batchResultDTO.getId())){
                 RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(batchResultDTO.getId());
-                batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : batchResultDTO.getMsg(),rulePromptWordEntity.getSolution()));
             }
         }
         return batchResultDTO;
@@ -2220,7 +2220,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     Map<String,RulePromptWordEntity> rulePromptWordEntityMap = soB2cErrorService.getRulePromptWord(map);
                     if(rulePromptWordEntityMap.containsKey(soB2cErrorEntity.getId())){
                         RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(soB2cErrorEntity.getId());
-                        batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                        batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : soB2cErrorEntity.getMessage(),rulePromptWordEntity.getSolution()));
                     }
                 }
                 return batchResultDTO;
@@ -8188,7 +8188,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 if(rulePromptWordEntityMap.containsKey(v.getId())){
                     RulePromptWordEntity rulePromptWordEntity = rulePromptWordEntityMap.get(v.getId());
-                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",rulePromptWordEntity.getTips(),rulePromptWordEntity.getSolution()));
+                    batchResultDTO.setMsg(StrUtil.format("失败原因：{},【解决方案】：{}",CharSequenceUtil.isNotBlank(rulePromptWordEntity.getTips()) ? rulePromptWordEntity.getTips() : v.getMessage(),rulePromptWordEntity.getSolution()));
                 }
             });
         }
@@ -10354,6 +10354,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 if (!errorNoList.contains(no)) {
 
                     soB2cService.save(soB2cEntity);
+                    // 操作日志
+                    String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
+                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
 
                     List<SoB2cDetailDTO.AddDTO> addDTOS = BeanMapper.copyList(detailList, SoB2cDetailDTO.AddDTO.class);
                     //计算物流尺寸
@@ -10431,9 +10434,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                         //自动计算预估运费到订单的预估运费字段
                         soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(soB2cEntity.getId()));
                     }
-                    // 操作日志
-                    String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "B2C销售订单表", soB2cEntity.getCode());
-                    operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "新增操作");
                 } else {
                     continue;
                 }
