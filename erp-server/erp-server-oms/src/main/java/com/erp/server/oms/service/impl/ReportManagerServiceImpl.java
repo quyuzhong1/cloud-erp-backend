@@ -154,6 +154,7 @@ public class ReportManagerServiceImpl implements ReportManagerService {
 
     @Override
     public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //sku 创建时间
         List<LocalDateTime> skuCreateTimeList = dto.getParams().getSkuCreateTimeList();
         List<String> skuIdList = Lists.newArrayList();

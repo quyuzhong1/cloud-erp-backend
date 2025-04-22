@@ -16,6 +16,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -24,6 +25,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.PackageStatusEnum;
@@ -207,8 +209,14 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
     }
 
     private void fillList(List<SoB2cDeliveryInterceptDTO.ListDTO> records) {
-        List<String> skuIdList = records.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<String> skuIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> detailEntityList = plmTaskFeign.getByIdList(skuIdList);
+        List<String> shopIdList = records.stream().map(SoB2cDeliveryInterceptDTO.ListDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        Map<String, String> shopNameMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(shopIdList)){
+            List<ShopInfoEntity> shopList = FeignQuery.getByIds(ShopInfoEntity.class, shopIdList);
+            shopNameMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getName));
+        }
         for (SoB2cDeliveryInterceptDTO.ListDTO record : records) {
             //取消状态名称
             record.setCancelStatusName(CancelStatusEnum.getName(record.getCancelStatus()));
@@ -226,6 +234,8 @@ public class SoB2cDeliveryInterceptServiceImpl extends SuperServiceImpl<SoB2cDel
                 record.setSkuNo(productDetailEntity.getSkuNo());
                 record.setProductName(productDetailEntity.getName());
             }
+            //店铺名称
+            record.setShopName(shopNameMap.getOrDefault(record.getShopId(), CharSequenceUtil.EMPTY));
         }
     }
 

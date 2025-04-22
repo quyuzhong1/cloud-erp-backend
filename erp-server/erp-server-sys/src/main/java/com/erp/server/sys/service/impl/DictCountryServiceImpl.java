@@ -482,6 +482,7 @@ public class DictCountryServiceImpl extends SuperServiceImpl<DictCountryMapper, 
 
     @Override
     public PagingVO<DictCountryDTO.PagingViewDTO> exportCountry(PagingDTO<DictCountryDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<DictCountryDTO.PagingViewDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         return new PagingVO<>(page);
     }

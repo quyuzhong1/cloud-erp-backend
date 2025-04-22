@@ -93,6 +93,7 @@ public class ReportOrderDemandServiceImpl extends SuperServiceImpl<ReportOrderDe
 
     @Override
     public PagingVO<ReportOrderDemandDTO.ListDTO> paging(PagingDTO<ReportOrderDemandDTO.PagingParamDTO> pagingDTO) {
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<ReportOrderDemandDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         // 填充名称

@@ -787,6 +787,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public PagingVO<SoReturnDTO.PagingView> exportSoReturn(PagingDTO<SoReturnDTO.PagingParam> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoReturnDTO.PagingView> page = baseMapper.soDeliveryNoticeExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         //获取sku的id集合
         List<String> skuIdList = page.getRecords().stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());

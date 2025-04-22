@@ -1,9 +1,11 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -983,6 +985,10 @@ public class WarehouseLocationController extends BaseController {
      * 分页查询仓位
      */
     @PostMapping("/pagingByParam")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "wl.warehouse_id",
+            menuCode = "wms:warehouseLocation:pagingByParam"
+    )
     @WebAdvanceQuery(handler = WarehouseLocationInfoQueryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationDTO.ViewDto>> pagingByParam(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.SearchParamDTO> dto){
         PagingVO<WarehouseLocationDTO.ViewDto> list = warehouseLocationService.pagingByParam(dto);

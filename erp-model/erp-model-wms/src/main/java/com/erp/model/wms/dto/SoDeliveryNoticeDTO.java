@@ -132,6 +132,14 @@ public class SoDeliveryNoticeDTO {
          */
         private String customerName;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouse_name;
+        /**
          * 发货组织id
          */
         private String warehouseOrgId;

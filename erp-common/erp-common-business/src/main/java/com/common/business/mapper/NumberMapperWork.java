@@ -1,5 +1,6 @@
 package com.common.business.mapper;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.utils.MathUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.mapstruct.Named;

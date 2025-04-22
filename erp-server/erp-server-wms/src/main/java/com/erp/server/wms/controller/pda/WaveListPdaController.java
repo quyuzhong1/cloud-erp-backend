@@ -1,17 +1,18 @@
-package com.erp.server.wms.controller.api;
+package com.erp.server.wms.controller.pda;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.WaveListDetailPdaDTO;
 import com.erp.model.wms.dto.WaveListPdaDTO;
 import com.erp.server.wms.query.WaveListPdaAdvanceQueryHandler;
+import com.erp.server.wms.service.OtherInstockService;
 import com.erp.server.wms.service.WaveListDetailPdaService;
 import com.erp.server.wms.service.WaveListPdaService;
-import com.erp.server.wms.service.WaveListService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -29,14 +30,17 @@ public class WaveListPdaController {
     @Resource
     private WaveListPdaService waveListPdaService;
     @Resource
-    private WaveListService waveListService;
-    @Resource
     private WaveListDetailPdaService waveListDetailPdaService;
 
     /**
      * 波次列表
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sbd.shop_id",
+            warehouseTableField = "sbdd.warehouse_id",
+            menuCode = "wms:waveList:paging"
+    )
     @WebAdvanceQuery(handler = WaveListPdaAdvanceQueryHandler.class)
     public ApiResult<PagingVO<WaveListPdaDTO.ViewDTO>> paging(@RequestBody PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO){
         PagingVO<WaveListPdaDTO.ViewDTO> pagingVO = waveListPdaService.paging(pagingDTO);
@@ -46,9 +50,14 @@ public class WaveListPdaController {
     /**
      * tabList
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<WaveListDTO.TabDTO>> tabList() {
-        List<WaveListDTO.TabDTO> list = waveListPdaService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sbd.shop_id",
+            warehouseTableField = "sbdd.warehouse_id",
+            menuCode = "wms:waveList:paging"
+    )
+    public ApiResult<List<WaveListDTO.TabDTO>> tabList(@RequestBody WaveListDTO.SearchParamDTO paramDTO) {
+        List<WaveListDTO.TabDTO> list = waveListPdaService.tabList(paramDTO);
         return ApiResult.success(list);
     }
 

@@ -51,6 +51,7 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
@@ -142,6 +143,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
@@ -156,23 +159,27 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        List<WarehouseEntity> list = this.list();
-        if (CollectionUtils.isEmpty(list)) {
-            return new ArrayList<>();
+    public List<WarehouseDTO.ListDTO> listApproveWarehouse(Boolean showByAuth) {
+        String permissionSql = null;
+        if (Objects.nonNull(showByAuth) && showByAuth){
+            permissionSql = authDataFeign.getWarehousePermissionSql("id");
         }
-        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-
+        List<WarehouseDTO.ListDTO> resultList = baseMapper.listApproveWarehouse(permissionSql);
+        if (CollectionUtils.isEmpty(resultList)) {
+            return Collections.emptyList();
+        }
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
         // 填充信息
         this.fillListData(resultList, warehouseBindMap);
-
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
     @Override
     public List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        if (Objects.nonNull(dto.getShowByAuth()) && dto.getShowByAuth()){
+            dto.setPermissionSql(authDataFeign.getWarehousePermissionSql("wh.id"));
+        }
         List<WarehouseEntity> list = baseMapper.listWarehouse(dto);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -327,7 +334,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListTreeDTO> listTree() {
-        List<WarehouseDTO.ListDTO> list = listApproveWarehouse();
+        List<WarehouseDTO.ListDTO> list = listApproveWarehouse(Boolean.FALSE);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
@@ -455,6 +462,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         if(params.isFilterSelfAddFlag()){
             params.setWarehouseManageType(WarehouseManageTypeEnum.SELF_BUILD.getCode());
         }
+        if (Objects.nonNull(params.getShowByAuth()) && params.getShowByAuth()){
+            params.setPermissionSql(authDataFeign.getWarehousePermissionSql("wh.id"));
+        }
         IPage<WarehouseDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<WarehouseDTO.ListDTO> records = pagResult.getRecords();
         handleSelect(records);
@@ -580,7 +590,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         List<String> orgIds = resultList.stream().map(WarehouseDTO.ListDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
-
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         for (WarehouseDTO.ListDTO listDTO : resultList) {
             // 组织信息
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
@@ -592,6 +602,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             OmsPlatformEnum platformEnum = this.checkAndGetPlatformInfo(listDTO, warehouseBindMap);
             listDTO.setDictPlatform(null == platformEnum ? "" : platformEnum.getCode());
             listDTO.setPlatformName(null == platformEnum ? "" : platformEnum.getName());
+            //平台类型
+            DictBasicDTO.ListDTO dict = dictList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(listDTO.getTypeId())).findFirst().orElse(null);
+            listDTO.setTypeName(Objects.nonNull(dict) ? dict.getName() : CharSequenceUtil.EMPTY);
         }
     }
 
@@ -1234,12 +1247,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
             typeIdList = dictList.stream().filter(e -> dto.getTypeCodeList().contains(e.getValue())).map(DictBasicDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         }
-        List<WarehouseEntity> list = lambdaQuery()
-                .eq(CharSequenceUtil.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
-                .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()), WarehouseEntity::getOrgId, dto.getOrgIdList())
-                .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()), WarehouseEntity::getId, dto.getWarehouseIdList())
-                .in(CollectionUtils.isNotEmpty(typeIdList), WarehouseEntity::getTypeId, typeIdList)
-                .list();
+        dto.setTypeIdList(typeIdList);
+        if (Objects.nonNull(dto.getShowByAuth()) && dto.getShowByAuth()){
+            dto.setPermissionSql(authDataFeign.getWarehousePermissionSql("id"));
+        }
+        List<WarehouseEntity> list = baseMapper.listByParam(dto);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }

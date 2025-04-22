@@ -46,7 +46,7 @@ public class WarehouseFeignController {
      */
     @GetMapping("/listApproveWarehouse")
     public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        return warehouseService.listApproveWarehouse();
+        return warehouseService.listApproveWarehouse(Boolean.FALSE);
     }
 
     /**

@@ -1781,6 +1781,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
 
     @Override
     public PagingVO<FbaShipmentDTO.ExportDTO> exportFbaShipment(PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<FbaShipmentDTO.ListDTO> page = baseMapper.export(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         fillList(page.getRecords());
         List<FbaShipmentDTO.ExportDTO> exportDTOList = BeanUtil.copyToList(page.getRecords(),FbaShipmentDTO.ExportDTO.class, CopyOptions.create(FbaShipmentDTO.ExportDTO.class,false,"receiveQty"));

@@ -108,7 +108,7 @@
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            #{params.permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY bdsc.${groupName},cost_type
     </select>
@@ -165,7 +165,7 @@
             </foreach>
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            #{params.permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY bdsc.month,cost_type
         ORDER BY bdsc.month
@@ -221,7 +221,7 @@
             </foreach>
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            #{params.permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY name
         ORDER BY monthSales DESC
@@ -276,7 +276,7 @@
             </foreach>
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            #{params.permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY name
         ORDER BY monthSales DESC

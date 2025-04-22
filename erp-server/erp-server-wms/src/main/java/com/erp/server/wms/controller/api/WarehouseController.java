@@ -14,12 +14,16 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,6 +34,7 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 仓库管理
@@ -45,7 +50,8 @@ public class WarehouseController extends BaseController {
 
     @Resource
     private WarehouseService warehouseService;
-
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     /**
      * 仓库分页列表
@@ -56,6 +62,7 @@ public class WarehouseController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "id",
             menuCode = "wms:warehouse:paging",
             tableAlias = "warehouse"
     )
@@ -64,7 +71,31 @@ public class WarehouseController extends BaseController {
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);
     }
-
+    /**
+     * 仓库自定义分页列表
+     * 产品要求不同的高级搜索
+     * @param
+     * @return
+     */
+    @PostMapping("/pagingCustom")
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
+    public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
+        if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())){
+            List<SysUserDTO.ShopDTO> shopUserList = authDataFeign.getShopUserList(dto.getParams().getUserId());
+            //如果用户没有店铺权限，就返回空
+            if (CollectionUtils.isEmpty(shopUserList)){
+                return success(new PagingVO<>());
+            }
+            StringBuilder sqlString = new StringBuilder();
+            String authType = shopUserList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
+            if ("part".equals(authType)){
+                sqlString.append(" AND string_to_array(").append("id").append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+                dto.getParams().setPermissionSql(sqlString.toString());
+            }
+        }
+        PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
+        return success(pagingVO);
+    }
     /**
      * 添加仓库
      *
@@ -317,8 +348,11 @@ public class WarehouseController extends BaseController {
      * 仓库列表
      */
     @GetMapping("/list")
-    public ApiResult<List<WarehouseDTO.ListDTO>> list() {
-        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
+    public ApiResult<List<WarehouseDTO.ListDTO>> list(@RequestParam(required = false) Boolean showByAuth) {
+        if (Objects.isNull(showByAuth)){
+            showByAuth = Boolean.TRUE;
+        }
+        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(showByAuth);
         return success(list);
     }
 
@@ -332,6 +366,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/selectPaging")
     public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody PagingDTO<WarehouseDTO.SelectDTO> dto) {
+        if (Objects.isNull(dto.getParams().getShowByAuth())){
+            dto.getParams().setShowByAuth(Boolean.TRUE);
+        }
         PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
         return success(pagingVO);
     }
@@ -345,6 +382,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/listWarehouseInventoryQty")
     public ApiResult<List<WarehouseDTO.ListInventoryQtyDTO>> listWarehouseInventoryQty(@RequestBody @Valid WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);
+        }
         List<WarehouseDTO.ListInventoryQtyDTO> list = warehouseService.listWarehouseInventoryQty(dto);
         return success(list);
     }
@@ -354,6 +394,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/listWarehouseByParams")
     public ApiResult<List<WarehouseDTO.ListDTO>> listWarehouseByParams(@RequestBody @Valid WarehouseDTO.ListParamDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);
+        }
         List<WarehouseDTO.ListDTO> list = warehouseService.listWarehouseByParams(dto);
         return success(list);
     }

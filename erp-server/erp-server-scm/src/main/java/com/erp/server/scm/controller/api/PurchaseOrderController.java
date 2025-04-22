@@ -77,6 +77,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
@@ -95,6 +96,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/purchaseCodePaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     public ApiResult<PagingVO<PurchaseOrderDTO.SourceCodeDTO>> purchaseCodePaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> dto) {
@@ -111,6 +113,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
@@ -128,6 +131,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     public ApiResult<List<ListStatusCountDTO.PurchaseOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {

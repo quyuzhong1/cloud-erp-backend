@@ -114,6 +114,10 @@
             <if test="params.isMerge != null">
                 and psm.is_merge = #{params.isMerge}
             </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
     </select>
 
