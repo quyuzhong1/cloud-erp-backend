@@ -1588,15 +1588,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             wmsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
             if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            	map = this.syncNewDataToSdyFieldHandler(entity, soOutstockDetailEntity, operate, 
+            	map.put("isQuerySync", Boolean.TRUE);
+                map.put("detailId", soOutstockDetailEntity.getId());
+                map.put("operate", operate);
+            }else {
+                map = this.syncNewDataToSdyFieldHandler(entity, soOutstockDetailEntity, operate, 
             			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
             			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
             			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
             			new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-            }else {
-            	map.put("isQuerySync", Boolean.TRUE);
-                map.put("detailId", soOutstockDetailEntity.getId());
-                map.put("operate", operate);
             }
             wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             wmsPushMsgService.save(wmsPushMsgEntity);

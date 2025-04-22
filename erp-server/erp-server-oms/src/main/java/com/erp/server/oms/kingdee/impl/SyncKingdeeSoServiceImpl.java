@@ -875,7 +875,7 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
             map.put("detailId", soDetailEntity.getId());
             map.put("operate", operate);
             omsPushMsgEntity.setPushData(JSON.toJSONString(map));
-            omsPushMsgService.save(omsPushMsgEntity);
+//            omsPushMsgService.save(omsPushMsgEntity);
         }
     }
 
