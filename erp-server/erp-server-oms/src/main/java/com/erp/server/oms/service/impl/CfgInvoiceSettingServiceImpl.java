@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -128,7 +129,12 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         AddCompanyDTO addCompanyDTO = invoiceSettingConverter.invoiceSettinToAddCompanyDTOTo(entity);
         //调用TF
         String token = tfFiscalService.createCompany(addCompanyDTO);
-        this.save(entity.setToken(token));
+        //更新token
+        this.update(
+                new LambdaUpdateWrapper<CfgInvoiceSettingEntity>()
+                        .eq(CfgInvoiceSettingEntity::getId, entity.getId())
+                        .set(CfgInvoiceSettingEntity::getToken, token)
+        );
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置", entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), entity.getId(), "新增操作");
