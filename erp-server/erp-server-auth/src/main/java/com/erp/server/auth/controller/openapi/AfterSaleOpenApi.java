@@ -1,5 +1,6 @@
 package com.erp.server.auth.controller.openapi;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -79,6 +80,10 @@ public class AfterSaleOpenApi {
      */
     @OpenApi("add")
     public ApiResult<BaseResultDTO.AddDTO> add( @Valid AfterSaleDTO.AddDTO dto){
+        if(CollUtil.isEmpty(dto.getDetailList())){
+            return  ApiResult.error(500, "寄修申请单明细不能为空");
+        }
+        dto.setType("wx");
         return afterSaleFeign.add(dto);
     }
 

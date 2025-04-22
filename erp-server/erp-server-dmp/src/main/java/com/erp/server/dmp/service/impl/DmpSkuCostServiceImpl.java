@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -19,6 +20,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -189,6 +191,8 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         }
         //根据sku编码查询bom数据
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuNos(skuNoList);
+        //仅销售套装bom查子件
+        bomChildrenSkuList = CollUtil.isEmpty(bomChildrenSkuList) ? Collections.emptyList() : bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(BomTypeEnum.COMBINATION.getType(),obj.getType())).collect(Collectors.toList());
 
         List<String> allSkuIdList = new ArrayList<>(skuNoList);
         if (CollUtil.isNotEmpty(bomChildrenSkuList)) {

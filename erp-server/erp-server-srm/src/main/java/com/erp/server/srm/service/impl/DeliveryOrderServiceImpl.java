@@ -121,6 +121,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<DeliveryOrderDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
         this.fillData(pageData.getRecords());
@@ -168,9 +169,9 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
     }
 
     @Override
-    public List<DeliveryOrderDTO.TabListDTO> tabList(List<String> supplierIdList) {
+    public List<DeliveryOrderDTO.TabListDTO> tabList(DeliveryOrderDTO.ParamDTO paramDTO) {
         List<DeliveryOrderDTO.TabListDTO> result = new ArrayList<>();
-        List<DeliveryOrderDTO.StatusListDTO> statusListDTOList =  this.baseMapper.tabList(supplierIdList);
+        List<DeliveryOrderDTO.StatusListDTO> statusListDTOList =  this.baseMapper.tabList(paramDTO);
         //ALL
         DeliveryOrderDTO.TabListDTO allDto = DeliveryOrderDTO.TabListDTO.builder()
                 .searchType(DeliveryOrderEnum.SearchTypeEnum.ALL.getCode())
@@ -330,48 +331,6 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
         }
 
         return true;
-    }
-
-    @Override
-    public List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto) {
-        List<DeliveryOrderExportExcelDTO> list = this.baseMapper.getExportList(dto);
-        Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(list.stream().map(DeliveryOrderExportExcelDTO::getSupplierId).distinct().collect(Collectors.toList()));
-        List<String> purchaseDetailIds = list.stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderExportExcelDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());
-        List<QcInfoDTO.QcReceiveResultDTO> qcReceiveResultDTOList = wmsTaskFeign.getQcReceiveResult(purchaseDetailIds);
-        WarehouseReceiveDTO.SourceParamDTO sourceParamDTO = new WarehouseReceiveDTO.SourceParamDTO();
-        sourceParamDTO.setSourceIds(list.stream().map(DeliveryOrderExportExcelDTO::getId).distinct().collect(Collectors.toList()));
-        sourceParamDTO.setSourceType(PoReceiveSourceTypeEnum.DELIVERY_ORDER.getCode());
-        List<WarehouseReceiveEntity> warehouseReceiveEntityList = wmsTaskFeign.listReceiveBySourceTypeAndIds(sourceParamDTO);
-
-        List<String> purchaseIds = list.stream().map(DeliveryOrderExportExcelDTO::getSourceId).distinct().collect(Collectors.toList());
-        //查询采购签收信息
-        List<WarehouseReceiveDTO.PurchaseOrderDetailDTO> receiveList = wmsTaskFeign.getReceiveListByPurchaseOrderIdsAll(purchaseIds);
-
-        list.forEach(v->{
-            Integer receiveQty = 0;
-            Integer giftReceiveQty = 0;
-            //收货数量
-            if (CollectionUtils.isNotEmpty(receiveList)) {
-                receiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(v.getDetailId()) )
-                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                giftReceiveQty = receiveList.stream().filter(e -> e.getSourceDetailId().equals(v.getDetailId()) )
-                        .map(WarehouseReceiveDTO.PurchaseOrderDetailDTO::getGiftReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            }
-            v.setReceiveQty(receiveQty);
-            v.setGiftReceiveQty(giftReceiveQty);
-
-            v.setReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getReceiptStatus()));
-            v.setDetailReceiptStatus(EnumMessage.getNameByCode(DeliveryOrderEnum.ReceiptStatusEnum.class,v.getDetailReceiptStatus()));
-            v.setPrintStatus(v.getIsPrint()?"已打印":"未打印");
-            v.setSupplierName(supplierSimpleDTOMap.containsKey(v.getSupplierId())?supplierSimpleDTOMap.get(v.getSupplierId()).getName():"");
-            WarehouseReceiveEntity warehouseReceiveEntity = warehouseReceiveEntityList.stream().filter(t->t.getSourceId().equals(v.getId())).findFirst().orElse(new WarehouseReceiveEntity());
-            v.setReceiveUserName(warehouseReceiveEntity.getReceiveUserName());
-            QcInfoDTO.QcReceiveResultDTO qcReceiveResultDTO = qcReceiveResultDTOList.stream().filter(t->t.getPurchaseDetailId().equals(v.getPurchaseDetailId()) && t.getReceiveCode().equals(v.getReceiveCode())).findFirst().orElse(null);
-            if(Objects.nonNull(qcReceiveResultDTO)){
-                v.setQcGoodQty(qcReceiveResultDTO.getQcGoodQty());
-            }
-        });
-        return list;
     }
 
     @Override
@@ -855,6 +814,7 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
 
     @Override
     public PagingVO<DeliveryOrderExportExcelDTO> exportSupplierDeliveryOrder(PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<DeliveryOrderExportExcelDTO> page = this.baseMapper.getExportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         Map<String, SupplierDTO.SupplierSimpleDTO> supplierSimpleDTOMap = supplierFeign.getSupplierSimpleInfo(page.getRecords().stream().map(DeliveryOrderExportExcelDTO::getSupplierId).distinct().collect(Collectors.toList()));
         List<String> purchaseDetailIds = page.getRecords().stream().filter(v->StringUtils.isNotBlank(v.getReceiveCode())).map(DeliveryOrderExportExcelDTO::getPurchaseDetailId).distinct().collect(Collectors.toList());

@@ -143,7 +143,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @author Will
      * @date: 2023/9/7 16:31
      */
-    List<ShopDTO.ListTreeDTO> listTree();
+    List<ShopDTO.ListTreeDTO> listTree(Boolean showByAuth);
 
     /**
      * 检查店铺是否授权

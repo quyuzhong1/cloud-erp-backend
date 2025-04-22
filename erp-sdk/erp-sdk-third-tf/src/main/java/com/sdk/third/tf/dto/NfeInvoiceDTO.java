@@ -58,6 +58,12 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("itens")
         private List<NfeItensDTO> itens;
+
+        /**
+         * 付款信息
+         */
+        @Alias("payment")
+        private List<NfePayMentDTO> payment;
         /**
          * 总金额，unit_price*销售数量，多行明细汇总；unit_price计算见明细
          */
@@ -72,6 +78,38 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("final_total")
         private BigDecimal finalTotal;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class NfePayMentDTO {
+        /**
+         * 金额
+         */
+        @Alias("amount")
+        private BigDecimal amount;
+        /**
+         * 付款方式
+         */
+        @Alias("method")
+        private String method;
+        /**
+         * 卡类型
+         */
+        @Alias("card_type")
+        private String cardType;
+
+        /**
+         * 时间（当天）
+         */
+        @Alias("vencimento")
+        private String vencimento;
+
+        /**
+         * 记录
+         */
+        @Alias("note")
+        private String note;
     }
 
     @Data
@@ -137,6 +175,12 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("ie_rg")
         private String ieRg;
+
+        /**
+         * 州（省份）二字码缩写
+         */
+        @Alias("uf")
+        private String uf;
     }
 
     @Data
@@ -177,6 +221,12 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("unit_price")
         private BigDecimal unitPrice;
+
+        /**
+         * 平台订单号
+         */
+        @Alias("co_ped_cliente_api")
+        private String coPedClienteApi;
     }
 
     @Data
@@ -257,5 +307,67 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("email_dev")
         private String emailDev;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class NfeSuccessResultDTO {
+        /**
+         * 是否成功
+         */
+        @Alias("successo")
+        private Boolean successo;
+        /**
+         * recibo
+         */
+        @Alias("recibo")
+        private String recibo;
+        /**
+         * 状态,200成功
+         */
+        @Alias("status")
+        private Integer status;
+        /**
+         * id
+         */
+        @Alias("id")
+        private String id;
+
+        /**
+         * link_nota,pdf文件
+         */
+        @Alias("link_nota")
+        private String link_nota;
+        /**
+         * link_xml,xml文件
+         */
+        @Alias("link_xml")
+        private String link_xml;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class NfeCceResultDTO {
+        /**
+         * 是否错误
+         */
+        @Alias("erro")
+        private Boolean erro;
+        /**
+         * 状态
+         */
+        @Alias("status")
+        private Integer status;
+        /**
+         * xml第三方本地路径
+         */
+        @Alias("xml_path")
+        private String xmlPath;
+        /**
+         * xml可下载路径
+         */
+        @Alias("url_xml_upload")
+        private String urlXmlUpload;
     }
 }

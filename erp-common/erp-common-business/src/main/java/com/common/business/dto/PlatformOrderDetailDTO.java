@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.enums.BillApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -115,7 +116,7 @@ public class PlatformOrderDetailDTO {
      */
     private String platformPackageId;
     /**
-     *来源平台
+     * 来源平台
      */
     private String sourcePlatform = "thirdPlatform";
     /**
@@ -133,4 +134,9 @@ public class PlatformOrderDetailDTO {
      * 销售费用
      */
     private BigDecimal saleFee;
+
+    /**
+     * 变体属性
+     */
+    private String variantProperty;
 }

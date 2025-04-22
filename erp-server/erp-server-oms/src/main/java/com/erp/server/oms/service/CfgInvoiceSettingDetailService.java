@@ -19,7 +19,7 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
 
     List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
 
-    BaseResultDTO.AddDTO addOrUpdate(List<CfgInvoiceSettingDetailDTO.AddDTO> dtoList);
+    BaseResultDTO.AddDTO addOrUpdate(List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> dtoList);
 
     List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop();
     /**
@@ -41,4 +41,16 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
      * @return CfgInvoiceSettingDetailEntity
      */
     CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(String dictPlatform, String shopId);
+
+    List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO> listDictSelect(CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto);
+
+      /**
+        * @description: 级联删除绑定店铺明细
+        * @author: hcg
+        * @date: 2025/4/18 9:41
+        * @param ids
+        * @param aTrue
+        * @return: void
+        **/
+    void delateByMainIds(List<String> ids, Boolean aTrue);
 }

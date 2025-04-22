@@ -57,6 +57,7 @@ public class SoReturnController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )
@@ -76,6 +77,7 @@ public class SoReturnController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )

@@ -51,6 +51,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "ti.in_warehouse_id,ti.out_warehouse_id",
             menuCode = "wms:pdaTransferInfo:paging",
             tableAlias = "ti"
     )
@@ -69,6 +70,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "ti.in_warehouse_id,ti.out_warehouse_id",
             menuCode = "wms:pdaTransferInfo:paging",
             tableAlias = "ti"
     )

@@ -97,6 +97,22 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
     @Resource
     @Qualifier("virtualFlowRefactorPool")
+    private ExecutorService b2bVirtualFlowRefactorPool;
+
+    @Resource
+    @Qualifier("virtualFlowRefactorPool")
+    private ExecutorService b2cVirtualFlowRefactorPool;
+
+    @Resource
+    @Qualifier("virtualFlowRefactorPool")
+    private ExecutorService firstMileVirtualFlowRefactorPool;
+
+    @Resource
+    @Qualifier("virtualFlowRefactorPool")
+    private ExecutorService allocationVirtualFlowRefactorPool;
+
+    @Resource
+    @Qualifier("virtualFlowRefactorPool")
     private ExecutorService virtualFlowRefactorPool;
 
     @Override
@@ -112,7 +128,6 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
 
         // 等待所有任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        virtualFlowRefactorPool.shutdown();
         log.info("VirtualFlowRefactorServiceImpl rebuildFlow end");
     }
 
@@ -145,32 +160,48 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         if (CollUtil.isEmpty(list)) {
             return;
         }
-        list.forEach(allocationEntity -> {
-            //查找所有明细
-            List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.listByMainIdList(Collections.singletonList(allocationEntity.getId()));
-            if (CollectionUtils.isNotEmpty(detailList)) {
-                String type = allocationEntity.getType();
-                switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
-                    case ALLOCATION:
-                        VirtualInventoryStockDTO.StockParamDTO allocationDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.IN_USABLE, detailList, allocationEntity);
-                        allocationDto.setIsSplitBom(Boolean.FALSE);
-                        getSelfBean().approve(allocationDto);
-                        break;
-                    case TRANSFER:
-                        VirtualInventoryStockDTO.TransferParamDTO dto = getTransferDTO(allocationEntity, detailList);
-                        getSelfBean().approveTransfer(dto);
-                        break;
-                    case CANCEL:
-                        VirtualInventoryStockDTO.StockParamDTO cancelDto = getCancelDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
-                        cancelDto.setIsSplitBom(Boolean.FALSE);
-                        getSelfBean().approve(cancelDto);
-                        break;
-                    default:
-                        throw new ServiceException(ApiError.ERROR_400);
-                }
-            }
-        });
+        // 使用自定义线程池处理订单类型
+        List<CompletableFuture<Void>> futures = list.stream()
+                .map(allocationEntity -> CompletableFuture.runAsync(() -> handleAllocation(allocationEntity)
+                , allocationVirtualFlowRefactorPool))
+                .collect(Collectors.toList());
+        // 等待所有任务完成
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
+
+    /**
+     *
+     * @author will
+     * @date 2025/4/21 14:57
+     * @param allocationEntity
+     * @return void
+     */
+    private void handleAllocation (VirtualWarehouseAllocationEntity allocationEntity) {
+        //查找所有明细
+        List<VirtualWarehouseAllocationDetailEntity> detailList = virtualWarehouseAllocationDetailService.listByMainIdList(Collections.singletonList(allocationEntity.getId()));
+        if (CollectionUtils.isNotEmpty(detailList)) {
+            String type = allocationEntity.getType();
+            switch (VirtualWarehouseAllocationTypeEnum.getEnum(type)) {
+                case ALLOCATION:
+                    VirtualInventoryStockDTO.StockParamDTO allocationDto = getAllocationDto(VirtualInventoryBusinessTypeEnum.IN_USABLE, detailList, allocationEntity);
+                    allocationDto.setIsSplitBom(Boolean.FALSE);
+                    getSelfBean().approve(allocationDto);
+                    break;
+                case TRANSFER:
+                    VirtualInventoryStockDTO.TransferParamDTO dto = getTransferDTO(allocationEntity, detailList);
+                    getSelfBean().approveTransfer(dto);
+                    break;
+                case CANCEL:
+                    VirtualInventoryStockDTO.StockParamDTO cancelDto = getCancelDto(VirtualInventoryBusinessTypeEnum.OUT_USABLE, detailList, allocationEntity);
+                    cancelDto.setIsSplitBom(Boolean.FALSE);
+                    getSelfBean().approve(cancelDto);
+                    break;
+                default:
+                    throw new ServiceException(ApiError.ERROR_400);
+            }
+        }
+    }
+
     /**
      * 新增分货
      * @author will
@@ -280,9 +311,9 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
        }
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
-        map.forEach((key, value) ->  {
-            String sourceType = value.get(0).getSourceType().getCode();
-            List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
+        List<CompletableFuture<Void>> futures = map.entrySet().stream().map(entry -> CompletableFuture.runAsync(() -> {
+            String sourceType = entry.getValue().get(0).getSourceType().getCode();
+            List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(entry.getValue(), VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(params);
             //b2b需冻结
@@ -307,7 +338,9 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             }
             //更新库存
             getSelfBean().approve(dto);
-        });
+        }, b2bVirtualFlowRefactorPool)).collect(Collectors.toList());
+        // 等待所有内层任务完成
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     /**
@@ -321,7 +354,8 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             return;
         }
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId()).concat(obj.getBusinessType())));
-        map.forEach((key, value) -> {
+        List<CompletableFuture<Void>> futures = map.entrySet().stream().map(entry -> CompletableFuture.runAsync(() -> {
+            List<VirtualFlowRefactorDTO.OutInStockDTO> value = entry.getValue();
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -348,7 +382,9 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             }
             //更新库存
             getSelfBean().approve(dto);
-        });
+        }, b2cVirtualFlowRefactorPool)).collect(Collectors.toList());
+        // 等待所有内层任务完成
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     /**
@@ -376,7 +412,8 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }).collect(Collectors.toList());
         Map<String, List<VirtualFlowRefactorDTO.OutInStockDTO>> map = CollUtil.isEmpty(singleList) ? new HashMap<>() : singleList.stream().collect(Collectors.groupingBy(obj -> obj.getSourceType().getCode().concat(obj.getSourceId())));
 
-        map.forEach((key, value) ->  {
+        List<CompletableFuture<Void>> futures = map.entrySet().stream().map(entry -> CompletableFuture.runAsync(() -> {
+            List<VirtualFlowRefactorDTO.OutInStockDTO> value = entry.getValue();
             String sourceType = value.get(0).getSourceType().getCode();
             List<VirtualInventoryStockDTO.OutInStockDTO> params = BeanUtil.copyToList(value, VirtualInventoryStockDTO.OutInStockDTO.class);
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
@@ -395,7 +432,9 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
             }
             //更新库存
             getSelfBean().approve(dto);
-        });
+        }, firstMileVirtualFlowRefactorPool)).collect(Collectors.toList());
+        // 等待所有内层任务完成
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
     }
 
     /**

@@ -56,6 +56,12 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "warehouse_keeper_id",
+            warehouseTableField = "ti.out_warehouse_id,ti.in_warehouse_id",
+            menuCode = "wms:transfer:in:paging",
+            tableAlias = "ti"
+    )
     public ApiResult<List<TransferInDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<TransferInDTO.TabListDTO> tabList = transferInService.tabList(dto);
         return success(tabList);
@@ -70,6 +76,7 @@ public class TransferInController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "ti.out_warehouse_id,ti.in_warehouse_id",
             menuCode = "wms:transfer:in:paging",
             tableAlias = "ti"
     )

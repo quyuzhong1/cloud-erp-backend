@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
@@ -462,6 +463,8 @@ public class AfterSaleDTO implements Serializable {
 
         @Size(max = 11,message = "手机号码最大长度不能超过11位")
         private String phoneNumber;
+        //用户类型 wx , selfAdd
+        private String type;
 
         /**
          * 第三方平台类型
@@ -511,12 +514,14 @@ public class AfterSaleDTO implements Serializable {
          * 货值
          */
         @Digits(integer = 14, fraction = 2, message = "货值整数位不能超过14位，小数位不能超过2位")
+        @Min(value = 0, message = "货值金额不能小于0")
         private BigDecimal totalPrice;
 
         /**
          * 维修金额
          */
         @Digits(integer = 14, fraction = 2, message = "维修金额整数位不能超过14位，小数位不能超过2位")
+        @Min(value = 0, message = "维修金额不能小于0")
         private BigDecimal totalRepairAmount;
 
         /**
@@ -528,7 +533,7 @@ public class AfterSaleDTO implements Serializable {
         /**
          * 小程序端附件
          */
-        private List<AttachmentDTO> attachmentList;
+        private List<String> attachmentList;
         /**
          * web附件
          */
@@ -550,7 +555,7 @@ public class AfterSaleDTO implements Serializable {
          * 明细
          */
         @NotEmpty(message = "售后明细不能为空")
-        private List<AfterSaleDetailEntity> detailList;
+        private List<AfterSaleDetailDTO.@Valid UpdateDTO> detailList;
     }
 
     @Data

@@ -133,7 +133,7 @@ public class InvoiceInfoController extends BaseController {
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(id, id, e.getMessage());
+                resultDTO = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
@@ -294,17 +294,17 @@ public class InvoiceInfoController extends BaseController {
      * @return ApiResult<BatchResultDTO>
      */
     @PostMapping("/notNeedInvoice")
-    public ApiResult<List<BatchResultDTO>> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.SoRemarkDTO dto) {
+    public ApiResult<List<BatchResultDTO>> notNeedInvoice(@RequestBody @Validated InvoiceInfoDTO.NoNeedInvoiceDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getSoIdList().size());
         for (String id : dto.getSoIdList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = invoiceInfoService.notNeedInvoice(id,dto.getRemark());
+                resultDTO = invoiceInfoService.notNeedInvoice(id,dto.getRemark(),dto.getInvoiceType());
             }catch (Exception e){
                 log.error("无需开票失败",e);
                 SoB2cEntity soB2cEntity = soB2cService.getById(id);
                 if (ObjUtil.isEmpty(soB2cEntity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "销售订单不存在, 无需开票失败");
+                    resultDTO = BatchResultDTO.fail(id, soB2cEntity.getCode(), "销售订单不存在, 无需开票失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }

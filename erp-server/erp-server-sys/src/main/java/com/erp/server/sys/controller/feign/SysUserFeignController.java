@@ -63,6 +63,11 @@ public class SysUserFeignController extends BaseController {
     private SysRoleMenuService sysRoleMenuService;
 
     @Resource
+    private AuthUserShopService authUserShopService;
+    @Resource
+    private AuthUserWarehouseService authUserWarehouseService;
+
+    @Resource
     private SysUserWechatService wechatService;
 
     @Resource

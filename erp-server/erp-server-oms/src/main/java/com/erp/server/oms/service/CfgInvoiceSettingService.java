@@ -30,5 +30,10 @@ public interface CfgInvoiceSettingService extends SuperService<CfgInvoiceSetting
 
     Boolean updateStatus(CfgInvoiceSettingDTO.UpdateStatusDTO dto);
 
+    /**
+     * @description: 获取发票设置公司名
+     * @author: hcg
+     * @date: 2025/4/17 13:22
+     **/
     List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName();
 }

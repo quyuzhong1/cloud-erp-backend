@@ -11,10 +11,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -48,7 +46,7 @@ public class CfgInvoiceSettingDTO implements Serializable {
          * 法人国家经济号（必填）
          */
         @NotBlank(message = "法人国家经济号不能为空")
-        @Size(max = 100, message = "法人国家经济号最大长度不能超过100位")
+        @Size(max = 50, message = "法人国家经济号最大长度不能超过50位")
         private String leiCode;
 
         /**
@@ -89,7 +87,7 @@ public class CfgInvoiceSettingDTO implements Serializable {
          * 邮编（必填）
          */
         @NotBlank(message = "邮编不能为空")
-        @Size(max = 50, message = "邮编最大长度不能超过50位")
+        @Size(max = 20, message = "邮编最大长度不能超过20位")
         private String postCode;
 
         /**
@@ -141,8 +139,6 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * A1证书链接（必填）
          */
-        @NotBlank(message = "A1证书链接不能为空")
-        @Size(max = 255, message = "证书链接最大长度不能超过255位")
         private String certificateUrl;
 
         /**
@@ -151,6 +147,23 @@ public class CfgInvoiceSettingDTO implements Serializable {
         @NotBlank(message = "证书密码不能为空")
         @Size(max = 100, message = "证书密码最大长度不能超过100位")
         private String certificatePassword;
+
+        /**
+         * 附件地址
+         */
+        @NotEmpty(message = "证书地址列表不能为空")
+        @Size(max = 1, message = "最多只能上传1个附件地址")
+        @Valid
+        private List<String> attachmentUrlList;
+
+        /**
+         * 附件名
+         */
+        @NotEmpty(message = "证书名列表不能为空")
+        @Size(max = 1, message = "最多只能上传1个附件名")
+        @Valid
+        private List<String> attachmentNameList;
+
     }
 
     /**

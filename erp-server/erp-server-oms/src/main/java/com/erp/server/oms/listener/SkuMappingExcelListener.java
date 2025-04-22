@@ -254,14 +254,14 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
         String skuNo = skuMappingImportExcelDTO.getProductSkuNo();
 
-        // 校验不允许重复历史
+     /*   // 校验不允许重复历史
         long historyCount = listDto.stream().filter(e -> e.getProductSkuNo().equals(skuNo)).count();
         if (0 < historyCount){
             errorMsgList.add( CharSequenceUtil.format("当前映射关系在【{}】已存在过，无法修改", skuNo));
             skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(skuMappingImportExcelDTO);
             return;
-        }
+        }*/
 
         // 设置当前listingId
         listingId = mappingDto.getListingId();

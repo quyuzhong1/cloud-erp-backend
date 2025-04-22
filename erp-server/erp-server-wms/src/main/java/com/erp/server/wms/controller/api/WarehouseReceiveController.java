@@ -57,6 +57,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "receive_user_id",
+            warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
@@ -72,6 +73,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "receive_user_id",
+            warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
@@ -89,6 +91,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "receive_user_id",
+            warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )

@@ -1,10 +1,12 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
@@ -45,6 +47,12 @@ public class PickingListsController extends BaseController {
      * @param dto 分页查询条件
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "pl.warehouse_id",
+            menuCode = "wms:picking-lists:paging",
+            tableAlias = "pl"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<PickingListsDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<PickingListsDTO.PagingParam> dto) {
         PagingVO<PickingListsDTO.PagingView> pagingVO = pickingListsService.paging(dto);

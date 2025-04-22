@@ -120,7 +120,7 @@ public class FeiShuMsgJob {
         if (CollectionUtil.isNotEmpty(warnReportByChannel)){
             WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
             warnMsgInfo.setBizName("预警消息");
-            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
+            warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
             warnMsgInfo.setTitle("物流轨迹更新预警汇总");
             warnMsgInfo.setTableName("logistics_channel/logistics_bill_detail");
             warnMsgInfo.setTableId("");

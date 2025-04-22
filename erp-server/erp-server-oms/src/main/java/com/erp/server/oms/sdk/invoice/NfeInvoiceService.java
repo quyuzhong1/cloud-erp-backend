@@ -1,8 +1,10 @@
 package com.erp.server.oms.sdk.invoice;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.PlatformDictEnum;
@@ -10,13 +12,16 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.server.oms.convert.NfeInvoiceConverter;
 import com.erp.server.oms.service.*;
 import com.sdk.oms.mercadolocal.dto.MercadoInvoiceDTO;
@@ -30,12 +35,17 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -63,6 +73,7 @@ public class NfeInvoiceService {
     private InvoiceTaxService invoiceTaxService;
 
     @Resource
+    @Lazy
     private InvoiceInfoService invoiceInfoService;
 
     @Resource
@@ -79,52 +90,86 @@ public class NfeInvoiceService {
 
     @Resource
     private SoB2cFinanceService soB2cFinanceService;
+    @Autowired
+    private SoB2cService soB2cService;
 
-    @Async
     @Transactional(rollbackFor = Exception.class)
     public void createInvoice(SoB2cEntity soB2cEntity) {
         String invoiceStatus = InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode();
         String remark = "";
-        String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
         Object obj = null;
+        String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
+        NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
         try {
-            NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
             createDTO.setEmailDev("gray@ulanzi.cn");
             //地址信息
             NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = getNfeClienteDTO(soB2cEntity);
             createDTO.setCliente(nfeClienteDTO);
+            log.warn("地址信息已查询完成！");
             //税务信息
             CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
             getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO);
-
-            //查询运费
-            getShipCost(soB2cEntity,invoiceSettingDetail);
-            obj = tfFiscalService.createInvoice(createDTO);
+            log.warn("税务信息已查询完成！");
+            //token
+            createDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
+            //付款信息
+            getPayMentDTO(soB2cEntity,createDTO);
+            log.warn("付款信息已查询完成！");
+             obj = tfFiscalService.createInvoice(createDTO);
+            log.info("创建发票接口调用成功！");
         }catch (Exception e){
-            invoiceStatus = InvoiceInfoStatusEnum.INVOICE_FAILED.getCode();
-            remark = e.getMessage();
+            log.error("创建发票失败,返回信息:{}", e.getMessage());
+            log.error("请求参数-body:{}", JSONUtil.toJsonStr(createDTO));
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,e.getMessage());
         }
-        if (InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode().equals(invoiceStatus)) {
-            //上传xml、pdf
-            uploadFile(obj);
-            //美客多自动上传发票、速卖通无需上传
-            if (CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode())) {
-                uploadStatus = SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode();
-            }else {
-                try {
-                    uploadNfeInvoice(soB2cEntity);
-                } catch (Exception e) {
-                    uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode();
-                    remark = e.getMessage();
-                }
-            }
+        NfeInvoiceDTO.NfeSuccessResultDTO resultDTO = null;
+        try {
+            //解析obj
+            JSONArray jsonArray = JSONUtil.parseArray(obj);
+            resultDTO = BeanUtil.toBean(jsonArray.get(0), NfeInvoiceDTO.NfeSuccessResultDTO.class);
+        } catch (Exception e) {
+            log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
+           throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
+        }
+        if (!resultDTO.getSuccesso() || 200 !=  resultDTO.getStatus()) {
+            log.error("创建发票失败,返回错误信息,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,"未知");
         }
         //更新开票状态
         InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
         invoiceInfoEntity.setStatus(invoiceStatus);
         invoiceInfoEntity.setUploadStatus(uploadStatus);
         invoiceInfoEntity.setRemark(remark);
+        invoiceInfoEntity.setQueryId(resultDTO.getId());
+        invoiceInfoEntity.setPlatformInvoiceNo(resultDTO.getRecibo());
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+
+        //上传xml、pdf
+        uploadFile(invoiceInfoEntity.getId(),resultDTO.getLink_xml(),resultDTO.getLink_nota());
+
+        //是否自动上传发票
+        if (CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
+            invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
+        }
+    }
+
+    /**
+     * 付款信息
+     * @author will
+     * @date 2025/4/18 15:37
+     * @param soB2cEntity
+     * @param createDTO
+     * @return void
+     */
+    private void getPayMentDTO(SoB2cEntity soB2cEntity,NfeInvoiceDTO.NfeCreateDTO createDTO) {
+        NfeInvoiceDTO.NfePayMentDTO nfePayMentDTO = new NfeInvoiceDTO.NfePayMentDTO();
+        nfePayMentDTO.setAmount(soB2cEntity.getPayAmount());
+        //默认现金
+        nfePayMentDTO.setMethod("cash");
+        nfePayMentDTO.setCardType(nfePayMentDTO.getMethod());
+        nfePayMentDTO.setVencimento(LocalDate.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy")));
+        nfePayMentDTO.setNote("");
+        createDTO.setPayment(Collections.singletonList(nfePayMentDTO));
     }
 
     /**
@@ -134,6 +179,7 @@ public class NfeInvoiceService {
      * @param soB2cEntity
      * @return void
      */
+    @Async
     public void uploadNfeInvoice (SoB2cEntity soB2cEntity) {
         //上传到平台
         MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
@@ -158,52 +204,6 @@ public class NfeInvoiceService {
         }
         //NF-e发票
         mercadoLocalSdkClientService.uploadInvoice(mercadoInvoiceDTO);
-    }
-
-    /**
-     * 查询生成发票结果
-     * @author will
-     * @date 2025/4/14 16:24
-     * @param soB2cEntity
-     * @param queryId
-     * @return void
-     */
-    public void getNfeInvoiceResult(SoB2cEntity soB2cEntity,String queryId) {
-        NfeInvoiceDTO.NfeListParamDTO nfeListParamDTO = new NfeInvoiceDTO.NfeListParamDTO();
-        nfeListParamDTO.setTransactionId(queryId);
-        String invoiceStatus = InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode();
-        String remark = "";
-        String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
-        Object nfeInvoiceResult = null;
-        try {
-              nfeInvoiceResult = tfFiscalService.getNfeInvoiceResult(nfeListParamDTO);
-        } catch (Exception e) {
-           log.error("查询发票数据失败，原因：{}",e.getMessage());
-            invoiceStatus = InvoiceInfoStatusEnum.INVOICE_FAILED.getCode();
-            remark = e.getMessage();
-        }
-        if (InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode().equals(invoiceStatus)) {
-            //上传xml、pdf
-            uploadFile(nfeInvoiceResult);
-
-            //美客多自动上传发票、速卖通无需上传
-            if (CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode())) {
-                uploadStatus = SoB2cNfeStatusEnum.NOT_NEED_UPLOAD.getCode();
-            }else {
-                try {
-                    uploadNfeInvoice(soB2cEntity);
-                } catch (Exception e) {
-                    uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode();
-                    remark = e.getMessage();
-                }
-            }
-        }
-        //更新开票状态
-        InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
-        invoiceInfoEntity.setStatus(invoiceStatus);
-        invoiceInfoEntity.setUploadStatus(uploadStatus);
-        invoiceInfoEntity.setRemark(remark);
-        invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
     }
 
 
@@ -245,6 +245,18 @@ public class NfeInvoiceService {
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
+
+        //州（省份）二字码缩写
+        List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
+                .eq(DictCityEntity::getCountryCode, "BR")
+                .eq(DictCityEntity::getType,"province")
+                .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "')")
+                .list();
+        if (CollUtil.isEmpty(dictCityList)) {
+            throw new ServiceException("开票省份/州二字码未找到");
+        }
+        nfeClienteDTO.setUf(dictCityList.get(0).getCode());
+        nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
         return nfeClienteDTO;
     }
 
@@ -257,6 +269,12 @@ public class NfeInvoiceService {
      */
     private void getNfeItensDTO(SoB2cEntity soB2cEntity,CfgInvoiceSettingDetailEntity invoiceSettingDetail,NfeInvoiceDTO.NfeCreateDTO createDTO) {
         List<NfeInvoiceDTO.NfeItensDTO> itens = new ArrayList<>();
+
+        //财务信息
+        SoB2cFinanceEntity financeEntity = soB2cFinanceService.getByMainId(soB2cEntity.getId());
+        if (ObjUtil.isEmpty(financeEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_FINANCE_NOT_EXIST);
+        }
 
         List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
         if (CollUtil.isEmpty(detailList)) {
@@ -296,6 +314,8 @@ public class NfeInvoiceService {
             nfeItensDTO.setCfopExterno(invoiceTaxEntity.getDiffStateTaxCode());
             nfeItensDTO.setCfopInterno(invoiceTaxEntity.getSameStateTaxCode());
             nfeItensDTO.setQuantity(detailEntity.getQty());
+            nfeItensDTO.setCoPedClienteApi(detailEntity.getPlatformSkuNo());
+
             //产品金额
             nfeItensDTO.setUnitPrice(getUnitPrice(detailEntity,invoiceSettingDetail));
             itens.add(nfeItensDTO);
@@ -303,7 +323,10 @@ public class NfeInvoiceService {
         }
         createDTO.setItens(itens);
         createDTO.setValorTotal(valorTotal);
-        createDTO.setFinalTotal(valorTotal);
+
+        //查询运费
+        BigDecimal shipCost = getShipCost(soB2cEntity, invoiceSettingDetail);
+        createDTO.setFinalTotal(MathUtil.subtract(valorTotal,shipCost));
     }
 
     /**
@@ -325,7 +348,7 @@ public class NfeInvoiceService {
             return MathUtil.multiply(detailEntity.getPrice(),invoiceSettingDetail.getRatio()) ;
         }
         if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.DEDUCT.getCode())) {
-            return MathUtil.subtract(detailEntity.getPrice(),detailEntity.getProductCost()) ;
+            return MathUtil.subtract(detailEntity.getPrice(),detailEntity.getSaleFee()) ;
         }
         return detailEntity.getPrice();
     }
@@ -338,15 +361,14 @@ public class NfeInvoiceService {
      * @return void
      */
     public void cancelInvoice(InvoiceInfoEntity invoiceInfoEntity,NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO) {
-
-        Object obj;
-        try {
-             obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
-        } catch (Exception e) {
-             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,e.getMessage());
-        }
+        //b2c订单信息
+        SoB2cEntity soB2cEntity = soB2cService.getById(invoiceInfoEntity.getSoId());
+        //税务信息
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        nfeCancelDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
+        Object obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
         //上传
-        uploadFile(obj);
+        //uploadFile(obj);
     }
 
     /**
@@ -358,14 +380,31 @@ public class NfeInvoiceService {
      * @return void
      */
     public void updateCceInvoice(InvoiceInfoEntity invoiceInfoEntity,NfeInvoiceDTO.NfeCceDTO nfeCceDTO) {
+        //b2c订单信息
+        SoB2cEntity soB2cEntity = soB2cService.getById(invoiceInfoEntity.getSoId());
+        //税务信息
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        nfeCceDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
         Object obj;
         try {
             obj = tfFiscalService.updateCceInvoice(nfeCceDTO);
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,e.getMessage());
         }
-        //上传
-        uploadFile(obj);
+        NfeInvoiceDTO.NfeCceResultDTO resultDTO = new NfeInvoiceDTO.NfeCceResultDTO();
+        try {
+            //解析obj
+            resultDTO = BeanUtil.toBean(obj, NfeInvoiceDTO.NfeCceResultDTO.class);
+        } catch (Exception e) {
+            log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
+        }
+        if (resultDTO.getErro() || 200 !=  resultDTO.getStatus()) {
+            log.error("创建发票失败,返回错误信息,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,"未知");
+        }
+        //上传发票
+        uploadFile(invoiceInfoEntity.getId(),resultDTO.getUrlXmlUpload(),"");
     }
 
     /**
@@ -388,16 +427,36 @@ public class NfeInvoiceService {
      * 上传
      * @author will
      * @date 2025/4/14 15:14
-     * @param obj
+     * @param invoiceXmlUrl
+     * @param invoicePdfUrl
      * @return void
      */
-    private void uploadFile (Object obj) {
-        if (ObjUtil.isEmpty(obj)) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPLOAD_XML_NOT_EXIST);
+    private void uploadFile (String invoiceId,String invoiceXmlUrl,String invoicePdfUrl) {
+        if (CharSequenceUtil.isBlank(invoiceXmlUrl) && CharSequenceUtil.isBlank(invoicePdfUrl)) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPLOAD_NOT_EXIST);
         }
-        JSONObject jsonObject = JSONUtil.parseObj(obj.toString());
-        Object xml = jsonObject.get("xml");
-        Object pdf = jsonObject.get("pdf");
+        List<OmsAttachmentDTO.UpdateDTO> addOrUpdateList = new ArrayList<>();
+        //上传xml
+        if (CharSequenceUtil.isNotBlank(invoiceXmlUrl)) {
+            try {
+                MultipartFile xmlFile = FileUtil.toMultipartFile(invoiceXmlUrl);
+                String xmlUrl = FastDFSClientUtil.uploadFile(xmlFile);
+                addOrUpdateList.add(new OmsAttachmentDTO.UpdateDTO(AttachmentTypeEnum.INVOICE_INFO_XML.getCode(),xmlUrl,xmlFile.getOriginalFilename(),invoiceId));
+            } catch (Exception e) {
+                log.error("发票XML上传失败");
+            }
+        }
+        //上传pdf
+       if (CharSequenceUtil.isNotBlank(invoicePdfUrl)) {
+           try {
+               MultipartFile pdfFile = FileUtil.toMultipartFile(invoicePdfUrl);
+               String pdfUrl = FastDFSClientUtil.uploadFile(pdfFile);
+               addOrUpdateList.add(new OmsAttachmentDTO.UpdateDTO( AttachmentTypeEnum.INVOICE_INFO_PDF.getCode(),pdfUrl,pdfFile.getOriginalFilename(),invoiceId));
+           } catch (Exception e) {
+               log.error("发票PDF上传失败");
+           }
+       }
+      omsAttachmentService.batchAddOrUpdate(addOrUpdateList);
     }
 
 

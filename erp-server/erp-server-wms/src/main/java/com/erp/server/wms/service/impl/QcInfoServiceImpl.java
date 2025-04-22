@@ -2541,7 +2541,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public PagingVO<QcInfoDTO.QcDailyReportDTO> exportDailyQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         // 查询数据
         Page<QcInfoDTO.DailyListDTO> page = baseMapper.getDailyExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         // 填充数据
@@ -2551,7 +2551,7 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
 
     @Override
     public PagingVO<QcBillExportExcelDTO> exportQcBill(PagingDTO<QcInfoDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<QcInfoDTO.PagingViewDTO> page = baseMapper.getExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         List<QcBillExportExcelDTO> resultList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(page.getRecords())) {

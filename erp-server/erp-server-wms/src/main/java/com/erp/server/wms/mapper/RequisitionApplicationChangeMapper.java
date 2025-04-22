@@ -40,14 +40,6 @@ public interface RequisitionApplicationChangeMapper extends BaseMapper<Requisiti
     List<ApproveStatusQtyDTO> listCount(@Param("params") RequisitionApplicationChangeDTO.PagingParamDTO params);
 
     /**
-    * 导出Excel查询
-    * @param params
-    * @return
-    */
-    List<RequisitionApplicationChangeDTO.ListDTO> listExport(@Param("params") RequisitionApplicationChangeDTO.ExportDTO params);
-
-
-    /**
     * 获取状态统计
     * @param searchParam
     * @return

@@ -47,9 +47,6 @@ public class SoB2cDeliveryController extends BaseController {
     @Resource
     private WaveListService waveListService;
 
-    @Resource
-    private SoB2cFeign soB2cFeign;
-
     /**
      * 新增
      *
@@ -76,9 +73,9 @@ public class SoB2cDeliveryController extends BaseController {
      **/
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:paging",
-            tableAlias = "sbd"
+            warehouseTableField = "sbdd.warehouse_id",
+            shopTableField = "sbd.shop_id",
+            menuCode = "wms:soB2cDelivery:paging"
     )
     public ApiResult<List<SoB2cDeliveryDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(soB2cDeliveryService.tabList(dto));
@@ -93,11 +90,11 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2023/12/13 19:13
      **/
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "wms:soB2cDelivery:paging",
-//            tableAlias = "sbd"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sbdd.warehouse_id",
+            shopTableField = "sbd.shop_id",
+            menuCode = "wms:soB2cDelivery:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryService.paging(dto));

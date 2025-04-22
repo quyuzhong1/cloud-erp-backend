@@ -4,6 +4,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -77,9 +78,6 @@ public class FullyManagedOrderController extends BaseController {
     private SoB2cLogisticsService soB2cLogisticsService;
 
     @Resource
-    private SoB2cStatusService soB2cStatusService;
-
-    @Resource
     private SoB2cDetailService soB2cDetailService;
     @Resource
     private PlmTaskFeign plmTaskFeign;
@@ -93,6 +91,11 @@ public class FullyManagedOrderController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:fully:paging"
+    )
     public ApiResult<List<SoB2cDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(fullyManagedOrderService.fullyManagedTabList(dto));
     }
@@ -106,6 +109,11 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:fully:paging"
+    )
     @WebAdvanceQuery(handler = FullyManagedQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
         dto.getParams().setIsFullyManaged(Boolean.TRUE);
@@ -162,6 +170,7 @@ public class FullyManagedOrderController extends BaseController {
     @PostMapping("/update")
     public ApiResult update(@RequestBody @Validated SoB2cDTO.UpdateDTO dto) {
         soB2cService.update(dto);
+        soB2cService.uploadLogisticsStatus(dto);
         //检查是否备案并修改状态
 //        soB2cService.checkProductRegistrationAndUpdate(dto.getId(), "");
         //自动计算预估运费到订单的预估运费字段

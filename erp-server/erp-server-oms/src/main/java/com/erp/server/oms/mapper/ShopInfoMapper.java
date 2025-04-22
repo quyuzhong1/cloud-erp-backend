@@ -39,9 +39,6 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
      */
     IPage<ShopDTO.ListDTO> pagingSelect(Page query,@Param("params") ShopDTO.SelectDTO params);
 
-
-    List<ShopDTO.PagingViewDTO> listExport(@Param("params") ShopDTO.ExportDTO dto);
-
     Page<ShopDTO.PagingViewDTO> listExport(@Param("page") Page<ShopDTO.PagingViewDTO> page,@Param("params") ShopDTO.ExportDTO dto);
 
     IPage<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(@Param("page") Page query, @Param("params") AdvanceQueryContainer advanceQueryDTO, @Param("shopIds") List<String> shopIds);
@@ -54,4 +51,12 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
      * @return IPage<AreaDTO>
      */
     IPage<ShopDTO.AreaDTO> pagingSelectArea(Page query,@Param("params") ShopDTO.AreaParamDTO params);
+
+    /**
+     * 根据参数获取店铺列表
+     * @param platformList
+     * @param permissionSql
+     * @return
+     */
+    List<ShopInfoEntity> listByParam(@Param("platformList") List<String> platformList, @Param("permissionSql") String permissionSql);
 }

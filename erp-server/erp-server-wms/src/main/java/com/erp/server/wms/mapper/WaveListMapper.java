@@ -21,7 +21,7 @@ public interface WaveListMapper extends BaseMapper<WaveListEntity> {
 
     IPage<WaveListEntity> paging(Page<Object> page, @Param("params") WaveListDTO.SearchParamDTO params);
 
-    List<WaveListDTO.TabDTO> listTab();
+    List<WaveListDTO.TabDTO> listTab(@Param("params") WaveListDTO.SearchParamDTO params);
 
     List<WaveListDTO.WaveDeliveryDTO> listByDeliverIds(@Param("ids") List<String> ids);
 

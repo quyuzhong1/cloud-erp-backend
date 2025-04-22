@@ -56,6 +56,7 @@ public class OtherInstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "oi.warehouse_id",
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
     )
@@ -75,6 +76,7 @@ public class OtherInstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "oi.warehouse_id",
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
     )

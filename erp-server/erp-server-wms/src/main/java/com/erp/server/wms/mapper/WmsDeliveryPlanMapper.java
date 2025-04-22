@@ -42,7 +42,6 @@ public interface WmsDeliveryPlanMapper extends BaseMapper<WmsDeliveryPlanEntity>
     * @param params
     * @return
     */
-    List<WmsDeliveryPlanDTO.ListDTO> listExport(@Param("params") WmsDeliveryPlanDTO.PagingParamDTO params);
     Page<WmsDeliveryPlanDTO.ListDTO> listExport(@Param("page") Page<WmsDeliveryPlanDTO.ListDTO> page, @Param("params") WmsDeliveryPlanDTO.PagingParamDTO params);
 
 
