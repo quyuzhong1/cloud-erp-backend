@@ -292,6 +292,7 @@ public class TfFiscalService {
         companyDTO.setCertificado(jsonObject.getStr("certificado"));
         companyDTO.setZipCode(jsonObject.getStr("zip_code"));
         companyDTO.setPassword(jsonObject.getStr("password"));
+        companyDTO.setUsername(jsonObject.getStr("name"));
         companyDTO.setName(jsonObject.getStr("name"));
         companyDTO.setState(jsonObject.getStr("state"));
         companyDTO.setApiCompleta(jsonObject.get("api_completa",Boolean.class));
