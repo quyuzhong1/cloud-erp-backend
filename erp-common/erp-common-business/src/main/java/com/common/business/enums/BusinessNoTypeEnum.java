@@ -107,6 +107,8 @@ public enum BusinessNoTypeEnum {
     CODE_INV(82, "INV","发票号",BusinessNoConstant.INV),
     CODE_XSBH(83, "XSBH","全托管订单",BusinessNoConstant.XSBH),
 
+    CODE_XSJM(83, "xsjm","销售价目编号", BusinessNoConstant.XSJM),
+    CODE_XSTJ(84, "xstj","销售价目调价编号", BusinessNoConstant.XSTJ),
     ;
 
 
