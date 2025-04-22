@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -17,13 +18,13 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.TransferInDetailService;
 import com.erp.server.wms.service.TransferOutDetailService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -117,6 +118,14 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
             }
         }
         return list;
+    }
+
+    @Override
+    public List<TransferInDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(TransferInDetailEntity::getMainId,mainIdList).list();
     }
 
 

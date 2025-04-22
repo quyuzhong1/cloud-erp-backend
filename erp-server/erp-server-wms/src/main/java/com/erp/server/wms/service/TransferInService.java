@@ -56,8 +56,17 @@ public interface TransferInService extends SuperService<TransferInEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    BatchResultDTO approve(BaseApproveParamDTO dto, TransferInEntity transferInEntity);
+    BatchResultDTO approve(ApproveOneDTO dto, TransferInEntity transferInEntity);
 
+    /**
+     * 审核结束
+     * @author will
+     * @date 2025/4/22 15:03
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, TransferInEntity entity);
     /**
      * 撤销流程
      * @author yl

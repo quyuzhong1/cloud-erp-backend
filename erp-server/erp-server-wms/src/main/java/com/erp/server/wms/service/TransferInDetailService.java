@@ -46,7 +46,15 @@ public interface TransferInDetailService extends SuperService<TransferInDetailEn
      */
     List<TransferInDetailDTO.ViewDTO> listByMainId(String mainId);
 
-    
+    /**
+     * 主表id集合
+     * @author will
+     * @date 2025/4/22 17:49
+     * @param mainIdList
+     * @return List<TransferInDetailEntity>
+     */
+    List<TransferInDetailEntity> listByMainIdList(List<String> mainIdList);
+
     /**
      * 更改详情
      * @author yl
