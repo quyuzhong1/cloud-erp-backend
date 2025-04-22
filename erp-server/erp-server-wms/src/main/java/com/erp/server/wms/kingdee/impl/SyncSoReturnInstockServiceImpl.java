@@ -652,14 +652,14 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
             wmsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
             if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            	map = this.syncNewDataToSdyFieldHandler(entity, detailEntity, operate, new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), "", "", "", new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-            }else {
             	map.put("isQuerySync", Boolean.TRUE);
                 map.put("detailId", detailEntity.getId());
                 map.put("operate", operate);
+            }else {
+                map = this.syncNewDataToSdyFieldHandler(entity, detailEntity, operate, new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), "", "", "", new ArrayList<>(), new ArrayList<>(), 
+            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
             }
             wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             wmsPushMsgService.save(wmsPushMsgEntity);
