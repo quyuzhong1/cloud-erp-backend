@@ -5464,6 +5464,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cLogisticsEntity> logisticsList = soB2cLogisticsService.listByMainIds(ids);
         List<String> channelIds = logisticsList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).
                 filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(channelIds)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
         List<LogisticsChannelDTO.BaseDTO> channelList = logisticsFeign.listChannelInfoById(channelIds);
         List<String> notChannelInfoList = soB2cList.stream().filter(v -> {
             SoB2cLogisticsEntity logisticsEntity = logisticsList.stream().filter(t -> t.getMainId().equals(v.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
