@@ -304,7 +304,7 @@ public class InvoiceInfoController extends BaseController {
                 log.error("无需开票失败",e);
                 SoB2cEntity soB2cEntity = soB2cService.getById(id);
                 if (ObjUtil.isEmpty(soB2cEntity)) {
-                    resultDTO = BatchResultDTO.fail(id, id, "销售订单不存在, 无需开票失败");
+                    resultDTO = BatchResultDTO.fail(id, soB2cEntity.getCode(), "销售订单不存在, 无需开票失败");
                     resultDTOS.add(resultDTO);
                     continue;
                 }
