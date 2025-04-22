@@ -61,12 +61,13 @@ public class DeliveryOrderController extends BaseController {
      * 获取 tab列表
      * @return
      */
-    @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "t.to_warehouse_id",
-            menuCode = "wms:deliveryOrder:paging"
-    )
-    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList(@RequestBody DeliveryOrderDTO.ParamDTO paramDTO) {
+    @GetMapping("/tabList")
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            warehouseTableField = "t.to_warehouse_id",
+//            menuCode = "wms:deliveryOrder:paging"
+//    )
+    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList() {
+        DeliveryOrderDTO.ParamDTO paramDTO = new DeliveryOrderDTO.ParamDTO();
         paramDTO.setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));
         List<DeliveryOrderDTO.TabListDTO> tabList = deliveryOrderService.tabList(paramDTO);
         return success(tabList);
@@ -104,10 +105,10 @@ public class DeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "do2.to_warehouse_id",
-            menuCode = "wms:deliveryOrder:paging"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            warehouseTableField = "do2.to_warehouse_id",
+//            menuCode = "wms:deliveryOrder:paging"
+//    )
     @WebAdvanceQuery(handler = DeliveryOrderQueryHandler.class)
     public ApiResult<PagingVO<DeliveryOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         dto.getParams().setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));
@@ -121,10 +122,10 @@ public class DeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/pagingTotal")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "do2.to_warehouse_id",
-            menuCode = "wms:deliveryOrder:paging"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            warehouseTableField = "do2.to_warehouse_id",
+//            menuCode = "wms:deliveryOrder:paging"
+//    )
     @WebAdvanceQuery(handler = DeliveryOrderQueryHandler.class)
     public ApiResult<DeliveryOrderDTO.TotalInfo> pagingTotal(@RequestBody @Validated DeliveryOrderDTO.ParamDTO dto) {
         dto.setSupplierIdList(Collections.singletonList(commonService.getSupplierEntity().getId()));
