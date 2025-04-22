@@ -43,7 +43,7 @@ public interface QcNoticeMapper extends BaseMapper<QcNoticeEntity> {
     * @param params
     * @return
     */
-    List<QcNoticeDTO.ListDTO> listExport(@Param("params") QcNoticeDTO.ExportDTO params);
+    IPage<QcNoticeDTO.ListDTO> listExport(Page query,@Param("params") QcNoticeDTO.ExportDTO params);
 
 
     /**

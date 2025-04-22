@@ -3,12 +3,9 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
-
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
-import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
@@ -16,6 +13,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.QcNoticeMapper;
@@ -28,7 +26,6 @@ import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -37,28 +34,17 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import cn.hutool.core.collection.CollUtil;
-import com.google.common.collect.Sets;
-import com.alibaba.fastjson.JSONObject;
-import com.google.common.collect.Lists;
-
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.erp.model.sys.dto.SysCodeDTO;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
-
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
-
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-
-import static cn.hutool.json.XMLTokener.entity;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_NOTICE_REPORT;
 
 /**
  * <p>
@@ -110,6 +96,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     private TransferOutService transferOutService;
     @Resource
     private TransferOutDetailService transferOutDetailService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -216,26 +204,44 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         return list;
     }
 
+//    @Override
+//    public void exportList(QcNoticeDTO.ExportDTO param, HttpServletResponse response) {
+//        List<QcNoticeDTO.ListDTO> list = this.baseMapper.listExport(param);
+//        if (CollUtil.isEmpty(list)) {
+//            return;
+//        }
+//        // 数据处理
+//        fillList(list);
+//
+//        // 导出数据
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/qcNotice.xlsx";
+//        String name = "质检通知单导出";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date).append(name);
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
+//    }
+
     @Override
     public void exportList(QcNoticeDTO.ExportDTO param, HttpServletResponse response) {
-        List<QcNoticeDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if (CollUtil.isEmpty(list)) {
-            return;
+        downloadTaskFeign.saveDownloadTask("质检通知单导出", EXPORT_WMS_QC_NOTICE_REPORT.getCode(), param);
+    }
+
+    @Override
+    public PagingVO<QcNoticeDTO.ListDTO> exportList(PagingDTO<QcNoticeDTO.ExportDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<QcNoticeDTO.ListDTO> pageData = this.baseMapper.listExport(query, pagingParamDTO.getParams());
+        if (CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
         }
         // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/qcNotice.xlsx";
-        String name = "质检通知单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -629,8 +635,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         }
     }
 
+
+    @Transactional(rollbackFor = Exception.class)
     @Override
-    public void cancelQcInfoFinish(List<String> detailIdList) {
+    public List<BatchResultDTO> cancelQcInfoFinish(List<String> detailIdList) {
         //先判断明细id下生成的分布式调出单的情况
         List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByIds(detailIdList);
         List<String> mainIdList = qcNoticeDetailEntities.stream().map(QcNoticeDetailEntity::getMainId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
@@ -662,7 +670,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                         List<TransferOutDetailEntity> transferOutDetailEntities = transferOutDetailService.listByMainId(transferOutEntity.getId());
 
                         //判断transferOutDetailEntities中的sourceDetailId是否在detailIdList
-                        boolean allMatch = transferOutDetailEntities.stream().allMatch(t -> detailIdList.contains(t.getSourceDetailId()));
                         boolean noneMatch = transferOutDetailEntities.stream().noneMatch(t -> detailIdList.contains(t.getSourceDetailId()));
                         if(Boolean.TRUE.equals(noneMatch)){
                             //不执行
@@ -676,11 +683,21 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                             List<String> qcInfoIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
                             //删除质检单以及其明细
                             deleteQcInfo(qcInfoIdList);
+
+                            for (TransferOutDetailEntity transferOutDetailEntity : transferOutDetailEntities) {
+                                // 记录撤销质检操作
+                                operateLogService.addModuleOperateLog(String.format("【%s】", transferOutDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), transferOutEntity.getSourceId(), "撤销质检");
+                            }
+
+                            QcNoticeEntity qcNoticeEntity = noticeMap.get(qcNoticeId);
+                            BatchResultDTO success = BatchResultDTO.success(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), String.format(errorMessage2, qcNoticeEntity.getCode()));
+                            results.add(success);
                         }
                     }
                 }
             }
         }
+        return results;
     }
 
 

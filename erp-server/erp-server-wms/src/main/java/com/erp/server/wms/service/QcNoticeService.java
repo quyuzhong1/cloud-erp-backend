@@ -81,7 +81,9 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     */
     void updateAndSubmit(QcNoticeDTO.UpdateDTO dto);
 
-     /**
+    PagingVO<QcNoticeDTO.ListDTO> exportList(PagingDTO<QcNoticeDTO.ExportDTO> pagingParamDTO);
+
+    /**
      * 提交审核
      * @author jack
      * @date: 2025-04-21
@@ -148,5 +150,5 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
 
     void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto);
 
-    void cancelQcInfoFinish(List<String> detailIdList);
+    List<BatchResultDTO> cancelQcInfoFinish(List<String> detailIdList);
 }

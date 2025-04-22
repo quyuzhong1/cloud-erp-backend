@@ -5,12 +5,10 @@ import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
-import com.erp.model.wms.entity.QcNoticeDetailEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.Valid;
 import javax.validation.constraints.*;
 
@@ -238,7 +236,7 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 质检时间
          */
-        private LocalDateTime qcDate;
+        private LocalDate qcDate;
 
         /**
          * 上架状态 待上架:wait  部分上架：part  已上架：finish
@@ -249,7 +247,7 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 上架时间
          */
-        private LocalDateTime putawayDate;
+        private LocalDate putawayDate;
 
 
 

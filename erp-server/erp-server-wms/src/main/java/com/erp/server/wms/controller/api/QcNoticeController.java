@@ -399,9 +399,9 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:cancelQcInfoFinish",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<Object> cancelQcInfoFinish(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
-        qcNoticeService.cancelQcInfoFinish(dto.getDetailIdList());
-        return success();
+    public ApiResult<List<BatchResultDTO>> cancelQcInfoFinish(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<BatchResultDTO> resultDTOS = qcNoticeService.cancelQcInfoFinish(dto.getDetailIdList());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -419,6 +419,7 @@ public class QcNoticeController extends BaseController {
             tableAlias = "qn"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检通知单导出Excel数据")
+    @WebAdvanceQuery(handler = RequisitionApplicationQueryHandler.class)
     public void exportList(@RequestBody @Validated QcNoticeDTO.ExportDTO dto, HttpServletResponse response) {
         qcNoticeService.exportList(dto, response);
     }
