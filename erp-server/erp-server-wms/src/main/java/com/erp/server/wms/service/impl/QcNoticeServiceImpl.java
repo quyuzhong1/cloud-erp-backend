@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
@@ -99,8 +100,12 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Resource
     private SysUserFeign sysUserFeign;
+
     @Resource
     private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private TransferOutService transferOutService;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -478,10 +483,25 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if(CollUtil.isEmpty(dto)){
             throw new ServiceException( ApiError.ERROR_92271);
         }
-        //质检通知单明细
+
         List<String> qcNoticeIdList = dto.stream().map(QcNoticeDTO.QcInfoView::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-        List<QcNoticeDetailEntity> noticeDetailList = qcNoticeDetailService.listByMainIds(qcNoticeIdList);
+        //质检通知单
+        List<QcNoticeEntity> qcNoticeList = listByIds(qcNoticeIdList);
+        Map<String, QcNoticeEntity> mainMap = qcNoticeList.stream().collect(Collectors.toMap(QcNoticeEntity::getId, t -> t));
+        //质检通知单明细
+        List<String> qcNoticeDetailIdList = dto.stream().map(QcNoticeDTO.QcInfoView::getDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<QcNoticeDetailEntity> noticeDetailList = qcNoticeDetailService.listByIds(qcNoticeDetailIdList);
         Map<String, QcNoticeDetailEntity> detailMap = noticeDetailList.stream().collect(Collectors.toMap(QcNoticeDetailEntity::getId, t -> t));
+
+        Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = noticeDetailList.stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
+
+        //仓库
+        List<String> qcWarehouseId = qcNoticeList.stream().map(QcNoticeEntity::getQcWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        List<String> putawayWarehouseId = qcNoticeList.stream().map(QcNoticeEntity::getPutawayWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        qcWarehouseId.addAll(putawayWarehouseId);
+        List<String> warehouseIdList = qcWarehouseId.stream().distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIdList);
+        Map<String, WarehouseEntity> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, t -> t));
 
         //质检员
         List<String> userIds = dto.stream().map(QcNoticeDTO.QcInfoView::getQcUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -503,18 +523,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 throw new ServiceException( ApiError.ERROR_92272, str);
             }
         }
+        //质检单map
+        Map<String, QcInfoEntity> qcInfoMap = new HashMap<>();
 
         //质检通知单审核通过自动生成质检单
         for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
-            //回写质检通知单
-            QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
-            qcNoticeDetailEntity.setQcQty(qcInfoView.getQcQty());
-            qcNoticeDetailEntity.setQcGoodQty(qcInfoView.getQcGoodQty());
-            qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
-            qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
-            qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getQcProblemDict());
-            qcNoticeDetailService.updateById(qcNoticeDetailEntity);
-
             QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
             //来源
             addDto.setSourceCode(qcInfoView.getCode());
@@ -550,8 +563,69 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             addDto.setQcInfo(qcInfo);
             //新增质检单
             QcInfoEntity qcInfoEntity = qcInfoService.add(addDto);
+            qcInfoMap.put(qcInfoView.getDetailId(), qcInfoEntity);
             //完成质检
             BatchResultDTO finish = qcInfoService.finish(qcInfoEntity);
+
+            //回写质检通知单
+            QcNoticeDetailEntity qcNoticeDetailEntity = detailMap.get(qcInfoView.getDetailId());
+            qcNoticeDetailEntity.setQcQty(qcInfoView.getQcQty());
+            qcNoticeDetailEntity.setQcGoodQty(qcInfoView.getQcGoodQty());
+            qcNoticeDetailEntity.setQcBadQty(qcInfoView.getQcBadQty());
+            qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
+            qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getQcProblemDict());
+            qcNoticeDetailService.updateById(qcNoticeDetailEntity);
+            //等下用来生成分布式调出单
+            detailMap.put(qcInfoView.getDetailId(), qcNoticeDetailEntity);
+            //质检通知单日志
+            operateLogService.addModuleOperateLogByObj(detailMap.get(qcInfoView.getDetailId()), qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(),"", String.format("【%s】", qcNoticeDetailEntity.getSkuNo()));
+            // 记录主单完成质检操作
+            operateLogService.addModuleOperateLog(String.format("【%s】", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
+        }
+
+        //以单据维度生成分布式调出单。
+        LocalDate billDate = LocalDate.now();
+        String remark ="关联质检单号【{}】";
+        String mainRemark ="质检通知单完成质检自动生成";
+        for (QcNoticeEntity qcNoticeEntity : qcNoticeList) {
+            //质检仓库不等于上架仓库则不生成调出单
+            if(!Objects.equals(qcNoticeEntity.getQcWarehouseId(), qcNoticeEntity.getPutawayWarehouseId())){
+                //类型
+                WarehouseEntity qcWarehouse = warehouseMap.get(qcNoticeEntity.getQcWarehouseId());
+                WarehouseEntity putawayWarehouse = warehouseMap.get(qcNoticeEntity.getPutawayWarehouseId());
+                String type = TransferTypeEnum.CROSS_ORG.getCode();
+                if(Objects.equals(qcWarehouse.getOrgId(),putawayWarehouse.getOrgId())){
+                    type = TransferTypeEnum.IN_ORG.getCode();
+                }
+
+                //分步式调出单
+                TransferOutDTO.AddDTO addOutDTO = new TransferOutDTO.AddDTO();
+                addOutDTO.setSourceId(qcNoticeEntity.getId());
+                addOutDTO.setSourceType(SourceTypeEnum.QC_NOTICE.getCode());
+                addOutDTO.setSourceCode(qcNoticeEntity.getCode());
+                addOutDTO.setType(type);
+                addOutDTO.setBillDate(billDate);
+                addOutDTO.setOutWarehouseId(qcNoticeEntity.getQcWarehouseId());
+                addOutDTO.setInWarehouseId(qcNoticeEntity.getPutawayWarehouseId());
+                addOutDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
+                addOutDTO.setRemark(mainRemark);
+
+                List<TransferOutDetailDTO.AddDTO> detailList = new ArrayList<>();
+                List<QcNoticeDetailEntity> qcNoticeDetailList = detailMapByMainId.get(qcNoticeEntity.getId());
+                for (QcNoticeDetailEntity detailEntity : qcNoticeDetailList) {
+                    TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
+                    transferOutDetail.setSkuId(detailEntity.getSkuId());
+                    transferOutDetail.setQty(detailEntity.getQcGoodQty());
+                    String code = qcInfoMap.get(detailEntity.getId()).getCode();
+                    transferOutDetail.setRemark(StrUtil.format(remark,code));
+                    transferOutDetail.setSourceDetailId(detailEntity.getId());
+                    transferOutDetail.setOutWarehouseLocation("空仓位");
+                    transferOutDetail.setUnit("Pcs");
+                    detailList.add(transferOutDetail);
+                }
+                addOutDTO.setDetailList(detailList);
+                transferOutService.add(addOutDTO);
+            }
         }
     }
 
