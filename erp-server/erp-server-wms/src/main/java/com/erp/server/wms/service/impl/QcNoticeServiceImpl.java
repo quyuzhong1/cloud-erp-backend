@@ -40,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
@@ -696,6 +697,30 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     }
                 }
             }
+        }
+        return results;
+    }
+
+    @Override
+    public List<BatchResultDTO> checkInventory(QcNoticeDTO.AddDTO dto) {
+        List<BatchResultDTO> results = new ArrayList<>();
+        List<QcNoticeDetailDTO.AddDTO> detailList = dto.getDetailList();
+        List<String> skuIds = detailList.stream().map(QcNoticeDetailDTO.AddDTO::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        //质检仓库下的可用库存
+        List<InventoryQtyDTO.SkuInventoryTotalDTO> skuInventoryTotalDTOS = inventoryService.listSkuInventory(skuIds, dto.getQcWarehouseId(), null, InventoryStatusEnum.USABLE.getCode());
+
+        Map<String, Integer> skuInventoryMap = skuInventoryTotalDTOS.stream().collect(Collectors.toMap(InventoryQtyDTO.SkuInventoryTotalDTO::getSkuId, InventoryQtyDTO.SkuInventoryTotalDTO::getInventoryTotal));
+        for (QcNoticeDetailDTO.AddDTO detail : detailList) {
+            String skuId = detail.getSkuId();
+            String skuNo = detail.getSkuNo();
+            Integer noticeQty = detail.getQcNoticeQty();
+            Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
+            if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
+                results.add(BatchResultDTO.fail(skuId, skuNo, String.format(ApiError.ERROR_92268.msg, skuNo, noticeQty, inventoryQty)));
+            }
+        }
+        if(results.size() == 0){
+            results.add(BatchResultDTO.success());
         }
         return results;
     }

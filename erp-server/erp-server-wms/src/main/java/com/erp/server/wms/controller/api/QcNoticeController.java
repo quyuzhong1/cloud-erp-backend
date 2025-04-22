@@ -405,6 +405,19 @@ public class QcNoticeController extends BaseController {
     }
 
     /**
+     * 新增校验库存
+     * @author jack
+     * @date:  2025-04-21
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/checkInventory")
+    public ApiResult<List<BatchResultDTO> > checkInventory(@RequestBody @Validated QcNoticeDTO.AddDTO dto) {
+        List<BatchResultDTO>  resultDTOS = qcNoticeService.checkInventory(dto);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
     * 导出Excel数据
     * @author jack
     * @date:  2025-04-21
@@ -423,6 +436,7 @@ public class QcNoticeController extends BaseController {
     public void exportList(@RequestBody @Validated QcNoticeDTO.ExportDTO dto, HttpServletResponse response) {
         qcNoticeService.exportList(dto, response);
     }
+
 
 
 }

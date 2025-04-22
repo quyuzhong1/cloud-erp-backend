@@ -151,4 +151,6 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto);
 
     List<BatchResultDTO> cancelQcInfoFinish(List<String> detailIdList);
+
+    List<BatchResultDTO>  checkInventory(QcNoticeDTO.AddDTO dto);
 }
