@@ -191,12 +191,12 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         }
 
                         // 平台仓发货时间
-                        // "global_delivery_time": NumberInt("0"),
-                        String globalDeliveryTimeStr = dmpDataMap.getOrDefault("delivery_time", "0").toString();
-                        long deliveryTimeLong = Long.parseLong(globalDeliveryTimeStr);
+                        // "delivery_time": NumberInt("0"),
+                        String deliveryTimeStr = platformInfoMap.getOrDefault("delivery_time", "0").toString();
+                        long deliveryTimeLong = Long.parseLong(deliveryTimeStr);
                         if (0 < deliveryTimeLong && OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode().equals(logisticType)){
-                            LocalDateTime globalDeliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTimeLong), ZoneId.systemDefault());
-                            dmpDataMap.put("globalDeliveryTime", globalDeliveryTime);
+                            LocalDateTime deliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTimeLong), ZoneId.systemDefault());
+                            dmpDataMap.put("deliveryTime", deliveryTime);
                         }
                     }
                 }
