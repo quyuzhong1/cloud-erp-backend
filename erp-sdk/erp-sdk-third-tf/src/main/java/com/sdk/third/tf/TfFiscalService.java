@@ -5,6 +5,8 @@ import cn.hutool.http.HttpResponse;
 import cn.hutool.http.HttpUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -15,6 +17,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.CompanyDTO;
+import com.sdk.third.tf.entity.CompanyInfoEntity;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -38,9 +41,13 @@ public class TfFiscalService {
 
     public static void main(String[] args) {
         String path = "/cadastrar_empresa";
+//        Map<String, String> bodyMap = new HashMap<>();
+//        bodyMap.put("tipo_pesquisa","cnpj");
+//        bodyMap.put("search","9661144118088");
+//        bodyMap.put("token_plataforma","16-04-2025_09-19-No28tBi0Yw28FixdY1sIjkmt4-dksxdY1sIjkB12n413207N4-sb7XiNa");
         CompanyDTO updateCompanyDTO = new CompanyDTO();
         updateCompanyDTO.setTokenPlataforma("16-04-2025_09-19-No28tBi0Yw28FixdY1sIjkmt4-dksxdY1sIjkB12n413207N4-sb7XiNa");
-        updateCompanyDTO.setCnpj("96611441148088");
+        updateCompanyDTO.setCnpj("966114411480881");
         updateCompanyDTO.setIe("000000000");
         updateCompanyDTO.setRazaoSocial("WJKJ");
         updateCompanyDTO.setUltimoNumeroNfe("test");
@@ -59,9 +66,9 @@ public class TfFiscalService {
         updateCompanyDTO.setRazaoSocial("test12345");
         updateCompanyDTO.setState("São Paulo");
         updateCompanyDTO.setApiCompleta(true);
-        updateCompanyDTO.setFirstName("WJKJTEST22131");
+        updateCompanyDTO.setFirstName("WJKJTEST123456");
         updateCompanyDTO.setEmail("ulanzichat@ulanzi.cn");
-        updateCompanyDTO.setUsername("WJKJTEST22131");
+        updateCompanyDTO.setUsername("WJKJTEST123456");
         updateCompanyDTO.setRua("test");
         updateCompanyDTO.setNaturezaId("10");
         updateCompanyDTO.setSurname("1412321");
@@ -77,18 +84,9 @@ public class TfFiscalService {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
             throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
         }
-        if(!apiResult.getData().contains("\"success\":1")){
-            throw new ServiceException("adsa");
-        }
+        CompanyInfoEntity companyInfoEntity = JSON.parseObject(apiResult.getData(),new TypeReference<CompanyInfoEntity>() {}.getType());
+        System.out.println(companyInfoEntity);
     }
-
-    private static Map<String, Object> buildDefaultParam() {
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("token_plataforma",ACCESS_TOKEN);
-        paramMap.put("api_completa",true);
-        return paramMap;
-    }
-
     /**
      * 创建公司
      * @param addCompanyDTO
@@ -105,7 +103,41 @@ public class TfFiscalService {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
             throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
         }
-        return null;
+        CompanyInfoEntity result = JSON.parseObject(apiResult.getData().toString(),new TypeReference<CompanyInfoEntity>() {}.getType());
+        if(Objects.isNull(result.getId())){
+            log.error("创建公司失败,{}", apiResult.getData());
+            throw new ServiceException("创建公司失败:"+ apiResult.getData());
+        }
+        CompanyInfoEntity companyInfoEntity = this.queryCompany(addCompanyDTO.getCnpj());
+        return companyInfoEntity.getTokenEmpresa();
+    }
+
+    /**
+     * 查询公司信息
+     * @param cnpj
+     */
+    public CompanyInfoEntity queryCompany(String cnpj){
+        String path = "/consultar_empresa";
+        String accessToken = getAccessToken();
+        Map<String, String> bodyMap = new HashMap<>();
+        bodyMap.put("tipo_pesquisa","cnpj");
+        bodyMap.put("search",cnpj);
+        bodyMap.put("token_plataforma",accessToken);
+        Map<String, String> headerMap = new HashMap<>();
+
+        //拉取数据
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
+        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+        }
+        CompanyInfoEntity companyInfoEntity = JSON.parseObject(apiResult.getData(),new TypeReference<CompanyInfoEntity>() {}.getType());
+        if(Objects.isNull(companyInfoEntity.getTokenEmpresa())){
+            log.error("查询公司失败,{}", apiResult.getData());
+            throw new ServiceException("查询公司失败:"+ apiResult.getData());
+        }
+        return companyInfoEntity;
     }
 
     /**
