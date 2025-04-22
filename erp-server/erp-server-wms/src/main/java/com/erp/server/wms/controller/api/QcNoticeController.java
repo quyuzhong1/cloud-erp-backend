@@ -2,6 +2,11 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.ExcelUtil;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
+import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
+import com.erp.model.wms.dto.QcNoticeDetailDTO;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +29,14 @@ import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.QcNoticeDTO;
+
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.erp.model.wms.entity.QcNoticeEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 质检通知单
@@ -436,6 +445,32 @@ public class QcNoticeController extends BaseController {
     public void exportList(@RequestBody @Validated QcNoticeDTO.ExportDTO dto, HttpServletResponse response) {
         qcNoticeService.exportList(dto, response);
     }
+
+    /**
+     * 下载模板
+     * @author jack
+     * @date:  2025-04-21
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载质检通知单明细导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String standardPath = "classpath:excel/qcNoticeDetailTemplate.xlsx";
+        String standardExcelName = "qcNoticeDetailTemplate.xlsx";
+        ExcelUtil.downloadTemplate(standardPath, standardExcelName, response);
+        return success();
+    }
+
+    /**
+     * 导入
+     * @author jack
+     * @date:  2025-04-21
+     */
+    @PostMapping("/importFile")
+    public ApiResult<QcNoticeDTO.ImportDTO> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        return success(qcNoticeService.importFile(excelFile, response));
+    }
+
+
 
 
 

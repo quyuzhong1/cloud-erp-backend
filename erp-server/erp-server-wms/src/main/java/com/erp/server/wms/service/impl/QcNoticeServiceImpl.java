@@ -45,6 +45,8 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.multipart.MultipartFile;
+
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_NOTICE_REPORT;
 
 /**
@@ -716,13 +718,20 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             Integer noticeQty = detail.getQcNoticeQty();
             Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
             if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                results.add(BatchResultDTO.fail(skuId, skuNo, String.format(ApiError.ERROR_92273.msg, skuNo, noticeQty, inventoryQty)));
+                results.add(BatchResultDTO.fail(skuId, skuNo, String.format(ApiError.ERROR_92273.msg, noticeQty, inventoryQty)));
             }
         }
         if(results.size() == 0){
             results.add(BatchResultDTO.success());
         }
         return results;
+    }
+
+    @Override
+    public QcNoticeDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+
+
+        return null;
     }
 
 
@@ -903,9 +912,5 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         return;
     }
 
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(QcNoticeEntity qcNoticeEntity) {
-    }
+
 }

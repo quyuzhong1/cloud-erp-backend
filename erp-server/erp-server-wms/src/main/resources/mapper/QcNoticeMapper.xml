@@ -86,11 +86,11 @@
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
-        LEFT JOIN qc_info as qn.id = qi.source_id and qi.source_type = 'qcNotice'
+        LEFT JOIN qc_info as qi on qn.id = qi.source_id and qi.source_type = 'qcNotice'
         WHERE
         ${params.sqlMap.default}
-        AND  qc.is_deleted = FALSE
-        AND qcd.is_deleted = FALSE
+        AND qn.is_deleted = FALSE
+        AND qnd.is_deleted = FALSE
         AND qi.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
@@ -164,8 +164,8 @@
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
         WHERE
-              qc.is_deleted = FALSE
-            AND qc.appprove_status = 'approve'
+            qn.is_deleted = FALSE
+            AND qn.appprove_status = 'approve'
             AND qcd.is_deleted = FALSE
             and qnd.qc_status = 'wait'
             AND qn.id IN
