@@ -102,12 +102,12 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
 
                 // 发货时间
                 // "global_delivery_time": NumberInt("0"),
-                String globalDeliveryTimeStr = dmpDataMap.getOrDefault("global_delivery_time", "0").toString();
-                long deliveryTimeLong = Long.parseLong(globalDeliveryTimeStr);
-                if (0 < deliveryTimeLong){
-                    LocalDateTime globalDeliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTimeLong), ZoneId.systemDefault());
-                    dmpDataMap.put("globalDeliveryTime", globalDeliveryTime);
-                }
+//                String globalDeliveryTimeStr = dmpDataMap.getOrDefault("global_delivery_time", "0").toString();
+//                long deliveryTimeLong = Long.parseLong(globalDeliveryTimeStr);
+//                if (0 < deliveryTimeLong){
+//                    LocalDateTime globalDeliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTimeLong), ZoneId.systemDefault());
+//                    dmpDataMap.put("globalDeliveryTime", globalDeliveryTime);
+//                }
 
                 // 付款时间
                 // global_payment_time
@@ -188,6 +188,15 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                             }
                             String name = viewDTO.getName();
                             dmpDataMap.put("sourcePlatform", name);
+                        }
+
+                        // 平台仓发货时间
+                        // "global_delivery_time": NumberInt("0"),
+                        String globalDeliveryTimeStr = dmpDataMap.getOrDefault("delivery_time", "0").toString();
+                        long deliveryTimeLong = Long.parseLong(globalDeliveryTimeStr);
+                        if (0 < deliveryTimeLong && OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode().equals(logisticType)){
+                            LocalDateTime globalDeliveryTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(deliveryTimeLong), ZoneId.systemDefault());
+                            dmpDataMap.put("globalDeliveryTime", globalDeliveryTime);
                         }
                     }
                 }
