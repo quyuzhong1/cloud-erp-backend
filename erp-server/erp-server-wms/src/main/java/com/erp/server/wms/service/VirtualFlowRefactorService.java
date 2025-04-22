@@ -2,6 +2,8 @@ package com.erp.server.wms.service;
 
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 
+import java.util.List;
+
 public interface VirtualFlowRefactorService {
     /**
      * 重构
@@ -16,7 +18,7 @@ public interface VirtualFlowRefactorService {
      * @date 2025/4/1 16:04
      * @param dto
      */
-    void approve(VirtualInventoryStockDTO.StockParamDTO dto);
+    void approve(VirtualInventoryStockDTO.StockParamDTO dto, List<String> ignoreSkuIds);
 
     /**
      * 调拨审核
@@ -24,5 +26,5 @@ public interface VirtualFlowRefactorService {
      * @date 2025/4/2 16:38
      * @param dto
      */
-    void approveTransfer(VirtualInventoryStockDTO.TransferParamDTO dto);
+    void approveTransfer(VirtualInventoryStockDTO.TransferParamDTO dto,List<String> ignoreSkuIds);
 }
