@@ -285,7 +285,7 @@
         from so_delivery_notice sdn
         inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false and sdn.virtual_warehouse_id != '' and sdn.invalid_status = false and sdnd.delivery_qty > 0
         where sdn.is_deleted = false
-        -- 加工单出库
+        -- 加工单出库(发货通知单下推)
         union all
         select
             md.sku_id,
@@ -300,9 +300,29 @@
             mi.approve_time as trade_time,
             md.qty as qty
         from machine_info mi
-        inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve' and mi.source_type in ('soInfo','soDeliveryNotice') and md.qty > 0
+        inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve' and mi.source_type = 'soDeliveryNotice' and md.qty > 0
         inner join so_delivery_notice_detail sdnd on sdnd.id = md.source_detail_id and sdnd.is_deleted = false
         inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != ''
+        where mi.is_deleted = false
+        -- 加工单出库(销售订单下推)
+        union all
+        select
+            md.sku_id,
+            md.sku_no,
+            si.virtual_warehouse_id,
+            si.warehouse_id,
+            'machineInfo' as source_type,
+            mi.id as source_id,
+            mi.code as source_code,
+            md.id as source_detail_id,
+            mi.approve_time as bill_date,
+            mi.approve_time as trade_time,
+            md.qty as qty
+        from machine_info mi
+         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'  and mi.source_type = 'soInfo' and md.qty > 0
+         inner join machine_ref_so mrs on md.id = mrs.machine_detail_id and mi.id = mrs.machine_id and mrs.is_deleted = false
+         inner join so_detail sd on sd.id = mrs.so_detail_id and sd.is_deleted = false
+         inner join  so_info si on si.id = sd.main_id and si.is_deleted = false and si.virtual_warehouse_id != ''
         where mi.is_deleted = false
         --直接调拨单出库
         union all
