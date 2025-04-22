@@ -1,4 +1,4 @@
-FROM 172.16.100.92:5000/library/openjdk:8u342-jdk
+FROM 172.16.100.92:5000/library/java-8-docker:latest
 MAINTAINER sdc-erp
 
 # 设置工作目录
