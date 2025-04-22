@@ -153,14 +153,14 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * 附件地址
          */
-//        @NotBlank(message = "证书地址不能为空")
+        @NotBlank(message = "证书地址不能为空")
         @Size(max = 100, message = "证书地址最大长度不能超过100位")
         private List<String> attachmentUrlList;
 
         /**
          * 附件名
          */
-//        @NotBlank(message = "证书名不能为空")
+        @NotBlank(message = "证书名不能为空")
         @Size(max = 100, message = "证书名最大长度不能超过100位")
         private List<String> attachmentNameList;
 
