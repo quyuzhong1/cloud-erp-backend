@@ -1039,6 +1039,11 @@ public class CustomerDTO implements Serializable {
          * false 没有
          */
         private Boolean disabled;
+
+        /**
+         * 币种
+         */
+        private String currency;
     }
 
     /**

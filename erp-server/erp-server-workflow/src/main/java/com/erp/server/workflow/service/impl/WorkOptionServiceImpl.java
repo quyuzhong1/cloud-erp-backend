@@ -109,6 +109,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Resource
     private ProcessTaskManagementService processTaskManagementService;
 
+    @Resource
+    private SoPriceFeign soPriceFeign;
+
     /**
      * 待办模块-模块分类下拉
      *
@@ -681,6 +684,14 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             case CUSTOMER_INFO:
                 ApiResult<List<BatchResultDTO>> apiResult = customerFeign.approve(baseApproveParamDTO);
                 resultDTOList = apiResult.getData();
+                break;
+            case SO_PRICE:
+                ApiResult<List<BatchResultDTO>>  soPriceResult  = soPriceFeign.approve(baseApproveParamDTO);
+                resultDTOList = soPriceResult.getData();
+                break;
+            case SO_PRICE_CHANGE:
+                ApiResult<List<BatchResultDTO>> soPriceChangeResult  =  soPriceFeign.approveChange(baseApproveParamDTO);
+                resultDTOList = soPriceChangeResult.getData();
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

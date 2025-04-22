@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoPriceChangeDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoPriceChangeDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="sku_id" property="skuId" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="min_qty" property="minQty" />
+       <result column="max_qty" property="maxQty" />
+       <result column="currency" property="currency" />
+       <result column="tax_price" property="taxPrice" />
+       <result column="effective_date" property="effectiveDate" />
+       <result column="expire_date" property="expireDate" />
+       <result column="tax_rate" property="taxRate" />
+       <result column="so_price_detail_id" property="soPriceDetailId" />
+       <result column="disabled" property="disabled" />
+       <result column="remark" property="remark" />
+       <result column="customer_id" property="customerId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        sku_id, main_id, sku_no, min_qty, max_qty, currency, tax_price, effective_date, expire_date, tax_rate, so_price_detail_id, delivery_day, disabled, remark, customer_id, so_price_code
+    </sql>
+
+    <!-- 根据销售价目明细id查询 -->
+    <select id="listBySoPriceDetailIds" resultType="com.erp.model.oms.entity.SoPriceChangeDetailEntity">
+        SELECT
+            spcd.sku_id,
+            spcd.sku_no,
+            spcd.min_qty,
+            spcd.max_qty,
+            spcd.currency,
+            spcd.tax_price,
+            spcd.tax_rate,
+            spcd.disabled,
+            spcd.effective_date,
+            spcd.expire_date,
+            spc.code as code,
+            spcd.so_price_detail_id,
+            spcd.main_id,
+            spcd.customer_id
+        FROM  so_price_change_detail spcd
+        LEFT JOIN so_price_change spc ON spcd.main_id = spc.id AND spcd.is_deleted = FALSE
+        WHERE spc.is_deleted = FALSE
+        <if test="soPriceDetailIds!=null and soPriceDetailIds.size>0">
+            AND spcd.so_price_detail_id IN
+            <foreach collection="soPriceDetailIds" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
+</mapper>
