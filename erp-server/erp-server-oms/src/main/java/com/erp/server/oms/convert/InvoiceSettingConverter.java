@@ -28,7 +28,7 @@ public interface InvoiceSettingConverter {
 
     @Mappings({
             @Mapping(target = "razaoSocial", source = "companyName"),
-            @Mapping(target = "city", source = "leiCode"),
+            @Mapping(target = "cnpj", source = "leiCode"),
             @Mapping(target = "ie", source = "stateTaxNo"),
             @Mapping(target = "certificado", source = "certificateUrl"),
             @Mapping(target = "senhaCertificado", source = "certificatePassword"),
@@ -43,7 +43,7 @@ public interface InvoiceSettingConverter {
 
     @Mappings({
             @Mapping(target = "razaoSocial", source = "companyName"),
-            @Mapping(target = "city", source = "leiCode"),
+            @Mapping(target = "cnpj", source = "leiCode"),
             @Mapping(target = "ie", source = "stateTaxNo"),
             @Mapping(target = "certificado", source = "certificateUrl"),
             @Mapping(target = "senhaCertificado", source = "certificatePassword"),
