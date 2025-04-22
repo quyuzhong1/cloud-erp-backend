@@ -76,6 +76,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
@@ -103,6 +104,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.*;
@@ -369,27 +371,30 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SyncSoB2cService syncSoB2cService;
     @Resource
     private TikTokFullService tikTokFullService;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql());
         List<AdvanceQueryDTO> advanceQueryDTOList = pagingParamDTO.getParams().getAdvanceQueryDTOList();
         //是否缺货 过滤
         Boolean isOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
         //是否虚拟仓缺货
         Boolean isVirtualOutStock = (Boolean) advanceQueryDTOList.stream().filter(v -> v.getField().equals("isVirtualOutStock")).findAny().orElse(new AdvanceQueryDTO()).getValue();
         if (Objects.nonNull(isOutStock)) {
-            return this.filterIsOutStockList(pagingParamDTO, isOutStock);
+            return this.filterIsOutStockList(pagingParamDTO, isOutStock, pagingParamDTO.getParams().getIsFullyManaged());
         } else if (Objects.nonNull(isVirtualOutStock)) {
-            return this.filterIsVirtualOutStockList(pagingParamDTO, isVirtualOutStock);
+            return this.filterIsVirtualOutStockList(pagingParamDTO, isVirtualOutStock, pagingParamDTO.getParams().getIsFullyManaged());
         } else {
             Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
-            IPage<SoB2cDTO.ListDTO> pageData = null;
+            IPage<SoB2cDTO.ListDTO> pageData;
             if (pagingParamDTO.getParams().getIsFullyManaged()){
                 pageData = this.baseMapper.fullyManagedPaging(query, pagingParamDTO.getParams(), null);
             }else {
                 pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), null);
-            }            if (CollUtil.isEmpty(pageData.getRecords())) {
+            }
+            if (CollUtil.isEmpty(pageData.getRecords())) {
                 return new PagingVO(pageData);
             }
             // 数据处理
@@ -398,6 +403,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+    private String getPermissionSql() {
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb2c.shop_id");
+        shopPermissionSql = CharSequenceUtil.isNotBlank(shopPermissionSql) ? shopPermissionSql : " and 1=1 ";
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sb2cd.warehouse_id");
+        warehousePermissionSql = CharSequenceUtil.isNotBlank(warehousePermissionSql) ? " and exists (select 1 from so_b2c_detail sb2cd where sb2c.id = sb2cd.main_id and sb2cd.is_deleted=FALSE " + warehousePermissionSql + ")" : " and 1=1 ";
+        return CharSequenceUtil.format(" {}  {}", shopPermissionSql, warehousePermissionSql);
+    }
 
     private PagingVO filterIsVirtualOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, Boolean isVirtualOutStock, boolean isFullyManaged) {
         List<AdvanceQueryDTO> advanceQueryDTOList = pagingParamDTO.getParams().getAdvanceQueryDTOList();
@@ -485,10 +497,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cTabEnum[] values = SoB2cTabEnum.values();
         List<Future<SoB2cDTO.TabListDTO>> futureList = new ArrayList<>();
         List<SoB2cDTO.TabListDTO> list = new ArrayList<>();
+        String permissionSql = getPermissionSql();
         for (SoB2cTabEnum item : values) {
             Future<SoB2cDTO.TabListDTO> submit = soB2cTabExecutorPool.submit(() -> {
                 SoB2cDTO.PagingParamDTO searchParamDTO = new SoB2cDTO.PagingParamDTO();
-                searchParamDTO.setPermissionSql(param.getPermissionSql());
+                searchParamDTO.setPermissionSql(permissionSql);
                 SoB2cDTO.TabListDTO resultDTO = new SoB2cDTO.TabListDTO();
                 String tabSql = soB2cQueryHandler.getTabSql(item.getCode());
                 HashMap<String,String> map = new HashMap<>();
