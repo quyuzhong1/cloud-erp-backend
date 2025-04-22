@@ -55,6 +55,7 @@ public class QcNoticeDetailExcelListener extends AnalysisEventListener<QcNoticeD
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
 
+
     }
 
     public List<QcNoticeDTO.QcNoticeDetailExportExcelDTO> getAllList(){

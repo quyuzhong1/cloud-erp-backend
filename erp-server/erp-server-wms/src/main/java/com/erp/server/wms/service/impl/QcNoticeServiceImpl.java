@@ -1,13 +1,17 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
@@ -16,6 +20,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.listener.QcNoticeDetailExcelListener;
 import com.erp.server.wms.mapper.QcNoticeMapper;
 import com.erp.server.wms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -37,6 +42,8 @@ import cn.hutool.core.collection.CollUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
@@ -45,6 +52,7 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_QC_NOTICE_REPORT;
@@ -729,9 +737,55 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     @Override
     public QcNoticeDTO.ImportDTO importFile(MultipartFile excelFile, HttpServletResponse response) {
+        QcNoticeDetailExcelListener excelListenerUtil = new QcNoticeDetailExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), QcNoticeDTO.QcNoticeDetailExportExcelDTO.class, excelListenerUtil).sheet(0).headRowNumber(1) .doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //导入数据处理
+        List<QcNoticeDTO.QcNoticeDetailExportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<QcNoticeDTO.QcNoticeDetailExportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        List<QcNoticeDetailDTO.AddDTO> resultList = new ArrayList<>();
 
+        if(CollUtil.isNotEmpty(successList)){
+            List<String> skuNoList = successList.stream().map(QcNoticeDTO.QcNoticeDetailExportExcelDTO::getSkuNo).collect(Collectors.toList());
+            List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
 
-        return null;
+            Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuNo, t -> t, (o1, o2) -> o1));
+
+            for (QcNoticeDTO.QcNoticeDetailExportExcelDTO excelDTO : successList) {
+                if(!skuMap.containsKey(excelDTO.getSkuNo())){
+                    excelDTO.setErrorMsg("SKU不存在");
+                    errorList.add(excelDTO);
+                }
+                SkuVO skuVO = skuMap.get(excelDTO.getSkuNo());
+                QcNoticeDetailDTO.AddDTO addDTO = new QcNoticeDetailDTO.AddDTO();
+                addDTO.setSkuId(skuVO.getSkuId());
+                addDTO.setSkuNo(skuVO.getSkuNo());
+                addDTO.setProductName(skuVO.getSkuName());
+                addDTO.setQcNoticeQty(Integer.parseInt(excelDTO.getQcNoticeQty()));
+                resultList.add(addDTO);
+            }
+        }
+
+        QcNoticeDTO.ImportDTO importDTO = new QcNoticeDTO.ImportDTO();
+        String url = "";
+        if (!CollectionUtils.isEmpty(errorList)) {
+            String fileName = "质检通知单明细错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, QcNoticeDTO.QcNoticeDetailExportExcelDTO.class);
+            if (!file.isDirectory()) {
+                url = FastDFSClientUtil.uploadFile(file, fileName);
+            }
+        }
+        importDTO.setSuccessList(resultList);
+        importDTO.setErrorUrl(url);
+        return importDTO;
     }
 
 
