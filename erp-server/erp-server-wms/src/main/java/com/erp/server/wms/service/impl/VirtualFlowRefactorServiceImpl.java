@@ -167,7 +167,6 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
                 .collect(Collectors.toList());
         // 等待所有任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        allocationVirtualFlowRefactorPool.shutdown();
     }
 
     /**
@@ -355,7 +354,6 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }, b2bVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        b2bVirtualFlowRefactorPool.shutdown();
 
     }
 
@@ -400,7 +398,6 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }, b2cVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        b2cVirtualFlowRefactorPool.shutdown();
     }
 
     /**
@@ -450,7 +447,6 @@ public class VirtualFlowRefactorServiceImpl implements VirtualFlowRefactorServic
         }, firstMileVirtualFlowRefactorPool)).collect(Collectors.toList());
         // 等待所有内层任务完成
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        firstMileVirtualFlowRefactorPool.shutdown();
     }
 
     /**
