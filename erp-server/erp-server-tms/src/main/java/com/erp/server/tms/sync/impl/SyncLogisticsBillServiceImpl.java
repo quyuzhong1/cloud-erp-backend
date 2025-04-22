@@ -127,6 +127,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         viewDto.setThirdUpdateTime(entity.getUpdateTime());
         viewDto.setDeliveryTime(entity.getDeliveryTime());
         viewDto.setOutstockCode(entity.getOutstockCode());
+        viewDto.setSignTime(logisticsBillDetailEntity.getSignTime());
 
         if (CharSequenceUtil.isBlank(supplierName)) {
         	viewDto.setLogisticCompanyName("无");
