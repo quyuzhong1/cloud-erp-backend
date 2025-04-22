@@ -37,7 +37,7 @@ public class PlatformOrderDetailDTO {
     /**
      * 平台skuId
      */
-    private String platformSkuId;
+    private String platformSkuId = "";
 
     /**
      * 平台产品id
