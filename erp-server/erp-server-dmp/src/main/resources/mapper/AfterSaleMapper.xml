@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.AfterSaleMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.AfterSaleEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="status" property="status" />
+       <result column="bill_date" property="billDate" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="thrid_user_id" property="thridUserId" />
+       <result column="thrid_type" property="thridType" />
+       <result column="platform_code" property="platformCode" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="buy_date" property="buyDate" />
+       <result column="address" property="address" />
+       <result column="fault_desc" property="faultDesc" />
+       <result column="repair_invoice_code" property="repairInvoiceCode" />
+       <result column="total_price" property="totalPrice" />
+       <result column="total_repair_amount" property="totalRepairAmount" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="invalid_remark" property="invalidRemark" />
+       <result column="invalid_time" property="invalidTime" />
+       <result column="remark" property="remark" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        afs.ID,
+	afs.create_user_id,
+	afs.create_user_name,
+	afs.create_time,
+	afs.update_user_id,
+	afs.update_user_name,
+	afs.update_time,
+	afs.VERSION,
+	afs.is_deleted,
+	afs.code,
+	afs.status,
+	afs.bill_date,
+	afs.approve_status,
+	afs.approve_time,
+	afs.approve_user_id,
+	afs.approve_user_name,
+	afs.thrid_user_id,
+	afs.thrid_type,
+	afs.platform_code,
+	afs.dict_platform,
+	afs.buy_date,
+	afs.address,
+	afs.fault_desc,
+	afs.repair_invoice_code,
+	afs.total_price,
+	afs.total_repair_amount,
+	afs.invalid_status,
+	afs.invalid_remark,
+	afs.invalid_time,
+	afs.remark
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.dmp.dto.AfterSaleDTO$ListDTO">
+        SELECT
+        afs.ID AS id,
+        afs.create_user_id AS createUserId,
+        afs.create_user_name AS createUserName,
+        afs.create_time AS createTime,
+        afs.update_user_id AS updateUserId,
+        afs.update_user_name AS updateUserName,
+        afs.update_time AS updateTime,
+        afs.VERSION AS version,
+        afs.is_deleted AS isDeleted,
+        afs.code AS code,
+        afs.status AS status,
+        afs.bill_date AS billDate,
+        afs.approve_status AS approveStatus,
+        afs.approve_time AS approveTime,
+        afs.approve_user_id AS approveUserId,
+        afs.approve_user_name AS approveUserName,
+        afs.thrid_user_id AS thridUserId,
+        afs.thrid_type AS thridType,
+        afs.platform_code AS platformCode,
+        afs.dict_platform AS dictPlatform,
+        afs.buy_date AS buyDate,
+        afs.address AS address,
+        afs.fault_desc AS faultDesc,
+        afs.repair_invoice_code AS repairInvoiceCode,
+        afs.total_price AS totalPrice,
+        afs.total_repair_amount AS totalRepairAmount,
+        afs.invalid_status AS invalidStatus,
+        afs.invalid_remark AS invalidRemark,
+        afs.invalid_time AS invalidTime,
+        afs.remark AS remark,
+        afsd.id AS detailId,
+        afsd.main_id AS mainId,
+        afsd.price AS price,
+        afsd.repair_amount AS repairAmount,
+        afsd.sku_id AS skuId,
+        afsd.sku_no AS skuNo,
+        afsd.prodcut_name AS prodcutName,
+        afsd.sku_qty AS skuQty,
+        afsd.detail_desc AS detailDesc,
+        tui.username AS thridUserName,
+        tui.nick_name AS nickName,
+        tui.phone_number AS phoneNumber
+        FROM
+            after_sale AS afs
+            left join after_sale_detail  AS afsd on afs.id = afsd.main_id and afsd.is_deleted =FALSE
+            left join thrid_user_info as tui on afs.thrid_user_id = tui.id and tui.is_deleted = FALSE
+        where
+            ${params.sqlMap.default}
+          AND afs.is_deleted = false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        afs.create_time DESC
+    </select>
+
+    <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
+        select approve_status, count(id) from after_sale where is_deleted = false group by approve_status
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.dmp.dto.AfterSaleDTO$ListDTO">
+
+    </select>
+    <select id="tabList" resultType="com.erp.model.dmp.dto.AfterSaleDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  after_sale
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+    <select id="getRepairProgress" resultType="com.erp.model.dmp.dto.AfterSaleProgressDTO$RepairRecordListDTO"
+            parameterType="com.erp.model.dmp.dto.AfterSaleDTO$ProgressDTO">
+        select
+            afs.id,
+            afsp.id as detailId,
+            afsp.node  ,
+            afsp.node_time  ,
+            afsp.track_no  ,
+            afsp.remark  ,
+            afsp.index
+        from
+            after_sale afs
+                left join after_sale_progress afsp on afs.id = afsp.main_id and afsp.is_deleted = FALSE
+        where
+            afs.is_deleted = false
+        <if test="params != null and params.code != null and params.code != ''">
+            and afs.code = #{params.code}
+        </if>
+        <if test="params != null and params.thridUserId != null and params.thridUserId != ''">
+            and afs.thrid_user_id = #{params.thridUserId}
+        </if>
+        order by index
+    </select>
+    <select id="getRepairHistory" resultType="com.erp.model.dmp.dto.AfterSaleProgressDTO$RepairHistoryListDTO"
+            parameterType="com.erp.model.dmp.dto.AfterSaleDTO$ThridUserDTO">
+        select
+        afs.id,
+        afs.code,
+        afs.status,
+        afs.update_time,
+        afs.remark
+        from
+        after_sale afs
+        where
+        afs.is_deleted = false
+        <if test="params != null and params.thridUserId != null and params.thridUserId != ''">
+            and afs.thrid_user_id = #{params.thridUserId}
+        </if>
+        order by afs.create_time desc
+    </select>
+
+</mapper>

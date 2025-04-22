@@ -2,10 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -14,6 +11,7 @@ import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
@@ -95,11 +93,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 打印拣货单预览
      *
      * @param ids
+     * @param isAddWave 是否添加波次
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.printPickingViewDTO>
      * @Author Luo_WG
      * @Date 2023/12/13 19:37
      **/
-    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids);
+    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids, boolean isAddWave);
 
     /**
      * 打印拣货单
@@ -435,6 +434,34 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return
      */
     BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds);
+
+    /**
+     * 打印条码列表展示
+     * @param ids
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids);
+
+    /**
+     * 打印sku条码确认
+     * @param dto
+     * @param response
+     */
+    void printSkuBarcodeConfirm(SoB2cDeliveryDTO.PrintSkuBarcodeConfirmDTO dto, HttpServletResponse response);
+
+    /**
+     * SKU打印完成
+     * @param idsDTO
+     * @return
+     */
+    ApiResult<?> printSkuBarcodeFinish(BaseIdsDTO.IdsDTO idsDTO);
+
+    /**
+     * 获取发货清单
+     * @param ids
+     * @return
+     */
+    List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
     /**
      * 查询b2c流水
      * @author will

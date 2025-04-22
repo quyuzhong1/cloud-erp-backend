@@ -584,6 +584,7 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setTradeCurrency(dto.getTradeCurrency());
         shopInfo.setEnableTime(dto.getEnableTime());
         shopInfo.setReturnWarehouse(dto.getReturnWarehouse());
+
         shopInfo.setBusinessModel(dto.getBusinessModel());
         String warehouseId = dto.getWarehouseId();
         if (StringUtils.isNotBlank(warehouseId)) {
@@ -1862,6 +1863,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             return Collections.emptyList();
         }
         return this.listByIds(shopIdList);
+    }
+
+    @Override
+    public List<ShopInfoEntity> listShopByName(List<String> shopNameList) {
+        if (CollUtil.isEmpty(shopNameList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(ShopInfoEntity::getName, shopNameList).list();
     }
 
     @Override

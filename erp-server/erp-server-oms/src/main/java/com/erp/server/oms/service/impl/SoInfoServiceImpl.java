@@ -61,7 +61,9 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -238,7 +240,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     private LogisticsFeign logisticsFeign;
 
     @Resource
-    private SysPartitionFeign sysPartitionFeign;
     private OmsPushMsgService omsPushMsgService;
 
     @Resource
@@ -246,6 +247,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Resource
     private SaleDemandFeign saleDemandFeign;
 
+    @Resource
+    private SysPartitionFeign sysPartitionFeign;
     /**
      * 添加销售订单
      *

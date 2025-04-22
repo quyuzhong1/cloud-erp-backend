@@ -41,6 +41,7 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 	@Override
 	protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(
 			List<Map<String, Object>> dmpInputMongoEntityList) {
+		this.beforeConvertData(dmpInputMongoEntityList);
 		parentDmpCfgInputConvertEntity = this.getMainConvertId();
 		parentServiceImpl = this.getServiceImpl(parentDmpCfgInputConvertEntity.getStorageName());
 		QueryWrapper<?> wrapper = new QueryWrapper<>();

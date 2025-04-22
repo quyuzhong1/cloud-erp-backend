@@ -343,6 +343,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     private String transactionSubType;
 
     /**
+     * 销售出库时间  来源：销售出库单的bill_date
+     */
+    @TableField("so_outstock_date")
+    private LocalDate soOutstockDate;
+
+    /**
      * 是否超范围派送，是：true  否：false
      */
     @TableField("is_out_of_range_delivery")
@@ -353,12 +359,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("is_over_estimated_ship_cost")
     private Boolean isOverEstimatedShipCost;
-
-    /**
-     * 销售出库时间  来源：销售出库单的bill_date
-     */
-    @TableField("so_outstock_date")
-    private LocalDate soOutstockDate;
 
     /**
      * 第三方编号

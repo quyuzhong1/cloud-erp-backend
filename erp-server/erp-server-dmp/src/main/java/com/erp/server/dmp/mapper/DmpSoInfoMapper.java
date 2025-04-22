@@ -1,4 +1,5 @@
 package com.erp.server.dmp.mapper;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
@@ -27,4 +28,8 @@ public interface DmpSoInfoMapper extends BaseMapper<DmpSoInfoEntity> {
                                               @Param("endTime") LocalDateTime endTime,
                                               @Param("sourceSystem") String sourceSystem,
                                               @Param("nextLevelId") String nextLevelId);
+    /**
+     *
+     */
+    List<AfterSaleDTO.DropDownDTO> listDetailByPlatformCode(@Param("platformCode") String platformCode);
 }

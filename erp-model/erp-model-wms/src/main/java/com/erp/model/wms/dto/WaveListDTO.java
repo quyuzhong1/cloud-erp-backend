@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.*;
@@ -38,6 +39,10 @@ public class WaveListDTO implements Serializable {
          * 波次类型
          */
         private String waveType;
+        /**
+         * 是否全托订单 是 true 否 false
+         */
+        private Boolean isFullyManaged;
     }
 
 
@@ -217,6 +222,22 @@ public class WaveListDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 是否全托管订单 是true 否false
+         */
+        private Boolean isFullyManaged;
+        /**
+         * SKU条码打印时间
+         */
+        private String skuBarcodePrintTime;
+        /**
+         * SKU条码打印状态
+         */
+        private String skuBarcodePrintStatus;
+        /**
+         * SKU条码打印状态名称
+         */
+        private String skuBarcodePrintStatusName;
     }
 
     @Data

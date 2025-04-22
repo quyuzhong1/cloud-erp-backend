@@ -66,10 +66,13 @@
                 wl.picking_time,
                 wl.print_time,
                 wl.is_out_stock,
+                wl.is_fully_managed,
                 wl.picking_print_status,
                 wl.picking_print_time,
                 sbdd.warehouse_id,
-                sbdd.warehouse_name
+                sbdd.warehouse_name,
+                wl.sku_barcode_print_status,
+                wl.sku_barcode_print_time
         from wave_list wl
         left join wave_list_detail wld on wl.id = wld.main_id and wld.is_deleted = false
         left join so_b2c_delivery sbd on sbd.id = wld.delivery_id and sbd.is_deleted = false

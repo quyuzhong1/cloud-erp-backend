@@ -71,6 +71,9 @@ public enum SettingEnum {
     //oms_shopify_hmac
     OMS_SHOPIFY_SECRET_KEY("secretKey","oms_shopify_hmac","HmacSHA256"),
     OMS_SHOPIFY_CLIENT_SECRET("clientSecret","oms_shopify_hmac","DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY"),
+
+    //after_sale
+    AFTER_SALSE_NODE("afterSaleNode","after_sale","售后维修节点"),
     ;
 
     @EnumValue

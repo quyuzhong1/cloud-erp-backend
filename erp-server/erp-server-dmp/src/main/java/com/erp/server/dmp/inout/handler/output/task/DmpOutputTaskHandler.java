@@ -209,6 +209,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 					if(!dmpOutputTaskRecordService.getById(dmpOutputTaskRecordEntity.getId()).getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode())) {
 						if(dmpOutputTaskRecordMergeService.mergeDeal(dmpCfgOutputEntity, dmpOutputTaskRecordEntity)) {
 							this.pushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
+							this.afterPushData(dmpCfgOutputEntity, dmpOutputTaskRecordEntity);
 						}
 					}
 
@@ -233,6 +234,8 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 	}
 	
 	protected abstract void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity);
+	
+	protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {}
 	
 	public void getRetryPushSourceData(List<DmpCfgInputConvertEntity> dmpCfgInputConvertEntityList , DmpOutputTaskRequest dmpOutputTaskRequest) {
 		DmpCfgInputConvertEntity dmpCfgInputConvertEntity = dmpCfgInputConvertEntityList.get(0);
@@ -274,7 +277,22 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			if(CollUtil.isNotEmpty(dmpCfgOutputBlackEntityList)) {
 				JSONObject parseObject = JSON.parseObject(JSON.toJSONString(object));
 				for(DmpCfgOutputBlackEntity dmpCfgOutputBlackEntity : dmpCfgOutputBlackEntityList) {
-					Object value = parseObject.get(dmpCfgOutputBlackEntity.getFieldName());
+					String fieldName = dmpCfgOutputBlackEntity.getFieldName();
+					if(StringUtils.isBlank(fieldName)) {
+						return false;
+					}
+					String[] fieldNameArr = fieldName.split("\\.");
+					if(fieldNameArr.length > 1) {
+						String className = fieldNameArr[0];
+						if(!object.getClass().getSimpleName().equalsIgnoreCase(className)) {
+							return false;
+						}
+					}
+					String key = fieldNameArr[fieldNameArr.length - 1];
+					if(StringUtils.isBlank(key)) {
+						return false;
+					}
+					Object value = parseObject.get(key);
 					if(this.validate(value, dmpCfgOutputBlackEntity)) {
 						return true;
 					}

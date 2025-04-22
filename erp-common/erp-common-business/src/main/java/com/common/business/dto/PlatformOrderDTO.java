@@ -240,6 +240,10 @@ public class PlatformOrderDTO extends UniqueDto {
      */
     private PlatformOrderReceiverDTO receiver;
 
+    /**
+     * 订单扩展表
+     */
+    private PlatformOrderExtendDTO extend;
 
     /**
      * 平台订单来源状态

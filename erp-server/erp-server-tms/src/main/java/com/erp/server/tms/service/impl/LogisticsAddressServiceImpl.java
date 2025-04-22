@@ -179,14 +179,10 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     }
 
     @Override
-    public List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId,String shopId) {
-        //根据类型和渠道ID查询地址
-        List<LogisticsAddressEntity> list=baseMapper.listByTypeAndChannelId(type,channelId);
-        List<LogisticsAddressEntity> shopAddressList=list.stream().filter(a->shopId.equals(a.getShopId())).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(shopAddressList)){
-             return shopAddressList;
-        }
-        return list.stream().filter(a->"all".equals(a.getShopId())).collect(Collectors.toList());
+    public List<LogisticsAddressEntity> listByTypeAndShopId(LogisticsAddressTypeEnum type, String shopId) {
+        return lambdaQuery().eq(LogisticsAddressEntity::getType, type)
+                .eq(LogisticsAddressEntity::getShopId, shopId)
+                .list();
     }
 
     @Override
@@ -222,7 +218,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
             return Collections.emptyList();
         }
         List<LogisticsAddressEntity> addressList =
-                this.lambdaQuery().select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName,LogisticsAddressEntity::getShopId)
+                this.lambdaQuery().select(LogisticsAddressEntity::getAddressId,LogisticsAddressEntity::getId,LogisticsAddressEntity::getName,LogisticsAddressEntity::getShopId)
                 .eq(LogisticsAddressEntity::getType,dto.getType())
                 .in(LogisticsAddressEntity::getShopId, dto.getShopIds())
                 .list();
