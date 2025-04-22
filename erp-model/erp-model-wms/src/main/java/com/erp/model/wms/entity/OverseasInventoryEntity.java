@@ -125,8 +125,8 @@ public class OverseasInventoryEntity extends BaseEntity<OverseasInventoryEntity>
     /**
      * 授权id
      */
-    @TableField("main_id")
-    private String mainId;
+    @TableField("overseas_provider_id")
+    private String overseasProviderId;
 
     public static final String WAREHOUSE_CODE = "warehouse_code";
 
