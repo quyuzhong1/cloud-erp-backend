@@ -175,7 +175,11 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      */
     @TableField("subcontract_type")
     private String subcontractType;
-
+    /**
+     * 供应商账户id
+     */
+    @TableField("supplier_account_id")
+    private String supplierAccountId;
     @Override
     public Serializable pkVal() {
         return null;
