@@ -441,7 +441,7 @@ public class ExportWmsFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             warehouseTableField = "opw.warehouse_id",
-            menuCode = "vms:overseasInventory:exportExcel",
+            menuCode = "wms:overseasInventory:exportExcel",
             tableAlias = "op")
     @WebAdvanceQuery(handler = OverseasInventoryQueryHandler.class)
     public PagingVO<OverseasInventoryDTO.ListDTO> exportOverseasInventory(@RequestBody PagingDTO<OverseasInventoryDTO.ExportDTO> dto) {
