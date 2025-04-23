@@ -133,6 +133,11 @@ public class DmpReturnInstockDTO implements Serializable {
         * 平台退货入库单号
         */
         private String platformReturnInstockCode;
+        
+        /**
+         * 平台退货订单号
+         */
+         private String platformOrderCode;
 
         /**
         * 唯一字段md5值
