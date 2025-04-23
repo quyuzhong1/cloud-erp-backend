@@ -127,6 +127,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
         //CfgInvoiceSettingEntity -> AddCompanyDTO
         AddCompanyDTO addCompanyDTO = invoiceSettingConverter.invoiceSettinToAddCompanyDTOTo(entity);
+        //username
+        addCompanyDTO.setUsername(addCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
         //调用TF
         String token = tfFiscalService.createCompany(addCompanyDTO);
         //更新token

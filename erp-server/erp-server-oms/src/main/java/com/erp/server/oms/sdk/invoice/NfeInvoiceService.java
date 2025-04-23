@@ -35,7 +35,6 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
@@ -90,8 +89,13 @@ public class NfeInvoiceService {
 
     @Resource
     private SoB2cFinanceService soB2cFinanceService;
-    @Autowired
+
+    @Resource
     private SoB2cService soB2cService;
+
+    @Resource
+    private ShopInfoService shopInfoService;
+
 
     @Transactional(rollbackFor = Exception.class)
     public void createInvoice(SoB2cEntity soB2cEntity) {
@@ -298,6 +302,13 @@ public class NfeInvoiceService {
         //查询发票税务信息
         List<InvoiceTaxEntity> invoiceTaxList = invoiceTaxService.listByListingIdList(listingIdList);
         Map<String, InvoiceTaxEntity> taxMap = invoiceTaxList.stream().collect(Collectors.toMap(InvoiceTaxEntity::getListingId, Function.identity()));
+
+        //店铺名称
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(shopInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92058);
+        }
+
         BigDecimal valorTotal = BigDecimal.ZERO;
         for (SoB2cDetailEntity detailEntity :detailList) {
             NfeInvoiceDTO.NfeItensDTO nfeItensDTO = new NfeInvoiceDTO.NfeItensDTO();
@@ -306,7 +317,7 @@ public class NfeInvoiceService {
             //税务信息
             InvoiceTaxEntity invoiceTaxEntity = CollUtil.isEmpty(listingInfoWithSkuMappingList) ? null : listingInfoWithSkuMappingList.stream().filter(obj -> ObjUtil.isNotEmpty(taxMap.get(obj.getListingId()))).map(obj -> taxMap.get(obj.getListingId())).findFirst().orElse(null);
             if (ObjUtil.isEmpty(invoiceTaxEntity)) {
-                throw new ServiceException(ApiError.ERROR_SKU_INVOICE_TAX_NOT_EXIST,detailEntity.getPlatformSkuNo(),soB2cEntity.getShopName());
+                throw new ServiceException(ApiError.ERROR_SKU_INVOICE_TAX_NOT_EXIST,detailEntity.getPlatformSkuNo(),shopInfoEntity.getName());
             }
             nfeItensDTO.setName(invoiceTaxEntity.getInvoiceProductName());
             nfeItensDTO.setSku(detailEntity.getPlatformSkuNo());
