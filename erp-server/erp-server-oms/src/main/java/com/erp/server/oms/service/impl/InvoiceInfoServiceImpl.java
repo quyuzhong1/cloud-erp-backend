@@ -509,42 +509,46 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if(entity.getUploadStatus().equals(InvoiceInfoUploadStatusEnum.UPLOADING.getCode())){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),"上传中不能上传发票");
         }
-        try {
-            uploadInvoice(entity,soB2cEntity);
-            entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
-            entity.setUploadTime(LocalDateTime.now());
-        }catch (Exception e){
-            entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
-            soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
-            log.error("上传发票失败",e);
-            return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("上传发票失败,{}",e.getMessage()));
+        //VAT发票
+        if (InvoiceInfoInvoiceTypeEnum.VAT.getCode().equals(entity.getInvoiceType())) {
+            try {
+                //VAT发票
+                uploadVatInvoice(entity,soB2cEntity);
+            } catch (Exception e){
+                entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOAD_FAILED.getCode());
+                soB2cEntity.setVatInvoiceStatus(SoB2cVatStatusEnum.UPLOAD_FAILURE.getCode());
+                return BatchResultDTO.fail(entity.getId(),entity.getCode(),StrUtil.format("上传发票失败,{}",e.getMessage()));
+            }
+            service.updateById(entity);
+            soB2cService.updateById(soB2cEntity);
+        } else if (InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(entity.getInvoiceType())) {
+           return uploadNfeInvoice(soB2cEntity, id);
         }
-        service.updateById(entity);
-        soB2cService.updateById(soB2cEntity);
         return BatchResultDTO.fail(entity.getId(),entity.getCode(),"上传发票成功");
     }
 
     /**
-     * 上传发票
-     * @author will
-     *
+     * 上传Vat发票
      * @date 2025/4/14 19:09
      * @param entity
      * @param soB2cEntity
      * @return void
      */
-    private void uploadInvoice (InvoiceInfoEntity entity,SoB2cEntity soB2cEntity) throws Exception{
+    private void uploadVatInvoice (InvoiceInfoEntity entity,SoB2cEntity soB2cEntity) throws Exception {
         //VAT发票
-        if (InvoiceInfoInvoiceTypeEnum.VAT.getCode().equals(entity.getInvoiceType())) {
-            String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity,entity.getFileUrl(),entity.getCode());
-            entity.setQueryId(feedId);
-            return;
-        }
-        service.uploadNfeInvoice(soB2cEntity,entity.getId());
+        String feedId = amazonUploadInvoiceService.uploadInvoice(soB2cEntity, entity.getFileUrl(), entity.getCode());
+        entity.setQueryId(feedId);
+        entity.setUploadStatus(InvoiceInfoUploadStatusEnum.UPLOADING.getCode());
+        entity.setUploadTime(LocalDateTime.now());
     }
 
     @Override
-    public void uploadNfeInvoice (SoB2cEntity soB2cEntity,String invoiceId) {
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO uploadNfeInvoice (SoB2cEntity soB2cEntity,String invoiceId) {
+        InvoiceInfoEntity invoiceInfoEntity = this.getById(invoiceId);
+        if (ObjUtil.isEmpty(invoiceInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NOT_EXIST);
+        }
         //上传nfe
         String uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
         try  {
@@ -555,6 +559,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         //更新上传状态
         this.updateInvoiceUploadStatus(invoiceId,uploadStatus);
+        //更新b2c上传状态
+        soB2cService.updateNfeInvoiceStatus(soB2cEntity.getId(), uploadStatus);
+
+        return BatchResultDTO.fail(invoiceInfoEntity.getId(),invoiceInfoEntity.getCode(),InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode().equals(uploadStatus) ? "上传发票成功" : "上传发票失败");
     }
 
     /**
