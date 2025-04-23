@@ -11,10 +11,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.Valid;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -102,6 +100,7 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * 门牌号
          */
+        @NotBlank(message = "门牌号不能为空")
         @Size(max = 50, message = "门牌号最大长度不能超过50位")
         private String doorplateNo;
 
@@ -141,8 +140,6 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * A1证书链接（必填）
          */
-        @NotBlank(message = "A1证书链接不能为空")
-        @Size(max = 255, message = "证书链接最大长度不能超过255位")
         private String certificateUrl;
 
         /**
@@ -155,15 +152,17 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * 附件地址
          */
-//        @NotBlank(message = "证书地址不能为空")
-        @Size(max = 100, message = "证书地址最大长度不能超过100位")
+        @NotEmpty(message = "证书地址列表不能为空")
+        @Size(max = 1, message = "最多只能上传1个附件地址")
+        @Valid
         private List<String> attachmentUrlList;
 
         /**
          * 附件名
          */
-//        @NotBlank(message = "证书名不能为空")
-        @Size(max = 100, message = "证书名最大长度不能超过100位")
+        @NotEmpty(message = "证书名列表不能为空")
+        @Size(max = 1, message = "最多只能上传1个附件名")
+        @Valid
         private List<String> attachmentNameList;
 
     }

@@ -70,5 +70,13 @@ public class OmsAttachmentDTO  implements Serializable {
          * 业务表id
          */
         private String businessId;
+
+
+        public UpdateDTO(String type, String attachUrl, String attachName, String businessId) {
+            this.type = type;
+            this.attachUrl = attachUrl;
+            this.attachName = attachName;
+            this.businessId = businessId;
+        }
     }
 }

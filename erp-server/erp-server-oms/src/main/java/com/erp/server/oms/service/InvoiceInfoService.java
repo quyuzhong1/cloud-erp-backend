@@ -9,6 +9,7 @@ import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.dto.InvoiceTaxDTO;
 import com.erp.model.oms.entity.InvoiceDetailEntity;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
@@ -65,6 +66,14 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
     void batchSave(List<InvoiceInfoEntity> addList, List<InvoiceDetailEntity> addDetailList);
 
     BatchResultDTO batchUploadInvoice(String id);
+    /**
+     * 上传nfe发票
+     * @author will
+     * @date 2025/4/21 09:45
+     * @param soB2cEntity
+     * @return void
+     */
+    BatchResultDTO uploadNfeInvoice (SoB2cEntity soB2cEntity,String invoiceId);
 
     Boolean export(InvoiceInfoDTO.PagingParamDTO dto);
 
@@ -173,13 +182,6 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @return void
      */
     void updateNfeStatusById(InvoiceInfoEntity invoiceInfoEntity);
-    /**
-     * 查询上传中的nfe发票
-     * @author will
-     * @date 2025/4/14 16:05
-     * @return void
-     */
-    void HandleUploadingNfeJob();
     /**
      * 根据soId查询最新的attach
      * @author will

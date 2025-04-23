@@ -27,6 +27,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.*;
@@ -85,6 +87,9 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             // 没查到name就用value兜底
             viewDTO.setPlatformName(valueNameMap.getOrDefault(dictPlatform, dictPlatform));
             List<CfgInvoiceSettingDetailDTO.DetailDTO> detailDTOS = BeanUtil.copyToList(details, CfgInvoiceSettingDetailDTO.DetailDTO.class);
+            detailDTOS.forEach(detail -> {
+                detail.setRatio(detail.getRatio().multiply(new BigDecimal("100")));
+            });
             viewDTO.setDetailDTOList(detailDTOS);
             viewDTOS.add(viewDTO);
         }
@@ -230,10 +235,10 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                 .collect(Collectors.toSet());
         // 将两种情况合并
         idsToDelete.addAll(idsWithChangedShopIdSet);
-        if (CollUtil.isNotEmpty(existingIds)) {
-            log.info("开始删除以下发票设置明细: {}", existingIds);
+        if (CollUtil.isNotEmpty(idsToDelete)) {
+            log.info("开始删除以下发票设置明细: {}", idsToDelete);
             boolean removed = this.lambdaUpdate()
-                    .in(CfgInvoiceSettingDetailEntity::getId, existingIds)
+                    .in(CfgInvoiceSettingDetailEntity::getId, idsToDelete)
                     .remove();
             if (!removed) {
                 throw new ServiceException("删除发票设置明细失败");
@@ -254,14 +259,14 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
         // 处理数据
         List<CfgInvoiceSettingDetailEntity> saveList = createList.stream()
                 .flatMap(item -> item.getDetailDTOList().stream()
-                        .filter(detail -> ObjectUtil.isEmpty(detail.getId()) || idsWithChangedShopIdSet.contains(detail.getId()))
+                        .filter(detail -> ObjectUtil.isEmpty(detail.getId()) || (ObjectUtil.isNotEmpty(idsWithChangedShopIdSet) && idsWithChangedShopIdSet.contains(detail.getId())))
                         .map(detail -> {
                             // 如果 id 在变更集合中，则置空
-                            if (idsWithChangedShopIdSet.contains(detail.getId())) {
+                            if (ObjectUtil.isNotEmpty(idsWithChangedShopIdSet) && idsWithChangedShopIdSet.contains(detail.getId())) {
                                 detail.setId(null);
                             }
-
                             CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(detail, CfgInvoiceSettingDetailEntity.class);
+                            entity.setRatio((entity.getRatio() == null ? BigDecimal.ZERO : entity.getRatio()).divide(new BigDecimal("100")));
                             entity.setDictPlatform(item.getPlatformValue());
                             return entity;
                         }))
@@ -287,6 +292,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                         .filter(detail -> ObjectUtil.isNotEmpty(detail.getId()))
                         .map(detail -> {
                             CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(detail, CfgInvoiceSettingDetailEntity.class);
+                            entity.setRatio((entity.getRatio() == null ? BigDecimal.ZERO : entity.getRatio()).divide(new BigDecimal("100"), RoundingMode.HALF_UP));
                             entity.setDictPlatform(item.getPlatformValue());
                             return entity;
                         }))

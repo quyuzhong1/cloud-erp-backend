@@ -32,17 +32,4 @@ public class InvoiceJob {
         return ReturnT.SUCCESS;
     }
 
-    /**
-     * 查询上传中的nfe发票
-     * @author will
-     * @date 2025/4/14 16:04
-     * @return ReturnT<String>
-     */
-    @XxlJob("HandleUploadingNfeJob")
-    public ReturnT<String> HandleUploadingNfeJob() {
-        XxlJobHelper.log("HandleUploadingNfeJob  执行开始");
-        invoiceInfoService.HandleUploadingNfeJob();
-        XxlJobHelper.log("HandleUploadingNfeJob  执行结束");
-        return ReturnT.SUCCESS;
-    }
 }

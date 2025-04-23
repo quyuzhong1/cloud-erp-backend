@@ -63,35 +63,12 @@ import java.util.*;
 @Component
 public class MercadoLocalSdkClientService {
 
-//    public static void main(String[] args) {
-//
-//        String accessToken = "APP_USR-5344160433223219-041005-6c3718c50d01369fb13ca5666d1ef4d5-2119968271";
-//        //组装授权url
-//        String url = MercadoConstant.URL;
-//        String path = "/orders/2000011159453786";
-//        StringBuffer sb = new StringBuffer();
-//        sb.append(url);
-//        sb.append(path);
-//        //入参
-//        //设置请求头
-//        Map<String, String> headerMap = new HashMap<>(1);
-//        headerMap.put("Authorization", "Bearer " +accessToken);
-////        headerMap.put("Content-Type", "application/xml");
-//
-//        //拉取数据
-//        ApiResult apiResult = new ApiResult();
-//        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), "", null, headerMap, RequestMethod.GET);
-//        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-//            System.out.println(apiResult.getData());
-//        }
-//
-//    }
     public static void main(String[] args) {
 
-        String accessToken = "APP_USR-5344160433223219-041104-82f2cf1f21e328ebc34a05503ea73c14-2119968271";
+        String accessToken = "APP_USR-5344160433223219-041806-588ef91706f1afe3e367873d31517ced-2119968271";
         //组装授权url
         String url = MercadoConstant.URL;
-        String path = "/shipments/{$SHIPMENT_ID}".replace("{$SHIPMENT_ID}","44665639687");
+        String path = "/orders/2000011159453786";
         StringBuffer sb = new StringBuffer();
         sb.append(url);
         sb.append(path);
@@ -99,7 +76,7 @@ public class MercadoLocalSdkClientService {
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(1);
         headerMap.put("Authorization", "Bearer " +accessToken);
-        headerMap.put("x-format-new", "true");
+//        headerMap.put("Content-Type", "application/xml");
 
         //拉取数据
         ApiResult apiResult = new ApiResult();
@@ -109,6 +86,29 @@ public class MercadoLocalSdkClientService {
         }
 
     }
+//    public static void main(String[] args) {
+//
+//        String accessToken = "APP_USR-5344160433223219-041806-588ef91706f1afe3e367873d31517ced-2119968271";
+//        //组装授权url
+//        String url = MercadoConstant.URL;
+//        String path = "/orders/{order_id}/billing_info".replace("{order_id}","2000011159453786");
+//        StringBuffer sb = new StringBuffer();
+//        sb.append(url);
+//        sb.append(path);
+//        //入参
+//        //设置请求头
+//        Map<String, String> headerMap = new HashMap<>(1);
+//        headerMap.put("Authorization", "Bearer " +accessToken);
+//        headerMap.put("x-version", "2");
+//
+//        //拉取数据
+//        ApiResult apiResult = new ApiResult();
+//        apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), "", null, headerMap, RequestMethod.GET);
+//        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+//            System.out.println(apiResult.getData());
+//        }
+//
+//    }
 
 
     private static RedisUtil redisUtil;
@@ -695,7 +695,7 @@ public class MercadoLocalSdkClientService {
         apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), param, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}", path, param, JSONUtil.toJsonStr(apiResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}",
+            throw new ServiceException(StrUtil.format("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}",
                     path, param, JSONUtil.toJsonStr(apiResult)));
         }
     }
