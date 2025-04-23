@@ -100,6 +100,8 @@ public enum SourceTypeEnum {
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
     SDY_SKU_MAPPING( "sdy_skuMapping", "sku映射","sku_mapping"),
     CFG_VAT_INVOICE( "cfgVatInvoice", "VAT发票设置","cfg_vat_invoice"),
+    SO_PRICE( "soPrice", "销售价目表","so_price"),
+    SO_PRICE_CHANGE( "soPriceChange", "销售调价表","so_price_change"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),

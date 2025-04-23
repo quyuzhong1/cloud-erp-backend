@@ -226,6 +226,22 @@ public class SoB2cDetailEntity extends BaseEntity<SoB2cDetailEntity> {
      */
     @TableField("third_detail_id")
     private String thirdDetailId;
+    /**
+     * 扩展的 值 当后续有需要扩展的类型的字段值存里面
+     */
+    @TableField("extend_data")
+    private String extendData;
+
+    /**
+     * 是否赠品：true/false
+     */
+    @TableField("is_gift")
+    private Boolean isGift;
+    /**
+     * 税率
+     */
+    @TableField("tax_rate")
+    private BigDecimal taxRate;
 
     public static final String MAIN_ID = "main_id";
 

@@ -368,4 +368,10 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @date: 2023/10/18 10:00
      */
     List<ShopInfoEntity> listAuthPlatform(List<String> platformDTO);
+    /**
+     * 根据店铺名称查询店铺信息
+     * @param shopNameList
+     * @return
+     */
+    List<ShopInfoEntity> listShopByName(List<String> shopNameList);
 }

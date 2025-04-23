@@ -229,8 +229,8 @@
         END AS NAME,
         oi.sale_return_in_transit_qty as saleReturnInTransitQty
         FROM overseas_inventory AS oi
-        LEFT JOIN overseas_provider_warehouse AS opw ON opw.platform_warehouse_code = oi.warehouse_code AND opw.is_deleted = FALSE AND opw.disabled =FALSE
-        LEFT JOIN overseas_provider AS op ON op.ID = opw.main_id AND op.is_deleted = FALSE
+        LEFT JOIN overseas_provider_warehouse AS opw ON opw.platform_warehouse_code = oi.warehouse_code AND oi.overseas_provider_id = opw.main_id AND opw.is_deleted = FALSE AND opw.disabled =FALSE
+        LEFT JOIN overseas_provider AS op ON op.ID = oi.overseas_provider_id AND op.is_deleted = FALSE
         LEFT JOIN (
         SELECT
         w.NAME AS warehouseName,
@@ -260,9 +260,9 @@
         COALESCE(SUM(oi.shipped_qty),0) as shippedQty
         FROM overseas_inventory as oi
         LEFT JOIN overseas_provider_warehouse as opw
-        on opw.platform_warehouse_code = oi.warehouse_code
+        on opw.platform_warehouse_code = oi.warehouse_code and oi.overseas_provider_id = opw.main_id and opw.is_deleted = false
         LEFT JOIN overseas_provider as op
-        on op.id = opw.main_id
+        on op.id = opw.main_id and op.is_deleted = false
         <where>
             <include refid="conditionSql"/>
         </where>

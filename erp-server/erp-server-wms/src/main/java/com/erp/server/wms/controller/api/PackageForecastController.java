@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.dto.PackageForecastDetailDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
@@ -27,9 +29,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.lang.reflect.Array;
+import java.util.*;
 
 /**
  * 组包预报表
@@ -213,8 +214,6 @@ public class PackageForecastController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
-
     /**
      * 上传组包预报
      *
@@ -224,23 +223,28 @@ public class PackageForecastController extends BaseController {
     @PostMapping("/upload")
     public ApiResult<List<BatchResultDTO>> upload(@RequestBody @Valid PackageForecastDTO.UploadDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
-            BatchResultDTO deleteResult;
-            try {
-                deleteResult = packageForecastService.upload(id, dto.getCollectMode(), dto.getCollectAddressId());
-            } catch (Exception e) {
-                log.error("组包预报上传消失败===>{}", e);
-                PackageForecastEntity entity = packageForecastService.getById(id);
-                if (Objects.isNull(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
-                    resultDTOS.add(deleteResult);
-                    continue;
+        if(dto.getDeliveryPlatform().equals(PlatformDictEnum.TIK_TOK_FULLY.getCode())){
+            BatchResultDTO batchResultDTO = packageForecastService.uploadTikTokFully(dto);
+            return batchResultDTO.getSuccess()?success(Collections.singletonList(batchResultDTO)):failure(Collections.singletonList(batchResultDTO));
+        }else{
+            for (String id : dto.getIds()) {
+                BatchResultDTO deleteResult;
+                try {
+                    deleteResult = packageForecastService.upload(id, dto.getCollectMode(), dto.getCollectAddressId());
+                } catch (Exception e) {
+                    log.error("组包预报上传消失败===>{}", e);
+                    PackageForecastEntity entity = packageForecastService.getById(id);
+                    if (Objects.isNull(entity)) {
+                        deleteResult = BatchResultDTO.fail(id, id, "组包预报单不存在, 上传失败");
+                        resultDTOS.add(deleteResult);
+                        continue;
+                    }
+                    deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 }
-                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+                resultDTOS.add(deleteResult);
             }
-            resultDTOS.add(deleteResult);
+            return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
         }
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -295,5 +299,49 @@ public class PackageForecastController extends BaseController {
     @PostMapping("/uploadLabel")
     public ApiResult<Boolean> uploadLabel(@RequestBody @Validated List<PackageForecastDTO.UploadFileDTO> uploadFileDTOList) {
         return success(packageForecastService.uploadFileDTO(uploadFileDTOList));
+    }
+
+    /**
+     * 获取物流类型
+     */
+    @GetMapping("/getLogisticsType")
+    public ApiResult<List<DictBasicDTO.DropDownDTO>> getLogisticsType(@RequestParam("dictPlatform") String dictPlatform,
+                                                                      @RequestParam("shopId") String shopId) {
+        return success(packageForecastService.getLogisticsType(dictPlatform,shopId));
+    }
+
+    /**
+     * 查询发货平台
+     *  TikTokFully -- tiktok全托管
+     *  TikTok -- tiktok线上
+     *  AliExpress --速卖通
+     */
+    @PostMapping("/getDeliveryPlatform")
+    public ApiResult<String> getDeliveryPlatform(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        return success(packageForecastService.getDeliveryPlatform(dto.getIds()));
+    }
+    /**
+     * 获取物流类型
+     */
+    @GetMapping("/getLogisticType")
+    public ApiResult<List<DictBasicDTO.DropDownDTO>> getLogisticType(@RequestParam String platform) {
+        return success(packageForecastService.getLogisticType(platform));
+    }
+
+    /**
+     * 查询可用物流商和预约日期
+     */
+    @PostMapping("/searchShippingProvider")
+    public ApiResult<PackageForecastDTO.ShippingProviderDTO> searchShippingProvider(@RequestBody @Valid PackageForecastDTO.SearchShippingProviderDTO dto) {
+        return success(packageForecastService.searchShippingProvider(dto));
+    }
+
+    /**
+     * 确认发货 只支持tiktok全托管商家自配业务
+     */
+    @PostMapping("/confirmDelivery")
+    public ApiResult<List<BatchResultDTO>> confirmDelivery(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = packageForecastService.confirmDelivery(dto.getIds());
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

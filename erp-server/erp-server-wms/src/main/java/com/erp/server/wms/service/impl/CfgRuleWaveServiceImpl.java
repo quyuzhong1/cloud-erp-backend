@@ -2,10 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -15,6 +13,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -27,6 +26,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
@@ -40,13 +40,13 @@ import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.mapper.CfgRuleWaveMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,32 +105,19 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
 
     @Resource
     private WaveListService waveListService;
-
-
-    @Resource
-    private CfgRulePickingService cfgRulePickingService;
-
-
     @Resource
     private PickingCartTypeService pickingCartTypeService;
 
     @Resource
     private CfgRuleWaveRecordService cfgRuleWaveRecordService;
-
-
-    @Resource
-    private InventoryTransCoreService inventoryTransCoreService;
-
     @Resource
     private WarehouseLocationReplenishService warehouseLocationReplenishService;
 
     @Resource
     @Lazy
     private CfgRuleWaveService cfgRuleWaveService;
-
-
     @Resource
-    private PickingListsService pickingListsService;
+    private ShopInfoFeign shopInfoFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -604,11 +591,26 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             throw new ServiceException(CharSequenceUtil.format("发货单【{}】未找到上游销售订单物流信息", soB2cDeliveryEntity.getCode()));
         }
         //销售订单买家信息
-        List<SoB2cReceiverEntity> receiverList = soB2cDataDTO.getReceiverList();
-        SoB2cReceiverEntity soB2cReceiverEntity = CollUtil.isEmpty(receiverList) ? null : receiverList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
-        if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
-            throw new ServiceException(CharSequenceUtil.format("发货单【{}】未找到上游销售订单买家信息", soB2cDeliveryEntity.getCode()));
+        String country = "";
+        if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(soB2cDeliveryEntity.getDictPlatform())){
+            String shopId = soB2cEntity.getShopId();
+            if (CharSequenceUtil.isBlank(shopId)) {
+                throw new ServiceException(CharSequenceUtil.format("发货单【{}】未找到上游销售订单店铺信息", soB2cDeliveryEntity.getCode()));
+            }
+            ShopInfoEntity shopInfoEntity = shopInfoFeign.getShopInfoById(shopId);
+            if (Objects.isNull(shopInfoEntity)) {
+                throw new ServiceException(CharSequenceUtil.format("发货单【{}】未找到上游销售订单店铺信息", soB2cDeliveryEntity.getCode()));
+            }
+            country = shopInfoEntity.getDictCountryCode();
+        }else {
+            List<SoB2cReceiverEntity> receiverList = soB2cDataDTO.getReceiverList();
+            SoB2cReceiverEntity soB2cReceiverEntity = CollUtil.isEmpty(receiverList) ? null : receiverList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), soB2cDeliveryEntity.getSourceId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cReceiverEntity)) {
+                throw new ServiceException(CharSequenceUtil.format("发货单【{}】未找到上游销售订单买家信息", soB2cDeliveryEntity.getCode()));
+            }
+            country =  soB2cReceiverEntity.getCountry();
         }
+
         List<Map<String, Object>> detailList = new ArrayList<>();
         for (SoB2cDeliveryDetailEntity detailEntity : deliveryDetailList) {
             Map<String, Object> detailMap = new HashMap<>();
@@ -623,7 +625,7 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
             //物流渠道
             detailMap.put(LOGISTICS_CHANNEL_ID, channelEntity.getId());
             //国家
-            detailMap.put(COUNTRY, Objects.nonNull(soB2cReceiverEntity) ? soB2cReceiverEntity.getCountry() : CharSequenceUtil.EMPTY);
+            detailMap.put(COUNTRY, country);
             //SKU
             detailMap.put(SKU_NO, detailEntity.getSkuNo());
             //包装尺寸长（cm）
@@ -655,8 +657,8 @@ public class CfgRuleWaveServiceImpl extends SuperServiceImpl<CfgRuleWaveMapper, 
         map.put(LOGISTICS_SUPPLIER_ID, logisticsSupplierId);
         Object logisticsChannelId = spElServer.getByField(LOGISTICS_CHANNEL_ID, detailList);
         map.put(LOGISTICS_CHANNEL_ID, logisticsChannelId);
-        Object country = spElServer.getByField(COUNTRY, detailList);
-        map.put(COUNTRY, country);
+        Object countryObj = spElServer.getByField(COUNTRY, detailList);
+        map.put(COUNTRY, countryObj);
         Object skuNo = spElServer.getByField(SKU_NO, detailList);
         map.put(SKU_NO, skuNo);
         Object length = spElServer.getByField(LENGTH, detailList);

@@ -887,6 +887,7 @@ public enum ApiError implements Serializable {
     ERROR_99116(99116,"只有待处理、非拦截中的发货单可以操作生成波次"),
 
     ERROR_99117(99117,"波次号和sku不能为空"),
+    ERROR_EXIST_FULLY_AND_NOT_FULLY_ORDER(99117,"存在托管订单和其他小包订单混合订单，请分开生成"),
     ERROR_99118(99118,"波次号和篮号不能为空"),
     ERROR_99119(99119,"波次号不能为空"),
     ERROR_99120(99120,"波次下不存在此sku"),
@@ -1032,17 +1033,22 @@ public enum ApiError implements Serializable {
     IS_NOT_MANUAL_DELIVERY(99152,"待处理、已发货、异常单、取消发货的数据不允许手动发货"),
     WALMART_PLATFORM_SHIP_ORDER_ERROR(99152,"平台发货失败，错误信息【{}】"),
     ERROR_PDF_MERGE(92115,"打印面单/配货单失败，合并PDF时出错"),
+    ERROR_PDF_MERGE_SKU_BARCODE(92115,"打印SKU条码失败，合并PDF时出错"),
     ERROR_PDF_SO_MERGE(92115,"打印面单失败，合并PDF时出错"),
     DELIVERY_NOT_COMBINATION_NOT_MACHINE(92116,"组合SKU不包含销售套装BOM，无需下推加工单"),
     IS_DELIVERY_NOT_UPDATE_MAPPING(92116,"已下推发货单，不允许修改发货信息"),
     PLATFORM_SHIP_ORDER_ERROR(92116,"平台【{}】，更新平台订单发货状态失败！,错误信息【{}】"),
     NOT_ADD_SO_B2C_DELIVERY(92117,"订单【{}】已生成过发货单，不可以重复新增！"),
     ORDER_IS_INTERCEPT_NOT_UPDATE(92118,"订单【{}】已发起拦截已被冻结，禁止变更状态"),
+    ORDER_IS_FULLY_MANAGEDT_NOT_UPDATE(92118,"全托管订单【{}】，无需标发"),
+    ORDER_IS_FULLY_MANAGED_NOT_PRINT(92118,"订单【{}】不是全托管订单，禁止打印SKU条码"),
+    ORDER_IS_FULLY_MANAGED_AND_B2C_NOT_PRINT(92118,"托管订单以及B2C订单不可同时打印"),
     SO_B2C_DELIVERY_STATUS_NOT_FALSE_DELIVERY(92119,"发货单【{}】状态手动标发，已发货的数据不允许操作手动标发"),
     APPROVE_IS_FALSE_DELIVERY(92120,"审核通过且待发货的订单允许手动标发"),
     DISTRIBUTION_IS_FALSE_DELIVERY(92120,"配货中存在渠道和物流号的订单允许手动标发"),
     LOGISTICS_NOT_SUBMIT_NOT_FALSE_DELIVERY(92121,"请申请物流单号后再提交手动标发"),
     STATUS_NOT_PRINT_PICKING(92122,"单据【{}】未生成波次，不允许操作"),
+    ERROR_NOT_IS_FULLY_MANAGED_ORDER(92122,"存在非全托管订单不能打印sku条码"),
     STATUS_NOT_PRINT_LABEL(92123,"单据【{}】取消发货单状态，不允许再打印标签"),
     TRANSFER_INFO_ERROR_NOT_CANCEL_PROCESS(92123,"关联的直接调拨单【{}】反审删除失败，无法撤销"),
     TRANSFER_INFO_CANCEL_PROCESS_ERROR(92123,"关联的直接调拨单【{}】撤销删除失败，无法撤销"),
@@ -1279,10 +1285,12 @@ public enum ApiError implements Serializable {
     ERROR_92058(92058,"店铺不存在"),
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
+    ERROR_SO_B2C_SPLIT_PRICE(92059, "未找到订单【{}】对应客户下SKU【{}】销售价格"),
     ERROR_SO_RETURN_DETAIL_SKU_NOT_EXIST(92060,"sku在销售退货单中未找到"),
     ERROR_SO_B2C_NOT_EXIST(92061,"未找到B2C销售订单"),
     ERROR_SO_B2C_LOGISTICS_NOT_EXIST(92062,"未找到B2C销售订单物流信息"),
     ERROR_SO_B2C_RECEIVER_NOT_EXIST(92062,"未找到B2C销售订单买家信息"),
+    ERROR_SO_B2C_EXTEND_NOT_EXIST(92062,"未找到B2C销售订单扩展信息"),
     ERROR_SO_B2C_HAND_DISTRIBUTION(92063,"只有待配货和配货中数据允许手动配货"),
     ERROR_SO_B2C_LOGISTICS_CODE(92064,"B2C销售订单【{}】渠道为空或者已有运输单号"),
     ERROR_SO_B2C_DETAIL_NOT_EXIST(92065,"未找到B2C销售订单明细信息"),
@@ -1336,6 +1344,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_RECEIVER_ADDRESS_NOT_NULL(92103,"买家信息地址不能全部为空"),
     ERROR_SO_PUSH_APPROVE_STATUS(92104,"销售订单【{}】未审核完成不支持下推"),
     ERROR_M_SKU_NOT_EXIST(92104,"系统不存在该平台产品，请确认产品已同步至系统后重试"),
+    ERROR_SO_B2C_PLATFORM_ORDER_STATUS_ERROR(92104, "全托管订单【{}】平台状态为已作废不能提交发货"),
 
     ERROR_COUNTRY_COUNT_SHOP_EXIST(92105,"系统已存在【{}】的亚马逊店铺"),
     ERROR_DUPLICATE_MAPPING_SKU_ID(92106,"产品SKU【{}】已在【{}】仓库绑定"),
@@ -1453,6 +1462,16 @@ public enum ApiError implements Serializable {
     ERROR_92172(92172,"退货通知单明细不能为空"),
     ERROR_92173(92173,"退货签收单明细不能为空"),
     ERROR_92174(92174,"退货入库单明细不能为空"),
+    ERROR_SO_PRICE_DATE(92175,"销售价目表SKU【{}】失效时间不可小于生效时间"),
+    ERROR_SO_PRICE_DATE_OVERLAP(92176,"销售价目表SKU【{}】时间区间重叠"),
+    ERROR_SO_PRICE_CHANGE_DATE(92177,"销售调价表SKU【{}】失效时间不可小于生效时间"),
+    ERROR_NOT_FOUND_SO_PRICE_DETAIL(98099,"未找到采购价目明细"),
+    ERROR_SO_PRICE_ID_REPEAT(98100,"请选择同一销售价目表下明细进行变更"),
+    ERROR_SO_ORDER_ID_REPEAT(98101,"请选择同一销售订单下明细进行变更"),
+    SO_ORG_NOT_REPEAT(98113,"只有相同的销售组织可以批量变更报价"),
+    ERROR_INTERVAL_CUSTOMER_OVERLAP(98047,"该客户SKU区间存在重叠，不可提交"),
+    ERROR_INTERVAL_CUSTOMER_CHANGE_OVERLAP(98048,"与该客户SKU变更区间存在重叠，不可提交"),
+    ERROR_SO_PRICE_INTERVAL_SIZE(98050,"SKU【{}】区间从值不能大于区间到值"),
     ERROR_92175(92175,"存在下游单据不允许作废"),
 
 
@@ -1622,8 +1641,7 @@ public enum ApiError implements Serializable {
 
     ERROR_99998(99998,"采购申请单【{}】下级SKU【{}】采购数量不能大于待申请数量"),
     ERROR_99999(99999, "参数错误"),
-    ERROR_END(1000000, "系统错误"),
-    ;
+    ERROR_END(1000000, "系统错误");
 
     public Integer code;
     public String msg;

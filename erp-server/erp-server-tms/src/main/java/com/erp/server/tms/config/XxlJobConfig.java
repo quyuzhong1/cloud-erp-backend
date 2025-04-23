@@ -47,7 +47,7 @@ public class XxlJobConfig {
     @Bean
     public XxlJobSpringExecutor xxlJobExecutor() {
         // 开发环境命名空间忽略注入
-        if (BusinessCommonConstants.DEV.equalsIgnoreCase(namespace)){
+        if (namespace.toLowerCase().startsWith(BusinessCommonConstants.DEV)){
             return null;
         }
         log.info(">>>>>>>>>>> xxl-job config init.");
