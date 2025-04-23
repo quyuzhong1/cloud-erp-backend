@@ -179,6 +179,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
         //调用TF
         UpdateCompanyDTO updateCompanyDTO = invoiceSettingConverter.invoiceSettinToUpdateCompanyDTOTo(cfgInvoiceSettingEntity);
+        updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
         tfFiscalService.updateCompany(updateCompanyDTO);
         //保存日志
         log.info("编辑 开始记录发票设置日志数据，id：【{}】", cfgInvoiceSettingEntity.getId());
