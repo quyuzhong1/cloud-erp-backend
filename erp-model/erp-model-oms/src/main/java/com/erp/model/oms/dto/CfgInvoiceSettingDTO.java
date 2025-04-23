@@ -100,6 +100,7 @@ public class CfgInvoiceSettingDTO implements Serializable {
         /**
          * 门牌号
          */
+        @NotBlank(message = "门牌号不能为空")
         @Size(max = 50, message = "门牌号最大长度不能超过50位")
         private String doorplateNo;
 

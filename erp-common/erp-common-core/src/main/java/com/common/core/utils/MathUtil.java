@@ -660,4 +660,13 @@ public class MathUtil {
         }
     }
 
+
+    //去掉符号和空格
+    public static String removeSignAndSpace(String str) {
+        if (str == null) {
+            return null;
+        }
+        // 去掉符号和空格
+        return str.replaceAll("[^\\d.]", "").replaceAll("\\s+", "");
+    }
 }

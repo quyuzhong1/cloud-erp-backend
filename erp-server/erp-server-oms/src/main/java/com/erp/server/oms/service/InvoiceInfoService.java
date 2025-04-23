@@ -73,7 +73,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param soB2cEntity
      * @return void
      */
-    void uploadNfeInvoice (SoB2cEntity soB2cEntity,String invoiceId);
+    BatchResultDTO uploadNfeInvoice (SoB2cEntity soB2cEntity,String invoiceId);
 
     Boolean export(InvoiceInfoDTO.PagingParamDTO dto);
 
