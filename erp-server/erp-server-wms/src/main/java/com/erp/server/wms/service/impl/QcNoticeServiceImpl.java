@@ -213,8 +213,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 list.add(new QcNoticeDTO.TabListDTO(code,QcNoticeStatusEnum.getByCode(code).getName(), 0));
             }
         }
-        list.add(new QcNoticeDTO.TabListDTO("all","全部", list.stream().mapToInt(QcNoticeDTO.TabListDTO::getCount).sum()));
-        // 计算合计数量
         return list;
     }
 
@@ -972,6 +970,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIdList);
         Map<String, String> warehouseMap = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
 
+        LocalDateTime nowTime = LocalDateTime.now();
         // 属性赋值
         for (QcNoticeDTO.ListDTO data : list) {
             //质检仓库
@@ -994,7 +993,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //上架状态 待上架:wait  部分上架：part  已上架：finish
             data.setPutawayStatusName(PutawayStatusEnum.getByCode(data.getPutawayStatus()).getName());
-
+            if(!data.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+                data.setQcTimeliness(this.getHoursDiff(data.getApproveTime(),nowTime));
+            }
         }
     }
 

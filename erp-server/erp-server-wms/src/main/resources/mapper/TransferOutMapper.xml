@@ -126,7 +126,7 @@
             tod.qty as outQty,
             t.out_warehouse_id as outWarehouseId,
             t.out_warehouse_name as outWarehouseName,
-            ti.id as outId,
+            ti.id as inId,
             ti.code as inCode,
             tid.qty as inQty,
             ti.out_warehouse_id as inWarehouseId,

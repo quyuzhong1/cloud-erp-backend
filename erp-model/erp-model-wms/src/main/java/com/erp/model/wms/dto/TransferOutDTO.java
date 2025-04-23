@@ -754,7 +754,11 @@ public class TransferOutDTO implements Serializable {
         /**
          *
          */
-        private String outId;
+        private String inId;
+        /**
+         *
+         */
+        private String inCode;
 
         /**
          *
