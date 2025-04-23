@@ -872,11 +872,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             Map<String, List<WmsAttachmentDTO.UpdateDTO>> listMap = attachmentList.stream().collect(Collectors.groupingBy(WmsAttachmentDTO.UpdateDTO::getBusinessId));
 
             for (QcNoticeDetailDTO.ViewDTO dto : detailList) {
-                List<WmsAttachmentDTO.UpdateDTO> updateDTOS = listMap.get(dto.getId());
-                List<String> imageUrls = updateDTOS.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
-                List<String> imageNames = updateDTOS.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
-                dto.setAttachNameList(imageNames);
-                dto.setAttachUrlList(imageUrls);
+                if(listMap.containsKey(dto.getId())){
+                    List<WmsAttachmentDTO.UpdateDTO> updateDTOS = listMap.get(dto.getId());
+                    List<String> imageUrls = updateDTOS.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+                    List<String> imageNames = updateDTOS.stream().map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+                    dto.setAttachNameList(imageNames);
+                    dto.setAttachUrlList(imageUrls);
+                }
+
             }
         }
     }
