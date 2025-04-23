@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 
@@ -45,4 +47,18 @@ public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSett
      * @return CfgInvoiceSettingDetailEntity
      */
     CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(@Param("dictPlatform")String dictPlatform,@Param("shopId") String shopId);
+
+
+    /**
+     * 查询发票设置详情，按平台分组，并在SQL中处理ratio乘以100
+     * @param mainId 主ID
+     * @param dictKey 字典Key
+     * @param platformValues 平台值列表
+     * @return 按平台分组的详情列表
+     */
+    List<CfgInvoiceSettingDetailDTO.ViewDTO> selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(
+            @Param("mainId") String mainId,
+            @Param("dictKey") String dictKey,
+            @Param("platformValues") List<String> platformValues
+    );
 }
