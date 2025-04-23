@@ -9,6 +9,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotEmpty;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -152,6 +153,8 @@ public interface QcNoticeService extends SuperService<QcNoticeEntity> {
     List<QcNoticeDTO.QcInfoView> generateQcInfoView(List<String> ids);
 
     void generateQcInfo(List<QcNoticeDTO.QcInfoView> dto);
+
+    int getHoursDiff(LocalDateTime approveTime, LocalDateTime nowTime);
 
     List<BatchResultDTO> cancelQcInfoFinish(List<String> detailIdList);
 

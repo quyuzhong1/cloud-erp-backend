@@ -11,7 +11,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.plm.vo.ProductVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
@@ -48,13 +47,10 @@ import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
-import javax.validation.Valid;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -651,7 +647,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         }
     }
 
-    private static int getHoursDiff(LocalDateTime approveTime, LocalDateTime nowTime) {
+    @Override
+    public int getHoursDiff(LocalDateTime approveTime, LocalDateTime nowTime) {
         // 计算两个时间点之间的分钟差
         long minutesDiff = Duration.between(approveTime, nowTime).toMinutes();
         // 处理分钟差的进位规则
@@ -745,9 +742,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
                 results.add(BatchResultDTO.fail(skuId, skuNo, String.format(ApiError.ERROR_92273.msg, noticeQty, inventoryQty)));
             }
-        }
-        if(results.size() == 0){
-            results.add(BatchResultDTO.success());
         }
         return results;
     }
