@@ -386,7 +386,7 @@ public class NfeInvoiceService {
         try {
              obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,e.getMessage());
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,e.getMessage());
         }
     }
 
