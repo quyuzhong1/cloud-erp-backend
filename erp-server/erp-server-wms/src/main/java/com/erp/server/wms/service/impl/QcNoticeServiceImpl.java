@@ -216,28 +216,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         return list;
     }
 
-//    @Override
-//    public void exportList(QcNoticeDTO.ExportDTO param, HttpServletResponse response) {
-//        List<QcNoticeDTO.ListDTO> list = this.baseMapper.listExport(param);
-//        if (CollUtil.isEmpty(list)) {
-//            return;
-//        }
-//        // 数据处理
-//        fillList(list);
-//
-//        // 导出数据
-//        StringBuffer sb = new StringBuffer();
-//        String excelPath = "excel/qcNotice.xlsx";
-//        String name = "质检通知单导出";
-//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//        sb.append(date).append(name);
-//        try {
-//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-//        } catch (Exception e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-//        }
-//    }
-
     @Override
     public void exportList(QcNoticeDTO.ExportDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("质检通知单导出", EXPORT_WMS_QC_NOTICE_REPORT.getCode(), param);
@@ -661,15 +639,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             List<QcNoticeDetailEntity> left = leftDetailMap.get(qcNoticeEntity.getId());
             boolean allMatch = left.stream().allMatch(e -> e.getQcStatus().equals(QcNoticeStatusEnum.FINISH.getCode()));
             LocalDateTime approveTime = qcNoticeEntity.getApproveTime();
+            // 求LocalDateTime nowTime 跟 LocalDateTime approveTime 时间差 。  精确到小时，不足30分钟时舍弃，大于等于30时进1
+            int hoursDiff = getHoursDiff(approveTime, nowTime);
+            qcNoticeEntity.setQcTImeliness(hoursDiff);
             if(allMatch){
-                // 求LocalDateTime nowTime 跟 LocalDateTime approveTime 时间差 。  精确到小时，不足30分钟时舍弃，大于等于30时进1
-                int hoursDiff = getHoursDiff(approveTime, nowTime);
                 qcNoticeEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
-                qcNoticeEntity.setQcTImeliness(hoursDiff);
             }else {
-                int hoursDiff = getHoursDiff(approveTime, nowTime);
                 qcNoticeEntity.setQcStatus(QcNoticeStatusEnum.PART.getCode());
-                qcNoticeEntity.setQcTImeliness(hoursDiff);
             }
             updateById(qcNoticeEntity);
         }
@@ -993,9 +969,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             //上架状态 待上架:wait  部分上架：part  已上架：finish
             data.setPutawayStatusName(PutawayStatusEnum.getByCode(data.getPutawayStatus()).getName());
-            if(!data.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
-                data.setQcTimeliness(this.getHoursDiff(data.getApproveTime(),nowTime));
-            }
+
+//            if(!data.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+//                data.setQcTimeliness(this.getHoursDiff(data.getApproveTime(),nowTime));
+//            }
         }
     }
 
