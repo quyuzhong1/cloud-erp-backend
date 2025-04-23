@@ -39,7 +39,8 @@
             md.sku_id,
             md.qty,
             md.reference_version as bomVersion,
-            md.source_detail_id as sourceDetailId
+            md.source_detail_id as sourceDetailId,
+            mi.source_type as sourceType
         from machine_info mi
         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false  and mi.invalid_status = false and mi.source_type = 'soDeliveryNotice'
         where mi.is_deleted = false
@@ -49,16 +50,17 @@
         </foreach>
         union all
         select
-        mi.id,
-        mi.code,
-        mi.approve_status,
-        mi.approve_time,
-        mi.source_id,
-        md.id as detailId,
-        md.sku_id,
-        md.qty,
-        md.reference_version as bomVersion,
-        mrs.so_detail_id as sourceDetailId
+            mi.id,
+            mi.code,
+            mi.approve_status,
+            mi.approve_time,
+            mi.source_id,
+            md.id as detailId,
+            md.sku_id,
+            md.qty,
+            md.reference_version as bomVersion,
+            mrs.so_detail_id as sourceDetailId,
+            mi.source_type as sourceType
         from machine_info mi
         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.invalid_status = false and mi.source_type = 'soInfo'
         inner join machine_ref_so mrs on mi.id = mrs.machine_id and md.id = mrs.machine_detail_id and mrs.is_deleted = false
