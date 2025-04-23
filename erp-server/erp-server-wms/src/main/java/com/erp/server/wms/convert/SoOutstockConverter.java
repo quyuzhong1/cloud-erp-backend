@@ -136,6 +136,7 @@ public interface SoOutstockConverter {
             @Mapping(target = "sourceDetailId", source = "platformSkuNo"),
             @Mapping(target = "soDetailId", source = "platformSkuNo"),
             @Mapping(target = "platformDetailId", source = "platformSkuNo"),
+            @Mapping(target = "remark", source = "remark"),
     })
     SoOutstockDetailDTO.AddDTO platformDetailToOutDetail(PlatformDeliveryDetailDTO deliveryDetailDTO);
 }
