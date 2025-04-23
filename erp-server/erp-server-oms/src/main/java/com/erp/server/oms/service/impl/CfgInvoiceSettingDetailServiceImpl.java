@@ -292,7 +292,7 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                         .filter(detail -> ObjectUtil.isNotEmpty(detail.getId()))
                         .map(detail -> {
                             CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(detail, CfgInvoiceSettingDetailEntity.class);
-                            entity.setRatio((entity.getRatio() == null ? BigDecimal.ZERO : entity.getRatio()).divide(new BigDecimal("100"), RoundingMode.HALF_UP));
+                            entity.setRatio((entity.getRatio() == null ? BigDecimal.ZERO : entity.getRatio()).divide(new BigDecimal("100")));
                             entity.setDictPlatform(item.getPlatformValue());
                             return entity;
                         }))
