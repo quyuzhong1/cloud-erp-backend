@@ -1,15 +1,12 @@
 package com.sdk.third.tf;
 
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
-import cn.hutool.http.HttpUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.entity.CfgSettingEntity;
@@ -25,6 +22,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -198,22 +201,8 @@ public class TfFiscalService {
      */
     public Object createInvoice(NfeInvoiceDTO.NfeCreateDTO nfeCreateDTO){
         String path = "/emitir_transparente";
-
-        HttpRequest createPost = HttpUtil.createPost(URL+path);
         String body = JSONUtil.toJsonStr(nfeCreateDTO);
-        createPost.body(body);
-        // 创建明确包含 Content-Type 的请求头
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type","application/json");
-        headers.put("Content-Length", String.valueOf(body.length()));
-        headers.put("Host", "tffiscal.com.br");
-        createPost.addHeaders(headers);
-        HttpResponse response = createPost.execute();
-        log.error("请求参数-body:{},响应结果-response:{}", body, response.body());
-        if (200 != response.getStatus() ) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,response.body());
-        }
-        return response.body();
+        return doPostUrl(URL + path, body);
     }
 
 
@@ -221,27 +210,13 @@ public class TfFiscalService {
      * 取消发票
      * @author will
      * @date 2025/4/11 12:12
-     * @param nfeCreateDTO
+     * @param nfeCancelDTO
      * @return Object
      */
-    public Object cancelInvoice(NfeInvoiceDTO.NfeCancelDTO nfeCreateDTO){
+    public Object cancelInvoice(NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO){
         String path = "/cancelar_nota";
-
-        HttpRequest createPost = HttpUtil.createPost(URL+path);
-        String body = JSONUtil.toJsonStr(nfeCreateDTO);
-        createPost.body(body);
-        // 创建明确包含 Content-Type 的请求头
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type","application/json");
-        headers.put("Content-Length", String.valueOf(body.length()));
-        headers.put("Host", "tffiscal.com.br");
-        createPost.addHeaders(headers);
-        HttpResponse response = createPost.execute();
-        log.error("请求参数-body:{},响应结果-response:{}", body, response.body());
-        if (200 != response.getStatus() ) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CANCEL,response.body());
-        }
-        return response.body();
+        String body = JSONUtil.toJsonStr(nfeCancelDTO);
+        return doPostUrl(URL + path, body);
     }
 
 
@@ -254,21 +229,8 @@ public class TfFiscalService {
      */
     public Object updateCceInvoice(NfeInvoiceDTO.NfeCceDTO nfeCceDTO){
         String path = "/corrigirCce_api";
-        HttpRequest createPost = HttpUtil.createPost(URL+path);
         String body = JSONUtil.toJsonStr(nfeCceDTO);
-        createPost.body(body);
-        // 创建明确包含 Content-Type 的请求头
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type","application/json");
-        headers.put("Content-Length", String.valueOf(body.length()));
-        headers.put("Host", "tffiscal.com.br");
-        createPost.addHeaders(headers);
-        HttpResponse response = createPost.execute();
-        log.error("请求参数-body:{},响应结果-response:{}", body, response.body());
-        if (200 != response.getStatus() ) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,response.body());
-        }
-        return response.body();
+        return doPostUrl(URL + path, body);
     }
 
     private String getAccessToken() {
@@ -302,5 +264,64 @@ public class TfFiscalService {
         companyDTO.setLastName(companyDTO.getName());
         companyDTO.setLandmark(jsonObject.getStr("landmark"));
         companyDTO.setAmbiente(jsonObject.getStr("ambiente"));
+    }
+
+    /**
+     * jdk原生数据请求
+     * @author will
+     * @date 2025/4/22 19:14
+     * @param postUrl
+     * @param jsonStr
+     * @return String
+     */
+    private static String doPostUrl (String postUrl,String jsonStr) {
+        // 读取响应体（成功或错误）
+        String responseBody = null;
+        try {
+            java.net.URL url = new URL(postUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(jsonStr.getBytes("UTF-8"));
+            }
+            // 获取响应码
+            int status = conn.getResponseCode();
+            System.out.println("Response Code: " + status);
+
+            // 读取响应体（成功或错误）
+            if (status >= 200 && status < 300) {
+                responseBody = readStream(conn.getInputStream());
+            } else {
+                String error = readStream(conn.getErrorStream());
+                throw new ServiceException(error);
+            }
+            System.out.println("Response Body: " + responseBody);
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage());
+        }
+        return responseBody;
+    }
+
+    /**
+     * 将 InputStream 转换为字符串
+     * @author will
+     * @date 2025/4/22 19:14
+     * @param inputStream
+     * @return String
+     */
+    private static String readStream(InputStream inputStream) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            return response.toString();
+        } catch (Exception e) {
+          throw new ServiceException(CharSequenceUtil.format("流转字符串失败，原因：{}",e.getMessage()));
+        }
     }
 }
