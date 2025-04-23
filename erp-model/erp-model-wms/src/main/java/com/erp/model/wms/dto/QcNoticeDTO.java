@@ -84,6 +84,10 @@ public class QcNoticeDTO implements Serializable {
         * 主键id
         */
         private String  id;
+        /**
+        * 主键id
+        */
+        private String  detailId;
 
         /**
         * 单据状态

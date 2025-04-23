@@ -81,17 +81,14 @@
         qnd.qc_status AS qcDetailStatus,
         qnd.qc_date AS qcDate,
         qnd.putaway_status AS putawayStatus,
-        qnd.putaway_date AS putawayDate,
-        qi.code  AS qcInfoCode
+        qnd.putaway_date AS putawayDate
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
-        LEFT JOIN qc_info as qi on qn.id = qi.source_id and qi.source_type = 'qcNotice'
         WHERE
         ${params.sqlMap.default}
         AND qn.is_deleted = FALSE
         AND qnd.is_deleted = FALSE
-        AND qi.is_deleted = FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
