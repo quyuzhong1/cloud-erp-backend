@@ -49,9 +49,11 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -294,6 +296,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             content = CharSequenceUtil.format("状态由【{}】变更为【{}】, 意见：{}", hisStatusName, approveStatus.getName(), baseApproveParamDTO.getComment());
             // TODO 审核通过流程
             this.updateInventoryTransCore(list);
+
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
             content = CharSequenceUtil.format("状态由【{}】变更为【{}】, 不通过原因：{}", hisStatusName, approveStatus.getName(), baseApproveParamDTO.getComment());
             // TODO 中止当前审批流程
