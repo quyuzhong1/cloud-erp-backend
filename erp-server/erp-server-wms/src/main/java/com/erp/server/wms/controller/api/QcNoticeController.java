@@ -7,6 +7,7 @@ import com.common.core.utils.ExcelUtil;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.enums.CfgReconciliationTypeEnum;
 import com.erp.model.wms.dto.QcNoticeDetailDTO;
+import com.erp.server.wms.query.QcNoticeQueryHandler;
 import com.erp.server.wms.query.RequisitionApplicationQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,7 +113,7 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:paging",
             tableAlias = "qn"
     )
-    @WebAdvanceQuery(handler = RequisitionApplicationQueryHandler.class)
+    @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
     public ApiResult<PagingVO<QcNoticeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<QcNoticeDTO.PagingParamDTO> dto) {
         return success(qcNoticeService.paging(dto));
     }
@@ -439,7 +440,7 @@ public class QcNoticeController extends BaseController {
             tableAlias = "qn"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检通知单导出Excel数据")
-    @WebAdvanceQuery(handler = RequisitionApplicationQueryHandler.class)
+    @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
     public void exportList(@RequestBody @Validated QcNoticeDTO.ExportDTO dto, HttpServletResponse response) {
         qcNoticeService.exportList(dto, response);
     }
