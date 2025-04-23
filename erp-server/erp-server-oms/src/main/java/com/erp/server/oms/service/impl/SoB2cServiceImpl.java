@@ -2279,7 +2279,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
 
-    private void updatePlatformStatus(SoB2cEntity entity, String status) {
+    @Override
+    public void updatePlatformStatus(SoB2cEntity entity, String status) {
         if (Objects.isNull(entity) ||  CharSequenceUtil.isBlank(status)){
             return;
         }
