@@ -716,11 +716,23 @@ public class PurchaseOrderDTO implements Serializable {
          * 含税金额合计
          */
         private BigDecimal totalAmount;
+        /**
+         * 含税金额合计 增加千分位分割
+         */
+        private String totalAmountStr;
 
         /**
          * 不含税金额合计
          */
         private BigDecimal totalNotTaxAmount;
+        /**
+         * 不含税金额合计 增加千分位分割
+         */
+        private String totalNotTaxAmountStr;
+        /**
+         * 不含税金额合计 中文大写
+         */
+        private String totalNotTaxAmountChinese;
 
         /**
          * 币别
