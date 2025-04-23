@@ -1,9 +1,6 @@
-package com.erp.server.oms.client;
+package com.sdk.oms.temu.dto;
 
-import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.experimental.Accessors;
 
 @Data
 public class TemuEntity {

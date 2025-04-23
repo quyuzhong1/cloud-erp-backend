@@ -1,18 +1,14 @@
-package com.erp.server.oms.client;
+package com.sdk.oms.temu.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
-import com.common.business.constant.UrlContant;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.utils.HttpCommonUtil;
-import io.netty.channel.ChannelOption;
-import io.netty.handler.timeout.ReadTimeoutHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
+import com.sdk.oms.temu.dto.TemuEntity;
+import com.sdk.oms.temu.util.EncryptionUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.OkHttpClient;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.test.web.servlet.RequestBuilder;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
@@ -23,7 +19,7 @@ import java.security.MessageDigest;
 import java.util.*;
 
 @Slf4j
-@Data
+@Component
 public class TemuClient {
 
     private static final String CONTENT_TYPE_HEADER_NAME = "Content-Type";
@@ -47,7 +43,7 @@ public class TemuClient {
 //美区
     private static final String APP_KEY = "ab3a401ed6c265793776aa3d4c48bd6f";
     private static final String APP_SECRET = "a05e0902cf9c1b3c372680e084f1d424332284fb";
-    private static final String ACCESS_TOKEN = "upsfmg4urc2tqviee1smfl2hk68fuunhf82lz4dn9ydqqwkmzubcvjjxzyo";
+    private static final String ACCESS_TOKEN = "upskffqpqmkoltggbfegqtbs7ghjaenvzwo9kbr1bt1ee5ypb0drvfh20ih";
 
     private WebClient webClient;
 
@@ -56,13 +52,43 @@ public class TemuClient {
 
 
     public static void main(String[] args) {
-        TemuEntity entity = new TemuEntity();
-        TemuClient temuClient = new TemuClient();
-        //非美区可以
-//        temuClient.getGoodList(entity);
+        String url = "http://40.118.250.12:7000/openapi/router";
+        String clientSecret = "a05e0902cf9c1b3c372680e084f1d424332284fb";
+        String clientId = "ab3a401ed6c265793776aa3d4c48bd6f";
 
-        //美区可以
-        temuClient.getOrderList(entity);
+        String token = "upskffqpqmkoltggbfegqtbs7ghjaenvzwo9kbr1bt1ee5ypb0drvfh20ih";
+        long timestamp = System.currentTimeMillis()/1000;
+        // 定义查询参数
+        Map<String, Object> params = new HashMap<>();
+        params.put("type", "bg.logistics.warehouse.list.get");
+        params.put("timestamp", timestamp);
+        params.put("app_key", clientId);
+        params.put("access_token", token);
+
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("content-type", "application/json");
+
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSignature(params, clientSecret);
+
+        //加入sign签名入参
+        params.put("sign", sign);
+
+        //拉取数据
+        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url , JSONUtil.toJsonStr(params),new HashMap<>(), headerMap, RequestMethod.POST);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("调用url={},入参params={}, TikTok查询发货选项失败，返回值 responseMap={}", url , params.toString(), JSONUtil.toJsonStr(apiResult));
+        }
+        System.out.println(apiResult);
+//        TemuEntity entity = new TemuEntity();
+//        TemuClient temuClient = new TemuClient();
+//        //非美区可以
+////        temuClient.getGoodList(entity);
+//
+//        //美区可以
+//        temuClient.getOrderList(entity);
     }
 
     public void getGoodList(TemuEntity entity ){
@@ -144,8 +170,8 @@ public class TemuClient {
         for (Map.Entry<String, Object> entry : obj.entrySet()) {
             if (entry.getValue() instanceof JSONObject) {
                 addParameters((JSONObject) entry.getValue(), sortedParams);
-            } else if (entry.getValue() instanceof java.util.List) {
-                java.util.List list = (java.util.List) entry.getValue();
+            } else if (entry.getValue() instanceof List) {
+                List list = (List) entry.getValue();
                 for (Object item : list) {
                     if (item instanceof JSONObject) {
                         addParameters((JSONObject) item, sortedParams);
