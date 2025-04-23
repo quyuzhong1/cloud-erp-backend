@@ -59,40 +59,11 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
 
     @Override
     public List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
-        ArrayList<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOS = new ArrayList<>();
-        //查询详情列表
-        List<CfgInvoiceSettingDetailEntity> entityList = baseMapper.selectList(new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>().eq(CfgInvoiceSettingDetailEntity::getMainId, dto.getId())
-                .eq(CfgInvoiceSettingDetailEntity::getIsDeleted, false).orderByDesc(CfgInvoiceSettingDetailEntity::getDictPlatform));
-        // 列表为空，第一次点击，返回平台情况即可
-        if (ObjectUtil.isEmpty(entityList)) {
-            return viewDTOS;
-        }
-        //按平台分组
-        Map<String, List<CfgInvoiceSettingDetailEntity>> groupedMap = entityList.stream()
-                .collect(Collectors.groupingBy(CfgInvoiceSettingDetailEntity::getDictPlatform));
-        //查询平台value对应
-        List<DictBasicDTO.ViewDTO> keyList = dictBasicService.getByKey(dto.getKey());
-        if (ObjectUtil.isNotEmpty(dto.getNames())) {
-            keyList = keyList.stream().filter(item -> ObjectUtil.isNotEmpty(dto.getNames()) && dto.getNames().contains(item.getValue()))
-                    .collect(Collectors.toList());
-        }
-        // 平台value => 平台name 映射
-        Map<String, String> valueNameMap = keyList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
-        // 遍历分组 map，封装返回结构
-        for (Map.Entry<String, List<CfgInvoiceSettingDetailEntity>> entry : groupedMap.entrySet()) {
-            String dictPlatform = entry.getKey();
-            List<CfgInvoiceSettingDetailEntity> details = entry.getValue();
-            CfgInvoiceSettingDetailDTO.ViewDTO viewDTO = new CfgInvoiceSettingDetailDTO.ViewDTO();
-            viewDTO.setPlatformValue(dictPlatform);
-            // 没查到name就用value兜底
-            viewDTO.setPlatformName(valueNameMap.getOrDefault(dictPlatform, dictPlatform));
-            List<CfgInvoiceSettingDetailDTO.DetailDTO> detailDTOS = BeanUtil.copyToList(details, CfgInvoiceSettingDetailDTO.DetailDTO.class);
-            detailDTOS.forEach(detail -> {
-                detail.setRatio(detail.getRatio().multiply(new BigDecimal("100")));
-            });
-            viewDTO.setDetailDTOList(detailDTOS);
-            viewDTOS.add(viewDTO);
-        }
+        List<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOS = baseMapper.selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(
+                dto.getId(),
+                dto.getKey(),
+                dto.getNames()
+        );
         return viewDTOS;
     }
 

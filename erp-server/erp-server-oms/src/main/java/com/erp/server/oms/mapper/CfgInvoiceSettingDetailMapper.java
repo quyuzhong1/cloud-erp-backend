@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 
@@ -45,4 +47,6 @@ public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSett
      * @return CfgInvoiceSettingDetailEntity
      */
     CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(@Param("dictPlatform")String dictPlatform,@Param("shopId") String shopId);
+
+    List<CfgInvoiceSettingDetailDTO.ViewDTO> selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(@NotBlank(message = "id不能为空") @Size(max = 19, message = "id最大长度不能超过19位") String id, @NotBlank(message = "key不能为空") String key, List<String> names);
 }
