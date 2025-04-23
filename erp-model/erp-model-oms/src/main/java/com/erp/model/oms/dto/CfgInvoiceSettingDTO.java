@@ -308,7 +308,7 @@ public class CfgInvoiceSettingDTO implements Serializable {
         private String certificatePassword;
 
         /**
-         * 循环拼接每个对象格式为'dictPlatform：name'，中间以'；'隔离
+         * name、value、
          */
         private List<ShopInfoDTO> shopList;
     }
