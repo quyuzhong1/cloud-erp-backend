@@ -36,7 +36,6 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -51,6 +50,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.common.core.utils.MathUtil.removeSignAndSpace;
 
 /**
  * Nfe发票上传
@@ -185,7 +186,6 @@ public class NfeInvoiceService {
      * @param soB2cEntity
      * @return void
      */
-    @Async
     public void uploadNfeInvoice (SoB2cEntity soB2cEntity) {
         //上传到平台
         MercadoInvoiceDTO mercadoInvoiceDTO = new MercadoInvoiceDTO();
@@ -251,7 +251,8 @@ public class NfeInvoiceService {
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
-
+        String newCep = CharSequenceUtil.isBlank(nfeClienteDTO.getCep()) ? "" : removeSignAndSpace(nfeClienteDTO.getCep());
+        nfeClienteDTO.setCep(newCep);
         //州（省份）二字码缩写
         List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
                 .eq(DictCityEntity::getCountryCode, "BR")
@@ -265,6 +266,8 @@ public class NfeInvoiceService {
         nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
         return nfeClienteDTO;
     }
+
+
 
     /**
      * 税务信息
