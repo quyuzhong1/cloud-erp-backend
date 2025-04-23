@@ -3,6 +3,7 @@ package com.erp.server.dmp.inout.handler.output.task.api;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -138,7 +139,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setTransaction_type("退货入库单");
     	        shudiyunB2cOrderDTO.setTransaction_sub_type("退货入库");
     	        shudiyunB2cOrderDTO.setBiz_status(returnInstockStatus);
-    	        shudiyunB2cOrderDTO.setStatus(dmpReturnInstockDetailEntity.getDataStatus());
+    	        shudiyunB2cOrderDTO.setStatus(dmpReturnInstockDetailEntity.getDetailStatus());
 
     	        shudiyunB2cOrderDTO.setSales_company_code(salesCompanyCode);
     	        shudiyunB2cOrderDTO.setReceiving_company_code(receivingCompanyCode);
@@ -232,4 +233,8 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	return result;
     }
 
+    @Override
+    protected List<String> getSourceCodeKeys() {
+    	return Arrays.asList("biz_no" , "sku_code");
+    }
 }

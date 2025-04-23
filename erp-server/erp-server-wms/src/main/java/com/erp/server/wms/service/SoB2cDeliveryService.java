@@ -469,4 +469,32 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
      */
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
+
+    /**
+     * 打印条码列表展示
+     * @param ids
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids);
+
+    /**
+     * 打印sku条码确认
+     * @param dto
+     * @param response
+     */
+    void printSkuBarcodeConfirm(SoB2cDeliveryDTO.PrintSkuBarcodeConfirmDTO dto, HttpServletResponse response);
+
+    /**
+     * SKU打印完成
+     * @param idsDTO
+     * @return
+     */
+    ApiResult<?> printSkuBarcodeFinish(BaseIdsDTO.IdsDTO idsDTO);
+
+    /**
+     * 获取发货清单
+     * @param ids
+     * @return
+     */
+    List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
 }

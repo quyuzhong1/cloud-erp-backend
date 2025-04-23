@@ -91,11 +91,6 @@ public class FullyManagedOrderController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "sb2cd.warehouse_id",
-            shopTableField = "sb2c.shop_id",
-            menuCode = "oms:fully:paging"
-    )
     public ApiResult<List<SoB2cDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(fullyManagedOrderService.fullyManagedTabList(dto));
     }
@@ -109,11 +104,6 @@ public class FullyManagedOrderController extends BaseController {
      * @date: 2023-08-18
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "sb2cd.warehouse_id",
-            shopTableField = "sb2c.shop_id",
-            menuCode = "oms:fully:paging"
-    )
     @WebAdvanceQuery(handler = FullyManagedQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDTO.PagingParamDTO> dto) {
         dto.getParams().setIsFullyManaged(Boolean.TRUE);

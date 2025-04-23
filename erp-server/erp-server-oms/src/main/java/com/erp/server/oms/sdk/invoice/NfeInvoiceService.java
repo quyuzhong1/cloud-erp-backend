@@ -250,7 +250,6 @@ public class NfeInvoiceService {
         List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
                 .eq(DictCityEntity::getCountryCode, "BR")
                 .eq(DictCityEntity::getType,"province")
-                .eq(DictCityEntity::getCodePt,nfeClienteDTO.getState())
                 .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "')")
                 .list();
         if (CollUtil.isEmpty(dictCityList)) {
