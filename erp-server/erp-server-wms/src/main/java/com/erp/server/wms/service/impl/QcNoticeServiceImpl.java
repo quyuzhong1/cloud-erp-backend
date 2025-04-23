@@ -938,6 +938,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             return;
         }
 
+        List<String> ids = list.stream().map(QcNoticeDTO.ListDTO::getId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        //
+        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIdsAndType(ids, SourceTypeEnum.QC_NOTICE.getCode());
+        Map<String, String> map = qcInfoEntities.stream().collect(Collectors.toMap(QcInfoEntity::getSourceDetailId, QcInfoEntity::getCode, (o1, o2) -> o1));
+
         List<String> qcWarehouseId = list.stream().map(QcNoticeDTO.ListDTO::getQcWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<String> putawayWarehouseId = list.stream().map(QcNoticeDTO.ListDTO::getPutawayWarehouseId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         qcWarehouseId.addAll(putawayWarehouseId);
@@ -970,6 +975,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //上架状态 待上架:wait  部分上架：part  已上架：finish
             data.setPutawayStatusName(PutawayStatusEnum.getByCode(data.getPutawayStatus()).getName());
 
+            data.setQcInfoCode(map.getOrDefault(data.getDetailId(), ""));
 //            if(!data.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
 //                data.setQcTimeliness(this.getHoursDiff(data.getApproveTime(),nowTime));
 //            }
