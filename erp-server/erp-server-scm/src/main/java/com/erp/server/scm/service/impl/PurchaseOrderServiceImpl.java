@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.convert.Convert;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
@@ -107,6 +108,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -770,7 +772,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         exportPdfDTO.setDeliveryWarehouseAddress(warehouseDTO.getAddress());
         exportPdfDTO.setDeliveryWarehouseTel(warehouseDTO.getContactTelNumber());
         exportPdfDTO.setDeliveryWarehouseContract(warehouseDTO.getContacts());
-
+        DecimalFormat df2 = new DecimalFormat("#,###.00");
+        DecimalFormat df4 = new DecimalFormat("#,###.0000");
         //明细物料信息
         List<PurchaseOrderDetailDTO.ExportPdfDTO> details = new ArrayList<>();
         for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
@@ -780,16 +783,32 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             detailDTO.setUnitName("个");
             //不含税单价（不含税价格=含税价格/（1+增值税税率））
             detailDTO.setPrice(MathUtil.divide(detailDTO.getTaxPrice(),MathUtil.add(BigDecimal.ONE,detailDTO.getTaxRate())));
-            detailDTO.setNotTaxPurchaseAmount(MathUtil.multiply(detailDTO.getPrice(),detailDTO.getPurchaseQty()));
+            //不含税单价 增加千分位分割
+            detailDTO.setPriceStr(df4.format(detailDTO.getPrice()));
+            //含税金额 增加千分位分割
+            detailDTO.setTaxPriceStr(df4.format(detailDTO.getTaxPrice()));
+            //不含税金额
+            detailDTO.setNotTaxPurchaseAmount(MathUtil.multiply(detailDTO.getPrice(),detailDTO.getPurchaseQty()).setScale(2, RoundingMode.HALF_UP));
+            //不含税金额 增加千分位分割
+            detailDTO.setNotTaxPurchaseAmountStr(df2.format(detailDTO.getNotTaxPurchaseAmount()));
+            //含税金额 增加千分位分割
+            detailDTO.setPurchaseAmountStr(df2.format(detailDTO.getPurchaseAmount()));
             detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }
         //含税金额合计
         BigDecimal totalAmount = details.stream().map(PurchaseOrderDetailDTO.ExportPdfDTO::getPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        exportPdfDTO.setTotalAmount(totalAmount);
+        //含税金额合计  增加千分位分割
+        exportPdfDTO.setTotalAmountStr(df2.format(totalAmount));
         //不含税金额合计
         BigDecimal totalNotTaxAmount = details.stream().map(PurchaseOrderDetailDTO.ExportPdfDTO::getNotTaxPurchaseAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
-        exportPdfDTO.setTotalAmount(totalAmount);
         exportPdfDTO.setTotalNotTaxAmount(totalNotTaxAmount);
+        //不含税金额合计  增加千分位分割
+        exportPdfDTO.setTotalNotTaxAmountStr(df2.format(totalNotTaxAmount));
+        //将totalNotTaxAmount转换为中文大写
+        String totalNotTaxAmountChinese = Convert.numberToChinese(totalNotTaxAmount.doubleValue(), true);
+        exportPdfDTO.setTotalNotTaxAmountChinese(totalNotTaxAmountChinese);
         exportPdfDTO.setCurrency(list.get(0).getCurrency());
         exportPdfDTO.setDetails(details);
         return exportPdfDTO;

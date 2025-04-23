@@ -1368,7 +1368,7 @@ public class SoB2cController extends BaseController {
      * @date: 2024-06-17
      */
     @PostMapping("/addGift")
-    public ApiResult<List<BatchResultDTO>> addGift(@RequestBody @Validated List<SoB2cDTO.GiftDTO> dtoList) {
+    public ApiResult<List<BatchResultDTO>> addGift(@RequestBody @Validated ValidList<SoB2cDTO.GiftDTO> dtoList) {
         Map<String, List<SoB2cDTO.GiftDTO>> collect = dtoList.stream().collect(Collectors.groupingBy(SoB2cDTO.GiftDTO::getId));
         List<BatchResultDTO> resultDTOS = new ArrayList<>(collect.size());
         List<String> ids = dtoList.stream().map(SoB2cDTO.GiftDTO::getId).distinct().collect(Collectors.toList());
@@ -1410,7 +1410,7 @@ public class SoB2cController extends BaseController {
      * @return
      */
     @PostMapping("/updateReceiverInfo")
-    public ApiResult<List<BatchResultDTO>> updateReceiverInfo(@RequestBody @Validated List<SoB2cReceiverDTO.UpdateBaseDTO> dtoList) {
+    public ApiResult<List<BatchResultDTO>> updateReceiverInfo(@RequestBody @Validated ValidList<SoB2cReceiverDTO.UpdateBaseDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         for (SoB2cReceiverDTO.UpdateBaseDTO dto : dtoList) {
             BatchResultDTO receiverResult;

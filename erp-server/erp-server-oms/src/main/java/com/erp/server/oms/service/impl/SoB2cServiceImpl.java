@@ -359,6 +359,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
     @Resource
     private AliExpressOrderService aliExpressOrderService;
     @Resource
@@ -573,7 +574,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (isFullyManagedOrder(dictPlatform)){
                 businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSBH);
             }else {
-                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             }
             soB2cEntity.setCode(businessNo);
         }
@@ -2277,6 +2278,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+
+    private void updatePlatformStatus(SoB2cEntity entity, String status) {
+        if (Objects.isNull(entity) ||  CharSequenceUtil.isBlank(status)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoB2cEntity::getId,entity.getId()).set(SoB2cEntity::getPlatformOrderStatus,status).update();
+        String msg = "销售订单【{}】平台订单状态由【{}】变更为【{}】";
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode(), entity.getPlatformOrderStatus(), status), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
+
+    }
 
     private void checkLogisticsParam(SoB2cEntity entity, SoB2cLogisticsEntity logisticsEntity) {
         String labelJson = entity.getLabelJson();
@@ -5494,6 +5505,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cLogisticsEntity> logisticsList = soB2cLogisticsService.listByMainIds(ids);
         List<String> channelIds = logisticsList.stream().map(SoB2cLogisticsEntity::getLogisticsChannelId).
                 filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(channelIds)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_NOT_EXIST);
+        }
         List<LogisticsChannelDTO.BaseDTO> channelList = logisticsFeign.listChannelInfoById(channelIds);
         List<String> notChannelInfoList = soB2cList.stream().filter(v -> {
             SoB2cLogisticsEntity logisticsEntity = logisticsList.stream().filter(t -> t.getMainId().equals(v.getId())).findFirst().orElse(new SoB2cLogisticsEntity());
@@ -9957,11 +9971,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO) {
         baseMapper.updateExtendData(id, JSONUtil.toJsonStr(extendDataDTO));
-    }
-
-    @Override
-    public void updatePlatformStatus(SoB2cEntity entity, String code) {
-
     }
 
     @Override

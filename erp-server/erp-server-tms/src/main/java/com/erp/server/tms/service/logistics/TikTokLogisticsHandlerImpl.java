@@ -184,7 +184,7 @@ public class TikTokLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
                 for (int attempt = 0; attempt <= maxRetries; attempt++) { // 包含初始请求+3次重试
                     try {
-                        base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl(), false);
+                        base64 = PdfUtil.convertPdfUrlToBase64(packageDocumentDTO.getData().getDocUrl(),false);
                         break; // 成功则跳出循环
                     } catch (Exception e) {
                         lastException = e;
