@@ -51,8 +51,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
             return;
         }
         //读取配置，初始化SDK
-        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERDIRECT.getCode());
-
+        KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFERIN.getCode());
 
         /**
          * 作废
