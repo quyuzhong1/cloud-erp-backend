@@ -695,7 +695,7 @@ public class MercadoLocalSdkClientService {
         apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), param, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
             log.error("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}", path, param, JSONUtil.toJsonStr(apiResult));
-            throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}",
+            throw new ServiceException(StrUtil.format("调用url={},入参params={}, 美客多上传发票数据失败，返回值 responseMap={}",
                     path, param, JSONUtil.toJsonStr(apiResult)));
         }
     }

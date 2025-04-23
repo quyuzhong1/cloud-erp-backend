@@ -12,7 +12,7 @@ public enum SoB2cNfeStatusEnum implements EnumMessage {
     INVOICE_FAILURE("invoiceFailure","开票失败"),
     NOT_NEED_INVOICE("notNeedInvoice","无需开票"),
     WAIT_UPLOAD("waitUpload","待上传"),
-    UPLOAD_FAILURE("uploadFailure","上传失败"),
+    UPLOAD_FAILURE("uploadFailed","上传失败"),
     UPLOAD_SUCCESS("uploadSuccess","已上传"),
     NOT_NEED_UPLOAD("notNeedUpload","无需上传"),
     ;
