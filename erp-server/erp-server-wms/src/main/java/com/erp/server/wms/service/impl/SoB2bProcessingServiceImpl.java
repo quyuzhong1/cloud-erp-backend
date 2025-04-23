@@ -214,16 +214,14 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
 
         //加工单
         SoB2bProcessingDTO.ResponseDTO machineResponseDTO = machineList.stream().filter(obj ->
-                        CharSequenceUtil.isNotBlank(entity.getDeliveryNoticeId())
-                        && CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId())
+                        (CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId()) || CharSequenceUtil.equals(obj.getSourceId(), entity.getSoId()))
                         && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
-                        &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
+                        &&  (CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId())) || CharSequenceUtil.equals(obj.getSourceId(), entity.getSoDetailId()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
             handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode());
             return;
         }
-
         //直接调拨单
         SoB2bProcessingDTO.ResponseDTO transferResponseDTO = transferList.stream().filter(obj ->
                                 CharSequenceUtil.isNotBlank(entity.getDeliveryNoticeId())

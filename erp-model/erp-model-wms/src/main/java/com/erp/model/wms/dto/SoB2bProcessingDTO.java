@@ -521,6 +521,10 @@ public class SoB2bProcessingDTO implements Serializable {
          * 来源id
          */
         private String sourceDetailId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**
