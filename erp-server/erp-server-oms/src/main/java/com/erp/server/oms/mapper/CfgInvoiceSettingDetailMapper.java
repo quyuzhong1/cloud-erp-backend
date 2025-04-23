@@ -6,8 +6,6 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import java.util.List;
 
 
@@ -21,14 +19,6 @@ import java.util.List;
  */
 @Mapper
 public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSettingDetailEntity> {
-    /**
-      * @description:查询发票设置明细关联的店铺（name、value）
-      * @author: hcg
-      * @date: 2025/4/9 14:46
-      * @param:
-      * @return: List<CfgInvoiceSettingDetailDTO.ViewDetailShop>
-      **/
-    List<CfgInvoiceSettingDetailDTO.ViewDetailShop> selectDetailShop();
 
     /**
      * 根据店铺id集合查询

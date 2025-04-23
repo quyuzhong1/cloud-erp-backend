@@ -94,11 +94,6 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     }
 
     @Override
-    public List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop() {
-        return baseMapper.selectDetailShop();
-    }
-
-    @Override
     public List<CfgInvoiceSettingDetailEntity> listByShopIdList(List<String> shopIdList) {
         return baseMapper.listByShopIdList(shopIdList);
     }
