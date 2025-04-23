@@ -364,7 +364,7 @@ public class QcNoticeController extends BaseController {
      * @param dto
      * @return ApiResult<QcNoticeDTO.ViewDTO>>
      */
-    @GetMapping("/generateQcInfoView")
+    @PostMapping("/generateQcInfoView")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:qcNotice:generateQcInfoView",
@@ -381,7 +381,7 @@ public class QcNoticeController extends BaseController {
      * @param dto
      * @return ApiResult<QcNoticeDTO.ViewDTO>>
      */
-    @GetMapping("/generateQcInfoFinish")
+    @PostMapping("/generateQcInfoFinish")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:qcNotice:generateQcInfo",
@@ -400,7 +400,7 @@ public class QcNoticeController extends BaseController {
      * @param dto
      * @return ApiResult<QcNoticeDTO.ViewDTO>>
      */
-    @GetMapping("/cancelQcInfoFinish")
+    @PostMapping("/cancelQcInfoFinish")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "wms:qcNotice:cancelQcInfoFinish",
