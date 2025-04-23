@@ -33,48 +33,82 @@
         <result column="certificate_password" property="certificatePassword" />
         <result column="token" property="token" />
     </resultMap>
-    <select id="paging" resultType="com.erp.model.oms.dto.CfgInvoiceSettingDTO$PagingViewDTO">
-                SELECT
-                cis.id,
-                cis.type as type,
-                cis.company_name as companyName,
-                cis.create_time as createTime,
-                cis.update_time as updateTime,
-                cis.update_user_name as updateUserName,
-                cis.lei_code as leiCode,
-                cis.disabled as disabled,
-                cis.tax_type as taxType,
-                cis.dict_company_type as dictCompanyType,
-                cis.state_tax_no as stateTaxNo,
-                cis.email as email,
-                cis.post_code as postCode,
-                cis.address as address,
-                cis.doorplate_no as doorplateNo,
-                cis.district as district,
-                cis.city as city,
-                cis.state as state,
-                cis.no as no,
-                cis.start_code as startCode,
-                cis.certificate_url as certificateUrl,
-                cis.certificate_password as certificatePassword
-                FROM cfg_invoice_setting AS cis
-                <if test="params.sqlMap.default!=null and params.sqlMap.default!='' and params.sqlMap.default.contains('cisd')">
-                   LEFT JOIN cfg_invoice_setting_detail AS cisd ON cis.ID = cisd.main_id and cisd.is_deleted = FALSE
-                </if>
-                WHERE ${params.sqlMap.default}
-                AND cis.is_deleted = FALSE
-                <!-- 权限 -->
-                <if test="params.permissionSql!=null and params.permissionSql!=''">
-                    ${params.permissionSql}
-                </if>
-                <if test="params.sqlMap.default!=null and params.sqlMap.default!='' and params.sqlMap.default.contains('cisd')">
-                    GROUP BY cis.id, cis.type, cis.company_name, cis.lei_code, cis.disabled
-                    , cis.tax_type, cis.dict_company_type, cis.state_tax_no, cis.email
-                    , cis.post_code, cis.address, cis.doorplate_no, cis.district, cis.city
-                    , cis.state, cis.no, cis.start_code, cis.certificate_url, cis.certificate_password
-                    , cis.create_time, cis.update_time, cis.update_user_name
-                </if>
-                ORDER BY
-                cis.create_time DESC
+
+
+    <resultMap id="pagingWithShopsResultMap" type="com.erp.model.oms.dto.CfgInvoiceSettingDTO$PagingViewDTO">
+        <id property="id" column="id" />
+        <result property="type" column="type" />
+        <result property="companyName" column="company_name" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="updateUserName" column="update_user_name" />
+        <result property="leiCode" column="lei_code" />
+        <result property="disabled" column="disabled" />
+        <result property="taxType" column="tax_type" />
+        <result property="dictCompanyType" column="dict_company_type" />
+        <result property="stateTaxNo" column="state_tax_no" />
+        <result property="email" column="email" />
+        <result property="postCode" column="post_code" />
+        <result property="address" column="address" />
+        <result property="doorplateNo" column="doorplate_no" />
+        <result property="district" column="district" />
+        <result property="city" column="city" />
+        <result property="state" column="state" />
+        <result property="no" column="no" />
+        <result property="startCode" column="start_code" />
+        <result property="certificateUrl" column="certificate_url" />
+        <result property="certificatePassword" column="certificate_password" />
+        <collection property="shopList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDTO$ShopInfoDTO">
+            <result property="name" column="shop_name" />
+            <result property="dictPlatform" column="dict_platform" />
+            <result property="dictPlatformName" column="dict_platform_name" />
+        </collection>
+    </resultMap>
+
+    <select id="pagingWithShops" resultMap="pagingWithShopsResultMap">
+        SELECT
+        cis.id,
+        cis.type,
+        cis.company_name,
+        cis.create_time,
+        cis.update_time,
+        cis.update_user_name,
+        cis.lei_code,
+        cis.disabled,
+        cis.tax_type,
+        cis.dict_company_type,
+        cis.state_tax_no,
+        cis.email,
+        cis.post_code,
+        cis.address,
+        cis.doorplate_no,
+        cis.district,
+        cis.city,
+        cis.state,
+        cis.no,
+        cis.start_code,
+        cis.certificate_url,
+        cis.certificate_password,
+        cisd.shop_id as shopId,
+        si.id AS shop_id,
+        si.name AS shop_name,
+        si.dict_platform,
+        db.name AS dict_platform_name
+        FROM
+        cfg_invoice_setting AS cis
+        LEFT JOIN
+        cfg_invoice_setting_detail AS cisd ON cis.id = cisd.main_id AND cisd.is_deleted = FALSE
+        LEFT JOIN
+        shop_info si ON cisd.shop_id = si.id AND si.is_deleted = FALSE
+        LEFT JOIN
+        dict_basic db ON si.dict_platform = db.value
+        WHERE
+        ${params.sqlMap.default}
+        AND cis.is_deleted = FALSE
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        cis.create_time DESC
     </select>
 </mapper>

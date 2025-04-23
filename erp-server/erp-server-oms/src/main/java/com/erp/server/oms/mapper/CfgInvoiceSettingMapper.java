@@ -28,5 +28,6 @@ public interface CfgInvoiceSettingMapper extends BaseMapper<CfgInvoiceSettingEnt
      * @param:
      * @return: IPage<CfgInvoiceSettingDTO.PagingViewDTO>
      **/
-    IPage<CfgInvoiceSettingDTO.PagingViewDTO> paging(@Param("query") Page<CfgInvoiceSettingDTO.PagingViewDTO> query, @Param("params") CfgInvoiceSettingDTO.PagingParamDTO params);
+    IPage<CfgInvoiceSettingDTO.PagingViewDTO> pagingWithShops(Page<CfgInvoiceSettingDTO.PagingViewDTO> page, @Param("params") CfgInvoiceSettingDTO.PagingParamDTO params);
+
 }
