@@ -62,19 +62,6 @@
         </collection>
     </resultMap>
 
-    <select id="selectDetailShop" resultType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$ViewDetailShop">
-        SELECT
-            cisd.main_id AS mainId,
-            si.name,
-            si.dict_platform
-        FROM
-            cfg_invoice_setting_detail cisd
-                LEFT JOIN
-            shop_info si ON cisd.shop_id = si.id and si.is_deleted = false
-        WHERE
-            cisd.is_deleted = FALSE;
-    </select>
-
     <!-- 根据店铺id集合查询 -->
     <select id="listByShopIdList" resultType="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
         select
