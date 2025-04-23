@@ -1,6 +1,8 @@
 package com.erp.server.dmp.push.service.business.impl;
 
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.KingdeeParamDTO;
@@ -8,11 +10,13 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastJsonUtil;
+import com.common.core.utils.MathUtil;
 import com.common.message.enums.ApiModuleTypeEnum;
 import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeTransferInConsumerService;
@@ -22,9 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +40,10 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
 
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
+    @Resource
+    private WmsTaskFeign wmsTaskFeign;
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -87,7 +93,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
      * @param map
      * @description: 作废
      * @author Will
-     * @date: 2023/5/24 17:57
+     * @date: 2025/4/23 17:57
      */
     public void operateInvalid (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map,String operate){
         //作废
@@ -101,7 +107,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
      * @param map
      * @description: 反审核
      * @author Will
-     * @date: 2023/5/24 17:57
+     * @date: 2025/4/23 17:57
      */
     public void operateDisapprove ( KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map){
         //反审核
@@ -116,7 +122,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
      * @param map
      * @description: 审核
      * @author Will
-     * @date: 2023/5/24 18:10
+     * @date: 2025/4/23 18:10
      */
     public void operateApprove (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map){
         //模块类型
@@ -160,7 +166,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, ApiModuleTypeEnum.TRANSFER_INFO.getCode());
+            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, ApiModuleTypeEnum.TRANSFER_IN.getCode());
         }
     }
 
@@ -169,7 +175,78 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
      */
     public void operateDelete(KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,String operate) {
         //删除
-        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.TRANSFER_INFO.getCode(),operate);
+        kingdeeCommonService.handleDelete(apiUtils,platformEntity,map,ApiModuleTypeEnum.TRANSFER_IN.getCode(),operate);
         return;
+    }
+
+
+
+    /**
+     * 新增
+     */
+    public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json,KingdeeParamDTO.SaveParamDTO param) {
+
+        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        if (isAdd) {
+            //给明细id赋值
+            JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
+            //更新明细id
+            updateKingdeeDetailId(jsonArray);
+        }
+        return  isAdd;
+    }
+
+    /**
+     * 给明细id赋值
+     * @Author Luo_WG
+     * @Date 2023/7/12 10:18
+     * @param apiUtils
+     * @param map
+     * @return cn.hutool.json.JSONArray
+     **/
+    public JSONArray setDetailIdForJSONObject (KingdeeApiUtils apiUtils,Map<String, Object> map) {
+
+        JSONArray list = JSONUtil.parseArray(map.get("list"));
+        String id = (String)map.get("syncKingdeeId");
+
+        LinkedList<String> queryFilters = new LinkedList<>();
+        queryFilters.add(String.format("FId = '%s'", id));
+        String filterStr = String.join(" and ", queryFilters);
+        //查询子单据id
+        String fieldKeys = "FSTKTRSOUTENTRY_FEntryID";
+        List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
+        if (CollectionUtils.isEmpty(queryList)) {
+            //错误日志
+            throw new ServiceException(ApiError.ERROR_NOT_EXIST_KINGDEE_DETAIL_ID);
+        }
+        JSONArray removeObj = new JSONArray();
+        JSONArray addObj = new JSONArray();
+        for (int i = 0; i < list.size(); i++) {
+            Object obj = list.get(i);
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            JSONObject newJson = new JSONObject(new LinkedHashMap<>());
+            if (list.size() >= queryList.size()) {
+                //金蝶明细id赋值
+                newJson.set("kingdeeDetailId",queryList.get(i).get("FSTKTRSOUTENTRY_FEntryID"));
+            }
+            newJson.putAll(jsonObject);
+            removeObj.set(obj);
+            addObj.set(newJson);
+        }
+        list.removeAll(removeObj);
+        list.addAll(addObj);
+        return list;
+    }
+
+
+    /**
+     * 更新明细id
+     */
+    public void updateKingdeeDetailId (JSONArray jsonArray) {
+        //更新业务单据状态
+        Map<String,Object> params = new HashMap<>(MathUtil.THREE);
+        params.put("code",ApiModuleTypeEnum.TRANSFER_IN.getCode().toString());
+        params.put("details",jsonArray);
+        wmsTaskFeign.updateBusinessSyncKingdeeStatus(params);
     }
 }

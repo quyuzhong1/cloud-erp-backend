@@ -149,5 +149,13 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
     List<TransferOutEntity> findByCodes(List<String> codes);
 
     PagingVO<TransferOutDTO.PagingViewDTO> exportTransferOut(PagingDTO<TransferOutDTO.ExportDTO> dto);
-
+    /**
+     *  更新明细金蝶id
+     * @author will
+     * @date 2025/4/23 17:46
+     * @param businessId
+     * @param syncKingdeeId
+     * @return void
+     */
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
 }

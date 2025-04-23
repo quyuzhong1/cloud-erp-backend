@@ -482,7 +482,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "删除");
             //删除明细
             transferInDetailService.removeByMainIdList(ids);
-
+            //推送金蝶
+            list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
         }
         return result;
     }
@@ -565,6 +566,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         lambdaUpdate().in(TransferInEntity::getId, ids).
                 set(TransferInEntity::getInvalidStatus, Boolean.TRUE).update();
+        //推送金蝶
+        list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_INVALID));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         String content = "作废了一个销售订单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "作废");
@@ -754,6 +757,14 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             item.setUnit(sku.getUnitName());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(TransferInEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferInEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
     }
 
     @Transactional(rollbackFor = Exception.class)

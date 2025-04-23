@@ -392,6 +392,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 删除主单数据
         log.info("删除 开始删除分步式调出单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
         super.removeByIds(ids);
+
+        //推送金蝶
+        list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -412,7 +415,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 .set(TransferOutEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(TransferOutEntity::getInvalidRemark, remark)
                 .update();
-
+        //推送金蝶
+        list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_INVALID));
         log.info("作废 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个分步式调出单【%s】，作废原因：".concat(remark), ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "作废操作");
@@ -597,6 +601,15 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         }
         return new PagingVO<>(page);
     }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(TransferOutEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferOutEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
+
 
     /**
      * 更新审核状态

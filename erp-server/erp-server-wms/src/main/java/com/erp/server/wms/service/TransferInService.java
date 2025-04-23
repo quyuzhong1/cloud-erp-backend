@@ -152,4 +152,13 @@ public interface TransferInService extends SuperService<TransferInEntity> {
     List<TransferInEntity> listBySourceIds(List<String> sourceIds);
 
     PagingVO<TransferInDTO.PagingViewDTO> exportTransferIn(PagingDTO<TransferInDTO.ExportDTO> dto);
+    /**
+     * 更新金蝶id
+     * @author will
+     * @date 2025/4/23 18:29
+     * @param businessId
+     * @param syncKingdeeId
+     * @return void
+     */
+    Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
 }

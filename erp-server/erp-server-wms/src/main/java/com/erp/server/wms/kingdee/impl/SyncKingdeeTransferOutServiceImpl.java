@@ -35,7 +35,6 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferOutService;
-import com.erp.server.wms.service.TransferInfoDetailService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -154,6 +153,9 @@ public class SyncKingdeeTransferOutServiceImpl implements SyncKingdeeTransferOut
         resultMap.put("transferDirection", entity.getTransferDirection());
         //备注
         resultMap.put("remark", entity.getRemark());
+
+        //在途归属
+        resultMap.put("transitOwner", entity.getTransitOwner());
 
         if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码

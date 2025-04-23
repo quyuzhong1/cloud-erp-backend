@@ -88,7 +88,7 @@ public class KingdeeTransferOutConsumerServiceImpl implements KingdeeTransferOut
      * @param map
      * @description: 作废
      * @author Will
-     * @date: 2023/5/24 17:57
+     * @date: 2025/4/23 17:57
      */
     public void operateInvalid (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map,String operate){
         //作废
@@ -102,7 +102,7 @@ public class KingdeeTransferOutConsumerServiceImpl implements KingdeeTransferOut
      * @param map
      * @description: 反审核
      * @author Will
-     * @date: 2023/5/24 17:57
+     * @date: 2025/4/23 17:57
      */
     public void operateDisapprove ( KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map){
         //反审核
@@ -117,7 +117,7 @@ public class KingdeeTransferOutConsumerServiceImpl implements KingdeeTransferOut
      * @param map
      * @description: 审核
      * @author Will
-     * @date: 2023/5/24 18:10
+     * @date: 2025/4/23 18:10
      */
     public void operateApprove (KingdeeApiUtils apiUtils,PlatformEntity platformEntity, Map<String, Object> map){
         //模块类型

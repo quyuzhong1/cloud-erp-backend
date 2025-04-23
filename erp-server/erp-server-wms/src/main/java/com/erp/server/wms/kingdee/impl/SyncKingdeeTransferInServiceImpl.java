@@ -34,7 +34,6 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInService;
-import com.erp.server.wms.service.TransferInfoDetailService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -96,7 +95,7 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
     private DmpPushTaskEntity saveTask (TransferInEntity entity, String operate, Map<String, Object> resultMap) {
     	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.TRANSFER_OUT.getCode())
+        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.TRANSFER_IN.getCode())
         		.eq(CfgSettingEntity::getType, settingEnum.getType())
         		.eq(CfgSettingEntity::getValue, "1")
         		.list();
@@ -105,9 +104,9 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
             DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
             dmpSyncTaskDTO.setSourceId(entity.getId());
             dmpSyncTaskDTO.setSourceCode(entity.getCode());
-            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.TRANSFER_IN.getCode());
             dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_TRANSFER_OUT_TAG.getName());
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_TRANSFER_IN_TAG.getName());
             dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
             dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
             dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
@@ -117,7 +116,7 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
         
         WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
         wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.KINGDEE.getCode());
-        wmsPushMsgEntity.setSourceType(SourceTypeEnum.TRANSFER_OUT.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.TRANSFER_IN.getCode());
         wmsPushMsgEntity.setSourceId(entity.getId());
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSyncOperate(operate);
