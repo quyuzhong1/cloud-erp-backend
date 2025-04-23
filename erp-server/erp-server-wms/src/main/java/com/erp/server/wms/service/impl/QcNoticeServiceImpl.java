@@ -743,9 +743,6 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 results.add(BatchResultDTO.fail(skuId, skuNo, String.format(ApiError.ERROR_92273.msg, noticeQty, inventoryQty)));
             }
         }
-        if(results.size() == 0){
-            results.add(BatchResultDTO.success());
-        }
         return results;
     }
 

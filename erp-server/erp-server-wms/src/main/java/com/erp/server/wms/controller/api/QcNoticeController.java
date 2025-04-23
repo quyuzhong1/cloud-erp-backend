@@ -422,7 +422,7 @@ public class QcNoticeController extends BaseController {
     @PostMapping("/checkInventory")
     public ApiResult<List<BatchResultDTO> > checkInventory(@RequestBody @Validated QcNoticeDTO.AddDTO dto) {
         List<BatchResultDTO>  resultDTOS = qcNoticeService.checkInventory(dto);
-        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+        return success(resultDTOS) ;
     }
 
     /**
