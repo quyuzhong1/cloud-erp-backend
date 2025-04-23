@@ -205,6 +205,7 @@ public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setName(shopInfo.getName());
         shopInfoDTO.setAccessToken(platformMercadoTokenDTO.getAccessToken());
         shopInfoDTO.setUserId(platformMercadoTokenDTO.getUserId());
+        shopInfoDTO.setSiteId(shopInfo.getBusinessModel());
         String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), shopId);
         redisUtil.set(tokenKey, shopInfoDTO, platformMercadoTokenDTO.getExpiresIn());
 
@@ -321,7 +322,7 @@ public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
         shopInfoDTO.setName("");
         shopInfoDTO.setUserId(platformMercadoRefreshTokenDTO.getUserId());
         shopInfoDTO.setAccessToken(accessToken);
-
+        shopInfoDTO.setSiteId(shopInfo.getBusinessModel());
         //设置缓存
         String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(), dto.getShopId());
         redisUtil.set(tokenKey, shopInfoDTO, expiresIn);
