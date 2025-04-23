@@ -544,6 +544,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void uploadNfeInvoice (SoB2cEntity soB2cEntity,String invoiceId) {
         //上传nfe
         String uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
@@ -555,6 +556,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         //更新上传状态
         this.updateInvoiceUploadStatus(invoiceId,uploadStatus);
+        //更新b2c上传状态
+        soB2cService.updateNfeInvoiceStatus(soB2cEntity.getId(), uploadStatus);
     }
 
     /**

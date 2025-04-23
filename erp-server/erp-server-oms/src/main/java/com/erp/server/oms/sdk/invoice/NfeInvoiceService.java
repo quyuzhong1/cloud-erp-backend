@@ -103,6 +103,9 @@ public class NfeInvoiceService {
         String remark = "";
         Object obj = null;
         String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
+        //配置信息
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+
         NfeInvoiceDTO.NfeCreateDTO createDTO = new NfeInvoiceDTO.NfeCreateDTO();
         try {
             createDTO.setEmailDev("gray@ulanzi.cn");
@@ -111,7 +114,6 @@ public class NfeInvoiceService {
             createDTO.setCliente(nfeClienteDTO);
             log.warn("地址信息已查询完成！");
             //税务信息
-            CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
             getNfeItensDTO(soB2cEntity,invoiceSettingDetail,createDTO);
             log.warn("税务信息已查询完成！");
             //token
@@ -152,7 +154,7 @@ public class NfeInvoiceService {
         uploadFile(invoiceInfoEntity.getId(),resultDTO.getLink_xml(),resultDTO.getLink_nota());
 
         //是否自动上传发票
-        if (CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
+        if (invoiceSettingDetail.getIsAutoUpload() && CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
             invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
         }
     }
@@ -377,9 +379,12 @@ public class NfeInvoiceService {
         //税务信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
         nfeCancelDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
-        Object obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
-        //上传
-        //uploadFile(obj);
+        Object obj;
+        try {
+             obj = tfFiscalService.cancelInvoice(nfeCancelDTO);
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_UPDATE_CCE,e.getMessage());
+        }
     }
 
     /**
@@ -405,7 +410,7 @@ public class NfeInvoiceService {
         NfeInvoiceDTO.NfeCceResultDTO resultDTO = new NfeInvoiceDTO.NfeCceResultDTO();
         try {
             //解析obj
-            resultDTO = BeanUtil.toBean(obj, NfeInvoiceDTO.NfeCceResultDTO.class);
+            resultDTO = JSONUtil.toBean(obj.toString(), NfeInvoiceDTO.NfeCceResultDTO.class);
         } catch (Exception e) {
             log.error("解析信息失败,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_JSON_HANDLE);
@@ -416,6 +421,10 @@ public class NfeInvoiceService {
         }
         //上传发票
         uploadFile(invoiceInfoEntity.getId(),resultDTO.getUrlXmlUpload(),"");
+        //是否自动上传发票
+        if (CharSequenceUtil.equals(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode(),soB2cEntity.getDictPlatform())) {
+            invoiceInfoService.uploadNfeInvoice(soB2cEntity,invoiceInfoEntity.getId());
+        }
     }
 
     /**
@@ -469,8 +478,6 @@ public class NfeInvoiceService {
        }
       omsAttachmentService.batchAddOrUpdate(addOrUpdateList);
     }
-
-
 
 }
 
