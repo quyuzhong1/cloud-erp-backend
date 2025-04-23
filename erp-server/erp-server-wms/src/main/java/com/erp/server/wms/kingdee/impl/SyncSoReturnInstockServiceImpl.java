@@ -412,6 +412,11 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         }
 
         viewDto.setPlatformReturnInstockCode(rootNodeNoInitial);
+        String platformOrderCode = entity.getPlatformOrderCode();
+        if(StringUtils.isBlank(platformOrderCode)) {
+        	platformOrderCode = rootNodeNoInitial;
+        }
+        viewDto.setPlatformOrderCode(platformOrderCode);
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
 
         if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {

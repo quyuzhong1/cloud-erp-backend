@@ -9,8 +9,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -20,8 +22,12 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockDetailEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockEntity;
+import com.erp.model.dmp.entity.DmpReturnInstockDetailEntity;
+import com.erp.model.dmp.entity.DmpReturnInstockEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpReturnInstockDetailService;
+import com.erp.server.dmp.service.DmpReturnInstockService;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -34,12 +40,19 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandler {
+	
+	@Autowired
+	private DmpReturnInstockService dmpReturnInstockService;
+	
+	@Autowired
+	private DmpReturnInstockDetailService dmpReturnInstockDetailService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
         Map<String, DmpReturnInstockEntity> dmpReturnInstockEntityMap = new HashMap<>();
         Map<String, List<DmpReturnInstockDetailEntity>> dmpReturnInstockDetailEntityMap = new HashMap<>();
+        Set<String> deleteIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
@@ -53,6 +66,9 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
                     for (BaseEntity v : value) {
                         DmpReturnInstockDetailEntity dmpSoOriginalDetailEntity = (DmpReturnInstockDetailEntity) v;
                         String mainId = dmpSoOriginalDetailEntity.getMainId();
+                        if("已删除".equals(dmpSoOriginalDetailEntity.getDataStatus())) {
+                        	deleteIds.add(mainId);
+                        }
                         List<DmpReturnInstockDetailEntity> list = dmpReturnInstockDetailEntityMap.get(mainId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
@@ -64,6 +80,18 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
             }
         }
 
+        if(CollUtil.isNotEmpty(deleteIds)) {
+        	List<DmpReturnInstockEntity> dbEntityList = dmpReturnInstockService.listByIds(deleteIds);
+        	for(DmpReturnInstockEntity dbEntity : dbEntityList) {
+        		dmpReturnInstockEntityMap.put(dbEntity.getId(), dbEntity);
+        	}
+        	List<DmpReturnInstockDetailEntity> dbDetailEntityList = dmpReturnInstockDetailService.lambdaQuery().in(DmpReturnInstockDetailEntity::getMainId, deleteIds).list();
+        	Map<String, List<DmpReturnInstockDetailEntity>> mainDbEntityMaps = dbDetailEntityList.stream().collect(Collectors.groupingBy(DmpReturnInstockDetailEntity::getMainId));
+        	for(Map.Entry<String, List<DmpReturnInstockDetailEntity>> mainDbEntityMap : mainDbEntityMaps.entrySet()) {
+        		dmpReturnInstockDetailEntityMap.put(mainDbEntityMap.getKey(), mainDbEntityMap.getValue());
+        	}
+        }
+        
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
         Set<String> changeIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
@@ -119,6 +147,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     		String shopNo = dmpReturnInstockEntity.getShopNo();
     		String shopName = dmpReturnInstockEntity.getShopName();
     		String platformReturnInstockCode = dmpReturnInstockEntity.getPlatformReturnInstockCode();
+    		String platformOrderCode = dmpReturnInstockEntity.getPlatformOrderCode();
     		
     		String returnInstockTimeFormat = null;
     		if(returnInstockTime != null) {
@@ -139,7 +168,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setTransaction_type("退货入库单");
     	        shudiyunB2cOrderDTO.setTransaction_sub_type("退货入库");
     	        shudiyunB2cOrderDTO.setBiz_status(returnInstockStatus);
-    	        shudiyunB2cOrderDTO.setStatus(dmpReturnInstockDetailEntity.getDetailStatus());
+    	        shudiyunB2cOrderDTO.setStatus(dmpReturnInstockDetailEntity.getDataStatus());
 
     	        shudiyunB2cOrderDTO.setSales_company_code(salesCompanyCode);
     	        shudiyunB2cOrderDTO.setReceiving_company_code(receivingCompanyCode);
@@ -153,7 +182,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
                 
 	            shudiyunB2cOrderDTO.setSettlement_currency_code(dmpReturnInstockDetailEntity.getSettlementCurrencyCode());
 
-    	        shudiyunB2cOrderDTO.setRoot_node_no(platformReturnInstockCode);
+    	        shudiyunB2cOrderDTO.setRoot_node_no(platformOrderCode);
     	        
     	        String skuNo = dmpReturnInstockDetailEntity.getSkuNo();
 				shudiyunB2cOrderDTO.setGoods_no(skuNo);
@@ -165,8 +194,12 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setSpec_no(spuNo);
 	            shudiyunB2cOrderDTO.setSpec_name(spuName);
 
-    	        shudiyunB2cOrderDTO.setIs_gift(dmpReturnInstockDetailEntity.getIsGift());
-    	        shudiyunB2cOrderDTO.setIs_comb(dmpReturnInstockDetailEntity.getIsComb());
+				shudiyunB2cOrderDTO.setIs_gift(dmpReturnInstockDetailEntity.getIsGift());
+    	        Integer isComb = dmpReturnInstockDetailEntity.getIsComb();
+    	        if(isComb == null) {
+    	        	isComb = 0;
+    	        }
+				shudiyunB2cOrderDTO.setIs_comb(isComb);
 	            shudiyunB2cOrderDTO.setSuite_no(dmpReturnInstockDetailEntity.getSuiteNo());
 	            shudiyunB2cOrderDTO.setSuite_name(dmpReturnInstockDetailEntity.getSuiteName());
 
@@ -188,7 +221,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setReturn_receipt_amount(dmpReturnInstockDetailEntity.getReturnInstockAmount());
 
     	        // 商品状态
-    	        shudiyunB2cOrderDTO.setGoods_status(dmpReturnInstockDetailEntity.getDataStatus());
+    	        shudiyunB2cOrderDTO.setGoods_status(dmpReturnInstockDetailEntity.getDetailStatus());
 
     	        LocalDateTime deliveryTime = dmpReturnInstockDetailEntity.getDeliveryTime();
     	        if (deliveryTime != null) {
@@ -207,7 +240,8 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     	        shudiyunB2cOrderDTO.setSku_name(skuName);
 
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
-    	        shudiyunB2cOrderDTO.setRoot_node_no_initial(platformReturnInstockCode);
+    	        shudiyunB2cOrderDTO.setRoot_node_no_initial(platformOrderCode);
+    	        shudiyunB2cOrderDTO.setParent_node_no(platformReturnInstockCode);
 
     	        
     	        // 国家编码

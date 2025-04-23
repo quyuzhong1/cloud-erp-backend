@@ -9,8 +9,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +24,8 @@ import com.erp.model.dmp.entity.DmpSoLogisticsDetailEntity;
 import com.erp.model.dmp.entity.DmpSoLogisticsEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
+import com.erp.server.dmp.service.DmpSoLogisticsDetailService;
+import com.erp.server.dmp.service.DmpSoLogisticsService;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -35,11 +39,18 @@ import lombok.extern.slf4j.Slf4j;
 @Scope("prototype")
 public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
 
+	@Autowired
+	private DmpSoLogisticsService dmpSoLogisticsService;
+	
+	@Autowired
+	private DmpSoLogisticsDetailService dmpSoLogisticsDetailService;
+	
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
         Map<String, DmpSoLogisticsEntity> dmpSoLogisticsEntityMap = new HashMap<>();
         Map<String, List<DmpSoLogisticsDetailEntity>> dmpSoLogisticsDetailEntityMap = new HashMap<>();
+        Set<String> deleteIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
@@ -53,6 +64,9 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
                     for (BaseEntity v : value) {
                         DmpSoLogisticsDetailEntity dmpSoOriginalDetailEntity = (DmpSoLogisticsDetailEntity) v;
                         String mainId = dmpSoOriginalDetailEntity.getMainId();
+                        if("已删除".equals(dmpSoOriginalDetailEntity.getDataStatus())) {
+                        	deleteIds.add(mainId);
+                        }
                         List<DmpSoLogisticsDetailEntity> list = dmpSoLogisticsDetailEntityMap.get(mainId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
@@ -62,6 +76,18 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
                     }
                 }
             }
+        }
+        
+        if(CollUtil.isNotEmpty(deleteIds)) {
+        	List<DmpSoLogisticsEntity> dbEntityList = dmpSoLogisticsService.listByIds(deleteIds);
+        	for(DmpSoLogisticsEntity dbEntity : dbEntityList) {
+        		dmpSoLogisticsEntityMap.put(dbEntity.getId(), dbEntity);
+        	}
+        	List<DmpSoLogisticsDetailEntity> dbDetailEntityList = dmpSoLogisticsDetailService.lambdaQuery().in(DmpSoLogisticsDetailEntity::getMainId, deleteIds).list();
+        	Map<String, List<DmpSoLogisticsDetailEntity>> mainDbEntityMaps = dbDetailEntityList.stream().collect(Collectors.groupingBy(DmpSoLogisticsDetailEntity::getMainId));
+        	for(Map.Entry<String, List<DmpSoLogisticsDetailEntity>> mainDbEntityMap : mainDbEntityMaps.entrySet()) {
+        		dmpSoLogisticsDetailEntityMap.put(mainDbEntityMap.getKey(), mainDbEntityMap.getValue());
+        	}
         }
 
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();

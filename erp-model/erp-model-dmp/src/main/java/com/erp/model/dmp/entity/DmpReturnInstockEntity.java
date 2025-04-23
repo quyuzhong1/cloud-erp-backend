@@ -120,6 +120,13 @@ public class DmpReturnInstockEntity extends BaseEntity<DmpReturnInstockEntity> {
     */
     @TableField("platform_return_instock_code")
     private String platformReturnInstockCode;
+    
+    /**
+     * 平台退货订单号
+     */
+     @TableField("platform_order_code")
+     private String platformOrderCode;
+    
     /**
     * 唯一字段md5值
     */

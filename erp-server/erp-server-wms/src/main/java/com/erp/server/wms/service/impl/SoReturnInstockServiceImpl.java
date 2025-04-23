@@ -845,16 +845,16 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<SoReturnInstockDetailEntity> soReturnInstockDetailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
         detailAllList.addAll(soReturnInstockDetailEntityList);
 
-        //删除详情表
-        soReturnInstockDetailService.delete(ids);
-        boolean flag = this.removeByIds(ids);
         //发送金蝶
         sendPushTask(entityList,SyncOperateEnum.OPERATE_DELETE.getCode());
 
         //推送数帝云
         this.syncToSdyHandler(entityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+        
+        //删除详情表
+        soReturnInstockDetailService.delete(ids);
         //删除主表
-        return flag;
+        return this.removeByIds(ids);
     }
 
     @Override
