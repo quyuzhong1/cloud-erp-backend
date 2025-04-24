@@ -337,6 +337,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
                     //税务信息
                     InvoiceTaxDTO.UpdateDTO invoiceTaxUpdateDTO = BeanUtil.toBean(skuMappingImportExcelDTO, InvoiceTaxDTO.UpdateDTO.class);
                     invoiceTaxUpdateDTO.setListingId(listingInfoEntity.getId());
+                    invoiceTaxUpdateDTO.setDictOrigin(dictOrigin);
                     invoiceTaxList.add(invoiceTaxUpdateDTO);
                 }
                 return;
