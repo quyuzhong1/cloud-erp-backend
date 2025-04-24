@@ -29,6 +29,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -703,6 +704,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
+    boolean isFullyManagedOrder(String platform);
+
     /**
      * 根据订单拆分sku
      */
@@ -1070,4 +1073,34 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return void
      */
     void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
+
+    /**
+     * 根据销售订单id和平台获取分区id
+     * @param soId
+     * @param platform
+     * @return
+     */
+    String getPartitionId(String soId, String platform);
+
+    /**
+     * 根据条件查询销售订单
+     * @param billStatusList
+     * @param platformStatusList
+     * @param platformList
+     * @return
+     */
+    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList);
+
+    /**
+     * 根据主表更新扩展字段
+     * @param id
+     * @param extendDataDTO
+     */
+    void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
+
+    /**
+     * 根据物流id标识是否匹配渠道规则
+     * @param dto
+     */
+    void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto);
 }

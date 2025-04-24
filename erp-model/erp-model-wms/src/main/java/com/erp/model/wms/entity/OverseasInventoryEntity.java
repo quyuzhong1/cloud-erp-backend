@@ -122,7 +122,11 @@ public class OverseasInventoryEntity extends BaseEntity<OverseasInventoryEntity>
     @TableField("sale_return_in_transit_qty")
     private Integer saleReturnInTransitQty;
 
-
+    /**
+     * 授权id
+     */
+    @TableField("overseas_provider_id")
+    private String overseasProviderId;
 
     public static final String WAREHOUSE_CODE = "warehouse_code";
 

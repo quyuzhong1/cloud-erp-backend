@@ -114,7 +114,7 @@ public class AsyncServiceImpl implements AsyncService {
     public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag, boolean hasNotOutstock) {
         try {
             // 根据提交平台唯一key幂等提交
-            submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey,hasNotOutstock);
+            asyncService.submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey,hasNotOutstock);
         } catch (Exception e) {
             log.error("【{}】销售单【{}】 标记发货失败 >>>错误信息{}", businessDesc, soCode, ExceptionUtil.stacktraceToString(e));
             // 独立异常

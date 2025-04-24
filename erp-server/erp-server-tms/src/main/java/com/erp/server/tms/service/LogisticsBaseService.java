@@ -88,4 +88,9 @@ public interface LogisticsBaseService {
      * @param authMap
      */
     void syncLogisticsAddress(Map<String, String> authMap);
+
+    /**
+     * TikTok全托管同步物流地址
+     */
+    void syncTikTokLogisticsAddress(String shopId);
 }

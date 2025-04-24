@@ -9,6 +9,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
+import com.erp.model.scm.dto.AttachmentDTO;
 import com.erp.server.oms.mapper.OmsAttachmentMapper;
 import com.erp.server.oms.service.OmsAttachmentService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
 /**
@@ -150,6 +152,15 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
         this.remove(queryWrapper);
     }
 
+
+    /**
+     * 根据业务表id 集合删除
+     *
+     * @param businessIdList
+     * @return void
+     * @author yl
+     * @date 2023-03-20 11:52
+     */
     @Override
     public void deleteByBusinessIds(List<String> businessIdList) {
         if (CollectionUtils.isNotEmpty(businessIdList)) {
@@ -163,4 +174,24 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
         }
     }
 
+
+
+    /**
+     * 根据业务表id 获取附件信息
+     *
+     * @param businessId
+     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     * @author yl
+     * @date 2023-03-27 9:37
+     */
+    @Override
+    public List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId) {
+        LambdaQueryWrapper<OmsAttachmentEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(OmsAttachmentEntity::getBusinessId, businessId);
+        List<OmsAttachmentEntity> list = this.list(queryWrapper);
+        if (CollectionUtils.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
+    }
 }

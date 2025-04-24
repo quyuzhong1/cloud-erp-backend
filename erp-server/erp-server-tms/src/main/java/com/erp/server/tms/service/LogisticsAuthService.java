@@ -156,7 +156,7 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @param logisticsPlatform
      * @return
      */
-    Map<String, String> addShopeeShopAuth(Map<String, String> authMap, String logisticsPlatform);
+    Map<String, String> addShopAuth(Map<String, String> authMap, String logisticsPlatform);
 
     List<LogisticsSupplierDTO.AuthDTO> listAuthBySupplierId(List<String> logisticsSupplierIds);
 }

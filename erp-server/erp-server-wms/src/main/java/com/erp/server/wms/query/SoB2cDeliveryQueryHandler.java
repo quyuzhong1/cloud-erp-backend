@@ -52,6 +52,14 @@ public class SoB2cDeliveryQueryHandler extends AbstractQueryHandler {
                 return " not  EXISTS (SELECT 1 from so_b2c_logistics sbl where sbl.main_id = sbd.source_id and sbl.is_deleted = false and sbl.track_no " + compareCodeSplicingValueSql + ")";
             }
         }
+        if ("isFullyManaged".equals(field)) {
+            boolean isFullyManaged = Boolean.parseBoolean(value.toString());
+            if(isFullyManaged){
+                return " sbd.dict_platform = 'TikTokFully'";
+            }else{
+                return " sbd.dict_platform != 'TikTokFully'";
+            }
+        }
         if ("sbd.logistic_type".equals(field)) {
             String searchType = value.toString();
             if ("all".equals(searchType)) {

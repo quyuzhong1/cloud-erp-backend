@@ -1,4 +1,5 @@
 package com.erp.server.oms.mapper;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -41,4 +42,11 @@ public interface SoB2cDetailMapper extends BaseMapper<SoB2cDetailEntity> {
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
+
+    /**
+     *  更新明细的扩展数据
+     * @param id
+     * @param extendData
+     */
+    void updateExtendData(@Param("id") String id, @Param("extendData") String extendData);
 }
