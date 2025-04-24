@@ -1062,15 +1062,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
-    /**
-     * 根据nfe发票状态
-     * @author will
-     * @date 2025/4/11 16:35
-     * @param soId
-     * @param nfeInvoiceStatus
-     * @return void
-     */
-    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
 
     void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
 
@@ -1081,6 +1072,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @return
      */
     String getPartitionId(String soId, String platform);
+
     /**
      * 根据条件查询销售订单
      * @param billStatusList
@@ -1096,8 +1088,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param extendDataDTO
      */
     void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
+    /**
+     * 根据nfe发票状态
+     * @author will
+     * @date 2025/4/11 16:35
+     * @param soId
+     * @param nfeInvoiceStatus
+     * @return void
+     */
+    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
 
-    void updatePlatformStatus(SoB2cEntity entity, String code);
 
     /**
      * 根据物流id标识是否匹配渠道规则
