@@ -771,7 +771,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
         //添加日志
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】{}无需开票",soB2cEntity.getCode(),InvoiceInfoInvoiceTypeEnum.getName(invoiceType)), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "无需开票操作");
-        return BatchResultDTO.success(soId, remark, "无需开票成功");
+        return BatchResultDTO.success(soId, soB2cEntity.getCode(), "无需开票成功");
     }
     
     /**

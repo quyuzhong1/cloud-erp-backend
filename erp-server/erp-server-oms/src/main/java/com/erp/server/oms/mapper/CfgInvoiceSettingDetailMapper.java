@@ -46,7 +46,7 @@ public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSett
      * @param platformValues 平台值列表
      * @return 按平台分组的详情列表
      */
-    List<CfgInvoiceSettingDetailDTO.ViewDTO> selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(
+    CfgInvoiceSettingDetailDTO.ViewDTO selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(
             @Param("mainId") String mainId,
             @Param("dictKey") String dictKey,
             @Param("platformValues") List<String> platformValues
