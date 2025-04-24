@@ -3173,6 +3173,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             if (StringUtils.isNotBlank(skuNos)) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_DATE,entity.getCode(),skuNos);
             }
+            if (CharSequenceUtil.isBlank(entity.getSupplierAccountId())){
+                throw new ServiceException(ApiError.ERROR_PURCHASE_SUPPLIER_ACCOUNT,entity.getCode());
+            }
         }
     }
 
