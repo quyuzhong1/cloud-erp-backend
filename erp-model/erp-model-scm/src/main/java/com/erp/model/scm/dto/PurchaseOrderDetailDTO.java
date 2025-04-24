@@ -240,21 +240,37 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 不含税单价
          */
         private BigDecimal price;
+        /**
+         * 不含税单价 使用科学计数法展示
+         */
+        private String priceStr;
 
         /**
          * 含税单价
          */
         private BigDecimal taxPrice;
+        /**
+         * 含税单价 使用科学计数法展示
+         */
+        private String taxPriceStr;
 
         /**
          * 不含税金额
          */
         private BigDecimal notTaxPurchaseAmount;
+        /**
+         * 不含税金额 使用科学计数法展示
+         */
+        private String notTaxPurchaseAmountStr;
 
         /**
          * 含税金额
          */
         private BigDecimal purchaseAmount;
+        /**
+         * 含税金额 使用科学计数法展示
+         */
+        private String purchaseAmountStr;
 
         /**
          * 交期
