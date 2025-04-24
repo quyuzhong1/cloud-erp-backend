@@ -130,8 +130,8 @@
             ti.id as inId,
             ti.code as inCode,
             tid.qty as inQty,
-            ti.out_warehouse_id as inWarehouseId,
-            ti.out_warehouse_name as inWarehouseName
+            ti.in_warehouse_id as inWarehouseId,
+            ti.in_warehouse_name as inWarehouseName
         from
             transfer_out t
                 left join (select main_id, sum(qty) as qty from transfer_out_detail where is_deleted = false GROUP BY main_id ) as tod on t.id = tod.main_id
