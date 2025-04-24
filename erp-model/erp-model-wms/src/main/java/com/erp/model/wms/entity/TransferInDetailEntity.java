@@ -93,7 +93,7 @@ public class TransferInDetailEntity extends BaseEntity<TransferInDetailEntity> {
     /**
      * 金蝶详情Id
      */
-    @TableField("Kingdee_detail_id")
+    @TableField("kingdee_detail_id")
     private String KingdeeDetailId;
 
 

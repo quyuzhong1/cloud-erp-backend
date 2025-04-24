@@ -75,7 +75,7 @@ public class TransferOutDetailEntity extends BaseEntity<TransferOutDetailEntity>
     /**
      * 金蝶详情Id
      */
-    @TableField("Kingdee_detail_id")
+    @TableField("kingdee_detail_id")
     private String KingdeeDetailId;
 
     public static final String MAIN_ID = "main_id";
