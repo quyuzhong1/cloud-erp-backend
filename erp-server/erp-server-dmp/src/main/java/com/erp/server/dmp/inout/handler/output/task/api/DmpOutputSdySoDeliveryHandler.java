@@ -104,7 +104,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		if(validateDataBlack(dmpSoDeliveryEntity, cfgOutputId)) {
     			return result;
     		}
-    		Tools.stringNullToBlank(dmpSoDeliveryEntity);
+    		Tools.nullToBlank(dmpSoDeliveryEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String thirdDeliveryId = dmpSoDeliveryEntity.getThirdDeliveryId();
     		String thirdDeliveryCode = dmpSoDeliveryEntity.getThirdDeliveryCode();
@@ -118,36 +118,9 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		BigDecimal payAmount = dmpSoDeliveryEntity.getPayAmount();
     		BigDecimal shippingAmount = dmpSoDeliveryEntity.getShippingAmount();
     		BigDecimal totalTaxAmount = dmpSoDeliveryEntity.getTotalTaxAmount();
-    		if(allAmount == null) {
-    			allAmount = BigDecimal.ZERO;
-    		}
-    		if(totalDiscountAmount == null) {
-    			totalDiscountAmount = BigDecimal.ZERO;
-    		}
-    		if(totalCancelAmount == null) {
-    			totalCancelAmount = BigDecimal.ZERO;
-    		}
-    		if(payAmount == null) {
-    			payAmount = BigDecimal.ZERO;
-    		}
-    		if(shippingAmount == null) {
-    			shippingAmount = BigDecimal.ZERO;
-    		}
-    		if(totalTaxAmount == null) {
-    			totalTaxAmount = BigDecimal.ZERO;
-    		}
     		Integer totalQty = dmpSoDeliveryEntity.getTotalQty();
     		Integer cancelQty = dmpSoDeliveryEntity.getCancelQty();
     		Integer shippingQty = dmpSoDeliveryEntity.getShippingQty();
-    		if(totalQty == null) {
-    			totalQty = 0;
-    		}
-    		if(cancelQty == null) {
-    			cancelQty = 0;
-    		}
-    		if(shippingQty == null) {
-    			shippingQty = 0;
-    		}
     		String salesCompanyCode = dmpSoDeliveryEntity.getSalesCompanyCode();
     		String receivingCompanyCode = dmpSoDeliveryEntity.getReceivingCompanyCode();
     		String organizationCode = dmpSoDeliveryEntity.getOrganizationCode();
@@ -182,7 +155,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     			if(validateDataBlack(dmpSoDeliveryDetailEntity, cfgOutputId)) {
     				continue;
     			}
-    			Tools.stringNullToBlank(dmpSoDeliveryDetailEntity);
+    			Tools.nullToBlank(dmpSoDeliveryDetailEntity);
     			String detailId = dmpSoDeliveryDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			

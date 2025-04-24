@@ -102,7 +102,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     		if(validateDataBlack(dmpReturnInstockEntity, cfgOutputId)) {
     			return result;
     		}
-    		Tools.stringNullToBlank(dmpReturnInstockEntity);
+    		Tools.nullToBlank(dmpReturnInstockEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String thirdReturnInstockId = dmpReturnInstockEntity.getThirdReturnInstockId();
     		String thirdReturnInstockCode = dmpReturnInstockEntity.getThirdReturnInstockCode();
@@ -130,7 +130,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     			if(validateDataBlack(dmpReturnInstockDetailEntity, cfgOutputId)) {
     				continue;
     			}
-    			Tools.stringNullToBlank(dmpReturnInstockDetailEntity);
+    			Tools.nullToBlank(dmpReturnInstockDetailEntity);
     			String detailId = dmpReturnInstockDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
