@@ -39,6 +39,10 @@ public class InvoiceTaxDTO implements Serializable {
          */
         private String  shopId;
         /**
+         * 店铺名称
+         */
+        private String  shopName;
+        /**
          * 平台
          */
         private String platform;

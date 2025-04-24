@@ -129,9 +129,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Lazy
     private NfeInvoiceService nfeInvoiceService;
 
-    @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
-
 
     @Resource
     @Qualifier("soB2cTabExecutorPool")
@@ -967,6 +964,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         //查询nfe发票配置信息
         List<CfgInvoiceSettingDetailEntity> cfgInvoiceSettingDetailList = cfgInvoiceSettingDetailService.listByShopIdList(shopIdList);
         Map<String, CfgInvoiceSettingDetailEntity> cfgInvoiceSettingDetailMap = cfgInvoiceSettingDetailList.stream().collect(Collectors.toMap(CfgInvoiceSettingDetailEntity::getShopId, Function.identity()));
+        
+        //店铺信息
+        List<ShopInfoEntity> shopInfoList = shopInfoService.listByIds(shopIdList);
+        Map<String, String> shopMap = shopInfoList.stream().collect(Collectors.toMap(ShopInfoEntity::getId,ShopInfoEntity::getName));
 
         // 查询该店铺所有平台sku
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
@@ -1014,6 +1015,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             viewDTO.setPlatformSkuName(CollUtil.isEmpty(listingInfoWithSkuMappingList) ? "" : listingInfoWithSkuMappingList.get(0).getPlatformSkuName());
             viewDTO.setPlatform(soB2cEntity.getDictPlatform());
             viewDTO.setShopId(soB2cEntity.getShopId());
+            viewDTO.setShopName(shopMap.get(soB2cEntity.getShopId()));
             viewDTO.setUnit(CharSequenceUtil.isBlank(viewDTO.getUnit()) ? "UN" : viewDTO.getUnit());
             //同州cfop
             if (CharSequenceUtil.isBlank(viewDTO.getSameStateTaxCode())) {
