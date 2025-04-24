@@ -1,6 +1,7 @@
 package com.erp.server.tms.sync.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
@@ -16,6 +17,8 @@ import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.service.*;
 import com.erp.server.tms.sync.SyncLogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -30,6 +33,11 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
 
     @Resource
     private TmsPushMsgService tmsPushMsgService;
+    
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
+    @Resource
+    private LogisticsSupplierService logisticsSupplierService;
 
     @Override
     public Map<String, Object> syncDataToSdyFieldHandler(LogisticsBillEntity entity,
@@ -182,6 +190,21 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
                               List<LogisticsBillDetailEntity> detailEntityList,
                               String operate) {
 
+    	List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
+    	List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
+    	
+    	if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		String channelId = entity.getChannelId();
+            if (StringUtils.isNotBlank(channelId)) {
+                logisticsChannelEntities = logisticsChannelService.listByIds(Arrays.asList(channelId));
+            }
+
+            List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(supplierIds)) {
+                logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
+            }
+    	}
+        
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
             if (CharSequenceUtil.isBlank(sourceCode)) {
@@ -199,7 +222,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
                 map.put("detailId", billDetailEntity.getId());
                 map.put("operate", operate);
             }else {
-            	map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, new ArrayList<>(), new ArrayList<>());
+            	map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticsChannelEntities, logisticsSupplierEntities);
             }
             tmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             tmsPushMsgService.save(tmsPushMsgEntity);

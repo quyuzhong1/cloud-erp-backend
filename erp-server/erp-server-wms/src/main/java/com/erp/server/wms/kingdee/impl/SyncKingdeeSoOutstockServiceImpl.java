@@ -1579,81 +1579,21 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
     @Override
     public void syncDataToSdy(SoOutstockEntity entity, List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate) {
-        for (SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
-            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
-            wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
-            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soOutstockDetailEntity.getSkuNo());
-            wmsPushMsgEntity.setSyncOperate(operate);
-            Map<String, Object> map = new HashMap<>();
-            if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            	map.put("isQuerySync", Boolean.TRUE);
-                map.put("detailId", soOutstockDetailEntity.getId());
-                map.put("operate", operate);
-            }else {
-                map = this.syncNewDataToSdyFieldHandler(entity, soOutstockDetailEntity, operate, 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    	if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		this.syncBatchDataToSdy(Arrays.asList(entity), soOutstockDetailEntityList, operate, true, true);
+    	}else {
+    		for (SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
+                WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+                wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+                wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
+                wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
+                wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soOutstockDetailEntity.getSkuNo());
+                wmsPushMsgEntity.setSyncOperate(operate);
+                wmsPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+                wmsPushMsgService.save(wmsPushMsgEntity);
             }
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
-            wmsPushMsgService.save(wmsPushMsgEntity);
-        }
+    	}
     }
-
-    @Override
-    public void syncDataToSdy(SoOutstockEntity entity,
-                              List<SoOutstockDetailEntity> detailEntities,
-                              String operate,
-                              List<CurrencyDTO.ViewDTO> currencyList,
-                              List<ShopInfoEntity> shopInfoList,
-                              List<CustomerInfoEntity> customerInfoList,
-                              List<BaseIdDTO.CodeDTO> companyEntities,
-                              List<SkuVO> skuVOList,
-                              List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
-                              List<ProductDetailEntity> parentSkuList,
-                              List<SoB2cEntity> soB2cEntities,
-                              List<SoInfoEntity> soInfoEntities,
-                              List<SoB2cReceiverEntity> soB2cReceiverEntityList,
-                              List<DictBasicEntity> omsAllDictList,
-                              List<DictPartitionEntity> partitionEntityList,
-                              List<DictCountryEntity> countryEntityList,
-                              List<DictGlobalAreaEntity> dictGlobalEntityList,
-                              List<SysDepartmentEntity> deptList
-    ) {
-
-        for (SoOutstockDetailEntity detailEntity : detailEntities) {
-            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
-            wmsPushMsgEntity.setSourceId(detailEntity.getId());
-            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
-            wmsPushMsgEntity.setSyncOperate(operate);
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncNewDataToSdyFieldHandler(entity,
-                    detailEntity,
-                    operate,
-                    currencyList,
-                    shopInfoList,
-                    customerInfoList,
-                    companyEntities,
-                    skuVOList,
-                    bomChildrenSkuDTOS,
-                    parentSkuList,
-                    soB2cEntities,
-                    soInfoEntities,
-                    soB2cReceiverEntityList,
-                    omsAllDictList,
-                    partitionEntityList,
-                    countryEntityList,
-                    dictGlobalEntityList,
-                    deptList
-            )));
-            wmsPushMsgService.save(wmsPushMsgEntity);
-        }
-    }
-
 
     /**
      * 出库单子状态转换
@@ -1680,4 +1620,160 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         return transactionSubType;
     }
+
+
+	@Override
+	public Map<String, Map<String, Object>> syncBatchDataToSdy(List<SoOutstockEntity> soOutstockEntities,
+			List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate, boolean isSavePush, boolean isNewQuerySync) {
+		Map<String , Map<String, Object>> resultList = new HashMap<>();
+		//B2C订单
+        List<SoOutstockEntity> b2cEntity = soOutstockEntities.stream().filter(req -> OrderTypeEnum.B2C.getCode().equals(req.getOrderType())).collect(Collectors.toList());
+        List<String> b2cSoIds = b2cEntity.stream().map(req -> req.getSoId()).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+
+        List<SoB2cEntity> soB2cEntities = new ArrayList<>();
+        List<SoB2cReceiverEntity> soB2cReceiverEntityList = new ArrayList<>();
+        if (CollectionUtils.isNotEmpty(b2cSoIds)){
+            soB2cEntities = soB2cFeign.listByIds(b2cSoIds);
+            // B2C收货信息
+            soB2cReceiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+                    .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
+                    .list();
+        }
+
+
+        //B2B订单
+        List<SoOutstockEntity> b2bEntity = soOutstockEntities.stream().filter(req -> OrderTypeEnum.B2B.getCode().equals(req.getOrderType())).collect(Collectors.toList());
+        List<String> b2bSoIds = b2bEntity.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
+        List<SoInfoEntity> soInfoEntities = soInfoFeign.listSoInfoByIds(b2bSoIds);
+
+        //客户
+        List<String> customerIds = soOutstockEntities.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoList = new ArrayList<>();
+        List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(customerIds)) {
+            //店铺
+            shopInfoList = FeignQuery.create(ShopInfoEntity.class)
+                    .in(ShopInfoEntity::getCustomerId, customerIds)
+                    .list();
+            //组织
+            customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
+                    .in(CustomerInfoEntity::getId, customerIds)
+                    .list();
+        }
+        //币别
+        List<String> currencyCodeList = soOutstockDetailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<String> currency = customerInfoList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        currencyCodeList.addAll(currency);
+        List<String> tradeCurrency = customerInfoList.stream().map(req -> req.getTradeCurrency()).distinct().collect(Collectors.toList());
+        currencyCodeList.addAll(tradeCurrency);
+        List<String> settlementCurrency = shopInfoList.stream().map(req -> req.getSettlementCurrency()).distinct().collect(Collectors.toList());
+        currencyCodeList.addAll(settlementCurrency);
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+
+        //组织
+        List<String> orgList = new ArrayList<>();
+        List<String> salesOrgId = shopInfoList.stream().map(req -> req.getSalesOrgId()).distinct().collect(Collectors.toList());
+        orgList.addAll(salesOrgId);
+        List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+        orgList.addAll(financialOrganization);
+        List<String> salesOrgIds = soOutstockEntities.stream().map(req -> req.getSalesOrgId()).distinct().collect(Collectors.toList());
+        orgList.addAll(salesOrgIds);
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(orgList);
+
+        //产品信息
+        List<String> skuNos = soOutstockDetailEntityList.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<String> skuIds = soOutstockDetailEntityList.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+        //父类产品
+        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
+        // OMS字典信息
+        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                ))
+                .list();
+
+        // 军区信息
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+        // 国家信息
+        List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+        // 子区域信息
+        List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+        // 部门信息
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
+
+        for (SoOutstockEntity soOutstockEntity : soOutstockEntities) {
+            List<SoOutstockDetailEntity> detailEntityList = soOutstockDetailEntityList.stream().filter(req -> req.getMainId().equals(soOutstockEntity.getId())).collect(Collectors.toList());
+            for (SoOutstockDetailEntity detailEntity : detailEntityList) {
+            	Map<String, Object> syncDataToSdyFieldHandler = null;
+            	if(isNewQuerySync) {
+            		syncDataToSdyFieldHandler = this.syncNewDataToSdyFieldHandler(soOutstockEntity,
+                            detailEntity,
+                            operate,
+                            currencyList,
+                            shopInfoList,
+                            customerInfoList,
+                            companyEntities,
+                            skuVOList,
+                            bomChildrenSkuDTOS,
+                            parentSkuList,
+                            soB2cEntities,
+                            soInfoEntities,
+                            soB2cReceiverEntityList,
+                            dictBasicEntityList,
+                            partitionEntityList,
+                            countryEntityList,
+                            dictGlobalEntityList,
+                            deptList
+                    );
+            	}else {
+            		syncDataToSdyFieldHandler = this.syncDataToSdyFieldHandler(soOutstockEntity,
+                            detailEntity,
+                            operate,
+                            currencyList,
+                            shopInfoList,
+                            customerInfoList,
+                            companyEntities,
+                            skuVOList,
+                            bomChildrenSkuDTOS,
+                            parentSkuList,
+                            soB2cEntities,
+                            soInfoEntities,
+                            soB2cReceiverEntityList,
+                            dictBasicEntityList,
+                            partitionEntityList,
+                            countryEntityList,
+                            dictGlobalEntityList,
+                            deptList
+                    );
+            	}
+            	String sourceId = detailEntity.getId();
+            	resultList.put(sourceId, syncDataToSdyFieldHandler);
+            	if(isSavePush) {
+            		WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+                    wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+                    wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
+                    wmsPushMsgEntity.setSourceId(sourceId);
+                    wmsPushMsgEntity.setSourceCode(soOutstockEntity.getCode() + "_" + detailEntity.getSkuNo());
+                    wmsPushMsgEntity.setSyncOperate(operate);
+    				wmsPushMsgEntity.setPushData(JSON.toJSONString(syncDataToSdyFieldHandler));
+                    wmsPushMsgService.save(wmsPushMsgEntity);
+            	}
+            }
+            
+        }
+		return resultList;
+	}
 }
