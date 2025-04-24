@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.Tools;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockDetailEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockEntity;
@@ -101,6 +102,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     		if(validateDataBlack(dmpReturnInstockEntity, cfgOutputId)) {
     			return result;
     		}
+    		Tools.stringNullToBlank(dmpReturnInstockEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String thirdReturnInstockId = dmpReturnInstockEntity.getThirdReturnInstockId();
     		String thirdReturnInstockCode = dmpReturnInstockEntity.getThirdReturnInstockCode();
@@ -128,6 +130,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     			if(validateDataBlack(dmpReturnInstockDetailEntity, cfgOutputId)) {
     				continue;
     			}
+    			Tools.stringNullToBlank(dmpReturnInstockDetailEntity);
     			String detailId = dmpReturnInstockDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
