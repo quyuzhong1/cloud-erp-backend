@@ -102,7 +102,7 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     		if(validateDataBlack(dmpSoLogisticsEntity, cfgOutputId)) {
     			return result;
     		}
-    		Tools.stringNullToBlank(dmpSoLogisticsEntity);
+    		Tools.nullToBlank(dmpSoLogisticsEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String bizNo = dmpSoLogisticsEntity.getThirdLogisticsCode();
     		LocalDateTime deliveryTime = dmpSoLogisticsEntity.getDeliveryTime();
@@ -119,7 +119,7 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     			if(validateDataBlack(dmpSoLogisticsDetailEntity, cfgOutputId)) {
     				continue;
     			}
-    			Tools.stringNullToBlank(dmpSoLogisticsDetailEntity);
+    			Tools.nullToBlank(dmpSoLogisticsDetailEntity);
     			String detailId = dmpSoLogisticsDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
