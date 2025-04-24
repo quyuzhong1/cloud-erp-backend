@@ -738,7 +738,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 dto.setTaxRate(viewDTO.getTaxRate());
                 dto.setCurrency(viewDTO.getCurrency());
                 dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                dto.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
+                dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
             }
             //仓位名称
             String locationName = warehouseLocationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),dto.getWarehouseId()) && StrUtil.equals(obj.getCode(), dto.getWarehouseLocation()))

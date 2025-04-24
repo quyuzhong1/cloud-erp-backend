@@ -168,7 +168,7 @@ public class SoMultiChannelDetailServiceImpl extends SuperServiceImpl<SoMultiCha
             //含税单价
             BigDecimal costPrice = null == skuVO ? BigDecimal.ZERO : ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
             detailEntity.setTaxCost(costPrice);
-            detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(), detailEntity.getQty()));
+            detailEntity.setAmount(MathUtil.multiplyWithTwo(detailEntity.getPrice(), detailEntity.getQty()));
             // 产品图片
             detailEntity.setImageUrl(null == skuVO ? "" : skuVO.getSkuImagesUrl());
         }

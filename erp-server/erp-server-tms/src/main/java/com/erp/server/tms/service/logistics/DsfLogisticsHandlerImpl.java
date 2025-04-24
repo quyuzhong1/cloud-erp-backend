@@ -2,7 +2,6 @@ package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -110,7 +109,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
                 }
                 //先转换成人民币
-                BigDecimal cnyDestDeclarePrice = MathUtil.multiply(destDeclarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
+                BigDecimal cnyDestDeclarePrice = MathUtil.multiplyWithTwo(destDeclarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
                 //再统一转换成美元
                 BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), CurrencyEnum.USD.getCurrencyCode());
                 if (Objects.isNull(exchangeRate2)){
@@ -133,7 +132,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
                 }
                 //先转换成人民币
-                BigDecimal cnyDeclarePrice = MathUtil.multiply(declarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
+                BigDecimal cnyDeclarePrice = MathUtil.multiplyWithTwo(declarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
                 //再统一转换成美元
                 BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), CurrencyEnum.USD.getCurrencyCode());
                 if (Objects.isNull(exchangeRate2)){

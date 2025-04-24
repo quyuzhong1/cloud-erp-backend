@@ -290,7 +290,7 @@ public class SyncKingdeePurchaseChangeServiceImpl implements SyncKingdeePurchase
             jsonObject.set("isGift",purchaseOrderDetailEntity.getIsGift());
 
             //税率
-            jsonObject.set("taxRate", MathUtil.multiply(purchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("taxRate", MathUtil.multiplyWithTwo(purchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             //源单分录内码
             jsonObject.set("refKingdeeDetailId",purchaseOrderDetailEntity.getKingdeeDetailId());
 

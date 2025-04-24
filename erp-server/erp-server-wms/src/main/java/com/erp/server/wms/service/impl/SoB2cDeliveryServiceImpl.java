@@ -10,7 +10,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -1011,7 +1010,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .scanLength(dto.getLength())
                 .scanWidth(dto.getWidth())
                 .scanHeight(dto.getHeight())
-                .scanWeight(MathUtil.multiply(dto.getWeight(),new BigDecimal(1000)))
+                .scanWeight(MathUtil.multiplyWithTwo(dto.getWeight(),new BigDecimal(1000)))
                 .orderLength(soB2cLogisticsEntity.getLength())
                 .orderWidth(soB2cLogisticsEntity.getWidth())
                 .orderHeight(soB2cLogisticsEntity.getHeight())

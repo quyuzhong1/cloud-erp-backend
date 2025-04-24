@@ -466,13 +466,13 @@ public class BiTargetNewProductSettingServiceImpl extends SuperServiceImpl<BiTar
             BigDecimal value = dbList.stream().filter(d -> d.getMonth().equals(month)).findFirst().
                     map(BiTargetNewProductSettingEntity::getValue).orElse(null);
             if (value != null && MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
-                value = MathUtil.multiply(value, MathUtil.NUMBER_100);
+                value = MathUtil.multiplyWithTwo(value, MathUtil.NUMBER_100);
             }
             return value;
         } else {
             BigDecimal rate = dbList.stream().filter(d -> d.getMonth().equals(month)).findFirst().
                     map(BiTargetNewProductSettingEntity::getRate).orElse(null);
-            return Objects.nonNull(rate) ? MathUtil.multiply(rate, MathUtil.BigDecimal_100) : rate;
+            return Objects.nonNull(rate) ? MathUtil.multiplyWithTwo(rate, MathUtil.BigDecimal_100) : rate;
         }
     }
 
