@@ -164,6 +164,11 @@ public enum RocketMqTagEnum {
      */
     WMS_VIRTUAL_DETAIL_MSG_TAG(30,RocketMqTagEnum.SYNC_WMS,"wms_virtual_detail_msg_tag"),
 
+    /**
+     * 虚拟仓明细信息tag DMP_WECHAT_SUBSCRIBE_MSG
+     */
+    DMP_WECHAT_SUBSCRIBE_MSG_TAG(31,RocketMqTagEnum.WECHAT_SUBSCRIBE,"dmp_wechat_subscribe_msg_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -625,7 +630,10 @@ public enum RocketMqTagEnum {
     public static final String FBA_SHIPMENT = "fba_shipment";
 
     public static final String SYNC_WANGDIAN = "sync_wangdian";
+
     public static final String SYNC_LINGXING = "sync_lingxing";
+
+    public static final String WECHAT_SUBSCRIBE = "wechat_subscribe";
 
     private Integer code;
 
