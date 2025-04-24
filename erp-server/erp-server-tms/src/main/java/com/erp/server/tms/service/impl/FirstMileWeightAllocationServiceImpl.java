@@ -326,24 +326,20 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             if(cfgWeightAllocationType.equals("productWeight")){
                 entity.setAllocationType(WeightAllocationTypeEnum.PRODUCT_WEIGHT.getCode());
             }
-            //2024-09-13 jack and 凤玲 头程费用分摊页面--单产品重量取值逻辑优化
-            //单产品重量：取值来源表为产品管理-毛重/净重：优先取值毛重，其次取值净重
-            //1.单SKU时：直接取值毛重和净重
-            //2.组合SKU时：销售套装取值 优先毛重*用例【取值版本为最新版本，后续改为发货单版本】
-            if(singleSkuIds.contains(oldEntity.getSkuId())){
-                ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(oldEntity.getSkuId())).findFirst().get();
-                productPackEntity.handleData();
-                BigDecimal productWeight = productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) != 0 ? productPackEntity.getGrossWeight() : productPackEntity.getNetWeight();
-                entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
-            }else if(comboSkuIds.contains(oldEntity.getSkuId())){
-                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = comboSkuMap.get(oldEntity.getSkuId());
-                BigDecimal sum = BigDecimal.ZERO;
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
-                    BigDecimal grossWeight = bomChildrenSkuDTO.getGrossWeight().compareTo(BigDecimal.ZERO)<=0 ?  bomChildrenSkuDTO.getNetWeight() : bomChildrenSkuDTO.getGrossWeight();
-                    BigDecimal quantity = null == bomChildrenSkuDTO.getQuantity() || bomChildrenSkuDTO.getQuantity() <0 ? BigDecimal.ZERO : new BigDecimal(bomChildrenSkuDTO.getQuantity());
-                    sum = sum.add(quantity.multiply(grossWeight).divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
-                }
-                entity.setProductWeight(sum);
+            //重量分摊-单产品重量-取值优化-按照计费规则取值
+            if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(entity.getFeeRule())){
+               //取值 单产品的毛重，净重，体积重 取值最大【体积重计算方式 长cm*宽cm*高cm/渠道的材积设置------------注意尺寸单位是cm】
+                //毛重
+                BigDecimal grossWeight = getProductGrossWeight(oldEntity.getSkuId(), oldEntity.getSkuNo(), singleSkuIds, productPackList, comboSkuIds, comboSkuMap);
+                //净重
+                BigDecimal netWeight = getProductNetWeight(oldEntity.getSkuId(),oldEntity.getSkuNo(),  singleSkuIds, productPackList, comboSkuIds, comboSkuMap);
+                entity.setProductWeight(grossWeight.max(netWeight).max(volumeWeight));
+            }else if (ShippingFeeRuleEnum.NET_WEIGHT.getCode().equals(entity.getFeeRule())){
+                //取值实重 优先取值毛重，没有取值净重
+                setNetWeightByRule(oldEntity.getSkuId(),oldEntity.getSkuNo(),  singleSkuIds, productPackList, entity, comboSkuIds, comboSkuMap);
+            }else if(ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(entity.getFeeRule())){
+                //取值体积重【体积重计算方式 长cm*宽cm*高cm/渠道的材积设置------------注意尺寸单位是cm】
+                entity.setProductWeight(volumeWeight);
             }
             updateList.add(entity);
         }
@@ -351,6 +347,89 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         boolean updated = this.updateBatchById(updateList);
 
         return updated ? BatchResultDTO.success(logisticsBillId, logisticsBillId) : BatchResultDTO.fail(logisticsBillId, logisticsBillId, OperationTypeEnum.UPDATE);
+    }
+
+    /**
+     * 计算实重
+     * @param skuId
+     * @param skuNo
+     * @param singleSkuIds
+     * @param productPackList
+     * @param entity
+     * @param comboSkuIds
+     * @param comboSkuMap
+     */
+    private static void setNetWeightByRule(String skuId,String skuNo, List<String> singleSkuIds, List<ProductPackEntity> productPackList, FirstMileWeightAllocationEntity entity, List<String> comboSkuIds, Map<String, List<BomChildrenSkuDTO>> comboSkuMap) {
+        if(singleSkuIds.contains(skuId)){
+            ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(skuId)).findFirst().orElseThrow(() -> new ServiceException("【{}】没有找到产品包装信息",skuNo));
+            BigDecimal netWeight1 = Objects.nonNull(productPackEntity.getNetWeight()) ? productPackEntity.getNetWeight() : BigDecimal.ZERO;
+            BigDecimal grossWeight1 = Objects.nonNull(productPackEntity.getGrossWeight()) ? productPackEntity.getGrossWeight() : BigDecimal.ZERO;
+            BigDecimal productWeight = grossWeight1.compareTo(BigDecimal.ZERO) != 0 ? grossWeight1 : netWeight1;
+            entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
+        }else if(comboSkuIds.contains(skuId)){
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = comboSkuMap.get(skuId);
+            BigDecimal sum = BigDecimal.ZERO;
+            for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                BigDecimal grossWeight = bomChildrenSkuDTO.getGrossWeight().compareTo(BigDecimal.ZERO)<=0 ?  bomChildrenSkuDTO.getNetWeight() : bomChildrenSkuDTO.getGrossWeight();
+                BigDecimal quantity = null == bomChildrenSkuDTO.getQuantity() || bomChildrenSkuDTO.getQuantity() <0 ? BigDecimal.ZERO : new BigDecimal(bomChildrenSkuDTO.getQuantity());
+                sum = sum.add(quantity.multiply(grossWeight).divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
+            }
+            entity.setProductWeight(sum);
+        }
+    }
+
+    /**
+     * 计算产品净重
+     * @param skuId
+     * @param skuNo
+     * @param singleSkuIds
+     * @param productPackList
+     * @param comboSkuIds
+     * @param comboSkuMap
+     * @return
+     */
+    private static BigDecimal getProductNetWeight(String skuId,String skuNo, List<String> singleSkuIds, List<ProductPackEntity> productPackList, List<String> comboSkuIds, Map<String, List<BomChildrenSkuDTO>> comboSkuMap) {
+        BigDecimal netWeight = BigDecimal.ZERO;
+        if(singleSkuIds.contains(skuId)){
+            ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(skuId)).findFirst().orElseThrow(() -> new ServiceException("【{}】没有找到产品包装信息",skuNo));
+            BigDecimal netWeight1 = Objects.nonNull(productPackEntity.getNetWeight()) ? productPackEntity.getNetWeight() : BigDecimal.ZERO;
+            netWeight = netWeight1.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP);
+        }else if(comboSkuIds.contains(skuId)){
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = comboSkuMap.get(skuId);
+            for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                BigDecimal netWeight1 = bomChildrenSkuDTO.getNetWeight();
+                BigDecimal quantity = null == bomChildrenSkuDTO.getQuantity() || bomChildrenSkuDTO.getQuantity() <0 ? BigDecimal.ZERO : new BigDecimal(bomChildrenSkuDTO.getQuantity());
+                netWeight = netWeight.add(quantity.multiply(netWeight1).divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
+            }
+        }
+        return netWeight;
+    }
+
+    /**
+     * 计算产品毛重
+     * @param skuId
+     * @param skuNo
+     * @param singleSkuIds
+     * @param productPackList
+     * @param comboSkuIds
+     * @param comboSkuMap
+     * @return
+     */
+    private static BigDecimal getProductGrossWeight(String skuId, String skuNo, List<String> singleSkuIds, List<ProductPackEntity> productPackList, List<String> comboSkuIds, Map<String, List<BomChildrenSkuDTO>> comboSkuMap) {
+        BigDecimal grossWeight = BigDecimal.ZERO;
+        if(singleSkuIds.contains(skuId)){
+            ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(skuId)).findFirst().orElseThrow(() -> new ServiceException("【{}】没有找到产品包装信息",skuNo));
+            BigDecimal grossWeight1 = Objects.nonNull(productPackEntity.getGrossWeight()) ? productPackEntity.getGrossWeight() : BigDecimal.ZERO;
+            grossWeight = grossWeight1.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP);;
+        }else if(comboSkuIds.contains(skuId)){
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = comboSkuMap.get(skuId);
+            for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
+                BigDecimal grossWeight1 = bomChildrenSkuDTO.getGrossWeight().compareTo(BigDecimal.ZERO)<=0 ?  bomChildrenSkuDTO.getNetWeight() : bomChildrenSkuDTO.getGrossWeight();
+                BigDecimal quantity = null == bomChildrenSkuDTO.getQuantity() || bomChildrenSkuDTO.getQuantity() <0 ? BigDecimal.ZERO : new BigDecimal(bomChildrenSkuDTO.getQuantity());
+                grossWeight = grossWeight.add(quantity.multiply(grossWeight1).divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
+            }
+        }
+        return grossWeight;
     }
 
     /**
@@ -524,25 +603,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 entity.setProductName(deliveryDetail.getProductName());
                 entity.setPlatformSkuNo(deliveryDetail.getPlatformSkuNo());
             }
-            //2024-09-13 jack and 凤玲 头程费用分摊页面--单产品重量取值逻辑优化
-            //单产品重量：取值来源表为产品管理-毛重/净重：优先取值毛重，其次取值净重
-            //1.单SKU时：直接取值毛重和净重
-            //2.组合SKU时：销售套装取值 优先毛重*用例【取值版本为最新版本，后续改为发货单版本】
-            if(singleSkuIds.contains(cartonDetail.getSkuId())){
-                ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId())).findFirst().orElseThrow(() -> new ServiceException("【{}】没有找到产品包装信息",cartonDetail.getSkuNo()));
-                productPackEntity.handleData();
-                BigDecimal productWeight = productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) != 0 ? productPackEntity.getGrossWeight() : productPackEntity.getNetWeight();
-                entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
-            }else if(comboSkuIds.contains(cartonDetail.getSkuId())){
-                List<BomChildrenSkuDTO> bomChildrenSkuDTOS = comboSkuMap.get(cartonDetail.getSkuId());
-                BigDecimal sum = BigDecimal.ZERO;
-                for (BomChildrenSkuDTO bomChildrenSkuDTO : bomChildrenSkuDTOS) {
-                    BigDecimal grossWeight = bomChildrenSkuDTO.getGrossWeight().compareTo(BigDecimal.ZERO)<=0 ?  bomChildrenSkuDTO.getNetWeight() : bomChildrenSkuDTO.getGrossWeight();
-                    BigDecimal quantity = null == bomChildrenSkuDTO.getQuantity() || bomChildrenSkuDTO.getQuantity() <0 ? BigDecimal.ZERO : new BigDecimal(bomChildrenSkuDTO.getQuantity());
-                    sum = sum.add(quantity.multiply(grossWeight).divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
-                }
-                entity.setProductWeight(sum);
-            }
             BigDecimal boxSize = cartonDetail.getBoxLength().multiply(cartonDetail.getBoxWidth()).multiply(cartonDetail.getBoxHeight());
             BigDecimal volumeSetting = BigDecimal.valueOf(weightAllocationDTO.getVolumeSetting());
             if(volumeSetting.compareTo(BigDecimal.ZERO) == 0){
@@ -551,6 +611,22 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             }
             BigDecimal volumeWeight = boxSize.divide(volumeSetting, 4, RoundingMode.HALF_UP);
             entity.setVolumeWeight(volumeWeight);
+            //重量分摊-单产品重量-取值优化-按照计费规则取值
+            if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(entity.getFeeRule())){
+                //取值 单产品的毛重，净重，体积重 取值最大【体积重计算方式 长cm*宽cm*高cm/渠道的材积设置------------注意尺寸单位是cm】
+                //毛重
+                BigDecimal grossWeight = getProductGrossWeight(cartonDetail.getSkuId(), cartonDetail.getSkuNo(), singleSkuIds, productPackList, comboSkuIds, comboSkuMap);
+                //净重
+                BigDecimal netWeight = getProductNetWeight(cartonDetail.getSkuId(), cartonDetail.getSkuNo(), singleSkuIds, productPackList, comboSkuIds, comboSkuMap);
+                entity.setProductWeight(grossWeight.max(netWeight).max(volumeWeight));
+            }else if (ShippingFeeRuleEnum.NET_WEIGHT.getCode().equals(entity.getFeeRule())){
+                //取值实重 优先取值毛重，没有取值净重
+                setNetWeightByRule(cartonDetail.getSkuId(), cartonDetail.getSkuNo(), singleSkuIds, productPackList, entity, comboSkuIds, comboSkuMap);
+            }else if(ShippingFeeRuleEnum.VOLUME_WEIGHT.getCode().equals(entity.getFeeRule())){
+                //取值体积重【体积重计算方式 长cm*宽cm*高cm/渠道的材积设置------------注意尺寸单位是cm】
+                entity.setProductWeight(volumeWeight);
+            }
+            //出库计费重
             entity.setChargedWeight(cartonDetail.getPackageWeight().max(volumeWeight));
             if(cfgWeightAllocationType.equals("outstockChargedWeight")){
                 if(ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(weightAllocationDTO.getFeeRule())){
