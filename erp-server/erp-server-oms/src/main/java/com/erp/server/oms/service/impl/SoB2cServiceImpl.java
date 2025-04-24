@@ -2201,12 +2201,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             updateLingXingOrder(entity, list);
         }
 
-        if (CollUtil.isNotEmpty(overseasWarehouseList)) {
-            //是否推送发票
-            autoPushInvoice(entity,overseasWarehouseList.get(0),logisticsChannelId);
-        }
-
-
         /**
          * 如果是API 对接的仓库
          * 下出库单的命令
@@ -2253,16 +2247,17 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     }
 
-    /**
-     * 推送发票
-     * @author will
-     * @date 2025/4/14 17:43
-     * @param logisticsChannelId
-     * @return void
-     */
-    private void autoPushInvoice (SoB2cEntity entity,OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse,String logisticsChannelId) {
+   /**
+    * 推送发票
+    * @author will
+    * @date 2025/4/24 17:42
+    * @param entity
+    * @param overseasProviderWarehouse
+    * @param logisticsChannelEntity
+    * @return void
+    */
+    private void autoPushInvoice (SoB2cEntity entity,OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse,LogisticsChannelEntity logisticsChannelEntity,ThirdWarehouseCreateOutboundReq createOutboundReq) {
         //物流渠道
-        LogisticsChannelEntity logisticsChannelEntity = FeignQuery.getById(LogisticsChannelEntity.class, logisticsChannelId);
         if (ObjectUtil.isEmpty(logisticsChannelEntity) || !logisticsChannelEntity.getIsSendInvoice()) {
             return;
         }
@@ -2288,6 +2283,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(!uploadFileResponse.isSuccess()){
             throw new ServiceException("上传发票失败{}",uploadFileResponse.getMsg());
         }
+        Integer attachId = uploadFileResponse.getData().getAttachId();
+        List<ThirdWarehouseCreateOutboundReq.Attach> attachList = CollUtil.isEmpty(createOutboundReq.getAttach()) ? new ArrayList<>() : createOutboundReq.getAttach();
+        ThirdWarehouseCreateOutboundReq.Attach attach = new ThirdWarehouseCreateOutboundReq.Attach();
+        attach.setFileType(FileTypeEnum.PDF.getCode());
+        attach.setAttachId(attachId);
+        attachList.add(attach);
+        createOutboundReq.setAttach(attachList);
     }
 
 
@@ -2733,6 +2735,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             attach.setAttachId(uploadFileResponse.getData().getAttachId());
             createOutboundReq.setAttach(Collections.singletonList(attach));
         }
+
+        //上传发票
+        autoPushInvoice(entity, overseasProviderWarehouse, channelEntity,createOutboundReq);
+
         createOutboundReq.setCarrierType(channelEntity.getCarrierType());
         ApiResult<String> apiResult = thirdWarehouseFeign.createOutboundOrder(createOutboundReq);
         log.info("第三方仓下单结果:{}", JSONUtil.toJsonStr(apiResult));

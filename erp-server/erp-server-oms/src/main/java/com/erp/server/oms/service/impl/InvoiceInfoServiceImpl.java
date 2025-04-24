@@ -964,6 +964,10 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (CollUtil.isEmpty(platformSkuNoList)) {
             throw new ServiceException("选择订单无平台SKU不支持开票");
         }
+        //查询nfe发票配置信息
+        List<CfgInvoiceSettingDetailEntity> cfgInvoiceSettingDetailList = cfgInvoiceSettingDetailService.listByShopIdList(shopIdList);
+        Map<String, CfgInvoiceSettingDetailEntity> cfgInvoiceSettingDetailMap = cfgInvoiceSettingDetailList.stream().collect(Collectors.toMap(CfgInvoiceSettingDetailEntity::getShopId, Function.identity()));
+
         // 查询该店铺所有平台sku
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(shopIdList);
@@ -988,6 +992,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             if (ObjUtil.isEmpty(soB2cEntity)) {
                 continue;
             }
+            CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = cfgInvoiceSettingDetailMap.get(soB2cEntity.getShopId());
+            if (ObjUtil.isEmpty(cfgInvoiceSettingDetailEntity)) {
+                continue;
+            }
+
             if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
                 continue;
             }
@@ -1005,6 +1014,25 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             viewDTO.setPlatformSkuName(CollUtil.isEmpty(listingInfoWithSkuMappingList) ? "" : listingInfoWithSkuMappingList.get(0).getPlatformSkuName());
             viewDTO.setPlatform(soB2cEntity.getDictPlatform());
             viewDTO.setShopId(soB2cEntity.getShopId());
+            viewDTO.setUnit(CharSequenceUtil.isBlank(viewDTO.getUnit()) ? "UN" : viewDTO.getUnit());
+            //同州cfop
+            if (CharSequenceUtil.isBlank(viewDTO.getSameStateTaxCode())) {
+                //给默认值
+                if (TaxTypeEnum.PURCHASE_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
+                    viewDTO.setSameStateTaxCode(NfeCfopEnum.PURCHASE_SALE_SAME_CFOP.getCode());
+                } else if (TaxTypeEnum.SELF_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
+                    viewDTO.setSameStateTaxCode(NfeCfopEnum.SELF_SALE_SAME_CFOP.getCode());
+                }
+            }
+            //跨州cfop
+            if (CharSequenceUtil.isBlank(viewDTO.getDiffStateTaxCode())) {
+                //给默认值
+                if (TaxTypeEnum.PURCHASE_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
+                    viewDTO.setDiffStateTaxCode(NfeCfopEnum.PURCHASE_SALE_DIFF_CFOP.getCode());
+                } else if (TaxTypeEnum.SELF_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
+                    viewDTO.setDiffStateTaxCode(NfeCfopEnum.SELF_SALE_DIFF_CFOP.getCode());
+                }
+            }
             resultList.add(viewDTO);
         }
         return resultList.stream().distinct().collect(Collectors.toList());
