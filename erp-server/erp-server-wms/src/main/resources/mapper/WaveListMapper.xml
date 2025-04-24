@@ -72,7 +72,6 @@
                 sbdd.warehouse_id,
                 sbdd.warehouse_name,
                 wl.sku_barcode_print_status,
-                wl.picking_print_time,
                 wl.sku_barcode_print_time
         from wave_list wl
         left join wave_list_detail wld on wl.id = wld.main_id and wld.is_deleted = false
