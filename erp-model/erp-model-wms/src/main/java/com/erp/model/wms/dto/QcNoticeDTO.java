@@ -487,29 +487,5 @@ public class QcNoticeDTO implements Serializable {
          */
         private String errorUrl;
     }
-    @Data
-    @NoArgsConstructor
-    public static class QcNoticeDetailExportExcelDTO {
-        /**
-         * sku
-         */
-        @ExcelProperty(value = "*SKU", index = 0)
-        @FieldValid(fieldName = "SKU", isNotBlank = true)
-        private String skuNo;
-
-        /**
-         * 计划数量
-         */
-        @ExcelProperty(value = "*质检通知数量", index = 1)
-        @FieldValid(fieldName = "质检通知数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
-        private String qcNoticeQty;
-
-        /**
-         * 错误数据
-         */
-        @ExcelProperty(value = "错误数据", index = 2)
-        private String errorMsg;
-    }
-
 
 }

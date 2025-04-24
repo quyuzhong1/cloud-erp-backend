@@ -853,7 +853,7 @@ public class ExportWmsFeignController {
             menuCode = "wms:qcNotice:export",
             tableAlias = "qn"
     )
-    @WebAdvanceQuery(handler = RequisitionApplicationQueryHandler.class)
+    @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
     public PagingVO<QcNoticeDTO.ListDTO> exportList(@RequestBody PagingDTO<QcNoticeDTO.ExportDTO> dto) {
         return qcNoticeService.exportList(dto);
     }
