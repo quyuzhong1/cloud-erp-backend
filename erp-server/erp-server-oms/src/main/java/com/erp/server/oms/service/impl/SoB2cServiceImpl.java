@@ -9959,6 +9959,42 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+    @Override
+    public String getPartitionId(String soId, String platform) {
+        if (soB2cService.isFullyManagedOrder(platform)){
+            SoB2cExtendEntity extendEntity = soB2cExtendService.getByMainId(soId);
+            return Objects.nonNull(extendEntity)? extendEntity.getPartitionId():"";
+        }else {
+            SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soId);
+            return Objects.nonNull(receiverEntity)? receiverEntity.getPartitionId():"";
+        }
+    }
+
+    @Override
+    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList) {
+        if (CollUtil.isEmpty(platformList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList,codeList);
+    }
+
+    @Override
+    public void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO) {
+        baseMapper.updateExtendData(id, JSONUtil.toJsonStr(extendDataDTO));
+    }
+
+    @Override
+    public void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto) {
+        String id = dto.getId();
+        SoB2cEntity entity = this.getById(id);
+        if (Objects.isNull(entity)){
+            return;
+        }
+        if (CharSequenceUtil.isNotBlank(dto.getLogisticsDTO().getLogisticsChannelId()) && !entity.getIsMatchLogisticsRule()){
+            this.lambdaUpdate().set(SoB2cEntity::getIsMatchLogisticsRule,Boolean.TRUE).eq(SoB2cEntity::getId,id).update();
+        }
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
