@@ -742,6 +742,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
     ERROR_PURCHASE_ORG_REQUIRED(98105,"采购订单【{}】收料组织不能为空"),
     ERROR_PURCHASE_DETAIL_DATE(98105,"采购订单【{}】SKU【{}】预计交货日期不能为空"),
+    ERROR_PURCHASE_SUPPLIER_ACCOUNT(98105,"采购订单【{}】供应商账户信息不能为空"),
     ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购单中未找到"),
     ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购收货单中未找到"),
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
@@ -1214,12 +1215,12 @@ public enum ApiError implements Serializable {
     WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
     WAREHOUSE_AREA_USED(92253, "库区被使用后，库存类型禁止修改"),
     WAREHOUSE_NOT_EDIT(92253, "所属仓库禁止修改"),
-    ERROR_92268(92268, "【%s】库存不足,质检通知数量%s，可用库存%s"),
-    ERROR_92269(92269, "【%s】已质检完成，不允许操作反审核"),
+    ERROR_92268(92268, "【{}】库存不足,质检通知数量{}，可用库存{}"),
+    ERROR_92269(92269, "【{}】已质检完成，不允许操作反审核"),
     ERROR_92270(92270, "请先审核通过质检通知单"),
     ERROR_92271(92271, "请至少选择一条明细"),
     ERROR_92272(92272, "【{}】包装信息不存在"),
-    ERROR_92273(92273, "SKU库存不足,质检通知数量%s，可用库存%s，请确认是否继续创建"),
+    ERROR_92273(92273, "SKU库存不足,质检通知数量{}，可用库存{}，请确认是否继续创建"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1488,7 +1489,10 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_COMPANY_TOKEN_NOT_EXIST(92186,"公司token不存在"),
     ERROR_INVOICE_NFE_UPDATE_CCE(92187,"更新Cce发票失败，原因：{}"),
     ERROR_INVOICE_NFE_CREATE_INVOICE(92188,"创建发票失败，原因：{}"),
-
+    ERROR_INVOICE_NFE_UPLOAD_NOT_EXIST(92189,"发票上传文件不存在"),
+    ERROR_INVOICE_NFE_CREATE_JSON_HANDLE(92190,"NF-e创建发票json解析失败"),
+    ERROR_INVOICE_NFE_UPDATE_CCE_JSON_HANDLE(92191,"发票修改Cce结果json解析失败"),
+    ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST(92192,"选择订单不支持生成NF-e发票"),
 
 
 

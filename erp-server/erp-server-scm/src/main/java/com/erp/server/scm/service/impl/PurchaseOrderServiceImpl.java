@@ -29,6 +29,7 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
@@ -224,6 +225,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Resource
     private FileTemplateFeign fileTemplateFeign;
+    @Resource
+    private SupplierAccountService supplierAccountService;
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> paging(PagingDTO<PurchaseOrderDTO.SearchParamDTO> pagingDTO) {
@@ -328,7 +331,20 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
         //能否编辑
         dto.setCanEdit(purchaseApplicationRefPoService.getPurchaseApplicationByPurchaseOrderId(id));
-
+        //供应商账号信息
+        if (CharSequenceUtil.isNotBlank(dto.getSupplierAccountId())){
+            SupplierAccountEntity supplierAccountEntity = supplierAccountService.getById(dto.getSupplierAccountId());
+            if (ObjectUtils.isNotEmpty(supplierAccountEntity)){
+                dto.setPayee(supplierAccountEntity.getPayee());
+                dto.setBankAccount(supplierAccountEntity.getBankAccount());
+                if(CharSequenceUtil.isNotBlank(supplierAccountEntity.getBankName())){
+                    dto.setBankName(supplierAccountEntity.getBankName());
+                }else if (CharSequenceUtil.isNotBlank(supplierAccountEntity.getBankId())){
+                    List<BaseIdDTO> bankList = sysUserFeign.getBankList(Collections.singletonList(supplierAccountEntity.getBankId()));
+                    dto.setBankName(CollUtil.isNotEmpty(bankList) ?bankList.get(0).getName() : "");
+                }
+            }
+        }
         // 采购员名称
         if(StrUtils.isNotEmpty(dto.getPurchaseUserId())) {
             FindUserDTO purchaseUser = sysUserFeign.getUserByUserId(dto.getPurchaseUserId());
@@ -749,6 +765,20 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (ObjectUtils.isEmpty(supplier)) {
             throw new ServiceException(ApiError.ERROR_SUPPLIER_ABSENCE);
         }
+        //供应商账号信息
+        String supplierBankNo = "";
+        String supplierBankName = "";
+        String supplierAccountName = "";
+        if (CharSequenceUtil.isNotBlank(purchaseOrderEntity.getSupplierAccountId())){
+            SupplierAccountEntity supplierAccountEntity = supplierAccountService.getById(purchaseOrderEntity.getSupplierAccountId());
+            supplierBankNo =Objects.nonNull(supplierAccountEntity)?supplierAccountEntity.getBankAccount():"";
+            supplierBankName =Objects.nonNull(supplierAccountEntity)?supplierAccountEntity.getBankName():"";
+            supplierAccountName =Objects.nonNull(supplierAccountEntity)?supplierAccountEntity.getPayee():"";
+        }
+        exportPdfDTO.setSupplierBankName(supplierBankName);
+        exportPdfDTO.setSupplierBankNo(supplierBankNo);
+        exportPdfDTO.setSupplierAccountName(supplierAccountName);
+
         exportPdfDTO.setSupplierName(supplier.getName());
         exportPdfDTO.setSupplierAddress(supplier.getCompanyAddress());
 
@@ -806,10 +836,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         exportPdfDTO.setTotalNotTaxAmount(totalNotTaxAmount);
         //不含税金额合计  增加千分位分割
         exportPdfDTO.setTotalNotTaxAmountStr(df2.format(totalNotTaxAmount));
+        String currency = list.get(0).getCurrency();
+        String currencyName = "";
+        if (StrUtil.isNotBlank(currency)) {
+            currencyName = CurrencyEnum.getNameByCode(currency);
+        }
         //将totalNotTaxAmount转换为中文大写
-        String totalNotTaxAmountChinese = Convert.numberToChinese(totalNotTaxAmount.doubleValue(), true);
-        exportPdfDTO.setTotalNotTaxAmountChinese(totalNotTaxAmountChinese);
-        exportPdfDTO.setCurrency(list.get(0).getCurrency());
+        String totalNotTaxAmountChinese = Convert.digitToChinese(totalNotTaxAmount.doubleValue());
+        exportPdfDTO.setTotalNotTaxAmountChinese(currencyName + totalNotTaxAmountChinese);
+        exportPdfDTO.setCurrency(currency);
         exportPdfDTO.setDetails(details);
         return exportPdfDTO;
     }
@@ -3137,6 +3172,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             String skuNos = detailList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseOrderId()) && ObjectUtils.isEmpty(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
             if (StringUtils.isNotBlank(skuNos)) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_DATE,entity.getCode(),skuNos);
+            }
+            if (CharSequenceUtil.isBlank(entity.getSupplierAccountId())){
+                throw new ServiceException(ApiError.ERROR_PURCHASE_SUPPLIER_ACCOUNT,entity.getCode());
             }
         }
     }

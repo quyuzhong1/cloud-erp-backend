@@ -16,7 +16,7 @@ public interface NfeInvoiceConverter {
     NfeInvoiceConverter INSTANCE = Mappers.getMapper(NfeInvoiceConverter.class);
 
     @Mappings({
-            @Mapping(target = "bairro",  constant = "state"),
+            @Mapping(target = "bairro",  source = "state"),
             @Mapping(target = "cep", source = "postalCode"),
             @Mapping(target = "cityId", source = "city"),
             @Mapping(target = "country", source = "country"),

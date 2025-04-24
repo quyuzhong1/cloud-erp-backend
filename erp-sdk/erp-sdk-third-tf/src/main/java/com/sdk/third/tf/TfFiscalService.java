@@ -1,13 +1,12 @@
 package com.sdk.third.tf;
 
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
-import cn.hutool.http.HttpUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
 import com.erp.model.oms.entity.CfgSettingEntity;
@@ -15,6 +14,7 @@ import com.erp.model.oms.entity.DictBasicEntity;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.CompanyDTO;
+import com.sdk.third.tf.entity.CompanyInfoEntity;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +22,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +44,13 @@ public class TfFiscalService {
 
     public static void main(String[] args) {
         String path = "/cadastrar_empresa";
+//        Map<String, String> bodyMap = new HashMap<>();
+//        bodyMap.put("tipo_pesquisa","cnpj");
+//        bodyMap.put("search","9661144118088");
+//        bodyMap.put("token_plataforma","16-04-2025_09-19-No28tBi0Yw28FixdY1sIjkmt4-dksxdY1sIjkB12n413207N4-sb7XiNa");
         CompanyDTO updateCompanyDTO = new CompanyDTO();
-        updateCompanyDTO.setTokenPlataforma("19-04-2023_10-47-No37tBi0Yw39Fida4MdUYwmXdksxdY1sIjkmt4-Ymwx04dy1iu94m0b");
-        updateCompanyDTO.setCnpj("96611441148088");
+        updateCompanyDTO.setTokenPlataforma("16-04-2025_09-19-No28tBi0Yw28FixdY1sIjkmt4-dksxdY1sIjkB12n413207N4-sb7XiNa");
+        updateCompanyDTO.setCnpj("966114411480881");
         updateCompanyDTO.setIe("000000000");
         updateCompanyDTO.setRazaoSocial("WJKJ");
         updateCompanyDTO.setUltimoNumeroNfe("test");
@@ -59,15 +69,15 @@ public class TfFiscalService {
         updateCompanyDTO.setRazaoSocial("test12345");
         updateCompanyDTO.setState("São Paulo");
         updateCompanyDTO.setApiCompleta(true);
-        updateCompanyDTO.setFirstName("WJKJTEST22131");
+        updateCompanyDTO.setFirstName("WJKJTEST123456");
         updateCompanyDTO.setEmail("ulanzichat@ulanzi.cn");
-        updateCompanyDTO.setUsername("WJKJTEST22131");
+        updateCompanyDTO.setUsername("WJKJTEST123456");
         updateCompanyDTO.setRua("test");
         updateCompanyDTO.setNaturezaId("10");
-//        updateCompanyDTO.setSurname("1412321");
-//        updateCompanyDTO.setLastName("1231");
-//        updateCompanyDTO.setLandmark("1231");
-//        updateCompanyDTO.setAmbiente("1231");
+        updateCompanyDTO.setSurname("1412321");
+        updateCompanyDTO.setLastName("1231");
+        updateCompanyDTO.setLandmark("1231");
+        updateCompanyDTO.setAmbiente("1231");
         Map<String, String> headerMap = new HashMap<>();
 
         //拉取数据
@@ -77,18 +87,9 @@ public class TfFiscalService {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
             throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
         }
-        if(!apiResult.getData().contains("\"success\":1")){
-            throw new ServiceException("adsa");
-        }
+        CompanyInfoEntity companyInfoEntity = JSON.parseObject(apiResult.getData(),new TypeReference<CompanyInfoEntity>() {}.getType());
+        System.out.println(companyInfoEntity);
     }
-
-    private static Map<String, Object> buildDefaultParam() {
-        Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("token_plataforma",ACCESS_TOKEN);
-        paramMap.put("api_completa",true);
-        return paramMap;
-    }
-
     /**
      * 创建公司
      * @param addCompanyDTO
@@ -105,7 +106,41 @@ public class TfFiscalService {
             log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
             throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
         }
-        return null;
+        CompanyInfoEntity result = JSON.parseObject(apiResult.getData().toString(),new TypeReference<CompanyInfoEntity>() {}.getType());
+        if(Objects.isNull(result.getId())){
+            log.error("创建公司失败,{}", apiResult.getData());
+            throw new ServiceException("创建公司失败:"+ apiResult.getData());
+        }
+        CompanyInfoEntity companyInfoEntity = this.queryCompany(addCompanyDTO.getCnpj());
+        return companyInfoEntity.getTokenEmpresa();
+    }
+
+    /**
+     * 查询公司信息
+     * @param cnpj
+     */
+    public CompanyInfoEntity queryCompany(String cnpj){
+        String path = "/consultar_empresa";
+        String accessToken = getAccessToken();
+        Map<String, String> bodyMap = new HashMap<>();
+        bodyMap.put("tipo_pesquisa","cnpj");
+        bodyMap.put("search",cnpj);
+        bodyMap.put("token_plataforma",accessToken);
+        Map<String, String> headerMap = new HashMap<>();
+
+        //拉取数据
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(bodyMap), null, headerMap, RequestMethod.POST);
+        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
+            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
+        }
+        CompanyInfoEntity companyInfoEntity = JSON.parseObject(apiResult.getData(),new TypeReference<CompanyInfoEntity>() {}.getType());
+        if(Objects.isNull(companyInfoEntity.getTokenEmpresa())){
+            log.error("查询公司失败,{}", apiResult.getData());
+            throw new ServiceException("查询公司失败:"+ apiResult.getData());
+        }
+        return companyInfoEntity;
     }
 
     /**
@@ -166,24 +201,8 @@ public class TfFiscalService {
      */
     public Object createInvoice(NfeInvoiceDTO.NfeCreateDTO nfeCreateDTO){
         String path = "/emitir_transparente";
-        String accessToken = getAccessToken();
-        nfeCreateDTO.setTokenEmpresa(accessToken);
-
-        HttpRequest createPost = HttpUtil.createPost(URL+path);
         String body = JSONUtil.toJsonStr(nfeCreateDTO);
-        createPost.body(body);
-        // 创建明确包含 Content-Type 的请求头
-        Map<String, String> headers = new HashMap<>();
-        headers.put("Content-Type","application/json");
-        headers.put("Content-Length", String.valueOf(body.length()));
-        headers.put("Host", "tffiscal.com.br");
-        createPost.addHeaders(headers);
-        HttpResponse response = createPost.execute();
-        log.warn("请求参数-body:{},响应结果-response:{}", body, response.body());
-        if (200 != response.getStatus() ) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,response.body());
-        }
-        return response.body();
+        return doPostUrl(URL + path, body);
     }
 
 
@@ -191,41 +210,15 @@ public class TfFiscalService {
      * 取消发票
      * @author will
      * @date 2025/4/11 12:12
-     * @param nfeCreateDTO
+     * @param nfeCancelDTO
      * @return Object
      */
-    public Object cancelInvoice(NfeInvoiceDTO.NfeCancelDTO nfeCreateDTO){
+    public Object cancelInvoice(NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO){
         String path = "/cancelar_nota";
-        String accessToken = getAccessToken();
-        nfeCreateDTO.setTokenEmpresa(accessToken);
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCreateDTO), null, new HashMap<>(), RequestMethod.POST);
-        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
-        }
-        return apiResult.getData();
+        String body = JSONUtil.toJsonStr(nfeCancelDTO);
+        return doPostUrl(URL + path, body);
     }
 
-    /**
-     * 查询发票
-     * @author will
-     * @date 2025/4/14 16:15
-     * @param nfeListParamDTO
-     * @return Object
-     */
-    public Object getNfeInvoiceResult(NfeInvoiceDTO.NfeListParamDTO nfeListParamDTO){
-        String path = "/consultar_nota";
-        String accessToken = getAccessToken();
-        nfeListParamDTO.setTokenEmpresa(accessToken);
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeListParamDTO), null, new HashMap<>(), RequestMethod.POST);
-        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
-        }
-        return apiResult.getData();
-    }
 
     /**
      * 更新cce信息
@@ -236,15 +229,8 @@ public class TfFiscalService {
      */
     public Object updateCceInvoice(NfeInvoiceDTO.NfeCceDTO nfeCceDTO){
         String path = "/corrigirCce_api";
-        String accessToken = getAccessToken();
-        nfeCceDTO.setTokenEmpresa(accessToken);
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(nfeCceDTO), null, new HashMap<>(), RequestMethod.POST);
-        log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("请求失败,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
-            throw new RuntimeException("请求失败,code:" + apiResult.getCode() + ",msg:" + apiResult.getMsg()+ ",data:" + apiResult.getData());
-        }
-        return apiResult.getData();
+        String body = JSONUtil.toJsonStr(nfeCceDTO);
+        return doPostUrl(URL + path, body);
     }
 
     private String getAccessToken() {
@@ -274,5 +260,68 @@ public class TfFiscalService {
         companyDTO.setFirstName(jsonObject.getStr("first_name"));
         companyDTO.setEmail(jsonObject.getStr("email"));
         companyDTO.setNaturezaId(jsonObject.getStr("natureza_id"));
+        companyDTO.setSurname(companyDTO.getName());
+        companyDTO.setLastName(companyDTO.getName());
+        companyDTO.setLandmark(jsonObject.getStr("landmark"));
+        companyDTO.setAmbiente(jsonObject.getStr("ambiente"));
+    }
+
+    /**
+     * jdk原生数据请求
+     * @author will
+     * @date 2025/4/22 19:14
+     * @param postUrl
+     * @param jsonStr
+     * @return String
+     */
+    private static String doPostUrl (String postUrl,String jsonStr) {
+        // 读取响应体（成功或错误）
+        String responseBody = null;
+        try {
+            java.net.URL url = new URL(postUrl);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("Content-Type", "application/json");
+            conn.setDoOutput(true);
+
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(jsonStr.getBytes("UTF-8"));
+            }
+            // 获取响应码
+            int status = conn.getResponseCode();
+            System.out.println("Response Code: " + status);
+
+            // 读取响应体（成功或错误）
+            if (status >= 200 && status < 300) {
+                responseBody = readStream(conn.getInputStream());
+            } else {
+                String error = readStream(conn.getErrorStream());
+                throw new ServiceException(error);
+            }
+            System.out.println("Response Body: " + responseBody);
+        } catch (Exception e) {
+            throw new ServiceException(e.getMessage());
+        }
+        return responseBody;
+    }
+
+    /**
+     * 将 InputStream 转换为字符串
+     * @author will
+     * @date 2025/4/22 19:14
+     * @param inputStream
+     * @return String
+     */
+    private static String readStream(InputStream inputStream) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, "UTF-8"))) {
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+            return response.toString();
+        } catch (Exception e) {
+          throw new ServiceException(CharSequenceUtil.format("流转字符串失败，原因：{}",e.getMessage()));
+        }
     }
 }

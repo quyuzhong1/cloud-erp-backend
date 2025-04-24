@@ -79,9 +79,9 @@ public class DmpInputLxOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                     if (isPlatformWarehouseOrder) {
                         //平台仓
                         logisticType = OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode();
-                    } else {
-                        //自发货
-                        logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
+//                    } else {
+//                        //自发货
+//                        logisticType = OrderLogisticTypeEnum.SELF_SHIPMENT.getCode();
                     }
                 }
                 dmpDataMap.put("logisticType", logisticType);

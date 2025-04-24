@@ -120,6 +120,11 @@ public class ExportOmsFeignController {
         return soB2cService.exportSoB2C(dto);
     }
     @PostMapping("/exportFullyManagedOrder")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:fully:paging"
+    )
     @WebAdvanceQuery(handler = FullyManagedQueryHandler.class)
     public PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
         return fullyManagedOrderService.exportFullyManagedOrder(dto);

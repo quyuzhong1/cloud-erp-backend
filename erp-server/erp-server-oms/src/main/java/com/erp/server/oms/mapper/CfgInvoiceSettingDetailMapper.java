@@ -19,14 +19,6 @@ import java.util.List;
  */
 @Mapper
 public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSettingDetailEntity> {
-    /**
-      * @description:查询发票设置明细关联的店铺（name、value）
-      * @author: hcg
-      * @date: 2025/4/9 14:46
-      * @param:
-      * @return: List<CfgInvoiceSettingDetailDTO.ViewDetailShop>
-      **/
-    List<CfgInvoiceSettingDetailDTO.ViewDetailShop> selectDetailShop();
 
     /**
      * 根据店铺id集合查询
@@ -45,4 +37,18 @@ public interface CfgInvoiceSettingDetailMapper extends BaseMapper<CfgInvoiceSett
      * @return CfgInvoiceSettingDetailEntity
      */
     CfgInvoiceSettingDetailEntity getInvoiceSettingDetail(@Param("dictPlatform")String dictPlatform,@Param("shopId") String shopId);
+
+
+    /**
+     * 查询发票设置详情，按平台分组，并在SQL中处理ratio乘以100
+     * @param mainId 主ID
+     * @param dictKey 字典Key
+     * @param platformValues 平台值列表
+     * @return 按平台分组的详情列表
+     */
+    CfgInvoiceSettingDetailDTO.ViewDTO selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(
+            @Param("mainId") String mainId,
+            @Param("dictKey") String dictKey,
+            @Param("platformValues") List<String> platformValues
+    );
 }

@@ -44,18 +44,26 @@
         cisd.is_auto_upload
     </sql>
 
-    <select id="selectDetailShop" resultType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$ViewDetailShop">
-        SELECT
-            cisd.main_id AS mainId,
-            si.name,
-            si.dict_platform
-        FROM
-            cfg_invoice_setting_detail cisd
-                LEFT JOIN
-            shop_info si ON cisd.shop_id = si.id and si.is_deleted = false
-        WHERE
-            cisd.is_deleted = FALSE;
-    </select>
+    <!-- 结果映射 -->
+    <resultMap id="DetailGroupResultMap" type="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$ViewDTO">
+        <id column="main_id" property="mainId"/>
+        <collection property="detailDTOList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$DetailListDTO">
+            <result column="platform_name" property="platformName"/>
+            <result column="dict_platform" property="platformValue"/>
+            <collection property="detailDTOList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$CommonDTO">
+                <id column="id" property="id"/>
+                <result column="dict_platform" property="dictPlatform"/>
+                <result column="shop_id" property="shopId"/>
+                <result column="dict_invoice_rule" property="dictInvoiceRule"/>
+                <result column="ratio" property="ratio"/>
+                <result column="is_contain_ship_fee" property="isContainShipFee"/>
+                <result column="tax_type" property="taxType"/>
+                <result column="invoice_node" property="invoiceNode"/>
+                <result column="is_auto_upload" property="isAutoUpload"/>
+            </collection>
+        </collection>
+    </resultMap>
+
 
     <!-- 根据店铺id集合查询 -->
     <select id="listByShopIdList" resultType="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
@@ -80,6 +88,38 @@
         where cis.is_deleted = false and cis.disabled = false
         and cisd.dict_platform  = #{dictPlatform} and cisd.shop_id = #{shopId}
         limit 1
+    </select>
+    <!-- 可选：如果不想在Java代码中处理ratio乘以100的逻辑，可以在SQL中处理 -->
+    <select id="selectDetailsByMainIdGroupByPlatformWithRatioAdjusted" resultMap="DetailGroupResultMap">
+        SELECT
+        d.id,
+        d.main_id,
+        d.dict_platform,
+        d.shop_id,
+        d.dict_invoice_rule,
+        d.ratio * 100 as ratio, <!-- 在SQL中直接乘以100 -->
+        d.is_contain_ship_fee,
+        d.tax_type,
+        d.invoice_node,
+        d.is_auto_upload,
+        d.create_time,
+        d.update_time,
+        COALESCE(dict.name, d.dict_platform) as platform_name
+        FROM
+        cfg_invoice_setting_detail d
+        LEFT JOIN
+        dict_basic dict ON d.dict_platform = dict.value AND dict.type = #{dictKey}
+        WHERE
+        d.main_id = #{mainId}
+        AND d.is_deleted = false
+        <if test="platformValues != null and platformValues.size() > 0">
+            AND d.dict_platform IN
+            <foreach collection="platformValues" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+        ORDER BY
+        dict.name DESC
     </select>
 
 </mapper>

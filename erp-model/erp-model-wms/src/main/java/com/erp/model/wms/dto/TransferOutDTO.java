@@ -167,6 +167,10 @@ public class TransferOutDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 分步式调出单号(来源编号)
+         */
+        private String sourceCode;
     }
 
     @Data

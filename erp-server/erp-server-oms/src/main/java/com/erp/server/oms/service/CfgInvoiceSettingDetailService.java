@@ -17,11 +17,10 @@ import java.util.List;
  */
 public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceSettingDetailEntity> {
 
-    List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
+    CfgInvoiceSettingDetailDTO.ViewDTO view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
 
-    BaseResultDTO.AddDTO addOrUpdate(List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> dtoList);
+    BaseResultDTO.AddDTO addOrUpdate(CfgInvoiceSettingDetailDTO.AddOrUpdateDTO dto);
 
-    List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop();
     /**
      * 根据店铺id集合查询
      * @author will

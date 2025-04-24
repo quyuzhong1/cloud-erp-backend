@@ -378,13 +378,13 @@ public class QcNoticeDTO implements Serializable {
         /**
          *
          */
-        @NotBlank(message = "良品数量不能为空")
+        @NotNull(message = "良品数量不能为空")
         @Min(value = 0, message = "良品数量不能小于0")
         private Integer qcGoodQty;
         /**
          *
          */
-        @NotBlank(message = "不良品数量不能为空")
+        @NotNull(message = "不良品数量不能为空")
         @Min(value = 0, message = "不良品数量不能小于0")
         private Integer qcBadQty;
         /**
@@ -399,13 +399,12 @@ public class QcNoticeDTO implements Serializable {
         /**
          *
          */
-        @NotBlank(message = "质检员不能为空")
         private String qcUserId;
         private String qcUserName;
         /**
          *
          */
-        @NotBlank(message = "质检日期不能为空")
+        @NotNull(message = "质检日期不能为空")
         private LocalDate qcDate;
         /**
          *
@@ -487,29 +486,5 @@ public class QcNoticeDTO implements Serializable {
          */
         private String errorUrl;
     }
-    @Data
-    @NoArgsConstructor
-    public static class QcNoticeDetailExportExcelDTO {
-        /**
-         * sku
-         */
-        @ExcelProperty(value = "*SKU", index = 0)
-        @FieldValid(fieldName = "SKU", isNotBlank = true)
-        private String skuNo;
-
-        /**
-         * 计划数量
-         */
-        @ExcelProperty(value = "*质检通知数量", index = 1)
-        @FieldValid(fieldName = "质检通知数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
-        private String qcNoticeQty;
-
-        /**
-         * 错误数据
-         */
-        @ExcelProperty(value = "错误数据", index = 2)
-        private String errorMsg;
-    }
-
 
 }

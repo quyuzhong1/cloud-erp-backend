@@ -27,9 +27,11 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 
@@ -56,70 +58,47 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     ShopInfoService shopInfoService;
 
     @Override
-    public List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
-        ArrayList<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOS = new ArrayList<>();
-        //查询详情列表
-        List<CfgInvoiceSettingDetailEntity> entityList = baseMapper.selectList(new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>().eq(CfgInvoiceSettingDetailEntity::getMainId, dto.getId())
-                .eq(CfgInvoiceSettingDetailEntity::getIsDeleted, false).orderByDesc(CfgInvoiceSettingDetailEntity::getDictPlatform));
-        // 列表为空，第一次点击，返回平台情况即可
-        if (ObjectUtil.isEmpty(entityList)) {
-            return viewDTOS;
-        }
-        //按平台分组
-        Map<String, List<CfgInvoiceSettingDetailEntity>> groupedMap = entityList.stream()
-                .collect(Collectors.groupingBy(CfgInvoiceSettingDetailEntity::getDictPlatform));
-        //查询平台value对应
-        List<DictBasicDTO.ViewDTO> keyList = dictBasicService.getByKey(dto.getKey());
-        if (ObjectUtil.isNotEmpty(dto.getNames())) {
-            keyList = keyList.stream().filter(item -> ObjectUtil.isNotEmpty(dto.getNames()) && dto.getNames().contains(item.getValue()))
-                    .collect(Collectors.toList());
-        }
-        // 平台value => 平台name 映射
-        Map<String, String> valueNameMap = keyList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
-        // 遍历分组 map，封装返回结构
-        for (Map.Entry<String, List<CfgInvoiceSettingDetailEntity>> entry : groupedMap.entrySet()) {
-            String dictPlatform = entry.getKey();
-            List<CfgInvoiceSettingDetailEntity> details = entry.getValue();
-            CfgInvoiceSettingDetailDTO.ViewDTO viewDTO = new CfgInvoiceSettingDetailDTO.ViewDTO();
-            viewDTO.setPlatformValue(dictPlatform);
-            // 没查到name就用value兜底
-            viewDTO.setPlatformName(valueNameMap.getOrDefault(dictPlatform, dictPlatform));
-            List<CfgInvoiceSettingDetailDTO.DetailDTO> detailDTOS = BeanUtil.copyToList(details, CfgInvoiceSettingDetailDTO.DetailDTO.class);
-            viewDTO.setDetailDTOList(detailDTOS);
-            viewDTOS.add(viewDTO);
-        }
+    public CfgInvoiceSettingDetailDTO.ViewDTO view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
+        CfgInvoiceSettingDetailDTO.ViewDTO viewDTOS = baseMapper.selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(
+                dto.getId(),
+                dto.getKey(),
+                dto.getNames()
+        );
         return viewDTOS;
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addOrUpdate(List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> dtoList) {
+    public BaseResultDTO.AddDTO addOrUpdate(CfgInvoiceSettingDetailDTO.AddOrUpdateDTO dto) {
+        //发票设置id
+        String mainId = dto.getMainId();
         // 参数校验
-        if (CollUtil.isEmpty(dtoList)) {
-            throw new ServiceException("参数不能为空");
+        if (ObjectUtil.isEmpty(dto)) {
+            throw new ServiceException("请求参数不能为空");
         }
         // 校验主表是否存在
-        CfgInvoiceSettingEntity cfgInvoiceSettingEntity = validateInvoiceSetting(dtoList.get(0).getDetailDTOList().get(0).getMainId());
-        // 处理删除逻辑
-        Set<String> idsWithChangedShopIdSet = handleDeletedDetails(dtoList);
-        //新增 & 更新
-        handleCreateDetails(dtoList,idsWithChangedShopIdSet);
-        List<CfgInvoiceSettingDetailEntity> updateList = handleUpdateDetails(dtoList);
+        CfgInvoiceSettingEntity cfgInvoiceSettingEntity = validateInvoiceSetting(mainId);
+        if(ObjectUtil.isEmpty(cfgInvoiceSettingEntity)){
+            throw new ServiceException("发票设置不存在！");
+        }
+        //处理清空逻辑
+        if (CollUtil.isEmpty(dto.getDetailDTOList())){
+            this.lambdaUpdate().in(CfgInvoiceSettingDetailEntity::getMainId, mainId).remove();
+            //清空成功
+            return new BaseResultDTO.AddDTO(mainId, mainId);
+        }
+        // 处理更新中的删除逻辑
+        List<CfgInvoiceSettingDetailEntity> relatedToAddAndUpdateList= handleInvoiceSettingDetails(dto.getDetailDTOList(), mainId);
         // 操作日志
-        if (ObjectUtil.isNotEmpty(updateList)) {
-            List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
+        if (ObjectUtil.isNotEmpty(relatedToAddAndUpdateList)) {
+            List<Pair<String, String>> pairList = relatedToAddAndUpdateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
             String msg = StrUtil.format("用户【{}】修改【{}】绑定店铺id为【{}】",
-                    UserContext.getDefaultLoginUser().getUserName(), "发票设置明细", updateList.stream().map(CfgInvoiceSettingDetailEntity::getId).collect(Collectors.toList()));
+                    UserContext.getDefaultLoginUser().getUserName(), "发票设置明细", relatedToAddAndUpdateList.stream().map(CfgInvoiceSettingDetailEntity::getId).collect(Collectors.toList()));
             operateLogService.batchAddModuleOperateLog(msg,
                     ModuleTypeEnum.INVOICE_SETTING_DETAIL.getCode(), pairList, "新增操作");
         }
-        return new BaseResultDTO.AddDTO(dtoList.get(0).getDetailDTOList().get(0).getMainId(), dtoList.get(0).getDetailDTOList().get(0).getMainId());
-    }
-
-    @Override
-    public List<CfgInvoiceSettingDetailDTO.ViewDetailShop> getDetailShop() {
-        return baseMapper.selectDetailShop();
+        return new BaseResultDTO.AddDTO(mainId, mainId);
     }
 
     @Override
@@ -187,39 +166,40 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     }
 
     /**
-     * @description:删除逻辑封装
+     * @description:add、update、add AND update过程中的delete
      * @author: hcg
      * @date: 2025/4/15 12:09
      * @param: dtoList
      * @return: null
      **/
-    private Set<String> handleDeletedDetails(List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> dtoList) {
-        String mainId = dtoList.get(0).getDetailDTOList().get(0).getMainId();
-        List<CfgInvoiceSettingDetailEntity> detailEntityList = this.list(
+    @Transactional(rollbackFor = Exception.class)
+    public List<CfgInvoiceSettingDetailEntity> handleInvoiceSettingDetails(List<CfgInvoiceSettingDetailDTO.DetailListDTO> dtoList, String mainId) {
+        // 1. 获取现有记录
+        List<CfgInvoiceSettingDetailEntity> existingEntities = this.list(
                 new LambdaQueryWrapper<CfgInvoiceSettingDetailEntity>()
-                        .eq(CfgInvoiceSettingDetailEntity::getMainId, mainId).eq(CfgInvoiceSettingDetailEntity::getIsDeleted, false)
+                        .eq(CfgInvoiceSettingDetailEntity::getMainId, mainId)
+                        .eq(CfgInvoiceSettingDetailEntity::getIsDeleted, false)
         );
         // 构建现有记录的 Map<id, entity>
-        Map<String, CfgInvoiceSettingDetailEntity> existingMap = detailEntityList.stream()
-                .filter(item -> ObjectUtil.isNotEmpty(item.getId())) // 排除 id 为空
+        Map<String, CfgInvoiceSettingDetailEntity> existingMap = existingEntities.stream()
+                .filter(item -> ObjectUtil.isNotEmpty(item.getId()))
                 .collect(Collectors.toMap(
-                item -> item.getId(),
-                item -> item,
-                (a, b) -> a // 保留第一个
-        ));
-        // 已存在的 id 列表
+                        CfgInvoiceSettingDetailEntity::getId,
+                        Function.identity(),
+                        (a, b) -> a // 保留第一个
+                ));
+        // 2. 获取传入的ID集合
         Set<String> existingIds = existingMap.keySet();
-        //传入的id
         Set<String> incomingIds = dtoList.stream()
-                .flatMap(dto -> dto.getDetailDTOList().stream()) // 扁平化处理 detailDTOList
-                .map(CfgInvoiceSettingDetailDTO.CommonDTO::getId) // 提取 id
-                .filter(ObjectUtil::isNotEmpty) // 过滤空值
+                .flatMap(dto -> dto.getDetailDTOList().stream())
+                .map(CfgInvoiceSettingDetailDTO.CommonDTO::getId)
+                .filter(ObjectUtil::isNotEmpty)
                 .collect(Collectors.toSet());
-        // 第一种：差集（原有但传入中没有的）
+        // 3. 处理需要删除的记录
         Set<String> idsToDelete = new HashSet<>(existingIds);
         idsToDelete.removeAll(incomingIds);
-        // 第二种：传入中有，但 shopId 与原记录不一致的
-        Set<String> idsWithChangedShopIdSet = dtoList.stream()
+        // 4. 找出shopId变更的记录
+        Set<String> idsWithChangedShopId = dtoList.stream()
                 .flatMap(dto -> dto.getDetailDTOList().stream())
                 .filter(detailDTO -> StrUtil.isNotEmpty(detailDTO.getId()))
                 .filter(detailDTO -> {
@@ -228,73 +208,67 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                 })
                 .map(CfgInvoiceSettingDetailDTO.CommonDTO::getId)
                 .collect(Collectors.toSet());
-        // 将两种情况合并
-        idsToDelete.addAll(idsWithChangedShopIdSet);
-        if (CollUtil.isNotEmpty(existingIds)) {
-            log.info("开始删除以下发票设置明细: {}", existingIds);
+
+        // 将shopId变更的记录也加入删除集合
+        idsToDelete.addAll(idsWithChangedShopId);
+        // 5. 执行删除操作
+        int deleteCount = 0;
+        if (CollUtil.isNotEmpty(idsToDelete)) {
+            log.info("删除发票设置明细: {}", idsToDelete);
             boolean removed = this.lambdaUpdate()
-                    .in(CfgInvoiceSettingDetailEntity::getId, existingIds)
+                    .in(CfgInvoiceSettingDetailEntity::getId, idsToDelete)
                     .remove();
             if (!removed) {
                 throw new ServiceException("删除发票设置明细失败");
             }
+            deleteCount = idsToDelete.size();
         }
-        return idsWithChangedShopIdSet;
-    }
+        // 6. 准备新增和更新的实体列表
+        List<CfgInvoiceSettingDetailEntity> createList = new ArrayList<>();
+        List<CfgInvoiceSettingDetailEntity> updateList = new ArrayList<>();
+        Iterator<CfgInvoiceSettingDetailDTO.DetailListDTO> dtoIterator = dtoList.iterator();
+        while (dtoIterator.hasNext()) {
+            CfgInvoiceSettingDetailDTO.DetailListDTO item = dtoIterator.next();
+            String platformValue = item.getPlatformValue();
+            Iterator<CfgInvoiceSettingDetailDTO.CommonDTO> detailIterator = item.getDetailDTOList().iterator();
+            while (detailIterator.hasNext()) {
+                CfgInvoiceSettingDetailDTO.CommonDTO detail = detailIterator.next();
+                CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(detail, CfgInvoiceSettingDetailEntity.class);
 
-    /**
-     * @description:新增逻辑封装
-     * @author: hcg
-     * @date: 2025/4/15 12:10
-     * @param: createList
-     * @return: null
-     **/
-    private void handleCreateDetails(List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> createList,
-                                     Set<String> idsWithChangedShopIdSet) {
-        // 处理数据
-        List<CfgInvoiceSettingDetailEntity> saveList = createList.stream()
-                .flatMap(item -> item.getDetailDTOList().stream()
-                        .filter(detail -> ObjectUtil.isEmpty(detail.getId()) || idsWithChangedShopIdSet.contains(detail.getId()))
-                        .map(detail -> {
-                            // 如果 id 在变更集合中，则置空
-                            if (idsWithChangedShopIdSet.contains(detail.getId())) {
-                                detail.setId(null);
-                            }
+                // 处理比率
+                BigDecimal ratio = entity.getRatio();
+                entity.setRatio((ratio == null ? BigDecimal.ZERO : ratio).divide(new BigDecimal("100")));
+                entity.setDictPlatform(platformValue);
+                entity.setMainId(mainId); // 确保设置了mainId
 
-                            CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(detail, CfgInvoiceSettingDetailEntity.class);
-                            entity.setDictPlatform(item.getPlatformValue());
-                            return entity;
-                        }))
-                .collect(Collectors.toList());
-        log.info("开始新增发票设置明细，共 {} 条", saveList.size());
-        if (CollUtil.isNotEmpty(saveList) && !super.saveBatch(saveList)) {
-            throw new ServiceException("新增发票设置明细失败");
+                // 判断是新增还是更新
+                String id = detail.getId();
+                if (ObjectUtil.isEmpty(id) || idsWithChangedShopId.contains(id)) {
+                    // 如果ID为空或者是shopId变更的记录，则为新增
+                    if (idsWithChangedShopId.contains(id)) {
+                        entity.setId(null); // 清空ID，让数据库生成新ID
+                    }
+                    createList.add(entity);
+                } else if (existingMap.containsKey(id)) {
+                    // 存在且未变更shopId的记录，为更新
+                    updateList.add(entity);
+                }
+            }
         }
-    }
-
-
-    /**
-     * @description:更新逻辑封装
-     * @author: hcg
-     * @date: 2025/4/15 12:10
-     * @param: updateList
-     * @return: null
-     **/
-    private List<CfgInvoiceSettingDetailEntity> handleUpdateDetails(List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> updateList) {
-        //处理数据
-        List<CfgInvoiceSettingDetailEntity> saveList = updateList.stream()
-                .flatMap(item -> item.getDetailDTOList().stream()
-                        .filter(detail -> ObjectUtil.isNotEmpty(detail.getId()))
-                        .map(detail -> {
-                            CfgInvoiceSettingDetailEntity entity = BeanUtil.copyProperties(detail, CfgInvoiceSettingDetailEntity.class);
-                            entity.setDictPlatform(item.getPlatformValue());
-                            return entity;
-                        }))
-                .collect(Collectors.toList());
-        log.info("开始更新发票设置明细");
-        if (ObjectUtil.isNotEmpty(saveList) &&!super.updateBatchById(saveList)) {
-            throw new ServiceException("更新发票设置明细失败");
+        // 7. 执行新增操作
+        if (CollUtil.isNotEmpty(createList)) {
+            if (!super.saveBatch(createList)) {
+                throw new ServiceException("新增发票设置明细失败");
+            }
         }
-        return saveList;
+        // 8. 执行更新操作
+        if (CollUtil.isNotEmpty(updateList)) {
+            if (!super.updateBatchById(updateList)) {
+                throw new ServiceException("更新发票设置明细失败");
+            }
+        }
+        // 9. 返回处理结果统计
+        updateList.addAll(createList);
+        return updateList;
     }
 }

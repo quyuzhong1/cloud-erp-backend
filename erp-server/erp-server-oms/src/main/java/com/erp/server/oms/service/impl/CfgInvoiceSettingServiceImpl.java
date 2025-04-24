@@ -6,6 +6,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -71,30 +72,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         CfgInvoiceSettingDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page<CfgInvoiceSettingDTO.PagingViewDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        //分页数据
-        IPage<CfgInvoiceSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params);
-        //获取绑定店铺
-        List<CfgInvoiceSettingDetailDTO.ViewDetailShop> detailShopList = cfgInvoiceSettingDetailService.getDetailShop();
-        //获取店铺名称
-        Set<String> dictPlatformSet = detailShopList.stream().map(CfgInvoiceSettingDetailDTO.ViewDetailShop::getDictPlatform).collect(Collectors.toSet());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.list(new LambdaQueryWrapper<DictBasicEntity>().in(DictBasicEntity::getValue, dictPlatformSet));
-        //platformValue-platformName
-        Map<String, String> dictValueNameMap = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName, (existing, replacement) -> existing));
-        //发票设置主键-绑定店铺集合
-        Map<String, List<CfgInvoiceSettingDetailDTO.ViewDetailShop>> mainIdToDetailsMap = detailShopList.stream()
-                .collect(Collectors.groupingBy(CfgInvoiceSettingDetailDTO.ViewDetailShop::getMainId));
-        pageData.getRecords().forEach(item -> {
-            List<CfgInvoiceSettingDetailDTO.ViewDetailShop> detailShopListByMainIdList = mainIdToDetailsMap.get(item.getId());
-            if (CollUtil.isEmpty(detailShopListByMainIdList)) {
-                return;
-            }
-            List<CfgInvoiceSettingDTO.ShopInfoDTO> shopInfoList = BeanUtil.copyToList(detailShopListByMainIdList, CfgInvoiceSettingDTO.ShopInfoDTO.class);
-            shopInfoList.forEach(shopInfo -> {
-                shopInfo.setDictPlatformName(dictValueNameMap.get(shopInfo.getDictPlatform()));
-            });
-            item.setShopList(shopInfoList);
-        });
-        //遍历分页数据集合
+        // 直接通过一个SQL查询获取所有数据
+        IPage<CfgInvoiceSettingDTO.PagingViewDTO> pageData = baseMapper.pagingWithShops(query, params);
         return new PagingVO(pageData);
     }
 
@@ -114,6 +93,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         //保存
         CfgInvoiceSettingEntity entity = new CfgInvoiceSettingEntity();
         BeanMapperUtils.copy(dto, entity);
+        entity.setCertificateUrl(dto.getAttachmentUrlList().get(0));
         boolean save = super.save(entity);
         if (!save) {
             throw new ServiceException("发票设置保存失败");
@@ -125,9 +105,16 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
         //CfgInvoiceSettingEntity -> AddCompanyDTO
         AddCompanyDTO addCompanyDTO = invoiceSettingConverter.invoiceSettinToAddCompanyDTOTo(entity);
+        //username
+        addCompanyDTO.setUsername(addCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
         //调用TF
         String token = tfFiscalService.createCompany(addCompanyDTO);
-        this.save(entity.setToken(token));
+        //更新token
+        this.update(
+                new LambdaUpdateWrapper<CfgInvoiceSettingEntity>()
+                        .eq(CfgInvoiceSettingEntity::getId, entity.getId())
+                        .set(CfgInvoiceSettingEntity::getToken, token)
+        );
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "VAT发票设置", entity.getId());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), entity.getId(), "新增操作");
@@ -150,30 +137,36 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         //校验邮编格式
         checkCode(dto.getLeiCode(), dto.getPostCode());
         //转换格式
-        CfgInvoiceSettingEntity cfgVatInvoiceEntity = BeanMapperUtils.map(CfgInvoiceSettingEntity.class, dto);
+        CfgInvoiceSettingEntity cfgInvoiceSettingEntity = BeanMapperUtils.map(CfgInvoiceSettingEntity.class, dto);
         //禁止更新以下字段
-        cfgVatInvoiceEntity.setStartCode(old.getStartCode());
-        cfgVatInvoiceEntity.setLeiCode(old.getLeiCode());
-        cfgVatInvoiceEntity.setStateTaxNo(old.getStateTaxNo());
-        cfgVatInvoiceEntity.setNo(old.getNo());
+        cfgInvoiceSettingEntity.setStartCode(old.getStartCode());
+        cfgInvoiceSettingEntity.setLeiCode(old.getLeiCode());
+        cfgInvoiceSettingEntity.setStateTaxNo(old.getStateTaxNo());
+        cfgInvoiceSettingEntity.setNo(old.getNo());
+        cfgInvoiceSettingEntity.setCertificateUrl(dto.getAttachmentUrlList().get(0));
         log.info("编辑 开始修改发票设置数据，id：【{}】", old.getId());
         //修改
-        boolean update = super.updateById(cfgVatInvoiceEntity);
+        boolean update = super.updateById(cfgInvoiceSettingEntity);
         if (!update) {
             throw new ServiceException("发票设置保存失败");
         }
         //保存附件
-        Class<CfgInvoiceSettingEntity> settingEntityClass = CfgInvoiceSettingEntity.class;
-        TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
-        String type = tableName.value();
-        omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgVatInvoiceEntity.getId());
+        OmsAttachmentEntity omsAttachmentEntity = omsAttachmentService.getOne(new LambdaQueryWrapper<OmsAttachmentEntity>()
+                .eq(OmsAttachmentEntity::getAttachUrl, dto.getAttachmentUrlList().get(0)).eq(OmsAttachmentEntity::getIsDeleted, false));
+        if (ObjectUtil.isEmpty(omsAttachmentEntity)){
+            Class<CfgInvoiceSettingEntity> settingEntityClass = CfgInvoiceSettingEntity.class;
+            TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
+            String type = tableName.value();
+            omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
+        }
         //调用TF
-        UpdateCompanyDTO updateCompanyDTO = invoiceSettingConverter.invoiceSettinToUpdateCompanyDTOTo(cfgVatInvoiceEntity);
+        UpdateCompanyDTO updateCompanyDTO = invoiceSettingConverter.invoiceSettinToUpdateCompanyDTOTo(cfgInvoiceSettingEntity);
+        updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
         tfFiscalService.updateCompany(updateCompanyDTO);
         //保存日志
-        log.info("编辑 开始记录发票设置日志数据，id：【{}】", cfgVatInvoiceEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgVatInvoiceEntity.getId(), "发票设置");
-        operateLogService.addModuleOperateLogByObj(old, cfgVatInvoiceEntity, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), cfgVatInvoiceEntity.getId(), msg);
+        log.info("编辑 开始记录发票设置日志数据，id：【{}】", cfgInvoiceSettingEntity.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgInvoiceSettingEntity.getId(), "发票设置");
+        operateLogService.addModuleOperateLogByObj(old, cfgInvoiceSettingEntity, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), cfgInvoiceSettingEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
