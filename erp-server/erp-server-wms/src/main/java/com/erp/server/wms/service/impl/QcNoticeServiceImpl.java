@@ -305,7 +305,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 Integer noticeQty = detail.getQcNoticeQty();
                 Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
                 if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                    sb.append(String.format(ApiError.ERROR_92268.msg, skuNo, noticeQty, inventoryQty));
+                    sb.append(StrUtil.format(ApiError.ERROR_92268.msg, skuNo, noticeQty, inventoryQty));
                     sb.append(";");
                 }
             }
@@ -377,7 +377,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 sb.append(map.get(qcInfo.getSourceDetailId()));
                 sb.append(";");
             }
-            return BatchResultDTO.fail(entity.getId(), entity.getCode(), String.format(ApiError.ERROR_92269.msg,sb.toString()));
+            return BatchResultDTO.fail(entity.getId(), entity.getCode(), StrUtil.format(ApiError.ERROR_92269.msg,sb.toString()));
         }
         //反审核成功后，自动删除待质检的质检单，通知单状态变更为待提交
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -553,6 +553,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcInfo.setQcResult(QcResultEnum.CONFORMITY.getCode());//默认OK
             qcInfo.setHandleModeDict("waitHandle");//默认待定
             qcInfo.setIsInsideQc(Boolean.FALSE);
+            qcInfo.setId("");
             //不良图片
             qcInfo.setBadImageNameList(qcInfoView.getAttachNameList());
             qcInfo.setBadImageUrlList(qcInfoView.getAttachUrlList());
@@ -562,6 +563,11 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcInfoMap.put(qcInfoView.getDetailId(), qcInfoEntity);
             //完成质检
             BatchResultDTO finish = qcInfoService.finish(qcInfoEntity);
+            qcInfoService.lambdaUpdate()
+                    .set(QcInfoEntity::getQcStatus, QcBillStatusEnum.FINISH_QC)
+                    .set(QcInfoEntity::getQcFinishTime, nowTime)
+                    .eq(QcInfoEntity::getId, qcInfoEntity.getId())
+                    .update();
 
             //保持不良图片
             List<String> imageNameList = qcInfo.getBadImageNameList();
@@ -588,9 +594,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //等下用于回填主表状态
             leftDetailList.add(qcNoticeDetailEntity);
             //质检通知单日志
-            operateLogService.addModuleOperateLogByObj(detailMap.get(qcInfoView.getDetailId()), qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(),"", String.format("【%s】", qcNoticeDetailEntity.getSkuNo()));
+            operateLogService.addModuleOperateLogByObj(detailMap.get(qcInfoView.getDetailId()), qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(),"", StrUtil.format("【%s】", qcNoticeDetailEntity.getSkuNo()));
             // 记录主单完成质检操作
-            operateLogService.addModuleOperateLog(String.format("【%s】", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
+            operateLogService.addModuleOperateLog(StrUtil.format("【%s】完成质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
         }
         Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = new ArrayList<>(detailMap.values()).stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
 
@@ -675,6 +681,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     public List<BatchResultDTO> cancelQcInfoFinish(List<String> detailIdList) {
         //先判断明细id下生成的分步式调出单的情况
         List<QcNoticeDetailEntity> qcNoticeDetailEntities = qcNoticeDetailService.listByIds(detailIdList);
+        Map<String, List<QcNoticeDetailEntity>> qcNoticeDetailMap = qcNoticeDetailEntities.stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
+
         List<String> mainIdList = qcNoticeDetailEntities.stream().map(QcNoticeDetailEntity::getMainId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
 
         Map<String, QcNoticeEntity> noticeMap = listByIds(mainIdList).stream().collect(Collectors.toMap(QcNoticeEntity::getId, t -> t));
@@ -689,16 +697,36 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         List<BatchResultDTO> results = new ArrayList<>();
 
         for (String qcNoticeId : mainIdList) {
+            if(noticeMap.containsKey(qcNoticeId)){
+                QcNoticeEntity qcNoticeEntity = noticeMap.get(qcNoticeId);
+                if(Objects.equals(qcNoticeEntity.getQcWarehouseId(),qcNoticeEntity.getPutawayWarehouseId())){
+                    List<QcNoticeDetailEntity> qcNoticeDetail = qcNoticeDetailMap.get(qcNoticeEntity.getId());
+
+                    List<String> detailIds = qcNoticeDetail.stream()
+                            .map(QcNoticeDetailEntity::getId)
+                            .collect(Collectors.toList());
+                    cancelQcNotice(qcNoticeId, detailIds);
+
+                    for (QcNoticeDetailEntity qcNoticeDetailEntity : qcNoticeDetail) {
+                        // 记录撤销质检操作
+                        operateLogService.addModuleOperateLog(StrUtil.format("【{}】撤销质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeEntity.getId(), "撤销质检");
+                    }
+                    BatchResultDTO success = BatchResultDTO.success(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(errorMessage2, qcNoticeEntity.getCode()));
+                    results.add(success);
+                    continue;
+                }
+            }
+
             if(!transferOutMap.containsKey(qcNoticeId)){
                 QcNoticeEntity qcNoticeEntity = noticeMap.get(qcNoticeId);
-                BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), String.format(errorMessage, qcNoticeEntity.getCode()));
+                BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(errorMessage, qcNoticeEntity.getCode()));
                 results.add(fail);
             }else {
                 for (TransferOutEntity transferOutEntity : transferOutMap.get(qcNoticeId)) {
                     if(transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)
                         || transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
                         QcNoticeEntity qcNoticeEntity = noticeMap.get(qcNoticeId);
-                        BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), String.format(errorMessage2, qcNoticeEntity.getCode()));
+                        BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(errorMessage2, qcNoticeEntity.getCode()));
                         results.add(fail);
                     }else {
                         List<TransferOutDetailEntity> transferOutDetailEntities = transferOutDetailService.listByMainId(transferOutEntity.getId());
@@ -711,42 +739,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                             transferOutDetailService.removeById(transferOutEntity.getId());
                             //执行 删除关联的明细的质检单
                             List<String> qcNoticeDetailIdList = transferOutDetailEntities.stream().map(TransferOutDetailEntity::getSourceDetailId).collect(Collectors.toList());
-                            List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceDetailIds(qcNoticeDetailIdList);
-                            List<String> qcInfoIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
-                            //删除质检单以及其明细
-                            deleteQcInfo(qcInfoIdList);
-                            //撤销质检通知单明细状态
-                            qcNoticeDetailService.lambdaUpdate()
-                                    .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.WAIT.getCode())
-                                    .in(QcNoticeDetailEntity::getId, qcNoticeDetailIdList)
-                                    .update();
-
-                            //查询其余明细的质检状态,是否有包含任一的质检完成状态
-                            boolean anyMatch = qcNoticeDetailService.lambdaQuery()
-                                    .notIn(QcNoticeDetailEntity::getId, qcNoticeDetailIdList)
-                                    .eq(QcNoticeDetailEntity::getMainId, qcNoticeId)
-                                    .list()
-                                    .stream().anyMatch(e-> e.getQcStatus().equals(QcNoticeStatusEnum.FINISH.getCode()));
-
                             //撤销质检通知单状态
-                            if(anyMatch){
-                                lambdaUpdate()
-                                        .set(QcNoticeEntity::getQcStatus, QcNoticeStatusEnum.PART.getCode())
-                                        .eq(QcNoticeEntity::getId, qcNoticeId)
-                                        .update();
-                            }else {
-                                lambdaUpdate()
-                                        .set(QcNoticeEntity::getQcStatus, QcNoticeStatusEnum.WAIT.getCode())
-                                        .eq(QcNoticeEntity::getId, qcNoticeId)
-                                        .update();
-                            }
+                            cancelQcNotice(qcNoticeId,qcNoticeDetailIdList);
 
                             QcNoticeEntity qcNoticeEntity = noticeMap.get(qcNoticeId);
                             for (TransferOutDetailEntity transferOutDetailEntity : transferOutDetailEntities) {
                                 // 记录撤销质检操作
-                                operateLogService.addModuleOperateLog(String.format("【%s】", transferOutDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), transferOutEntity.getSourceId(), "撤销质检");
+                                operateLogService.addModuleOperateLog(StrUtil.format("【{}】撤销质检", transferOutDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), transferOutEntity.getSourceId(), "撤销质检");
                             }
-                            BatchResultDTO success = BatchResultDTO.success(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), String.format(errorMessage2, qcNoticeEntity.getCode()));
+                            BatchResultDTO success = BatchResultDTO.success(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(errorMessage2, qcNoticeEntity.getCode()));
                             results.add(success);
                         }
                     }
@@ -754,6 +755,38 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             }
         }
         return results;
+    }
+
+    //撤销质检通知单状态
+    private void cancelQcNotice(String qcNoticeId, List<String> detailIds ) {
+        List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceDetailIds(detailIds);
+        List<String> qcInfoIdList = qcInfoEntities.stream().map(QcInfoEntity::getId).collect(Collectors.toList());
+        //删除质检单以及其明细
+        deleteQcInfo(qcInfoIdList);
+
+        qcNoticeDetailService.lambdaUpdate()
+                .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.WAIT.getCode())
+                .in(QcNoticeDetailEntity::getId, detailIds)
+                .update();
+        //查询其余明细的质检状态,是否有包含任一的质检完成状态
+        boolean anyMatch = qcNoticeDetailService.lambdaQuery()
+                .notIn(QcNoticeDetailEntity::getId, detailIds)
+                .eq(QcNoticeDetailEntity::getMainId, qcNoticeId)
+                .list()
+                .stream().anyMatch(e-> e.getQcStatus().equals(QcNoticeStatusEnum.FINISH.getCode()));
+
+        //撤销质检通知单状态
+        if(anyMatch){
+            lambdaUpdate()
+                    .set(QcNoticeEntity::getQcStatus, QcNoticeStatusEnum.PART.getCode())
+                    .eq(QcNoticeEntity::getId, qcNoticeId)
+                    .update();
+        }else {
+            lambdaUpdate()
+                    .set(QcNoticeEntity::getQcStatus, QcNoticeStatusEnum.WAIT.getCode())
+                    .eq(QcNoticeEntity::getId, qcNoticeId)
+                    .update();
+        }
     }
 
     @Override
@@ -771,7 +804,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             Integer noticeQty = detail.getQcNoticeQty();
             Integer inventoryQty = skuInventoryMap.getOrDefault(skuId, 0);
             if (inventoryQty <= 0 || inventoryQty.intValue() < noticeQty.intValue()) {
-                results.add(BatchResultDTO.fail(skuId, skuNo, String.format(ApiError.ERROR_92273.msg, noticeQty, inventoryQty)));
+                results.add(BatchResultDTO.fail(skuId, skuNo, StrUtil.format(ApiError.ERROR_92273.msg, noticeQty, inventoryQty)));
             }
         }
         return results;
@@ -833,11 +866,13 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
     //删除质检单以及其明细
     private void deleteQcInfo(List<String> qcInfoIdList) {
-        qcInfoService.lambdaUpdate().in(QcInfoEntity::getId, qcInfoIdList).remove();
-        qcProductService.lambdaUpdate().in(QcProductEntity::getMainId, qcInfoIdList).remove();
-        qcResultService.lambdaUpdate().in(QcResultEntity::getMainId, qcInfoIdList).remove();
-        qcReportDetailService.lambdaUpdate().in(QcReportDetailEntity::getMainId, qcInfoIdList).remove();
-        qcRemarkService.lambdaUpdate().in(QcRemarkEntity::getMainId, qcInfoIdList).remove();
+        if(CollUtil.isNotEmpty(qcInfoIdList)){
+            qcInfoService.lambdaUpdate().in(QcInfoEntity::getId, qcInfoIdList).remove();
+            qcProductService.lambdaUpdate().in(QcProductEntity::getMainId, qcInfoIdList).remove();
+            qcResultService.lambdaUpdate().in(QcResultEntity::getMainId, qcInfoIdList).remove();
+            qcReportDetailService.lambdaUpdate().in(QcReportDetailEntity::getMainId, qcInfoIdList).remove();
+            qcRemarkService.lambdaUpdate().in(QcRemarkEntity::getMainId, qcInfoIdList).remove();
+        }
     }
 
     @Override

@@ -441,8 +441,9 @@ public class QcNoticeController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "质检通知单导出Excel数据")
     @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
-    public void exportList(@RequestBody @Validated QcNoticeDTO.ExportDTO dto, HttpServletResponse response) {
+    public ApiResult<Object> exportList(@RequestBody @Validated QcNoticeDTO.ExportDTO dto, HttpServletResponse response) {
         qcNoticeService.exportList(dto, response);
+        return success();
     }
 
     /**
