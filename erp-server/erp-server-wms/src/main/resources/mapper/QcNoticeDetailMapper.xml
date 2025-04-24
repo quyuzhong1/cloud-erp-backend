@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.QcNoticeDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.QcNoticeDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="product_name" property="productName" />
+       <result column="qc_notice_qty" property="qcNoticeQty" />
+       <result column="qc_qty" property="qcQty" />
+       <result column="qc_diff_qty" property="qcDiffQty" />
+       <result column="qc_good_qty" property="qcGoodQty" />
+       <result column="qc_bad_qty" property="qcBadQty" />
+       <result column="putaway_qty" property="putawayQty" />
+       <result column="bad_desc" property="badDesc" />
+       <result column="qc_user_id" property="qcUserId" />
+       <result column="qc_user_name" property="qcUserName" />
+       <result column="qc_problem_dict" property="qcProblemDict" />
+       <result column="qc_status" property="qcStatus" />
+       <result column="qc_date" property="qcDate" />
+       <result column="putaway_status" property="putawayStatus" />
+       <result column="putaway_date" property="putawayDate" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+            qnd.id,
+            qnd.create_user_id,
+            qnd.create_user_name,
+            qnd.create_time,
+            qnd.update_user_id,
+            qnd.update_user_name,
+            qnd.update_time,
+            qnd.version,
+            qnd.is_deleted,
+            qnd.main_id,
+            qnd.sku_id,
+            qnd.sku_no,
+            qnd.product_name,
+            qnd.qc_notice_qty,
+            qnd.qc_qty,
+            qnd.qc_diff_qty,
+            qnd.qc_good_qty,
+            qnd.qc_bad_qty,
+            qnd.putaway_qty,
+            qnd.bad_desc,
+            qnd.qc_user_id,
+            qnd.qc_user_name,
+            qnd.qc_problem_dict,
+            qnd.qc_status,
+            qnd.qc_date,
+            qnd.putaway_status,
+            qnd.putaway_date
+    </sql>
+
+
+</mapper>

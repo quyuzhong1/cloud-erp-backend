@@ -2,11 +2,9 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
@@ -51,6 +49,7 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -297,6 +296,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             content = CharSequenceUtil.format("状态由【{}】变更为【{}】, 意见：{}", hisStatusName, approveStatus.getName(), baseApproveParamDTO.getComment());
             // TODO 审核通过流程
             this.updateInventoryTransCore(list);
+
         } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
             content = CharSequenceUtil.format("状态由【{}】变更为【{}】, 不通过原因：{}", hisStatusName, approveStatus.getName(), baseApproveParamDTO.getComment());
             // TODO 中止当前审批流程
@@ -535,6 +535,31 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             filling(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String id) {
+        List<TransferOutDTO.PutawayDetailDTO> putawayDetailDTOS = this.baseMapper.listPutawayDetail(id);
+        if(CollUtil.isNotEmpty(putawayDetailDTOS)){
+            List<String> outIds = putawayDetailDTOS.stream().map(TransferOutDTO.PutawayDetailDTO::getInId).collect(Collectors.toList());
+
+            List<OperateLogEntity> operateLogEntityList  = operateLogService.lambdaQuery()
+                    .eq(OperateLogEntity::getModuleType, ModuleTypeEnum.TRANSFER_IN.getCode())
+                    .in(OperateLogEntity::getBusinessId, outIds)
+                    .like(OperateLogEntity::getContent, ApproveStatusEnum.APPROVE.getName())
+                    .list();
+
+            Map<String, List<OperateLogEntity>> map = operateLogEntityList.stream().collect(Collectors.groupingBy(OperateLogEntity::getBusinessId));
+
+            for (TransferOutDTO.PutawayDetailDTO detailDTO : putawayDetailDTOS) {
+                if(map.containsKey(detailDTO.getInId())){
+                    List<OperateLogEntity> list = map.get(detailDTO.getInId());
+                    list.sort(Comparator.comparing(OperateLogEntity::getCreateTime).reversed());
+                    detailDTO.setInApproveTime(list.get(0).getCreateTime());
+                }
+            }
+        }
+        return putawayDetailDTOS;
     }
 
     /**

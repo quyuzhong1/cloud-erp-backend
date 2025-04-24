@@ -1,0 +1,37 @@
+package com.erp.model.wms.dto.excel;
+
+import com.alibaba.excel.annotation.ExcelProperty;
+import com.alibaba.excel.annotation.write.style.ColumnWidth;
+import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+
+/**
+ *
+ * @author jack
+ */
+@Data
+@NoArgsConstructor
+public class QcNoticeDetailImportExcelDTO {
+    /**
+     * sku
+     */
+    @ExcelProperty(value = "*SKU")
+    @FieldValid(fieldName = "SKU", isNotBlank = true)
+    private String skuNo;
+
+    /**
+     * 计划数量
+     */
+    @ExcelProperty(value = "*质检通知数量")
+    @FieldValid(fieldName = "质检通知数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
+    private String qcNoticeQty;
+    /**
+     * 错误信息
+     */
+    @ExcelProperty(value = "错误数据")
+    private String errorMsg;
+
+}
