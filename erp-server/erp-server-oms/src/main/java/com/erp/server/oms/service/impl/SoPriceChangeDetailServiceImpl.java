@@ -355,6 +355,7 @@ public class SoPriceChangeDetailServiceImpl extends SuperServiceImpl<SoPriceChan
     private List<SoPriceChangeDetailEntity> getEntityByPriceChangeId(String priceChangeId) {
         LambdaQueryWrapper<SoPriceChangeDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SoPriceChangeDetailEntity::getMainId, priceChangeId);
+        queryWrapper.orderByDesc(SoPriceChangeDetailEntity::getId);
         return this.list(queryWrapper);
     }
 
