@@ -1,13 +1,13 @@
 package com.erp.model.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -39,9 +39,9 @@ public class KingdeeOperatorTypeEntity extends BaseEntity<KingdeeOperatorTypeEnt
 
     public static final String KINGDEE_ID = "kingdee_id";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
     @Override
     public Serializable pkVal() {

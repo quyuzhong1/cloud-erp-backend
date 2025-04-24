@@ -7,7 +7,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectMembersEntity;
 import com.erp.model.plm.vo.ItemMemberVO;
-import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -31,7 +30,7 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     Boolean saveOrUpdateMember(SaveOrUpdateProjectMemberDTO dto);
 
-    PagingVO<List<MemberPagingShowDTO>> paging(PagingDTO<MemberPagingDTO> dto);
+    PagingVO<MemberPagingShowDTO> paging(PagingDTO<MemberPagingDTO> dto);
 
     /**
      * 根据产品表id 集合
@@ -54,7 +53,6 @@ public interface ProjectMembersService extends IService<ProjectMembersEntity> {
 
     List<TaskConductDTO> getUserTaskConduct(List<FindUserDTO> userList, List<Integer> stateList);
 
-    void addRoleAndMembersByApproval(String productId,String productPropertyId);
 
     List<ProjectMembersEntity> getByMemberIds(List<String> memberIds,String productId);
 

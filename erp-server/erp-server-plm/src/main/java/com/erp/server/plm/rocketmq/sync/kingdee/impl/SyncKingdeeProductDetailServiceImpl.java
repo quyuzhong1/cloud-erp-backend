@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
@@ -17,12 +16,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.LengthConverterUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.*;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
+import com.erp.model.plm.enums.SaleMethodEnum;
 import com.erp.model.sys.dto.PlmCfgSettingDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -36,9 +38,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Will
@@ -84,6 +89,11 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     
     @Resource
     private PlmPushMsgService plmPushMsgService;
+    
+    @Resource
+    private ProductDetailService productDetailService;
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
 
     /**
      * 组装数据发送到金蝶
@@ -92,8 +102,11 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate) {
-        //生成任务
-       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    	    return saveTask(entity,operate,DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
 
@@ -208,6 +221,13 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
                 }
             }
         }
+        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(productInfoEntity.getApplicationCategoryId());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            resultMap.put("applicationCategory", applicationCategory.getName());
+            //一级分类编码
+            resultMap.put("applicationCategoryCode", applicationCategory.getCode());
+        }
+
         //产品经理
         resultMap.put("chargeName", productInfoEntity.getChargeName());
         //销售信息
@@ -313,5 +333,96 @@ public class SyncKingdeeProductDetailServiceImpl implements SyncKingdeeProductDe
             resultMap.put("allowInventory", Boolean.FALSE);
         }
         return resultMap;
+	}
+
+
+	@Override
+	public void syncDataToSdy(ProductDetailEntity entity, String operate) {
+		String id = entity.getId();
+		PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+        plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        plmPushMsgEntity.setSourceType(SourceTypeEnum.SDY_PRODUCT_DETAIL.getCode());
+		plmPushMsgEntity.setSourceId(id);
+        plmPushMsgEntity.setSourceCode(entity.getSkuNo());
+        plmPushMsgEntity.setSyncOperate(operate);
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        	plmPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+        }else {
+        	ProductInfoEntity productInfo = null;
+            if (StringUtils.isNotBlank(entity.getProductId())){
+                productInfo = productInfoService.getById(entity.getProductId());
+            }
+            plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(productDetailService.getById(id), productInfo, operate)));
+        }
+        
+        plmPushMsgService.save(plmPushMsgEntity);
+	}
+
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(ProductDetailEntity entity, ProductInfoEntity productInfoEntity, String operate) {
+		ProductCostEntity productCostEntity = productCostService.getBySkuId(entity.getId());
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("data_source_system", "SDC");
+		resultMap.put("biz_uni_key", entity.getId());
+		resultMap.put("goods_code", entity.getSkuNo());
+		resultMap.put("goods_name", entity.getName());
+		if(productCostEntity != null) {
+			BigDecimal retailPrice = productCostEntity.getRetailPrice();
+			if(retailPrice != null) {
+				resultMap.put("uni_retail_price", retailPrice.toString());
+			}
+		}
+		resultMap.put("main_unit", entity.getUnitName());
+		LocalDateTime createTime = entity.getCreateTime();
+		if(createTime != null) {
+			resultMap.put("created_time", createTime.format(formatter));
+		}
+		resultMap.put("latest_update_time", LocalDateTime.now());
+		LocalDateTime enableTime = entity.getEnableTime();
+		if(enableTime != null) {
+			resultMap.put("enable_time", enableTime.format(formatter));
+		}
+		resultMap.put("out_system_code", "SDC");
+		
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "已删除");
+		}else {
+			resultMap.put("status", ProductDetailStatusEnum.getName(entity.getStatus()));
+		}
+        // 是否虚拟品/is_virtual
+        // 商品属性=费用/服务
+        if (null != productInfoEntity){
+            if ("费用".equalsIgnoreCase(productInfoEntity.getProperty()) || "服务".equalsIgnoreCase(productInfoEntity.getProperty())
+            ){
+                resultMap.put("is_virtual", 1);
+            } else{
+                resultMap.put("is_virtual", 0);
+            }
+            // 是否服务类商品/is_service
+            // 商品属性=服务
+            if ("服务".equalsIgnoreCase(productInfoEntity.getProperty())
+            ){
+                resultMap.put("is_service", 1);
+            } else{
+                resultMap.put("is_service", 0);
+            }
+            // 销售方式
+            if (StringUtils.isNotBlank(productInfoEntity.getSaleMethod())) {
+                String[] sales = productInfoEntity.getSaleMethod().split(",");
+                List<SaleMethodEnum> saleMethods = Stream.of(sales).map(SaleMethodEnum::getEnumByName).collect(Collectors.toList());
+                if (1 == saleMethods.size() && saleMethods.contains(SaleMethodEnum.GIFT)){
+                    // 只包含赠品视为赠品
+                    resultMap.put("is_gift", 1);
+                } else {
+                    resultMap.put("is_gift", 0);
+                }
+            }
+        }
+
+		return resultMap;
 	}
 }

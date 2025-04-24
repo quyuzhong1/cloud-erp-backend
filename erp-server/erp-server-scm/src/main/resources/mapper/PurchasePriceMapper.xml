@@ -7,6 +7,7 @@
         SELECT
         pp.id,
         pp.code,
+        pp.voucher_no as voucherNo,
         pp.create_user_id AS createUserId,
         pp.create_user_name AS createUserName,
         pp.create_time AS createTime,
@@ -51,6 +52,7 @@
         SELECT
         pp.id,
         pp.code,
+        pp.voucher_no as voucherNo,
         pp.create_user_id AS createUserId,
         pp.create_user_name AS createUserName,
         pp.create_time AS createTime,

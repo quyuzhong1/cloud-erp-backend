@@ -1,7 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.enums.ApiError;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
@@ -168,7 +170,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
                         submit = BatchResultDTO.fail(id, vmAllocationEntity.getCode(), ApiError.ERROR_SYNC_ERROR.msg);
                     } else {
                         String thirdCode = vmAllocationDetailEntity.getThirdCode();
-                        if (StringUtils.isBlank(thirdCode)){
+                        if (CharSequenceUtil.isBlank(thirdCode)){
                             flagCode = vmAllocationEntity.getCode();
                             submit = virtualWarehouseAllocationDetailService.sync(vmAllocationDetailEntity, vmAllocationEntity);
                         }else {
@@ -201,7 +203,7 @@ public class VirtualWarehouseAllocationDetailController extends BaseController {
             serviceClass = VirtualWarehouseAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<DmpPushTaskEntity> viewSyncInfo(@RequestParam(value = "detailId") String detailId) {
+    public ApiResult<DmpPushTaskDTO.SyncInfoDTO> viewSyncInfo(@RequestParam(value = "detailId") String detailId) {
        return success(virtualWarehouseAllocationDetailService.viewSyncInfo(detailId));
     }
 

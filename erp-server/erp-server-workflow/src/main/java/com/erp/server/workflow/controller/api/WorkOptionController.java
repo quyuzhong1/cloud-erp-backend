@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 工作台
@@ -58,9 +59,9 @@ public class WorkOptionController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "新增工作台选项")
     @PostMapping("/addWaitDo")
-    public ApiResult addWaitDo(@RequestBody WorkOptionDTO.AddDTO dto) {
+    public ApiResult<Objects> addWaitDo(@RequestBody WorkOptionDTO.AddDTO dto) {
         Boolean flag = workOptionService.addWaitDo(dto);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**
@@ -72,9 +73,9 @@ public class WorkOptionController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "新增工作台常用模块")
     @PostMapping("/addOften")
-    public ApiResult addOften(@RequestBody WorkOptionDTO.AddOftenDTO dto) {
+    public ApiResult<Objects> addOften(@RequestBody WorkOptionDTO.AddOftenDTO dto) {
         Boolean flag = workOptionService.addOften(dto);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**
@@ -86,9 +87,9 @@ public class WorkOptionController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改工作台选项:id={id}")
     @PostMapping("/updateWaitDo")
-    public ApiResult updateWaitDo(@RequestBody WorkOptionDTO.UpdateDTO dto) {
+    public ApiResult<Objects> updateWaitDo(@RequestBody WorkOptionDTO.UpdateDTO dto) {
         Boolean flag = workOptionService.updateWaitDo(dto);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**
@@ -136,9 +137,9 @@ public class WorkOptionController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "删除工作台选项")
     @PostMapping("/delete")
-    public ApiResult<List<WorkOptionDTO.ApproveViewDTO>> delete(@RequestParam("id") String id) {
+    public ApiResult<Objects> delete(@RequestParam("id") String id) {
         Boolean flag = workOptionService.delete(id);
-        return flag == true ? success() : failure();
+        return Boolean.TRUE.equals(flag) ? success() : failure();
     }
 
     /**
@@ -160,8 +161,8 @@ public class WorkOptionController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.approveViewDTO>>
      **/
     @PostMapping("/approveView")
-    public ApiResult<PagingVO<List<WorkOptionDTO.ApproveViewDTO>>> approveView(@RequestBody @Validated PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
-        PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveViewDTO = workOptionService.approveView(dto);
+    public ApiResult<PagingVO<WorkOptionDTO.ApproveViewDTO>> approveView(@RequestBody @Validated PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
+        PagingVO<WorkOptionDTO.ApproveViewDTO> approveViewDTO = workOptionService.approveView(dto);
         return success(approveViewDTO);
     }
 
@@ -174,7 +175,7 @@ public class WorkOptionController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.APPROVE, desc = "审批中心审核")
     @PostMapping("/approve")
-    public ApiResult approve(@RequestBody @Validated ApproveParamDTO dto) {
+    public ApiResult<Objects> approve(@RequestBody @Validated ApproveParamDTO dto) {
         Boolean approve = workOptionService.approve(dto);
         return approve == Boolean.TRUE ? success() : failure();
     }

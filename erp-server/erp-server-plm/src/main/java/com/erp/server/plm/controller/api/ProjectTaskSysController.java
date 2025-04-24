@@ -44,7 +44,7 @@ public class ProjectTaskSysController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "新建或者修改系统任务")
     @PostMapping("/saveOrUpdate")
     //   @RequestPermissions("plm:sys:task:saveOrUpdate")
-    public ApiResult saveOrUpdate(@RequestBody @Validated SysTaskDTO dto) {
+    public ApiResult<Object> saveOrUpdate(@RequestBody @Validated SysTaskDTO dto) {
         Boolean result = projectTaskSysService.saveOrUpdateSysTask(dto);
         return result == true ? success() : failure();
     }
@@ -82,7 +82,7 @@ public class ProjectTaskSysController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除系统任务")
     @PostMapping("/remove")
     //  @RequestPermissions("plm:sys:task:remove")
-    public ApiResult paging(String taskId) {
+    public ApiResult<Object> paging(String taskId) {
         Boolean flag=projectTaskSysService.removeTask(taskId);
         return flag==true?success():failure();
     }
@@ -92,7 +92,7 @@ public class ProjectTaskSysController extends BaseController {
      */
     @GetMapping("/list")
     //  @RequestPermissions("plm:sys:task:list")
-    public ApiResult list(@Param("templateId") String templateId) {
+    public ApiResult<Object> list(@Param("templateId") String templateId) {
         List<Map<String,Object>> list= projectTaskSysService.taskList(templateId);
         return success(list);
     }

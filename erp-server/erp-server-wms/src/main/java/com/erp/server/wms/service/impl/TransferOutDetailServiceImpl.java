@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
@@ -28,6 +29,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,19 +49,19 @@ import java.util.stream.Collectors;
 @Service
 public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDetailMapper, TransferOutDetailEntity> implements TransferOutDetailService {
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private PickingDetailService pickingDetailService;
 
-    @Autowired
+    @Resource
     private TransferOutService transferOutService;
 
-    @Autowired
+    @Resource
     private TransferInDetailService transferInDetailService;
 
     @Override
@@ -136,7 +138,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         // 从分步式调入单的来源id查询分步式调出单明细
         List<TransferOutDetailEntity> transferOutDetailList = baseMapper.listTransferOutDetailByParam(param);
         if (CollUtil.isEmpty(transferOutDetailList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         Map<String,TransferOutDetailEntity> transferDetailMap = transferOutDetailList.stream().collect(Collectors.toMap(TransferOutDetailEntity::getId, Function.identity()));
         // 分步式调出单明细id集合
@@ -191,7 +193,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         for(int i = 0, length = newList.size();i < length;i++) {
             TransferOutDetailEntity data = newList.get(i);
             if(!skuMap.containsKey(data.getSkuId()) || CollUtil.isEmpty(skuMap.get(data.getSkuId()))) {
-                throw new ServiceException(StrUtil.format("SKU【{}】错误", data.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("SKU【{}】错误", data.getSkuNo()));
             }
             SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
             // 单位
@@ -247,7 +249,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
             }
             //数量检验
             if (detailEntity.getQty().intValue() > pickingQty.intValue() - hasPickingQty.intValue()) {
-                throw new ServiceException(StrUtil.format("调拨申请单【{}】SKU【{}】已完成分步式调拨调出", transferOutEntity.getSourceCode(), detailEntity.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("调拨申请单【{}】SKU【{}】已完成分步式调拨调出", transferOutEntity.getSourceCode(), detailEntity.getSkuNo()));
             }
         }
 

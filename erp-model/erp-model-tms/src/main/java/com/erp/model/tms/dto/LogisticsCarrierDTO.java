@@ -1,14 +1,12 @@
 package com.erp.model.tms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.RequestParam;
 
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>

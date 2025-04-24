@@ -1,14 +1,13 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.PagingVO;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -17,10 +16,7 @@ import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsAuthEntity;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsBillEntity;
-import com.erp.model.tms.entity.LogisticsCarrierEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.erp.server.tms.mapper.LogisticsBillDetailMapper;
 import com.erp.server.tms.service.*;
@@ -28,11 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -48,21 +44,21 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBillDetailMapper, LogisticsBillDetailEntity> implements LogisticsBillDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private LogisticsAuthService logisticsAuthService;
 
-    @Autowired
+    @Resource
     private LogisticsBillService logisticsBillService;
 
-    @Autowired
+    @Resource
     private LogisticsBillCostService logisticsBillCostService;
 
-    @Autowired
+    @Resource
     private LogisticsTrackService logisticsTrackService;
-    @Autowired
+    @Resource
     @Lazy
     private LogisticsCarrierService logisticsCarrierService;
 
@@ -172,69 +168,27 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         String newTrackStatusName = LogisticTrackStatusEnum.getName(trackStatus);
         detailEntity.setTrackStatus(trackStatus);
         detailEntity.setTrackTime(trackTime);
+        detailEntity.setTrackContent(trackDesc);
         this.updateById(detailEntity);
 
         //添加物流轨迹
         addLogisticsTrack(detailEntity,trackTime,trackDesc);
 
+        //推送数帝云
+        if (detailEntity.getSignTime() != null) {
+            LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
+            logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(trackStatus));
+        }
+
         //操作日志
-        String msg = StrUtil.format("用户【{}】从【{}】变更为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), oldTrackStatusName, newTrackStatusName);
+        String msg = CharSequenceUtil.format("用户【{}】从【{}】变更为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), oldTrackStatusName, newTrackStatusName);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_BILL.getCode(), id, "状态变更");
         return BatchResultDTO.success(detailEntity.getId(), detailEntity.getTrackNo(), OperationTypeEnum.UPDATE_STATUS);
     }
 
     @Override
-    public PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query) {
-        Page<LogisticsBillDetailEntity> page = new Page<>();
-        page.setSize(query.getSize());
-        page.setCurrent(query.getCurrent());
-        IPage<LogisticsBillDetailEntity> result = baseMapper.getTrackPage(page, query);
-        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
-    }
-
-    @Override
-    public PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query) {
-        Page<LogisticsTrackDTO.UpdateTrackDTO> page = new Page<>();
-        page.setSize(query.getSize());
-        page.setCurrent(query.getCurrent());
-        IPage<LogisticsTrackDTO.UpdateTrackDTO> result = baseMapper.getTrackDtoPage(page, query);
-        buildTrackData(result.getRecords());
-        return new PagingVO<>(result.getRecords(), (int) result.getTotal(), (int) result.getSize(), (int) result.getCurrent());
-    }
-
-    @Override
     public List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query) {
         return baseMapper.listTrackDto(query);
-    }
-
-    /**
-     * 回填数据
-     * @param records
-     */
-    private void buildTrackData(List<LogisticsTrackDTO.UpdateTrackDTO> records) {
-        if (CollectionUtils.isEmpty(records)){
-            return;
-        }
-        List<String> carrierIds = records.stream().filter(e -> StringUtils.isNotEmpty(e.getCarrierId())).map(LogisticsTrackDTO.UpdateTrackDTO::getCarrierId).distinct().collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(carrierIds)){
-            return;
-        }
-        List<LogisticsCarrierEntity> carrierEntityList = logisticsCarrierService.listByIds(carrierIds);
-        records.forEach(updateTrackDTO -> {
-            LogisticsCarrierEntity carrier = carrierEntityList.stream().filter(e -> Objects.nonNull(e) && StringUtils.isNotEmpty(updateTrackDTO.getCarrierId())
-                    && e.getId().equals(updateTrackDTO.getCarrierId())).findFirst().orElse(null);
-            if (Objects.nonNull(carrier)){
-                updateTrackDTO.setCarrierCode(carrier.getCarrierCode());
-            }else {
-                updateTrackDTO.setCarrierId(updateTrackDTO.getCarrierId());
-            }
-        });
-    }
-
-    @Override
-    public List<LogisticsBillDetailEntity> getDetailByTrackNo(String trackNo) {
-        return lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, trackNo)
-                .eq(LogisticsBillDetailEntity::getIsDeleted, false).list();
     }
 
     @Override
@@ -258,7 +212,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
             }
             this.saveBatch(billDetailList);
             for (LogisticsBillDetailEntity entity : billDetailList) {
-                LogisticsBillEntity logisticsBillEntity = billList.stream().filter(obj -> StrUtil.equals(entity.getMainId(), obj.getId())).findFirst().orElse(null);
+                LogisticsBillEntity logisticsBillEntity = billList.stream().filter(obj -> CharSequenceUtil.equals(entity.getMainId(), obj.getId())).findFirst().orElse(null);
                 //新增物流费用单
                 logisticsBillService.addLogisticsBillCost(logisticsBillEntity,Arrays.asList(entity));
             }
@@ -291,6 +245,9 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
      * @param trackDesc
      */
     private void addLogisticsTrack (LogisticsBillDetailEntity detailEntity,LocalDateTime trackTime,String trackDesc) {
+        if (CharSequenceUtil.isBlank(detailEntity.getTrackNo())){
+            return;//不记录空跟踪号轨迹
+        }
         LogisticsTrackDTO.AddDTO addDTO = new LogisticsTrackDTO.AddDTO();
         addDTO.setTrackNo(detailEntity.getTrackNo());
         addDTO.setContent(trackDesc);
@@ -303,7 +260,7 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
      * 新增修改处理数据
      */
     private void handleData(List<LogisticsBillDetailEntity> logisticsBillDetailEntityList, String mainId, Boolean isUpdate) {
-        // TODO 验证数据 & 数据赋值
+        
     }
 
     /**
@@ -315,5 +272,91 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         List<String> oldIds = oldList.stream().map(LogisticsBillDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    @Override
+    public void updateLogisticsBillDetailByTrackNo(LogisticsTrackEntity logisticsTrackEntity) {
+        if (Objects.isNull(logisticsTrackEntity) || CharSequenceUtil.isBlank(logisticsTrackEntity.getTrackNo()) || CharSequenceUtil.isBlank(logisticsTrackEntity.getOrderStatus())){
+            return;
+        }
+        LocalDateTime signTime = null;
+        String trackStatus = logisticsTrackEntity.getOrderStatus();
+        if (LogisticTrackStatusEnum.SIGN.getCode().equalsIgnoreCase(trackStatus)) {
+            signTime = logisticsTrackEntity.getTrackTime();
+        }
+        LocalDateTime trackTime = Objects.nonNull(logisticsTrackEntity.getTrackTime()) ? logisticsTrackEntity.getTrackTime() : LocalDateTime.now();
+        //根据跟踪号查询更新
+        this.lambdaUpdate().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo())
+                .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
+                .set(LogisticsBillDetailEntity::getTrackStatus, trackStatus)
+                .set(LogisticsBillDetailEntity::getTrackTime, trackTime)
+                .set(LogisticsBillDetailEntity::getTrackContent,logisticsTrackEntity.getContent())
+                .set(LogisticsBillDetailEntity::getSignTime, signTime)
+                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                .update();
+        //根据运单号查询更新
+        if (CharSequenceUtil.isNotBlank(logisticsTrackEntity.getTrackNo())){
+            baseMapper.updateTransportNo(Collections.singletonList(logisticsTrackEntity.getTrackNo()),Boolean.TRUE,trackStatus,signTime, trackTime,logisticsTrackEntity.getContent());
+        }
+
+        LogisticsBillDetailEntity detailEntity = lambdaQuery().eq(LogisticsBillDetailEntity::getTrackNo, logisticsTrackEntity.getTrackNo()).last(SqlConstants.LIMIT_1).one();
+        if (ObjectUtil.isNotEmpty(detailEntity)) {
+            LogisticsBillEntity billEntity = logisticsBillService.getById(detailEntity.getMainId());
+            if (detailEntity.getSignTime() != null) {
+                //同步速递云运单
+                logisticsBillService.pushSdyFieldHandler(billEntity, LogisticTrackStatusEnum.getName(trackStatus));
+            }
+        }
+    }
+
+    @Override
+    public void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime signTime, LocalDateTime trackTime) {
+        if (CollectionUtils.isEmpty(trackNoList) || CharSequenceUtil.isBlank(code)){
+            return;
+        }
+        this.lambdaUpdate().in(LogisticsBillDetailEntity::getTrackNo, trackNoList)
+                .set(LogisticsBillDetailEntity::getIsApiUpdate, Boolean.TRUE)
+                .set(LogisticsBillDetailEntity::getTrackStatus, code)
+                .set(Objects.nonNull(trackTime), LogisticsBillDetailEntity::getTrackTime, trackTime)
+                .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                .set(Objects.nonNull(signTime), LogisticsBillDetailEntity::getSignTime, signTime)
+                .update();
+        //根据运单号查询更新
+        if (CollectionUtils.isNotEmpty(trackNoList)){
+            baseMapper.updateTransportNo(trackNoList,Boolean.TRUE,code,signTime, LocalDateTime.now(), "");
+        }
+    }
+
+    @Override
+    public void updateRegisterStatus(List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList, int status) {
+        if (CollectionUtils.isEmpty(errorList)){
+            return;
+        }
+        errorList.forEach(e ->{
+            this.lambdaUpdate().set(LogisticsBillDetailEntity::getRegisterStatus, status)
+                    .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                    .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
+                    .set(LogisticsBillDetailEntity::getRegisterResult, e.getErrorMsg())
+                    .eq(LogisticsBillDetailEntity::getId, e.getId()).update();
+        });
+    }
+
+    @Override
+    public void updateRegisterStatusByParams(List<LogisticsBillDetailDTO.BillDetailDTO> sucessList, int status) {
+        if (CollectionUtils.isEmpty(sucessList)){
+            return;
+        }
+        //根据跟踪号进行的更新
+        sucessList.forEach(e ->{
+            this.lambdaUpdate().set(LogisticsBillDetailEntity::getRegisterStatus, status)
+                    .set(LogisticsBillDetailEntity::getUpdateTime, LocalDateTime.now())
+                    .set(LogisticsBillDetailEntity::getTrackTime, LocalDateTime.now())
+                    .set(CharSequenceUtil.isNotBlank(e.getPlatformOrderNo()), LogisticsBillDetailEntity::getPlatformOrderNo, e.getPlatformOrderNo())
+                    .eq(LogisticsBillDetailEntity::getTrackNo, e.getTrackNo()).ne(LogisticsBillDetailEntity::getRegisterStatus, status).update();
+        });
+        //根据运单号关联的更新
+        sucessList.forEach(e ->{
+            baseMapper.updateRegisticsStatus(e.getTrackNo(), e.getPlatformOrderNo(), status);
+        });
     }
 }

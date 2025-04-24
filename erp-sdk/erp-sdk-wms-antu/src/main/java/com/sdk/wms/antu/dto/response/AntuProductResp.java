@@ -17,7 +17,10 @@ import java.util.List;
 @ToString
 @AllArgsConstructor
 public class AntuProductResp extends CleanBaseDTO implements Serializable {
-
+    private static final long serialVersionUID = 2405172041950251807L;
+    //产品id
+    @JSONField(name = "product_id")
+    private String productId;
     //商品sku
     @JSONField(name = "product_sku")
     private String productSku;
@@ -132,7 +135,7 @@ public class AntuProductResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class WarehouseAttribute {
+    public static class WarehouseAttribute implements Serializable{
 
         //长
         @JSONField(name = "product_length")

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.DmpSoOriginalDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.DmpSoOriginalDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_time" property="createTime" />
+       <result column="update_time" property="updateTime" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_update_time" property="platformUpdateTime" />
+       <result column="main_id" property="mainId" />
+       <result column="third_detail_id" property="thirdDetailId" />
+       <result column="status" property="status" />
+       <result column="goods_name" property="goodsName" />
+       <result column="goods_no" property="goodsNo" />
+       <result column="num" property="num" />
+       <result column="price" property="price" />
+       <result column="share_discount" property="shareDiscount" />
+       <result column="refund_amount" property="refundAmount" />
+       <result column="logistics_no" property="logisticsNo" />
+       <result column="unique_encrypt" property="uniqueEncrypt" />
+       <result column="data_encrypt" property="dataEncrypt" />
+       <result column="input_task_id" property="inputTaskId" />
+       <result column="convert_id" property="convertId" />
+       <result column="next_level_id" property="nextLevelId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_time,
+        update_time,
+        create_user_name,
+        create_user_id,
+        update_user_name,
+        update_user_id,
+        version,
+        is_deleted,
+        platform_create_time, platform_update_time, main_id, third_detail_id, status, goods_name, goods_no, num, price, share_discount, refund_amount, logistics_no, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
+    </sql>
+
+
+</mapper>

@@ -74,7 +74,7 @@
         </if>
     </select>
     <!--获取授权信息根据物流商id-->
-    <select id="getAuthBySupplierId" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthDTO">
+    <select id="listAuthBySupplierId" resultType="com.erp.model.tms.dto.LogisticsSupplierDTO$AuthDTO">
         SELECT
             la.id,
             la.id AS authId,
@@ -87,9 +87,23 @@
         FROM logistics_auth la
         INNER JOIN logistics_supplier ls
         ON ls.id=la.main_id and  ls.is_deleted=false
-        WHERE ls.id=#{logisticsSupplierId}
+        WHERE ls.id in
+        <foreach collection="logisticsSupplierIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
         AND la.is_deleted=false
     </select>
 
+    <select id="listAllChannelByOverseas" resultType="java.lang.String">
+        SELECT lc.id AS channelId
+        FROM logistics_auth la
+                 INNER JOIN logistics_supplier ls ON ls.id = la.main_id AND ls.is_deleted = FALSE
+                 INNER JOIN logistics_channel lc ON lc.main_id = ls.id AND lc.is_deleted = FALSE
+        WHERE la.is_deleted = FALSE
+        AND la.logistics_platform IN
+        <foreach collection="list" item="platform" open="(" separator="," close=")">
+            #{platform}
+        </foreach>
+    </select>
 
 </mapper>

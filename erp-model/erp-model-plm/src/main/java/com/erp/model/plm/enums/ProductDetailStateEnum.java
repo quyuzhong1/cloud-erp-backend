@@ -30,14 +30,14 @@ public enum ProductDetailStateEnum implements EnumMessage {
     public static String getNameByCode(Integer code) {
         ProductDetailStateEnum[] productDetailStateEnums = values();
         for (ProductDetailStateEnum productDetailStateEnum : productDetailStateEnums) {
-            if (productDetailStateEnum.getCode() == code) {
+            if (productDetailStateEnum.getCode().equals(code)) {
                 return productDetailStateEnum.getName();
             }
         }
         return null;
     }
 
-    public static ProductDetailStateEnum getEnumByType(String code){
+    public static ProductDetailStateEnum getEnumByType(Integer code){
         ProductDetailStateEnum[] productDetailStateEnums = values();
         for (ProductDetailStateEnum productDetailStateEnum : productDetailStateEnums) {
             if (productDetailStateEnum.getCode().equals(code)) {

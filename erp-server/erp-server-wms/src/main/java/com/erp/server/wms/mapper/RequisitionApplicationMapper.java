@@ -5,9 +5,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.RequisitionApplicationEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.util.List;
 
@@ -78,7 +80,7 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      **/
     List<RequisitionApplicationDTO.GenerateDeliverViewDTO> generateDeliverView(@Param("ids") List<String> ids);
 
-    IPage<RequisitionApplicationDTO.PickingViewDTO> pagingPicking(@Param("page") Page<RequisitionApplicationDTO.PickingViewDTO> page,@Param("id") String id,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
+    IPage<RequisitionApplicationDTO.PickingViewDTO> pagingPicking(@Param("page") Page<RequisitionApplicationDTO.PickingViewDTO> page,@Param("param") RequisitionApplicationDTO.GetPickingViewDTO param,@Param("ignoreInventorySkus") List<String> ignoreInventorySkus);
 
     List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentView(@Param("ids") List<String> cartonIds);
 
@@ -87,4 +89,20 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
     List<RequisitionApplicationDTO.DeliverRecordView> listFbaDeliverRecord(String id);
 
     List<RequisitionApplicationDTO.DeliverRecordView> listWarehouseDeliverRecord(@Param("params") String id);
+
+    /**
+     * 根据要货申请id集合 查询fnsku msku 平台sku等信息
+     * @Author jack
+     * @Date 2024/10/16
+     **/
+    List<RequisitionApplicationDTO.PrintFnskuDetailDTO> listPrintPreviewByIds(@Param("ids")List<String> ids);
+
+    IPage<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO> pagingSkuByDeliveryPlan(Page<T> query, @Param("params")RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO pagingParamDTO,@Param("id")String id);
+    /**
+     * 查询头程流水数据
+     * @author will
+     * @date 2025/3/31 12:06
+     * @return java.util.List<com.erp.model.wms.entity.VirtualInventoryStockDTO.OutInStockDTO>
+     */
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow();
 }

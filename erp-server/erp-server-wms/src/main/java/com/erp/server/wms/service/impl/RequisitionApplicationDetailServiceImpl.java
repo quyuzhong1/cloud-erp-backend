@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
@@ -8,15 +9,15 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
-import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.enums.RequisitionApplicationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.RequisitionApplicationConverter;
 import com.erp.server.wms.mapper.RequisitionApplicationDetailMapper;
@@ -27,12 +28,14 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -45,9 +48,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<RequisitionApplicationDetailMapper, RequisitionApplicationDetailEntity> implements RequisitionApplicationDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
     @Resource
@@ -62,6 +65,38 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
         // 数据处理
         handleData(list, mainId, Boolean.FALSE);
 
+        //校验是否重复
+        String type = addDTO.getType();
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+            // 分组并检查 FBA 类型的唯一性
+            Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : fbaGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                }
+            }
+        } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+            Map<String, List<RequisitionApplicationDetailEntity>> thirdPartyGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : thirdPartyGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
+                }
+            }
+        } else {
+            throw new ServiceException("未知的类型: " + type);
+        }
         log.info("开始新增要货申请单明细单");
         boolean save = super.saveBatch(list);
         if(!save) {
@@ -77,7 +112,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     @Override
     public void update(RequisitionApplicationDTO.UpdateDTO updateDTO, String mainId) {
         //原明细数据
-        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Arrays.asList(updateDTO.getId()));
+        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Collections.singletonList(updateDTO.getId()));
         List<String> deleteIds = getDeleteIds(updateDTO.getDetailList(), oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<RequisitionApplicationDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -87,11 +122,42 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             this.removeByIds(deleteIds);
         }
 
-        List<RequisitionApplicationDetailEntity> list = BeanMapper.copyList(updateDTO.getDetailList(), RequisitionApplicationDetailEntity.class);
+        List<RequisitionApplicationDetailEntity> list = RequisitionApplicationConverter.INSTANCE.detailUpdateConvert(updateDTO.getDetailList());
 
         // 数据处理
         handleData(list, mainId, Boolean.TRUE);
+        //校验是否重复
+        String type = updateDTO.getType();
+        if (RequisitionApplicationTypeEnum.FBA.getCode().equals(type)) {
+            // 分组并检查 FBA 类型的唯一性
+            Map<String, List<RequisitionApplicationDetailEntity>> fbaGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getPlatformFnSku() + detail.getSkuNo()));
 
+            for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : fbaGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getPlatformFnSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("FBA 类型的 MSKU+FNSKU+SKU 必须唯一 ,重复的组合:" + duplicateSkus);
+                }
+            }
+        } else if (RequisitionApplicationTypeEnum.THIRD_WAREHOUSE.getCode().equals(type)) {
+            Map<String, List<RequisitionApplicationDetailEntity>> thirdPartyGroup = list.stream()
+                    .collect(Collectors.groupingBy(detail -> detail.getPlatformSku() + detail.getSkuNo()));
+
+            for (Map.Entry<String, List<RequisitionApplicationDetailEntity>> entry : thirdPartyGroup.entrySet()) {
+                if (entry.getValue().size() > 1) {
+                    String duplicateSkus = entry.getValue().stream()
+                            .map(detail -> detail.getPlatformSku() + "+" + detail.getSkuNo())
+                            .distinct()
+                            .collect(Collectors.joining(", "));
+                    throw new ServiceException("三方仓类型的 三方仓SKU+SKU 必须唯一，重复的组合: " + duplicateSkus);
+                }
+            }
+        } else {
+            throw new ServiceException("未知的类型: " + type);
+        }
         boolean save = super.saveOrUpdateBatch(list);
         if(!save) {
             throw new ServiceException("要货申请单明细单保存失败");
@@ -114,10 +180,10 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
                 .set(RequisitionApplicationDetailEntity::getToWarehouseId, toWarehouseId)
                 .set(RequisitionApplicationDetailEntity::getToWarehouseName, toWarehouseName)
                 .set(RequisitionApplicationDetailEntity::getApproveQty, approveQty)
-                .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
+                .set(CharSequenceUtil.isNotBlank(fromVirtualWarehouseId),RequisitionApplicationDetailEntity::getVirtualFrozenQty,approveQty)
                 .eq(RequisitionApplicationDetailEntity::getId, id);
-        String virtualWarehouseIdToSet = StringUtils.isNotBlank(fromVirtualWarehouseId) ? fromVirtualWarehouseId : "";
-        String virtualWarehouseNameToSet = StringUtils.isNotBlank(fromVirtualWarehouseName) ? fromVirtualWarehouseName : "";
+        String virtualWarehouseIdToSet = CharSequenceUtil.isNotBlank(fromVirtualWarehouseId) ? fromVirtualWarehouseId : "";
+        String virtualWarehouseNameToSet = CharSequenceUtil.isNotBlank(fromVirtualWarehouseName) ? fromVirtualWarehouseName : "";
         eq.set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId, virtualWarehouseIdToSet)
                 .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName, virtualWarehouseNameToSet);
 
@@ -140,22 +206,33 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     @Override
-    public void cleanVirtualWarehouseIdByMianId(String mainId) {
+    public void cleanVirtualFrozenQtyByMianId(String mainId) {
         lambdaUpdate().eq(RequisitionApplicationDetailEntity::getMainId,mainId)
-                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId,"")
-                .set(RequisitionApplicationDetailEntity::getFromVirtualWarehouseName,"")
                 .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty, MathUtil.ZERO)
                 .update();
+    }
+
+    @Override
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail() {
+        return baseMapper.listAllVirtualRequisitionApplicationDetail();
+    }
+
+    @Override
+    public List<RequisitionApplicationDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds) {
+        if (CollectionUtils.isEmpty(sourceDetailIds)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(RequisitionApplicationDetailEntity::getSourceDetailId,sourceDetailIds).list();
     }
 
     /**
     * 新增修改处理数据
     */
     private void handleData(List<RequisitionApplicationDetailEntity> list, String mainId, Boolean isUpdate) {
-        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<RequisitionApplicationDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
 
         //需要新增的数据
-        List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<RequisitionApplicationDetailEntity> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
         List<String> fromVirtualWarehouseIdList = list.stream().map(RequisitionApplicationDetailEntity::getFromVirtualWarehouseId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         Map<String,String> virtualWarehouseNameMap = new HashMap<>();
         if(CollectionUtils.isNotEmpty(fromVirtualWarehouseIdList)){
@@ -172,13 +249,13 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
             SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
             requisitionApplicationDetailEntity.setSkuNo(skuVO.getSkuNo());
             String virtualWarehouseName = virtualWarehouseNameMap.get(requisitionApplicationDetailEntity.getFromVirtualWarehouseId());
-            requisitionApplicationDetailEntity.setFromVirtualWarehouseName(StringUtils.isNotBlank(virtualWarehouseName)?virtualWarehouseName:"");
+            requisitionApplicationDetailEntity.setFromVirtualWarehouseName(CharSequenceUtil.isNotBlank(virtualWarehouseName)?virtualWarehouseName:"");
             if(requisitionApplicationDetailEntity.getFromVirtualWarehouseId() == null){
                 requisitionApplicationDetailEntity.setFromVirtualWarehouseId("");
             }
 
             //校验是否是修改，如果是就新增修改日志
-            if (StringUtils.isNotBlank(requisitionApplicationDetailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(requisitionApplicationDetailEntity.getId())) {
                 RequisitionApplicationDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(requisitionApplicationDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_REQUISITION_APPLICATION);
@@ -194,7 +271,7 @@ public class RequisitionApplicationDetailServiceImpl extends SuperServiceImpl<Re
     }
 
     private List<String> getDeleteIds(List<RequisitionApplicationDetailDTO.UpdateDTO> newList, List<RequisitionApplicationDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> org.apache.commons.lang3.StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(RequisitionApplicationDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(RequisitionApplicationDetailEntity
                 ::getId).collect(Collectors.toList());

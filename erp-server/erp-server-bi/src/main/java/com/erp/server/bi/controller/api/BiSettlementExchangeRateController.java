@@ -2,12 +2,10 @@ package com.erp.server.bi.controller.api;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.bi.dto.BiSettlementExchangeRateDTO;
-import com.common.core.enums.LogActionEnum;
 import com.erp.server.bi.service.BiSettlementExchangeRateService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;

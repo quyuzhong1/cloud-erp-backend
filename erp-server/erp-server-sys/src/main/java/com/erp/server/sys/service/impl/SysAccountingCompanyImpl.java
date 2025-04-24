@@ -50,6 +50,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         SysAccountingCompanyEntity entity = new SysAccountingCompanyEntity();
         checkName("", dto.getCompanyName());
         BeanMapperUtils.copy(dto, entity);
+        entity.setCode(entity.getKingdeeCode());
         return this.save(entity);
     }
 
@@ -97,6 +98,7 @@ public class SysAccountingCompanyImpl extends ServiceImpl<SysAccountingCompanyMa
         entity.setContactMobile(dto.getContactMobile());
         entity.setCurrency(dto.getCurrency());
         entity.setContactName(dto.getContactName());
+        entity.setKingdeeCode(dto.getKingdeeCode());
         return this.updateById(entity);
     }
 

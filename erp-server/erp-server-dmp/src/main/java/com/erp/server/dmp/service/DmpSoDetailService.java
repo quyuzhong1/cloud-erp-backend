@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpSoDetailDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 中台销售订单详情表 服务类
@@ -31,6 +33,15 @@ public interface DmpSoDetailService extends SuperService<DmpSoDetailEntity> {
     * @return
     */
     Boolean update(DmpSoDetailDTO.UpdateDTO dto);
+
+    /**
+     * 根据主表id查询订单明细信息
+     * @Author Luo_WG
+     * @Date 2024/11/12 11:29
+     * @param mainId
+     * @return java.lang.Boolean
+     **/
+    List<DmpSoDetailEntity> listByMainId(String mainId);
 
 
 }

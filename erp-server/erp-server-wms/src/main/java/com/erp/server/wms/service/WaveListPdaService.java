@@ -27,4 +27,9 @@ public interface WaveListPdaService extends SuperService<WaveListEntity> {
     ApiResult<?> bindPickingCart(WaveListPdaDTO.BindPickingCartDTO bindDTO);
 
     ApiResult<?> exitPicking(WaveListDetailPdaDTO.ExitPickingDTO exitDTO);
+
+    /**
+     * tabList
+     */
+    List<WaveListDTO.TabDTO> tabList();
 }

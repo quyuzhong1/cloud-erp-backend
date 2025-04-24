@@ -1,18 +1,25 @@
 package com.erp.model.tms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.UnitEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.tms.enums.LogisticsSupplierTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -26,6 +33,56 @@ import java.util.List;
 @NoArgsConstructor
 public class LogisticsChannelDTO implements Serializable {
 
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingViewDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 物流商名
+         */
+        private String name;
+        /**
+         * 物流商简称
+         */
+        private String shortName;
+
+        /**
+         * 类型
+         */
+        private LogisticsSupplierTypeEnum type;
+
+        /**
+         * 类型名称
+         */
+        private String typeName;
+        /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+    }
 
     /**
      * 基础信息
@@ -55,6 +112,16 @@ public class LogisticsChannelDTO implements Serializable {
          * 物流商名
          */
         private String logisticsSupplierName;
+
+        /**
+         * 物流类型
+         */
+        private String logisticsType;
+
+        /**
+         * 物流类型名称
+         */
+        private String logisticsTypeName;
 
         private String logisticsSupplierId;
         private String supplierId;
@@ -109,6 +176,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
          */
         private String undeliverableDecision;
+        /**
+         * 是否平台发货
+         */
+        private Boolean isPlatformShip;
+
     }
 
 
@@ -154,12 +226,12 @@ public class LogisticsChannelDTO implements Serializable {
         /**
          * 最低报关币种
          */
-        private String minCustomsCurrency = CurrencyEnum.USD.getCurrencyCode();;
+        private String minCustomsCurrency = CurrencyEnum.USD.getCurrencyCode();
 
         /**
          * 重量上限
          */
-        private BigDecimal maxWeight = BigDecimal.ZERO;;
+        private BigDecimal maxWeight = BigDecimal.ZERO;
 
         /**
          * 重量单位
@@ -230,6 +302,10 @@ public class LogisticsChannelDTO implements Serializable {
          * logistics_channel渠道ID
          */
         private String logisticsChannelId;
+        /**
+         * logistics_channel渠道名称
+         */
+        private String logisticsChannelName;
 
         /**
          * 销售渠道代号
@@ -331,7 +407,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 纸张大小
          */
         private String paperSize;
-
+        /**
+         * 是否推送海外仓面单
+         */
+        private Boolean isPushLabel;
         /**
          * 分拣码
          */
@@ -445,6 +524,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 材积设置
          */
         private Integer volumeSetting;
+        /**
+         * 运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
 
         /**
          * 物流映射列表
@@ -471,6 +554,16 @@ public class LogisticsChannelDTO implements Serializable {
          * 仓库设置
          */
         private LogisticsChannelWarehouseDTO.ViewDTO warehouseDTO;
+
+        /**
+         * 邮编组id集合
+         */
+        private List<String> remotePostcodeIdList;
+
+        /**
+         *  邮编组名称集合
+         */
+        private List<String> remotePostcodeNameList;
     }
 
     /**
@@ -506,6 +599,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         @NotNull(message = "仓库设置不能为空")
         private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
+
+        /**
+         * 邮编组id集合
+         */
+        private List<String> remotePostcodeIdList;
     }
 
     /**
@@ -548,6 +646,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         @NotNull(message = "仓库设置不能为空")
         private LogisticsChannelWarehouseDTO.BatchUpdateDTO warehouseDTO;
+
+        /**
+         * 邮编组id集合
+         */
+        private List<String> remotePostcodeIdList;
 
     }
 
@@ -611,6 +714,11 @@ public class LogisticsChannelDTO implements Serializable {
          */
         @Size(max = 30, message = "分拣码最大长度不能超过10位")
         private String sortingCode;
+
+        /**
+         * 是否推送海外仓面单
+         */
+        private Boolean isPushLabel;
 
 
         /**
@@ -722,6 +830,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 材积设置
          */
         private Integer volumeSetting;
+
+        /**
+         * 运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
     }
 
     @Data
@@ -851,6 +964,22 @@ public class LogisticsChannelDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    public static class PlatformSignSettingDTO{
+        /**
+         * 渠道id
+         */
+        @NotBlank(message = "渠道id不能为空")
+        private String id;
+
+        /**
+         * 是否平台发货  true代表物流下单后后续无需平台标发
+         */
+        @NotNull(message = "是否平台发货不能为空")
+        private Boolean isPlatformShip;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class DeliveryDTO{
         /**
          * 渠道id
@@ -870,5 +999,75 @@ public class LogisticsChannelDTO implements Serializable {
          * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = undeliverableDecision
          */
         private String undeliverableDecision;
+    }
+
+    /**
+     * 飞书预警汇总
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarnReportDTO {
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+        /**
+         * 渠道ID
+         */
+        private String channelId;
+        /**
+         * 消息类型
+         */
+        private String sourceType;
+        /**
+         * 数量
+         */
+        private String total;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ChannelWarehouseDTO {
+        /**
+         * 渠道id
+         */
+        private String channelId;
+        /**
+         * 渠道编码
+         */
+        private String channelCode;
+        /**
+         * 渠道名称
+         */
+        private String channelName;
+        /**
+         * 物流商
+         */
+        private String supplierId;
+        /**
+         * 物流商名称
+         */
+        private String supplierName;
+        /**
+         * 时效
+         */
+        private String effectiveTime;
+
+        /**
+         * 时效单位
+         */
+        private String effectiveTimeUnit;
+        /**
+         * 匹配类型
+         */
+        private String type;
+        /**
+         * 匹配仓库
+         */
+        private String warehouseId;
+        /**
+         *运费超限打标比例
+         */
+        private BigDecimal shipmentOverLimitRate;
+
     }
 }

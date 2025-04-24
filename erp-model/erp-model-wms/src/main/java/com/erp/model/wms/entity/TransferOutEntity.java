@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -177,11 +176,11 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
     @TableField("approve_user_id")
     private String approveUserId;
 
-    public static final String CODE = "code";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String TYPE = "type";
+    
 
     public static final String BILL_DATE = "bill_date";
 
@@ -199,7 +198,7 @@ public class TransferOutEntity extends BaseEntity<TransferOutEntity> {
 
     public static final String TRANSFER_DIRECTION = "transfer_direction";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String INVALID_STATUS = "invalid_status";
 

@@ -1,12 +1,13 @@
 package com.erp.server.oms.rocketmq.consumer;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformCategoryEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
@@ -70,7 +71,15 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
             platformSoMultiChannelConsumerService.handle(ext);
             return ApiResult.success();
         }
-        platformOrderConsumerHandleService.handleAll(dto);
+        //TIKTOK判断是否拆单或取消拆单，需要作废原单并且根据包裹号重新生成订单
+        if(PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())){
+            Boolean continueFlag = platformOrderConsumerHandleService.tiktokSplit(dto);
+            if(continueFlag){
+                platformOrderConsumerHandleService.handleAll(dto);
+            }
+        }else{
+            platformOrderConsumerHandleService.handleAll(dto);
+        }
         return ApiResult.success();
     }
 
@@ -93,7 +102,7 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
      * @return
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return  CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.ORDER.getCode());
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -61,6 +62,10 @@ public class SysAccountingCompanyDTO {
     @NotBlank(message = "币种不能为空")
     private String currency;
 
+    /**
+     * 金蝶code
+     */
+    private String kingdeeCode;
 
     /**
      * 列表展示

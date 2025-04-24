@@ -67,15 +67,16 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      */
     Boolean deleteByMainIds(List<String> mainIds);
     /**
-     * @description: 更新物流单号
-     * @author Will
-     * @date: 2023/8/24 15:51
      * @param mainId
      * @param transportNo
      * @param trackNo
+     * @param iossTaxNo
      * @return Boolean
+     * @description: 更新物流单号
+     * @author Will
+     * @date: 2023/8/24 15:51
      */
-    Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo);
+    Boolean updateLogisticsCode(String mainId, String transportNo, String trackNo, String iossTaxNo);
 
     /**
      * 更新中转信息
@@ -118,7 +119,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
     * @return 
     * @create 2024-01-05 9:29
     */
-   List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
+   List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList(SoB2cDTO.QueryDTO queryDTO);
 
     /**
      * 根据主表id修改发货时间
@@ -148,7 +149,7 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
 
    Boolean updateWeight(String soId, String logisticsId, BigDecimal weightByG, String operation);
 
-    BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList);
+    BatchResultDTO cancelLogistic(String id, List<SoB2cEntity> soB2cEntityList, List<SoB2cLogisticsEntity> soB2cLogisticsEntityList, Boolean checkBillStatus);
     /**
      * 根据物流跟踪号或运单好查询订单物流信息
      * @author will
@@ -170,4 +171,13 @@ public interface SoB2cLogisticsService extends SuperService<SoB2cLogisticsEntity
      * @param trackDTOS
      */
     void updateTrackNoByTransportNo(List<LogisticsBillDTO.TrackDTO> trackDTOS);
+
+    /**
+     * 更新物流预估费用
+     *
+     * @param b2cSoId
+     * @param totalShippingCost
+     * @param currency
+     */
+    void updateLogisticsFee(String b2cSoId, BigDecimal totalShippingCost, String currency);
 }

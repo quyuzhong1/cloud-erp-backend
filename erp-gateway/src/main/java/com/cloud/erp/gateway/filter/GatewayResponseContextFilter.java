@@ -1,5 +1,7 @@
 package com.cloud.erp.gateway.filter;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,6 +26,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.client.reactive.ClientHttpResponse;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponseDecorator;
+import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.reactive.function.BodyInserter;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -38,6 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.annotation.Resource;
+
 /**
  * 读取并缓存响应数据
  * @Author Luo_WG
@@ -46,37 +51,32 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
 
-	@Autowired
+    public static final String ERP_SYS = "erp-sys";
+
+    @Resource
     private ReactiveDiscoveryClient discoveryClient;
 	
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
-        GatewayContext gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
-        if(!gatewayContext.getReadResponseData()){
+        GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
+        if(null != gatewayContext && Boolean.FALSE.equals(gatewayContext.getReadResponseData())){
             log.debug("[ResponseLogFilter]Properties Set Not To Read Response Data");
             return chain.filter(exchange);
         }
         ServerHttpRequest request = exchange.getRequest();
         // 获取请求URL
         String uri = request.getPath().value();
-        if(uri.indexOf("/webVersion/sse") != -1) {
-        	HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
-        	responseHeaders.setCacheControl(CacheControl.noCache());
-        	return chain.filter(exchange);
-        }else if(uri.indexOf("/webVersion/update") != -1) {
-        	Flux<ServiceInstance> instances = discoveryClient.getInstances("erp-sys");
-        	Mono<List<ServiceInstance>> collectList = instances.collectList();
-        	List<ServiceInstance> block = collectList.block();
-        	if(CollUtil.isEmpty(block)) {
-        		try {
-					Thread.sleep(30000);
-				} catch (InterruptedException e) {
-				}
-        	}
-        	return chain.filter(exchange);
+        if(uri.contains("/webVersion/sse")) {
+            return handleSseRequest(exchange, chain);
+        }else if(uri.contains("/webVersion/update")) {
+            return handleUpdateRequest(exchange, chain);
         }
-        
-        ServerHttpResponseDecorator responseDecorator = new ServerHttpResponseDecorator(exchange.getResponse()) {
+        ServerHttpResponseDecorator responseDecorator = createResponseDecorator(exchange);
+        return chain.filter(exchange.mutate().response(responseDecorator).build());
+    }
+
+    private static ServerHttpResponseDecorator createResponseDecorator(ServerWebExchange exchange) {
+        return new ServerHttpResponseDecorator(exchange.getResponse()) {
             @Override
             public Mono<Void> writeWith(Publisher<? extends DataBuffer> body) {
                 return DataBufferUtils.join(Flux.from(body))
@@ -87,9 +87,7 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
                             Flux<DataBuffer> cachedFlux = Flux.defer(() -> {
                                 DataBuffer buffer = exchange.getResponse().bufferFactory().wrap(bytes);
                                 DataBufferUtils.retain(buffer);
-                                return Mono.just(buffer).doFinally(s -> {
-                                    DataBufferUtils.release(buffer);
-                                });
+                                return Mono.just(buffer).doFinally(s -> DataBufferUtils.release(buffer));
                             });
                             BodyInserter<Flux<DataBuffer>, ReactiveHttpOutputMessage> bodyInserter = BodyInserters.fromDataBuffers(cachedFlux);
                             CachedBodyOutputMessage outputMessage = new CachedBodyOutputMessage(exchange, exchange.getResponse().getHeaders());
@@ -108,7 +106,7 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
                                         })));
                             }
                             MediaType contentType = optionalMediaType.get();
-                            if(!contentType.equals(MediaType.APPLICATION_JSON) && !contentType.equals(MediaType.APPLICATION_JSON_UTF8)){
+                            if(!contentType.equals(MediaType.APPLICATION_JSON)){
                                 log.debug("[ResponseLogFilter]Response ContentType Is Not APPLICATION_JSON Or APPLICATION_JSON_UTF8");
                                 return Mono.defer(()-> bodyInserter.insert(outputMessage, new BodyInserterContext())
                                         .then(Mono.defer(() -> {
@@ -122,7 +120,7 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
                             }
                             return clientResponse.bodyToMono(Object.class)
                                     .doOnNext(originalBody -> {
-                                        GatewayContext gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
+                                        GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
                                         gatewayContext.setResponseBody(originalBody);
                                         log.debug("[ResponseLogFilter]Read Response Data To Gateway Context Success");
                                     })
@@ -136,16 +134,13 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
                                                 return getDelegate().writeWith(messageBody);
                                             }))));
                         });
-
             }
 
             @Override
             public Mono<Void> writeAndFlushWith(Publisher<? extends Publisher<? extends DataBuffer>> body) {
-                return writeWith(Flux.from(body)
-                        .flatMapSequential(p -> p));
+                return writeWith(Flux.from(body).flatMapSequential(p -> p));
             }
         };
-        return chain.filter(exchange.mutate().response(responseDecorator).build());
     }
 
     @Override
@@ -153,7 +148,7 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
         return FilterOrderEnum.RESPONSE_DATA_FILTER.getOrder();
     }
 
-    public class ResponseAdapter implements ClientHttpResponse {
+    public static class ResponseAdapter implements ClientHttpResponse {
 
         private final Flux<DataBuffer> flux;
         private final HttpHeaders headers;
@@ -189,8 +184,28 @@ public class GatewayResponseContextFilter implements GlobalFilter, Ordered {
 
         @Override
         public MultiValueMap<String, ResponseCookie> getCookies() {
-            return null;
+            return new LinkedMultiValueMap<>();
         }
     }
 
+    private Mono<Void> handleUpdateRequest(ServerWebExchange exchange, GatewayFilterChain chain) {
+        Flux<ServiceInstance> instances = discoveryClient.getInstances(ERP_SYS);
+        Mono<List<ServiceInstance>> collectList = instances.collectList();
+        List<ServiceInstance> block = collectList.block();
+        if(CollUtil.isEmpty(block)) {
+            try {
+                Thread.sleep(30000);
+            } catch (InterruptedException e) {
+                log.error( "线程睡眠阻塞: Interrupted!:{}", e.getMessage());
+                Thread.currentThread().interrupt();
+            }
+        }
+        return chain.filter(exchange);
+    }
+
+    private static Mono<Void> handleSseRequest(ServerWebExchange exchange, GatewayFilterChain chain) {
+        HttpHeaders responseHeaders = exchange.getResponse().getHeaders();
+        responseHeaders.setCacheControl(CacheControl.noCache());
+        return chain.filter(exchange);
+    }
 }

@@ -3,6 +3,7 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -19,6 +20,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("msg_channel_config")
+@EqualsAndHashCode
 public class MsgChannelConfig extends BaseEntity<MsgChannelConfig> {
 
     /**

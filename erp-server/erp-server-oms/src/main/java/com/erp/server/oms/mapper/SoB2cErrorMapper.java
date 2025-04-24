@@ -1,6 +1,8 @@
 package com.erp.server.oms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -59,4 +61,14 @@ public interface SoB2cErrorMapper extends BaseMapper<SoB2cErrorEntity> {
      * @return Boolean
      */
     Boolean deleteByMainIds(@Param("mainIds") List<String> mainIds);
+
+    List<SoB2cErrorDTO.TypeCountDTO> getTypeCountDTO();
+
+    /**
+     * 获取销售订单全部异常汇总
+     * @return
+     */
+    List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(@Param("typeList") List<String> typeList);
+
+    Page<SoB2cAbnormalDTO.PoolsDTO> exportSoB2CAbnormalPools(Page<Object> objectPage, SoB2cAbnormalDTO.PagingParamDTO params);
 }

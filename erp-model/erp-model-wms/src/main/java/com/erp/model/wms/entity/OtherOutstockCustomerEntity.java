@@ -68,8 +68,6 @@ public class OtherOutstockCustomerEntity extends BaseEntity<OtherOutstockCustome
 
     public static final String MAIN_ID = "main_id";
 
-    public static final String NAME = "name";
-
     public static final String RECEIVE_ADDRESS = "receive_address";
 
     public static final String RECEIVER_NAME = "receiver_name";

@@ -1,7 +1,6 @@
 package com.erp.server.wms.service.impl;
 
 import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.wms.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
@@ -9,8 +8,6 @@ import com.erp.server.wms.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Will
@@ -39,6 +36,12 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private TransferInfoService transferInfoService;
+
+    @Resource
+    private SoDeliveryNoticeChangeService soDeliveryNoticeChangeService;
+
+    @Resource
+    private RequisitionApplicationChangeService requisitionApplicationChangeService;
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
@@ -71,6 +74,14 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case TRANSFER_INFO:
                 //直接调拨单
                 transferInfoApproveEnd(dto);
+                break;
+            case SO_DELIVERY_NOTICE_CHANGE:
+                //销售发货通知变更单
+                deliveryNoticeChangeApproveEnd(dto);
+                break;
+            case REQUISITION_APPLICATION_CHANGE:
+                //要货申请变更单
+                requisitionApplicationChangeEnd(dto);
                 break;
             default:
                 break;
@@ -149,6 +160,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         ApproveOneDTO approveOne = new ApproveOneDTO();
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
+        approveOne.setDeliveryDate(dto.getDeliveryDate());
+        approveOne.setComment(dto.getComment());
         return firstMileDeliveryService.approveEnd(approveOne,entity);
     }
 
@@ -179,6 +192,30 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         //直接调拨单
         TransferInfoEntity entity = transferInfoService.getById(dto.getBusinessId());
         return transferInfoService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", Boolean.TRUE);
+    }
+    /**
+     * 发货通知变更
+     * @Author Luo_WG
+     * @Date 2024/9/6 18:18
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    private Boolean deliveryNoticeChangeApproveEnd(EndProcessDTO dto) {
+        //发货通知变更
+        SoDeliveryNoticeChangeEntity entity = soDeliveryNoticeChangeService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        return soDeliveryNoticeChangeService.approveEnd(approveOneDTO,entity);
+    }
+
+    /**
+     * 要货申请变更
+     **/
+    private Boolean requisitionApplicationChangeEnd(EndProcessDTO dto) {
+        RequisitionApplicationChangeEntity entity = requisitionApplicationChangeService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        return requisitionApplicationChangeService.approveEnd(approveOneDTO,entity);
     }
 
 }

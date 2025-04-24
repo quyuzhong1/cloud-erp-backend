@@ -99,12 +99,7 @@ public class SoB2cErrorFeignController extends BaseController {
      */
     @PostMapping("/deleteAll")
     public Boolean deleteAll(@RequestBody SoB2cErrorDTO.DeleteDetailDTO dto) {
-        Boolean detailResult = soB2cErrorService.deleteDetail(dto);
-        SoB2cErrorDTO.DeleteDTO mainDto = new SoB2cErrorDTO.DeleteDTO();
-        mainDto.setType(dto.getType());
-        mainDto.setMainId(dto.getMainId());
-        Boolean mainDelete = soB2cErrorService.delete(mainDto);
-        return detailResult && mainDelete;
+        return soB2cErrorService.deleteAll(dto);
     }
 
     /**
@@ -117,5 +112,13 @@ public class SoB2cErrorFeignController extends BaseController {
     @PostMapping("/deleteAndAddErrorBatch")
     void deleteAndAddErrorBatch(@RequestBody SoB2cErrorDTO.AddAndDeleteDTO addAndDeleteDTO) {
         soB2cErrorService.deleteAndAddErrorBatch(addAndDeleteDTO);
+    }
+    /**
+     * 获取销售订单全部异常汇总
+     * @return
+     */
+    @PostMapping("/getB2CErrorReport")
+    public List<SoB2cErrorDTO.TypeCountDTO> getB2CErrorReport(@RequestBody List<String> typeList){
+        return soB2cErrorService.getB2CErrorReport(typeList);
     }
 }

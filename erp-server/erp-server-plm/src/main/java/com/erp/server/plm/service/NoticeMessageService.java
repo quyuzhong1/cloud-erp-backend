@@ -7,10 +7,7 @@ import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.plm.dto.FlyingBookReminderDTO;
-import com.erp.model.plm.dto.NoticeMessageDTO;
-import com.erp.model.plm.dto.PilotApplicationDTO;
-import com.erp.model.plm.dto.UserNoticeNodeDTO;
+import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.NoticeMessageEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -23,7 +20,7 @@ import java.util.List;
  */
 public interface NoticeMessageService extends IService<NoticeMessageEntity> {
 
-    PagingVO<List<NoticeMessageDTO>> paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<NoticeMessageDTO> paging(PagingDTO<BaseSearchDTO> dto);
 
     Boolean add(NoticeMessageDTO dto);
 
@@ -306,4 +303,13 @@ public interface NoticeMessageService extends IService<NoticeMessageEntity> {
      * 试产量产审核/试产量产审核完毕 发送通知
      */
     Boolean approvePilotApplicationNotice(String userName, PilotApplicationDTO.ApprovePilotNoticeDTO entity,Boolean isCompeletd);
+
+    List<String> getSetPilotNotice(NoticeMessageEntity notice, PilotApplicationDTO.ApprovePilotNoticeDTO entity, Boolean isCompeletd);
+
+    /**
+     * 模具通知
+     */
+    void mouldInfoNotice(NoticeEnum noticeEnum, MouldInfoDTO.NoticeDTO noticeDTO, String message);
+
+    void productChangeNotice(NoticeEnum noticeEnum, List<ProductDetailDTO.SkuChangeFieldsDTO> skuChangeFieldsDTO);
 }

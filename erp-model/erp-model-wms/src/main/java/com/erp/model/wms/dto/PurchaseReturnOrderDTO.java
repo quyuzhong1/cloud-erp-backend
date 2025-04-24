@@ -21,9 +21,10 @@ import java.util.Map;
  * @Date 2023/4/7 10:52
  **/
 @Data
-@NoArgsConstructor
 public class PurchaseReturnOrderDTO {
-
+    private PurchaseReturnOrderDTO() {
+        throw new IllegalStateException("Utility PurchaseReturnOrderDTO class");
+    }
     /**
      * 添加
      */
@@ -71,6 +72,11 @@ public class PurchaseReturnOrderDTO {
          */
         @NotBlank(message = "退货仓库不能为空")
         private String returnWarehouseId;
+
+        /**
+         * 采购订单的交货仓库
+         */
+        private String deliveryWarehouseId;
 
         /**
          * 退货仓库库位
@@ -579,6 +585,30 @@ public class PurchaseReturnOrderDTO {
          */
         private Integer deductAmountQty;
 
+        /**
+         * 补货数量
+         */
+        private Integer replenishQty;
+
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织Name
+         */
+        private String purchaseOrgName;
+
+        /**
+         * 退货组织
+         */
+        private String returnOrgId;
+
+        /**
+         * 退货组织Name
+         */
+        private String returnOrgName;
         /**
          * 退款金额
          */

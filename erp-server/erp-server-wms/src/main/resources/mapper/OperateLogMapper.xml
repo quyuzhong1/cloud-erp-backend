@@ -9,7 +9,7 @@
         sol.create_time,
         max(sol.create_user_name) as create_user_name,
         array_to_string(array_agg(DISTINCT sol.operation),',') as operation,
-        array_to_string(array_agg(DISTINCT sol.content),',') as content
+        array_to_string(array_agg(DISTINCT sol.content),';') as content
         from operate_log sol
         <where>
             <if test="params.businessId !=null and params.businessId!=''">

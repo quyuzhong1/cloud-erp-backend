@@ -1,15 +1,13 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+
 import javax.validation.constraints.Digits;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * <p>
@@ -81,7 +79,7 @@ public class ShippingTemplateOtherCostDTO implements Serializable {
         /**
          * 数值设置json
          */
-        private String extendJson;;
+        private String extendJson;
 
         /**
         * 备注

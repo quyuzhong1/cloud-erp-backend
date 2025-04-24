@@ -58,17 +58,11 @@ public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntit
      */
     @TableField("enum_class")
     private String enumClass;
-
-
-    public static final String FIELD = "field";
-
-    public static final String FIELD_NAME = "field_name";
-
-    public static final String CLASS_PATH = "class_path";
-
-    public static final String TYPE = "type";
-
-    public static final String ENUM_CLASS = "enum_class";
+    /**
+     * 枚举类型(用于枚举值转换,需要枚举整个路径)
+     */
+    @TableField("value")
+    private String value;
 
     @Override
     public Serializable pkVal() {

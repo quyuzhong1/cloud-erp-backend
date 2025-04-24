@@ -111,7 +111,7 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
         }
         if (null != biReturnOrderInfoEntity) {
             //如果数据有变动需要更新数据库订单信息
-            if (!biReturnOrderInfoEntity.toString().equals(biReturnOrderInfoEntity.toString())) {
+            if (!biReturnOrderInfoEntity.toString().equals(returnOrderInfoEntity.toString())) {
                 returnOrderInfoEntity.setId(biReturnOrderInfoEntity.getId());
                 updateById(returnOrderInfoEntity);
             }
@@ -127,7 +127,8 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
             return returnOrderId;
         }
         String orderId = returnOrderId;
-        itemList.stream().peek(entity -> entity.setReturnOrderId(orderId)).collect(Collectors.toList());
+        List<BiReturnOrderItemEntity> biReturnOrderItemEntityList = itemList.stream().peek(entity -> entity.setReturnOrderId(orderId)).collect(Collectors.toList());
+        log.debug("BI退款明细：{}" , JSON.toJSONString(biReturnOrderItemEntityList));
         biReturnOrderItemService.checkOrderItem(itemList, returnOrderInfoEntity.getPlatformSign());
         return returnOrderId;
     }

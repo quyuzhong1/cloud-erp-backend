@@ -1,8 +1,11 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.annotation.DataIdempotent;
@@ -27,16 +30,15 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
-import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
-import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.service.*;
@@ -55,7 +57,10 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -101,6 +106,16 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Resource
     private SoB2cRefCategoryService soB2cRefCategoryService;
+    @Resource
+    private LogisticsFeign logisticsFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+    @Resource
+    private ShopInfoService shopInfoService;
+    @Resource
+    private SoB2cExtendService soB2cExtendService;
+    @Resource
+    private SoPriceService soPriceService;
 
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
@@ -108,6 +123,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if(CollectionUtils.isEmpty(detailEntityList)){
             throw new ServiceException("明细为空");
         }
+        List<String> mainIds = detailEntityList.stream().map(SoB2cDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(mainIds);
+        Map<String, SoB2cEntity> soB2cEntityMap = soB2cEntityList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
+
         List<String> skuIds = detailEntityList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
         List<SoB2cDetailDTO.ViewDTO> resultList = new ArrayList<>();
         //根据SKU查询BOM判断是否是组合SKU
@@ -118,8 +137,11 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             if(CollectionUtils.isEmpty(bomChildrenList)){
                 throw new ServiceException("不是销售套装组合品，无法拆分");
             }
-            List<String> childSkuList = bomChildrenList.stream().map(v->v.getSkuId()).collect(Collectors.toList());
-            List<SkuInfoSimpleVO> skuInfoSimpleVOList = plmTaskFeign.getSimpleSkuInfoByIds(childSkuList);
+            SoB2cEntity soB2cEntity = soB2cEntityMap.get(detailEntity.getMainId());
+            List<String> childSkuList = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+            List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(childSkuList);
+            //重置sku含税成本
+            resetSkuVO(soB2cEntity, detailEntity, skuVOList, childSkuList);
             BigDecimal totalCostPrice = BigDecimal.ZERO;
             BigDecimal remainAmount = detailEntity.getAmount();
             BigDecimal remainAdvicePrice = detailEntity.getAdvicePrice();
@@ -137,9 +159,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 viewDTO.setWarehouseName(detailEntity.getWarehouseName());
                 viewDTO.setSourceDetailId(detailEntity.getSourceDetailId());
                 viewDTO.setExchangeRate(detailEntity.getExchangeRate());
-                SkuInfoSimpleVO skuInfoSimpleVO = skuInfoSimpleVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuInfoSimpleVO());
+                SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
                 //含税单价
-                BigDecimal costPrice = ObjectUtils.isEmpty(skuInfoSimpleVO.getActualTaxCost()) ? skuInfoSimpleVO.getTargetTaxCost() : skuInfoSimpleVO.getActualTaxCost();
+                BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
                 if(Objects.isNull(costPrice)){
                     costPrice = BigDecimal.ZERO;
                 }
@@ -148,6 +170,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 //平台SKU
                 viewDTO.setPlatformSkuNo(detailEntity.getPlatformSkuNo());
                 viewDTO.setPlatformSpuNo(detailEntity.getPlatformSpuNo());
+                viewDTO.setProductCost(skuVO.getProductCost());
+                viewDTO.setFirstMileShippingCost(skuVO.getFirstMileShippingCost());
+                viewDTO.setClearanceCustomsTax(skuVO.getClearanceCustomsTax());
+                viewDTO.setCostSource(CharSequenceUtil.isBlank(skuVO.getCostSource()) ? "采购平均成本" : skuVO.getCostSource());
                 resultList.add(viewDTO);
             }
             for (int i = 0; i < resultList.size(); i++) {
@@ -179,6 +205,112 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     }
 
     @Override
+    public void resetSkuVO(SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, List<SkuVO> skuVOList, List<String> childSkuList) {
+        if (CollUtil.isEmpty(childSkuList) || CollUtil.isEmpty(skuVOList) || Objects.isNull(soB2cEntity) || Objects.isNull(detailEntity)){
+            return;
+        }
+        String shopId = soB2cEntity.getShopId();
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfo)){
+            return;
+        }
+        String salesOrgId = shopInfo.getSalesOrgId();
+        String warehouseId = detailEntity.getWarehouseId();
+        LocalDate billDate = soB2cEntity.getBillDate();
+        InventorySkuCostDTO.QueryB2CDTO queryB2CDTO = new InventorySkuCostDTO.QueryB2CDTO();
+        List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = new ArrayList<>();
+        queryB2CDTO.setSalesOrgId(salesOrgId);
+        for (String skuId : childSkuList){
+            detailDTOS.add(InventorySkuCostDTO.QueryB2CDetailDTO.builder()
+                    .skuId(skuId).warehouseId(warehouseId)
+                    .build());
+        }
+        queryB2CDTO.setDetailDTOS(detailDTOS);
+        queryB2CDTO.setBillDate(billDate);
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetail(queryB2CDTO);
+        for (SkuVO skuVO : skuVOList){
+            skuVO.setProductCost(skuVO.getNotTaxCostPrice());
+            if (CollUtil.isEmpty(skuCostDTOS)){
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(warehouseId) || Objects.isNull(billDate)){
+                continue;
+            }
+            if (!childSkuList.contains(skuVO.getSkuId())){
+                continue;
+            }
+            InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+            if (Objects.isNull(skuCostDTO)){
+                continue;
+            }
+            BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+            if (Objects.isNull(rate)){
+                continue;
+            }
+            BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
+            BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+            skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+            BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
+            skuVO.setActualTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+            skuVO.setProductCost(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+            skuVO.setFirstMileShippingCost(MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),rate,4));
+            skuVO.setClearanceCustomsTax(MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),rate,4));
+            skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
+        }
+    }
+
+    @Override
+    public void resetSkuVO(SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, SkuVO skuVO) {
+        if(Objects.isNull(skuVO)){
+            return;
+        }
+        skuVO.setProductCost(skuVO.getNotTaxCostPrice());
+        if (Objects.isNull(soB2cEntity) || Objects.isNull(detailEntity)){
+            return;
+        }
+        String shopId = soB2cEntity.getShopId();
+        ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
+        if (Objects.isNull(shopInfo)){
+            return;
+        }
+        String salesOrgId = shopInfo.getSalesOrgId();
+        String warehouseId = detailEntity.getWarehouseId();
+        LocalDate billDate = soB2cEntity.getBillDate();
+        InventorySkuCostDTO.QueryB2CDTO queryB2CDTO = new InventorySkuCostDTO.QueryB2CDTO();
+        List<InventorySkuCostDTO.QueryB2CDetailDTO> detailDTOS = new ArrayList<>();
+        queryB2CDTO.setSalesOrgId(salesOrgId);
+        detailDTOS.add(InventorySkuCostDTO.QueryB2CDetailDTO.builder()
+                    .skuId(skuVO.getSkuId()).warehouseId(warehouseId)
+                    .build());
+        queryB2CDTO.setDetailDTOS(detailDTOS);
+        queryB2CDTO.setBillDate(billDate);
+        List<InventorySkuCostDTO.SkuCostDTO> skuCostDTOS = logisticsFeign.listSkuCostByDetail(queryB2CDTO);
+        if (CollUtil.isEmpty(skuCostDTOS)){
+            return;
+        }
+        if (CharSequenceUtil.isBlank(warehouseId) || Objects.isNull(billDate)){
+            return;
+        }
+        InventorySkuCostDTO.SkuCostDTO skuCostDTO = skuCostDTOS.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+        if (Objects.isNull(skuCostDTO)){
+            return;
+        }
+        BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
+        if (Objects.isNull(rate)){
+            return;
+        }
+        BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
+        BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
+        skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+        BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
+        skuVO.setActualTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+        skuVO.setProductCost(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+        skuVO.setFirstMileShippingCost(MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),rate,4));
+        skuVO.setClearanceCustomsTax(MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),rate,4));
+        skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
+    }
+
+    @Override
     @DataIdempotent(keyIdName = "ids")
     public List<BatchResultDTO> bomSplitAndSave(List<String> ids) {
         List<SoB2cEntity> soB2cEntityList = this.listByIds(ids);
@@ -189,7 +321,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         bomChildrenList = bomChildrenList.stream().filter(b ->  BomTypeEnum.COMBINATION.getType().equals(b.getType())).collect(Collectors.toList());
         List<String> isCombinationSkuIds = bomChildrenList.stream().map(BomChildrenSkuDTO::getParentSkuId).collect(Collectors.toList());
         List<String> childSkuList = bomChildrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
-        List<SkuInfoSimpleVO> skuInfoSimpleVOList = plmTaskFeign.getSimpleSkuInfoByIds(childSkuList);
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuCostByIds(childSkuList);
         soB2cDetailEntityList = soB2cDetailEntityList.stream().filter(v->isCombinationSkuIds.contains(v.getSkuId())).collect(Collectors.toList());
         List<BatchResultDTO> batchResultDTOList = new ArrayList<>();
         List<String> removeDetailIds = new ArrayList<>();
@@ -208,6 +340,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             for(SoB2cDetailEntity detailEntity: detailList){
                 removeDetailIds.add(detailEntity.getId());
                 List<BomChildrenSkuDTO> bomChildrenSkuDTOList = bomChildrenList.stream().filter(b->b.getParentSkuId().equals(detailEntity.getSkuId())).collect(Collectors.toList());
+                List<String> childSkuIds = bomChildrenSkuDTOList.stream().map(BomChildrenSkuDTO::getSkuId).distinct().collect(Collectors.toList());
+                resetSkuVO(soB2cEntity,detailEntity,skuVOList,childSkuIds);
                 BigDecimal totalCostPrice = BigDecimal.ZERO;
                 BigDecimal remainAmount = detailEntity.getAmount();
                 BigDecimal remainAdvicePrice = detailEntity.getAdvicePrice();
@@ -222,13 +356,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     addDetailEntity.setPlatformSkuNo("");
                     addDetailEntity.setPlatformSpuNo("");
                     addDetailEntity.setWarehouseSkuNo("");
-                    SkuInfoSimpleVO skuInfoSimpleVO = skuInfoSimpleVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuInfoSimpleVO());
+                    SkuVO skuVO = skuVOList.stream().filter(v->v.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(new SkuVO());
                     //含税单价
-                    BigDecimal costPrice = ObjectUtils.isEmpty(skuInfoSimpleVO.getActualTaxCost()) ? skuInfoSimpleVO.getTargetTaxCost() : skuInfoSimpleVO.getActualTaxCost();
+                    BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
                     if(Objects.isNull(costPrice)){
                         costPrice = BigDecimal.ZERO;
                     }
                     addDetailEntity.setTaxCost(costPrice);
+                    addDetailEntity.setProductCost(skuVO.getProductCost());
+                    addDetailEntity.setFirstMileShippingCost(skuVO.getFirstMileShippingCost());
+                    addDetailEntity.setClearanceCustomsTax(skuVO.getClearanceCustomsTax());
+                    addDetailEntity.setCostSource(CharSequenceUtil.isBlank(skuVO.getCostSource()) ? "采购平均成本" : skuVO.getCostSource());
                     totalCostPrice = totalCostPrice.add(costPrice);
                     addDetailList.add(addDetailEntity);
                 }
@@ -259,7 +397,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
                 //封装平台sku信息
                 //SKU对照表信息
-                List<SkuMappingDTO.ListSkuParamDTO> listParamList = addDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), detailEntity.getWarehouseId(),soB2cEntity.getDictPlatform(),soB2cEntity.getShopId())).collect(Collectors.toList());
+                List<SkuMappingDTO.ListSkuParamDTO> listParamList = addDetailList.stream().map(obj -> new SkuMappingDTO.ListSkuParamDTO(obj.getSkuNo(), detailEntity.getWarehouseId(),soB2cEntity.getDictPlatform(),soB2cEntity.getShopId(), soB2cEntity.getBillDate().atStartOfDay())).collect(Collectors.toList());
                 ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
                 listSkuParamList.setList(listParamList);
                 List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
@@ -278,7 +416,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 addAllDetailList.addAll(addDetailList);
             }
             // 操作日志
-            String msg = StrUtil.format("用户【{}】操作捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
+            String msg =  CharSequenceUtil.format("用户【{}】操作捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "捆绑拆分");
         }
         service.batchHandleTransaction(removeDetailIds,addAllDetailList,new ArrayList<>());
@@ -336,7 +474,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 for (SoB2cEntity notPassMain : notPassMainList) {
                     List<SoB2cDetailEntity> notPassDetailList = otherDetailList.stream().filter(v->v.getMainId().equals(notPassMain.getId())).collect(Collectors.toList());
                     for(SoB2cDetailEntity soB2cDetailEntity : notPassDetailList){
-                        sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
+                        sb.append( CharSequenceUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
                     }
                 }
                 batchResultDTOList.add(BatchResultDTO.fail(soB2cEntity.getId(),soB2cEntity.getCode(),sb.toString()));
@@ -364,12 +502,25 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     addDetailList.add(addDetail);
                 }
             }
+            List<String> initSkuList = originDetailList.stream().map(SoB2cDetailEntity::getInitSkuId).filter(StrUtil::isNotBlank).collect(Collectors.toList());
+            resetIsChangeSkuFlag(initSkuList,soB2cEntity);
             // 操作日志
-            String msg = StrUtil.format("用户【{}】操作还原捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
+            String msg =  CharSequenceUtil.format("用户【{}】操作还原捆绑拆分", UserContext.getDefaultLoginUser().getUserName());
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "还原捆绑拆分");
         }
         service.batchHandleTransaction(removeDetailIds,addDetailList,revertDetailIds);
         return batchResultDTOList;
+    }
+
+    private void resetIsChangeSkuFlag(List<String> initSkuList, SoB2cEntity soB2cEntity) {
+        if (Objects.nonNull(soB2cEntity.getIsChangeSku()) && soB2cEntity.getIsChangeSku() && CollectionUtils.isEmpty(initSkuList)){
+            //订单存在更换sku标识，还原拆分订单时 还原订单状态
+            soB2cService.updateIsChangeSku(Collections.singletonList(soB2cEntity.getId()), Boolean.FALSE);
+        }
+        if (Objects.nonNull(soB2cEntity.getIsChangeSku()) && !soB2cEntity.getIsChangeSku() && CollectionUtils.isNotEmpty(initSkuList)){
+            //订单不存在更换sku标识，还原拆分订单时 子订单存在更换记录
+            soB2cService.updateIsChangeSku(Collections.singletonList(soB2cEntity.getId()), Boolean.TRUE);
+        }
     }
 
     @Override
@@ -420,16 +571,6 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
             resultDTOS.add(result);
         }
-        //原有逻辑
-        if (org.apache.commons.collections.CollectionUtils.isNotEmpty(allSoIdList)) {
-            for (String soId : allSoIdList) {
-                try {
-                    soB2cService.checkProductRegistrationAndUpdate(soId, "");
-                } catch (Exception e) {
-                    log.error("拆分保存后检查商品备案失败，soId:{}，异常信息{}", soId, e);
-                }
-            }
-        }
         return resultDTOS;
     }
 
@@ -464,7 +605,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             for (SoB2cEntity notPassMain : notPassMainList) {
                 List<SoB2cDetailEntity> notPassDetailList = sameSplitDetailList.stream().filter(v->v.getMainId().equals(notPassMain.getId())).collect(Collectors.toList());
                 for(SoB2cDetailEntity soB2cDetailEntity : notPassDetailList){
-                    sb.append(StrUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
+                    sb.append( CharSequenceUtil.format("捆绑子件{}数量{}关联的销售订单{}状态为{}，不允许还原捆绑",soB2cDetailEntity.getSkuNo(),soB2cDetailEntity.getQty(),notPassMain.getCode(),notPassMain.getIsFrozen()?"已冻结":notPassMain.getInvalidStatus()?"已作废":SoB2cBillStatusEnum.getName(notPassMain.getBillStatus())));
                 }
             }
             throw new ServiceException(sb.toString());
@@ -553,8 +694,25 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     @Override
     @DataIdempotent(keyIdName = "dto.id")
     public SoB2cDTO.SplitSaveResultDTO splitSave(SoB2cDTO.SplitSaveDTO dto) {
+        SoB2cDTO.SplitSaveResultDTO resultDTO = service.handleSplit(dto);
+        service.splitRule(resultDTO);
+        return resultDTO;
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    public SoB2cDTO.SplitSaveResultDTO handleSplit(SoB2cDTO.SplitSaveDTO dto) {
         //订单拆分字段处理
         SoB2cDTO.SplitSaveResultDTO resultDTO = service.splitSaveHandle(dto);
+        //如果是TikTok平台拆分订单，需要同步到平台
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform()) && dto.getIsSyncPlatform()) {
+            service.tikTokSplit(resultDTO);
+        }
+        //清楚异常
+        soB2cService.removeSignError(dto.getId(), SoB2cErrorTypeEnum.OTHER.getCode());
+        return resultDTO;
+    }
+
+    public void splitRule(SoB2cDTO.SplitSaveResultDTO resultDTO) {
         List<SoB2cEntity> entityList = resultDTO.getNeedRuleIds();
         if(CollectionUtils.isNotEmpty(entityList)){
             for (SoB2cEntity entity : entityList) {
@@ -577,17 +735,18 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                         log.error("{}物流规则异常",entity.getCode(),e);
                     }
                     Boolean autoGetTrackNo = logisticsRuleResult.getAutoGetTrackNo();
-                    if (Objects.nonNull(autoGetTrackNo) && autoGetTrackNo) {
-                        soB2cService.getLogisticsCode(entity.getId(), true);
+                    Boolean autoGetTrackNotOfRangeDelivery = logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery();
+                    Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
+                    if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
+                            || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
+                        soB2cService.getLogisticsCode(entity.getId(),  Boolean.TRUE);
                     }
+
                 }
+                //自动计算预估运费到订单的预估运费字段
+                soB2cService.autoCalcEstimatedShippingCost(Collections.singletonList(entity.getId()));
             }
         }
-        //如果是TikTok平台拆分订单，需要同步到平台
-        if (PlatformDictEnum.TIK_TOK.getCode().equals(resultDTO.getOldEntity().getDictPlatform())) {
-            service.tikTokSplit(resultDTO);
-        }
-        return resultDTO;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -601,11 +760,12 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listBySourceIdOrTargetId(Arrays.asList(dto.getId()));
         //拆分后的销售订单集合
         List<String> soIdList = new ArrayList<>(5);
+        List<String> soCodeList = new ArrayList<>(5);
         /**
          * 拆分后金额、费用根据金额比例进行分摊
          */
         //验证拆分数据
-        checkSplitData(entity,soB2cRefList);
+        checkSplitData(entity,soB2cRefList, dto.getIsSyncPlatform());
         //原单据明细
         List<SoB2cDetailEntity> oldDetailList = soB2cDetailService.listByMainId(dto.getId());
         if (CollectionUtils.isEmpty(oldDetailList)) {
@@ -618,14 +778,22 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
         SoB2cLogisticsDTO.AddDTO logisticsAddDTO = new SoB2cLogisticsDTO.AddDTO();
         BeanMapperUtils.copy(soB2cLogisticsEntity, logisticsAddDTO);
-
-        //买家信息
-        SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(dto.getId());
-        if (ObjectUtils.isEmpty(soB2cReceiverEntity)) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
-        }
         SoB2cReceiverDTO.AddDTO receiverAddDTO = new SoB2cReceiverDTO.AddDTO();
-        BeanMapperUtils.copy(soB2cReceiverEntity, receiverAddDTO);
+        SoB2cExtendDTO.AddDTO extendDTO = new SoB2cExtendDTO.AddDTO();
+        if (soB2cService.isFullyManagedOrder(entity.getDictPlatform())){
+            SoB2cExtendEntity extendEntity = soB2cExtendService.getByMainId(dto.getId());
+            if (ObjectUtils.isEmpty(extendEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_EXTEND_NOT_EXIST);
+            }
+            BeanMapperUtils.copy(extendEntity,extendDTO);
+        }else {
+            //买家信息
+            SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverService.getByMainId(dto.getId());
+            if (ObjectUtils.isEmpty(soB2cReceiverEntity)) {
+                throw new ServiceException(ApiError.ERROR_SO_B2C_RECEIVER_NOT_EXIST);
+            }
+            BeanMapperUtils.copy(soB2cReceiverEntity, receiverAddDTO);
+        }
 
         //订单分类
         List<SoB2cRefCategoryEntity> soB2cRefCategoryList = soB2cRefCategoryService.listByMainIds(Arrays.asList(dto.getId()));
@@ -672,11 +840,30 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 addDTO.setCategoryIdList(categoryIdList);
             }
             addDTO.setReceiverDTO(receiverAddDTO);
+            addDTO.setExtendDTO(extendDTO);
 
             //拆分后金额合计
             BigDecimal splitTotalAmount = BigDecimal.ZERO;
 
             List<SoB2cDetailDTO.AddDTO> detailList = new ArrayList<>();
+            //全托管平台重算真实售价和金额
+            List<SoPriceDTO.PriceDTO> priceDTOS = new ArrayList<>();
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
+                List<SoPriceDTO.PriceParamDTO> list = new ArrayList<>();
+                groupSplitSaveDTO.getDetailList().forEach(splitDetailSaveDTO -> {
+                    SoB2cDetailEntity detailEntity = oldDetailList.stream().filter(obj -> obj.getId().equals(splitDetailSaveDTO.getId())).findFirst().orElse(null);
+                    if (ObjectUtils.isEmpty(detailEntity)) {
+                        throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
+                    }
+                    SoPriceDTO.PriceParamDTO priceParamDTO = new SoPriceDTO.PriceParamDTO();
+                    priceParamDTO.setSkuId(detailEntity.getSkuId());
+                    priceParamDTO.setDate(entity.getBillDate());
+                    priceParamDTO.setQty(splitDetailSaveDTO.getQty());
+                    priceParamDTO.setShopId(entity.getShopId());
+                    list.add(priceParamDTO);
+                });
+                priceDTOS = soPriceService.batchGetSoPrice(list);
+            }
             for (SoB2cDTO.SplitDetailSaveDTO splitDetailSaveDTO : groupSplitSaveDTO.getDetailList()) {
 
                 SoB2cDetailEntity detailEntity = oldDetailList.stream().filter(obj -> obj.getId().equals(splitDetailSaveDTO.getId())).findFirst().orElse(null);
@@ -700,12 +887,25 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 BeanMapperUtils.copy(detailEntity, addDetailDTO);
                 addDetailDTO.setQty(splitDetailSaveDTO.getQty());
                 addDetailDTO.setOperateDetailId(detailEntity.getId());
+                if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
+                    SoPriceDTO.PriceDTO priceDTO = priceDTOS.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                    addDetailDTO.setPrice(Objects.nonNull(priceDTO) ? priceDTO.getTaxPrice() : detailEntity.getPrice());
+                    addDetailDTO.setTaxRate(Objects.nonNull(priceDTO) ?  priceDTO.getTaxRate() : detailEntity.getTaxRate());
+                }
                 detailList.add(addDetailDTO);
                 //累加拆分金额
                 splitTotalAmount = MathUtil.add(splitTotalAmount, MathUtil.multiply(detailEntity.getPrice(), splitDetailSaveDTO.getQty()));
 
             }
             addDTO.setDetailList(detailList);
+            //全托管订单重算订单数量
+            if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(entity.getDictPlatform())){
+                //累加订单数量
+                Integer orderQty = detailList.stream().map(SoB2cDetailDTO.AddDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
+                SoB2cDTO.ExtendDataDTO dataDTO = JSONUtil.toBean(entity.getExtendData(), SoB2cDTO.ExtendDataDTO.class);
+                dataDTO.setOrderQty(orderQty);
+                addDTO.setExtendData(JSONUtil.toJsonStr(dataDTO));
+            }
             //拆分金额所占比例
             BigDecimal rate = MathUtil.divide(splitTotalAmount, totalAmount);
             BigDecimal amount = MathUtil.multiply(rate, entity.getAmount());
@@ -737,15 +937,16 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setWeight(null);
             logisticsAddDTO.setLogisticsChannelId("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
-            addDTO.setRemark(StrUtil.format("【{}】拆分订单", entity.getCode()));
+            addDTO.setRemark( CharSequenceUtil.format("【{}】拆分订单", entity.getCode()));
 
             //操作信息
             addDTO.setOperateType(SoB2cOptionTypeEnum.ENUM_SPLIT);
 
             //新增拆分后订单
-            String code = StrUtil.format("{}_{}", entity.getCode(), flag);
+            String code =  CharSequenceUtil.format("{}_{}", entity.getCode(), flag);
             SoB2cEntity add = soB2cService.add(addDTO, code);
             soIdList.add(add.getId());
+            soCodeList.add(add.getCode());
             //迭代1.27.4 拆分的子订单的审核状态默认等于原订单审核状态 订单状态：如果子件不是审核通过，则默认待配货；如果子单是审核通过，则子件走仓库和物流规则，按实际规则执行结果确认订单状态
             add.setApproveStatus(entity.getApproveStatus());
             if(ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
@@ -758,7 +959,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 this.updateById(add);
             }
             //用于同步到TikTok拆分数据的入参
-            List<String> sourceDetailIds = detailList.stream().map(req -> req.getSourceDetailId()).collect(Collectors.toList());
+            List<String> sourceDetailIds = detailList.stream().map(req -> req.getPlatformLineNumber()).collect(Collectors.toList());
             groupsBean.setOrderLineItemIds(sourceDetailIds);
             groupsBean.setId(add.getId());
             splittableGroups.add(groupsBean);
@@ -772,13 +973,14 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             flag++;
         }
         tikTokPramDTO.setSplittableGroups(splittableGroups);
-        soB2cService.invalid(entity.getId(), StrUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+        soB2cService.invalid(entity.getId(),  CharSequenceUtil.format("【{}】被拆分作废", entity.getCode()), SoB2cInvalidTypeEnum.ENUM_SPLIT);
 
         //操作日志
         String msg = "从【{}】拆分出新订单";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "拆分订单");
         SoB2cDTO.SplitSaveResultDTO splitSaveResultDTO = new SoB2cDTO.SplitSaveResultDTO();
         splitSaveResultDTO.setSoB2cIds(soIdList);
+        splitSaveResultDTO.setSoCodeList(soCodeList);
         splitSaveResultDTO.setTikTokPramDTO(tikTokPramDTO);
         splitSaveResultDTO.setOldEntity(entity);
         splitSaveResultDTO.setNeedRuleIds(needRuleList);
@@ -806,11 +1008,12 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     /**
      * @param entity
      * @param soB2cRefList
+     * @param checkTikTok
      * @description: 验证拆分数据
      * @author Will
      * @date: 2023/8/23 15:12
      */
-    private void checkSplitData(SoB2cEntity entity,List<SoB2cRefEntity> soB2cRefList) {
+    private void checkSplitData(SoB2cEntity entity, List<SoB2cRefEntity> soB2cRefList, Boolean checkTikTok) {
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (SoB2cBillStatusEnum.ENUM_FROZEN.getCode().equals(entity.getBillStatus()) || entity.getInvalidStatus()
                 || SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode().equals(entity.getBillStatus()) ||SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(entity.getBillStatus())) {
@@ -825,7 +1028,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(entity.getDictPlatform())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
         }
-        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform())) {
+        if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(entity.getDictPlatform())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_MERCADO_NOT_SPLIT, entity.getCode());
+        }
+        if (PlatformDictEnum.TIK_TOK.getCode().equals(entity.getDictPlatform()) && checkTikTok) {
             TikTokShopInfoDTO tikTokShopInfoDTO = tikTokSdkClientService.getShopInfoByShopId(entity.getShopId());
             SplitAttributesDTO splitAttributesDTO = tikTokSdkClientService.sendTikTokSplitAttributes(tikTokShopInfoDTO, entity.getPlatformCode());
             SplitAttributesBean splitAttributesBean = splitAttributesDTO.getData().getSplitAttributes().stream().filter(req -> entity.getPlatformCode().equals(req.getOrderId())).findFirst().orElse(null);
@@ -840,7 +1046,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
 
         //查询订单是否是合并订单
-        List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> StrUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
+        List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> CharSequenceUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(thisRefList)) {
             return;
         }
@@ -875,12 +1081,12 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         List<SoB2cDTO.ViewSplitDTO> resultList = new ArrayList<>();
         for (SoB2cEntity entity : soB2cList) {
             //验证拆分数据
-            checkSplitData(entity,soB2cRefList);
+            checkSplitData(entity,soB2cRefList, true);
             SoB2cDTO.ViewSplitDTO viewSplitDTO = new SoB2cDTO.ViewSplitDTO();
             viewSplitDTO.setId(entity.getId());
             viewSplitDTO.setCode(entity.getCode());
             //销售订单下对应明细
-            List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> StrUtil.equals(obj.getMainId(), entity.getId())).collect(Collectors.toList());
+            List<SoB2cDetailEntity> detailList = soB2cDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getMainId(), entity.getId())).collect(Collectors.toList());
             List<SoB2cDTO.ViewSplitDetailDTO> viewSplitDetailList = new ArrayList<>();
             for (SoB2cDetailEntity detailEntity : detailList) {
                 SoB2cDTO.ViewSplitDetailDTO viewSplitDetailDTO = new SoB2cDTO.ViewSplitDetailDTO();
@@ -949,7 +1155,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO cancelSplit(String id) {
+    public BatchResultDTO cancelSplit(String id, Boolean isCheckPlatform) {
         //B2C销售订单主表信息
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
@@ -959,6 +1165,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 //        if () {
 //            throw new ServiceException("已作废，已冻结，待发货，已发货不允许还原拆分");
 //        }
+        if (PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform()) && isCheckPlatform) {
+            throw new ServiceException("tiktok订单不允许取消拆分，请在tiktok后台操作");
+        }
         //关联关系
         List<SoB2cRefEntity> soB2cRefList = soB2cRefService.listSourceByTargetIds(Arrays.asList(id), SoB2cOptionTypeEnum.ENUM_SPLIT.getCode());
         if (CollectionUtils.isEmpty(soB2cRefList)) {
@@ -979,7 +1188,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 List<String> otherSplitIds = otherB2cSplitRefList.stream().filter(v->v.getSourceId().equals(soB2cEntity.getId())).map(SoB2cRefEntity::getTargetId).collect(Collectors.toList());
                 List<String> otherSplitCodes = otherB2cSplitList.stream().filter(v->otherSplitIds.contains(v.getId())).map(SoB2cEntity::getCode).collect(Collectors.toList());
                 if(CollectionUtils.isNotEmpty(otherSplitCodes)){
-                    String msg = StrUtil.format("{}存在下游拆分子订单【{}】，请先还原子订单拆分后操作", soB2cEntity.getCode(), otherSplitCodes);
+                    String msg =  CharSequenceUtil.format("{}存在下游拆分子订单【{}】，请先还原子订单拆分后操作", soB2cEntity.getCode(), otherSplitCodes);
                     sb.append(msg);
                 }
             }
@@ -991,21 +1200,57 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
 
         String invalidCodes = sameTargetList.stream().filter(obj -> obj.getInvalidStatus() ||  obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_FROZEN.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode()) || obj.getBillStatus().equals(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())).map(SoB2cEntity::getCode).collect(Collectors.joining(","));
         if (StringUtils.isNotBlank(invalidCodes)) {
-            throw new ServiceException(StrUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
+            throw new ServiceException( CharSequenceUtil.format("{} 已作废，已冻结，待发货，已发货不允许还原拆分",invalidCodes));
         }
 
         log.info("删除B2C销售订单数据，ids = {}", targetIdList);
         //删除拆分后的数据
-        soB2cService.deleteById(targetIdList);
+        soB2cService.deleteById(targetIdList,entity.getCode());
         //反作废合并前的数据
         log.info("反作废原B2C销售订单数据，id = {}", entity.getId());
-        soB2cService.unInvalid(soB2cRefList.get(0).getSourceId(), SoB2cInvalidTypeEnum.ENUM_AUTOMATIC);
+        soB2cService.unInvalid(soB2cRefList.get(0).getSourceId(), SoB2cInvalidTypeEnum.ENUM_SPLIT);
         //操作日志
         String msg = "从【{}】取消拆分";
-        operateLogService.addModuleOperateLog(StrUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消拆分");
-        operateLogService.addModuleOperateLog(StrUtil.format("订单取消拆分"), ModuleTypeEnum.SO_B2C.getCode(), soB2cRefList.get(0).getSourceId(), "取消拆分");
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "取消拆分");
+        operateLogService.addModuleOperateLog( CharSequenceUtil.format("订单取消拆分"), ModuleTypeEnum.SO_B2C.getCode(), soB2cRefList.get(0).getSourceId(), "取消拆分");
         //删除原单备注
         this.lambdaUpdate().eq(SoB2cEntity::getId,soB2cRefList.get(0).getSourceId()).set(SoB2cEntity::getRemark,"").update();
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "取消拆分");
+        return BatchResultDTO.success(soB2cRefList.get(0).getSourceId(), entity.getCode(), "取消拆分");
+    }
+
+    @Override
+    public SoB2cDTO.SplitSaveDTO buildSplitBySku(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS, String skuNo) {
+        SoB2cDTO.SplitSaveDTO splitSaveDTO = new SoB2cDTO.SplitSaveDTO();
+        splitSaveDTO.setId(soB2cEntity.getId());
+        splitSaveDTO.setGroupList(buildSplitGroupListBySku(skuNo,detailEntityList,splitSkuDetailDTOS));
+        return splitSaveDTO;
+    }
+
+    /**
+     * 构建拆分分组
+     *
+     * @param skuNo
+     * @param detailEntityList
+     * @param splitSkuDetailDTOS
+     * @return
+     */
+    private List<SoB2cDTO.GroupSplitSaveDTO> buildSplitGroupListBySku(String skuNo, List<SoB2cDetailEntity> detailEntityList, List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS) {
+        List<SoB2cDTO.GroupSplitSaveDTO> groupSplitSaveDTOS = new ArrayList<>();
+        List<String> detailIds = splitSkuDetailDTOS.stream().map(SoB2cDTO.SplitSkuDetailDTO::getDetailId).distinct().collect(Collectors.toList());
+        List<SoB2cDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.equals(e.getSkuNo(), skuNo) && CollectionUtils.isNotEmpty(detailIds) && detailIds.contains(e.getId())).collect(Collectors.toList());
+        List<String> splitIds = detailEntityList1.stream().map(SoB2cDetailEntity::getId).distinct().collect(Collectors.toList());
+        List<SoB2cDetailEntity> detailEntityList2 = detailEntityList.stream().filter(e -> !splitIds.contains(e.getId()) ).collect(Collectors.toList());
+        groupSplitSaveDTOS.add(buildGroupSplitSaveDTO(detailEntityList1));
+        groupSplitSaveDTOS.add(buildGroupSplitSaveDTO(detailEntityList2));
+        return groupSplitSaveDTOS;
+    }
+
+    private SoB2cDTO.GroupSplitSaveDTO buildGroupSplitSaveDTO(List<SoB2cDetailEntity> detailEntityList1) {
+        if (CollectionUtils.isEmpty(detailEntityList1)){
+            throw new ServiceException("不能对单一SKU进行按照SKU拆单");
+        }
+        SoB2cDTO.GroupSplitSaveDTO groupSplitSaveDTO = new SoB2cDTO.GroupSplitSaveDTO();
+        groupSplitSaveDTO.setDetailList(B2cOrderConverter.INSTANCE.convertDetailTOSplitDTO(detailEntityList1));
+        return groupSplitSaveDTO;
     }
 }

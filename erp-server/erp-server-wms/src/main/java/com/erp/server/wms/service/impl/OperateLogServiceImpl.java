@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -22,10 +23,8 @@ import com.erp.model.wms.entity.OperateLogEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.OperateLogMapper;
 import com.erp.server.wms.service.CfgOperateLogFieldService;
-import com.erp.server.wms.service.CommonService;
 import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.OperateLogService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -100,7 +99,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
             }
             //字典
             if (ModuleOperateLogFieldTypeEnum.TYPE_DIST.getCode().equals(type)) {
-                valuePair = setDistValue(valuePair);
+                valuePair = setDistValue(valuePair,fieldEntity.getValue());
             }
             //人员
             if (ModuleOperateLogFieldTypeEnum.TYPE_USER.getCode().equals(type)) {
@@ -113,10 +112,10 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
                 continue;
             }
             String content;
-            newValue = StrUtil.isBlank(newValue) ? "空值" : newValue;
-            oldValue = StrUtil.isBlank(oldValue) ? "空值" : oldValue;
-            String concat = (StringUtils.isBlank(msg) ? "" : msg).concat("编辑了[").concat(fieldName).concat("]");
-            if (StringUtils.isBlank(valuePair.getKey())) {
+            newValue = CharSequenceUtil.isBlank(newValue) ? "空值" : newValue;
+            oldValue = CharSequenceUtil.isBlank(oldValue) ? "空值" : oldValue;
+            String concat = (CharSequenceUtil.isBlank(msg) ? "" : msg).concat("编辑了[").concat(fieldName).concat("]");
+            if (CharSequenceUtil.isBlank(valuePair.getKey())) {
                 content = concat.concat("由空值变更为[").concat(newValue).concat("]");
             } else {
                 content = concat.concat("由[").concat(oldValue).concat("]").concat("变更为[").concat(newValue).concat("]");
@@ -210,7 +209,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         String trueValue = "是";
         String falseValue = "否";
         String booleanValue = fieldEntity.getBooleanValue();
-        if (StringUtils.isNotBlank(booleanValue)) {
+        if (CharSequenceUtil.isNotBlank(booleanValue)) {
             String[] booleanValues = booleanValue.split("\\|");
             trueValue = booleanValues[0];
             falseValue = booleanValues[1];
@@ -225,18 +224,18 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
     /**
      * 设置字典值
      */
-    private Pair<String, String> setDistValue(Pair<String, String> valuePair) {
-        String oldValue = "";
-        String newValue = "";
-        List<DictBasicEntity> oldList = dictBasicService.listByIds(Arrays.asList(valuePair.getKey().split(",")));
-        if (CollectionUtils.isNotEmpty(oldList)) {
-            oldValue = oldList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
+    private Pair<String,String> setDistValue (Pair<String, String> valuePair,String value) {
+        String  oldValue = "";
+        String  newValue = "";
+        DictBasicEntity oldEntity = dictBasicService.getByTypeAndValue(value, valuePair.getKey());
+        if (ObjectUtils.isNotEmpty(oldEntity)) {
+            oldValue = oldEntity.getName();
         }
-        List<DictBasicEntity> newList = dictBasicService.listByIds(Arrays.asList(valuePair.getValue().split(",")));
-        if (CollectionUtils.isNotEmpty(newList)) {
-            newValue = newList.stream().map(DictBasicEntity::getName).distinct().collect(Collectors.joining(","));
+        DictBasicEntity newEntity = dictBasicService.getByTypeAndValue(value, valuePair.getValue());
+        if (ObjectUtils.isNotEmpty(newEntity)) {
+            newValue = newEntity.getName();
         }
-        return new Pair<>(oldValue, newValue);
+        return new Pair<>(oldValue,newValue);
     }
 
     /**
@@ -260,11 +259,9 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
      * 设置枚举值
      */
     private Pair<String, String> setEnumValue(CfgOperateLogFieldEntity fieldEntity, Pair<String, String> valuePair) {
-        if (StringUtils.isBlank(fieldEntity.getEnumClass())) {
+        if (CharSequenceUtil.isBlank(fieldEntity.getEnumClass())) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        String oldValue = "";
-        String newValue = "";
         Class<?> aClass;
         try {
             aClass = Class.forName(fieldEntity.getEnumClass());
@@ -275,22 +272,34 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         if (!anEnum) {
             throw new ServiceException(ApiError.ERROR_9028);
         }
-        if (StringUtils.isNotBlank(valuePair.getKey())) {
-            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getKey(), aClass);
-            if (ObjectUtils.isNotEmpty(enumObject)) {
-                oldValue = enumObject.getName();
-            } else {
-                oldValue = "";
-            }
-        }
-        if (StringUtils.isNotBlank(valuePair.getValue())) {
-            EnumMessage enumObject = EnumsUtil.getEnumObject(valuePair.getValue(), aClass);
-            if (ObjectUtils.isNotEmpty(enumObject)) {
-                newValue = enumObject.getName();
-            } else {
-                newValue = "";
-            }
-        }
+        String oldValue = handleEnumVale(valuePair.getKey(), aClass);
+        String newValue = handleEnumVale(valuePair.getValue(), aClass);
         return new Pair<>(oldValue, newValue);
+    }
+
+    /**
+     * @description: 处理枚举数据
+     * @author Will
+     * @date: 2023/11/24 18:44
+     * @param object
+     * @param aClass
+     * @return String
+     */
+    private String handleEnumVale (String object,Class<?> aClass) {
+        if (StrUtil.isBlank(object)) {
+            return "";
+        }
+        List<String> resultList = new ArrayList<>();
+        String[] split = object.split(",");
+        for (String value : split) {
+            EnumMessage enumObject = EnumsUtil.getEnumObject(value, aClass);
+            if (ObjectUtils.isNotEmpty(enumObject)) {
+                resultList.add(enumObject.getName());
+            }
+        }
+        if (CollectionUtils.isEmpty(resultList)) {
+            return "";
+        }
+        return resultList.stream().collect(Collectors.joining(","));
     }
 }

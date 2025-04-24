@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.wms.entity.FbaShipmentDetailEntity;
 import com.erp.server.wms.mapper.FbaShipmentDetailMapper;
 import com.erp.server.wms.service.FbaShipmentDetailService;
@@ -55,7 +56,9 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
     @Override
     public Boolean update(FbaShipmentDetailDTO.UpdateDTO updateDTO) {
         FbaShipmentDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "FBA拣货明细单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "FBA拣货明细单");
+        }
         FbaShipmentDetailEntity fbaShipmentDetailEntity =  BeanMapperUtils.map(FbaShipmentDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -86,5 +89,13 @@ public class FbaShipmentDetailServiceImpl extends SuperServiceImpl<FbaShipmentDe
             return Boolean.FALSE;
         }
         return lambdaUpdate().in(FbaShipmentDetailEntity::getMainId,mainIds).remove();
+    }
+
+    @Override
+    public FbaShipmentDetailEntity getDetail(String shipmentCode, String asin, String msku) {
+        if (CharSequenceUtil.isAllNotBlank(shipmentCode,asin,msku)){
+            return baseMapper.getDetail(shipmentCode, asin, msku);
+        }
+        return null;
     }
 }

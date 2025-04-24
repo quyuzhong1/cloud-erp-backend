@@ -1,13 +1,14 @@
 package com.erp.model.plm.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -91,13 +92,13 @@ public class ProductCustomsEntity extends BaseEntity<ProductCustomsEntity> {
 
     public static final String SKU_ID = "sku_id";
 
-    public static final String COUNTRY = "country";
+    public static final String FIELD_COUNTRY = "country";
 
     public static final String CUSTOMS_CODE = "customs_code";
 
     public static final String TAX_RATE = "tax_rate";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     @Override
     public Serializable pkVal() {

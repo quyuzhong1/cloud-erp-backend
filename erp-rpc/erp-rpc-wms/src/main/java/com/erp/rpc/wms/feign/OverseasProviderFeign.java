@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 @FeignClient(name = "erp-wms", contextId = "overseasProviderFeign")
 public interface OverseasProviderFeign {
     /**
@@ -29,4 +31,13 @@ public interface OverseasProviderFeign {
     OverseasProviderDTO.FeignDTO getOverseasWarehouse(@RequestBody OverseasProviderDTO.FeignDTO feignDTO);
     @PostMapping("/feign/overseasProvider/feignBind")
     void feignBind(@RequestBody OverseasProviderDTO.FeignDTO feignDTO);
+
+    /**
+     * 查询所有数据
+     */
+    @GetMapping("/feign/overseasProvider/listAllMatch")
+    List<OverseasProviderDTO.ListWithWarehouseDTO> listAllMatch();
+
+    @GetMapping("/feign/overseasProvider/listProviderWarehouseBySql")
+    List<String> listProviderWarehouseBySql(@RequestParam String compareCodeSplicingValueSql);
 }

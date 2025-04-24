@@ -1,9 +1,10 @@
 package com.sdk.tms.tongyou.dto.response;
 
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+
+import java.io.Serializable;
 
 /**
  * @author liuruipeng
@@ -34,7 +35,7 @@ public class TongYouCreateOrder extends TongYouResponse<Object> {
     @Data
     @ToString
     @NoArgsConstructor
-    public static class ReturnLabel {
+    public static class ReturnLabel implements Serializable {
 
         //面单返回方式(0:base64,1:url) *返回方式不能固定，具体返回的格式，根据这个值判断即可
         private String type;

@@ -1,14 +1,14 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -72,6 +72,11 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
 
     @TableField("paper_size")
     private String paperSize;
+    /**
+     * 是否推送海外仓面单
+     */
+    @TableField("is_push_label")
+    private Boolean isPushLabel;
     /**
     * 纸张长
     */
@@ -212,12 +217,29 @@ public class LogisticsChannelEntity extends BaseEntity<LogisticsChannelEntity> {
      */
     @TableField("volume_setting")
     private Integer volumeSetting;
+    /**
+     * 运费超限打标比例
+     */
+    @TableField("shipment_over_limit_rate")
+    private BigDecimal shipmentOverLimitRate;
+
+    /**
+     * 是否平台发货  true代表物流下单后后续无需平台标发
+     */
+    @TableField("is_platform_ship")
+    private Boolean isPlatformShip;
+
+    /**
+     * 配送商类型
+     */
+    @TableField("carrier_type")
+    private String carrierType;
 
     public static final String MAIN_ID = "main_id";
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String EFFECTIVE_TIME = "effective_time";
 

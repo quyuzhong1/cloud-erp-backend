@@ -5,6 +5,8 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
@@ -12,6 +14,7 @@ import com.common.business.dto.JobTaskDTO;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -127,13 +130,14 @@ public class GyyShopInfoServiceImpl implements IReportSaveService<GyyShopInfoEnt
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
+        List<BiShopInfoEntity> biShopInfoEntityList = entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.GYY_SHOP_INFO_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getPlatformShopNo(), msg.getFinanceCode()));
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+        log.debug("gyyShop发送数据为：{}" , JSON.toJSONString(biShopInfoEntityList));
     }
 
     @Override

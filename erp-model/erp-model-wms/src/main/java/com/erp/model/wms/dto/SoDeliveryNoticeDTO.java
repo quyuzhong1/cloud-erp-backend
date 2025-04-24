@@ -15,7 +15,9 @@ import java.util.List;
 import java.util.Map;
 
 public class SoDeliveryNoticeDTO {
-
+    private SoDeliveryNoticeDTO() {
+        throw new IllegalStateException("Utility SoDeliveryNoticeDTO class");
+    }
     /**
      * 分页参数
      */
@@ -138,6 +140,18 @@ public class SoDeliveryNoticeDTO {
          */
         private String warehouseOrgName;
         /**
+         * 是否已完成拣货
+         */
+        private Boolean isPicked;
+        /**
+         * 是否已完成装箱
+         */
+        private Boolean isPacked;
+        /**
+         * 生成拣货单状态
+         */
+        private String generationPickStatus;
+        /**
          * 单据状态
          */
         private String approveStatus;
@@ -192,6 +206,15 @@ public class SoDeliveryNoticeDTO {
         private Integer deliveryQty;
 
         /**
+         * 拣货数量
+         */
+        private Integer pickedQty;
+
+        /**
+         * 拣货单
+         */
+        private Integer pickeStatus;
+        /**
          * 装箱数量
          */
         private Integer packingQty;
@@ -231,6 +254,14 @@ public class SoDeliveryNoticeDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 中转仓库集合
+         */
+        private String transferWarehouseIds;
+        /**
+         * 中转仓库名称
+         */
+        private String transferWarehouseNames;
     }
 
     /**
@@ -331,6 +362,10 @@ public class SoDeliveryNoticeDTO {
          * 收货地址
          */
         private String receiveAddress;
+        /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
         /**
          * 明细信息
          */
@@ -498,6 +533,11 @@ public class SoDeliveryNoticeDTO {
          */
         private String invalidRemark;
         /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
+
+        /**
          * 明细信息
          */
         private List<SoDeliveryNoticeDetailDTO.View> detailList;
@@ -583,6 +623,10 @@ public class SoDeliveryNoticeDTO {
          * skuNo
          */
         private String skuNo;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
         /**
          * skuId
          */

@@ -28,7 +28,7 @@ import java.time.OffsetDateTime;
 @Ignore
 public class FbaOutboundApiTest {
 
-    private final FbaOutboundApi api = null;
+    private final FbaOutboundApi api = new FbaOutboundApi(null);
 
     
     /**

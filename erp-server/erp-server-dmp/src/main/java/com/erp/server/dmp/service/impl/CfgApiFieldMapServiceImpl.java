@@ -89,7 +89,7 @@ public class CfgApiFieldMapServiceImpl extends ServiceImpl<CfgApiFieldMapMapper,
     @Transactional(rollbackFor = Exception.class)
     public Boolean batchAdd(List<CfgApiFieldMapDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         for(CfgApiFieldMapDTO dto: list) {
             //新增

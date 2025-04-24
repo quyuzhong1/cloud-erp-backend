@@ -24,7 +24,7 @@ import java.util.List;
 @Mapper
 public interface BiTargetNewProductSettingMapper extends BaseMapper<BiTargetNewProductSettingEntity> {
 
-    IPage<BiTargetNewProductSettingDTO.PagingViewDTO> paging(Page query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
+    IPage<BiTargetNewProductSettingDTO.PagingViewDTO> paging(Page<Object> query, @Param("params")BiTargetYearDTO.PagingParamDTO params,@Param("multiplyNum") BigDecimal multiplyNum);
 
     /**
      * 查询部门新品目标

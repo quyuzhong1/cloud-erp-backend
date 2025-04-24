@@ -116,6 +116,7 @@ public class DmpOutputGoodCangProductRocketMQTaskHandler extends DmpOutputRocket
     	product.setMatchResult(false);
     	product.setPlatform(sourcePlatform);
 		product.setAuthId(dmpProductInfoEntity.getAuthId());
+		product.setPlatformProductBarcode(dmpSkuInfoEntity.getSkuId());
         return product;
     }
 

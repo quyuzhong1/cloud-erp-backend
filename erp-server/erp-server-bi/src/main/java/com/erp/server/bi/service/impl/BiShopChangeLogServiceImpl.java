@@ -25,9 +25,9 @@ public class BiShopChangeLogServiceImpl extends ServiceImpl<BiShopChangeLogMappe
 
     @Override
     public PagingVO<DmpShopChangeLogDTO> paging(PagingDTO<AdvanceSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         AdvanceSearchDTO params = dto.getParams();
         IPage<DmpShopChangeLogDTO> pageData = baseMapper.paging(query, params);
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 }

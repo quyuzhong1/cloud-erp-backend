@@ -1,7 +1,9 @@
 package com.sdk.wms.antu.constants;
 
 public class AntuConstants {
-
+    private AntuConstants() {
+        throw new IllegalStateException("Utility AntuConstants class");
+    }
     public static final String METHOD_GET_PRODUCT_LIST = "getProductList";
 
     public static final String METHOD_GET_WAREHOUSE = "getWarehouse";
@@ -25,4 +27,9 @@ public class AntuConstants {
     public static final String GET_SHIPPING_METHOD = "getShippingMethod";
 
     public static final String GET_ORDER_LIST = "getOrderList";
+
+    public static final String GET_SPECIAL_ORDERS_LIST = "getSpecialOrdersList";
+    public static final String GET_CALCULATE_FEE_BATCH = "getCalculateFeeBatch";
+    //上传文件
+    public static final String GET_UPLOAD_FILE = "uploadFile";
 }

@@ -1,5 +1,6 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
@@ -76,9 +77,14 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
             errorMsgList.addAll(msgList);
         }
         //盘点数量
-        Integer qty = excelDTO.getQty();
-        if (qty < 0) {
-            errorMsgList.add("盘点数量不能为负数");
+        Integer qty = 0;
+        try {
+            qty = Integer.valueOf(excelDTO.getQty());
+            if (qty < 0) {
+                errorMsgList.add("盘点数量不能为负数");
+            }
+        }catch (Exception e){
+            errorMsgList.add("盘点数量不能为非整数");
         }
         //任务盘点单号
         String taskCode = excelDTO.getCode();
@@ -92,7 +98,7 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
         //仓库id
         String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
                 findFirst().map(WarehouseEntity::getId).orElse("");
-        if (StringUtils.isBlank(warehouseId)) {
+        if (CharSequenceUtil.isBlank(warehouseId)) {
             errorMsgList.add("仓库不存在");
         }
         String mainId = Objects.nonNull(taskEntity) ? taskEntity.getId() : "";

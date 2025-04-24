@@ -4,11 +4,14 @@ import java.security.MessageDigest;
 /**
  * @author zdy
  * @ClassName MD5Util
- * @description: TODO
+
  * @date 2023年11月02日
  * @version: 1.0
  */
 public class MD5Util {
+
+    private MD5Util(){}
+
     public static final int FOUR_BIT = 4;
 
     public static final int FF = 15;

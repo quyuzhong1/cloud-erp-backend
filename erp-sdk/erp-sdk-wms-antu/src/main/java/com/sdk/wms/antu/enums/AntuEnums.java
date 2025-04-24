@@ -2,6 +2,7 @@ package com.sdk.wms.antu.enums;
 
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import io.seata.common.util.StringUtils;
@@ -115,7 +116,7 @@ public enum AntuEnums {
         INITIAL_RECEIVING("P","头程收货中", OverseasInstockStatusEnum.TO_BE_SIGNED),
         IN_TRANSIT("Z","转运中", OverseasInstockStatusEnum.TO_BE_SIGNED),
         RECEIVING_DESTINATION_WAREHOUSE("G","目的仓库收货中", OverseasInstockStatusEnum.PARTIAL_SIGNED),
-        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("F","目的仓收货完成", OverseasInstockStatusEnum.PARTIAL_SIGNED),
+        COMPLETION_RECEIVING_DESTINATION_WAREHOUSE("F","目的仓收货完成", OverseasInstockStatusEnum.SIGNED),
         COMPLETE_LISTING("E","完成上架", OverseasInstockStatusEnum.SIGNED),
         ABANDONMENT("X","废弃", OverseasInstockStatusEnum.CANCELED)
         ;
@@ -195,6 +196,54 @@ public enum AntuEnums {
                     .findFirst()
                     .map(AntuEnums.OrderStatusEnum::getName)
                     .orElse(null);
+        }
+    }
+
+
+    /**
+     * 退件类型
+     */
+    @Getter
+    public enum ReturnInstockTypeEnum {
+        BUYER_RETURNS(1,"买家退件", SoB2cReturnTypeEnum.CUSTOMER_RETURNS),
+        LOGISTICS_RETURNS(2,"物流退件", SoB2cReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        CLAIM(3,"认领", SoB2cReturnTypeEnum.CLAIM),
+        ;
+        private final Integer code;
+        private final String name;
+        private final SoB2cReturnTypeEnum erpEnum;
+
+        ReturnInstockTypeEnum(Integer code, String name, SoB2cReturnTypeEnum erpEnum) {
+            this.code = code;
+            this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static Integer getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(ReturnInstockTypeEnum::getCode)
+                    .orElse(null);
+        }
+
+        public static ReturnInstockTypeEnum getByCode(Integer code) {
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(e -> e.getCode().equals(code))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        public static String getErpStatus(String code){
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(item -> item.getCode().toString().equalsIgnoreCase(code))
+                    .findFirst()
+                    .map(ReturnInstockTypeEnum::getErpEnum)
+                    .map(SoB2cReturnTypeEnum::getCode)
+                    .orElse("");
         }
     }
 }

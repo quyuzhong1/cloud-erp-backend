@@ -1,12 +1,13 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -19,12 +20,11 @@ import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -40,9 +40,9 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsSaleChannelMapper, LogisticsSaleChannelEntity> implements LogisticsSaleChannelService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
 
@@ -67,10 +67,10 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销售平台物流渠道单" , logisticsSaleChannelEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "销售平台物流渠道单" , logisticsSaleChannelEntity.getCode());
+        
         operateLogService.addModuleOperateLog(msg, null, logisticsSaleChannelEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        
 
         return new BaseResultDTO.AddDTO(logisticsSaleChannelEntity.getId(), code);
     }
@@ -92,12 +92,12 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
         if(!save) {
             throw new ServiceException("销售平台物流渠道单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        
 
         // 记录主单操作日志
             log.info("编辑 开始记录销售平台物流渠道单日志数据，单号：【{}】", logisticsSaleChannelEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsSaleChannelEntity.getCode(), "销售平台物流渠道单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsSaleChannelEntity.getCode(), "销售平台物流渠道单");
+        
         operateLogService.addModuleOperateLogByObj(old, logisticsSaleChannelEntity, null, logisticsSaleChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -120,7 +120,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
             queryWrapper.eq(LogisticsSaleChannelEntity::getPlatformWarehouseCode, logisticsSaleChannelEntity.getPlatformWarehouseCode());
         }
         queryWrapper.eq(LogisticsSaleChannelEntity::getIsDeleted, false);
-        queryWrapper.last("limit 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         LogisticsSaleChannelEntity one  = baseMapper.selectOne(queryWrapper);
         //检查数据是否存在
         if (Objects.nonNull(one)){
@@ -160,7 +160,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
 
     @Override
     public LogisticsSaleChannelEntity getByPlatform(String platform, String code) {
-        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,code).eq(LogisticsSaleChannelEntity::getLogisticsPlatform,platform).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(LogisticsSaleChannelEntity::getCode,code).eq(LogisticsSaleChannelEntity::getLogisticsPlatform,platform).last(SqlConstants.LIMIT_1).one();
     }
 
 
@@ -168,7 +168,7 @@ public class LogisticsSaleChannelServiceImpl extends SuperServiceImpl<LogisticsS
     * 新增修改处理数据
     */
     private void handleData(LogisticsSaleChannelEntity logisticsSaleChannelEntity) {
-    // TODO 验证数据 & 数据赋值
+    
     }
 
 

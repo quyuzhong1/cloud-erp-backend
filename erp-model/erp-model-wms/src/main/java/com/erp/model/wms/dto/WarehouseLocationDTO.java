@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
@@ -346,7 +347,7 @@ public class WarehouseLocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @EqualsAndHashCode(callSuper = true)
-    public static class updateDto extends AddDTO{
+    public static class UpdateDto extends AddDTO{
 
         /**
          * 仓位ID
@@ -411,6 +412,12 @@ public class WarehouseLocationDTO implements Serializable {
          * 仓位ID
          */
         private String id;
+
+        /**
+         * 库区类型
+         */
+        @Dict(queryTypeField = "warehouseAreaType")
+        private String areaType;
 
         /**
          * 仓位编码
@@ -495,7 +502,7 @@ public class WarehouseLocationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class updateStatusDto{
+    public static class UpdateStatusDto {
         /**
          * 仓位ID
          */
@@ -509,7 +516,7 @@ public class WarehouseLocationDTO implements Serializable {
 
     @Data
     @AllArgsConstructor
-    public static class tabDto{
+    public static class TabDto {
         /**
          * 类型：idle可分配，occupied被占用，recyclable可回收，all全部
          */
@@ -647,5 +654,52 @@ public class WarehouseLocationDTO implements Serializable {
          * 仓库ID
          */
         private String warehouseId;
+    }
+
+    @Data
+    public static class WareInventoryQtyDTO{
+        /**
+         *
+         */
+        private String id;
+        /**
+         * 库区id
+         */
+        private String warehouseId;
+
+        /**
+         * 仓库code
+         */
+        private String warehouseCode;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationCode;
+
+
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
+
+        /**
+         * 库存数量
+         */
+        private String qty;
+
+        /**
+         *
+         */
+        private String skuId;
+
+        /**
+         *
+         */
+        private String skuNo;
     }
 }

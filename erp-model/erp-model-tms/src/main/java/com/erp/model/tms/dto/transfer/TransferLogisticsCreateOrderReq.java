@@ -7,7 +7,6 @@ import lombok.Data;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-import javax.xml.bind.annotation.XmlElement;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -148,5 +147,14 @@ public class TransferLogisticsCreateOrderReq {
          * 目的海关申报单价
          */
         protected String purposeDeclaredValue;
+
+        /**
+         * 真实售价
+         */
+        private BigDecimal price;
+        /**
+         * 售价原币种
+         */
+        private String currency;
     }
 }

@@ -1,7 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -49,6 +49,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -99,7 +100,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         this.batchAdd(targetYear.getId(), detailList);
         //汇总分类的集合
         List<BiTargetSkuSettingDTO.CommonDTO> gatherCategoryList = detailList.stream().
-                filter(d -> d.getIsGatherCategory()).collect(Collectors.toList());
+                filter(BiTargetSkuSettingDTO.CommonDTO::getIsGatherCategory).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(gatherCategoryList)){
             addDTO.setDetailList(gatherCategoryList);
             autoCreateCategorySetting(addDTO);
@@ -496,8 +497,8 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         params.setPermissionSql(dto.getPermissionSql());
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(params.getMetrics());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params, multiplyNum);
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<BiTargetSkuSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params, multiplyNum);
         List<BiTargetSkuSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -545,7 +546,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -569,7 +570,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         List<String> metricsNameList = MetricsEnum.listName();
         BiTargetSkuSettingExcelListener excelListenerUtil = new BiTargetSkuSettingExcelListener(metricsNameList, biProductDetailService);
         try {
-            EasyExcel.read(excelFile.getInputStream(), TargetSkuSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), TargetSkuSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("单品目标设置 导入错误>>>{}", e);
         }
@@ -608,12 +609,11 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
      */
     @Override
     public Boolean delete(BiTargetSkuSettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetSkuSettingEntity::getSkuId, dto.getSkuId()).
                 eq(BiTargetSkuSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetSkuSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
-        return result;
 
     }
 
@@ -627,8 +627,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto, multiplyNum);
-        return pagingTotal;
+        return baseMapper.pagingTotal(dto, multiplyNum);
 
     }
 

@@ -9,6 +9,7 @@ import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.util.List;
 
@@ -24,7 +25,7 @@ import java.util.List;
 @Mapper
 public interface DeliveryOrderMapper extends BaseMapper<DeliveryOrderEntity> {
 
-    IPage<DeliveryOrderDTO.ListDTO> paging(Page query, @Param("params")DeliveryOrderDTO.ParamDTO params);
+    IPage<DeliveryOrderDTO.ListDTO> paging(Page<T> query, @Param("params")DeliveryOrderDTO.ParamDTO params);
 
     List<DeliveryOrderDTO.StatusListDTO> tabList(@Param("supplierIdList") List<String> supplierIdList);
 

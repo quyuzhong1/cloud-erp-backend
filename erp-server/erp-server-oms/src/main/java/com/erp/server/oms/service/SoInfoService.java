@@ -1,11 +1,15 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.scm.dto.SkuCostProfitDTO;
 import org.springframework.web.multipart.MultipartFile;
@@ -222,7 +226,15 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @author yl
      * @date 2023-05-18 14:12
      */
-    SoInfoDTO.ExportPdfDTO exportSoContractPdf(String id);
+    SoInfoDTO.ExportPdfDTO listSoContractPdf(String id);
+    /**
+     * 导出销售合同pdf
+     * @author will
+     * @date 2024/11/4 16:28
+     * @param id
+     * @param response
+     */
+    void exportSoContractPdf(String id,HttpServletResponse response);
 
     /**
      * @param ids
@@ -304,13 +316,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     Boolean exportSoPI(String id, HttpServletResponse response);
 
     /**
-     * 根据sku id和数量计算成本毛利
-     * @param costParam
-     * @return
-     */
-    SkuCostProfitDTO.SkuCostProfitResult getSkuCostProfit(SkuCostProfitDTO.SkuCostProfitParam costParam);
-
-    /**
      * 重刷销售订单毛利成本数据
      * @param startDate
      * @param endDate
@@ -352,7 +357,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean updateDetailRemark(BaseIdsDTO.RemarkDTO dto);
+    Boolean updateDetailRemark(List<String> ids, String remark);;
     /**
      * @description: 更新备注
      * @author Will
@@ -360,7 +365,7 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @param dto
      * @return Boolean
      */
-    Boolean updateRemark(BaseIdsDTO.RemarkDTO dto);
+    BatchResultDTO updateRemark(SoInfoEntity entity, String remark);
 
     /**
      * 根据销售订单判断是否已经下推过发货通知单
@@ -468,4 +473,45 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * 导出销售订单
      */
     PagingVO<SoInfoDTO.PagingViewDTO> exportSo(PagingDTO<SoInfoDTO.ExportDTO> dto);
+
+    /**
+     * 同步数帝云
+     * @param soId
+     * @param operateEnum
+     */
+    void sdyFieldOrderHandler(String soId, String operateEnum);
+
+    List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endStart, Integer pageSize, int offset);
+
+    IPage<SoInfoEntity> pagePartitionIsNull(Page query);
+    /**
+     * 下推销售退货订单-列表查询-计算退货金额
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
+     * @Author jack
+     * @Date 2024-11-25
+     **/
+    List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto);
+
+
+    /**
+     * 是否存在客户+sku 的订单
+     * @return
+     */
+    Boolean existsByCustomerAndSku(String customer,String platformSku);
+
+    /**
+     * 批量上传物流面单
+     * @param files
+     * @return
+     */
+    List<BatchResultDTO> batchUploadLogisticLabel(List<MultipartFile> files);
+
+    /**
+     * 单个物流面单上传
+     * @param file
+     * @param id
+     * @return
+     */
+    BatchResultDTO singleUploadLogisticLabel(MultipartFile file, String id);
 }

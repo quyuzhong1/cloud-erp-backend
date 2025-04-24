@@ -4,6 +4,7 @@ import cn.hutool.core.date.CalendarUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.entity.TransactionFlowEntity;
@@ -66,7 +67,7 @@ public class SafetyInventoryJob {
             String warehouseId = split[0];
             String warehouseLocation = split[1];
             String skuId = split[2];
-            if(StringUtils.isBlank(warehouseId) || StringUtils.isBlank(warehouseLocation) || StringUtils.isBlank(skuId)){
+            if(CharSequenceUtil.isBlank(warehouseId) || CharSequenceUtil.isBlank(warehouseLocation) || CharSequenceUtil.isBlank(skuId)){
                 continue;
             }
             WarehouseLocationSafetyInventoryEntity one = safetyInventoryService.getOne(new QueryWrapper<WarehouseLocationSafetyInventoryEntity>()

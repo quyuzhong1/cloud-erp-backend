@@ -28,6 +28,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.BiShopInfoDTO;
+import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.SalesDemandDTO;
@@ -118,6 +119,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
             records.forEach(obj -> {
                 obj.setInvalidStatusName(InvalidStatusEnum.getName(obj.getInvalidStatus()));
                 obj.setApproveStatusName(ApproveStatusEnum.getName(obj.getApproveStatus()));
+                obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
             });
         }
         return new PagingVO(pageData);
@@ -423,7 +425,6 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
             List<SalesDemandDTO.GenerateSalesDemandDTO> value = entry.getValue();
             SalesDemandDTO.AddDTO addDTO = new SalesDemandDTO.AddDTO();
             addDTO.setApplyDate(value.get(0).getApplyDate());
-            addDTO.setIsFirstMassProduct(value.get(0).getIsFirstMassProduct());
             addDTO.setSourceId(value.get(0).getSourceId());
             addDTO.setSourceCode(value.get(0).getSourceCode());
             addDTO.setSourceType(value.get(0).getSourceType());
@@ -445,6 +446,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
                 addDetailDTO.setPlanStockQty(dto.getPlanStockQty());
                 addDetailDTO.setDestWarehouseId(dto.getWarehouseId());
                 addDetailDTO.setRemark(dto.getRemark());
+                addDetailDTO.setFirstMassProduct(dto.getFirstMassProduct());
                 addDetailList.add(addDetailDTO);
             }
             addDTO.setDetails(addDetailList);
@@ -478,6 +480,13 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<SalesDemandEntity> listBySourceIds(List<String> sourceIds) {
+        return lambdaQuery().in(SalesDemandEntity::getSourceId, sourceIds)
+                .eq(SalesDemandEntity::getInvalidStatus,Boolean.FALSE)
+                .eq(SalesDemandEntity::getIsDeleted,Boolean.FALSE)
+                .list();
+    }
 
     /**
      * 处理数据id

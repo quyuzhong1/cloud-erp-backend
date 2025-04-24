@@ -1,5 +1,6 @@
 package com.erp.server.wms.query;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
@@ -13,7 +14,7 @@ public class PoInStockQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("tab".equals(field)) {
-            if (StringUtils.isBlank(value.toString())) {
+            if (CharSequenceUtil.isBlank(value.toString())) {
                 return getQueryAllSql();
             }
             this.buildDefaultDTO("psi.approve_status",value);

@@ -38,35 +38,40 @@
         SELECT
             t.status AS tabFlag,
             COUNT(t.id) AS count
-        FROM
-            dmp_output_task_record t
+        FROM dmp_output_task_record t
         WHERE t.is_deleted = false
-        AND NOT EXISTS (
-            SELECT 1
-            FROM dmp_cfg_output_black b
-            WHERE b.is_deleted = FALSE
-            AND b.field_value = t.source_code AND t.main_id = b.main_id
-        )
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
         GROUP BY t.status
     </select>
-
+    
+    <select id="listStatusCountHis" resultType="java.lang.Integer">
+        SELECT
+            COUNT(t.id) AS count
+        FROM dmp_output_task_record_his t
+        WHERE t.is_deleted = false
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+    </select>
+    
     <!--添加进黑名单的数量-->
     <select id="listBlackCount" resultType="java.lang.Integer">
         SELECT
             COUNT(t.id) AS count
-        FROM
-        dmp_output_task_record t
-        WHERE t.is_deleted = false
-        AND EXISTS (
-            SELECT 1
-            FROM dmp_cfg_output_black b
-            WHERE b.is_deleted = FALSE
-            AND b.field_value = t.source_code
-            AND t.main_id = b.main_id
-        )
+        from 
+(select id,main_id,create_time,field_value,remark,cfg_output_id,source_code,t4.update_time,status,is_need_sync from dmp_cfg_output_black t1 
+left join 
+(select t2.is_need_sync,t3.cfg_output_id,t2.source_code,t2.update_time,t2.status from dmp_output_task_record t2 left join dmp_output_task t3 on t2.main_id = t3.id where t2.is_deleted = 'f' and t3.is_deleted = 'f') t4 
+on t1.main_id = t4.cfg_output_id and t1.field_value = t4.source_code
+where t1.field_value != '' and t1.compare_sign = 'eq' and t1.create_user_id != '' and t1.is_deleted = 'f') t
+LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
+				LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+				LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id 
+        where ${params.sqlMap.default}
         <if test="permissionSql != null and permissionSql != ''">
             ${permissionSql}
         </if>
@@ -85,7 +90,7 @@
         t.update_time AS lastSyncTime,
         t.response_data AS returnMsg,
         t.is_need_sync AS isNeedSync,
-        CASE WHEN dcob.id IS NULL OR dcob.id = '' THEN FALSE ELSE TRUE END AS isBlack
+        CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS isBlack
         FROM dmp_output_task_record t
         LEFT JOIN dmp_output_task g ON t.main_id = g.id
         LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
@@ -94,11 +99,85 @@
         LEFT JOIN dmp_basic_system l ON k.system_id = l.id
         LEFT JOIN dmp_basic_system i ON h.system_id = i.id
         LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
-            AND g.id = dcob.main_id
+            AND h.id = dcob.main_id
             AND dcob.is_deleted = FALSE
         WHERE ${params.sqlMap.default}
         AND t.is_deleted = false
         <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc
+    </select>
+    
+    <select id="hisPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
+        SELECT
+        t.id,
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        t.source_code AS sourceCode,
+        t.status AS status,
+        t.create_time,
+        t.update_time AS lastSyncTime,
+        t.response_data AS returnMsg,
+        t.is_need_sync AS isNeedSync,
+        CASE WHEN dcob.id IS NOT NULL and dcob.field_value != '' THEN TRUE ELSE FALSE END AS isBlack
+        FROM dmp_output_task_record_his t
+        LEFT JOIN dmp_output_task_his g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+        LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
+            AND h.id = dcob.main_id
+            AND dcob.is_deleted = FALSE
+        WHERE ${params.sqlMap.default}
+        AND t.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+	    <if test="params.sortList != null and params.sortList.size > 0">
+	       <foreach collection="params.sortList" item="item" separator="," close=",">
+	           ${item.field} ${item.sort}
+	       </foreach>
+	    </if>
+	    t.id desc
+    </select>
+    
+    <select id="blackPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
+        select 
+	t.id,t.create_time,
+        l."name" AS sourcePlatformName,
+        i.name AS targetPlatformName,
+        k.name AS sourceTypeName,
+        t.field_value AS sourceCode,
+        t.status AS status,
+        t.update_time AS lastSyncTime,
+        ('黑名单原因：' || t.remark) AS returnMsg,
+        t.is_need_sync AS isNeedSync,
+        TRUE isBlack
+from 
+(select id,main_id,create_time,field_value,remark,cfg_output_id,source_code,t4.update_time,status,is_need_sync from dmp_cfg_output_black t1 
+left join 
+(select t2.is_need_sync,t3.cfg_output_id,t2.source_code,t2.update_time,t2.status from dmp_output_task_record t2 left join dmp_output_task t3 on t2.main_id = t3.id where t2.is_deleted = 'f' and t3.is_deleted = 'f') t4 
+on t1.main_id = t4.cfg_output_id and t1.field_value = t4.source_code
+where t1.field_value != '' and t1.compare_sign = 'eq' and t1.create_user_id != '' and t1.is_deleted = 'f') t
+LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
+				LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+				LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id 
+		where ${params.sqlMap.default} <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
@@ -108,7 +187,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        t.create_time desc
+        t.id desc
     </select>
 
     <select id="listExportExcel" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
@@ -136,5 +215,150 @@
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
+    </select>
+
+    <!-- -->
+    <select id="getErrorData" resultType="com.erp.model.dmp.dto.DmpPushTaskDTO$SyncInfoDTO">
+        SELECT
+            t.id,
+            l."name" AS sourcePlatformName,
+            i.name AS targetPlatformName,
+            k.name AS sourceTypeName,
+            t.source_code AS sourceCode,
+            t.status AS status,
+            t.create_time,
+            t.update_time AS lastSyncTime,
+            t.response_data AS returnMsg,
+            t.is_need_sync AS isNeedSync
+        FROM dmp_output_task_record t
+                 LEFT JOIN dmp_output_task g ON t.main_id = g.id
+                 LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+                 LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+                 LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+                 LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+                 LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+                 LEFT JOIN dmp_push_msg m ON t.data_id = m.id
+        WHERE  t.is_deleted = false and t.status in('cosumererror','mqerror','error')
+        <if test="params.sourceId != null and params.sourceId != ''">
+            and m.source_id = #{params.sourceId}
+        </if>
+        <if test="params.sourcePlatformName != null and params.sourcePlatformName != ''">
+            and l."name" = #{params.sourcePlatformName}
+        </if>
+        <if test="params.targetPlatformName != null and params.targetPlatformName != ''">
+            and i.name = #{params.targetPlatformName}
+        </if>
+        order by t.id asc limit 1
+    </select>
+    
+    <select id="getOutputErrorTask" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
+			SELECT T.* 
+	FROM
+		dmp_output_task_record
+		T LEFT JOIN dmp_output_task G ON T.main_id = G.
+		ID LEFT JOIN dmp_cfg_output h ON G.cfg_output_id = h.ID 
+	WHERE
+		T.is_deleted = 'f' 
+		AND G.is_deleted = 'f' 
+		AND h.is_deleted = 'f' 
+		AND (
+			T.status IN ( 'init', 'mqerror', 'cosumererror' ) 
+			OR ( T.status = 'mqsuccess' AND T.update_time <![CDATA[ < ]]> ( CURRENT_TIMESTAMP - INTERVAL '7200 seconds' ) ) 
+		) 
+		AND h.system_id = #{systemId}
+	ORDER BY
+		T.update_time 
+		LIMIT #{size}
+    </select>
+    
+    <delete id="dmpInputMoveToHistoryTable">
+		insert into dmp_input_task_file_his select * from dmp_input_task_file where main_id in (${conditionSql});
+		delete from dmp_input_task_file where main_id in (${conditionSql});
+
+		insert into dmp_input_task_his select * from dmp_input_task where id in (${conditionSql});
+		delete from dmp_input_task where id in (${conditionSql});
+	</delete>
+	
+    <delete id="dmpRelationMoveToHistoryTable">
+    	<if test="fileConditionSql != null and fileConditionSql != ''">
+    		insert into dmp_input_file_mongo_relation_his select * from dmp_input_file_mongo_relation where id in (${fileConditionSql});
+			delete from dmp_input_file_mongo_relation where id in (${fileConditionSql});
+    	</if>
+
+		<if test="dmpConditionSql != null and dmpConditionSql != ''">
+			insert into dmp_input_mongo_dmp_relation_his select * from dmp_input_mongo_dmp_relation where id in (${dmpConditionSql});
+			delete from dmp_input_mongo_dmp_relation where id in (${dmpConditionSql});
+		</if>
+	</delete>
+	
+	<select id="getDmpOutputMoveToHistoryTable" resultType="java.lang.String">
+		select t.id from dmp_output_task t where update_time <![CDATA[ < ]]> #{beforeUpdateTime} and status = 'finish' and not exists (select 1 from dmp_output_task_record g where g.status in ('init','mqsuccess','mqerror' , 'cosumererror' , 'error') and g.main_id = t.id ) order by t.update_time limit #{size};
+	</select>
+	
+    <delete id="dmpOutputMoveToHistoryTable">
+		insert into dmp_push_msg_his select * from dmp_push_msg where id in (select data_id from dmp_output_task_record where status = 'finish' and main_id in (${conditionSql}));
+		delete from dmp_push_msg where id in (select data_id from dmp_output_task_record where status = 'finish' and main_id in (${conditionSql}));
+	
+		insert into dmp_output_task_record_his select * from dmp_output_task_record where status = 'finish' and main_id in (${conditionSql});
+		delete from dmp_output_task_record where status = 'finish' and main_id in (${conditionSql});
+	
+		insert into dmp_output_task_his select * from dmp_output_task t where id in (${conditionSql});
+		delete from dmp_output_task where id in (${conditionSql});
+
+	</delete>
+	
+	<select id="getDmpOutputNoRecordMoveToHistoryTable" resultType="java.lang.String">
+		select g.id from dmp_output_task g where not exists (select 1 from dmp_output_task_record t where t.main_id = g.id);
+	</select>
+	
+    <delete id="dmpOutputNoRecordMoveToHistoryTable">
+		insert into dmp_output_task_his select * from dmp_output_task g where g.id in (${conditionSql});
+		delete from dmp_output_task g where g.id in (${conditionSql});
+	</delete>
+
+    <select id="queryBySourceCodeAndCfgOutputId" resultMap="BaseResultMap">
+        SELECT
+            dotr.*
+        FROM
+            dmp_output_task_record AS dotr
+            LEFT JOIN dmp_output_task AS dor ON dor.ID = dotr.main_id
+        WHERE
+            dor.cfg_output_id = #{cfgOutputId}
+          AND dotr.source_code = #{sourceCode}
+          AND dotr.source_code NOT IN ( '', '_' )
+          AND dotr.is_deleted = FALSE
+          AND dor.is_deleted = FALSE
+    </select>
+    <select id="getOutputTaskRecord" resultType="com.erp.model.dmp.entity.DmpOutputTaskRecordEntity">
+        SELECT
+            dotr.*
+        FROM
+            dmp_output_task_record AS dotr
+                LEFT JOIN dmp_output_task AS dor ON dor.ID = dotr.main_id
+                LEFT JOIN dmp_cfg_output AS dco on dco.id = dor.cfg_output_id
+        WHERE
+            dco.output_class = #{outputClass}
+          AND dotr.source_code = #{sourceCode}
+          AND dotr.is_deleted = FALSE
+          AND dor.is_deleted = FALSE ORDER BY dotr.create_time LIMIT 1
+    </select>
+    
+    <select id="outputErrorCountMsg" resultType="java.lang.String">
+        SELECT concat('【' , k.name , '】推送【' , i.name , '】失败：' , count(*))
+        FROM dmp_output_task_record t
+        LEFT JOIN dmp_output_task g ON t.main_id = g.id
+        LEFT JOIN dmp_cfg_output h ON g.cfg_output_id = h.id
+        LEFT JOIN dmp_cfg_input_convert j ON h.input_convert_id = j.id
+        LEFT JOIN dmp_cfg_input k ON j.main_id = k.id
+        LEFT JOIN dmp_basic_system l ON k.system_id = l.id
+        LEFT JOIN dmp_basic_system i ON h.system_id = i.id
+        LEFT JOIN dmp_cfg_output_black dcob ON t.source_code = dcob.field_value
+            AND h.id = dcob.main_id
+            AND dcob.is_deleted = FALSE
+        WHERE t.status = 'error'
+        AND t.is_deleted = false
+				and t.create_time <![CDATA[ < ]]> current_date
+				and l.id is not null and i.id is not null and k.id is not null
+				group by l."name",i.name,k.name order by k.name,i.name,count(*) desc
     </select>
 </mapper>

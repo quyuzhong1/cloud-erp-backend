@@ -55,7 +55,7 @@ public class TmsFirstMileReconciliationController extends BaseController {
             menuCode = "tms:tmsFirstMileReconciliation:update",
             serviceClass = TmsFirstMileReconciliationService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdateDTO dto) {
         tmsFirstMileReconciliationService.updateReconciliation(dto);
         return success();
     }
@@ -324,6 +324,46 @@ public class TmsFirstMileReconciliationController extends BaseController {
     public ApiResult<Boolean> exportList(@RequestBody @Validated TmsFirstMileReconciliationDTO.ExportDTO dto) {
         tmsFirstMileReconciliationService.exportList(dto);
         return success(true);
+    }
+
+    /**
+     * 初始化头程对账单汇率
+     * @return
+     */
+    @PostMapping("/initExchangeRate")
+    public ApiResult initExchangeRate(){
+        tmsFirstMileReconciliationService.initExchangeRate();
+        return success();
+    }
+
+    /**
+     * 更新付款状态
+     * @Author Luo_WG
+     * @Date 2024/11/28 18:10
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.lang.Boolean>
+     **/
+    @PostMapping("/updatePayStatus")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "更新付款状态")
+    public ApiResult<List<BatchResultDTO>> updatePayStatus(@RequestBody @Validated TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = tmsFirstMileReconciliationService.updatePayStatus(dto, id);
+            } catch (Exception e) {
+                log.error("更新付款状态失败", e);
+                TmsFirstMileReconciliationEntity entity = tmsFirstMileReconciliationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "头程对账单不存在, 更新付款状态失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 

@@ -1,10 +1,9 @@
 package com.erp.model.sys.dto;
 
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.erp.model.sys.validator.AddGroup;
-import com.erp.model.sys.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname 系统用户入参
@@ -124,7 +124,14 @@ public class SysUserInfoDTO implements Serializable {
          * 更新时间
          */
         private List<LocalDate> updateTimeList;
-
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -167,5 +174,10 @@ public class SysUserInfoDTO implements Serializable {
          * 店铺
          */
         private String shopNames;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 }

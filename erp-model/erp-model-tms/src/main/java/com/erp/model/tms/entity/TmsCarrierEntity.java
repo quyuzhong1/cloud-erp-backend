@@ -51,11 +51,11 @@ public class TmsCarrierEntity extends BaseEntity<TmsCarrierEntity> {
     private String salesPlatform;
 
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String LOGISTICS_TRACK_URL = "logistics_track_url";
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
     public static final String SALES_PLATFORM = "sales_platform";
 

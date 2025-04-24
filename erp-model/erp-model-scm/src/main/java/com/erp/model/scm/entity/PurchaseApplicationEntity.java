@@ -68,12 +68,6 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
     private String applyDeptName;
 
     /**
-     * 新品首批（false否,true是）
-     */
-    @TableField("is_first_mass_product")
-    private Boolean isFirstMassProduct;
-
-    /**
      * 审核时间
      */
     @TableField("approve_time")
@@ -112,7 +106,7 @@ public class PurchaseApplicationEntity extends BaseEntity<PurchaseApplicationEnt
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String APPLY_DATE = "apply_date";
 

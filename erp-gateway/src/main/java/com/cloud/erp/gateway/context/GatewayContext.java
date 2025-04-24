@@ -14,7 +14,7 @@ import org.springframework.util.MultiValueMap;
 @Getter
 @Setter
 @ToString
-public class GatewayContext {
+public class GatewayContext<T> {
 
     public static final String CACHE_GATEWAY_CONTEXT = "cacheGatewayContext";
     /**
@@ -49,6 +49,6 @@ public class GatewayContext {
     /**
      * Gateway Extra Data
      */
-    protected GatewayContextExtraData gatewayContextExtraData;
+    protected GatewayContextExtraData<T> gatewayContextExtraData;
 
 }

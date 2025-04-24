@@ -1,6 +1,8 @@
 package com.erp.server.wms.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
+import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -25,4 +27,20 @@ public interface TransferInfoDetailMapper extends BaseMapper<TransferInfoDetailE
      * @return List<TransferInfoDetailEntity>
      */
     List<TransferInfoDetailEntity> listSourceDetailIds(@Param("sourceDetailIds") List<String> sourceDetailIds);
+
+    /**
+     * 根据主表ID查询明细数据和仓库数据
+     * @param mainIds
+     * @param isApprove
+     * @return
+     */
+    List<TransferInfoDetailDTO.ApproveDTO> listApproveByMainIds(@Param("mainIds")List<String> mainIds, @Param("isApprove")Boolean isApprove);
+    /**
+     * 根据来源明细id集合查询
+     * @author will
+     * @date 2024/12/19 17:12
+     * @param sourceIdList
+     * @return List<ResponseDTO>
+     */
+    List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceIdList(@Param("sourceIdList")List<String> sourceIdList);
 }

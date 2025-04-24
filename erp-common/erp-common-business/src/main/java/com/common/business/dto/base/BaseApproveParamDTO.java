@@ -1,15 +1,15 @@
 package com.common.business.dto.base;
 
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -18,6 +18,7 @@ import java.util.List;
 
  * @date 2023/3/15 18:16
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -46,4 +47,8 @@ public class BaseApproveParamDTO extends PermissionsDTO {
      * 是否需要流程，false则跳过
      */
     private Boolean isNeedProcess;
+    /**
+     *发货日期
+     */
+    private LocalDate deliveryDate;
 }

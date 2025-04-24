@@ -2,8 +2,8 @@ package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.StopWatch;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.InventoryClosedRecordEnum;
@@ -11,10 +11,7 @@ import com.erp.model.wms.entity.InventoryClosedRecordEntity;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.entity.InventoryFlowOverrideRecordEntity;
 import com.erp.model.wms.enums.InventoryFlowOverrideRecordTypeEnum;
-import com.erp.server.wms.service.InventoryClosedRecordService;
-import com.erp.server.wms.service.InventoryFlowOverrideRecordService;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.TransactionFlowService;
+import com.erp.server.wms.service.*;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -48,6 +45,8 @@ public class InventoryFlowRecalculateJob {
     private InventoryFlowOverrideRecordService inventoryFlowOverrideRecordService;
     @Resource
     private InventoryClosedRecordService inventoryClosedRecordService;
+    @Resource
+    private InventoryHisService inventoryHisService;
 
     @XxlJob("inventoryFlowOverride")
     public ReturnT inventoryFlowOverride() {
@@ -60,7 +59,7 @@ public class InventoryFlowRecalculateJob {
         String inventoryId;
         String inventoryOrgId = null;
         Boolean fromTable = Boolean.FALSE;
-        if (StrUtil.isNotBlank(jobParam)) {
+        if (CharSequenceUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             startTime = jsonParam.getLocalDateTime("startTime", LocalDateTime.parse("2023-07-06T00:00:00"));
             inventoryId = jsonParam.getStr("inventoryId");
@@ -69,7 +68,7 @@ public class InventoryFlowRecalculateJob {
         } else {
             inventoryId = null;
         }
-        if(StrUtil.isNotBlank(inventoryId)){
+        if(CharSequenceUtil.isNotBlank(inventoryId)){
             InventoryEntity inventory = inventoryService.getById(inventoryId);
             if (null != inventory) {
                 inventoryOrgId = inventory.getOrgId();
@@ -111,18 +110,20 @@ public class InventoryFlowRecalculateJob {
             LocalDate startDate = ObjectUtil.isNotEmpty(startTime) ? startTime.toLocalDate() : orgStartTimeMap.getValue();
             // 1. 查询当前组织下所有存在流水的库存id
             List<String> inventoryIdList = transactionFlowService.listByOrgId(startDate, orgStartTimeMap.getKey(), inventoryId, fromTable);
-            if(CollUtil.isEmpty(inventoryIdList)) {
-                log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
-                continue;
-            }
             try {
+                if(CollUtil.isEmpty(inventoryIdList)) {
+                    log.warn("未找到需要重算的库存流水，组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate);
+                    // 流水不存在则删除历史库存
+                    inventoryHisService.removeByInventoryIds(Collections.singletonList(inventoryId), startDate);
+                    continue;
+                }
                 // 多线程更新库存流水
                 CompletableFuture<Void> allOf = CompletableFuture.allOf(inventoryIdList.stream()
                         .map(invId -> CompletableFuture.runAsync(() ->
                                 transactionFlowService.overrideInventoryFlow(startDate, invId, orgName))
                         ).toArray(CompletableFuture[]::new));
                 allOf.thenRun(() -> log.info("###TransactionFlowServiceImpl:::overrideInventoryFlow 库存流水重算，所有任务执行完毕 组织:{}, 库存id:{}, 开始时间:{}", orgName, inventoryId, startDate)).join();
-                if(StrUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(inventoryOrgId)){
+                if(CharSequenceUtil.isEmpty(inventoryId) && ObjectUtil.isNotEmpty(inventoryOrgId)){
                     inventoryFlowOverrideRecordService.save(new InventoryFlowOverrideRecordEntity(LocalDateTime.of(startDate, LocalTime.MIN),LocalDateTime.now(), orgStartTimeMap.getKey(),orgName, InventoryFlowOverrideRecordTypeEnum.AUTO));
                 }
 
@@ -170,7 +171,7 @@ public class InventoryFlowRecalculateJob {
                 .filter(entry -> !closedDateMap.containsKey(entry.getKey()))
                 .forEach(entry -> startTimeMap.put(entry.getKey(), entry.getValue().toLocalDate()));
         // 指定组织
-        if(StrUtil.isNotBlank(inventoryOrgId)){
+        if(CharSequenceUtil.isNotBlank(inventoryOrgId)){
             Map<String, LocalDate> result = startTimeMap.entrySet().stream()
                     .filter(entry -> inventoryOrgId.equals(entry.getKey()))
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

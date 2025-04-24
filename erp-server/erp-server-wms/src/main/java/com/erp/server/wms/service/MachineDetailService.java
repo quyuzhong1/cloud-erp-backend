@@ -2,6 +2,7 @@ package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.MachineDetailDTO;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.entity.MachineDetailEntity;
 
 import java.util.List;
@@ -55,4 +56,21 @@ public interface MachineDetailService extends SuperService<MachineDetailEntity> 
      */
     void removeByMainIds(List<String> mainIds);
 
+    List<MachineDetailEntity> listBySourceDetailIds(List<String> detailIds);
+    /**
+     * 根据来源id查询数据
+     * @author will
+     * @date 2024/12/19 16:47
+     * @param sourceIdList
+     * @return List<ResponseDTO>
+     */
+    List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceIdList(List<String> sourceIdList);
+    /**
+     * 根据来源id查询数据
+     * @author will
+     * @date 2024/12/19 16:47
+     * @param refIdList
+     * @return List<ResponseDTO>
+     */
+    List<SoB2bProcessingDTO.ResponseDTO> listMachineByRefIdList(List<String> refIdList);
 }

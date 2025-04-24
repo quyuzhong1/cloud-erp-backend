@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
  */
 public class KingdeeBusinessOperatorDTO  {
 
+    private KingdeeBusinessOperatorDTO() {
+    }
+
     @Data
     @NoArgsConstructor
     public static class ListBusinessOperatorDTO{
@@ -49,6 +52,10 @@ public class KingdeeBusinessOperatorDTO  {
 
         //用户id
         private String userId;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
 
     }
 }

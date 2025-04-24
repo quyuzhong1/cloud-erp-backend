@@ -1,10 +1,13 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.mapper.BigDecimalToIntMapperWork;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
+import com.erp.model.tms.dto.LogisticsServicePlatformDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.entity.LogisticsServicePlatformEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.request.ParceInfoVO;
 import com.erp.model.tms.vo.request.ReceiverInfoVO;
@@ -38,4 +41,18 @@ public interface LogisticsServiceConverter {
     })
     LogisticsSaleChannelEntity convertLogisticsService(LogisticsServiceResponseVO obj);
     List<LogisticsSaleChannelEntity> convertLogisticsService( List<LogisticsServiceResponseVO> list);
+
+    @Mapping(target = "serviceName", source = "cnName")
+    LogisticsServicePlatformDTO.ServiceNameDTO convertToServiceName(LogisticsSaleChannelEntity logisticsSaleChannelEntity);
+    List<LogisticsServicePlatformDTO.ServiceNameDTO> convertToServiceName(List<LogisticsSaleChannelEntity> logisticsSaleChannelEntityList);
+
+    @Mappings({
+            @Mapping(target = "code", source = "id"),
+            @Mapping(target = "value", source = "shortName"),
+            @Mapping(target = "disabled", source = "disabled"),
+            @Mapping(target = "type", source = "type.code"),
+
+    })
+    BaseDropDownDTO.DisabledDTO convertBySupplierShortDown(LogisticsSupplierEntity logisticsChannel);
+    List<BaseDropDownDTO.DisabledDTO> convertBySupplierShortDown(List<LogisticsSupplierEntity> list);
 }

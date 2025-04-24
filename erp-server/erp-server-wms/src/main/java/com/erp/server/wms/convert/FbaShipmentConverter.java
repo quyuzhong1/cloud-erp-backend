@@ -9,6 +9,8 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 /**
  * FBA货件实体映射工具
  * @Author Luo_WG
@@ -143,8 +145,25 @@ public interface FbaShipmentConverter {
             @Mapping(target = "approveQty", ignore = true),
             @Mapping(target = "pickingQty", ignore = true),
             @Mapping(target = "asin", source = "asin"),
-            @Mapping(target = "fnSku", source = "fnSku"),
+            @Mapping(target = "platformFnSku", source = "fnSku"),
             @Mapping(target = "platformSku", source = "msku"),
     })
     RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "customerId", ignore = true),
+            @Mapping(target = "customerName", ignore = true),
+            @Mapping(target = "shipmentId", source = "shipmentEntity.id"),
+            @Mapping(target = "shipmentStatus", source = "shipmentEntity.platformShipmentStatus")
+    })
+    FbaTransitCalculateReportEntity fbaShipmentToTransit(String shipmentCode, LocalDate reportMonth, FbaShipmentEntity shipmentEntity);
 }

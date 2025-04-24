@@ -255,4 +255,9 @@ public class TaskPagingShowDTO implements Serializable {
      * 是否变更文档
      */
     private Boolean isChangeDocs;
+
+    /**
+     * 创建时间
+     */
+    private LocalDateTime createTime;
 }

@@ -37,11 +37,6 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
      * 成功信息
      */
     private List<ProductDetailExcelDTO> successList = new ArrayList<>();
-
-    public ProductDetailExcelListener() {
-
-    }
-
     /**
      * @Description 每解析一行数据回调一遍
      * @Author Luo_WG
@@ -77,7 +72,7 @@ public class ProductDetailExcelListener extends AnalysisEventListener<ProductDet
      **/
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 
     public List<ProductDetailExcelDTO> getErrorList(){

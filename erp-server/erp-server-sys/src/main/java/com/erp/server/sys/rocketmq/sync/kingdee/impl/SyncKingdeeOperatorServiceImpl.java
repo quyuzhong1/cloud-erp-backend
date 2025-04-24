@@ -7,10 +7,12 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -62,35 +64,12 @@ public class SyncKingdeeOperatorServiceImpl implements SyncKingdeeOperatorServic
     @GlobalTransactional(rollbackFor = Exception.class)
     @Override
     public DmpPushTaskEntity syncDataToKingdee(KingdeeOperatorRefPostEntity entity, String operate) {
-        if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException("金蝶业务员表数据不存在");
-        }
-        Map<String, Object> resultMap = new HashMap<>();
-        //业务id
-        resultMap.put("id", entity.getId());
-        //金蝶id
-        resultMap.put("syncKingdeeId", entity.getKingdeeId());
-        resultMap.put("operate", operate);
-        //业务类型
-        resultMap.put("typeCode", entity.getTypeCode());
-
-        List<Map<String, Object>> list = new ArrayList<>(1);
-        Map<String, Object> itemMap = new HashMap<>();
-
-        SysAccountingCompanyEntity org = sysAccountingCompanyService.getById(entity.getUseOrgId());
-        if (Objects.nonNull(org)) {
-            //业务组织
-            itemMap.put("useOrgCode", org.getCode());
-        }
-
-        KingdeeUserRefPostEntity userPost = kingdeeUserRefPostService.getById(entity.getUserPostId());
-        if(Objects.nonNull(userPost)){
-            itemMap.put("userPostCode", userPost.getCode());
-        }
-        list.add(itemMap);
-        resultMap.put("list", list);
-        //生成任务
-        return saveTask(entity, operate, resultMap);
+    	//生成任务
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     private DmpPushTaskEntity saveTask(KingdeeOperatorRefPostEntity entity, String operate, Map<String, Object> resultMap) {
@@ -127,4 +106,36 @@ public class SyncKingdeeOperatorServiceImpl implements SyncKingdeeOperatorServic
         
         return null;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(KingdeeOperatorRefPostEntity entity, String operate) {
+		if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException("金蝶业务员表数据不存在");
+        }
+        Map<String, Object> resultMap = new HashMap<>();
+        //业务id
+        resultMap.put("id", entity.getId());
+        //金蝶id
+        resultMap.put("syncKingdeeId", entity.getKingdeeId());
+        resultMap.put("operate", operate);
+        //业务类型
+        resultMap.put("typeCode", entity.getTypeCode());
+
+        List<Map<String, Object>> list = new ArrayList<>(1);
+        Map<String, Object> itemMap = new HashMap<>();
+
+        SysAccountingCompanyEntity org = sysAccountingCompanyService.getById(entity.getUseOrgId());
+        if (Objects.nonNull(org)) {
+            //业务组织
+            itemMap.put("useOrgCode", org.getCode());
+        }
+
+        KingdeeUserRefPostEntity userPost = kingdeeUserRefPostService.getById(entity.getUserPostId());
+        if(Objects.nonNull(userPost)){
+            itemMap.put("userPostCode", userPost.getCode());
+        }
+        list.add(itemMap);
+        resultMap.put("list", list);
+        return resultMap;
+	}
 }

@@ -1,7 +1,6 @@
 package com.sdk.tms.express.enums;
 
 import com.sdk.tms.express.service.IServiceCodeStandard;
-import com.sdk.tms.express.enums.PrePathEnum;
 
 /**
  * @Description: 快递管家

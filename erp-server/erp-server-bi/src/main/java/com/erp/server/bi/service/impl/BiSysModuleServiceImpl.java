@@ -66,7 +66,6 @@ public class BiSysModuleServiceImpl extends ServiceImpl<BiSysModuleMapper, BiSys
         queryWrapper.select(BiSysModuleEntity::getId,
                 BiSysModuleEntity::getName,
                 BiSysModuleEntity::getIsAdd);
-       // queryWrapper.eq(BiSysModuleEntity::getIsAdd, isAdd);
 
         return this.listMaps(queryWrapper);
     }

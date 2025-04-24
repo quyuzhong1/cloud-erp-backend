@@ -60,6 +60,11 @@ public class ProductPlanDevelopDTO implements Serializable {
     private String category;
 
     /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+
+    /**
      * 产品属性ID
      */
     @NotBlank(message = "产品属性ID不能为空")

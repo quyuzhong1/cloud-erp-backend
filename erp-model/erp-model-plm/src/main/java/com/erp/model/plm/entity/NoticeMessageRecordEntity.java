@@ -1,14 +1,13 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * 消息通知记录表
@@ -17,7 +16,7 @@ import java.time.LocalDateTime;
 @TableName(value ="notice_message_log")
 @Data
 @NoArgsConstructor
-public class NoticeMessageRecordEntity extends BaseEntity implements Serializable {
+public class NoticeMessageRecordEntity extends BaseEntity<NoticeMessageRecordEntity> implements Serializable {
     /**
      * 任务id
      */
@@ -82,12 +81,4 @@ public class NoticeMessageRecordEntity extends BaseEntity implements Serializabl
     private Integer isTask;
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
-
-    public NoticeMessageRecordEntity(String titleContent, String id, String flag, String userId, String productId, String name, String chargeName) {
-        this.messageContent = titleContent;
-        this.noticeMessageId = id;
-        this.noticeNode = flag;
-        this.noticeUserId = userId;
-        this.chargeName = chargeName;
-    }
 }

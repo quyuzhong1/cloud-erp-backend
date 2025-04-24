@@ -10,6 +10,8 @@ public enum CfgSettingEnum implements EnumMessage {
     RECONCILIATION_CYCLE("reconciliationCycle","生成设置"),
     BILL_AUTO_ADD("billAutoAdd","单据生成"),
     ALLOCATION_SETTING("allocationSetting","分摊设置"),
+    DECLARE_CUSTOMS("declareCustoms","报关主体"),
+    BUILD_DONGGUANG("buildDongGuanWarehouseAndCompany","东莞塘厦仓和公司生成"),
 
     ;
 

@@ -98,9 +98,49 @@ public class CfgSettingDTO implements Serializable {
          */
         private CfgSettingValueDTO.TransitSettingDTO transitSettingDTO;
         /**
+         * 飞书要货申请完成通知配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionNoticeDTO;
+        /**
          * 委外入库
          */
         private CfgSettingValueDTO.SubcontractInStock subcontractInStock;
+        /**
+         * 委外退货
+         */
+        private CfgSettingValueDTO.SubcontractReturnStock subcontractReturnStock;
+
+        /**
+         * 飞书仓位补货通知配置
+         */
+        private CfgSettingValueDTO.FsQcNoticeDTO fsWlrNoticeDTO;
+
+        /**
+         * 飞书要货申请待处理配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionWaitHandleDTO;
+        /**
+         * 飞书要货申请处理中配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionHandleIngNoticeDTO;
+        /**
+         * 飞书要货申请已装箱配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionPackingNoticeDTO;
+        /**
+         * 飞书头程发货单待处理配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsFirstMileDeliveryWaitHandleNoticeDTO;
+
+        /**
+         * 飞书要货申请变更提交配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeSubmitNoticeDTO;
+
+        /**
+         * 飞书要货申请变更审核配置
+         */
+        private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeApproveNoticeDTO;
 
     }
 

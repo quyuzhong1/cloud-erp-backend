@@ -1,24 +1,28 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
-import lombok.extern.slf4j.Slf4j;
-
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
+import com.erp.server.wms.service.VirtualWarehouseRelationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.VirtualWarehouseRelationService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
+import javax.annotation.Resource;
+import java.util.List;
 
 /**
  * 虚拟仓实体仓关联关系
@@ -103,4 +107,16 @@ public class VirtualWarehouseRelationController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 是否存在虚拟仓
+     * @author will
+     * @date 2024/10/25 11:55
+     * @param paramList
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/virtualWarehouse/isExistVirtualWarehouse")
+    public ApiResult<List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO>> isExistVirtualWarehouse(@RequestBody @Validated ValidList<VirtualWarehouseRelationDTO.IsExistVirtualDTO> paramList) {
+        List<VirtualWarehouseRelationDTO.IsExistVirtualResultDTO> list = virtualWarehouseRelationService.isExistVirtualWarehouse(paramList.getList());
+        return success(list);
+    }
 }

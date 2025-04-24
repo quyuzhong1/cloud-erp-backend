@@ -154,7 +154,7 @@ public class SubcontractChangeEntity extends BaseEntity<SubcontractChangeEntity>
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String BILL_DATE = "bill_date";
 

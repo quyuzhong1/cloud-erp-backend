@@ -1,10 +1,15 @@
 package com.erp.server.wms.convert.tool;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.utils.IdGeneratorUtil;
+import com.common.core.utils.IdUtils;
+import com.common.core.utils.UUID;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.mapstruct.Named;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Component
@@ -24,4 +29,23 @@ public class TypeConversionWorker {
         return name;
     }
 
+    @Named("replacePdf")
+    public String replacePdf(String fileData){
+        if (CharSequenceUtil.isBlank(fileData)){
+            return fileData;
+        }
+        return fileData.replace("data:application/pdf;base64,","");
+    }
+
+    @Named("getPdfFileName")
+    public String getPdfFileName(String orderCode){
+        if (CharSequenceUtil.isBlank(orderCode)){
+            return IdUtils.fastSimpleUUID() + ".pdf";
+        }
+        return orderCode + ".pdf";
+    }
+    @Named("getIsGift")
+    public Integer getIsGift(Boolean isGift) {
+        return Objects.isNull(isGift) || !isGift ? 2 : 1;
+    }
 }

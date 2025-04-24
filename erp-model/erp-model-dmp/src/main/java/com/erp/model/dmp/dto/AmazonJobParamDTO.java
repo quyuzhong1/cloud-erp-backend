@@ -1,17 +1,19 @@
 package com.erp.model.dmp.dto;
 
-import cn.hutool.json.JSONUtil;
+import java.util.Collections;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+
+import cn.hutool.json.JSONUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * 亚马逊 任务参数 DTO
@@ -48,7 +50,6 @@ public class AmazonJobParamDTO {
             this.size = 10;
             this.shopIdList = Collections.emptyList();
             this.recordTypeList = Collections.emptyList();
-            ;
         }
 
         public static ReportBaseDTO init(String jobParamStr) {

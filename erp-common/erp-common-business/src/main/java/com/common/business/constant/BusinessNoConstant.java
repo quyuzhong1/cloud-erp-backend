@@ -147,10 +147,33 @@ public interface BusinessNoConstant {
     String JHC = "JHC";
     //拣货波次
     String JHBC = "JHBC";
+    String JSRQ = "JSRQ";
+    String S = "S";
+    String P = "P";
+    String PP = "PP";
     //退料单
     String TLD = "TLD";
     String QCFT = "QCFT";
     String CHCB = "CHCB";
     //试产量产
     String SCLC = "SCLC";
+    String FHBG = "FHBG";
+    String FHJY = "FHJY";
+    String CGJY = "CGJY";
+    String THD = "THD";
+    String TKD = "TKD";
+    String XLSS = "XLSS";
+    String MJ = "MJ";
+    String YHBG = "YHBG";
+
+    //库龄批次号
+    String N = "N";
+    String INV = "INV";
+    String XSBH = "XSBH";
+
+    String XSJM = "XSJM";
+    String XSTJ = "XSTJ";
+
+    //售后
+    String SHSQ = "SHSQ";
 }

@@ -30,6 +30,8 @@ public enum DictBasicEnum {
     STOP_GEN_SO_OUT_STOCK_TIME("stopGenSoOutStockTime", "", "系统停止生成平台销售出库单记录配置"),
     WAVE_TYPE("waveType", "", "波次类型"),
     VIRTUAL_SPLIT_BOM("virtual_split_bom", "", "拆分bom"),
+    CFG_SETTING_VIRTUAL("cfgSettingVirtual", "", "虚拟仓配置"),
+
     ;
 
 

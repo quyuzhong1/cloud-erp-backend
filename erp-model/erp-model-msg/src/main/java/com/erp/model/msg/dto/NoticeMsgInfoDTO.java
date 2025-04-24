@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -56,19 +57,14 @@ public class NoticeMsgInfoDTO implements Serializable {
      */
     private List<MessageChannelEnum> sendChannels;
 
-    // TODO 泛型扩展实体，便于后面扩展
-
-    //------------MQ调用方法时传入，此处只是标识---------------------
+    /**
+     * 按钮信息
+     */
+    private NoticeMsgCardButtonDTO noticeMsgCardButtonDTO;
 
     /**
-     * 发送MQ消息的主题，取值从类RocketMqTopic.NOTICE_MSG_TOPIC，发送消息时会替换环境变量
+     * 延迟时间，仅支持飞书，单位：分钟
+     * 说明：如果指定了延迟时间，则会在指定的时间后发送消息，否则立即发送消息
      */
-    // private String rocketMqTopic = "${spring.cloud.nacos.discovery.namespace}-notice_msg_topic";
-
-    /**
-     * 发送MQ消息的tag，不指定请赋值为msg_notice_default_tag，取值从类RocketMqTagEnum.MSG_NOTICE_TAG，可以不同的业务使用不同的tag，需替换*号
-     */
-    // private String rocketMqTag = "msg_notice_default_tag";
-
-
+    private LocalDateTime delayTime;
 }

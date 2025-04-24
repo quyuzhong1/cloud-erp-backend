@@ -1,8 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -26,14 +26,15 @@ import com.erp.server.tms.service.DictBasicService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+
 /**
  * <p>
  * 系统配置管理 服务实现类
@@ -45,7 +46,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -152,10 +153,18 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         dto.setFirstTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setFirstOtherTaxFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setFirstOtherFee(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
+        dto.setFirstOrgId(CharSequenceUtil.EMPTY);
+        dto.setFirstWarehouseId(CharSequenceUtil.EMPTY);
 
         dto.setPackageShippingCost(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
         dto.setPackageTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
         dto.setPackageOtherFee(CostAllocationEnum.WEIGHT_ALLOCATION.getCode());
+        dto.setPackageOrgId(CharSequenceUtil.EMPTY);
+        dto.setPackageWarehouseId(CharSequenceUtil.EMPTY);
+
+        dto.setTransferTariffFee(CostAllocationEnum.COST_ALLOCATION.getCode());
+        dto.setTransferOrgId(CharSequenceUtil.EMPTY);
+        dto.setTransferWarehouseId(CharSequenceUtil.EMPTY);
         return dto;
     }
 
@@ -240,7 +249,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 break;
         }
         //查询是否是修改
-        String id = cfgSettingList.stream().filter(obj -> StrUtil.equals(obj.getKey(),viewDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),viewDTO.getCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         entity.setId(id);
         entity.setIndex(viewDTO.getIndex());
         entity.setKey(viewDTO.getCode());
@@ -257,5 +266,27 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     private List<CfgSettingEntity> listCfgSetting () {
         List<CfgSettingEntity> list = baseMapper.listCfgSetting();
         return list;
+    }
+
+    /**
+     * @description: 查询未禁用配置
+     * @author jack
+     * @date: 2025-03-31
+     * @return List<CfgSettingEntity>
+     */
+    @Override
+    public List<CfgSettingEntity> listCfgSettingByKeys(List<String> keys) {
+        return lambdaQuery().in(CfgSettingEntity::getKey, keys).eq(CfgSettingEntity::getDisabled, Boolean.FALSE).eq(CfgSettingEntity::getIsDeleted, Boolean.FALSE).list();
+    }
+
+    /**
+     * @description: 查询费用分摊配置禁用配置
+     * @author jack
+     * @date: 2025-03-31
+     * @return CfgSettingValueDTO.AllocationSettingDTO
+     */
+    @Override
+    public CfgSettingValueDTO.AllocationSettingDTO getCfgSettingByAllocationSetting() {
+        return view().getAllocationSettingDTO();
     }
 }

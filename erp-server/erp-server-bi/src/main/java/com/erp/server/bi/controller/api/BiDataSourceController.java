@@ -50,8 +50,8 @@ public class BiDataSourceController extends BaseController {
 
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "批量添加数据源:数据源类型={type}")
     @PostMapping("/batchAdd")
-    public ApiResult batchAddBiDataSource(@RequestBody @Validated List<BiDataSourceDTO> list) {
-        Boolean flag = this.biDataSourceService.batchAddBiDataSource(list);
-        return flag == true ? success() : failure();
+    public ApiResult<Object> batchAddBiDataSource(@RequestBody @Validated List<BiDataSourceDTO> list) {
+        boolean flag = this.biDataSourceService.batchAddBiDataSource(list);
+        return flag ? success() : failure();
     }
 }

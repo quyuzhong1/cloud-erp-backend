@@ -33,7 +33,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param dto
      * @return com.erp.model.scm.entity.PurchasePriceEntity
      */
-    String add(PurchasePriceDTO.AddDTO dto);
+    PurchasePriceEntity add(PurchasePriceDTO.AddDTO dto);
 
     
     /**
@@ -52,7 +52,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param dto
      * @return com.erp.model.scm.entity.PurchasePriceEntity
      */
-    String updatePurchasePrice(PurchasePriceDTO.UpdateDTO dto);
+    PurchasePriceEntity updatePurchasePrice(PurchasePriceDTO.UpdateDTO dto);
     
     /**
      * 保存并提交审核 价目
@@ -61,7 +61,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean addAndSubmit(PurchasePriceDTO.AddDTO dto);
+    PurchasePriceEntity addAndSubmit(PurchasePriceDTO.AddDTO dto);
 
     /**
      * 修改并审核采购价目
@@ -70,7 +70,7 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateAndSubmit(PurchasePriceDTO.UpdateDTO dto);
+    PurchasePriceEntity updateAndSubmit(PurchasePriceDTO.UpdateDTO dto);
 
     
     
@@ -78,19 +78,19 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * 批量删除采购价目信息
      * @author yl
      * @date 2023-03-27 12:04
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean deleteByIds(List<String> ids);
+    BatchResultDTO deleteEntity(PurchasePriceEntity entity);
 
     /**
      * 采购价目表 提交审核
      * @author yl
      * @date 2023-03-27 12:11
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean submitApprove(List<String> ids);
+    BatchResultDTO submitEntity(PurchasePriceEntity entity);
 
     /**
      * 审核
@@ -120,10 +120,10 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
      * 取消流程
      * @author yl
      * @date 2023-03-27 14:04
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcessEntity(PurchasePriceEntity entity);
 
     /**
      * 采购信息分页
@@ -227,4 +227,6 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     PagingVO<PurchasePriceExportExcelDTO> exportPurchasePrice(PagingDTO<PurchasePriceDTO.PagingParamDTO> dto);
 
     List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
+
+    BatchResultDTO updateOutPlatformCode(PurchasePriceEntity entity, String outPlatformCode);
 }

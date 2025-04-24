@@ -207,7 +207,7 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
     private String mergeSourceId;
 
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String SOURCE_TYPE = "source_type";
 
@@ -217,7 +217,7 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
 
     public static final String DELIVERY_TYPE = "delivery_type";
 
-    public static final String COUNTRY = "country";
+    public static final String FIELD_COUNTRY = "country";
 
     public static final String NET_WEIGHT = "net_weight";
 
@@ -259,7 +259,7 @@ public class TmsDeclareBillEntity extends BaseEntity<TmsDeclareBillEntity> {
 
     public static final String DICT_TRANSACTION_METHOD = "dict_transaction_method";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String SHIPPING_FEE = "shipping_fee";
 

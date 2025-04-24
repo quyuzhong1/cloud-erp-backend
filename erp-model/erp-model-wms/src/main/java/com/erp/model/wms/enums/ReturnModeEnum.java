@@ -1,5 +1,6 @@
 package com.erp.model.wms.enums;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
@@ -32,10 +33,12 @@ public enum ReturnModeEnum implements EnumMessage {
         this.kingdeeCode = kingdeeCode;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -45,7 +48,7 @@ public enum ReturnModeEnum implements EnumMessage {
     }
 
     public static String getName(String code) {
-        if (StrUtil.isBlank(code)){
+        if (CharSequenceUtil.isBlank(code)){
             return "";
         }
         for (ReturnModeEnum returnModeEnum : ReturnModeEnum.values()) {

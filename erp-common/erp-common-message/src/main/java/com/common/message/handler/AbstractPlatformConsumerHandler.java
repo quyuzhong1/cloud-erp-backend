@@ -44,12 +44,14 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
         String redisKey = "dmp:sync:task:" + dmpSyncTaskId;
         
         int count = 1;
-        while(!redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.SECONDS)) {
+        while(Boolean.FALSE.equals(redisTemplate.opsForValue().setIfAbsent(redisKey, DateUtil.now(), 30, TimeUnit.SECONDS))) {
         	log.warn("同步任务正在执行中：{}，重试获取锁次数：{}" , dmpSyncTaskId , count);
         	count = count + 1;
         	try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
+                log.error( "线程睡眠阻塞: Interrupted!:{}", e.getMessage());
+                Thread.currentThread().interrupt();
 			}
         }
     	try {
@@ -64,11 +66,6 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
                 sendWarnMsg(dmpSyncTaskId, handle.getMsg());
                 updateMongodbData(platform, uniqueId, 0);
                 return;
-            }
-            String msg = SyncStatusEnum.SUCCESS_SYNC.getName();
-            if (Objects.nonNull(handle.getData())){
-                //记录正确响应数据返回-留痕
-                msg = JSONUtil.toJsonStr(handle.getData());
             }
             updateSyncTaskStatus(new DmpSyncMqDTO.ParamDTO(dmpSyncTaskId,version, SyncStatusEnum.SUCCESS_SYNC.getCode(), handle.getMsg()));
             updateMongodbData(platform, uniqueId, 2);
@@ -111,6 +108,6 @@ public abstract class AbstractPlatformConsumerHandler<T extends DmpSyncTaskIdDTO
      * 处理平台数据
      * @param ext
      */
-    public abstract ApiResult<?> handle(Object ext);
+    public abstract ApiResult handle(Object ext);
 
 }

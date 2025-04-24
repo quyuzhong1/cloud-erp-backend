@@ -5,11 +5,9 @@ import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.RefundOrderStatusEnum;
-import com.erp.model.oms.enums.ShopTypeEnum;
 import com.erp.server.oms.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,6 +43,13 @@ public class DropDownListController extends BaseController {
      *  soB2cLable  b2c销售订单标签
      *  logisticsMethod b2c销售订单物流方式
      *  shopAuthType 店铺授权类型
+     *  invoiceTemplateType 发票模板类型
+     *  invoiceType 发票类型
+     *  invoiceStatus 发票状态
+     *  uploadStatus 上传状态
+     *  cfgInvoiceType 发票配置类型
+     *  fullyManaged 全托管平台类型
+     *  orderSourceType 订单来源类型
      * @return
      */
     @GetMapping("/dict/list")
@@ -58,6 +63,27 @@ public class DropDownListController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 销售平台下拉框
+     * @param key
+     * @return
+     */
+    @GetMapping("/dict/salesPlatform")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSalesPlatform(@RequestParam("key") String key) {
+        List<DictBasicDTO.ViewDTO> list = dictBasicService.listSalesPlatform(key);
+        //list 根据sort排序
+        list = list.stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
+    /**
+     * 根据类型和子类型获取列表
+     * @param type
+     * @param subType
+     * @return
+     */
     @GetMapping("/dict/listByType")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> list(@RequestParam("type") String type,
                                                            @RequestParam(value = "subType", required = false) String subType) {
@@ -110,8 +136,26 @@ public class DropDownListController extends BaseController {
     }
 
 
+    /**
+     * 字典信息带禁用
+     */
+    @GetMapping("/dict/listWithDisabled")
+    public ApiResult<List<BaseDropDownDTO.DisabledDTO>> listWithDisabled(@RequestParam("key") String key) {
+        List<DictBasicEntity> list = dictBasicService.lambdaQuery()
+                .eq(DictBasicEntity::getType, key)
+                .list();
+        //list 根据sort排序
+        list = list.stream().sorted(Comparator.comparingInt(DictBasicEntity::getSort)).collect(Collectors.toList());
+        List<BaseDropDownDTO.DisabledDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.DisabledDTO(x.getValue(), x.getName(), !x.getStatus()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
 
-
+    @GetMapping("/dict/listInternalSalesPlatform")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listInternalSalesPlatform(@RequestParam("key") String key) {
+        return success(dictBasicService.listInternalSalesPlatform(key));
+    }
 
 
 

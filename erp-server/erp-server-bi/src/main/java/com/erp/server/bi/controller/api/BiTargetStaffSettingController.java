@@ -146,7 +146,7 @@ public class BiTargetStaffSettingController extends BaseController {
 //        serviceClass = BiTargetStaffSettingService.class,
 //        keyIdName = "id")
     @CacheEvict(cacheNames = "cache:bi:listTargetMetrics", allEntries = true)
-    public ApiResult update(@RequestBody @Validated BiTargetStaffSettingDTO.UpdateDTO dto) {
+    public ApiResult<Void> update(@RequestBody @Validated BiTargetStaffSettingDTO.UpdateDTO dto) {
         biTargetStaffSettingService.update(dto);
         return success();
     }
@@ -158,7 +158,7 @@ public class BiTargetStaffSettingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载目标人员模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Void> downloadTemplate(HttpServletResponse response) {
         biTargetStaffSettingService.downloadTemplate(response);
         return success();
     }
@@ -184,8 +184,8 @@ public class BiTargetStaffSettingController extends BaseController {
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "人员目标设置删除")
     @CacheEvict(cacheNames = "cache:bi:listTargetMetrics", allEntries = true)
-    public ApiResult remove(@RequestBody @Validated BiTargetStaffSettingDTO.RemoveDTO dto) {
-        Boolean result = biTargetStaffSettingService.delete(dto);
+    public ApiResult<Object> remove(@RequestBody @Validated BiTargetStaffSettingDTO.RemoveDTO dto) {
+        boolean result = biTargetStaffSettingService.delete(dto);
         return result ? success() : failure();
     }
 

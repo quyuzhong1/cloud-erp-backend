@@ -3,7 +3,7 @@ package com.erp.rpc.wms.feign;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
-import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
+import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -82,4 +82,10 @@ public interface SoB2cDeliveryInterceptFeign {
      **/
     @PostMapping("feign/soB2cDeliveryIntercept/interceptResultConfirm")
     BatchResultDTO interceptResultConfirm(@RequestBody SoB2cDeliveryInterceptDTO.InterceptResultConfirmDTO dto, @RequestParam("id") String id);
+
+    /**
+     * 处理拦截成功
+     **/
+    @PostMapping("feign/soB2cDeliveryIntercept/handleSuccess")
+    BatchResultDTO handleSuccess(@RequestBody SoB2cDeliveryEntity soB2cDelivery, @RequestParam("id") String interceptId);
 }

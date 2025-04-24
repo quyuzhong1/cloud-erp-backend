@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -44,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Slf4j
 public class DictCore {
+	public static final String JAVA_LANG_STRING = "java.lang.String";
 	@Value("${spring.application.name}")
 	private String serviceName;
 	
@@ -107,7 +109,7 @@ public class DictCore {
         }else if(result instanceof List) {
         	Object recordObj = this.parseDictTextPlus(result, lang , true);
         	List<Object> items = new ArrayList<>();
-        	((List) result).clear();
+        	result = new ArrayList<>();
         	for (Object record : ((List) recordObj)) {
         		((List) result).add(record);
             }
@@ -255,8 +257,8 @@ public class DictCore {
     		Dict dictAnnotation = field.getAnnotation(Dict.class);
             if (dictAnnotation != null) {
             	Class<?> declaringClass = field.getType();
-            	if(!"java.lang.String".equals(declaringClass.getName()) && !declaringClass.isEnum()) {
-            		if(!declaringClass.getName().equals(clazz.getName())) {
+            	if(!JAVA_LANG_STRING.equals(declaringClass.getName()) && !declaringClass.isEnum()) {
+            		if(!declaringClass.isAssignableFrom(clazz)) {
             			getDictDtoList(declaringClass , dictDtoList);
                 	}
             		continue;
@@ -292,11 +294,15 @@ public class DictCore {
         if (fieldValueMap.size() > 0) {
             BeanGenerator beanGenerator = new BeanGenerator();
             //设置类的class
-            beanGenerator.setSuperclass(record.getClass());
+            Class<? extends Object> recordClass = record.getClass();
+            Set<String> fieldSet = Stream.of(recordClass.getDeclaredFields()).map(Field::getName).collect(Collectors.toSet());
+			beanGenerator.setSuperclass(recordClass);
             //增加新的_dictText字段
             for (Map.Entry<String, Object> entry : fieldValueMap.entrySet()) {
                 String key = entry.getKey();
-                beanGenerator.addProperty(key, Object.class);
+                if(!fieldSet.contains(key)) {
+                	beanGenerator.addProperty(key, Object.class);
+                }
             }
             //创建拥有_dictText字段的类
             Object objHasDictText = beanGenerator.create();

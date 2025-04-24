@@ -1,16 +1,15 @@
 package com.erp.model.sys.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.Map;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.util.Map;
 
 
 /**
@@ -86,7 +85,7 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
 
     public static final String REQUEST_METHOD = "request_method";
 
-    public static final String PARAM = "param";
+    public static final String FIELD_PARAM = "param";
 
     public static final String SELECT_LABEL = "select_label";
 

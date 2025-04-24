@@ -35,11 +35,6 @@ public class WmsCartonDetailDTO implements Serializable {
         private String  id;
 
         /**
-        * first_mile_carton表id
-        */
-//        private String cartonId;
-
-        /**
         * 产品id
         */
         private String skuId;
@@ -98,7 +93,7 @@ public class WmsCartonDetailDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-
+        private String id;
     }
 
     @Data
@@ -140,6 +135,21 @@ public class WmsCartonDetailDTO implements Serializable {
          * 重量单位
          */
         private String weightUnit;
+    }
+
+    /**
+     * 装箱清单产品信息--统计装箱总数量
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListPackingDetailPackQtyDTO {
+        /**
+         * 箱子id
+         */
+        private String id;
+
+        private Integer packQty;
+
     }
 
     /**
@@ -318,6 +328,10 @@ public class WmsCartonDetailDTO implements Serializable {
          * fnsku
          */
         private String fnSku;
+        /**
+         * 装箱总数量
+         */
+        private Integer totalQty = 0;
     }
 
     /**
@@ -344,5 +358,34 @@ public class WmsCartonDetailDTO implements Serializable {
          * 重量单位
          */
         private String weightUnit;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BoxDetailDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNO
+         */
+        private String skuNo;
+        /**
+         * fnSku
+         */
+        private String fnSku;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 装箱数量
+         */
+        private Integer packQty;
     }
 }

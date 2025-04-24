@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
@@ -70,13 +71,12 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 新品首批（false否,true是）
          */
-        private Boolean isFirstMassProduct;
-
+        private String firstMassProduct;
 
         /**
          * 新品首批（false否,true是）
          */
-        private String isFirstMassProductStr;
+        private String firstMassProductName;
 
         /**
          * 采购单关联状态
@@ -202,6 +202,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 来源详情表id
          */
         private String sourceDetailId;
+
+        /**
+         * 来源详情表id
+         */
+        private JSONArray sourceJson;
     }
 
     @Data
@@ -254,11 +259,6 @@ public class PurchaseApplicationDTO implements Serializable {
          * 采购订单生成状态（0未生成，1部分生成，2已生成)
          */
         private List<String> createPoTypeList;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
 
         /**
          * sku编码
@@ -324,12 +324,6 @@ public class PurchaseApplicationDTO implements Serializable {
          * 申请人部门id
          */
         private String applyDeptId;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        @NotNull(message = "新品首批不能为空")
-        private Boolean isFirstMassProduct;
         /**
          * 来源ID
          */
@@ -554,6 +548,16 @@ public class PurchaseApplicationDTO implements Serializable {
         private LocalDate planDeliveryDate;
 
         /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
+
+        /**
          * 明细备注
          */
         private String detailRemark;
@@ -653,6 +657,10 @@ public class PurchaseApplicationDTO implements Serializable {
          * 采购员id
          */
         private String purchaseUserId;
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
 
         /**
          * 明细备注
@@ -807,6 +815,16 @@ public class PurchaseApplicationDTO implements Serializable {
         private String paymentCondition;
 
         /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
+
+        /**
          * 明细备注
          */
         private String remark;
@@ -958,6 +976,17 @@ public class PurchaseApplicationDTO implements Serializable {
          * 付款条件
          */
         private String paymentCondition;
+
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
 
@@ -1059,6 +1088,11 @@ public class PurchaseApplicationDTO implements Serializable {
          * 是否赠品
          */
         private Boolean isGift;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
 
         /**
          * 备注

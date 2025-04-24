@@ -20,7 +20,6 @@
         <result column="apply_user_name" property="applyUserName" />
         <result column="apply_dept_id" property="applyDeptId" />
         <result column="apply_dept_name" property="applyDeptName" />
-        <result column="is_first_mass_product" property="isFirstMassProduct" />
         <result column="shop_id" property="shopId" />
         <result column="shop_name" property="shopName" />
         <result column="remark" property="remark" />
@@ -39,7 +38,6 @@
             sdd.product_name as productName,
             sdd.variant_property as variantProperty,
             sdd.is_urgent as isUrgent,
-            sd.is_first_mass_product as isFirstMassProduct,
             sdd.plan_delivery_date as planDeliveryDate,
             sdd.plan_stock_qty as planStockQty,
             sdd.dest_warehouse_name as destWarehouseName,
@@ -50,7 +48,19 @@
             sd.approve_user_name as approveUserName,
             sd.approve_time as approveTime,
             sd.create_user_name as createUserName,
-            sd.create_time as createTime
+            sd.create_time as createTime,
+            sdd.first_mass_product as firstMassProduct,
+        CASE
+        sdd.first_mass_product
+        WHEN 'firstPilotBatch' THEN
+        '试产首批'
+        WHEN 'firstMassProductionBatch' THEN
+        '量产首批'
+        WHEN 'firstTrialProductionBatch' THEN
+        '试量产首批'
+        WHEN 'subsequentBatch' THEN
+        '非首批' ELSE''
+        END AS firstMassProductName
         from sales_demand  sd
         inner join  sales_demand_detail sdd  on sd.id = sdd.sales_demand_id and sdd.is_deleted = false
         where
@@ -76,10 +86,17 @@
         sdd.sku_no as skuNo,
         sdd.product_name as productName,
         sdd.is_urgent as isUrgent,
-        case sd.is_first_mass_product
-            when true then '是'
-            when false then '否'
-        end as isFirstMassProduct,
+        CASE
+        sdd.first_mass_product
+        WHEN 'firstPilotBatch' THEN
+        '试产首批'
+        WHEN 'firstMassProductionBatch' THEN
+        '量产首批'
+        WHEN 'firstTrialProductionBatch' THEN
+        '试量产首批'
+        WHEN 'subsequentBatch' THEN
+        '非首批' ELSE''
+        END AS firstMassProduct,
         sdd.plan_delivery_date as planDeliveryDate,
         sdd.plan_stock_qty as planStockQty,
         sdd.dest_warehouse_name as destWarehouseName,

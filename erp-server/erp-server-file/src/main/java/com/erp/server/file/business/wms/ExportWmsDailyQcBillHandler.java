@@ -1,7 +1,7 @@
 package com.erp.server.file.business.wms;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.write.handler.WriteHandler;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
@@ -39,42 +39,76 @@ public class ExportWmsDailyQcBillHandler extends AbstractPageFileEventHandler<Qc
         QcInfoDTO.ExportDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<QcInfoDTO.ExportDTO>() {
         });
         List<QcInfoDTO.QcDailyReportDTO> qcDailyReportDTOS = listSeqData(dto);
+        List<String> picFormats = Arrays.stream(PicFormatEnum.values())
+                .map(PicFormatEnum::getCode)
+                .collect(Collectors.toList());
+
         for (QcInfoDTO.QcDailyReportDTO data : qcDailyReportDTOS) {
-            if (CollUtil.isNotEmpty(data.getProductImgUrl())) {
-                data.setProductImg(data.getProductImgUrl().get(0));
-            }
-            if (CollUtil.isNotEmpty(data.getBoxMarkImgUrl())) {
-                data.setBoxMarkImg(data.getBoxMarkImgUrl().get(0));
-            }
-            if (CollUtil.isNotEmpty(data.getBadAttachments())) {
-                // 判断是否有图片，有图片则显示图片，没有图片则添加超链接
-                List<String> picFormats = Arrays.asList(PicFormatEnum.values()).stream().map(PicFormatEnum::getCode).collect(Collectors.toList());
-                WmsAttachmentDTO.UpdateDTO badAttachment = data.getBadAttachments().stream().filter(r ->
-                        r.getAttachUrl().contains(".") && picFormats.contains(r.getAttachUrl().substring(r.getAttachUrl().lastIndexOf(".") + 1))
-                ).findFirst().orElse(null);
-                if (Objects.nonNull(badAttachment)) {
-                    data.setBadAttachment(badAttachment.getAttachUrl());
-                }else {
-                    badAttachment = data.getBadAttachments().get(0);
-                    data.setBadAttachment(badAttachment.getAttachName() + "," + badAttachment.getAttachUrl());
-                }
-            }
-            data.setProductSize(StrUtil.format("{}*{}*{}", Objects.isNull(data.getProductLength()) ? "0" : data.getProductLength(),
-                    Objects.isNull(data.getProductWidth()) ? "0" : data.getProductWidth(),
-                    Objects.isNull(data.getProductHeight()) ? "0" : data.getProductHeight()));
-            data.setBoxSize(StrUtil.format("{}*{}*{}", Objects.isNull(data.getBoxLength()) ? "0" : data.getBoxLength(),
-                    Objects.isNull(data.getBoxWidth()) ? "0" : data.getBoxWidth(),
-                    Objects.isNull(data.getBoxHeight()) ? "0" : data.getBoxHeight()));
-            if(CollUtil.isNotEmpty(data.getReportList())) {
-                // 写入超链接（只能写一个）
-                QcReportDetailDTO.ViewDTO reportAttachment = data.getReportList().stream().filter(r->CollUtil.isNotEmpty(r.getReportUrlList())).findFirst().orElse(null);
-                if(Objects.nonNull(reportAttachment)) {
-                    data.setReportListLink(reportAttachment.getReportNameList().get(0) + "," + reportAttachment.getReportUrlList().get(0));
-                }
-            }
+            data.setProductImg(getFirstItem(data.getProductImgUrl()));
+            data.setBoxMarkImg(getFirstItem(data.getBoxMarkImgUrl()));
+            data.setBadAttachment(getBadAttachment(data.getBadAttachments(), picFormats));
+
+            // 设置尺寸格式
+            data.setProductSize(formatSize(data.getProductLength(), data.getProductWidth(), data.getProductHeight()));
+            data.setBoxSize(formatSize(data.getBoxLength(), data.getBoxWidth(), data.getBoxHeight()));
+
+            // 获取第一个带链接的报告
+            data.setReportListLink(getReportListLink(data.getReportList()));
         }
         return qcDailyReportDTOS;
     }
+
+    /**
+     * 获取图片列表中第一个 URL
+     *
+     * @param urls url
+     */
+    private String getFirstItem(List<String> urls) {
+        return CollUtil.isNotEmpty(urls) ? urls.get(0) : null;
+    }
+
+    /**
+     * 图片格式过滤
+     *
+     * @param attachments 参数
+     * @param picFormats  图片格式
+     */
+    private String getBadAttachment(List<WmsAttachmentDTO.UpdateDTO> attachments, List<String> picFormats) {
+        if (CollUtil.isEmpty(attachments)) return null;
+        // 查找图片格式附件
+        WmsAttachmentDTO.UpdateDTO imageAttachment = attachments.stream()
+                .filter(att -> att.getAttachUrl().contains(".") &&
+                        picFormats.contains(att.getAttachUrl().substring(att.getAttachUrl().lastIndexOf(".") + 1)))
+                .findFirst()
+                .orElse(null);
+        // 如果有图片，返回图片链接；否则返回第一个附件的名称和链接
+        return imageAttachment != null ? imageAttachment.getAttachUrl()
+                : attachments.get(0).getAttachName() + "," + attachments.get(0).getAttachUrl();
+    }
+
+    /**
+     * 尺寸格式化
+     *
+     * @param length 长
+     * @param width  宽
+     * @param height 高
+     */
+    private String formatSize(Object length, Object width, Object height) {
+        return CharSequenceUtil.format("{}*{}*{}",
+                Objects.toString(length, "0"),
+                Objects.toString(width, "0"),
+                Objects.toString(height, "0"));
+    }
+
+    private String getReportListLink(List<QcReportDetailDTO.ViewDTO> reportList) {
+        if (CollUtil.isEmpty(reportList)) return null;
+        return reportList.stream()
+                .filter(report -> CollUtil.isNotEmpty(report.getReportUrlList()))
+                .findFirst()
+                .map(report -> report.getReportNameList().get(0) + "," + report.getReportUrlList().get(0))
+                .orElse(null);
+    }
+
 
     @Override
     public List<WriteHandler> getWriteHandler() {

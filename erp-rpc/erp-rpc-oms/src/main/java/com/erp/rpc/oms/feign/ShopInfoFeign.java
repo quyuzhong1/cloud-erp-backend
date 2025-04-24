@@ -1,8 +1,10 @@
 package com.erp.rpc.oms.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.AmazonTokenUpdateDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -138,4 +140,39 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/pagingSelect")
     PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto);
+
+    /**
+     * 检查和更新亚马逊同账号店铺授权
+     */
+    @PostMapping("feign/shop/checkAndSaveAllAmazonToken")
+    Boolean checkAndSaveAllAmazonToken(@RequestBody @Validated AmazonTokenUpdateDTO updateDTO);
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    @GetMapping("feign/shop/listShopInfoByPlatform")
+    List<String> listShopInfoByPlatform(@RequestParam String platform);
+
+    /**
+     * 获取店铺列表
+     *
+     * @return
+     */
+    @GetMapping("/feign/shop/getShopListByParam")
+    ApiResult<List<ShopAuthEntity>> getShopListByParam(@RequestParam(value = "type") String type, @RequestParam(value = "status") String status, @RequestParam(value = "dictPlatform") String dictPlatform);
+
+    /**
+     * 获取商铺详情
+     *
+     * @return
+     */
+    @GetMapping("/feign/shop/getShopAuthById")
+    ApiResult<ShopAuthEntity> getShopAuthById(@RequestParam(value = "shopId") String shopId);
+
+    /**
+     * 高级查询分页店铺
+     */
+    @PostMapping("feign/shop/paging")
+    PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody PagingDTO<ShopDTO.PagingParamDTO> advanceQueryDTO);
 }

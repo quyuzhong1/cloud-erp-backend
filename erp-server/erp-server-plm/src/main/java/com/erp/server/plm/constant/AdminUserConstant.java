@@ -1,7 +1,9 @@
 package com.erp.server.plm.constant;
 
-public interface AdminUserConstant {
+import java.io.Serializable;
 
-    String ID = "1549948476757303297";
-    String ACCOUNT = "admin";
+public class AdminUserConstant implements Serializable {
+
+    public static final String ID = "1549948476757303297";
+    public static final String ACCOUNT = "admin";
 }

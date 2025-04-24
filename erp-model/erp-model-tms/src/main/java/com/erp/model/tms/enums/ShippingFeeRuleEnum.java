@@ -10,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
  *
  * @author
  * @Classname ShippingFeeRuleEnums
- * @Description TODO
  * @Date 2023-11-13 11:48
  * @Created by yl
  */

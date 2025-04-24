@@ -8,6 +8,7 @@ import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
 import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
+import com.erp.model.tms.enums.WeightAllocationStatusEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
@@ -74,7 +75,35 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
             compareCodeSplicingValueSql = compareCodeSplicingValueSql.replace("signTime","lt.track_time");
             return " exists (SELECT 1 from  logistics_track lt where lt.is_deleted = false and lt.status = 'sign' and lt.track_no = lbd.track_no AND lt.track_time = (select max(track_time) from logistics_track b where b.track_no = lbd.track_no and b.is_deleted = false) and lt.track_time "+compareCodeSplicingValueSql+" ) ";
         }
-
+        if(field.equals("weightAllocationStatus")){
+            if (isContain()){
+                if(value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryAllSql();
+                }
+                if(!value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && !value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryEmptySql();
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.TODO.getCode())){
+                    return " not exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())) {
+                    return " exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+            }else {
+                if(value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryEmptySql();
+                }
+                if(!value.toString().contains(WeightAllocationStatusEnum.TODO.getCode()) && !value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return getQueryAllSql();
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.DONE.getCode())){
+                    return " not exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+                if (value.toString().contains(WeightAllocationStatusEnum.TODO.getCode())) {
+                    return " exists (select 1 from first_mile_weight_allocation fmwa where fmwa.is_deleted = false and fmwa.logistics_bill_id = lb.id)";
+                }
+            }
+        }
         if(field.equals("warn")){
             List<TmsFirstMileLogisticDTO.PagingVO> list = tmsFirstMileLogisticService.hasWarnPaging(new TmsFirstMileLogisticDTO.PagingParamDTO());
             List<String> ids = new ArrayList<>();
@@ -92,6 +121,33 @@ public class TmsFirstMileLogisticQueryHandler extends AbstractQueryHandler {
                 return this.getQueryEmptySql();
             }
             super.buildSplicingSQLDTO("lb.id",QueryConditionEnum.IN_LIST,ids,QueryDataTypeEnum.STRING);
+        }
+
+        if(field.equals("reconciliationStatus")){
+            return " lb.id in  (\n" +
+                    "\t\tSELECT\n" +
+                    "\t\t\tlogistics_bill_id \n" +
+                    "\t\tFROM\n" +
+                    "\t\t\t(\n" +
+                    "\t\t\tSELECT\n" +
+                    "\t\t\t\tbill.logistics_bill_id,\n" +
+                    "\t\t\t\tbill.reconciliation_status,\n" +
+                    "\t\t\t\tROW_NUMBER ( ) OVER ( PARTITION BY bill.logistics_bill_id ORDER BY bill.create_time ) AS rn \n" +
+                    "\t\t\tFROM\n" +
+                    "\t\t\t\tlogistics_bill_cost bill\n" +
+                    "\t\t\t\tINNER JOIN logistics_bill lb on lb.id = bill.logistics_bill_id and lb.is_deleted = false\n" +
+                    "\t\t\t\tLEFT JOIN tms_first_mile_reconciliation_detail tfmrd ON bill.reconciliation_id = tfmrd.main_id \n" +
+                    "\t\t\t\tAND tfmrd.is_deleted = FALSE \n" +
+                    "\t\t\t\tAND lb.order_type = 'firstMile' \n" +
+                    "\t\t\t\tAND tfmrd.\"type\" = 'actual' \n" +
+                    "\t\t\t\tAND tfmrd.reconciliation_count = 1 \n" +
+                    "\t\t\tWHERE\n" +
+                    "\t\t\t\tbill.is_deleted = FALSE \n" +
+                    "\t\t\t) AS detail \n" +
+                    "\t\tWHERE\n" +
+                    "\t\t\trn = 1 \n" +
+                    "\t\t\tAND reconciliation_status  "+compareCodeSplicingValueSql+" \n" +
+                    "\t\t) ";
         }
         return null;
     }

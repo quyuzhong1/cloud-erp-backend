@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.erp.model.wms.enums.StocktakingModeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

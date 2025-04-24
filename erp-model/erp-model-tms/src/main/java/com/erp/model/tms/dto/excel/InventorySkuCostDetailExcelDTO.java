@@ -2,12 +2,10 @@ package com.erp.model.tms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 /**
  * @description: 期初头程分摊导入明细
@@ -37,14 +35,32 @@ public class InventorySkuCostDetailExcelDTO implements Serializable {
     @FieldValid(fieldName = "单位",maxLength = 10)
     private String  unit;
     /**
+     * *仓库
+     */
+    @ExcelProperty(value = "*仓库", index = 3)
+    @FieldValid(fieldName = "仓库",isNotBlank = true)
+    private String warehouseName;
+    /**
      * *产品成本
      */
-    @ExcelProperty(value = "*产品成本", index = 3)
-    @FieldValid(fieldName = "产品成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
+    @ExcelProperty(value = "*材料成本", index = 4)
+    @FieldValid(fieldName = "材料成本",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
     private String productCost;
+    /**
+     * *头程运费
+     */
+    @ExcelProperty(value = "头程运费", index = 5)
+    @FieldValid(fieldName = "头程运费",formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
+    private String firstMileShippingCost;
+    /**
+     * *清关税费
+     */
+    @ExcelProperty(value = "清关税费", index = 6)
+    @FieldValid(fieldName = "清关税费",formatPattern = FieldFormatPatternTypeEnum.AMOUNT6)
+    private String clearanceCustomsTax;
     /**
      * 错误信息
      */
-    @ExcelProperty(value = "错误数据", index = 4)
+    @ExcelProperty(value = "错误数据", index = 7)
     private String errorMsg;
 }

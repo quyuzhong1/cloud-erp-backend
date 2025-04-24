@@ -92,7 +92,7 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
     @Override
     public Boolean update(ThirdWarehouseDTO.UpdateDTO updateDTO) {
         ThirdWarehouseEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "第三方系统仓库单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "第三方系统仓库单"));
         ThirdWarehouseEntity thirdWarehouseEntity = BeanMapperUtils.map(ThirdWarehouseEntity.class, updateDTO);
 
         // 数据处理

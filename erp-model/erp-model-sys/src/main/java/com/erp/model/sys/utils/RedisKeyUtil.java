@@ -11,6 +11,9 @@ import com.common.business.constant.RedisCacheConstants;
  */
 public class RedisKeyUtil {
 
+    private RedisKeyUtil() {
+    }
+
     /**
      *  获取邮箱验证码 的key
      *

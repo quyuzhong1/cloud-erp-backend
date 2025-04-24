@@ -5,11 +5,14 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.ListingTimeDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -83,4 +86,11 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @return java.util.List<com.erp.model.oms.dto.ListingTimeDTO>
      **/
     List<ListingTimeDTO> listFirstListingTime(@Param("ids") List<String> ids);
+
+
+    List<SoInfoEntity> queryToSdy(@Param("startDate")LocalDate startDate, @Param("endDate")LocalDate endDate, @Param("pageSize")Integer pageSize, @Param("offset")int offset);
+
+    IPage<SoInfoEntity> pagePartitionIsNull(Page query);
+
+    Boolean existsByCustomerAndSku(@Param("customer")String customer,@Param("platformSku") String platformSku);
 }

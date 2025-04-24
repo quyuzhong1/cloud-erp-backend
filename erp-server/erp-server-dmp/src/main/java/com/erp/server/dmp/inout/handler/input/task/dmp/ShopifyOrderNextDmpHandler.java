@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,22 +31,33 @@ public class ShopifyOrderNextDmpHandler extends ShopifyOrderGetDetailDmpHandler 
 				Object totalDiscountObj = dmpDataMap.get("discountAmount");
 				Object quantityObj = dmpDataMap.get("qty");
 
-				BigDecimal price = BigDecimal.ZERO;
+				BigDecimal price = null == priceObj ? BigDecimal.ZERO : new BigDecimal(priceObj.toString());
 				BigDecimal totalDiscount = BigDecimal.ZERO;
 				BigDecimal quantity = BigDecimal.ZERO;
+				if (totalDiscountObj != null) {
+					totalDiscount = MathUtil.valueOf(totalDiscountObj);
+
+					dmpDataMap.put("discountAmount", MathUtil.valueOf(totalDiscountObj));
+				}
+				if (quantityObj != null) {
+					quantity = MathUtil.valueOf(quantityObj);
+				}
+
+				if (quantity.compareTo(BigDecimal.ZERO) > 0) {
+					price = price.subtract(totalDiscount.divide(quantity, 4, RoundingMode.DOWN));
+				} else {
+					price = price.subtract(totalDiscount);
+				}
+
+				if (quantityObj != null) {
+					//商品售价(折扣后单价)
+					dmpDataMap.put("sellPrice", price);
+				}
 				if (priceObj != null) {
-					price = MathUtil.valueOf(priceObj);
 					//折扣后订单总金额
 					dmpDataMap.put("afterAmount", price.multiply(quantity));
 				}
-				if (totalDiscountObj != null) {
-					totalDiscount = MathUtil.valueOf(totalDiscountObj);
-				}
-				if (quantityObj != null) {
-					//商品售价(折扣后单价)
-					quantity = MathUtil.valueOf(quantityObj);
-					dmpDataMap.put("sellPrice", price.subtract(totalDiscount.divide(quantity, 4, BigDecimal.ROUND_HALF_UP)));
-				}
+
 			}
 		}
 	}

@@ -5,7 +5,6 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
-import com.erp.model.wms.enums.OutstockTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;

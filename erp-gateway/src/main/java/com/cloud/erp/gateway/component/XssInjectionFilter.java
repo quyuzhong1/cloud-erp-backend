@@ -49,12 +49,13 @@ public class XssInjectionFilter implements GlobalFilter, Ordered {
         
         String scheme = requestURI.getScheme();
         
-        GatewayContext gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
+        GatewayContext<?> gatewayContext = exchange.getAttribute(GatewayContext.CACHE_GATEWAY_CONTEXT);
         
         /*
          * not http or https scheme
          */
-        if ((!HTTP_SCHEME.equalsIgnoreCase(scheme) && !HTTPS_SCHEME.equals(scheme)) || !gatewayContext.getReadRequestData()){
+        if ((!HTTP_SCHEME.equalsIgnoreCase(scheme) && !HTTPS_SCHEME.equals(scheme)) ||
+                (null != gatewayContext && Boolean.TRUE.equals(!gatewayContext.getReadRequestData()))){
             return chain.filter(exchange);
         }
 
@@ -85,11 +86,8 @@ public class XssInjectionFilter implements GlobalFilter, Ordered {
             {
                 return WebfluxResponseUtils.responseWrite(exchange, "参数中不允许存在XSS注入关键字");
             }
-            return chain.filter(exchange);
         }
-        else {
-            return chain.filter(exchange);
-        }
+        return chain.filter(exchange);
     }
 
     @Override
@@ -134,19 +132,13 @@ public class XssInjectionFilter implements GlobalFilter, Ordered {
         URI routeUri = route.getUri();
         
         String routeServiceId = routeUri.getHost().toLowerCase();
-        if(!CollectionUtils.isEmpty(readRequestDataServiceIdList)){
-            if(readRequestDataServiceIdList.contains(routeServiceId)){
+        if(!CollectionUtils.isEmpty(readRequestDataServiceIdList) && readRequestDataServiceIdList.contains(routeServiceId)){
                 log.debug("[GatewayContext]Properties Set Not Read Specific Request Data With ServiceId:{}",routeServiceId);
                 serviceFlag =  true;
             }
-        }
-        
-        if (serviceFlag && pathFlag)
-        {
-            return false;
-        }
-        
-        return true;
+
+
+        return !serviceFlag || !pathFlag;
     }
 
 }

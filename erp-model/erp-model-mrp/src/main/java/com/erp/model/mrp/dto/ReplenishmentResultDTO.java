@@ -1,0 +1,1850 @@
+package com.erp.model.mrp.dto;
+
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.core.enums.CurrencyEnum;
+import com.erp.model.mrp.entity.*;
+import com.erp.model.mrp.enums.CfgRuleSuggestedAmountNodeEnum;
+import com.erp.model.mrp.enums.RecentTimePeriodEnum;
+import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
+import com.erp.model.mrp.enums.TimePeriodEnum;
+import com.erp.model.mrp.vo.ReplenishmentSuggestionVO;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.util.CollectionUtils;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Getter
+@Setter
+public class ReplenishmentResultDTO {
+    /**
+     * 补货主表数据
+     */
+    private BasicDTO replenishment;
+    /**
+     * 补货明细表数据
+     */
+    private DetailDTO replenishmentDetail;
+    /**
+     * bom子件信息
+     */
+    private List<BomChildrenSkuDTO> bomSkuList;
+
+    /**
+     * FBA在途明细
+     */
+    private List<FbaInTransitDetailDTO> fbaInTransitDetails;
+    /**
+     * FBA到货明细
+     */
+    private List<EstimatedDeliveryDetailDTO> fbaDeliveryDetails;
+    /**
+     * 海外可用库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> overseasUsableDetail;
+    /**
+     * 海外仓在途明细
+     */
+    private List<OverseasInTransitDetailDTO> overseasInTransitDetails;
+    /**
+     * 海外在途库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> overseasInTransitDetail;
+    /**
+     * 海外仓到货明细
+     */
+    private List<EstimatedDeliveryDetailDTO> overseasDeliveryDetails;
+    /**
+     * 海外仓到货库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> overseasDeliveryDetail;
+    /**
+     * 本地可用库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> localUsableDetail;
+    /**
+     * 本地可用库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> localWaitQcDetail;
+    /**
+     * 本地在途明细
+     */
+    private List<LocalInTransitDetailDTO> localInTransitDetails;
+    /**
+     * 本地在途库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> localInTransitDetail;
+    /**
+     * 本地采购明细
+     */
+    private List<EstimatedPurchaseDetailDTO> localPurchaseDetails;
+    /**
+     * 本地采购库存明细
+     */
+    private List<ReplenishmentInventoryDetailDTO> localPurchaseDetail;
+
+    /**
+     * 断货报告
+     */
+    private List<RptOutOfStockDTO> rptOutOfStocks;
+
+    /**
+     * 销量(去噪销量加历史销量)
+     */
+    private List<SalesInfoDTO> salesInfos;
+    /**
+     * 去噪销量
+     */
+    private List<SalesInfoDTO> salesInfoList;
+
+    /**
+     * 分时段销量
+     */
+    private List<TimePeriodSalesDTO> timePeriodSales;
+
+    /**
+     * 真实销量
+     */
+    private List<TimePeriodSalesDTO> realSaleQty;
+    /**
+     * 分时段日均销量
+     */
+    private List<TimePeriodSalesDTO> avgTimePeriodSales;
+
+    /**
+     * 销量预估
+     */
+    private List<SalesEstimateDTO> salesEstimates;
+
+    /**
+     * 分时段销量预估
+     */
+    private List<TimePeriodSalesEstimateDTO> timePeriodSalesEstimates;
+
+    /**
+     * 分时段日均销量预估
+     */
+    private List<TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates;
+
+    /**
+     * 建议发货
+     */
+    private List<DeliverySuggestDTO> deliverySuggests;
+
+    /**
+     * 建议采购(源数据)
+     */
+    private List<PurchaseSuggestDTO> purchaseSuggests;
+    /**
+     * 最近建议明细
+     */
+    private List<RecentSuggestionDTO> recentSuggestions;
+    /**
+     * 获取历史库存
+     */
+    private Map<LocalDate, Integer> historyInventoryList;
+    /**
+     * 获取历史销量
+     */
+    private Map<LocalDate, Integer> historySalesList;
+
+    /**
+     * 采购单价
+     */
+    private BigDecimal purchasePrice;
+
+    /**
+     * 销售价
+     */
+    private BigDecimal salesPrice;
+
+    /**
+     * 本地仓id
+     */
+    private List<String> localWarehouseId;
+
+    /**
+     * 海外仓id
+     */
+    private List<String> overseasWarehouseId;
+
+    /**
+     * 店铺映射
+     */
+    private Map<String, List<String>> shopIdByPlatform;
+
+    /**
+     * 库存
+     */
+    private ReplenishmentInventoryDTO inventoryDTO;
+
+    /**
+     * 海外仓code映射
+     */
+    private List<OverseasProviderWarehouseDTO> overseasProviderWarehouseList;
+
+    /**
+     * 配置
+     */
+    private CfgRuleStrategyDTO cfgRuleStrategy;
+
+    /**
+     * 店铺需求数
+     */
+    private Integer shopDemandQty;
+
+    @Getter
+    @Setter
+    public static class BasicDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+
+        /**
+         * sku id
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 国家
+         */
+        private String country;
+
+        /**
+         * 店铺
+         */
+        private String shopId;
+
+        /**
+         * fba店铺
+         */
+        private String fbaWarehouseId;
+
+        /**
+         * 平台
+         */
+        private String platform;
+
+        /**
+         * 区域
+         */
+        private String area;
+
+        public static BasicDTO buildBasicDTO(ReplenishmentSuggestionEntity entity) {
+            BasicDTO dto = new BasicDTO();
+            dto.setId(entity.getId());
+            dto.setPlatformType(entity.getPlatformType());
+            dto.setSkuId(entity.getSkuId());
+            dto.setSkuNo(entity.getSkuNo());
+            dto.setCountry(entity.getCountry());
+            dto.setShopId(entity.getShopId());
+            dto.setPlatform(entity.getPlatform());
+            dto.setFbaWarehouseId(entity.getFbaWarehouseId());
+            dto.setArea(entity.getArea());
+            return dto;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class InventoryHistoryDTO {
+        /**
+         * 建议 id
+         */
+        private String replenishmentId;
+        /**
+         * 日期
+         */
+        private LocalDate date;
+        /**
+         * 原始库存
+         */
+        private Integer originalInventQty;
+
+        public static InventoryHistoryDTO buildInventoryHistory(String replenishmentId, LocalDate date, Integer originalInventQty) {
+            InventoryHistoryDTO inventoryHistoryDTO = new InventoryHistoryDTO();
+            inventoryHistoryDTO.setReplenishmentId(replenishmentId);
+            inventoryHistoryDTO.setDate(date);
+            inventoryHistoryDTO.setOriginalInventQty(originalInventQty);
+            return inventoryHistoryDTO;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class SalesHistoryDTO {
+        /**
+         * 建议 id
+         */
+        private String shopSkuIds;
+        /**
+         * 日期
+         */
+        private LocalDate date;
+        /**
+         * 原始销量
+         */
+        private Integer originalSalesQty;
+
+        public static SalesHistoryDTO buildSalesHistory(String shopSkuIds, LocalDate date, Integer originalSalesQty) {
+            SalesHistoryDTO dto = new SalesHistoryDTO();
+            dto.setShopSkuIds(shopSkuIds);
+            dto.setDate(date);
+            dto.setOriginalSalesQty(originalSalesQty);
+            return dto;
+        }
+    }
+
+
+    @Getter
+    @Setter
+    public static class DetailDTO {
+
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * 主表id
+         */
+        private String mainId;
+        /**
+         * sku类型 新品/常规品
+         */
+        private String skuType;
+
+        /**
+         * fba可用
+         */
+        private Integer fbaUsableQty;
+
+        /**
+         * fba在途
+         */
+        private Integer fbaInTransitQty;
+
+        /**
+         * FBA 预计发货数量
+         */
+        private Integer fbaPlanDeliveryQty;
+
+        /**
+         * 海外仓可用
+         */
+        private Integer overseasUsableQty;
+
+        /**
+         * 海外仓在途
+         */
+        private Integer overseasInTransitQty;
+
+        /**
+         * 海外仓预计发货
+         */
+        private Integer overseasPlanDeliveryQty;
+
+        /**
+         * 本地仓可用
+         */
+        private Integer localUsableQty;
+
+        /**
+         * 本地仓待检
+         */
+        private Integer localWaitQcQty;
+
+        /**
+         * 本地仓在途
+         */
+        private Integer localInTransitQty;
+
+        /**
+         * 本地仓预计采购
+         */
+        private Integer localPlanPurchaseQty;
+
+        /**
+         * 总库存
+         */
+        private Integer totalInventoryQty;
+
+
+        /**
+         * 采购审批天数（天）
+         */
+        private Integer purchaseApproveDays;
+
+        /**
+         * 生产周期天数（天）
+         */
+        private Integer productionDays;
+
+        /**
+         * 供应商发货天数（天）
+         */
+        private Integer supplierDeliveryDays;
+
+        /**
+         * 质检入库天数（天）
+         */
+        private Integer qcDays;
+
+        /**
+         * 采购频率天数（天）
+         */
+        private Integer purchaseCycleDays;
+        /**
+         * 最短发货时效（天）
+         */
+        private Integer deliveryMinDays;
+        /**
+         * 默认发货时效（天）
+         */
+        private Integer deliveryDefaultDays;
+        /**
+         * 最长发货时效（天）
+         */
+        private Integer deliveryMaxDays;
+        /**
+         * 发货频率
+         */
+        private Integer logisticsCycleDays;
+        /**
+         * 最短发货频率
+         */
+        private Integer logisticsMinCycleDays;
+        /**
+         * 最长发货频率
+         */
+        private Integer logisticsMaxCycleDays;
+        /**
+         * 物流方式
+         */
+        private String logisticsMinMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流方式
+         */
+        private String logisticsMaxMethod;
+
+        /**
+         * 最短备货时效（天）
+         */
+        private Integer stockUpMinDays;
+        /**
+         * 默认备货时效（天）
+         */
+        private Integer stockUpDefaultDays;
+        /**
+         * 最长备货时效（天）
+         */
+        private Integer stockUpMaxDays;
+
+        /**
+         * 安全天数（天）
+         */
+        private Integer safeDays;
+
+        /**
+         * 入库天数（天）
+         */
+        private Integer instockDays;
+
+        /**
+         * fba可售天数
+         */
+        private Integer fbaSellableDays;
+
+        /**
+         * 可售天数
+         */
+        private Integer sellableDays;
+
+        /**
+         * 海外仓可售天数
+         */
+        private Integer overseasSellableDays;
+
+        /**
+         * 本地可售天数
+         */
+        private Integer localSellableDays;
+
+        /**
+         * 总库存可售天数
+         */
+        private Integer totalSellableDays;
+        /**
+         * 在途配置
+         */
+        private String cfgFbaInTransit;
+
+        /**
+         * 计算版本  所有子表加   根据单号生成规则
+         */
+        private String calcVersion;
+
+        /**
+         * 计算日期
+         */
+        private String calcDate;
+
+
+        public static DetailDTO buildDetail(ReplenishmentSuggestionDetailEntity entity) {
+            DetailDTO dto = new DetailDTO();
+            dto.setDetailId(entity.getId());
+            dto.setMainId(entity.getMainId());
+            dto.setCalcDate(entity.getCalcDate());
+            dto.setCalcVersion(entity.getCalcVersion());
+            dto.setSkuType(entity.getSkuType());
+            return dto;
+        }
+
+        public static DetailDTO buildDetailNotId(ReplenishmentSuggestionDetailEntity entity) {
+            DetailDTO dto = new DetailDTO();
+            dto.setDetailId(IdWorker.getIdStr());
+            dto.setMainId(entity.getMainId());
+            dto.setSkuType(entity.getSkuType());
+            return dto;
+        }
+
+        public static void setJsonAttributes(ReplenishmentSuggestionDetailEntity detail, DetailDTO dto, List<TimePeriodSalesEstimateDTO> timePeriodSalesEstimates,
+                                             List<TimePeriodSalesEstimateDTO> avgTimePeriodSalesEstimates, List<TimePeriodSalesDTO> timePeriodSales,
+                                             List<TimePeriodSalesDTO> avgTimePeriodSales, List<TimePeriodSalesDTO> realSaleQty) {
+
+
+            // 设置销售数量
+            detail.setSalesQty(convertToSalesVOJson(timePeriodSales));
+            detail.setAvgSalesQty(convertToSalesVOJson(avgTimePeriodSales));
+            detail.setSalesEstimateQty(convertToSalesEstimateVOJson(timePeriodSalesEstimates, dto, false));
+            detail.setAvgSalesEstimateQty(convertToSalesEstimateVOJson(avgTimePeriodSalesEstimates, dto, true));
+            detail.setRealSaleQty(convertToSalesVOJson(realSaleQty));
+        }
+
+        // 提取基础属性
+        public static void setBasicAttributes(ReplenishmentSuggestionDetailEntity detail, DetailDTO dto) {
+            detail.setId(dto.getDetailId());
+            detail.setMainId(dto.getMainId());
+            detail.setSkuType(dto.getSkuType());
+            detail.setFbaUsableQty(dto.getFbaUsableQty());
+            detail.setFbaInTransitQty(dto.getFbaInTransitQty());
+            detail.setFbaPlanDeliveryQty(dto.getFbaPlanDeliveryQty());
+            detail.setOverseasUsableQty(dto.getOverseasUsableQty());
+            detail.setOverseasInTransitQty(dto.getOverseasInTransitQty());
+            detail.setOverseasPlanDeliveryQty(dto.getOverseasPlanDeliveryQty());
+            detail.setLocalUsableQty(dto.getLocalUsableQty());
+            detail.setLocalWaitQcQty(dto.getLocalWaitQcQty());
+            detail.setLocalInTransitQty(dto.getLocalInTransitQty());
+            detail.setLocalPlanPurchaseQty(dto.getLocalPlanPurchaseQty());
+            detail.setTotalInventoryQty(dto.getTotalInventoryQty());
+        }
+
+        // 转换销售数据为 JSON
+        private static String convertToSalesVOJson(List<TimePeriodSalesDTO> salesList) {
+            if (CollectionUtils.isEmpty(salesList)) {
+                return null;
+            }
+            return JSON.toJSONString(salesList.stream()
+                    .map(v -> new ReplenishmentSuggestionVO.SalesVO(v.getCode().getName(), v.getQty()))
+                    .collect(Collectors.toList()));
+        }
+
+        // 转换销售预估数据为 JSON
+        private static String convertToSalesEstimateVOJson(List<TimePeriodSalesEstimateDTO> estimates, DetailDTO dto, boolean isAvg) {
+            if (CollectionUtils.isEmpty(estimates)) {
+                return null;
+            }
+            return JSON.toJSONString(estimates.stream()
+                    .map(v -> new ReplenishmentSuggestionVO.SalesVO(RecentTimePeriodEnum.getNameByCode(v.getCode(), isAvg, dto.getCalcDate()), v.getQty()))
+                    .collect(Collectors.toList()));
+        }
+
+        // 设置其他属性
+        public static void setOtherAttributes(ReplenishmentSuggestionDetailEntity detail, DetailDTO dto,
+                                              CfgRuleStrategyDTO cfgRuleStrategy, BigDecimal purchasePrice, BigDecimal salesPrice) {
+            detail.setPurchaseApproveDays(dto.getPurchaseApproveDays());
+            detail.setProductionDays(dto.getProductionDays());
+            detail.setSupplierDeliveryDays(dto.getSupplierDeliveryDays());
+            detail.setQcDays(dto.getQcDays());
+            detail.setPurchaseCycleDays(dto.getPurchaseCycleDays());
+            detail.setDeliveryMinDays(dto.getDeliveryMinDays());
+            detail.setDeliveryDefaultDays(dto.getDeliveryDefaultDays());
+            detail.setDeliveryMaxDays(dto.getDeliveryMaxDays());
+            detail.setLogisticsCycleDays(dto.getLogisticsCycleDays());
+            detail.setLogisticsMinCycleDays(dto.getLogisticsMinCycleDays());
+            detail.setLogisticsMaxCycleDays(dto.getLogisticsMaxCycleDays());
+            detail.setLogisticsMinMethod(dto.getLogisticsMinMethod());
+            detail.setLogisticsMethod(dto.getLogisticsMethod());
+            detail.setLogisticsMaxMethod(dto.getLogisticsMaxMethod());
+            detail.setStockUpMinDays(dto.getStockUpMinDays());
+            detail.setStockUpDefaultDays(dto.getStockUpDefaultDays());
+            detail.setStockUpMaxDays(dto.getStockUpMaxDays());
+            detail.setSafeDays(dto.getSafeDays());
+            detail.setInstockDays(dto.getInstockDays());
+            detail.setFbaSellableDays(dto.getFbaSellableDays());
+            detail.setSellableDays(dto.getSellableDays());
+            detail.setOverseasSellableDays(dto.getOverseasSellableDays());
+            detail.setLocalSellableDays(dto.getLocalSellableDays());
+            detail.setTotalSellableDays(dto.getTotalSellableDays());
+            detail.setCfgFbaInTransit(dto.getCfgFbaInTransit());
+            detail.setCalcVersion(dto.getCalcVersion());
+            detail.setCalcDate(dto.getCalcDate());
+            detail.setCfgRule(JSON.toJSONString(cfgRuleStrategy));
+            detail.setPurchasePrice(purchasePrice);
+            detail.setSalesPrice(salesPrice);
+        }
+
+        public static ReplenishmentSuggestionDetailEntity buildNewDetail(DetailDTO detailDTO) {
+            ReplenishmentSuggestionDetailEntity entity = new ReplenishmentSuggestionDetailEntity();
+            entity.setId(detailDTO.getDetailId());
+            entity.setCalcVersion(detailDTO.getCalcVersion());
+            entity.setCalcDate(detailDTO.getCalcDate());
+            entity.setMainId(detailDTO.getMainId());
+            entity.setSkuType(detailDTO.getSkuType());
+            return entity;
+        }
+
+        public static ReplenishmentSuggestionDetailEntity buildNewDetail(String code, String calcDate, String mainId) {
+            ReplenishmentSuggestionDetailEntity detail = new ReplenishmentSuggestionDetailEntity();
+            detail.setId(IdWorker.getIdStr());
+            detail.setCalcVersion(code);
+            detail.setCalcDate(calcDate);
+            detail.setMainId(mainId);
+            return detail;
+        }
+
+        public static Integer getAttributeValue(DetailDTO detail, String code) {
+            if (CfgRuleSuggestedAmountNodeEnum.PURCHASE_APPROVE_DAYS.getCode().equals(code)) {
+                return detail.getPurchaseApproveDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.PRODUCTION_DAYS.getCode().equals(code)) {
+                return detail.getProductionDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.SUPPLIER_DELIVERY_DAYS.getCode().equals(code)) {
+                return detail.getSupplierDeliveryDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.QC_DAYS.getCode().equals(code)) {
+                return detail.getQcDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.PURCHASE_CYCLE_DAYS.getCode().equals(code)) {
+                return detail.getPurchaseCycleDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.DELIVERY_DAYS.getCode().equals(code)) {
+                return detail.getDeliveryDefaultDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.IN_STOCK_DAYS.getCode().equals(code)) {
+                return detail.getInstockDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.LOGISTICS_CYCLE_DAYS.getCode().equals(code)) {
+                return detail.getLogisticsCycleDays();
+            }
+            if (CfgRuleSuggestedAmountNodeEnum.SAFE_DAYS.getCode().equals(code)) {
+                return detail.getSafeDays();
+            }
+            return 0;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class FbaInTransitDetailDTO {
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 发货状态
+         */
+        private String status;
+
+        /**
+         * 发货日期
+         */
+        private LocalDate deliveryDate;
+
+        /**
+         * 申报数量
+         */
+        private Integer declareQty;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 在途
+         */
+        private Integer inTransitQty;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 计算版本  所有子表加   根据单号生成规则
+         */
+        private String calcVersion;
+
+        public static FbaInTransitDetailEntity buildFbaInTransitDetail(FbaInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
+            FbaInTransitDetailEntity entity = new FbaInTransitDetailEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setSourceId(dto.getSourceId());
+            entity.setSourceCode(dto.getSourceCode());
+            entity.setSourceType(dto.getSourceType());
+            entity.setStatus(dto.getStatus());
+            entity.setDeliveryDate(dto.getDeliveryDate());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
+            entity.setDeclareQty(dto.getDeclareQty());
+            entity.setDeliveryQty(dto.getDeliveryQty());
+            entity.setReceiveQty(dto.getReceiveQty());
+            entity.setInTransitQty(dto.getInTransitQty());
+            entity.setCalcVersion(calcVersion);
+            return entity;
+        }
+
+        public static FbaInTransitDetailDTO buildFbaInTransitDetailDTO(ReplenishmentInventoryDTO.FbaInTransitDTO fbaInTransitDTO, CfgRuleExpireTimeDTO.StrategyResultDTO expireTimeResult, String calcVersion) {
+            FbaInTransitDetailDTO dto = new FbaInTransitDetailDTO();
+            dto.setSourceId(fbaInTransitDTO.getSourceId());
+            dto.setSourceCode(fbaInTransitDTO.getSourceCode());
+            dto.setSourceType(fbaInTransitDTO.getSourceType());
+            dto.setStatus(fbaInTransitDTO.getStatus());
+            dto.setDeliveryDate(fbaInTransitDTO.getDeliveryDate());
+            dto.setEstimateSalesDate(fbaInTransitDTO.getEstimateSalesDate().plusDays(expireTimeResult.getLogisticsResult().getLogisticsDays()).plusDays(expireTimeResult.getInstockDays()));
+            dto.setDeclareQty(fbaInTransitDTO.getDeclareQty());
+            dto.setDeliveryQty(fbaInTransitDTO.getDeliveryQty());
+            dto.setReceiveQty(fbaInTransitDTO.getReceiveQty());
+            dto.setInTransitQty(fbaInTransitDTO.getInTransitQty());
+            dto.setCalcVersion(calcVersion);
+            return dto;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class AvgSalesEstimateDTO {
+
+        private String type;
+
+        private String qty;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class RptOutOfStockDTO {
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 断货开始日期
+         */
+        private LocalDate startDate;
+
+        /**
+         * 断货结束日期
+         */
+        private LocalDate endDate;
+
+        /**
+         * 销量
+         */
+        private BigDecimal salesQty;
+
+        /**
+         * 金额
+         */
+        private BigDecimal amount;
+
+        public static RptOutOfStockEntity buildRptOutOfStock(RptOutOfStockDTO dto, String replenishmentDetailId, String calcVersion) {
+            RptOutOfStockEntity entity = new RptOutOfStockEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setDate(dto.getDate());
+            entity.setStartDate(dto.getStartDate());
+            entity.setEndDate(dto.getEndDate());
+            entity.setSalesQty(dto.getSalesQty());
+            entity.setAmount(dto.getAmount());
+            entity.setCalcVersion(calcVersion);
+            return entity;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class SalesInfoDTO {
+        /**
+         * id
+         */
+        private String id;
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 销量
+         */
+        private BigDecimal salesQty;
+
+        /**
+         * 断货数据是否从历史销量中排除,true是，false否
+         */
+        private Boolean isIgnoreOutOfStock;
+
+        /**
+         * denoisingType 去噪类型
+         */
+        private String denoisingType;
+
+        /**
+         * 有效值
+         */
+        private Integer effectiveValue;
+
+
+        public static SalesInfoEntity buildSalesInfo(SalesInfoDTO dto, String replenishmentDetailId, String calcVersion) {
+            SalesInfoEntity entity = new SalesInfoEntity();
+            entity.setId(dto.getId());
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setDate(dto.getDate());
+            entity.setSalesQty(dto.getSalesQty());
+            entity.setIsIgnoreOutOfStock(dto.getIsIgnoreOutOfStock());
+            entity.setSalesQtyType(dto.getDenoisingType());
+            entity.setCalcVersion(calcVersion);
+            entity.setEffectiveValue(dto.getEffectiveValue());
+            return entity;
+        }
+
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TimePeriodSalesDTO {
+
+        private TimePeriodEnum code;
+
+        private BigDecimal qty;
+    }
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TimePeriodSalesEstimateDTO {
+
+        private RecentTimePeriodEnum code;
+
+        private BigDecimal qty;
+    }
+
+    @Getter
+    @Setter
+    public static class DeliverySuggestDTO {
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 数据类型（auto系统，manual人工）
+         */
+        @TableField("data_type")
+        private String dataType;
+
+        /**
+         * 建议发货量
+         */
+        private Integer suggestDeliveryQty;
+        /**
+         * 建议发货日期
+         */
+        private LocalDate suggestDeliveryDate;
+        /**
+         * 物流方式,LogisticsMethodEnum枚举
+         */
+        private String logisticsMethod;
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+        /**
+         * 物流成本
+         */
+        private BigDecimal logisticsCost;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 国家
+         */
+        private String country;
+        /**
+         * skuid
+         */
+        private String skuId;
+
+
+        public static DeliverySuggestDTO buildDeliverySuggestDTO(String code, CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType) {
+            DeliverySuggestDTO dto = new DeliverySuggestDTO();
+            dto.setId(IdWorker.getIdStr());
+            dto.setCode(code);
+            dto.setDataType(createType);
+            dto.setLogisticsDays(logisticsResult.getLogisticsDays());
+            dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
+            dto.setSourceId(replenishmentResultDTO.getReplenishment().getId());
+            dto.setSourceType(SourceTypeEnum.REPLENISHMENT_SUGGESTION.getCode());
+            dto.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            dto.setPlatformType(replenishmentResultDTO.getReplenishment().getPlatformType());
+            dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
+            dto.setPlatform(replenishmentResultDTO.getReplenishment().getPlatform());
+            dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
+            dto.setCountry(replenishmentResultDTO.getReplenishment().getCountry());
+            return dto;
+        }
+
+        public static DeliverySuggestEntity buildDeliverySuggest(DeliverySuggestDTO dto) {
+            DeliverySuggestEntity entity = new DeliverySuggestEntity();
+            entity.setId(dto.getId());
+            entity.setCode(dto.getCode());
+            entity.setDataType(dto.getDataType());
+            entity.setSuggestDeliveryQty(dto.getSuggestDeliveryQty());
+            entity.setSuggestDeliveryDate(dto.getSuggestDeliveryDate());
+            entity.setPlanDeliveryQty(entity.getSuggestDeliveryQty());
+            entity.setLogisticsMethod(dto.getLogisticsMethod());
+            entity.setLogisticsDays(dto.getLogisticsDays());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
+            entity.setLogisticsCost(dto.getLogisticsCost());
+            entity.setSourceId(dto.getSourceId());
+            entity.setSourceType(dto.getSourceType());
+            entity.setCurrency(dto.getCurrency());
+            entity.setPlatformType(dto.getPlatformType());
+            entity.setPlatform(dto.getPlatform());
+            entity.setShopId(dto.getShopId());
+            entity.setCountry(dto.getCountry());
+            entity.setSkuId(dto.getSkuId());
+            return entity;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class PurchaseSuggestDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 数据类型（auto系统，manual人工）
+         */
+        private String dataType;
+        /**
+         * 建议发货量
+         */
+        private Integer suggestDeliveryQty;
+        /**
+         * 库存数量（本地仓可用 + 本地仓待检  + 本地在途 + 预计采购）
+         */
+        private Integer inventoryQty;
+        /**
+         * 建议采购量
+         */
+        private Integer suggestPurchaseQty;
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimateInstockDate;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+        /**
+         * 采购成本
+         */
+        private BigDecimal purchaseCost;
+        /**
+         * 来源id
+         */
+        private JSONArray sourceIdJson;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * skuid
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 父级SkuId
+         */
+        private String parentSkuId;
+        /**
+         * bom信息
+         */
+        private String bomVersion;
+        /**
+         * 用量
+         */
+        private Integer quantity;
+        /**
+         * 是否拆分
+         */
+        private Boolean isMerge;
+        /**
+         * 补货建议id
+         */
+        private String replenishmentSuggestionId;
+
+        public static PurchaseSuggestDTO buildPurchaseSuggestDTO( CfgRuleLogisticsDTO.LogisticsResultDTO logisticsResult, ReplenishmentResultDTO replenishmentResultDTO, String createType,List<String> deliverySuggestIdList) {
+            PurchaseSuggestDTO dto = new PurchaseSuggestDTO();
+            dto.setDataType(createType);
+            dto.setLogisticsMethod(logisticsResult.getLogisticsMethod());
+            dto.setLogisticsDays(logisticsResult.getLogisticsDays());
+            dto.setSourceIdJson(JSONUtil.parseArray(deliverySuggestIdList));
+            dto.setSourceType(SourceTypeEnum.DELIVERY_SUGGESTION.getCode());
+            dto.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+            dto.setPlatformType(replenishmentResultDTO.getReplenishment().getPlatformType());
+            dto.setPlatform(replenishmentResultDTO.getReplenishment().getPlatform());
+            dto.setShopId(replenishmentResultDTO.getReplenishment().getShopId());
+            dto.setSkuId(replenishmentResultDTO.getReplenishment().getSkuId());
+            dto.setSkuNo(replenishmentResultDTO.getReplenishment().getSkuNo());
+            dto.setReplenishmentSuggestionId(replenishmentResultDTO.getDeliverySuggests().get(0).getSourceId());
+            return dto;
+        }
+
+        public static PurchaseSuggestEntity buildPurchaseSuggest(PurchaseSuggestDTO dto) {
+            PurchaseSuggestEntity entity = new PurchaseSuggestEntity();
+            entity.setId(dto.getId());
+            entity.setCode(dto.getCode());
+            entity.setDataType(dto.getDataType());
+            entity.setSuggestDeliveryQty(dto.getSuggestDeliveryQty());
+            entity.setSuggestPurchaseQty(dto.getSuggestPurchaseQty());
+            entity.setSuggestPurchaseDate(dto.getSuggestPurchaseDate());
+            entity.setPlanPurchaseQty(entity.getSuggestPurchaseQty());
+            entity.setLogisticsMethod(dto.getLogisticsMethod());
+            entity.setLogisticsDays(dto.getLogisticsDays());
+            entity.setEstimateInstockDate(dto.getEstimateInstockDate());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
+            entity.setPurchaseCost(dto.getPurchaseCost());
+            entity.setSourceIdJson(dto.getSourceIdJson());
+            entity.setSourceType(dto.getSourceType());
+            entity.setPlatformType(dto.getPlatformType());
+            entity.setCurrency(dto.getCurrency());
+            entity.setPlatform(dto.getPlatform());
+            entity.setShopId(dto.getShopId());
+            entity.setSkuId(dto.getSkuId());
+            entity.setReplenishmentSuggestionId(dto.getReplenishmentSuggestionId());
+            entity.setParentSkuId(dto.getParentSkuId());
+            entity.setBomVersion(dto.getBomVersion());
+            return entity;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class PurchaseSuggestMergeDTO {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 数据类型（auto系统，manual人工）
+         */
+        @TableField("data_type")
+        private String dataType;
+        /**
+         * 建议采购量
+         */
+        private Integer suggestPurchaseQty;
+        /**
+         * 建议采购日期
+         */
+        private LocalDate suggestPurchaseDate;
+        /**
+         * 物流方式
+         */
+        private String logisticsMethod;
+        /**
+         * 物流时效（天）
+         */
+        private Integer logisticsDays;
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimateInstockDate;
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+        /**
+         * 采购成本
+         */
+        private BigDecimal purchaseCost;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 币别
+         */
+        private String currency;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * skuid
+         */
+        private String skuId;
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SalesEstimateDTO {
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        /**
+         * 销量
+         */
+        private BigDecimal salesQty;
+
+        /**
+         * 所属月份
+         */
+        private String month;
+
+        /**
+         * 销量类型：default=默认，dynamic=动态、fixed=固定
+         */
+        private String type;
+        /**
+         * 销量默认类型：dynamic=动态、fixed=固定
+         */
+        private String defaultType;
+        /**
+         * 固定值
+         */
+        private Integer fixedValue;
+        /**
+         * 百分比
+         */
+        private JSONObject percentJson;
+
+        public static SalesEstimateEntity buildSalesEstimate(SalesEstimateDTO dto, String replenishmentDetailId, String calcVersion) {
+            SalesEstimateEntity entity = new SalesEstimateEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setDate(dto.getDate());
+            entity.setSalesQty(dto.getSalesQty());
+            entity.setMonth(dto.getMonth());
+            entity.setCalcVersion(calcVersion);
+            entity.setType(dto.getType());
+            entity.setDefaultType(dto.getDefaultType());
+            entity.setFixedValue(dto.getFixedValue());
+            entity.setPercentJson(dto.getPercentJson());
+            return entity;
+        }
+
+        public static SalesEstimateDTO buildSalesEstimateDTO(LocalDate calcDate, BigDecimal saleQty, CfgRuleSalesQtyDTO.StrategyFormulaResultDTO formulaResult) {
+            SalesEstimateDTO dto = new SalesEstimateDTO();
+            dto.setDate(calcDate);
+            dto.setSalesQty(saleQty);
+            dto.setMonth(calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            dto.setType(formulaResult.getType());
+            dto.setDefaultType(formulaResult.getDefaultType());
+            dto.setFixedValue(formulaResult.getFixedValue());
+            dto.setPercentJson(formulaResult.getPercentJson());
+            return dto;
+        }
+
+        public static SalesEstimateDTO buildSalesEstimateDTO(LocalDate calcDate, BigDecimal saleQty) {
+            SalesEstimateDTO dto = new SalesEstimateDTO();
+            dto.setDate(calcDate);
+            dto.setSalesQty(saleQty);
+            dto.setMonth(calcDate.format(DateTimeFormatter.ofPattern("yyyy-MM")));
+            return dto;
+        }
+    }
+
+    @Getter
+    @Setter
+    public static class EstimatedDeliveryDetailDTO {
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 业务类型 FBA/海外仓
+         */
+        private String type;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 预计发货日期
+         */
+        private LocalDate planDeliveryDate;
+
+        /**
+         * 收货渠道，店铺id/仓库id
+         */
+        private String receivingChannel;
+
+        /**
+         * 发货仓库
+         */
+        private String deliveryWarehouseId;
+
+        /**
+         * 店铺预计数量
+         */
+        private Integer shopPreQty = 0;
+
+
+        public static EstimatedDeliveryDetailEntity buildEstimatedDeliveryDetail(EstimatedDeliveryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
+            EstimatedDeliveryDetailEntity entity = new EstimatedDeliveryDetailEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setStatus(dto.getStatus());
+            entity.setQty(dto.getQty());
+            entity.setType(dto.getType());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
+            entity.setSourceId(dto.getSourceId());
+            entity.setSourceCode(dto.getSourceCode());
+            entity.setSourceType(dto.getSourceType());
+            entity.setPlanDeliveryDate(dto.getPlanDeliveryDate());
+            entity.setCalcVersion(calcVersion);
+            entity.setShopPreQty(dto.getShopPreQty());
+            entity.setReceivingChannel(dto.getReceivingChannel());
+            return entity;
+        }
+    }
+
+
+    @Getter
+    @Setter
+    public static class EstimatedPurchaseDetailDTO {
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimatedPutAwayDate;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 业务类型 本地
+         */
+        private String type;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 店铺预计数量
+         */
+        private Integer shopPreQty = 0;
+
+        /**
+         * 收货渠道
+         */
+        private String receivingChannel;
+
+        public static EstimatedPurchaseDetailEntity buildEstimatedPurchaseDetail(EstimatedPurchaseDetailDTO dto, String replenishmentDetailId, String calcVersion) {
+            EstimatedPurchaseDetailEntity entity = new EstimatedPurchaseDetailEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setStatus(dto.getStatus());
+            entity.setQty(dto.getQty());
+            entity.setPlanArrivalDate(dto.getEstimatedPutAwayDate());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
+            entity.setType(dto.getType());
+            entity.setSourceId(dto.getSourceId());
+            entity.setSourceCode(dto.getSourceCode());
+            entity.setSourceType(dto.getSourceType());
+            entity.setShopPreQty(dto.getShopPreQty());
+            entity.setReceivingChannel(dto.getReceivingChannel());
+            entity.setCalcVersion(calcVersion);
+            return entity;
+        }
+
+        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.EstimatedPurchaseDTO purchaseDTO) {
+            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
+            dto.setStatus(purchaseDTO.getStatus());
+            dto.setQty(purchaseDTO.getQty());
+            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
+            dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
+            dto.setSourceCode(purchaseDTO.getSourceCode());
+            dto.setSourceType(purchaseDTO.getSourceType());
+            dto.setReceivingChannel(purchaseDTO.getWarehouseId());
+            dto.setWarehouseId(purchaseDTO.getWarehouseId());
+            return dto;
+        }
+
+        public static EstimatedPurchaseDetailDTO buildEstimatedPurchaseDetailDTO(ReplenishmentInventoryDTO.ReplenishmentPurchaseDTO purchaseDTO) {
+            EstimatedPurchaseDetailDTO dto = new EstimatedPurchaseDetailDTO();
+            dto.setStatus(purchaseDTO.getStatus());
+            dto.setQty(purchaseDTO.getQty());
+            dto.setEstimatedPutAwayDate(purchaseDTO.getEstimatedPutAwayDate());
+            dto.setEstimateSalesDate(purchaseDTO.getEstimateSalesDate());
+            dto.setSourceId(purchaseDTO.getSourceId());
+            dto.setSourceCode(purchaseDTO.getSourceCode());
+            dto.setType(ReplenishmentInventoryTypeEnum.LOCAL_ESTIMATED_DELIVERY.getCode());
+            dto.setSourceType(purchaseDTO.getSourceType());
+            dto.setReceivingChannel(purchaseDTO.getShopId());
+            return dto;
+        }
+    }
+
+
+    @Getter
+    @Setter
+    public static class LocalInTransitDetailDTO {
+
+        /**
+         * 数量
+         */
+        private Integer qty;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+
+        /**
+         * 预计入库日期
+         */
+        private LocalDate estimatedPutAwayDate;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 计算版本  所有子表加   根据单号生成规则
+         */
+        private String calcVersion;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 店铺预计数量
+         */
+        private Integer shopPreQty = 0;
+
+        public static LocalInTransitDetailDTO buildLocalInTransitDetailDTO(ReplenishmentInventoryDTO.LocalInTransitDTO localInTransitDTO) {
+            LocalInTransitDetailDTO dto = new LocalInTransitDetailDTO();
+            dto.setQty(localInTransitDTO.getQty());
+            dto.setEstimatedPutAwayDate(localInTransitDTO.getEstimatedPutAwayDate());
+            dto.setSourceId(localInTransitDTO.getSourceId());
+            dto.setSourceCode(localInTransitDTO.getSourceCode());
+            dto.setSourceType(localInTransitDTO.getSourceType());
+            dto.setWarehouseId(localInTransitDTO.getWarehouseId());
+            return dto;
+        }
+
+        public static LocalInTransitDetailEntity buildLocalInTransitDetail(LocalInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
+            LocalInTransitDetailEntity entity = new LocalInTransitDetailEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setQty(dto.getQty());
+            entity.setPlanArrivalDate(dto.getEstimatedPutAwayDate());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
+            entity.setSourceId(dto.getSourceId());
+            entity.setSourceCode(dto.getSourceCode());
+            entity.setSourceType(dto.getSourceType());
+            entity.setCalcVersion(calcVersion);
+            entity.setShopPreQty(dto.getShopPreQty());
+            entity.setWarehouseId(dto.getWarehouseId());
+            return entity;
+        }
+
+    }
+
+    @Getter
+    @Setter
+    public static class OverseasInTransitDetailDTO {
+
+        /**
+         * 发货单id
+         */
+        private String deliveryPlanId;
+
+        /**
+         * 发货单code
+         */
+        private String deliveryPlanCode;
+
+        /**
+         * 状态
+         */
+        private String status;
+
+        /**
+         * 发货日期
+         */
+        private LocalDate deliveryDate;
+
+        /**
+         * 发货数量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 签收数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 在途
+         */
+        private Integer inTransitQty;
+
+        /**
+         * 预计可售日期
+         */
+        private LocalDate estimateSalesDate;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        /**
+         * 店铺预计数量
+         */
+        private Integer shopPreQty = 0;
+
+        public static OverseasInTransitDetailEntity buildOverseasInTransitDetail(OverseasInTransitDetailDTO dto, String replenishmentDetailId, String calcVersion) {
+            OverseasInTransitDetailEntity entity = new OverseasInTransitDetailEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setDeliveryPlanId(dto.getDeliveryPlanId());
+            entity.setDeliveryPlanCode(dto.getDeliveryPlanCode());
+            entity.setStatus(dto.getStatus());
+            entity.setDeliveryDate(dto.getDeliveryDate());
+            entity.setDeliveryQty(dto.getDeliveryQty());
+            entity.setReceiveQty(dto.getReceiveQty());
+            entity.setInTransitQty(dto.getInTransitQty());
+            entity.setEstimateSalesDate(dto.getEstimateSalesDate());
+            entity.setCalcVersion(calcVersion);
+            entity.setShopPreQty(dto.getShopPreQty());
+            entity.setWarehouseId(dto.getWarehouseId());
+            return entity;
+        }
+
+    }
+
+
+    @Getter
+    @Setter
+    public static class ReplenishmentInventoryDetailDTO {
+        /**
+         * 类型   海外仓可用/海外仓在途/预计发货/本地仓可用/本地仓在途/预计采购
+         */
+        private String inventoryType;
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+
+        /**
+         * 仓库类型，local本地，overseas海外
+         */
+        private String warehouseType;
+
+        /**
+         * 关联店铺类型，platform按平台，shop按店铺
+         */
+        private String channelType;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+
+        /**
+         * 店铺id的json
+         */
+        private JSONArray channelIdJson;
+
+        /**
+         * 总数量
+         */
+        private Integer totalQty;
+
+        /**
+         * 平台数量
+         */
+        private Integer platformQty;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 店铺明细
+         */
+        private List<ShopInventoryDetailDTO> shopInventoryDetails;
+
+
+        public static ReplenishmentInventoryDetailEntity buildReplenishmentInventoryDetail(ReplenishmentInventoryDetailDTO dto, String replenishmentDetailId, String calcVersion) {
+            ReplenishmentInventoryDetailEntity entity = new ReplenishmentInventoryDetailEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setInventoryType(dto.getInventoryType());
+            entity.setWarehouseId(dto.getWarehouseId());
+            entity.setVirtualWarehouseId(dto.getVirtualWarehouseId());
+            entity.setWarehouseType(dto.getWarehouseType());
+            entity.setChannelType(dto.getChannelType());
+            entity.setChannelIdJson(dto.getChannelIdJson());
+            entity.setTotalQty(dto.getTotalQty());
+            entity.setPlatformQty(dto.getPlatformQty());
+            entity.setCalcVersion(calcVersion);
+            entity.setSourceType(dto.getSourceType());
+            return entity;
+        }
+
+        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, CfgRuleWarehouseDTO.StrategyDetailResultDTO result, LocalInventoryDTO inventoryDTO, Integer platformQty, List<ShopInventoryDetailDTO> shopInventoryDetails) {
+            ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
+            dto.setInventoryType(inventoryType);
+            dto.setDictPlatform(result.getDictPlatform());
+            dto.setWarehouseId(result.getWarehouseId());
+            dto.setVirtualWarehouseId(result.getVirtualWarehouseId());
+            dto.setWarehouseType(result.getWarehouseType());
+            dto.setChannelType(result.getChannelType());
+            dto.setChannelIdJson(result.getChannelIdJson());
+            dto.setTotalQty(inventoryDTO.getQty());
+            dto.setSourceType(inventoryDTO.getSourceType());
+            dto.setPlatformQty(platformQty);
+            dto.setShopInventoryDetails(shopInventoryDetails);
+            return dto;
+        }
+
+        public static ReplenishmentInventoryDetailDTO buildReplenishmentInventoryDetailDTO(String inventoryType, LocalInventoryDTO inventoryDTO, List<ShopInventoryDetailDTO> shopInventoryDetails) {
+            ReplenishmentInventoryDetailDTO dto = new ReplenishmentInventoryDetailDTO();
+            dto.setInventoryType(inventoryType);
+            dto.setTotalQty(inventoryDTO.getQty());
+            dto.setSourceType(inventoryDTO.getSourceType());
+            dto.setShopInventoryDetails(shopInventoryDetails);
+            return dto;
+        }
+    }
+
+
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ShopInventoryDetailDTO {
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 数量
+         */
+        private BigDecimal qty;
+
+        /**
+         * 店铺需求数
+         */
+        private Integer shopRequireQty;
+
+        public static ShopInventoryDetailEntity buildShopInventoryDetail(ShopInventoryDetailDTO dto, String mainId, String calcVersion) {
+            ShopInventoryDetailEntity entity = new ShopInventoryDetailEntity();
+            entity.setMainId(mainId);
+            entity.setShopId(dto.getShopId());
+            entity.setQty(dto.getQty());
+            entity.setShopRequireQty(dto.getShopRequireQty());
+            entity.setCalcVersion(calcVersion);
+            return entity;
+        }
+
+    }
+
+
+    @Getter
+    @Setter
+    public static class SalesInfoAllDTO {
+        /**
+         * 日期
+         */
+        private LocalDate date;
+        /**
+         * sku id
+         */
+        private String skuId;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 订单类型
+         */
+        private String orderType;
+        /**
+         * 原始销量
+         */
+        private Integer originalSalesQty;
+    }
+
+    @Getter
+    @Setter
+    public static class RecentSuggestionDTO {
+        /**
+         * 类型
+         */
+        private String type;
+
+        /**
+         * 天数
+         */
+        private Integer days;
+
+        /**
+         * 补货建议标识类型
+         */
+        private String markType;
+
+        /**
+         * 建议数量
+         */
+        private Integer qty;
+
+        /**
+         * 日期
+         */
+        private LocalDate date;
+
+        public static RecentSuggestionDTO buildRecentSuggestion(String type, Integer days, String markType, Integer qty, LocalDate date) {
+            RecentSuggestionDTO dto = new RecentSuggestionDTO();
+            dto.setType(type);
+            dto.setQty(qty);
+            dto.setDate(date);
+            dto.setDays(days);
+            dto.setMarkType(markType);
+            return dto;
+        }
+
+        public static RecentSuggestionDetailEntity buildRecentSuggestionEntity(RecentSuggestionDTO dto, String replenishmentDetailId, String calcVersion) {
+
+            RecentSuggestionDetailEntity entity = new RecentSuggestionDetailEntity();
+            entity.setReplenishmentDetailId(replenishmentDetailId);
+            entity.setType(dto.getType());
+            entity.setDays(dto.getDays());
+            entity.setMarkType(dto.getMarkType());
+            entity.setQty(dto.getQty());
+            entity.setDate(dto.getDate());
+            entity.setCalcVersion(calcVersion);
+            return entity;
+        }
+    }
+}

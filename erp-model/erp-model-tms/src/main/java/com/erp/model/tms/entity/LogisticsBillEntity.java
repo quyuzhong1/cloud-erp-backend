@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 
 /**
@@ -67,6 +66,11 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     */
     @TableField("outstock_code")
     private String outstockCode;
+    /**
+     * 业务编号
+     */
+    @TableField("business_code")
+    private String businessCode;
     /**
     * 渠道id
     */
@@ -185,14 +189,6 @@ public class LogisticsBillEntity extends BaseEntity<LogisticsBillEntity> {
     @Override
     public Serializable pkVal() {
         return null;
-    }
-
-    public static void main(String[] args) {
-        LocalDateTime dateTime1 = LocalDateTime.of(2023, 6, 24, 10, 30);
-        LocalDateTime dateTime2 = LocalDateTime.of(2023, 6, 23, 10, 30);
-
-        long daysBetween = ChronoUnit.DAYS.between(dateTime2, dateTime1);
-        System.out.println("两个日期相差的天数: " + daysBetween);
     }
 
 }

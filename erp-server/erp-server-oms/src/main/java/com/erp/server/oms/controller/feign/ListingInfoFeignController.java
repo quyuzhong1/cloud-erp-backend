@@ -1,13 +1,21 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.SkuMappingService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -29,8 +37,6 @@ public class ListingInfoFeignController extends BaseController {
     @Resource
     private SkuMappingService skuMappingService;
 
-
-
     /**
      * 根据产品sku查询库存sku
      * @Author Luo_WG
@@ -40,8 +46,18 @@ public class ListingInfoFeignController extends BaseController {
      **/
     @PostMapping("/listStockSkuNoByProductSkuIds")
     public List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> listStockSkuNoByProductSkuIds(@RequestBody List<String> productSkuIdList) {
-        List<SkuMappingDTO.ListStockSkuNoByProductSkuIdView> list = skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList);
-        return list;
+        return skuMappingService.listStockSkuNoByProductSkuIds(productSkuIdList);
+    }
+    /**
+     * 根据参数查询sku映射记录
+     * @Author zdy
+     * @Date 2024/11/25 17:24
+     * @param queryDTO
+     * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.SkuMappingViewDTO>
+     **/
+    @PostMapping("/listSkuMappingByParams")
+    public List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(@RequestBody ListingInfoDTO.QueryDTO queryDTO) {
+        return skuMappingService.listSkuMappingByParams(queryDTO);
     }
 
     /**
@@ -56,5 +72,19 @@ public class ListingInfoFeignController extends BaseController {
         return listingInfoService.skuMapping(dto);
     }
 
+    /**
+     * 检查和更新FnSku
+     **/
+    @PostMapping("/checkAndUpdateFnsku")
+    public List<ListingInfoWithSkuMappingDTO> checkAndUpdateFnsku(@RequestBody @Validated ListingInfoParamDTO dto) {
+        return listingInfoService.checkAndUpdateFnsku(dto);
+    }
 
+    /**
+     * listing 分页
+     **/
+    @PostMapping("/paging")
+    public PagingVO<ListingInfoDTO.PageDTO> paging(@RequestBody @Validated PagingDTO<ListingInfoDTO.PagingParamDTO> dto) {
+        return listingInfoService.paging(dto);
+    }
 }

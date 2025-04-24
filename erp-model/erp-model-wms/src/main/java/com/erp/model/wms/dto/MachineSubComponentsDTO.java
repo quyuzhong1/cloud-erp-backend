@@ -74,7 +74,9 @@ public class MachineSubComponentsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends AddDTO {
+    public static class UpdateDTO extends AddDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
+
         /**
          * 主键id
          */

@@ -33,7 +33,7 @@ public abstract class AbstractSparrowAnnotationBeanMap<A extends Annotation,B> e
         Map<A, B> annotationBeanMap = Maps.newHashMap();
         Map<String, Object> beanMap = getBeanMapByAnnotation(getAnnotation());
         beanMap.values().forEach(bean -> {
-            A annotation = (A) AnnotationUtils.findAnnotation(bean.getClass(), getAnnotation());
+            A annotation = AnnotationUtils.findAnnotation(bean.getClass(), getAnnotation());
             annotationBeanMap.put(annotation, (B) bean);
         });
         refresh(annotationBeanMap);

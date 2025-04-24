@@ -6,6 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 /**
  * @author zdy
  * @ClassName ReceiverInfoVO
@@ -17,7 +19,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class ReceiverInfoVO implements ReceiverDTO {
+public class ReceiverInfoVO implements ReceiverDTO , Serializable {
     /**
      * 买家名称
      */

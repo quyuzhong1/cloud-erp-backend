@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
@@ -99,7 +100,7 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
                 .list();
 
         // 查询默认配置
-//        List<DictBasicDTO.ViewDTO> defaultConfigList = dictBasicService.getByKey(DictBasicEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
+//        List<DictBasicDTO.ViewDTO> defaultConfigList = dictBasicService.getByKey(CfgSettingEnum.SKU_MAPPING_DEFAULT_MANAGE_DELIVERY_TYPE.getKey());
 //        if (CollectionUtils.isEmpty(defaultConfigList)){
 //            throw new ServiceException("默认SKU仓库发货配置缺失");
 //        }
@@ -117,11 +118,11 @@ public class SkuMappingExtendServiceImpl extends SuperServiceImpl<SkuMappingExte
             String warehouseDeliveryTypeName = WarehouseDeliveryTypeEnum.getNameByCode(dto.getWarehouseDeliveryType());
             if (null != existEntity){
                 existEntity.setDeliveryType(dto.getWarehouseDeliveryType());
-                msg = StrUtil.format("用户【{}】修改仓库类型为【{}】发货配置为【{}】", UserContext.getDefaultLoginUser().getUserName(),warehouseTypeName,warehouseDeliveryTypeName);
+                msg =  CharSequenceUtil.format("用户【{}】修改仓库类型为【{}】发货配置为【{}】", UserContext.getDefaultLoginUser().getUserName(),warehouseTypeName,warehouseDeliveryTypeName);
                 updateList.add(existEntity);
             } else {
                 SkuMappingExtendEntity saveEntity = new SkuMappingExtendEntity(entity.getId(), dto.getWarehouseManageType(), dto.getWarehouseDeliveryType());
-                msg = StrUtil.format("用户【{}】新增仓库类型为【{}】发货配置为【{}】", UserContext.getDefaultLoginUser().getUserName(),warehouseTypeName,warehouseDeliveryTypeName);
+                msg =  CharSequenceUtil.format("用户【{}】新增仓库类型为【{}】发货配置为【{}】", UserContext.getDefaultLoginUser().getUserName(),warehouseTypeName,warehouseDeliveryTypeName);
                 saveList.add(saveEntity);
             }
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LISTING_INFO.getCode(), entity.getListingId(), "修改发货配置");

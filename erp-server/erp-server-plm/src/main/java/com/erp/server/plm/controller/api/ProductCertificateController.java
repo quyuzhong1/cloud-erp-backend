@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -28,6 +29,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 产品认证
@@ -55,6 +57,7 @@ public class ProductCertificateController extends BaseController {
             tableField = "create_user_id",
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<ProductCertificateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ProductCertificateDTO.SearchParamDTO> dto) {
         PagingVO<ProductCertificateDTO.ListDTO> pagingVO = productCertificateService.paging(dto);
         return success(pagingVO);
@@ -69,7 +72,7 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "上传证书")
     @PostMapping("/add")
-    public ApiResult add(@ModelAttribute @Validated ProductCertificateDTO.AddDTO dto) {
+    public ApiResult<Object> add(@ModelAttribute @Validated ProductCertificateDTO.AddDTO dto) {
         productCertificateService.add(dto);
         return  success();
     }
@@ -88,7 +91,7 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:update",
             serviceClass = ProductCertificateService.class,
             keyIdName = "id")
-    public ApiResult update(@ModelAttribute @Validated ProductCertificateDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@ModelAttribute @Validated ProductCertificateDTO.UpdateDTO dto) {
         Boolean flag = productCertificateService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -127,7 +130,7 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:delete",
             serviceClass = ProductCertificateService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = productCertificateService.delete(dto.getIds());
         return flag == true ? success() : failure();
     }
@@ -142,7 +145,7 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载产品认证信息模板")
     @GetMapping("/exportExcelTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/productCertificateTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -154,7 +157,7 @@ public class ProductCertificateController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -174,7 +177,7 @@ public class ProductCertificateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品证书信息批量导入")
     @PostMapping("/import")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = productCertificateService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -193,7 +196,8 @@ public class ProductCertificateController extends BaseController {
             menuCode = "plm:productCertificate:paging",
             tableAlias = "pc"
     )
-    public ApiResult exportExcel(@RequestBody ProductCertificateDTO.ExportParamDTO dto) {
+    @WebAdvanceQuery
+    public ApiResult<Object> exportExcel(@RequestBody ProductCertificateDTO.ExportParamDTO dto) {
         Boolean flag = productCertificateService.exportExcel(dto);
         return flag == true ? success() : failure();
     }

@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -60,7 +61,15 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
             sysDepartment.setParentId("0");
         }
         sysDepartment.setId(id);
-
+        
+        String name = sysDepartment.getName();
+        if(StringUtils.isBlank(name)) {
+        	throw new ServiceException("部门名称不能为空");
+        }
+        Integer nameCount = lambdaQuery().eq(SysDepartmentEntity::getName, name).ne(SysDepartmentEntity::getId, id).count();
+        if(nameCount != null && nameCount > 0) {
+        	throw new ServiceException("存在相同部门名称");
+        }
         SysDepartmentEntity entity = this.getById(id);
 
         //编号赋值，为兼容历史数据修改数据无编码时也重新生成编码
@@ -219,7 +228,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:sys:listDept",keyGenerator = "myKeyGenerator")
+//    @Cacheable(cacheNames = "cache:sys:listDept",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentEntity> listDept() {
         List<SysDepartmentEntity> list = lambdaQuery()
                 .in(SysDepartmentEntity::getType, new ArrayList<>(Arrays.asList(1, 2)))
@@ -260,7 +269,7 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
     }
 
     @Override
-    @Cacheable(cacheNames = "cache:sys:getDeptList",keyGenerator = "myKeyGenerator")
+//    @Cacheable(cacheNames = "cache:sys:getDeptList",keyGenerator = "myKeyGenerator")
     public List<SysDepartmentDTO> getDeptList() {
 
         return baseMapper.getDeptList();
@@ -451,6 +460,14 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
         return this.lambdaQuery().in(SysDepartmentEntity::getName,deptNameList).list();
     }
 
+    @Override
+    public List<SysDepartmentEntity> getDeptByIds(List<String> ids) {
+        if (CollUtil.isEmpty(ids)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(SysDepartmentEntity::getId,ids).list();
+    }
+
     /**
      * 查找部门最上级
      */
@@ -527,6 +544,31 @@ public class SysDepartmentServiceImpl extends ServiceImpl<SysDepartmentMapper, S
                     return d;
                 }).collect(Collectors.toList());
         return CollectionUtils.isEmpty(collect) ? null : collect;
+    }
+
+
+    @Override
+    public List<SysDepartmentEntity> listByParentIds() {
+        List<SysDepartmentEntity> list = lambdaQuery().list();
+        if (CollectionUtils.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        return fillParentIds(list);
+    }
+
+    public List<SysDepartmentEntity> fillParentIds(List<SysDepartmentEntity> departments) {
+        // 构建 id -> SysDepartmentEntity 的映射，方便查找
+        Map<String, SysDepartmentTreeDTO> map = baseMapper.findTree()
+                .stream()
+                .collect(Collectors.toMap(SysDepartmentTreeDTO::getId, dept -> dept));
+
+        for (SysDepartmentEntity sysDepartmentEntity : departments) {
+            SysDepartmentTreeDTO sysDepartmentTreeDTO = map.get(sysDepartmentEntity.getId());
+            if (null != sysDepartmentTreeDTO){
+                sysDepartmentEntity.setPath(sysDepartmentTreeDTO.getPath());
+            }
+        }
+        return departments;
     }
 
 

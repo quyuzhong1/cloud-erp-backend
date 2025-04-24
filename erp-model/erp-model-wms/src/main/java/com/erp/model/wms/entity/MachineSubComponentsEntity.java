@@ -105,9 +105,6 @@ public class MachineSubComponentsEntity extends BaseEntity<MachineSubComponentsE
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
-
-    public static final String UNIT = "unit";
 
     public static final String WAREHOUSE_ID = "warehouse_id";
 
@@ -116,8 +113,6 @@ public class MachineSubComponentsEntity extends BaseEntity<MachineSubComponentsE
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
     public static final String CUR_INVENTORY_QTY = "cur_inventory_qty";
-
-    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

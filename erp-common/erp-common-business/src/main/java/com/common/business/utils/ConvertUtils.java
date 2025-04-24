@@ -1,6 +1,9 @@
 package com.common.business.utils;
 
-import java.io.UnsupportedEncodingException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
+
+import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -9,32 +12,23 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.sql.Date;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import javax.servlet.http.HttpServletRequest;
-
-import org.springframework.beans.BeanUtils;
-
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * @Author 张代浩
  */
 @Slf4j
 public class ConvertUtils {
+
+    public static final String UNKNOWN = "unknown";
+    public static final String REGEX = "\\s+";
+
+    private ConvertUtils() {
+    }
+
     public static boolean isEmpty(Object object) {
         if (object == null) {
             return (true);
@@ -56,29 +50,17 @@ public class ConvertUtils {
     }
 
     public static boolean isEmpty(Collection<?> list) {
-        return list == null || list.size() == 0;
+        return list == null || list.isEmpty();
     }
 
     public static boolean isNotEmpty(Collection<?> list) {
-        return list != null && list.size() > 0;
+        return list != null && !list.isEmpty();
     }
 
     public static String decode(String strIn, String sourceCode, String targetCode) {
-        String temp = code2code(strIn, sourceCode, targetCode);
-        return temp;
+        return code2code(strIn, sourceCode, targetCode);
     }
 
-    public static String StrToUTF(String sourceCode, String targetCode) {
-        String strIn = "";
-        try {
-            strIn = new String(strIn.getBytes(StandardCharsets.ISO_8859_1), "GBK");
-        } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return strIn;
-
-    }
 
     private static String code2code(String strIn, String sourceCode, String targetCode) {
         String strOut = null;
@@ -88,12 +70,11 @@ public class ConvertUtils {
         try {
             byte[] b = strIn.getBytes(sourceCode);
             for (int i = 0; i < b.length; i++) {
-                System.out.print(b[i] + "  ");
+                log.info(b[i] + "  ");
             }
             strOut = new String(b, targetCode);
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
         }
         return strOut;
     }
@@ -132,10 +113,10 @@ public class ConvertUtils {
     }
 
     public static Integer[] getInts(String[] s) {
-        Integer[] integer = new Integer[s.length];
-        if (s == null) {
-            return null;
+        if (null == s) {
+            return new Integer[0];
         }
+        Integer[] integer = new Integer[s.length];
         for (int i = 0; i < s.length; i++) {
             integer[i] = Integer.parseInt(s[i]);
         }
@@ -144,7 +125,7 @@ public class ConvertUtils {
     }
 
     public static double getDouble(String s, double defval) {
-        if (s == null || s.equals("")) {
+        if (s == null || s.isEmpty()) {
             return (defval);
         }
         try {
@@ -160,14 +141,6 @@ public class ConvertUtils {
         }
         return s;
     }
-
-	/*public static Short getShort(String s) {
-		if (StringUtil.isNotEmpty(s)) {
-			return (Short.parseShort(s));
-		} else {
-			return null;
-		}
-	}*/
 
     public static int getInt(Object object, int defval) {
         if (isEmpty(object)) {
@@ -207,7 +180,7 @@ public class ConvertUtils {
             }
             return result;
         } catch (NumberFormatException e) {
-            return null;
+            return new Integer[0];
         }
     }
 
@@ -229,9 +202,6 @@ public class ConvertUtils {
      * @param object
      * @return
      */
-	/*public static String escapeJava(Object s) {
-		return StringEscapeUtils.escapeJava(getString(s));
-	}*/
     public static String getString(Object object) {
         if (isEmpty(object)) {
             return "";
@@ -261,15 +231,6 @@ public class ConvertUtils {
         return (s.toString().trim());
     }
 
-    public static long stringToLong(String str) {
-        Long test = new Long(0);
-        try {
-            test = Long.valueOf(str);
-        } catch (Exception e) {
-        }
-        return test.longValue();
-    }
-
     /**
      * 获取本机IP
      */
@@ -291,7 +252,7 @@ public class ConvertUtils {
      * @param clazz 要判断的类。
      * @return true 表示为基本数据类型。
      */
-    private static boolean isBaseDataType(Class clazz) throws Exception {
+    private static boolean isBaseDataType(Class<?> clazz) {
         return (clazz.equals(String.class) || clazz.equals(Integer.class) || clazz.equals(Byte.class)
                 || clazz.equals(Long.class) || clazz.equals(Double.class) || clazz.equals(Float.class)
                 || clazz.equals(Character.class) || clazz.equals(Short.class) || clazz.equals(BigDecimal.class)
@@ -304,13 +265,13 @@ public class ConvertUtils {
      */
     public static String getIpAddrByRequest(HttpServletRequest request) {
         String ip = request.getHeader("x-forwarded-for");
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {
             ip = request.getHeader("Proxy-Client-IP");
         }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {
             ip = request.getHeader("WL-Proxy-Client-IP");
         }
-        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+        if (ip == null || ip.length() == 0 || UNKNOWN.equalsIgnoreCase(ip)) {
             ip = request.getRemoteAddr();
         }
         return ip;
@@ -358,7 +319,7 @@ public class ConvertUtils {
     public static String replaceBlank(String str) {
         String dest = "";
         if (str != null) {
-            Pattern p = Pattern.compile("\\s*|\t|\r|\n");
+            Pattern p = Pattern.compile(REGEX);
             Matcher m = p.matcher(str);
             dest = m.replaceAll("");
         }
@@ -390,18 +351,17 @@ public class ConvertUtils {
      * 获取Map对象
      */
     public static Map<Object, Object> getHashMap() {
-        return new HashMap<Object, Object>();
+        return new HashMap<>();
     }
 
     /**
      * SET转换MAP
      *
-     * @param str
      * @return
      */
-    public static Map<Object, Object> SetToMap(Set<Object> setobj) {
+    public static Map<Object, Object> setToMap(Set<Object> setobj) {
         Map<Object, Object> map = getHashMap();
-        for (Iterator iterator = setobj.iterator(); iterator.hasNext(); ) {
+        for (Iterator<Object> iterator = setobj.iterator(); iterator.hasNext(); ) {
             Map.Entry<Object, Object> entry = (Map.Entry<Object, Object>) iterator.next();
             map.put(entry.getKey().toString(), entry.getValue() == null ? "" : entry.getValue().toString().trim());
         }
@@ -432,8 +392,7 @@ public class ConvertUtils {
         long c = Integer.parseInt(ip[2]);
         long d = Integer.parseInt(ip[3]);
 
-        long ipNum = a * 256 * 256 * 256 + b * 256 * 256 + c * 256 + d;
-        return ipNum;
+        return a * 256 * 256 * 256 + b * 256 * 256 + c * 256 + d;
     }
 
     private static boolean isInner(long userIp, long begin, long end) {
@@ -462,7 +421,7 @@ public class ConvertUtils {
             //update-end--Author:zhoujf  Date:20180503 for：TASK #2500 【代码生成器】代码生成器开发一通用模板生成功能
         }
         // 用下划线将原始字符串分割
-        String camels[] = name.split("_");
+        String[] camels = name.split("_");
         for (String camel : camels) {
             // 跳过原始字符串中开头、结尾的下换线或双重下划线
             if (camel.isEmpty()) {
@@ -486,18 +445,18 @@ public class ConvertUtils {
      * 如果转换前的下划线大写方式命名的字符串为空，则返回空字符串。</br>
      * 例如：hello_world,test_id->helloWorld,testId
      *
-     * @param name 转换前的下划线大写方式命名的字符串
+     * @param names 转换前的下划线大写方式命名的字符串
      * @return 转换后的驼峰式命名的字符串
      */
     public static String camelNames(String names) {
         if (names == null || names.equals("")) {
             return null;
         }
-        StringBuffer sf = new StringBuffer();
+        StringBuilder sf = new StringBuilder();
         String[] fs = names.split(",");
         for (String field : fs) {
             field = camelName(field);
-            sf.append(field + ",");
+            sf.append(field).append(",");
         }
         String result = sf.toString();
         return result.substring(0, result.length() - 1);
@@ -524,7 +483,7 @@ public class ConvertUtils {
             return name.substring(0, 1).toUpperCase() + name.substring(1).toLowerCase();
         }
         // 用下划线将原始字符串分割
-        String camels[] = name.split("_");
+        String[] camels = name.split("_");
         for (String camel : camels) {
             // 跳过原始字符串中开头、结尾的下换线或双重下划线
             if (camel.isEmpty()) {
@@ -560,6 +519,9 @@ public class ConvertUtils {
         return sb.toString().toLowerCase();
     }
 
+
+    private static final Random rd = new Random();
+
     /**
      * 随机数
      *
@@ -567,8 +529,7 @@ public class ConvertUtils {
      */
     public static String randomGen(int place) {
         String base = "qwertyuioplkjhgfdsazxcvbnmQAZWSXEDCRFVTGBYHNUJMIKLOP0123456789";
-        StringBuffer sb = new StringBuffer();
-        Random rd = new Random();
+        StringBuilder sb = new StringBuilder();
         for (int i = 0; i < place; i++) {
             sb.append(base.charAt(rd.nextInt(base.length())));
         }
@@ -637,8 +598,8 @@ public class ConvertUtils {
      * @return
      */
     public static <F, T> List<T> entityListToModelList(List<F> fromList, Class<T> tClass) {
-        if (fromList.isEmpty() || fromList == null) {
-            return null;
+        if (fromList.isEmpty()) {
+            return Collections.emptyList();
         }
         List<T> tList = new ArrayList<>();
         for (F f : fromList) {
@@ -674,8 +635,8 @@ public class ConvertUtils {
      * list == null		: true
      * list.size() == 0	: true
      */
-    public static boolean listIsEmpty(Collection list) {
-        return (list == null || list.size() == 0);
+    public static boolean listIsEmpty(Collection<?> list) {
+        return (list == null || list.isEmpty());
     }
 
     /**
@@ -686,7 +647,7 @@ public class ConvertUtils {
      * list == null		: false
      * list.size() == 0	: false
      */
-    public static boolean listIsNotEmpty(Collection list) {
+    public static boolean listIsNotEmpty(Collection<?> list) {
         return !listIsEmpty(list);
     }
     
@@ -705,5 +666,12 @@ public class ConvertUtils {
         //替换上传文件名字的特殊字符
         fileName = fileName.replace("=", "").replace(",", "").replace("&", "").replace("#", "");
         return fileName;
+    }
+
+    public static void main(String[] args) {
+        boolean baseDataType = isBaseDataType(Integer.class);
+        boolean baseDataType1 = isBaseDataType(String.class);
+        log.info("baseDataType={}", baseDataType);
+        log.info("baseDataType1={}", baseDataType1);
     }
 }

@@ -133,7 +133,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
             }
 
             //检查发货单是否已审核
-            if(soOutstockEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+            if(soOutstockEntity.getApproveStatus().getCode().equals(ApproveStatusEnum.APPROVE.getCode())){
                 packingExcelDTO.setErrorMsg("出库单已审核，无法更改装箱");
                 errorList.add(packingExcelDTO);
                 it.remove();
@@ -151,7 +151,7 @@ public class SoOutstockPackingExcelListener extends AnalysisEventListener<SoOuts
             Integer currentMaxBoxNo = boxMap.get(packingExcelDTO.getCode());
             if(Objects.isNull(currentMaxBoxNo)){
                 if(packingExcelDTO.getBoxNo() != 1){
-                    packingExcelDTO.setErrorMsg("装箱号不连续");
+                    packingExcelDTO.setErrorMsg("装箱号从1开始");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;

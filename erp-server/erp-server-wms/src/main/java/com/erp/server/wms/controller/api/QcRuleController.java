@@ -1,7 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -52,6 +54,7 @@ public class QcRuleController extends BaseController {
             tableField = "create_user_id",
             menuCode = "wms:qcRule:paging",
             tableAlias = "qc_rule")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<QcRuleDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<QcRuleDTO.PagingParamDTO> dto) {
         PagingVO<QcRuleDTO.PagingViewDTO> pagingVO = qcRuleService.paging(dto);
         return success(pagingVO);
@@ -73,7 +76,7 @@ public class QcRuleController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated QcRuleDTO.AddDTO dto) {
         String id = qcRuleService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -140,7 +143,7 @@ public class QcRuleController extends BaseController {
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated QcRuleDTO.UpdateDTO dto) {
         String id = qcRuleService.updateQcRule(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

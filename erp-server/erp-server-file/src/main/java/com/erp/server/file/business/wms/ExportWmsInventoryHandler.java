@@ -1,10 +1,7 @@
 package com.erp.server.file.business.wms;
 
-import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.utils.CollectionUtils;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.VirtualInventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.enums.inventory.InventorySearchDimensionEnum;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
@@ -13,6 +10,7 @@ import com.erp.server.file.entity.FileTask;
 import com.common.business.enums.FileTaskEventEnum;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -40,7 +38,7 @@ public class ExportWmsInventoryHandler extends AbstractPageFileEventHandler<Inve
     protected PagingVO<InventoryDTO.PagingViewDTO> getPageData(PagingDTO<InventoryDTO.ExportSearchParamDTO> dto) {
         PagingVO<InventoryDTO.PagingViewDTO> inventoryPageData = exportWmsFeign.getInventoryPageData(dto);
         List<InventoryDTO.PagingViewDTO> dataList = (List<InventoryDTO.PagingViewDTO>) inventoryPageData.getList();
-        if (dataList.size() > 0) {
+        if (CollectionUtils.isNotEmpty(dataList)) {
             dto.setLastId(dataList.get(dataList.size() - 1).getId());
         }
         return inventoryPageData;

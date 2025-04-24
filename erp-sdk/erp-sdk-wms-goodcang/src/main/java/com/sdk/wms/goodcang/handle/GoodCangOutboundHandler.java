@@ -24,6 +24,7 @@ import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -46,7 +47,7 @@ public class GoodCangOutboundHandler extends AbstractPullThirdWarehouseHandler<G
     private GoodCangService goodCangService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     private final String failureMsgHead = "调用谷仓获取出库数据接口异常";
 
@@ -115,10 +116,6 @@ public class GoodCangOutboundHandler extends AbstractPullThirdWarehouseHandler<G
     @Override
     public String getTargetPlatform() {
         return PlatformEnum.ERP_WMS.getDesc();
-    }
-
-    private PlatformDictEnum getPlatformDictEnum(){
-        return PlatformDictEnum.GOOD_CANG;
     }
 
     public boolean isSuccess(String ask){

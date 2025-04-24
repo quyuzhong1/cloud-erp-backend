@@ -1,7 +1,9 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseDropDownDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -13,10 +15,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -60,8 +59,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
     @Override
     public List<DictBasicDTO.ViewDTO> getByKey(String key) {
         List<DictBasicEntity> list = listByKey(key);
-        List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
-        return resultList;
+        return BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
     }
     /**
      * 根据key 获取字典数据
@@ -165,5 +163,37 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
             treeList.add(tree);
         });
         return treeList;
+    }
+
+    @Override
+    public List<DictBasicDTO.ViewDTO> listSalesPlatform(String key) {
+        List<DictBasicEntity> list = listByKey(key);
+        if (DictBasicTypeEnum.SALES_PLATFORM.getType().equals(key)){
+            //销售平台下拉框去除全托管平台类型
+            List<DictBasicEntity> dictList = listByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
+            if (CollUtil.isNotEmpty(dictList)){
+                list = list.stream().filter(x ->!dictList.stream().map(DictBasicEntity::getValue).collect(Collectors.toList()).contains(x.getValue())).collect(Collectors.toList());
+            }
+        }
+        return BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class);
+    }
+
+    @Override
+    public List<BaseDropDownDTO.CommonDTO> listInternalSalesPlatform(String key) {
+//        List<DictBasicEntity> list =  listByType(key,DictBasicTypeEnum.SALES_PLATFORM_INTERNAL.getType());
+        List<DictBasicEntity> list = lambdaQuery()
+                .eq(DictBasicEntity::getType, key)
+                .eq(DictBasicEntity::getStatus, Boolean.TRUE)
+                .in(DictBasicEntity::getSubType,
+                        DictBasicTypeEnum.SALES_PLATFORM_INTERNAL.getType(),
+                        DictBasicTypeEnum.SALES_PLATFORM_OTHER.getType())
+                .list();
+
+        List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class).stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
+
+        List<BaseDropDownDTO.CommonDTO> result = resultList.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+                .collect(Collectors.toList());
+        return result;
     }
 }

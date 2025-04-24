@@ -154,7 +154,6 @@ public class YanWenCreateWayBillRequest {
         @NotNull(message = "是否带电标识不能为空")
         private Integer hasBattery;
 
-        //币种代码传 USD,EUR,GBP,CNY,AUD,CAD;
         @NotNull(message = "币种代码不能为空")
         @StateEnumValue(strValues = {"USD", "EUR","GBP","CNY","AUD","CAD"}, message = "币种代码有误")
         private String currency;

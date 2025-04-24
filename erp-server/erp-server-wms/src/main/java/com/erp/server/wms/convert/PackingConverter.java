@@ -1,5 +1,6 @@
 package com.erp.server.wms.convert;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.utils.MD5Util;
 import com.common.business.utils.StringUtil;
 import com.erp.model.wms.dto.*;
@@ -38,6 +39,8 @@ public interface PackingConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "sourceId", source = "id"),
             @Mapping(target = "sourceCode", source = "code"),
+            @Mapping(target = "businessId", source = "sourceId"),
+            @Mapping(target = "businessCode", source = "sourceCode"),
             @Mapping(target = "sourceType", constant = "B2B"),
             @Mapping(target = "warehouseId", source = "warehouseId"),
             @Mapping(target = "warehouseName", source = "warehouseName"),
@@ -61,7 +64,7 @@ public interface PackingConverter {
             @Mapping(target = "skuNo", source = "detailEntity.skuNo"),
             @Mapping(target = "deliveryQty", source = "detailEntity.deliveryQty"),
             @Mapping(target = "sourceDetailId", source = "detailEntity.id"),
-            @Mapping(target = "fnSku", ignore = true)
+            @Mapping(target = "fnSku", source = "detailEntity.platformSkuNo")
     })
     PackingTaskDetailEntity b2bDeliveryDetailToPackingTaskDetail(SoDeliveryNoticeDetailEntity detailEntity);
     List<PackingTaskDetailEntity> b2bDeliveryDetailToPackingTaskDetail(List<SoDeliveryNoticeDetailEntity> detailEntityList);
@@ -155,6 +158,8 @@ public interface PackingConverter {
             @Mapping(target = "isDeleted", ignore = true),
             @Mapping(target = "sourceId", source = "requisitionApplicationEntity.id"),
             @Mapping(target = "sourceCode", source = "requisitionApplicationEntity.code"),
+            @Mapping(target = "businessId", source = "requisitionApplicationEntity.sourceId"),
+            @Mapping(target = "businessCode", source = "requisitionApplicationEntity.sourceCode"),
             @Mapping(target = "sourceType", source = "sourceType"),
             @Mapping(target = "warehouseId", source = "requisitionApplicationEntity.requisitionWarehouseId"),
             @Mapping(target = "warehouseName", source = "requisitionApplicationEntity.requisitionWarehouseName"),
@@ -185,10 +190,10 @@ public interface PackingConverter {
     List<PackingTaskDetailEntity> requisitionDetailToPackingTaskDetail(List<RequisitionApplicationDetailEntity> detailEntityList);
 
     static String getFnSkuByReqDetail(RequisitionApplicationDetailEntity detailEntity){
-        return StringUtils.isBlank(detailEntity.getPlatformFnSku())?detailEntity.getPlatformSku():detailEntity.getPlatformFnSku();
+        return CharSequenceUtil.isBlank(detailEntity.getPlatformFnSku())?detailEntity.getPlatformSku():detailEntity.getPlatformFnSku();
     }
     static String getFnSkuByDeliveryDetail(FirstMileDeliveryDetailEntity detailEntity){
-        return StringUtils.isBlank(detailEntity.getFnSku())?detailEntity.getPlatformSkuNo():detailEntity.getFnSku();
+        return CharSequenceUtil.isBlank(detailEntity.getFnSku())?detailEntity.getPlatformSkuNo():detailEntity.getFnSku();
     }
 
 }

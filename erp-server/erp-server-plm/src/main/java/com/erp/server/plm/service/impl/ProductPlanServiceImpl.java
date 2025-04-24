@@ -9,11 +9,11 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.business.dto.TabListDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.MonthEnum;
-import com.common.business.enums.PlatformDictEnum;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.*;
 import com.common.business.enums.ProductTypeEnum;
-import com.common.business.enums.SeasonEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -34,6 +34,7 @@ import com.erp.model.plm.vo.ProductPlanGroupVO;
 import com.erp.model.plm.vo.ProductPlanStatisticsVO;
 import com.erp.model.plm.vo.ProductPlanVO;
 import com.erp.model.sys.dto.SysUserDeptDTO;
+import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.listener.ProductPlanExcelListener;
@@ -108,6 +109,9 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
     @Resource
     private ProductStatusTimeService productStatusTimeService;
 
+    @Resource
+    private ApplicationCategoryService applicationCategoryService;
+
     @Override
     public PagingVO<List<ProductPlanVO>> paging(PagingDTO<ProductPlanSearchDTO> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
@@ -115,7 +119,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         IPage<ProductPlanVO> pageData = this.baseMapper.paging(query, pagingDTO.getParams());
         List<ProductPlanVO> records = pageData.getRecords();
         if (CollectionUtils.isNotEmpty(records)) {
+            List<String> applicationCategoryIds = pageData.getRecords().stream().map(ProductPlanVO::getApplicationCategoryId).distinct().collect(Collectors.toList());
+            List<ApplicationCategoryEntity> list = applicationCategoryService.listByIds(applicationCategoryIds);
+            Map<String, String> applicationCategoryMap = list.stream()
+                    .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
             records.forEach(obj -> {
+                obj.setApplicationCategoryName(applicationCategoryMap.get(obj.getApplicationCategoryId()));
                 //产品状态格式化
                 obj.setProductStatusName(ProductPlanStatusEnum.getNameByCode(obj.getProductStatus()));
                 //调研是否延期
@@ -143,8 +152,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (ObjectUtils.isEmpty(productPlanEntity)) {
             throw new ServiceException(ApiError.ERROR_95133);
         }
+        ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryService.getById(productPlanEntity.getApplicationCategoryId());
         ProductPlanDTO productPlanDTO = new ProductPlanDTO();
         BeanMapperUtils.copy(productPlanEntity, productPlanDTO);
+        productPlanDTO.setApplicationCategoryName(applicationCategoryEntity.getName());
         resultDTO.setProductPlanDTO(productPlanDTO);
         //枚举格式化
         productPlanDTO.setProductStyleName(ProductStyleEnum.getNameByCode(productPlanEntity.getProductStyle()));
@@ -254,7 +265,8 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
 
     @Override
     public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
-        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this, basicDictService, basicCategoryService, productPlanSaleService, productPlanSaleInfoService, productPlanPurchaseService, productPlanRemarkService, sysUserFeign);
+        ProductPlanExcelListener excelListenerUtil = new ProductPlanExcelListener(this, basicDictService, basicCategoryService, productPlanSaleService, productPlanSaleInfoService,
+                productPlanPurchaseService, productPlanRemarkService, sysUserFeign, applicationCategoryService);
         try {
             EasyExcel.read(excelFile.getInputStream(), ProductPlanExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {
@@ -403,6 +415,7 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         productPlanEntity.setBrandName(productInfoEntity.getBrandName());
         productPlanEntity.setCategoryId(productInfoEntity.getCategoryId());
         productPlanEntity.setCategory(productInfoEntity.getCategory());
+        productPlanEntity.setApplicationCategoryId(productInfoEntity.getApplicationCategoryId());
         productPlanEntity.setGradeId(productInfoEntity.getGradeId());
         productPlanEntity.setGrade(productInfoEntity.getGrade());
         productPlanEntity.setSpuNo(productInfoEntity.getSpuNo());
@@ -571,10 +584,10 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
             Integer completeCount = MathUtil.ZERO;
             monthList.add(monthEnum.getCode().concat("月份"));
             if (CollectionUtils.isNotEmpty(approvalList)) {
-                approvalCount = approvalList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(Integer.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getApprovalCount).findFirst().orElse(0);
+                approvalCount = approvalList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(obj.getMonth())).map(ProductPlanApprovalTrendDTO::getApprovalCount).findFirst().orElse(0);
             }
             if (CollectionUtils.isNotEmpty(completeList)) {
-                completeCount = completeList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(Integer.valueOf(obj.getMonth()))).map(ProductPlanApprovalTrendDTO::getCompleteCount).findFirst().orElse(0);
+                completeCount = completeList.stream().filter(obj -> (Integer.valueOf(monthEnum.getCode())).equals(obj.getMonth())).map(ProductPlanApprovalTrendDTO::getCompleteCount).findFirst().orElse(0);
             }
             approvalCountList.add(approvalCount);
             completeCountList.add(completeCount);
@@ -904,7 +917,12 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
         if (CollectionUtils.isNotEmpty(page.getRecords())) {
             List<String> productPlanIds = page.getRecords().stream().map(ProductPlanExcelDTO::getProductPlanId).collect(Collectors.toList());
             List<ProductPlanSaleInfoEntity> productPlanSaleInfoList = productPlanSaleInfoService.listByProductPlanIds(productPlanIds);
+            List<String> applicationCategoryIds = page.getRecords().stream().map(ProductPlanExcelDTO::getApplicationCategoryId).distinct().collect(Collectors.toList());
+            List<ApplicationCategoryEntity> list = applicationCategoryService.listByIds(applicationCategoryIds);
+            Map<String, String> applicationCategoryMap = list.stream()
+                    .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
             page.getRecords().forEach(obj -> {
+                obj.setApplicationCategory(applicationCategoryMap.get(obj.getApplicationCategoryId()));
                 //枚举格式化
                 obj.setProductStyleName(ProductStyleEnum.getNameByCode(obj.getProductStyleName()));
                 obj.setProductTypeName(ProductTypeEnum.getNameByCode(obj.getProductTypeName()));
@@ -1036,6 +1054,33 @@ public class ProductPlanServiceImpl extends ServiceImpl<ProductPlanMapper, Produ
                 productPlanEntity.setProjectApprovalDate(projectApprovalDate.toLocalDate());
             }
         }
+    }
+
+    @Override
+    public List<TabListDTO> tabList(PermissionsDTO dto) {
+        List<TabListDTO> resultList = new LinkedList<>();
+        ProductPlanSearchDTO productPlanSearchDTO = new ProductPlanSearchDTO();
+        productPlanSearchDTO.setPermissionSql(dto.getPermissionSql());
+        productPlanSearchDTO.setType("0");
+
+        Integer allCount = baseMapper.tabList(productPlanSearchDTO);
+        resultList.add(new TabListDTO("all","全部" , allCount));
+
+        // 尚未开始
+        productPlanSearchDTO.setType("1");
+        Integer type1Count = baseMapper.tabList(productPlanSearchDTO);
+        resultList.add(new TabListDTO("1","尚未开始" ,type1Count));
+
+        // 已立项
+        productPlanSearchDTO.setType("2");
+        Integer type2Count = baseMapper.tabList(productPlanSearchDTO);
+        resultList.add(new TabListDTO("2","已立项" ,type2Count));
+
+        // 开发中
+        productPlanSearchDTO.setType("3");
+        Integer type3Count = baseMapper.tabList(productPlanSearchDTO);
+        resultList.add(new TabListDTO("3","开发中" ,type3Count));
+        return resultList;
     }
 
 }

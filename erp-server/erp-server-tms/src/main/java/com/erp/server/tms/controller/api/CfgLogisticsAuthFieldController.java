@@ -1,32 +1,21 @@
 package com.erp.server.tms.controller.api;
 
 
-import com.common.business.enums.LogisticsPlatformEnum;
-import com.erp.server.tms.handler.LogisticsRegistry;
-import com.erp.server.tms.service.LogisticsService;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-
-import javax.annotation.Resource;
-
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.CfgLogisticsAuthFieldService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.CfgLogisticsAuthFieldDTO;
+import com.erp.server.tms.handler.LogisticsRegistry;
+import com.erp.server.tms.service.CfgLogisticsAuthFieldService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
 
 /**
  * 物流商管理
@@ -70,7 +59,7 @@ public class CfgLogisticsAuthFieldController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "物流商授权字段配置表修改")
-    public ApiResult update(@RequestBody @Validated CfgLogisticsAuthFieldDTO.UpdateDTO dto) {
+    public ApiResult<String> update(@RequestBody @Validated CfgLogisticsAuthFieldDTO.UpdateDTO dto) {
         cfgLogisticsAuthFieldService.update(dto);
         return success();
     }

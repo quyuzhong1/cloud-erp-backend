@@ -6,6 +6,9 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.sys.dto.OpenApiReqDTO;
 import com.erp.server.auth.config.OpenApi;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @OpenApi
 public class TestOpenApi {
 	
@@ -14,7 +17,7 @@ public class TestOpenApi {
 	 */
 	@OpenApi("testVoid")
 	public void testVoid() {
-		
+		log.debug("测试testVoid");
 	}
 	
 	/**
@@ -31,7 +34,7 @@ public class TestOpenApi {
 	 * @return
 	 */
 	@OpenApi("testDto")
-	public ApiResult<?> testDto() {
+	public ApiResult testDto() {
 		ApiResult success = ApiResult.success();
 		success.setData("测试返回testDto");
 		return success;

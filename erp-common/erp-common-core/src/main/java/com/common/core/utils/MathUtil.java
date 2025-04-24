@@ -71,7 +71,7 @@ public class MathUtil {
      * @param val
      * @return
      */
-    public Integer valueOf(Integer val) {
+    public Integer valueOfZero(Integer val) {
         if (val == null) {
             return 0;
         }
@@ -428,7 +428,7 @@ public class MathUtil {
         float minF = min.floatValue();
         float maxF = max.floatValue();
         //生成随机数
-        BigDecimal db = new BigDecimal(Math.random() * (maxF - minF) + minF);
+        BigDecimal db = BigDecimal.valueOf(Math.random() * (maxF - minF) + minF);
         //返回保留两位小数的随机数。不进行四舍五入
         return db.setScale(scale, BigDecimal.ROUND_DOWN);
     }

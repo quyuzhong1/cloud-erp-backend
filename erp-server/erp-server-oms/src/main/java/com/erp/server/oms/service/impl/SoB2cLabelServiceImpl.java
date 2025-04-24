@@ -2,20 +2,25 @@ package com.erp.server.oms.service.impl;
 
 
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.erp.model.oms.dto.SoB2cLabelDTO;
 import com.erp.model.oms.entity.SoB2cLabelEntity;
+import com.erp.model.oms.enums.SoB2cLabelSourceTypeEnum;
 import com.erp.server.oms.mapper.SoB2cLabelMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.SoB2cLabelService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -29,7 +34,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, SoB2cLabelEntity> implements SoB2cLabelService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Override
@@ -55,7 +60,27 @@ public class SoB2cLabelServiceImpl extends SuperServiceImpl<SoB2cLabelMapper, So
         if (CollectionUtils.isEmpty(mainIds)) {
             return Collections.emptyList();
         }
-        return lambdaQuery().in(SoB2cLabelEntity::getMainId, mainIds).list();
+        return lambdaQuery().in(SoB2cLabelEntity::getMainId, mainIds).orderByDesc(SoB2cLabelEntity::getCreateTime).list();
+    }
+
+    @Override
+    public void ManualUploadLabel(String base64, String id) {
+
+        SoB2cLabelEntity existApiEntity = lambdaQuery().eq(SoB2cLabelEntity::getMainId, id).eq(SoB2cLabelEntity::getSourceType, SoB2cLabelSourceTypeEnum.API.getCode()).last("LIMIT 1").one();
+        if(Objects.nonNull(existApiEntity)){
+            throw new ServiceException("已存在物流商面单，无法上传");
+        }
+        //先删除，再新增
+        List<SoB2cLabelEntity> manualEntityList = lambdaQuery().eq(SoB2cLabelEntity::getMainId, id).eq(SoB2cLabelEntity::getSourceType, SoB2cLabelSourceTypeEnum.MANUAL.getCode()).list();
+        if(CollectionUtils.isNotEmpty(manualEntityList)){
+            List<String> ids = manualEntityList.stream().map(SoB2cLabelEntity::getId).collect(Collectors.toList());
+            this.removeByIds(ids);
+        }
+        SoB2cLabelEntity addEntity = new SoB2cLabelEntity();
+        addEntity.setMainId(id);
+        addEntity.setLogisticsLabelBase64(base64);
+        addEntity.setSourceType(SoB2cLabelSourceTypeEnum.MANUAL.getCode());
+        this.save(addEntity);
     }
 
     /**

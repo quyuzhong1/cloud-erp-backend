@@ -1,7 +1,11 @@
 package com.sdk.wms.goodcang.service;
 
 
+import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
+import com.sdk.wms.goodcang.constants.GoodCangConstants;
 import com.sdk.wms.goodcang.dto.request.*;
 import com.sdk.wms.goodcang.dto.response.*;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
@@ -13,13 +17,18 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-//生产 url : https://oms.goodcang.net  appToken : a39ab99c1437c991ec07fad4e1f78f8f appKey f7e4102f9b0b983e58bed3140dc22f1a
+//生产 url : https://oms.goodcang.net  appToken : a39ab99c1437c991ec07fad4e1f78f8f appKey 2ebe5419f7bce44074e93ce639fa5136
 //测试 url : https://uat-oms.eminxing.com appToken:  7013991264f611e98ea200e01b680258 appKey 6ff50abf64f611e98ea200e01b680258
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes={GoodCangService.class, GoodCangUtils.class})
@@ -31,7 +40,7 @@ public class GoodCangServiceTest {
     public GoodCangServiceTest(){
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("appToken","7013991264f611e98ea200e01b680258");
-        authMap.put("appKey","6ff50abf64f611e98ea200e01b680258");
+        authMap.put("appKey","2ebe5419f7bce44074e93ce639fa5136");
         ThirdWarehouseContext.setAuthMap(authMap);
     }
 
@@ -44,22 +53,14 @@ public class GoodCangServiceTest {
         GoodCangGetSkuReq goodCangGetSkuReq = GoodCangGetSkuReq.builder()
                 .page(1)
                 .pageSize(100)
-//                .productUpdateTimeFrom("2023-09-26 15:00:00")
-//                .productUpdateTimeTo("2023-09-26 16:00:00")
+                .productUpdateTimeFrom("2023-09-26 15:00:00")
+                .productUpdateTimeTo("2023-09-26 16:00:00")
 //                .productSku("YDXN5C-001300UK")
-                .productSkuArr(Arrays.asList("M032GBB1","L055GBA1"))
+//                .productSkuArr(Arrays.asList("M032GBB1","L055GBA1"))
                 .build();
         List<GoodCangSkuResp> respList = new ArrayList<>();
-        int page = 1;
-        while (true) {
-            goodCangGetSkuReq.setPage(page);
-            GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
-            respList.addAll(goodCangResponse.getData());
-            if (goodCangResponse.getCount() <= page * 100) {
-                break;
-            }
-            page++;
-        }
+        GoodCangResponse<List<GoodCangSkuResp>> goodCangResponse = goodCangService.getSkuList(goodCangGetSkuReq);
+        System.out.println(goodCangResponse);
         respList = respList.stream().filter(v->v.getProductStatus().equals(GoodCangEnums.OpenApiProductStatusEnum.AVAILABLE.getCode())).collect(Collectors.toList());
         System.out.println(respList.size());
     }
@@ -84,9 +85,9 @@ public class GoodCangServiceTest {
     @Test
     public void getOutboundTest() {
         GoodCangGetOutBoundReq goodCangGetOutBoundReq = GoodCangGetOutBoundReq.builder()
-//                .modifyDateFrom(LocalDateTime.of(2020,12,20, 0, 0, 0))
-//                .modifyDateTo(LocalDateTime.of(2023,12,20, 0, 0, 0))
-                .orderCode("G1149-240515-0008")
+                .modifyDateFrom(LocalDateTime.of(2018,11,20, 0, 0, 0))
+                .modifyDateTo(LocalDateTime.of(2018,12,20, 0, 0, 0))
+//                .orderCode("G1149-240515-0008")
                 .page(1)
                 .pageSize(20)
                 .build();
@@ -211,4 +212,81 @@ public class GoodCangServiceTest {
         System.out.println(response.getData());
     }
 
+    @Test
+    public void getReturnInstockTest() {
+        GoodCangGetReturnInstockReq goodCangGetReturnInstockReq = GoodCangGetReturnInstockReq
+                .builder()
+                .currentPage(1)
+                .pageSize(5)
+//                .asroStatus(5)
+                .build();
+        GoodCangResponse<List<GoodCangReturnInstockResp>> response = goodCangService.getReturnInstock(goodCangGetReturnInstockReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
+    @Test
+    public void getInventoryAgeList() {
+        Map<Object, Object> hashMap = new HashMap<>();
+        hashMap.put("page_size", 200);
+        hashMap.put("page", 2);
+        String json = JSON.toJSONString(hashMap);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.INVENTORY_AGE_LIST,json);
+        System.out.println("结果 :"+ response);
+    }
+
+    @Test
+    public void getCalculateDeliveryFeeTest() {
+        GoodCangCalculateDeliveryFeeReq deliveryFeeReq = GoodCangCalculateDeliveryFeeReq
+                .builder()
+                .warehouseCode("USWE")
+                .countryCode("US")
+                .postcode("33178")
+                .weight(1F)
+                .build();
+        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(deliveryFeeReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
+
+    @Test
+    public void uploadFile() {
+        String fileData = "";
+        try {
+            InputStream inputStream = getClass().getClassLoader().getResourceAsStream("fileBase64.txt");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            StringBuilder builder = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null){
+                builder.append(line);
+            }
+            fileData = builder.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        GoodCangUploadFileReq uploadFileReq = GoodCangUploadFileReq
+                .builder()
+                .file(fileData)
+                .useFor("ORDER_LABEL_ATTACHMENT")
+                .fileName("33178.pdf")
+                .build();
+        GoodCangResponse<GoodCangUploadFileResp> response = goodCangService.uploadFile(uploadFileReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
+    @Test
+    public void uploadOrderLabel() {
+        GoodCangUploadOrderLabelReq.LabelInfo labelInfo = new GoodCangUploadOrderLabelReq.LabelInfo();
+        labelInfo.setLabelIdList(Collections.singletonList(45234));
+        labelInfo.setLabelImageType(3);
+        GoodCangUploadOrderLabelReq uploadOrderLabelReq = GoodCangUploadOrderLabelReq
+                .builder()
+                .orderCode("LP00667624835862")
+                .trackingNumber("CNG00667624835862")
+                .labelInfo(labelInfo)
+                .build();
+        GoodCangResponse<GoodCangUploadOrderLabelResp> response = goodCangService.uploadOrderLabel(uploadOrderLabelReq);
+        System.out.println(response);
+        System.out.println(JSONUtil.toJsonStr(response.getData()));
+    }
 }

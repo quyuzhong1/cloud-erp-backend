@@ -66,40 +66,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         return baseMapper.listProductInfoByIds(ids);
     }
 
-    /**
-     * 更新PLM同步过来的数据
-     * @Author Luo_WG
-     * @Date 2023/4/19 16:05
-     **/
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean saveOrUpdateProductInfo(List<ProductInfoEntity> productInfoEntityList) {
-        List<String> detailIds = productInfoEntityList.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
-        List<ProductInfoEntity> detailEntityList = ListProductInfoByIds(detailIds);
-        List<String> ids = productInfoEntityList.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
-        List<String> dbIds = detailEntityList.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
-        List<String> existIdList = ids.stream().filter(s -> dbIds.contains(s)).collect(Collectors.toList());
-        List<String> notExistIdList = ids.stream().filter(s -> !dbIds.contains(s)).collect(Collectors.toList());
-        List<ProductInfoEntity> notExistDetailEntityList = new ArrayList<>();
-        List<ProductInfoEntity> existDetailEntityList = new ArrayList<>();
-        for (ProductInfoEntity detailEntity : productInfoEntityList) {
-            if (notExistIdList.contains(detailEntity.getId())) {
-//                notExistDetailEntityList.add(detailEntity);
-                this.save(detailEntity);
-            }
-            if (existIdList.contains(detailEntity.getId())) {
-//                existDetailEntityList.add(detailEntity);
-                baseMapper.updateAllById(detailEntity);
-            }
-        }
-//        if (CollectionUtils.isNotEmpty(notExistDetailEntityList)) {
-//            this.saveBatch(notExistDetailEntityList);
-//        }
-//        if (CollectionUtils.isNotEmpty(existDetailEntityList)) {
-//            baseMapper.updateBatchSelective(existDetailEntityList);
-//        }
-        return Boolean.TRUE;
-    }
-
     @Override
     public List<BaseDropDownDTO.CommonDTO> getNotEmptySpuNos() {
         List<String> spuNos = this.baseMapper.getNotEmptySpuNos();

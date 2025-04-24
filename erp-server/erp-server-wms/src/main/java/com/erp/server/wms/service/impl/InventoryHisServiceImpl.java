@@ -1,9 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -92,20 +91,20 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
                 .orderByAsc(InventoryHisEntity::getBillDate)
                 .last("for update")
                 .list();
-        if(CollectionUtil.isEmpty(lockInventoryHisList)){
+        if(CollUtil.isEmpty(lockInventoryHisList)){
             log.info("需要修复历史库存列表为空！hisEntity={}", JSONUtil.toJsonStr(hisEntity));
             XxlJobHelper.log("需要修复历史库存列表为空！");
             return;
         }
         Map<String, InventoryHisEntity> inventoryHisMap = lockInventoryHisList
                 .stream()
-                .collect(Collectors.toMap(item -> StrUtil.format("{}_{}", item.getInfoId(), item.getBillDate()), item -> item));
+                .collect(Collectors.toMap(item -> CharSequenceUtil.format("{}_{}", item.getInfoId(), item.getBillDate()), item -> item));
 
         // 按单据日期统计流水
         Map<String, Integer> flowBillDataMap = flowList
                 .stream()
                 .sorted(Comparator.comparing(TransactionFlowEntity::getBillDate))
-                .collect(Collectors.groupingBy(item -> StrUtil.format("{}_{}", item.getInventoryId(), item.getBillDate()),
+                .collect(Collectors.groupingBy(item -> CharSequenceUtil.format("{}_{}", item.getInventoryId(), item.getBillDate()),
                         Collectors.summingInt(TransactionFlowEntity::getQty)));
         // 遍历统计流水日期
         AtomicReference<Integer> curQty = new AtomicReference<>(hisEntity.getQty());
@@ -143,6 +142,14 @@ public class InventoryHisServiceImpl extends SuperServiceImpl<InventoryHisMapper
         if(CollUtil.isNotEmpty(removeHisIdList)){
             removeByIds(removeHisIdList);
         }
+    }
+
+    @Override
+    public void removeByInventoryIds(List<String> InventoryIds, LocalDate startDate) {
+        LambdaQueryWrapper<InventoryHisEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(InventoryHisEntity::getInfoId, InventoryIds);
+        queryWrapper.ge(InventoryHisEntity::getBillDate, startDate);
+        baseMapper.delete(queryWrapper);
     }
 
 

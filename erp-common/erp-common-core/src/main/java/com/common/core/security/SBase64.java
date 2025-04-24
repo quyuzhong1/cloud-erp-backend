@@ -72,34 +72,6 @@ public class SBase64 {
 	}
 
 	/**
-	 * 文件转Base64字符串
-	 *
-	 * @param fileName 文件名
-	 * @return Base64字符串
-	 * @throws IOException 抛出异常
-	 */
-	public static String fileToBase64(String fileName) throws IOException {
-		InputStream in = null;
-		byte[] data = null;
-		try {
-			File file = new File(fileName);
-			if (!file.exists()) {
-				throw new IOException("fileName:" + fileName + ",文件不存在");
-			}
-
-			in = new FileInputStream(fileName);
-			data = new byte[in.available()];
-			in.read(data);
-		} catch (IOException e) {
-			throw e;
-		} finally {
-			IOUtils.closeQuietly(in);
-		}
-		// 对字节数组Base64编码
-		return Base64.encodeBase64String(data);// 返回Base64编码过的字节数组字符串
-	}
-
-	/**
 	 * Base64字符串转文件并写入
 	 *
 	 * @param base64Str Base64字符串
@@ -143,34 +115,8 @@ public class SBase64 {
 	}
 
 	public static void main(String[] args) throws IOException {
-//		String sourceString="中华人民共和国";
-//		String base64String=stringToBase64(sourceString);
-//		String targetString=base64ToString(base64String);
-//		
-//		System.out.println("加密前:"+sourceString);
-//		System.out.println("加密后:"+base64String);
-//		System.out.println("解密后:"+targetString);
-
-
-//		String sourceFileName="d://动态短信验证码安全防护方案201507.pdf";
-//		String base64FileString=fileToBase64(sourceFileName);		
-//		System.out.println("加密文件:"+sourceFileName);
-//		System.out.println("加密后："+base64FileString);
-//		
-//		String baseOutFile="d://1.txt";
-//		writeStrToFile(base64FileString,baseOutFile);
-
-//		String targetFileName="d://动态短信验证码安全防护方案201507Base64.pdf";
-//		base64ToFile(base64FileString,targetFileName);
-//		System.out.println("解密后文件:"+targetFileName);
-
-//		System.out.println(FileUtil.txtToString(new File("D://1.txt")));
-
-		//String content=FileUtil.getContentFromFile(new File("d://base64pdf.txt"));
-		String primstr = fileToBase64("C:/Users/Administrator/Desktop/itext测试/iTextAsian.zip");
-
 		try {
-			base64ToFile(primstr, "C:/Users/Administrator/Desktop/itext测试/新建文本文档1.zip");
+			base64ToFile("", "C:/Users/Administrator/Desktop/itext测试/新建文本文档1.zip");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

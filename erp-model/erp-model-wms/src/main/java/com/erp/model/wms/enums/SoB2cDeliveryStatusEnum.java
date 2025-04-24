@@ -75,5 +75,4 @@ public enum SoB2cDeliveryStatusEnum implements EnumMessage {
     public static List<String> notFinishPrint(){
         return Arrays.asList(WAIT_HANDLE.getCode(), EXCEPTION_ORDER.getCode(), CANCEL_DELIVERY.getCode(), SHIPPED.getCode());
     }
-
 }

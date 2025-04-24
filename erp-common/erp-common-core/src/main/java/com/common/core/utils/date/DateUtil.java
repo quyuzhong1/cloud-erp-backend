@@ -18,7 +18,6 @@ import java.util.regex.Pattern;
 
 /**
  * @Classname 日期工具类
-
  * @Date 2022-08-02 16:10
  * @Created by yl
  */
@@ -29,26 +28,28 @@ public class DateUtil {
 
     }
 
-    public static final String fmt = "yyyy-MM-dd HH:mm:ss",
-            fmt_day = "yyyy-MM-dd",
-            fmt_year_month = "yyyy/MM/dd",
-            fmt_recent = "MM-dd HH:mm",
-            fmt_num = "yyMMdd",
-            fmt_year = "yy",
-            fmt_md = "MMdd",
-            fmt_month = "yyyy-MM",
-            fmt_quarter = "yyyy-M",
+    public static final String fmt = "yyyy-MM-dd HH:mm:ss";
+    public static final String fmt_day = "yyyy-MM-dd";
+    public static final String fmt_year_month = "yyyy/MM/dd";
+    public static final String fmt_recent = "MM-dd HH:mm";
+    public static final String fmt_num = "yyMMdd";
+    public static final String fmt_year = "yy";
+    public static final String fmt_md = "MMdd";
+    public static final String fmt_month = "yyyy-MM";
+    public static final String fmt_quarter = "yyyy-M";
+    public static final String fmt_hms = "HH:mm:ss";
 
-            fmt_hms = "HH:mm:ss";
-
-    public final static String FMT_YEAR4 = "yyyy", DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm", DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd", DATE_PATTERN_SHORT_TIME_NO_SP = "yyyyMMddHHmmss";
+    public static final String FMT_YEAR4 = "yyyy";
+    public static final String DATE_TIME_PATTERN_NO_SEC = "yyyy-MM-dd HH:mm";
+    public static final String DATE_PATTERN_SHORT_YEAR_NO_SP = "yyyyMMdd";
+    public static final String DATE_PATTERN_SHORT_TIME_NO_SP = "yyyyMMddHHmmss";
 
 
     public static LocalDateTime nowDay() {
-        return now(fmt_day);
+        return now();
     }
 
-    public static LocalDateTime now(String fmt) {
+    public static LocalDateTime now() {
         return toDay(LocalDateTime.now());
     }
 
@@ -62,11 +63,9 @@ public class DateUtil {
         int dayOfYear = date.getYear();
         int dayOfMonth = date.getDayOfMonth();
         int monthValue = date.getMonthValue();
-        StringBuffer sb = new StringBuffer();
-        sb.append(dayOfYear).append("年");
-        sb.append(monthValue).append("月");
-        sb.append(dayOfMonth).append("日");
-        return sb.toString();
+        return dayOfYear + "年" +
+                monthValue + "月" +
+                dayOfMonth + "日";
     }
 
     /**
@@ -178,7 +177,7 @@ public class DateUtil {
      */
     public static long getDiffDay(String beginDateStr, String endDateStr) {
         long day = 0;
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat format = new SimpleDateFormat(fmt_day);
         Date beginDate = null;
         Date endDate = null;
 
@@ -192,7 +191,7 @@ public class DateUtil {
     }
 
     public static int getDiffDay(Date beginDate, Date endDate) {
-        return (int) ((endDate.getTime() - beginDate.getTime()) / (24 * 60 * 60 * 1000));
+        return (int) ((endDate.getTime() - beginDate.getTime()) / (24 * 60 * 60 * 1000L));
     }
 
     /**
@@ -203,7 +202,7 @@ public class DateUtil {
      * @return 日期，格式为yyyy-MM-dd
      */
     public static String getWeekStartDate(int yearNo, int weekNo) {
-        SimpleDateFormat format_Date = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat format_Date = new SimpleDateFormat(fmt_day);
         Calendar cal = Calendar.getInstance();
         cal.setFirstDayOfWeek(Calendar.SUNDAY);
         cal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY);
@@ -222,7 +221,7 @@ public class DateUtil {
      * @return 日期，格式为yyyy-MM-dd
      */
     public static String getWeekEndDate(int yearNo, int weekNo) {
-        SimpleDateFormat format_Date = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat format_Date = new SimpleDateFormat(fmt_day);
         Calendar cal = Calendar.getInstance();
 
         cal.setFirstDayOfWeek(Calendar.SUNDAY);
@@ -252,7 +251,7 @@ public class DateUtil {
     }
 
     public static String getWeekStartDate(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); // 设置时间格式
+        SimpleDateFormat sdf = new SimpleDateFormat(fmt_day); // 设置时间格式
         Calendar cal = Calendar.getInstance();
 
         cal.setTime(date);
@@ -263,7 +262,7 @@ public class DateUtil {
     }
 
     public static String getWeekEndDate(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); // 设置时间格式
+        SimpleDateFormat sdf = new SimpleDateFormat(fmt_day); // 设置时间格式
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);
         int dayWeek = cal.get(Calendar.DAY_OF_WEEK);// 获得当前日期是一个星期的第几天
@@ -309,10 +308,10 @@ public class DateUtil {
      */
     public static String discrepancy(Date endDate, Date startDate) {
         if (endDate != null && startDate != null) {
-            long nd = 1000 * 24 * 60 * 60;
-            long nh = 1000 * 60 * 60;
-            long nm = 1000 * 60;
-            long ns = 1000;
+            long nd = 1000L * 24 * 60 * 60;
+            long nh = 1000L * 60 * 60;
+            long nm = 1000L * 60;
+            long ns = 1000L;
             // 获得两个时间的毫秒时间差异
             long diff = endDate.getTime() - startDate.getTime();
             // 计算差多少天
@@ -366,10 +365,10 @@ public class DateUtil {
      */
     public static String getRingRatioDate(Date endDate, Date startDate) {
         if (endDate != null && startDate != null) {
-            long nd = 1000 * 24 * 60 * 60;
-            long nh = 1000 * 60 * 60;
-            long nm = 1000 * 60;
-            long ns = 1000;
+            long nd = 1000L * 24 * 60 * 60;
+            long nh = 1000L * 60 * 60;
+            long nm = 1000L * 60;
+            long ns = 1000L;
             // 获得两个时间的毫秒时间差异
             long diff = endDate.getTime() - startDate.getTime();
             // 计算差多少天
@@ -419,12 +418,13 @@ public class DateUtil {
 
     /**
      * 计算日期的上一个月
+     *
+     * @param date      日期
+     * @param fmtReturn 返回的格式
+     * @param n         输出指定日期的上一个月，如果是-1则代表数据下一个月
+     * @return java.lang.String
      * @Author Luo_WG
      * @Date 2023/9/19 15:38
-     * @param date 日期
-     * @param fmtReturn 返回的格式
-     * @param n 输出指定日期的上一个月，如果是-1则代表数据下一个月
-     * @return java.lang.String
      **/
     public static String getPrevMonthDate(Date date, String fmtReturn, int n) {
         Calendar calendar = Calendar.getInstance();
@@ -435,12 +435,13 @@ public class DateUtil {
 
     /**
      * 计算日期的上一年
+     *
+     * @param date      日期
+     * @param fmtReturn 返回的格式
+     * @param n         输出指定日期的上一个月，如果是-1则代表数据下一年
+     * @return java.lang.String
      * @Author Luo_WG
      * @Date 2023/9/19 15:39
-     * @param date 日期
-     * @param fmtReturn 返回的格式
-     * @param n 输出指定日期的上一个月，如果是-1则代表数据下一年
-     * @return java.lang.String
      **/
     public static String getPrevYearDate(Date date, String fmtReturn, int n) {
         Calendar calendar = Calendar.getInstance();
@@ -451,10 +452,11 @@ public class DateUtil {
 
     /**
      * 东八区时间转UTC时间
+     *
      * @param localDateTime 东八区时间
      * @return java.time.OffsetDateTime UTC时间
      */
-    public static OffsetDateTime plus8SameUtcOffset(LocalDateTime localDateTime){
+    public static OffsetDateTime plus8SameUtcOffset(LocalDateTime localDateTime) {
         return localDateTime
                 .atZone(ZoneId.systemDefault())
                 .toOffsetDateTime()
@@ -463,6 +465,7 @@ public class DateUtil {
 
     /**
      * UTC时间转东八区时间
+     *
      * @param localDateTime UTC时间
      * @return java.time.LocalDateTime 东八区时间
      */
@@ -475,6 +478,7 @@ public class DateUtil {
 
     /**
      * UTC时间转东八区时间
+     *
      * @param localDateTime 东八区时间
      * @return java.time.LocalDateTime UTC时间
      */
@@ -492,10 +496,12 @@ public class DateUtil {
         LocalDate currentDate = LocalDate.now();
         // 格式化当前日期为字符串，格式为"yyyyMMdd"
 
-        return currentDate.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        return currentDate.format(DateTimeFormatter.ofPattern(DATE_PATTERN_SHORT_YEAR_NO_SP));
     }
+
     /**
      * 获取某年的全部日子
+     *
      * @param year
      * @return
      */
@@ -512,6 +518,7 @@ public class DateUtil {
 
     /**
      * 判断字符串是否是合法的日期或时间 yyyy或yyyy-MM或yyyy-MM-DD 或yyyy-MM-DD HH:MI:SS
+     *
      * @param input
      * @return
      */
@@ -522,7 +529,7 @@ public class DateUtil {
         return matcher.matches();
     }
 
-    public static String nowExcelFileFormat(){
+    public static String nowExcelFileFormat() {
         return DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
     }
 
@@ -557,15 +564,16 @@ public class DateUtil {
 
     /**
      * 解析时区字符串
+     *
      * @param dateTimeStr 格式: 2024-06-18T21:03:31+01:00[Europe/London] 或 2024-06-16T12:26:27+02:00
      * @return OffsetDateTime
      */
     public static OffsetDateTime parseOffsetDateTime(String dateTimeStr) {
-        if (StringUtils.isBlank(dateTimeStr)){
+        if (StringUtils.isBlank(dateTimeStr)) {
             return null;
         }
         //  兼容地区解析
-        if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
+        if (dateTimeStr.contains("[") || dateTimeStr.contains("]")) {
             // 尝试解析包含时区的字符串
             ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
             return zdt.toOffsetDateTime();
@@ -577,19 +585,20 @@ public class DateUtil {
 
     /**
      * 解析时区字符串
+     *
      * @param dateTimeStr 格式: 2024-06-18T21:03:31+01:00[Europe/London] 或 2024-06-16T12:26:27+02:00
      * @return LocalDateTime
      */
     public static LocalDateTime parseLocalDateTimeWithOffset(String dateTimeStr) {
-        if (StringUtils.isBlank(dateTimeStr)){
+        if (StringUtils.isBlank(dateTimeStr)) {
             return null;
         }
         //  兼容地区解析
-        if (dateTimeStr.contains("[") || dateTimeStr.contains("]") ) {
+        if (dateTimeStr.contains("[") || dateTimeStr.contains("]")) {
             // 尝试解析包含时区的字符串
             ZonedDateTime zdt = ZonedDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_ZONED_DATE_TIME);
             return zdt.toOffsetDateTime().toLocalDateTime();
-        }  else if (dateTimeStr.contains("+") || dateTimeStr.contains("-") ) {
+        } else if (dateTimeStr.contains("+") || dateTimeStr.contains("-")) {
             // 解析不包含时区的字符串
             return OffsetDateTime.parse(dateTimeStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME).toLocalDateTime();
         } else {
@@ -600,9 +609,10 @@ public class DateUtil {
 
     /**
      * 指定localDateTime时区转为目标时区
+     *
      * @param localDateTime 来源localDateTime
-     * @param sourceZoneId 来源时区
-     * @param targetZoneId 目标时区
+     * @param sourceZoneId  来源时区
+     * @param targetZoneId  目标时区
      * @return 转化后的localDateTime
      */
     public static LocalDateTime convertZoneTime(LocalDateTime localDateTime, ZoneId sourceZoneId, ZoneId targetZoneId) {

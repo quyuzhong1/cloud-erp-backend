@@ -96,11 +96,11 @@ public class TransferInDetailEntity extends BaseEntity<TransferInDetailEntity> {
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
+    
 
     public static final String OUT_WAREHOUSE_LOCATION = "out_warehouse_location";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String PLAN_QTY = "plan_qty";
 

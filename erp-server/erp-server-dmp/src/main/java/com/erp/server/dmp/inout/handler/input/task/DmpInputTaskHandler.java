@@ -86,8 +86,6 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	@Autowired
 	protected DmpCfgApiService dmpCfgApiService;
 	@Autowired
-	protected DmpCfgInputChildServiceImpl dmpCfgInputChildServiceImpl;
-	@Autowired
 	protected DmpInputCreateFactory dmpInputCreateFactory;
 	@Autowired
 	protected DmpInputTaskFileService dmpInputTaskFileService;
@@ -254,6 +252,9 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @param dmpOutputRequest
 	 */
 	protected void doBaseChain(DmpInputTaskRequest dmpRequest, DmpInputInitResponse dmpResponse , DmpHandlerChain chain , DmpOutputTaskRequest dmpOutputRequest) {
+		if(!dmpResponse.isDoNextStatus()) {
+			return;
+		}
 		if(dmpResponse.isDoOutputChain()) {
 			this.doOutputChain(dmpRequest, dmpResponse, chain, dmpOutputRequest);
 		}
@@ -261,7 +262,15 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 			this.doChildCfgInput(dmpRequest, dmpResponse);
 		}
 		if(dmpResponse.isDoUpdateStatus()) {
-			this.updateTaskStatus(dmpRequest, dmpResponse);
+			Integer childNeFinishCount = dmpInputTaskService.lambdaQuery()
+					.eq(DmpInputTaskEntity::getParentTaskId, inputTaskId)
+					.ne(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
+					.count();
+			if(childNeFinishCount == null || childNeFinishCount == 0) {
+				this.updateTaskStatus(dmpRequest, dmpResponse);
+			}else {
+				dmpResponse.setDoNextStatus(false);
+			}
 		}
 		if(dmpResponse.isDoNextChain()) {
 			this.doNextChain(dmpRequest, dmpResponse, chain);
@@ -469,7 +478,7 @@ public abstract class DmpInputTaskHandler extends DmpInputHandler{
 	 * @return
 	 */
 	protected List<DmpCfgInputChildEntity> getCfgInputChildList(DmpInputTaskRequest dmpRequest, DmpInputTaskResponse dmpResponse){
-		return dmpCfgInputChildServiceImpl.lambdaQuery()
+		return dmpCfgInputChildService.lambdaQuery()
 				.eq(DmpCfgInputChildEntity::getParentId, dmpResponse.getDmpCfgInputEntity().getId())
 				.eq(DmpCfgInputChildEntity::getInputStatus, dmpRequest.getDealTaskStatus())
 				.list();

@@ -80,12 +80,6 @@ public class OperateLogEntity extends BaseEntity<OperateLogEntity> {
 
     public static final String NEW_VALUE = "new_value";
 
-    public static final String CONTENT = "content";
-
-    public static final String OPERATION = "operation";
-
-    public static final String PID = "pid";
-
     @Override
     public Serializable pkVal() {
         return null;

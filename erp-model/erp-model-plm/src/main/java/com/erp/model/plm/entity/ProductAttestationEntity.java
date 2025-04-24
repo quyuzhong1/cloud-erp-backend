@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 @TableName("product_attestation")
 @Data
 @NoArgsConstructor
-public class ProductAttestationEntity extends BaseEntity {
+public class ProductAttestationEntity extends BaseEntity<ProductAttestationEntity> {
 
 
     /**

@@ -38,14 +38,7 @@ public final class UserContext {
      * @return {@link LoginUser}
      */
     public static LoginUser getDefaultLoginUser() {
-        LoginUser loginUser = userThreadLocal.get();
-        if (Objects.isNull(loginUser)) {
-            loginUser = new LoginUser();
-            loginUser.setUid("");
-            loginUser.setUserName("");
-            loginUser.setUserAccount("");
-        }
-        return loginUser;
+         return getNonLoginUser();
     }
 
     public static void clear() {

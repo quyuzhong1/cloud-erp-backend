@@ -11,9 +11,13 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -219,12 +223,6 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return List<LogisticsBillEntity>
      */
     List<LogisticsBillEntity> listByShopIdList(List<String> shopIdList);
-
-    /**
-     * 初始化物流单手机号数据
-     * @param dto
-     */
-    void initLogisticsBillPhone(LogisticsBillDTO.BillPhoneDTO dto);
     /**
      * @description: 根据销售出库单id集合查询
      * @author Will
@@ -252,4 +250,50 @@ public interface LogisticsBillService extends SuperService<LogisticsBillEntity> 
      * @return
      */
     List<LogisticsBillDTO.LogisticsBillVo> listLogisticsBillVoByTrackNo(List<String> trackNoList);
+
+    /**
+     * 同步业务单号到物流单
+     */
+    void initLogisticsBillBusinessCode();
+
+    /**
+     * 同步速递云销售出库单
+     * @param entity
+     * @param operateEnum
+     */
+    void pushSdyFieldHandler(LogisticsBillEntity entity, String operateEnum);
+
+    List<LogisticsBillEntity> queryToSdy(LocalDateTime startTime, LocalDateTime endTime, Integer pageSize, int offset);
+
+    /**
+     * 获取物流面单信息
+     * @param dto
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(LogisticsBillDTO.PrintLogisticsWaybillDTO dto);
+
+    /**
+     * 初始化物流单 无销售出库单 b2b/
+     */
+    void deleteLogisticsBillNoOutstock(String orderType);
+
+    /**
+     * 添加物流单明细并补充物流费用
+     */
+    void addNoLogisticsBillDetailByBill();
+
+    /**
+     * 导入物流轨迹
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importTrack(MultipartFile excelFile, HttpServletResponse response) throws Exception;
+
+    /**
+     * 更新物流单信息
+     * @param updateDetailList
+     * @param addTrackList
+     */
+    void updateImport(List<LogisticsBillDetailEntity> updateDetailList, List<LogisticsTrackEntity> addTrackList);
 }

@@ -16,6 +16,7 @@ import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -61,7 +62,11 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(CustomerContactEntity entity, String operate) {
         //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -143,8 +148,12 @@ public class SyncKingdeeCustomerContactServiceImpl implements SyncKingdeeCustome
         CustomerAddressDTO.ViewDTO viewDTO = viewDTOS.stream().filter(req -> req.getPerson().equals(entity.getPerson())).findFirst().orElse(new CustomerAddressDTO.ViewDTO());
         resultMap.put("addressCode", viewDTO.getCode());
         resultMap.put("address", viewDTO.getAddress());
+        String customerCode = "";
+        if(customerInfoEntity != null) {
+        	customerCode = customerInfoEntity.getCode();
+        }
         //客户编号
-        resultMap.put("customerCode", customerInfoEntity.getCode());
+        resultMap.put("customerCode", customerCode);
         return resultMap;
 	}
 }

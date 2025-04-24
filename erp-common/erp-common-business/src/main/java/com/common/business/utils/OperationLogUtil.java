@@ -13,7 +13,6 @@ import org.apache.commons.math3.util.Pair;
 import java.lang.reflect.Field;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -41,7 +40,7 @@ public class OperationLogUtil {
         }
         //如果两个对象Class不一致则提示
         if (!oldObject.getClass().equals(newObject.getClass())) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         //旧对象转Map
         Map<String,Object> oldMap = BeanMapUtil.objToMap(oldObject);
@@ -99,7 +98,7 @@ public class OperationLogUtil {
                 typeName = typeName.replace("java.util.List<", "");
                 typeName = typeName.replace(">","");
             } catch (Exception e) {
-                throw new ServiceException(ApiError.Default);
+                throw new ServiceException(ApiError.DEFAULT);
             }
             List<Object> list = TransitionUtil.transitionType(value, List.class);
             List<String> stringList = new ArrayList<>();
@@ -144,7 +143,7 @@ public class OperationLogUtil {
                 declaredField.setAccessible(true);
                 type = declaredField.getType().toString();
             } catch (NoSuchFieldException e) {
-                throw new ServiceException(ApiError.Default);
+                throw new ServiceException(ApiError.DEFAULT);
             }
             Iterator<Map.Entry<String, Object>> iterator = map.size() == 0 ? null : map.entrySet().iterator();
             while (iterator .hasNext()){

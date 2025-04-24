@@ -31,10 +31,12 @@ public class ScheduleTaskExportErrorExcelVO  {
 
     @ColumnWidth(50)
     @ExcelProperty(value = "产品名称", index = 0)
+    @FieldValid(fieldName = "产品名称",isNotBlank = true)
     private String productName;
 
     @ColumnWidth(50)
     @ExcelProperty(value = "任务名称", index = 1)
+    @FieldValid(fieldName = "任务名称",isNotBlank = true)
     private String taskName;
 
 
@@ -49,7 +51,7 @@ public class ScheduleTaskExportErrorExcelVO  {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划开始时间", index = 3)
-    @FieldValid(fieldName = "计划开始时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "计划开始时间",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String planStartTime;
 
     /**
@@ -57,7 +59,7 @@ public class ScheduleTaskExportErrorExcelVO  {
      */
     @ColumnWidth(50)
     @ExcelProperty(value = "计划结束时间", index = 4)
-    @FieldValid(fieldName = "计划结束时间",formatPattern = FieldFormatPatternTypeEnum.DATE)
+    @FieldValid(fieldName = "计划结束时间",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.DATE)
     private String planEndTime;
 
 
@@ -65,6 +67,7 @@ public class ScheduleTaskExportErrorExcelVO  {
 
     @ColumnWidth(50)
     @ExcelProperty(value = "负责人名", index = 5)
+    @FieldValid(fieldName = "负责人名",isNotBlank = true)
     private String chargeName;
 
     @ColumnWidth(100)

@@ -3,12 +3,10 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -46,17 +44,6 @@ public class CfgAmzFulfillmentCenterEntity extends BaseEntity<CfgAmzFulfillmentC
     */
     @TableField("disabled")
     private Boolean disabled;
-
-
-    public static final String REMARK = "remark";
-
-    public static final String CODE = "code";
-
-    public static final String COUNTRY = "country";
-
-    public static final String DISABLED = "disabled";
-
-
     /**
      * 新增未知国家仓库中心代号记录
      */

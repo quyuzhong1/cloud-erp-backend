@@ -85,6 +85,7 @@ public class DmpInputAmazonFbaInboundPlanShipmentsInitHandler extends DmpInputIn
                                 Thread.sleep(sleepTime);
                             } catch (InterruptedException ie) {
                                 log.error("调用亚马逊入库计划接口重试睡眠异常:{}", shopInfoDTO.getPlatformShopCode());
+                                Thread.currentThread().interrupt();
                             }
                             sleepTime = sleepTime + 1000;
                             count = count + 1;

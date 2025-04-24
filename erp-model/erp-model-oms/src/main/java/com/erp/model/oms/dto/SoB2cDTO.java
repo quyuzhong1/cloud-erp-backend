@@ -1,15 +1,18 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -36,6 +39,108 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     @Builder
+    public static class UploadFileDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private MultipartFile file;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class GenerateSoB2cReturnViewDTO {
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String code;
+        /**
+         * 明细ID
+         */
+        @NotBlank(message = "明细ID不能为空")
+        private String detailId;
+        private String billStatus;
+
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 销售数量
+         */
+        private Integer saleQty;
+
+        /**
+         * 出库数量
+         */
+        private Integer outQty;
+
+        /**
+         * 已退数量
+         */
+        private Integer alreadyReturnQty;
+
+        /**
+         * 退货数量
+         */
+        @NotNull(message = "退货数量不能为空")
+        private Integer returnQty;
+
+        /**
+         * 退货原因 {{oms_url}}common/enumDropDown?type=SoB2cReturnReason
+         */
+        @NotBlank(message = "退货原因不能为空")
+        private String returnReason;
+
+        /**
+         * 备注
+         */
+        private String remark;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderNo;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 订单金额
+         */
+        private BigDecimal amount;
+
+        /**
+         * 币别（原币）
+         */
+        private String currency;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
     public static class DeliveryWithNotOutboundDTO {
 
         /**
@@ -43,6 +148,11 @@ public class SoB2cDTO implements Serializable {
          */
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;
+        /**
+         * 实际发货仓库
+         */
+        @NotEmpty(message = "实际发货仓库不能为空")
+        private String warehouseId;
 
         /**
          * 平台是否标发
@@ -146,6 +256,10 @@ public class SoB2cDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+        /**
+         * 是否全托管
+         */
+        private Boolean isFullyManaged;
     }
 
     @Data
@@ -172,11 +286,49 @@ public class SoB2cDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * vat发票状态
+         */
+        private String vatInvoiceStatus;
+        /**
+         * vat发票状态名称
+         */
+        private String vatInvoiceStatusName;
+        /**
+         * 平台订单状态
+         */
+        private String platformOrderStatus;
+        /**
+         * 平台订单状态名称
+         * 全托管平台订单状态
+         */
+        private String platformOrderStatusName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
 
         /**
          * 单据编码
          */
         private String code;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
 
         /**
          * 销售平台
@@ -222,6 +374,18 @@ public class SoB2cDTO implements Serializable {
          * 作废状态（false未作废，true已作废）
          */
         private Boolean invalidStatus;
+        /**
+         * 作废备注
+         */
+        private String invalidRemark;
+        /**
+         * 作废类型
+         */
+        private String invalidType;
+        /**
+         * 作废类型名称
+         */
+        private String invalidTypeName;
 
         /**
          * 组包状态  not 不需要  wait 待组包   already 已经组包
@@ -243,6 +407,26 @@ public class SoB2cDTO implements Serializable {
          * 国家代号
          */
         private String country;
+        /**
+         * 省份编码
+         */
+        private String province;
+        /**
+         * 省份名称
+         */
+        private String provinceName;
+        /**
+         * 城市编码
+         */
+        private String city;
+        /**
+         * 城市名称
+         */
+        private String cityName;
+        /**
+         * 邮编
+         */
+        private String postCode;
 
         /**
          * 是否对接了第三方海外仓
@@ -410,6 +594,14 @@ public class SoB2cDTO implements Serializable {
          */
         private String label;
         /**
+         * 扩展字段
+         */
+        private String extendData;
+        /**
+         * 是否可送
+         */
+        private Boolean isDeliver;
+        /**
          * 标签对象
          */
         private LabelDTO labelDTO;
@@ -464,6 +656,26 @@ public class SoB2cDTO implements Serializable {
          */
         private String weightUnit;
         /**
+         * 包装长度单位
+         */
+        private String sizeUnit;
+        /**
+         * 包装 长
+         */
+        private BigDecimal length;
+        /**
+         * 包装 宽
+         */
+        private BigDecimal width;
+        /**
+         * 包装 高
+         */
+        private BigDecimal height;
+        /**
+         * 发货仓库id
+         */
+        private String fromWarehouseId;
+        /**
          * 审核时间
          */
         private LocalDateTime approveTime;
@@ -487,6 +699,108 @@ public class SoB2cDTO implements Serializable {
          * 是否地址修改 true 是  false 否
          */
         private Boolean isChangeReceiverAddress;
+        /**
+         * 是否更换sku true 是  false 否
+         */
+        private Boolean isChangeSku;
+        /**
+         * 是否标记不出库发货 true 是  false 否
+         */
+        private Boolean isNotOutbound;
+        /**
+         * 是否标记手动发货true 是  false 否(以label为准)
+         */
+        private Boolean isManualDelivery;
+        /**
+         * 是否预估运费超限，是：true  否：false
+         */
+        private Boolean isOverEstimatedShipCost;
+        /**
+         * 标签
+         */
+        private Boolean tag;
+
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+        /**
+         * 实际发货时间
+         */
+        private LocalDateTime deliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
+
+        /**
+         * 是否超出范围派送
+         */
+        private Boolean isOutOfRangeDelivery;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+
+        /**
+         * 提交发货是否选择渠道
+         */
+        private Boolean isSelectChannel = false;
+
+        //属性字段
+
+        private String extendId;
+        /**
+         * 要求发货时间
+         */
+        private LocalDateTime requiredDeliveryTime;
+        /**
+         * 要求收货时间
+         */
+        private LocalDateTime requiredReceiveTime;
+        /**
+         * 发货预警时间
+         */
+        private LocalDateTime deliveryWarningTime;
+        /**
+         * 预警时间
+         * 未发货时
+         * 当前时间< 预警时间时 无异常 黑色
+         * 当前时间> 预警时间时 且 当前时间< 要求发货时间 有异常
+         * 要求发货时间-当前时间  正数 橙色  负数红色
+         * 已发货时
+         * 要求发货时间>实际发货时间：则显示未超时
+         * 要求发货时间<实际发货时间：则显示已超期N小时
+         */
+        private BigDecimal warningHour;
+        /**
+         * 发货预警描述【导出使用】
+         */
+        private String deliveryWarningDesc;
+        /**
+         * 订单来源类型
+         * SoB2cExtendOrderSourceTypeEnum
+         */
+        private String orderSourceType;
+        private String orderSourceTypeName;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
     }
 
     @Data
@@ -516,6 +830,25 @@ public class SoB2cDTO implements Serializable {
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
+        /**
+         * 发货类型
+         */
+        private String deliveryType;
+        /**
+         * 紧急程度
+         * 紧急(最高)-URGENT
+         * 加急（高）-EXPEDITED
+         * 普通-GENERAL
+         */
+        private String priorityLevel;
+        /**
+         * 是否可送
+         */
+        private Boolean isDeliver;
     }
 
     @Data
@@ -584,6 +917,23 @@ public class SoB2cDTO implements Serializable {
          * 是否退款: true=退款, false=未退款
          */
         private Boolean isRefunded;
+        /**
+         * 发货类型
+         * NORMAL-普通备货
+         * JIT-JIT备货
+         */
+        private String deliveryType;
+        /**
+         * 紧急程度
+         * 紧急(最高)-URGENT
+         * 加急（高）-EXPEDITED
+         * 普通-GENERAL
+         */
+        private String priorityLevel;
+        /**
+         * 是否可送
+         */
+        private Boolean isDeliver;
     }
 
 
@@ -599,6 +949,10 @@ public class SoB2cDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 提交发货是否选择渠道
+         */
+        private Boolean isSelectChannel = false;
         /**
          * 销售单号
          */
@@ -670,6 +1024,11 @@ public class SoB2cDTO implements Serializable {
          */
         private String extendData;
         /**
+         * 单据子类型
+         */
+        @Dict(enumClass = OrderSubTypeEnum.class)
+        private String transactionSubType;
+        /**
          * 物流信息
          */
         private SoB2cLogisticsDTO.ViewDTO logisticsDTO;
@@ -678,6 +1037,8 @@ public class SoB2cDTO implements Serializable {
          */
         @Valid
         private SoB2cReceiverDTO.ViewDTO receiverDTO;
+
+        private SoB2cExtendDTO.ViewDTO extendDTO;
 
         /**
          * 财务信息
@@ -694,6 +1055,16 @@ public class SoB2cDTO implements Serializable {
          * 申报信息
          */
         private List<SoB2cDeclareProductDTO.ViewDTO> declareProductList;
+
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
     }
 
     /**
@@ -901,17 +1272,26 @@ public class SoB2cDTO implements Serializable {
          * 扩展字段
          */
         private String extendData;
+        /**
+         * 标签json
+         */
+        private String labelJson;
 
         /**
          * 物流信息
          */
+        @Valid
         private SoB2cLogisticsDTO.AddDTO logisticsDTO;
         /**
          * 买家信息
          */
-        @NotNull(message = "买家信息不能为空")
-        @Valid
+//        @NotNull(message = "买家信息不能为空")
+//        @Valid
         private SoB2cReceiverDTO.AddDTO receiverDTO;
+        /**
+         * 全托管扩展信息
+         */
+        private SoB2cExtendDTO.AddDTO extendDTO;
 
         /**
          * 明细信息
@@ -925,6 +1305,20 @@ public class SoB2cDTO implements Serializable {
          */
         private SoB2cOptionTypeEnum operateType;
 
+        /**
+         * 订单子类型
+         * 接口：oms/common/enumDropDown?type=OrderSubType
+         */
+        private String transactionSubType;
+        /**
+         * 第三方编号
+         */
+        private String thirdCode;
+
+        /**
+         * 第三方来源系统
+         */
+        private String thirdSystem;
     }
 
 
@@ -954,8 +1348,10 @@ public class SoB2cDTO implements Serializable {
          */
         private Boolean autoGetTrackNo;
 
-
-
+        /**
+         *是否自动获取跟踪号提交发货（非超范围派送订单）
+         */
+        private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
     /**
@@ -971,6 +1367,12 @@ public class SoB2cDTO implements Serializable {
         private String id;
 
         /**
+         * 订单子类型
+         * 接口：oms/common/enumDropDown?type=OrderSubType
+         */
+        private String transactionSubType;
+
+        /**
          * 物流信息
          */
         private SoB2cLogisticsDTO.UpdateDTO logisticsDTO;
@@ -981,9 +1383,13 @@ public class SoB2cDTO implements Serializable {
         /**
          * 买家信息
          */
-        @NotNull(message = "买家信息不能为空")
-        @Valid
+//        @NotNull(message = "买家信息不能为空")
+//        @Valid
         private SoB2cReceiverDTO.UpdateDTO receiverDTO;
+        /**
+         * 全托管扩展信息
+         */
+        private SoB2cExtendDTO.UpdateDTO extendDTO;
 
         /**
          * 明细信息
@@ -996,7 +1402,8 @@ public class SoB2cDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class
+    CommonDTO {
 
         /**
          * 平台订单号
@@ -1035,7 +1442,7 @@ public class SoB2cDTO implements Serializable {
         /**
          * 付款时间
          */
-        @NotNull(message = "付款时间不能为空")
+        @NotNull(message = "付款时间/下单时间不能为空")
         private LocalDateTime payTime;
 
         /**
@@ -1241,7 +1648,16 @@ public class SoB2cDTO implements Serializable {
         private Boolean isDelivery;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class GetLogisticsLabel {
 
+        /**
+         * 主表id集合
+         */
+        @NotEmpty(message = "选择数据不能为空")
+        private List<String> ids;
+    }
     /**
      * 运费估算要的参数
      */
@@ -1387,6 +1803,16 @@ public class SoB2cDTO implements Serializable {
          */
         private List<String> countryIdList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
     /**
@@ -1471,6 +1897,11 @@ public class SoB2cDTO implements Serializable {
          * 主表信息
          */
         private List<MergeMainDTO> mainList;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     @Data
@@ -1760,6 +2191,22 @@ public class SoB2cDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 成本来源
+         */
+        private String costSource;
+        /**
+         * 材料成本（本位币）
+         */
+        private BigDecimal productCost;
+        /**
+         * 头程运费（本位币）
+         */
+        private BigDecimal firstMileShippingCost;
+        /**
+         * 清关税费（本位币）
+         */
+        private BigDecimal clearanceCustomsTax;
     }
 
     /**
@@ -1815,6 +2262,10 @@ public class SoB2cDTO implements Serializable {
          */
         @NotBlank(message = "主键id不能为空")
         private String id;
+        /**
+         * 是否同步平台
+         */
+        private Boolean isSyncPlatform = true;
         /**
          * 明细信息
          */
@@ -1988,6 +2439,11 @@ public class SoB2cDTO implements Serializable {
          * 是否是状态变更为取消状态
          */
         private boolean isUpdateCancel = false;
+
+        /**
+         * SoB2cErrorTypeEnum.ORDER_FETCH
+         */
+        SoB2cErrorEntity soB2cError;
     }
 
     /**
@@ -2120,6 +2576,7 @@ public class SoB2cDTO implements Serializable {
          */
         private  String sellerName;
 
+        private String salesDeptId;
         private String salesOrgId;
 
         private String salesOrgName;
@@ -2212,6 +2669,24 @@ public class SoB2cDTO implements Serializable {
 
     }
 
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubmitDeliveryDTO {
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 海外仓交运渠道
+         */
+        private String channelId;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -2266,11 +2741,80 @@ public class SoB2cDTO implements Serializable {
          * 销售订单id
          */
         private String id;
+        /**
+         * 订单创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 销售订单明细id
+         */
+        private String detailId;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
         /**
          * 单据编码
          */
         private String code;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 作废状态
+         */
+        private Boolean invalidStatus;
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
+        /**
+         * 作废类型
+         */
+        private String invalidType;
+        /**
+         * 作废类型名称
+         */
+        private String invalidTypeName;
+        /**
+         * 平台订单状态
+         */
+        private String platformOrderStatus;
+        /**
+         * 平台订单状态名称
+         * 全托管平台订单状态
+         */
+        private String platformOrderStatusName;
+        /**
+         * 是否冻结
+         */
+        private Boolean isFrozen;
+        /**
+         * 是否取消（false未取消，true已取消）
+         */
+        private Boolean isCancel;
+        /**
+         * 是否地址修改 true 是  false 否
+         */
+        private Boolean isChangeReceiverAddress;
+        /**
+         * 是否更换sku true 是  false 否
+         */
+        private Boolean isChangeSku;
+        /**
+         * 是否标记不出库发货 true 是  false 否
+         */
+        private Boolean isNotOutbound;
 
         /**
          * 销售平台
@@ -2408,6 +2952,10 @@ public class SoB2cDTO implements Serializable {
          * 规格属性
          */
         private String variantProperty;
+        /**
+         * 属性对象
+         */
+        private List<SoB2cDetailDTO.PropertyDTO> propertyDTOList;
 
         /**
          * 含税成本
@@ -2418,6 +2966,18 @@ public class SoB2cDTO implements Serializable {
          * 订单原币金额
          */
         private BigDecimal sourceAmount;
+        /**
+         * 单价
+         */
+        private BigDecimal sourcePrice;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
+        /**
+         * 成本来源
+         */
+        private String costSource;
 
         /**
          * 币别（原币）
@@ -2515,11 +3075,18 @@ public class SoB2cDTO implements Serializable {
          * 包装辅料sku编码
          */
         private String accessoriesSkuNo;
-
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
         /**
          * 物流跟踪单
          */
-        private String logisticsCode;
+        private String trackNo;
+        /**
+         * 物流类型
+         */
+        private String logisticType;
 
         /**
          * 买家自选物流名称
@@ -2595,6 +3162,10 @@ public class SoB2cDTO implements Serializable {
          * 高
          */
         private BigDecimal height;
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
 
         //-------------------------------------------- 买家信息 ---------------------------------------------------------------------------------------
 
@@ -2682,7 +3253,99 @@ public class SoB2cDTO implements Serializable {
          * 销售出库时间
          */
         private LocalDate soOutStockTime;
+        /**
+         * 标签
+         */
+        private String label;
+        /**
+         * 明细标签
+         */
+        private String labelJson;
+        /**
+         * 拦截订单（ERP发货拦截中，拦截成功，拦截失败的订单）
+         */
+        private Boolean isIntercept;
+        /**
+         * 1、拆分生成的子订单 split
+         * 2、合并生成的新订单 merge
+         */
+        private String refType;
+        /**
+         * WFS（沃尔玛订单shipNodeType=WFSFulfilled或3PLFulfilled）
+         */
+        private String shipNodeType;
+        /**
+         * 订单标签集合
+         */
+        private String labelOrderList;
+        /**
+         * 明细标签集合
+         */
+        private String labelDetailList;
 
+        /**
+         * 提交发货时间
+         */
+        private LocalDateTime createDeliveryTime;
+
+        /**
+         * 面单打印时间
+         */
+        private LocalDateTime finishPrintTime;
+
+        //销售订单扩展字段
+        //属性字段
+        private String extendId;
+        /**
+         * 要求发货时间
+         */
+        private LocalDateTime requiredDeliveryTime;
+        /**
+         * 要求收货时间
+         */
+        private LocalDateTime requiredReceiveTime;
+        /**
+         * 发货预警时间
+         */
+        private LocalDateTime deliveryWarningTime;
+        /**
+         * 预警时间
+         * 未发货时
+         * 当前时间< 预警时间时 无异常 黑色
+         * 当前时间> 预警时间时 且 当前时间< 要求发货时间 有异常
+         * 要求发货时间-当前时间  正数 橙色  负数红色
+         * 已发货时
+         * 要求发货时间>实际发货时间：则显示未超时
+         * 要求发货时间<实际发货时间：则显示已超期N小时
+         */
+        private BigDecimal warningHour;
+        /**
+         * 发货预警描述【导出使用】
+         */
+        private String deliveryWarningDesc;
+        /**
+         * 订单来源类型
+         * SoB2cExtendOrderSourceTypeEnum
+         */
+        private String orderSourceType;
+        private String orderSourceTypeName;
+
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
         //get方法
         private String getLengthStr () {
             return this.length.stripTrailingZeros().toPlainString();
@@ -2722,6 +3385,10 @@ public class SoB2cDTO implements Serializable {
          * id
          */
         private List<String> soB2cIds;
+        /**
+         * 编码
+         */
+        private List<String> soCodeList;
         /**
          * TikTok拆单入参
          */
@@ -2899,5 +3566,196 @@ public class SoB2cDTO implements Serializable {
          */
         private String bomVersion;
     }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class ChangeDeliverySkuViewDTO {
 
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String code;
+        /**
+         * 明细ID
+         */
+        @NotBlank(message = "明细ID不能为空")
+        private String detailId;
+
+        @NotBlank(message = "skuId不能为空")
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * spuNo
+         */
+        private String spuNo;
+        /**
+         * spu名称
+         */
+        private String spuName;
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 更换skuId
+         */
+        private String changeSkuId;
+        /**
+         * 更换skuNo
+         */
+        private String changeSkuNo;
+    }
+
+    /**
+     * 拆分保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSkuDTO {
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "拆分SKU不能为空")
+        private String skuNo;
+        /**
+         * 拆分明细
+         */
+        @Valid
+        @NotEmpty(message = "拆分明细不能为空")
+        private List<SplitSkuDetailDTO> detailList;
+    }
+    /**
+     * 拆分保存
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SplitSkuDetailDTO {
+        /**
+         * 主键id
+         */
+        @NotBlank(message = "主键id不能为空")
+        private String id;
+
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class LogisticsDTO {
+        //销售订单id
+        private String id;
+        //销售订单编码
+        private String code;
+        //订单金额
+        private BigDecimal amount;
+        //币别
+        private String currency;
+        // 汇率
+        private BigDecimal exchangeRate;
+        /**
+         * 是否预估运费超限，是：true  否：false
+         */
+        private Boolean isOverEstimatedShipCost;
+        //渠道id
+        private String logisticsChannelId;
+        //发货仓库id
+        private String warehouseId;
+        //长
+        private BigDecimal length;
+        //宽
+        private BigDecimal width;
+        //高
+        private BigDecimal height;
+        //重量
+        private BigDecimal weight;
+        //重量单位
+        private String weightUnit;
+        //预估运费
+        private BigDecimal estimatedShippingCost;
+        //预估运费币种
+        private String estimatedShippingCurrency;
+        //国家二字码
+        private String country;
+        //国家名称
+        private String countryName;
+        //城市名称
+        private String cityName;
+        //邮编
+        private String postCode;
+        //省
+        private String provinceName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * 销售平台类型
+         */
+        List<String> dictPlatformList;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ExtendDataDTO {
+        /**
+         * 订单数量
+         */
+        private Integer orderQty;
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliveryDTO{
+        private String id;
+        private String code;
+        private String dictPlatform;
+        private String platformOrderStatus;
+        private String shopId;
+        private String transportNo;
+        private String detailId;
+        private String extendData;
+        private String extendDetailData;
+        private String platformSkuNo;
+        private String platformSpuNo;
+    }
 }

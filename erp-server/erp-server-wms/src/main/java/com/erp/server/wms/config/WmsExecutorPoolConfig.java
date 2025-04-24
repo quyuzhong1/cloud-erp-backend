@@ -18,5 +18,100 @@ public class WmsExecutorPoolConfig {
 
         return service;
     }
-    
+    @Bean(name = "thirdWarehouseExecutorPool")
+    public ExecutorService thirdWarehouseExecutorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(5, 10,
+                5L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(100));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
+    /**
+     * 流水生成线程池
+     * @author will
+     * @date 2025/4/8 09:59
+     * @return ExecutorService
+     */
+    @Bean(name = "virtualFlowRefactorPool")
+    public ExecutorService virtualFlowRefactorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(5, 10,
+                5L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(100));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
+    /**
+     * 流水生成线程池
+     * @author will
+     * @date 2025/4/8 09:59
+     * @return ExecutorService
+     */
+    @Bean(name = "b2bVirtualFlowRefactorPool")
+    public ExecutorService b2bVirtualFlowRefactorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(20, 100,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
+    /**
+     * 流水生成线程池
+     * @author will
+     * @date 2025/4/8 09:59
+     * @return ExecutorService
+     */
+    @Bean(name = "b2cVirtualFlowRefactorPool")
+    public ExecutorService b2cVirtualFlowRefactorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(20, 100,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
+    /**
+     * 流水生成线程池
+     * @author will
+     * @date 2025/4/8 09:59
+     * @return ExecutorService
+     */
+    @Bean(name = "firstMileVirtualFlowRefactorPool")
+    public ExecutorService firstMileVirtualFlowRefactorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(20, 100,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
+    /**
+     * 流水生成线程池
+     * @author will
+     * @date 2025/4/8 09:59
+     * @return ExecutorService
+     */
+    @Bean(name = "allocationVirtualFlowRefactorPool")
+    public ExecutorService allocationVirtualFlowRefactorPool() {
+        ThreadPoolExecutor service = new ThreadPoolExecutor(20, 100,
+                30L, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<>(1000));
+        //设置线城池的饱和策略
+        RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
+        service.setRejectedExecutionHandler(handler);
+
+        return service;
+    }
 }

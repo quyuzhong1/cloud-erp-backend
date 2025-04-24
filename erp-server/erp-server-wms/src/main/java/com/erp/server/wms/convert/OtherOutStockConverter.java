@@ -108,7 +108,7 @@ public interface OtherOutStockConverter {
 
             @Mapping(target = "skuId", source = "skuVO.skuId"),
             @Mapping(target = "skuNo", source = "skuVO.skuNo"),
-            @Mapping(target = "unit", expression = "java(org.apache.commons.lang3.StringUtils.isBlank(skuVO.getUnitName()) ? \"\" : skuVO.getUnitName())"),
+            @Mapping(target = "unit", expression = "java(cn.hutool.core.text.CharSequenceUtil.isBlank(skuVO.getUnitName()) ? \"\" : skuVO.getUnitName())"),
             @Mapping(target = "actualQty", source = "actualQty"),
             @Mapping(target = "warehouseLocation", expression = "java(null == locationEntity ? \"\" : locationEntity.getCode())"),
             @Mapping(target = "remark", source = "importExcelDTO.remark"),

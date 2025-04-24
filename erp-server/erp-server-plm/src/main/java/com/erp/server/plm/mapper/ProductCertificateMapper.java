@@ -41,7 +41,7 @@ public interface ProductCertificateMapper extends BaseMapper<ProductCertificateE
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<ProductCertificateDTO.ListDTO> paging(Page query,@Param("params") ProductCertificateDTO.SearchParamDTO params);
+    IPage<ProductCertificateDTO.ListDTO> paging(Page<ProductCertificateDTO.SearchParamDTO> query,@Param("params") ProductCertificateDTO.SearchParamDTO params);
 
     /**
      * @description: 导出数据

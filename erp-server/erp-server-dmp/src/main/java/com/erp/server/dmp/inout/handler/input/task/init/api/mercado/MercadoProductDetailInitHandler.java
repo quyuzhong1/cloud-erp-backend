@@ -5,8 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.core.anno.ParamData;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.PannoEnum;
@@ -27,7 +25,6 @@ import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.listing.BodyBean;
 import com.sdk.oms.mercado.dto.mercado.listing.ListingViewDTO;
-import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -110,7 +107,9 @@ public class MercadoProductDetailInitHandler extends DmpInputInitHandler {
 					}
 					try {
 						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
 					sleepTime = sleepTime + 1000;
 					count = count + 1;
 				}

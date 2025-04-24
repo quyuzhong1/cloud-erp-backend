@@ -4,7 +4,6 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -433,5 +432,88 @@ public class PurchasePriceChangeDTO implements Serializable {
          */
         private Integer count;
 
+    }
+
+
+
+
+    /**
+     * 消息推送详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class NoticeMsgViewDTO {
+
+        /**
+         * 表id
+         */
+        private String id;
+
+
+        /**
+         * 详情id
+         */
+        private String changeDetailId;
+
+        /**
+         * 价目表id
+         */
+        private String purchasePriceId;
+
+        /**
+         * 价目明细id
+         */
+        private String purchasePriceDetailId;
+
+        /**
+         * code
+         */
+        private String code;
+
+        /**
+         * 供应商id
+         */
+        private String supplierId;
+
+        /**
+         * 供应商名
+         */
+        private String supplierName;
+        /**
+         * 供应商采购员id
+         */
+        private String purchaseUserId;
+        /**
+         * 供应商采购员
+         */
+        private String purchaseUserName;
+
+        /**
+         * 审核人Id
+         */
+        private String approveUserId;
+        /**-
+         * 审核人名称
+         */
+        private String approveUserName;
+
+        /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 }

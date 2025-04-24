@@ -26,7 +26,7 @@ public interface BiRefundInfoMapper extends BaseMapper<BiRefundInfoEntity> {
      * @param params
      * @return IPage<DmpRefundInfoDTO>
      */
-    IPage<DmpRefundInfoDTO> paging(Page query,@Param("params") DmpRefundInfoSearchDTO params);
+    IPage<DmpRefundInfoDTO> paging(Page<Object> query,@Param("params") DmpRefundInfoSearchDTO params);
     /**
      * @description: 导出
      * @author Will

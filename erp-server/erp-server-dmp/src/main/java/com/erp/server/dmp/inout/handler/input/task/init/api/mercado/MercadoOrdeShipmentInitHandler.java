@@ -10,7 +10,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
-import com.common.core.utils.ObjectUtils;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
@@ -23,13 +22,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
-import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
-import com.sdk.oms.mercado.dto.mercado.order.OrderViewDTO;
 import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
-import com.sdk.oms.tiktok.constant.TikTokConstant;
-import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -38,7 +32,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器，被init任务状态执行器继承，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -112,7 +105,9 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 					}
 					try {
 						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
 					sleepTime = sleepTime + 1000;
 					count = count + 1;
 				}
@@ -131,8 +126,10 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 			try {
 				shipmentViewDTO = objectMapper.readValue(JSONUtil.toJsonStr(apiResult.getData()), ShipmentViewDTO.class);
 			} catch (JsonProcessingException e) {
+				System.out.println(e.getMessage());
+				e.printStackTrace();
 				log.error("美客多shipments/'shippingId'/接口数据解析错误，数据={}", apiResult.getData());
-				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}",
+				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 数据解析失败，返回值 responseMap={}" ,e.getMessage() +
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(apiResult)));
 			}
 			if (ObjectUtil.isEmpty(shipmentViewDTO)) {
@@ -147,5 +144,21 @@ public class MercadoOrdeShipmentInitHandler extends DmpInputInitHandler {
 
 		return dmpInputTaskInitDTOList;
 
+	}
+
+
+	public static void main(String[] args) {
+
+		String dataJsonString = "{\"gross_amount\":3.99,\"currency_id\":\"USD\",\"receiver\":{\"user_id\":24384856,\"cost\":0,\"compensation\":0,\"save\":0,\"discounts\":[{\"rate\":1,\"type\":\"ratio\",\"promoted_amount\":4.99}],\"compensations\":[]},\"senders\":[{\"user_id\":2198665353,\"cost\":3.99,\"compensation\":0,\"save\":0,\"discounts\":[],\"compensations\":[]}]}";
+		//解析数据
+		ObjectMapper objectMapper = new ObjectMapper();
+		ShipmentViewDTO shipmentViewDTO = null;
+		try {
+			shipmentViewDTO = objectMapper.readValue(dataJsonString, ShipmentViewDTO.class);
+		} catch (JsonProcessingException e) {
+			System.out.println(e.getMessage());
+			e.printStackTrace();
+		}
+		System.out.println(shipmentViewDTO);
 	}
 }

@@ -21,6 +21,7 @@ import com.sdk.wms.iml.dto.response.ImlRegionResp;
 import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.service.ImlService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -40,9 +41,9 @@ public class ImlCityDictHandler extends AbstractPullThirdWarehouseHandler<ImlReg
     private ImlService imlService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
-    private final String failureMsgHead = "调用艾姆勒获取区域数据接口异常";
+    private final String FAIL_MSG_HEAD = "调用艾姆勒获取区域数据接口异常";
 
     @Override
     public List<ImlRegionResp> download(JobTaskDTO data) {
@@ -58,10 +59,10 @@ public class ImlCityDictHandler extends AbstractPullThirdWarehouseHandler<ImlReg
 
     private void checkResponse(ImlResponse<?> response) {
         if (!isSuccess(response.getAsk())) {
-            log.error(failureMsgHead + response.getMessage());
+            log.error(FAIL_MSG_HEAD + response.getMessage());
             WarnMsgInfoDTO msgInfoDTO = this.buildWarnMsgInfoDTO(response.getMessage());
             mqProducerService.sendWarnMsg(msgInfoDTO);
-            throw new ServiceException(failureMsgHead + response.getMessage());
+            throw new ServiceException(FAIL_MSG_HEAD + response.getMessage());
         }
     }
 
@@ -69,7 +70,7 @@ public class ImlCityDictHandler extends AbstractPullThirdWarehouseHandler<ImlReg
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName("调用艾姆勒获取区域数据接口");
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_THIRD_SDK);
-        warnMsgInfo.setTitle(failureMsgHead);
+        warnMsgInfo.setTitle(FAIL_MSG_HEAD);
         warnMsgInfo.setTableName(this.getClass().getName());
         warnMsgInfo.setTableId("");
         warnMsgInfo.setKeyInfo(msg);

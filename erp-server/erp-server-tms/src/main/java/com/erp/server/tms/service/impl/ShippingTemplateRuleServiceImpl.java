@@ -1,46 +1,44 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.message.constant.RocketMqTopic;
-import com.common.message.enums.RocketMqTagEnum;
-import com.erp.model.scm.dto.PurchaseOrderDetailDTO;
-import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.constant.SqlConstants;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.ShippingRegionCityDTO;
+import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
 import com.erp.model.tms.entity.ShippingRegionCityEntity;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
-import com.erp.model.tms.entity.ShippingTemplateOtherCostEntity;
 import com.erp.model.tms.entity.ShippingTemplateRuleEntity;
 import com.erp.model.tms.enums.ShippingBillingMethodEnum;
 import com.erp.model.tms.enums.ShippingTemplateTypeEnum;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.tms.mapper.ShippingTemplateRuleMapper;
-import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.ShippingRegionCityService;
+import com.erp.server.tms.service.ShippingTemplateRuleService;
+import com.erp.server.tms.service.ShippingTemplateService;
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
 
+import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 /**
  * <p>
  * 运费模板渠道关联表 服务实现类
@@ -52,16 +50,16 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTemplateRuleMapper, ShippingTemplateRuleEntity> implements ShippingTemplateRuleService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private SysDictFeign sysDictFeign;
 
-    @Autowired
+    @Resource
     private ShippingTemplateService shippingTemplateService;
 
-    @Autowired
+    @Resource
     private ShippingRegionCityService shippingRegionCityService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -137,7 +135,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
                 .eq(StringUtils.isNotEmpty(viewParamDTO.getMainId()),ShippingTemplateRuleEntity::getMainId,viewParamDTO.getMainId())
                 .ge(ShippingTemplateRuleEntity::getEndWeight,viewParamDTO.getWeight())
                 .lt(ShippingTemplateRuleEntity::getStartWeight,viewParamDTO.getWeight())
-                .last("limit 1")
+                .last(SqlConstants.LIMIT_1)
                 .one();
     }
 
@@ -231,7 +229,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         //按国家
         if (ShippingTemplateTypeEnum.ENUM_COUNTRY.getCode().equals(entity.getType())) {
             //必填校验
-            long count = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getToCountry())).count();
+            long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getToCountry())).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_TO_COUNTRY_NOT_NUll);
             }
@@ -255,7 +253,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         //按分区
         if (ShippingTemplateTypeEnum.ENUM_REGION.getCode().equals(entity.getType())) {
             //必填校验
-            long regionCount = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getRegion())).count();
+            long regionCount = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getRegion())).count();
             if (regionCount > 0) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_REGION_NOT_NULL);
             }
@@ -285,7 +283,7 @@ public class ShippingTemplateRuleServiceImpl extends SuperServiceImpl<ShippingTe
         if (ShippingTemplateTypeEnum.ENUM_WAREHOUSE.getCode().equals(entity.getType())) {
             Map<String, List<ShippingTemplateRuleEntity>> map = detailList.stream().collect(Collectors.groupingBy(obj -> obj.getFromCountry().concat(obj.getToWarehouseName())));
             //必填校验
-            long count = detailList.stream().filter(obj -> StrUtil.isBlank(obj.getToWarehouseName())).count();
+            long count = detailList.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getToWarehouseName())).count();
             if (count > 0) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_WAREHOUSE_NOT_NULL);
             }

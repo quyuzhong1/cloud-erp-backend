@@ -60,8 +60,8 @@ public class CfgRuleOutController extends BaseController {
      * 匹配中转仓配置
      */
     @PostMapping("/matchTransferRule")
-    public ApiResult<Boolean> matchTransferRule(@RequestBody CfgRuleOutDTO.MatchTransferRuleDTO dto){
-        Boolean matched = cfgRuleOutService.matchTransferRule(dto);
-        return success(matched);
+    public ApiResult<CfgRuleOutDTO.MatchTransferResultDTO> matchTransferRule(@RequestBody CfgRuleOutDTO.MatchTransferRuleDTO dto){
+        CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
+        return success(matchTransferResultDTO);
     }
 }

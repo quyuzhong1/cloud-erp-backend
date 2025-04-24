@@ -1,7 +1,7 @@
 package com.erp.server.bi.service.impl;
 
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -48,6 +48,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -236,7 +237,6 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         if (!save) {
             throw new ServiceException("店铺目标设置单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
         this.removeByMainId(id);
         this.batchAdd(id, detailList);
         return Boolean.TRUE;
@@ -356,8 +356,8 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         String metrics = params.getMetrics();
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(metrics);
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params,multiplyNum);
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<BiTargetShopSettingDTO.PagingViewDTO> pageData = baseMapper.paging(query, params,multiplyNum);
         List<BiTargetShopSettingDTO.PagingViewDTO> list = pageData.getRecords();
         list.forEach(s -> s.setMetricsName(s.getMetrics().getName()));
         return new PagingVO<>(pageData);
@@ -542,7 +542,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -568,7 +568,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
         List<BiShopInfoEntity> shopInfoList = biShopInfoService.list();
         BiTargetShopSettingExcelListener excelListenerUtil = new BiTargetShopSettingExcelListener(metricsNameList, shopInfoList);
         try {
-            EasyExcel.read(excelFile.getInputStream(), TargetShopSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), TargetShopSettingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (Exception e) {
             log.error("人员目标设置 导入错误>>>{}", e);
         }
@@ -607,12 +607,11 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
      */
     @Override
     public Boolean delete(BiTargetShopSettingDTO.RemoveDTO dto) {
-        Boolean result = this.lambdaUpdate().
+        return this.lambdaUpdate().
                 eq(BiTargetShopSettingEntity::getShopId, dto.getShopId()).
                 eq(BiTargetShopSettingEntity::getMainId, dto.getId()).
                 eq(BiTargetShopSettingEntity::getMetrics, dto.getMetrics()).
                 remove();
-        return result;
     }
 
     /**
@@ -625,8 +624,7 @@ public class BiTargetShopSettingServiceImpl extends SuperServiceImpl<BiTargetSho
     public BiTargetYearDTO.PagingTotalDTO pagingTotal(BiTargetYearDTO.PagingParamDTO dto) {
         //乘的值
         BigDecimal multiplyNum = getMultiplyNum(dto.getMetrics());
-        BiTargetYearDTO.PagingTotalDTO pagingTotal = baseMapper.pagingTotal(dto,multiplyNum);
-        return pagingTotal;
+        return baseMapper.pagingTotal(dto,multiplyNum);
     }
 
 }

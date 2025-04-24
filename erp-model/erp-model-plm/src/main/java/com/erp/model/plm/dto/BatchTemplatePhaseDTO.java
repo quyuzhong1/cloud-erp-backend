@@ -25,5 +25,5 @@ public class BatchTemplatePhaseDTO implements Serializable {
      * 模板阶段集合
      */
     @Valid
-    List<TemplatePhaseDTO> templatePhases;
+    private List<TemplatePhaseDTO> templatePhases;
 }

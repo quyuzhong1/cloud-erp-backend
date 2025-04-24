@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -20,10 +20,10 @@ import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,10 +42,10 @@ import java.util.stream.Collectors;
 @Service
 public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<LogisticsChannelWarehouseMapper, LogisticsChannelWarehouseEntity> implements LogisticsChannelWarehouseService {
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private WmsWarehouseFeign wmsWarehouseFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -76,13 +76,13 @@ public class LogisticsChannelWarehouseServiceImpl extends SuperServiceImpl<Logis
             this.saveBatch(resultList);
         }
         //新增数据直接返回
-        if (StrUtil.isNotBlank(oldDTO.getType()) ) {
+        if (CharSequenceUtil.isNotBlank(oldDTO.getType()) ) {
             return new BaseResultDTO.AddDTO(channelId, channelId);
         }
 
         //日志
-        if (!StrUtil.equals(oldDTO.getType(),addDTO.getType())) {
-            String msg = StrUtil.format("仓库配置类型由【{}】变更为【{}】", LogisticsChannelWarehouseTypeEnum.getName(oldDTO.getType()),LogisticsChannelWarehouseTypeEnum.getName(addDTO.getType()));
+        if (!CharSequenceUtil.equals(oldDTO.getType(),addDTO.getType())) {
+            String msg = CharSequenceUtil.format("仓库配置类型由【{}】变更为【{}】", LogisticsChannelWarehouseTypeEnum.getName(oldDTO.getType()),LogisticsChannelWarehouseTypeEnum.getName(addDTO.getType()));
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), channelId, "编辑操作");
         }
         return new BaseResultDTO.AddDTO(channelId, channelId);

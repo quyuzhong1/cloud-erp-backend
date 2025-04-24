@@ -1,5 +1,6 @@
 package com.erp.server.wms.wdt.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.SyncOperateEnum;
 import org.apache.commons.math3.util.Pair;
 import cn.hutool.core.util.ObjectUtil;
@@ -69,10 +70,10 @@ public class SyncWdtOtherInStockServiceImpl extends AbstractWdtService implement
 
         //临时转换仓位
         for (CreateOtherStockinRequest.GoodsList goods : goodsList) {
-            if(goods.getPositionNo().equals("TC-JHZC") || goods.getPositionNo().equals("B2B-JHZC")){
+            if("TC-JHZC".equals(goods.getPositionNo()) || "B2B-JHZC".equals(goods.getPositionNo())){
                 goods.setPositionNo(goods.getPositionNo() + "1");
             }
-            if(StringUtils.isBlank(goods.getPositionNo())){
+            if(CharSequenceUtil.isBlank(goods.getPositionNo())){
                 goods.setPositionNo("空仓位");
             }
         }

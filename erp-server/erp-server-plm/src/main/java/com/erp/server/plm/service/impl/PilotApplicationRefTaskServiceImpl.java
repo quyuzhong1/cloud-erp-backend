@@ -38,9 +38,6 @@ public class PilotApplicationRefTaskServiceImpl extends SuperServiceImpl<PilotAp
         PilotApplicationRefTaskEntity pilotApplicationRefTaskEntity = new PilotApplicationRefTaskEntity();
         BeanMapperUtils.copy(addDTO, pilotApplicationRefTaskEntity);
 
-        // 数据处理
-        handleData(pilotApplicationRefTaskEntity);
-
         log.info("开始新增试产/量产 关联任务");
         boolean save = super.save(pilotApplicationRefTaskEntity);
         if(!save) {
@@ -60,12 +57,10 @@ public class PilotApplicationRefTaskServiceImpl extends SuperServiceImpl<PilotAp
     @Override
     public Boolean update(PilotApplicationRefTaskDTO.UpdateDTO updateDTO) {
         PilotApplicationRefTaskEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "试产/量产 关联任务"));
+        PilotApplicationRefTaskEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "试产/量产 关联任务"));
         PilotApplicationRefTaskEntity pilotApplicationRefTaskEntity =  BeanMapperUtils.map(PilotApplicationRefTaskEntity.class, updateDTO);
 
-        // 数据处理
-        handleData(pilotApplicationRefTaskEntity);
-        log.info("编辑 开始修改试产/量产 关联任务数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改试产/量产 关联任务数据，id：【{}】", oldEntity.getId());
         boolean save = super.updateById(pilotApplicationRefTaskEntity);
         if(!save) {
             throw new ServiceException("试产/量产 关联任务保存失败");
@@ -75,11 +70,4 @@ public class PilotApplicationRefTaskServiceImpl extends SuperServiceImpl<PilotAp
         return Boolean.TRUE;
     }
 
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(PilotApplicationRefTaskEntity pilotApplicationRefTaskEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 }

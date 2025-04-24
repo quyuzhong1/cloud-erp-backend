@@ -1,7 +1,7 @@
 package com.erp.server.srm.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -29,8 +29,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SRM_PO_RECONCILIATION_DETAIL;
 
 /**
  * <p>
@@ -139,7 +137,7 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
         //对账单数据
         for (PoReconciliationDetailEntity entity : list) {
             //添加日志
-            PoReconciliationDetailEntity old = poReconciliationDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
+            PoReconciliationDetailEntity old = poReconciliationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), entity.getId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(old)) {
                 throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
             }

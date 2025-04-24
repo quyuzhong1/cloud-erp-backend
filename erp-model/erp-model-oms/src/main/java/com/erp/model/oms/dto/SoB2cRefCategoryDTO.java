@@ -81,4 +81,18 @@ public class SoB2cRefCategoryDTO implements Serializable {
         private String categoryId;
     }
 
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CategoryNamesDTO  {
+
+        private String soB2cId;
+
+        private String categoryNames;
+
+    }
+
 }

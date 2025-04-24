@@ -78,9 +78,9 @@ public class StocktakingTaskEntity extends BaseEntity<StocktakingTaskEntity> {
     private String approveUserName;
 
 
-    public static final String CODE = "code";
+    
 
-    public static final String STATUS = "status";
+    
 
     public static final String SOURCE_ID = "source_id";
 

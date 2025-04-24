@@ -5,17 +5,17 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.SubcontractOrderDTO;
 import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
+import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.server.scm.query.PurchasePriceQueryHandler;
@@ -23,7 +23,6 @@ import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,9 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -84,9 +81,9 @@ public class PurchasePriceController extends BaseController {
             menuCode = "scm:purchase:price:add",
             serviceClass = PurchasePriceService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
-        String id = purchasePriceService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<?> add(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
+        PurchasePriceEntity entity = purchasePriceService.add(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
 
@@ -115,9 +112,9 @@ public class PurchasePriceController extends BaseController {
      */
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交采购价目")
     @PostMapping("/addAndSubmit")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
-        Boolean result = purchasePriceService.addAndSubmit(dto);
-        return result == true ? success() : failure();
+    public ApiResult<?> addAndSubmit(@RequestBody @Validated PurchasePriceDTO.AddDTO dto) {
+        PurchasePriceEntity entity = purchasePriceService.addAndSubmit(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
     /**
@@ -151,9 +148,9 @@ public class PurchasePriceController extends BaseController {
             menuCode = "scm:purchase:price:update",
             serviceClass = PurchasePriceService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
-        String id = purchasePriceService.updatePurchasePrice(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<?> update(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
+        PurchasePriceEntity entity = purchasePriceService.updatePurchasePrice(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
     /**
@@ -169,9 +166,9 @@ public class PurchasePriceController extends BaseController {
             menuCode = "scm:purchase:price:update",
             serviceClass = PurchasePriceService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
-        Boolean result = purchasePriceService.updateAndSubmit(dto);
-        return result == true ? success() : failure();
+    public ApiResult<?> updateAndSubmit(@RequestBody @Validated PurchasePriceDTO.UpdateDTO dto) {
+        PurchasePriceEntity entity = purchasePriceService.updateAndSubmit(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
 
@@ -188,9 +185,23 @@ public class PurchasePriceController extends BaseController {
             menuCode = "scm:purchase:price:delete",
             serviceClass = PurchasePriceService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceService.deleteByIds(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchasePriceEntity> entityMap = purchasePriceService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id,"采购价目不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchasePriceService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("采购价目删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -206,10 +217,25 @@ public class PurchasePriceController extends BaseController {
             menuCode = "scm:purchase:price:submit",
             serviceClass = PurchasePriceService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceService.submitApprove(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<?> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchasePriceEntity> entityMap = purchasePriceService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id, id,"采购价目不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchasePriceService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("采购价目提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
 
     /**
@@ -260,9 +286,23 @@ public class PurchasePriceController extends BaseController {
             menuCode = "scm:purchase:price:cancelProcess",
             serviceClass = PurchasePriceService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceService.cancelProcess(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<?> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchasePriceEntity> entityMap = purchasePriceService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchasePriceService.cancelProcessEntity((entity)));
+            }catch (Exception e){
+                log.error("采购价目撤销失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -271,7 +311,7 @@ public class PurchasePriceController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购价目数据导出")
     @PostMapping("/exportPurchasePrice")
-    public ApiResult exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.PagingParamDTO dto) {
+    public ApiResult<?> exportPurchasePrice(@RequestBody @Valid PurchasePriceDTO.PagingParamDTO dto) {
         purchasePriceService.exportPurchasePrice(dto);
         return success();
     }
@@ -281,7 +321,7 @@ public class PurchasePriceController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购价目数据批量导入")
     @PostMapping("/import")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<?> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = purchasePriceService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -292,7 +332,7 @@ public class PurchasePriceController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板采购价目")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
         purchasePriceService.downloadTemplate(response);
         return success();
     }
@@ -336,7 +376,7 @@ public class PurchasePriceController extends BaseController {
     /**
      * 更新明细备注
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新明细备注采购价目:ids={ids},明细备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新明细备注采购价目:明细备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "pricing_user_id",
@@ -344,9 +384,66 @@ public class PurchasePriceController extends BaseController {
             serviceClass = PurchasePriceService.class,
             keyIdName = "ids"
     )
-    public ApiResult updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = purchasePriceService.updateDetailRemark(dto.getIds(),dto.getRemark());
-        return result ? success() : failure();
+    public ApiResult<?> updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchasePriceDetailEntity> detailList = purchasePriceDetailService.listByIds(dto.getIds());
+        Map<String, PurchasePriceDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(PurchasePriceDetailEntity::getPurchasePriceId).distinct().collect(Collectors.toList());
+        Map<String, PurchasePriceEntity> entityMap = purchasePriceService.mapByIds(mainIds);
+        for (String id : dto.getIds()) {
+            PurchasePriceDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购明细不存在"));
+                continue;
+            }
+            PurchasePriceEntity entity = entityMap.get(detailEntity.getPurchasePriceId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目不存在"));
+                continue;
+            }
+            try {
+                Boolean disabled = purchasePriceService.updateDetailRemark(Collections.singletonList(id), dto.getRemark());
+                if (disabled){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "更新采购价目明细备注失败"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "更新采购价目明细备注成功"));
+                }
+            }catch (Exception e){
+                log.error("更新采购采购价目明细备注失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 更新外部平台单号
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "采购价目:更新外部平台单号:ids={ids},外部平台单号={voucherNo}")
+    @PostMapping("/updateOutPlatformCode")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "pricing_user_id",
+            menuCode = "scm:purchase:price:updateOutPlatformCode",
+            serviceClass = PurchasePriceService.class,
+            keyIdName = "ids"
+    )
+    public ApiResult<?> updateOutPlatformCode(@RequestBody @Valid PurchasePriceDTO.OutPlatformCodeDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchasePriceEntity> entityMap = purchasePriceService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(purchasePriceService.updateOutPlatformCode(entity, dto.getVoucherNo()));
+            }catch (Exception e){
+                log.error("采购价目更新外部平台单号失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

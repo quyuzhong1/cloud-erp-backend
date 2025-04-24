@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -18,12 +19,10 @@ import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.server.wms.query.SoReturnNoticeQueryHandler;
 import com.erp.server.wms.service.SoReturnNoticeService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -89,7 +88,7 @@ public class SoReturnNoticeController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoReturnNoticeDTO.Add dto) {
         String id = soReturnNoticeService.add(dto);
-        return StringUtils.isNotBlank(id) == true ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) == true ? success() : failure();
     }
 
     /**

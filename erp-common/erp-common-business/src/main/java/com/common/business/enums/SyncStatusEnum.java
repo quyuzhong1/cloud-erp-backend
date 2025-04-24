@@ -38,6 +38,16 @@ public enum SyncStatusEnum {
         return SyncStatusEnum.FAILED_SYNC.getCode();
     }
 
+    public static SyncStatusEnum getByDmpInputTaskStatus(String dmpInputTaskStatus) {
+        if ("error".equalsIgnoreCase(dmpInputTaskStatus)){
+            return FAILED_SYNC;
+        }
+        if ("finish".equalsIgnoreCase(dmpInputTaskStatus)){
+            return SUCCESS_SYNC;
+        }
+        return IN_SYNC;
+    }
+
     public String getCode() {
         return code;
     }

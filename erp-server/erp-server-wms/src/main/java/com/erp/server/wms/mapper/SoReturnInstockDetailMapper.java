@@ -1,9 +1,7 @@
 package com.erp.server.wms.mapper;
 
-import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.SoReturnNoticeDetailEntity;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -39,5 +37,5 @@ public interface SoReturnInstockDetailMapper extends BaseMapper<SoReturnInstockD
     List<SoReturnInstockDetailEntity> listDetailBySourceDetailIds(@Param("ids") List<String> sourceDetailIds);
 
 
-
+    List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(@Param("returnIds") List<String> returnIds);
 }

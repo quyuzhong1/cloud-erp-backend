@@ -79,13 +79,13 @@ public class SysDepartmentUserController extends BaseController {
         return success(dto);
     }
 
-    
+
     /**
      * 根据部门id获取员工信息
      * @author yl
      * @date 2023-06-05 12:02
      * @param deptId
-     * @return 
+     * @return
      */
     @GetMapping("/listDeptUserByDeptId")
     public ApiResult<List<FindUserDTO>> listDeptUserByDeptId(@RequestParam("deptId") String deptId) {

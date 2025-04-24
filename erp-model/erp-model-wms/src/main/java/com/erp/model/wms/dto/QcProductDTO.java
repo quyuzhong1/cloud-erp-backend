@@ -5,7 +5,11 @@ import com.common.business.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -17,17 +21,17 @@ import java.util.List;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
 public class QcProductDTO {
-
-
+    private QcProductDTO() {
+        throw new IllegalStateException("Utility QcProductDTO class");
+    }
     /**
      * 暂存 质检产品信息
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
-
+    public static class AddDTO implements Serializable {
+        private static final long serialVersionUID = 1905122041950251207L;
 
         private String id;
 
@@ -95,11 +99,11 @@ public class QcProductDTO {
         private BigDecimal boxWeight;
 
         /**
-         * 整单数量
+         * 整箱数量
          */
-        @NotNull(message = "整单数量不能为空", groups = {UpdateGroup.class, AddGroup.class})
-        @Min(value = 1, message = "整单数量最小值为1" , groups = {UpdateGroup.class, AddGroup.class})
-        @Max(value = 999999999, message = "整单数量最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
+        @NotNull(message = "整箱数量不能为空", groups = {UpdateGroup.class, AddGroup.class})
+        @Min(value = 1, message = "整箱数量最小值为1" , groups = {UpdateGroup.class, AddGroup.class})
+        @Max(value = 999999999, message = "整箱数量最大值为999999999", groups = {UpdateGroup.class, AddGroup.class})
         private Integer boxQty;
 
         /**
@@ -133,7 +137,8 @@ public class QcProductDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
 
         private String id;
@@ -200,7 +205,7 @@ public class QcProductDTO {
         private BigDecimal boxHeight;
 
         /**
-         * 整单数量
+         * 整箱数量
          */
         private Integer boxQty;
 
@@ -234,10 +239,5 @@ public class QcProductDTO {
          * 产品名称地址集合
          */
         private List<String> productImageNameList;
-
-
-
-
-
     }
 }

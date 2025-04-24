@@ -1,8 +1,13 @@
 package com.erp.server.dmp.mapper;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 
 /**
@@ -16,4 +21,15 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DmpSoInfoMapper extends BaseMapper<DmpSoInfoEntity> {
 
+    /**
+     *
+     */
+    List<DmpSoInfoEntity> findSoMissingDetail(@Param("startTime") LocalDateTime startTime,
+                                              @Param("endTime") LocalDateTime endTime,
+                                              @Param("sourceSystem") String sourceSystem,
+                                              @Param("nextLevelId") String nextLevelId);
+    /**
+     *
+     */
+    List<AfterSaleDTO.DropDownDTO> listDetailByPlatformCode(@Param("platformCode") String platformCode);
 }

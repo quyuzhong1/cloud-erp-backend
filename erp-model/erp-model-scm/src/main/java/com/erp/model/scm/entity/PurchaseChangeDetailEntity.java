@@ -109,6 +109,12 @@ public class PurchaseChangeDetailEntity extends BaseEntity<PurchaseChangeDetailE
     private String remark;
 
     /**
+     * 新品首批
+     */
+    @TableField("first_mass_product")
+    private String firstMassProduct;
+
+    /**
      * 汇率
      */
     @TableField(exist = false)
@@ -130,15 +136,15 @@ public class PurchaseChangeDetailEntity extends BaseEntity<PurchaseChangeDetailE
 
     public static final String OLD_AMOUNT = "old_amount";
 
-    public static final String QTY = "qty";
+    public static final String FIELD_QTY = "qty";
 
-    public static final String PRICE = "price";
+    public static final String FIELD_PRICE = "price";
 
-    public static final String AMOUNT = "amount";
+    public static final String FIELD_AMOUNT = "amount";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String CURRENCY_SYMBOL = "currency_symbol";
 

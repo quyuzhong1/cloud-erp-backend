@@ -2,14 +2,13 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -21,6 +20,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -84,9 +84,13 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public DmpPushTaskEntity syncDataToKingdee(TransferInfoEntity entity, String operate) {
+    public DmpPushTaskEntity syncDataToKingdee(TransferInfoEntity entity, List<TransferInfoDetailEntity> detailList, String operate) {
         //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity , detailList , operate));
+    	}
     }
 
     /**
@@ -133,7 +137,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
     }
 
 	@Override
-	public Map<String, Object> newSyncDataToKingdee(TransferInfoEntity entity, String operate) {
+	public Map<String, Object> newSyncDataToKingdee(TransferInfoEntity entity, List<TransferInfoDetailEntity> detailList, String operate) {
 		//第三方马帮拉取数据无推送
         if (ThirdPartySystemEnum.ENUM_MB.getCode().equals(entity.getThirdPartySystem())) {
             return null;
@@ -163,7 +167,7 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
         //备注
         resultMap.put("remark", entity.getRemark());
 
-        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
@@ -186,8 +190,6 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
                 .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
         resultMap.put("outOrgCode", outOrgCode);
 
-
-        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
@@ -238,14 +240,14 @@ public class SyncKingdeeTransferInfoServiceImpl implements SyncKingdeeTransferIn
                 jsonObject.set("outWarehouseCode", outWarehouseCode);
             }
             //是否下推调入仓位
-            Boolean isPushIn = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getInWarehouseId()))
+            Boolean isPushIn = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detail.getInWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPushIn) {
                 //调入仓位
                 jsonObject.set("inWarehouseLocation", detail.getInWarehouseLocation());
             }
             //是否下推调出仓位
-            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detail.getOutWarehouseId()))
+            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detail.getOutWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPushOut) {
                 //调出仓位

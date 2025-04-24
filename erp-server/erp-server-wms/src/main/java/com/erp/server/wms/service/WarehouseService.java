@@ -1,14 +1,12 @@
 package com.erp.server.wms.service;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -100,7 +98,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateStatus(UpdateStateDTO dto);
+    Boolean updateStatus(WarehouseUpdateStateDTO dto);
 
     /**
      * 审核仓库
@@ -264,7 +262,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @Author Jim
      * @date 2023-11-29
      */
-    List<WarehouseDTO.ListDTO> listOverseasWarehouse();
+    List<WarehouseDTO.PullDownDTO> listOverseasWarehouse();
 
     /**
      * 根据名称获取仓库id
@@ -299,4 +297,17 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
 
 
     PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto);
+    
+    /**
+     * 检验启用和禁用时间
+     * @param warehouseEntity
+     */
+    boolean checkOpenCloseTime(WarehouseEntity warehouseEntity);
+
+    /**
+     * 根据仓库名称获取仓库信息
+     * @param warehouseNameList
+     * @return
+     */
+    List<WarehouseEntity> listByWarehouseNameList(List<String> warehouseNameList);
 }

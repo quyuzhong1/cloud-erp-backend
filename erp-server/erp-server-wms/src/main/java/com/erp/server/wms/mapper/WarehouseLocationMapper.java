@@ -85,4 +85,13 @@ public interface WarehouseLocationMapper extends BaseMapper<WarehouseLocationEnt
     WarehouseLocationEntity findWarehouseArea(@Param("warehouseId") String warehouseId, @Param("warehouseLocation") String warehouseLocation);
 
     List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(@Param("warehouseId") String warehouseId);
+
+    /**
+     * 根据SKU找出非拣货区的所有仓位，按库存数量降序排序
+     * @param warehouseId
+     * @param skuNo
+     * @date: 2024-11-05
+     * @author: jack
+     */
+    WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(@Param("warehouseId") String warehouseId,@Param("skuNo") String skuNo);
 }

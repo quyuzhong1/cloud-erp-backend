@@ -2,9 +2,11 @@ package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.collection.ListUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.annotation.format.DateTimeFormat;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -14,13 +16,17 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -29,7 +35,9 @@ import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
+import com.erp.model.tms.enums.TmsB2cDeclareReconciliationPayStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -45,6 +53,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -87,6 +97,12 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     @Resource
     @Lazy
     private FirstMileSkuCostAllocationService firstMileSkuCostAllocationService;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
+    @Lazy
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -108,10 +124,10 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "头程对账单", tmsFirstMileReconciliationEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "头程对账单", tmsFirstMileReconciliationEntity.getCode());
+
         operateLogService.addModuleOperateLog(msg, null, tmsFirstMileReconciliationEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+
 
         return new BaseResultDTO.AddDTO(tmsFirstMileReconciliationEntity.getId(), code);
     }
@@ -137,31 +153,31 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 //        if (!save) {
 //            throw new ServiceException("头程对账单保存失败");
 //        }
-        if (!Objects.equals(old.getReconciliationMonth(),updateDTO.getReconciliationMonth())){
+        if (!Objects.equals(old.getReconciliationMonth(), updateDTO.getReconciliationMonth())) {
             //校验明细物流单在这个月份是否已存在
             List<String> sourceIds = updateDTO.getDetailList().stream().map(TmsFirstMileReconciliationDetailDTO.UpdateDTO::getSourceId).distinct().collect(Collectors.toList());
-            if (!CollectionUtils.isEmpty(sourceIds)){
+            if (!CollectionUtils.isEmpty(sourceIds)) {
                 List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds, DetailReconciliationTypeEnum.ACTUAL.getCode());
                 List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && updateDTO.getReconciliationMonth().equals(e.getReconciliationMonth())).collect(Collectors.toList());
-                if (!CollectionUtils.isEmpty(detailEntityList1)){
+                if (!CollectionUtils.isEmpty(detailEntityList1)) {
                     List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
-                    throw new ServiceException(ApiError.ERROR_92260,String.join(",",sourceCodes), updateDTO.getReconciliationMonth());
+                    throw new ServiceException(ApiError.ERROR_92260, String.join(",", sourceCodes), updateDTO.getReconciliationMonth());
                 }
             }
 
-            this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getReconciliationMonth,updateDTO.getReconciliationMonth())
-                    .eq(TmsFirstMileReconciliationEntity::getId,updateDTO.getId()).update();
+            this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getReconciliationMonth, updateDTO.getReconciliationMonth())
+                    .eq(TmsFirstMileReconciliationEntity::getId, updateDTO.getId()).update();
             old.setReconciliationMonth(updateDTO.getReconciliationMonth());
             String msg = "用户【{}】编辑了【{}】对账月份，由【{}】改为【{}】";
-            operateLogService.addModuleOperateLog(StrUtil.format(msg,UserContext.getDefaultLoginUser().getUserName(),old.getCode(),old.getReconciliationMonth(),updateDTO.getReconciliationMonth()),
-                    ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(),old.getId(),"修改对账单");
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, UserContext.getDefaultLoginUser().getUserName(), old.getCode(), old.getReconciliationMonth(), updateDTO.getReconciliationMonth()),
+                    ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), old.getId(), "修改对账单");
         }
         // 修改明细数据（包含增删改）
         tmsFirstMileReconciliationDetailService.update(updateDTO.getDetailList(), old);
 
         // 记录主单操作日志
         log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsFirstMileReconciliationEntity, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), tmsFirstMileReconciliationEntity.getId(), msg);
         return Boolean.TRUE;
@@ -224,7 +240,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         startProcess(entity);
         // 记录操作日志
         log.info("提交 开始记录头程对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
         // 此处的需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
@@ -267,7 +283,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 调用流程审核
         approveProcess(entity, dto);
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单", approveType.getName(), dto.getComment());
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单", approveType.getName(), dto.getComment());
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "审核操作");
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(approveType);
@@ -316,13 +332,13 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
         // 反审核恢复已确认
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        if (!CollectionUtils.isEmpty(detailEntityList)){
+        if (!CollectionUtils.isEmpty(detailEntityList)) {
             List<String> sourceIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
-            tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.CONFIRMED.getCode(),id);
+            tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.CONFIRMED.getCode(), id);
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "反审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DISAPPROVE);
@@ -335,14 +351,14 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         }
         //对账单明细已进行费用分摊 不能进行反审核
         List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByReconciliationIds(Collections.singletonList(entity.getId()));
-        if (!CollectionUtils.isEmpty(entityList)){
+        if (!CollectionUtils.isEmpty(entityList)) {
             throw new ServiceException(ApiError.ERROR_92241);
         }
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        if (!CollectionUtils.isEmpty(detailEntityList)){
+        if (!CollectionUtils.isEmpty(detailEntityList)) {
             List<String> detailIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getId).distinct().collect(Collectors.toList());
             List<FirstMileSkuCostAllocationEntity> detailList = firstMileSkuCostAllocationService.listByReconciliationDetailIds(detailIds);
-            if(!CollectionUtils.isEmpty(detailList)){
+            if (!CollectionUtils.isEmpty(detailList)) {
                 throw new ServiceException(ApiError.ERROR_92241);
             }
         }
@@ -367,7 +383,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         super.removeById(id);
         // 删除日志数据
         log.info("删除 开始删除头程对账单日志数据，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getCode(), "删除头程对账单数据");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
@@ -392,7 +408,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), entity.getId(), "取消流程操作");
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
@@ -415,16 +431,15 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 明细数据处理 上下游数据处理
 
         // 审核通过修改头程物流单已对账
-        if (ApproveStatusEnum.APPROVE.equals(approveStatus)){
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
             List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-            if (!CollectionUtils.isEmpty(detailEntityList)){
+            if (!CollectionUtils.isEmpty(detailEntityList)) {
                 List<String> sourceIds = detailEntityList.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceId).distinct().collect(Collectors.toList());
-                tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.RECONCILED.getCode(),entity.getId());
+                tmsFirstMileLogisticService.updateReconciliation(sourceIds, ReconciliationStatusEnum.RECONCILED.getCode(), entity.getId());
             }
         }
         return Boolean.TRUE;
     }
-
 
 
     @Override
@@ -472,21 +487,22 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
             data.setCurrencyName(null == currencyView ? "" : currencyView.getName());
         }
         LogisticsSupplierEntity supplierEntity = logisticsSupplierService.getById(data.getLogisticsSupplierId());
-        if (null != supplierEntity){
+        if (null != supplierEntity) {
             data.setLogisticsSupplierName(supplierEntity.getSupplierName());
         }
 
         //审核状态名称
         data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
         //对账周期
-        data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
+        data.setCycle(CharSequenceUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
         // 明细数据
         List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listByMainIdsBySort(Collections.singletonList(data.getId()));
 
         List<TmsFirstMileReconciliationDetailDTO.ListDTO> viewDTOList = BeanMapperUtils.copyList(TmsFirstMileReconciliationDetailDTO.ListDTO.class, detailEntityList);
 
         tmsFirstMileReconciliationDetailService.fillDetailList(viewDTOList, currency, currencyView);
-
+        List<String> sourceIds = viewDTOList.stream().map(TmsFirstMileReconciliationDetailDTO.ListDTO::getSourceId).distinct().collect(Collectors.toList());
+        data.setDetailCount(sourceIds.size());
         data.setDetailList(viewDTOList);
 
     }
@@ -534,8 +550,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     public void updateApproveStatus(String id, String approveStatus) {
         lambdaUpdate().eq(TmsFirstMileReconciliationEntity::getId, id)
                 .set(TmsFirstMileReconciliationEntity::getApproveStatus, approveStatus)
-                .set(ApproveStatusEnum.APPROVE_ING.getCode().equals(approveStatus),TmsFirstMileReconciliationEntity::getSubmitDate, LocalDate.now())
-                .set(ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(approveStatus),TmsFirstMileReconciliationEntity::getSubmitDate, null)
+                .set(ApproveStatusEnum.APPROVE_ING.getCode().equals(approveStatus), TmsFirstMileReconciliationEntity::getSubmitDate, LocalDate.now())
+                .set(ApproveStatusEnum.WAIT_SUBMIT.getCode().equals(approveStatus), TmsFirstMileReconciliationEntity::getSubmitDate, null)
                 .update(new TmsFirstMileReconciliationEntity());
     }
 
@@ -553,7 +569,6 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 .stream()
                 .collect(Collectors.groupingBy(TmsFirstMileReconciliationDetailEntity::getMainId));
 
-
         //币别信息
         List<String> currencyIdList = list.stream().map(TmsFirstMileReconciliationDTO.ListDTO::getCurrency).collect(Collectors.toList());
         List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyIdList);
@@ -562,37 +577,111 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         // 物流商
         Map<String, LogisticsSupplierEntity> supplierMap = logisticsSupplierService.mapByIds(supplierIds);
 
+        String currentDate = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        DmpTaskFeign dmpTaskFeign = ApplicationContextUtils.getBean(DmpTaskFeign.class);
+    	Map<String, BigDecimal> rateMap = new HashMap<>();
+    	rateMap.put("CNY", BigDecimal.ONE);
         // 属性赋值
         for (TmsFirstMileReconciliationDTO.ListDTO data : list) {
             //审核状态名称
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             //对账周期
-            data.setCycle(StrUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
+            data.setCycle(CharSequenceUtil.format("{}-{}", data.getStartDate(), data.getEndDate()));
             //币别符号
             CurrencyDTO.ViewDTO viewDTO = currencyList
                     .stream()
-                    .filter(obj -> StrUtil.equals(obj.getId(), data.getCurrency()))
+                    .filter(obj -> CharSequenceUtil.equals(obj.getId(), data.getCurrency()))
                     .findFirst()
                     .orElse(null);
             data.setCurrencySymbol(null == viewDTO ? "" : viewDTO.getSymbol());
             data.setCurrencyName(null == viewDTO ? "" : viewDTO.getName());
-            if (Objects.nonNull(data.getReconciliationMonth())){
+            if (Objects.nonNull(data.getReconciliationMonth())) {
                 DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
                 data.setReconciliationMonthStr(data.getReconciliationMonth().format(dateTimeFormatter));
             }
             LogisticsSupplierEntity supplierEntity = supplierMap.get(data.getLogisticsSupplierId());
-            if (null != supplierEntity){
+            if (null != supplierEntity) {
                 data.setLogisticsSupplierName(supplierEntity.getSupplierName());
             }
-            if (Objects.nonNull(data.getReconciliationCount())){
-                if (Objects.equals(0, data.getReconciliationCount())){
+            if (Objects.nonNull(data.getReconciliationCount())) {
+                if (Objects.equals(0, data.getReconciliationCount())) {
                     data.setReconciliationCountName("");
-                }else if (Objects.equals(1, data.getReconciliationCount())){
+                } else if (Objects.equals(1, data.getReconciliationCount())) {
                     data.setReconciliationCountName("首次对账");
-                }else {
-                    data.setReconciliationCountName(data.getReconciliationCount()+"次对账");
+                } else {
+                    data.setReconciliationCountName(data.getReconciliationCount() + "次对账");
                 }
             }
+
+            data.setPayStatusName(TmsB2cDeclareReconciliationPayStatusEnum.getName(data.getPayStatus()));
+            
+            BigDecimal actualShippingCost = BigDecimal.ZERO;
+            BigDecimal actualDeclareCost = BigDecimal.ZERO;
+            BigDecimal actualOtherCost = BigDecimal.ZERO;
+            BigDecimal actualOtherTaxCost = BigDecimal.ZERO;
+            List<TmsFirstMileReconciliationDetailEntity> detailList = detailGroupMap.get(data.getId());
+            if(CollUtil.isNotEmpty(detailList)) {
+            	for(TmsFirstMileReconciliationDetailEntity detail : detailList) {
+            		if(detail.getType().equals("actual")) {
+            			BigDecimal cost = detail.getShippingCost();
+            			String currency = detail.getShippingCostCurrency();
+                		BigDecimal rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualShippingCost = actualShippingCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		
+                		cost = detail.getDeclareCost();
+            			currency = detail.getDeclareCostCurrency();
+                		rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualDeclareCost = actualDeclareCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		
+                		cost = detail.getOtherCost();
+            			currency = detail.getOtherCostCurrency();
+                		rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualOtherCost = actualOtherCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+                		
+                		cost = detail.getOtherTaxCost();
+            			currency = detail.getOtherTaxCurrency();
+                		rate = rateMap.get(currency);
+                		if(rate == null) {
+                			rate = dmpTaskFeign.getRate(currentDate, currency);
+                			if(rate == null) {
+                				log.error("币别【{}】,汇率为空，请维护汇率后再提交",currency);
+                                throw new ServiceException(currency + "汇率为空，请维护汇率后再提交");
+                			}
+                			rateMap.put(currency, rate);
+                		}
+                		actualOtherTaxCost = actualOtherTaxCost.add(cost.multiply(rate).setScale(4, RoundingMode.DOWN));
+            		}
+            	}
+            }
+            data.setActualShippingCost(actualShippingCost);
+            data.setActualDeclareCost(actualDeclareCost);
+            data.setActualOtherCost(actualOtherCost);
+            data.setActualOtherTaxCost(actualOtherTaxCost);
+            data.setTotalCost(actualShippingCost.add(actualDeclareCost).add(actualOtherCost).add(actualOtherTaxCost));
         }
     }
 
@@ -606,7 +695,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         }
         // 是否所有明细确认
         List<TmsFirstMileReconciliationDetailEntity> detailList = tmsFirstMileReconciliationDetailService.listByMainIds(Collections.singletonList(entity.getId()));
-        if (CollectionUtils.isEmpty(detailList)){
+        if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException("明细为空无法提交");
         }
         List<String> unConfirmNoList = detailList.stream()
@@ -614,8 +703,8 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                 .map(TmsFirstMileReconciliationDetailEntity::getTransportNo)
                 .distinct()
                 .collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(unConfirmNoList)){
-            String msg = StrUtil.format("运单号{}明细处于待确认，无法提交", unConfirmNoList);
+        if (!CollectionUtils.isEmpty(unConfirmNoList)) {
+            String msg = CharSequenceUtil.format("运单号{}明细处于待确认，无法提交", unConfirmNoList);
             throw new ServiceException(msg);
         }
 
@@ -642,7 +731,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
                         e.getCode(),
                         e.getStartDate(),
                         e.getEndDate(),
-                        StrUtil.format("{}-{}", e.getStartDate(), e.getEndDate()),
+                        CharSequenceUtil.format("{}-{}", e.getStartDate(), e.getEndDate()),
                         e.getLogisticsSupplierId(),
                         e.getLogisticsSupplierName()
                 )).collect(Collectors.toList());
@@ -662,11 +751,11 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
     @Override
     public String checkAndGetSupplier(String id) {
-        if (StringUtils.isBlank(id)){
+        if (StringUtils.isBlank(id)) {
             throw new ServiceException("id不能为空");
         }
         TmsFirstMileReconciliationEntity reconciliationEntity = this.getById(id);
-        if (null == reconciliationEntity){
+        if (null == reconciliationEntity) {
             throw new ServiceException("头程对账不存在");
         }
         return reconciliationEntity.getLogisticsSupplierId();
@@ -676,7 +765,7 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
     public TmsFirstMileReconciliationEntity findByCycleAndSupplier(String supplier, String currency, LocalDate startDate, LocalDate endDate) {
         return lambdaQuery()
                 .eq(TmsFirstMileReconciliationEntity::getLogisticsSupplierId, supplier)
-                .eq(TmsFirstMileReconciliationEntity::getCurrency, currency)
+                .eq(TmsFirstMileReconciliationEntity::getApproveStatus, currency)
                 .eq(TmsFirstMileReconciliationEntity::getStartDate, startDate)
                 .eq(TmsFirstMileReconciliationEntity::getEndDate, endDate)
                 .last(" LIMIT 1 ")
@@ -704,29 +793,29 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
         TmsFirstMileReconciliationEntity tmsFirstMileReconciliationEntity = TmsFirstMileReconciliationConverter.INSTANCE.updateDtoToEntity(updateDTO);
         log.info("编辑 开始修改头程对账单数据，单号：【{}】", old.getCode());
         //校验对账月份
-        if (!Objects.equals(old.getReconciliationMonth(),updateDTO.getReconciliationMonth())){
+        if (!Objects.equals(old.getReconciliationMonth(), updateDTO.getReconciliationMonth())) {
             //校验明细物流单在这个月份是否已存在
             List<String> sourceIds = updateDTO.getDetailList().stream().map(TmsFirstMileReconciliationDetailDTO.UpdateDTO::getSourceId).distinct().collect(Collectors.toList());
-            if (!CollectionUtils.isEmpty(sourceIds)){
+            if (!CollectionUtils.isEmpty(sourceIds)) {
                 List<TmsFirstMileReconciliationDetailEntity> detailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIds(sourceIds, DetailReconciliationTypeEnum.ACTUAL.getCode());
                 List<TmsFirstMileReconciliationDetailEntity> detailEntityList1 = detailEntityList.stream().filter(e -> Objects.nonNull(e) && updateDTO.getReconciliationMonth().equals(e.getReconciliationMonth())).collect(Collectors.toList());
-                if (!CollectionUtils.isEmpty(detailEntityList1)){
+                if (!CollectionUtils.isEmpty(detailEntityList1)) {
                     List<String> sourceCodes = detailEntityList1.stream().map(TmsFirstMileReconciliationDetailEntity::getSourceCode).distinct().collect(Collectors.toList());
-                    throw new ServiceException(ApiError.ERROR_92260,String.join(",",sourceCodes), updateDTO.getReconciliationMonth());
+                    throw new ServiceException(ApiError.ERROR_92260, String.join(",", sourceCodes), updateDTO.getReconciliationMonth());
                 }
             }
-            this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getReconciliationMonth,updateDTO.getReconciliationMonth())
-                    .eq(TmsFirstMileReconciliationEntity::getId,updateDTO.getId()).update();
+            this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getReconciliationMonth, updateDTO.getReconciliationMonth())
+                    .eq(TmsFirstMileReconciliationEntity::getId, updateDTO.getId()).update();
             old.setReconciliationMonth(updateDTO.getReconciliationMonth());
             String msg = "用户【{}】编辑了【{}】对账月份，由【{}】改为【{}】";
-            operateLogService.addModuleOperateLog(StrUtil.format(msg,UserContext.getDefaultLoginUser().getUserName(),old.getCode(),old.getReconciliationMonth(),updateDTO.getReconciliationMonth()),
-                    ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(),old.getId(),"修改对账单");
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, UserContext.getDefaultLoginUser().getUserName(), old.getCode(), old.getReconciliationMonth(), updateDTO.getReconciliationMonth()),
+                    ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), old.getId(), "修改对账单");
         }
         // 修改明细数据（包含增删改）
         tmsFirstMileReconciliationDetailService.updateReconciliationDetail(updateDTO.getDetailList(), old);
         // 记录主单操作日志
         log.info("编辑 开始记录头程对账单日志数据，单号：【{}】", old.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsFirstMileReconciliationEntity.getCode(), "头程对账单");
         // 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, tmsFirstMileReconciliationEntity, ModuleTypeEnum.TMS_FIRST_MILE_RECONCILIATION.getCode(), tmsFirstMileReconciliationEntity.getId(), msg);
     }
@@ -745,9 +834,72 @@ public class TmsFirstMileReconciliationServiceImpl extends SuperServiceImpl<TmsF
 
     @Override
     public List<TmsFirstMileLogisticDTO.ReconciliationDTO> listReconciliationAndCostByBillIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)){
+        if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         }
         return baseMapper.listReconciliationAndCostByBillIds(ids);
+    }
+
+    @Override
+    public List<TmsFirstMileReconciliationEntity> listbyCodes(List<String> codeList) {
+        if (CollectionUtils.isEmpty(codeList)) {
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(TmsFirstMileReconciliationEntity::getCode, codeList).list();
+    }
+
+    @Override
+    public BatchResultDTO updatePayStatus(TmsFirstMileReconciliationDTO.UpdatePayStatusDTO dto, String id) {
+        if (CollUtil.isEmpty(dto.getIds())) {
+            throw new ServiceException(ApiError.ERROR_98004);
+        }
+
+        TmsFirstMileReconciliationEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到头程对账单数据"));
+        if (entity.getPayStatus().equals(dto.getPayStatus())) {
+            throw new ServiceException("修改前后支付状态一致");
+        }
+        LocalDateTime payTime = dto.getPayTime();
+        if (SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(dto.getPayStatus())) {
+            payTime = null;
+        }
+        lambdaUpdate()
+                .set(TmsFirstMileReconciliationEntity::getPayStatus, dto.getPayStatus())
+                .set(TmsFirstMileReconciliationEntity::getPayTime, payTime)
+                .eq(TmsFirstMileReconciliationEntity::getId, id)
+                .update();
+
+        List<FirstMileCostAllocationEntity> costAllocationEntityList = firstMileCostAllocationService.listByReconciliationIds(Arrays.asList(entity.getId()));
+        List<String> ids = costAllocationEntityList.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(ids)) {
+            logisticsLargeService.updatePayStatusBySourceId(ids, dto.getPayStatus(), payTime);
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    public void initExchangeRate() {
+        List<TmsFirstMileReconciliationEntity> list = this.lambdaQuery()
+                .select(TmsFirstMileReconciliationEntity::getId,TmsFirstMileReconciliationEntity::getCurrency,TmsFirstMileReconciliationEntity::getExchangeRate,TmsFirstMileReconciliationEntity::getCreateTime)
+                .eq(TmsFirstMileReconciliationEntity::getExchangeRate, BigDecimal.ZERO).list();
+        if (CollUtil.isEmpty(list)){
+            return;
+        }
+        List<List<TmsFirstMileReconciliationEntity>> partition = ListUtil.partition(list, 100);
+        for (List<TmsFirstMileReconciliationEntity> entityList : partition){
+            if (CollUtil.isEmpty(entityList)){
+                continue;
+            }
+            for (TmsFirstMileReconciliationEntity entity : entityList){
+                if (CurrencyEnum.CNY.getCurrencyCode().equals(entity.getCurrency())){
+                    this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getExchangeRate, BigDecimal.ONE).eq(TmsFirstMileReconciliationEntity::getId, entity.getId()).update();
+                }else {
+                    String currentDate = entity.getCreateTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+                    BigDecimal rate = dmpTaskFeign.getRate(currentDate, entity.getCurrency());
+                    if (Objects.nonNull(rate)){
+                        this.lambdaUpdate().set(TmsFirstMileReconciliationEntity::getExchangeRate, rate).eq(TmsFirstMileReconciliationEntity::getId, entity.getId()).update();
+                    }
+                }
+            }
+        }
     }
 }

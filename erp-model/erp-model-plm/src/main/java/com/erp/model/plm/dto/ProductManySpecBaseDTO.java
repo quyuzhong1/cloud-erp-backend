@@ -3,12 +3,13 @@ package com.erp.model.plm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class ProductManySpecBaseDTO {
+public class ProductManySpecBaseDTO implements Serializable{
 
     /**
      * 产品信息列表id
@@ -160,4 +161,15 @@ public class ProductManySpecBaseDTO {
      *禁止修改的字段
      */
     private List<String> disableFieldList;
+
+
+    /**
+     * 应用分类id
+     */
+    private String applicationCategoryId;
+
+    /**
+     * 应用分类名
+     */
+    private String applicationCategoryName;
 }

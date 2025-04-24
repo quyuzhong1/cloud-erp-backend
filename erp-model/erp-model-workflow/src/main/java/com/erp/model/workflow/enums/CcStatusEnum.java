@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 抄送状态枚举
@@ -53,10 +55,6 @@ public enum CcStatusEnum {
     }
 
     public static List<CcStatusEnum> getAll() {
-        List<CcStatusEnum> resultList = new ArrayList<>();
-        for (CcStatusEnum optionEnum : CcStatusEnum.values()) {
-            resultList.add(optionEnum);
-        }
-        return resultList;
+        return Arrays.stream(CcStatusEnum.values()).collect(Collectors.toList());
     }
 }

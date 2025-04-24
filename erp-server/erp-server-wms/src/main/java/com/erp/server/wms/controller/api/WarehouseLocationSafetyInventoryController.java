@@ -70,7 +70,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @PostMapping("/importExcel")
-    public ApiResult<?> importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
+    public ApiResult importExcel(@RequestParam("excelFile") MultipartFile file, HttpServletResponse response){
         boolean flag = safetyInventoryService.importExcel(file, response);
         return flag ? success() : failure();
     }
@@ -84,7 +84,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery(handler = WarehouseLocationSafetyInventoryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody WarehouseLocationSafetyInventoryDTO.exportParamDTO dto){
+    public ApiResult exportExcel(@RequestBody WarehouseLocationSafetyInventoryDTO.exportParamDTO dto){
         boolean flag = safetyInventoryService.exportExcel(dto);
         return flag ? success() : failure();
     }
@@ -96,7 +96,7 @@ public class WarehouseLocationSafetyInventoryController extends BaseController {
      * @author: tanmujin
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> downloadTemplate(HttpServletResponse response){
+    public ApiResult downloadTemplate(HttpServletResponse response){
         safetyInventoryService.downloadTemplate(response);
         return success();
     }

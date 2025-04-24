@@ -14,8 +14,10 @@ import javax.validation.constraints.Size;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
 public class DictNodeDTO {
+
+    private DictNodeDTO() {
+    }
 
     @Data
     @NoArgsConstructor

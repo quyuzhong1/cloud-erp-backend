@@ -144,4 +144,17 @@ public class SysDeptFeignController extends BaseController {
     public List<SysDepartmentEntity> getDeptByNames(@RequestBody List<String> deptNameList) {
         return departmentService.getDeptByNames(deptNameList);
     }
+
+    @PostMapping("/getDeptByIds")
+    public List<SysDepartmentEntity> getDeptByIds(@RequestBody List<String> ids){
+        return departmentService.getDeptByIds(ids);
+    }
+
+    /**
+     * 获取所有的部门信息
+     */
+    @GetMapping("/getDeptEntityList")
+    public List<SysDepartmentEntity> getDeptEntityList(){
+        return departmentService.listByParentIds();
+    }
 }

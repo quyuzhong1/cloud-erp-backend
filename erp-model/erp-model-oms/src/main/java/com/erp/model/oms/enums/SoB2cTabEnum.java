@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
 public enum SoB2cTabEnum {
     ENUM_ALL("all",  "全部"),
     ENUM_PAYMENT("payment",  "待付款"),
-    ENUM_PENDING("pending",  "待处理"),
-    ENUM_APPROVE_ING("approveIng",  "审核中"),
+    ENUM_PENDING("pending",  "待提审"),
+    ENUM_APPROVE_ING("approveIng",  "待审核"),
     ENUM_IN_DISTRIBUTION("inDistribution",  "配货中"),
     ENUM_WAIT_SHIPPED("waitShipped",  "待发货"),
     ENUM_SHIPPED("shipped",  "已发货"),

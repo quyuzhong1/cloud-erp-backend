@@ -67,6 +67,13 @@ public class DmpCfgInputEntity extends BaseEntity<DmpCfgInputEntity> {
     */
     @TableField("is_main_task")
     private String isMainTask;
+    /**
+     * 业务类型：BusinessTypeEnum业务类型
+     * 子任务为空
+     * 对应dmp_cfg_input的billType
+     */
+    @TableField("bill_type")
+    private String billType;
     
     public static final String SYSTEM_ID = "system_id";
 

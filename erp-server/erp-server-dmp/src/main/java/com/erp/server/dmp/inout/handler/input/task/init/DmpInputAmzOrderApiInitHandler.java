@@ -12,11 +12,12 @@ import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
+import com.erp.model.dmp.entity.CfgTimezoneEntity;
 import com.erp.sdk.oms.amz.spapi.api.OrdersV0Api;
 import com.erp.sdk.oms.amz.spapi.client.ApiClient;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.orders.GetOrdersResponse;
 import com.erp.sdk.oms.amz.spapi.model.orders.Order;
@@ -26,7 +27,9 @@ import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.service.CfgAppClientService;
+import com.erp.server.dmp.service.CfgTimezoneService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -34,7 +37,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -54,6 +56,8 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
     private CfgAppClientService cfgAppClientService;
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private CfgTimezoneService cfgTimezoneService;
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -71,11 +75,80 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
         if (null != limitObj) {
             log.warn("【订单拉取】 PlatformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-            initDmpResponse.setDoNextChain(false);
+            initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
-//            throw new ServiceException(msg);
         }
 
+        List<String> orderIdList = new ArrayList<>(50);
+        // 是否使用站点解析
+        boolean hasParseByMarketplaceId = true;
+        if (StringUtils.isNotBlank(dmpInputTaskEntity.getExtendJson())){
+            JSONObject jsonObject = JSONObject.parseObject(dmpInputTaskEntity.getExtendJson());
+            JSONArray jsonArray = jsonObject.getJSONArray("orderIdList");
+            if (CollectionUtils.isNotEmpty(jsonArray)){
+                orderIdList = jsonArray.stream().map(Object::toString).distinct().collect(Collectors.toList());
+            }
+            Boolean cfgParseByMarketplaceId = jsonObject.getBoolean("hasParseByMarketplaceId");
+            if (null != cfgParseByMarketplaceId){
+                hasParseByMarketplaceId = cfgParseByMarketplaceId;
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(orderIdList)){
+            // 指定单号查询
+            return getByOrderIds((DmpInputInitResponse) dmpResponse, shopInfoDTO, limitKey, orderIdList, hasParseByMarketplaceId);
+        } else {
+            // 查询最新
+            return getNewDmpInputTaskInitDTOS((DmpInputInitResponse) dmpResponse, shopInfoDTO, limitKey, hasParseByMarketplaceId);
+        }
+
+    }
+
+    /**
+     * 根据订单IDS 查询
+     */
+    private List<DmpInputTaskInitDTO> getByOrderIds(DmpInputInitResponse dmpResponse, AmazonShopInfoDTO shopInfoDTO, String limitKey, List<String> orderIds, boolean parseByMarketplaceId) {
+        if (orderIds.size() > 50){
+            ServiceException.runError("亚马逊订单接口根据ID数量查询不能超过50");
+        }
+
+        String rateLimitStr = AmazonRequestTypeRateLimiterEnum.ORDER_LIST.getRateLimit();
+        // 亚马逊订单下载
+        OrdersV0Api api = AmazonSpApiInitUtils.create(OrdersV0Api.class, shopInfoDTO, false);
+        // 正式环境请求
+        try {
+            // 请求全站点
+            List<String> marketplaceIds = new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet());
+            // 发起请求
+            ApiResponse<GetOrdersResponse> ordersWithHttpInfo = api.getOrdersWithHttpInfo(marketplaceIds,
+                    null, null, null, null, null, null, null, null, null, 100,
+                    null, null, null, orderIds, null, null, null, null, null, null, null);
+            // 返回下载源数据
+            List<JSONObject> curJsonList = ordersWithHttpInfo.getData().getPayload()
+                    .getOrders()
+                    .stream()
+                    .map(e -> fillDataAndToJsonObject(e, shopInfoDTO, parseByMarketplaceId)).collect(Collectors.toList());
+
+            // 返回下载源数据
+            return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSONArray.toJSONString(curJsonList)));
+        } catch (ApiException e) {
+            if (429 == e.getCode()) {
+                // 设置动态速率，失效时间=1/limit
+                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
+                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                dmpResponse.setDoNextStatus(false);
+                return Collections.emptyList();
+            }
+            throw new ServiceException("根据订单IDS请求亚马逊SP-APi订单失败 异常失败,body=" + JSONUtil.toJsonStr(e));
+        } catch (Exception e) {
+            throw new RuntimeException("根据订单IDS请求亚马逊SP-APi订单失败,body=" + JSONUtil.toJsonStr(e));
+        }
+    }
+
+    /**
+     * 查询最新订单
+     */
+    private List<DmpInputTaskInitDTO> getNewDmpInputTaskInitDTOS(DmpInputInitResponse dmpResponse, AmazonShopInfoDTO shopInfoDTO, String limitKey, boolean parseByMarketplaceId) {
         // 开始时间
         LocalDateTime startTime = dmpInputTaskEntity.getStartTime();
         // 结束时间
@@ -114,7 +187,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
                 List<String> currentLimitArray = ordersWithHttpInfo.getHeaders().get(ApiClient.X_AMAZON_RATE_LIMIT);
                 rateLimitStr = currentLimitArray.get(0);
             }
-            List<JSONObject> curJsonList = orderList.stream().map(e -> fillDataAndToJsonObject(e, shopInfoDTO)).collect(Collectors.toList());
+            List<JSONObject> curJsonList = orderList.stream().map(e -> fillDataAndToJsonObject(e, shopInfoDTO, parseByMarketplaceId)).collect(Collectors.toList());
 
             // 返回下载源数据
             return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSONArray.toJSONString(curJsonList)));
@@ -123,8 +196,7 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
-                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
-                initDmpResponse.setDoNextChain(false);
+                dmpResponse.setDoNextStatus(false);
                 return Collections.emptyList();
             }
             throw new ServiceException("请求亚马逊SP-APi订单api异常失败,body=" + JSONUtil.toJsonStr(e));
@@ -136,14 +208,43 @@ public class DmpInputAmzOrderApiInitHandler extends DmpInputInitHandler {
     /**
      * 设置亚马逊账号和转换JSON
      */
-    private JSONObject fillDataAndToJsonObject(Order entity, AmazonShopInfoDTO shopInfoDTO) {
+    private JSONObject fillDataAndToJsonObject(Order entity, AmazonShopInfoDTO shopInfoDTO, boolean parseByMarketplaceId) {
         JSONObject json = (JSONObject) JSON.toJSON(entity);
         json.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
-        // 根据站点判断店铺ID
-        AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(entity.getMarketplaceId());
-        json.put("shopId", shopNameDTO.getShopId());
-        json.put("shopName", shopNameDTO.getShopName());
-        return json;
+        if (parseByMarketplaceId) {
+            // 根据站点判断店铺ID
+            AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(entity.getMarketplaceId());
+            if (null == shopNameDTO){
+                ServiceException.runError("未找到店铺站点:账号={}, 站点={}", shopInfoDTO.getPlatformShopCode(), entity.getMarketplaceId());
+            }
+            json.put("shopId", shopNameDTO.getShopId());
+            json.put("shopName", shopNameDTO.getShopName());
+            return json;
+        } else {
+            // 跳过FBA配送
+            if (entity.getSalesChannel().contains("Non-Amazon")){
+                return json;
+            }
+            // 渠道配置
+            List<CfgTimezoneEntity> timeList = cfgTimezoneService.listAndCache();
+            // 补充店铺信息
+            CfgTimezoneEntity timeZoneEntity = timeList.stream()
+                    .filter(t -> t.getAndParseCondition().contains(entity.getSalesChannel()))
+                    .findFirst()
+                    .orElse(null);
+            if (null == timeZoneEntity) {
+                ServiceException.runError("未解析到对应渠道为空:渠道={}", entity.getSalesChannel());
+            }
+            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(timeZoneEntity.getCountry());
+            AmazonShopInfoDTO.ShopNameDTO shopNameDTO = shopInfoDTO.getMarketplaceShopIdMap().get(marketplaceEnum.getMarketplaceId());
+            if (null == shopNameDTO) {
+                ServiceException.runError("未解析到渠道对应ERP店铺ID:渠道={},平台账号代号={}", entity.getSalesChannel(), shopInfoDTO.getPlatformShopCode());
+            }
+            json.put("shopId", shopNameDTO.getShopId());
+            json.put("shopName", shopNameDTO.getShopName());
+            return json;
+        }
+
     }
 
 }

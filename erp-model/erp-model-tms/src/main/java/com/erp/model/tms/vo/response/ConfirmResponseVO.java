@@ -33,6 +33,6 @@ public class ConfirmResponseVO extends LogisticsBaseResponseVO implements Serial
     /**
      * 兼容一对多情况 一个订单存在多个运单号
      */
-    List<ConfirmResponseVO> confirmResponseVOS;
+    private List<ConfirmResponseVO> confirmResponseVOS;
 
 }

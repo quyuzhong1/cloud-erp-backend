@@ -16,8 +16,10 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     AMAZON("Amazon", "Amazon", "亚马逊", "100","Y","N"),
     SHOPIFY("Shopify", "Shopify", "Shopify", "004","Y","N"),
     WALMART("Walmart", "Walmart", "沃尔玛", "018","Y","N"),
-    MERCADOLIBRE("mercadolibre", "美客多", "美客多", "","Y","N"),
-    TIK_TOK("TikTok", "TikTok", "TikTok", "","N","N"),
+    MERCADOLIBRE("mercadolibre", "美客多-全球站", "美客多-全球站", "","Y","N"),
+    MERCADOLIBRE_LOCAL("mercadolibreLocal", "美客多-本土站", "美客多-本土站", "","Y","N"),
+    TIK_TOK("TikTok", "TikTok", "TikTok", "","Y","N"),
+    TIK_TOK_FULLY("TikTokFully", "TikTok全托管", "TikTok全托管", "","Y","N"),
     //物流平台
     DSF("DSF", "递四方", "递四方(新)", "","Y","Y"),
     SF_EXPRESS("EXPRESS", "顺丰-丰桥", "顺丰国内物流", "","Y","N"),
@@ -34,6 +36,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     BAO_HONG("BaoHong", "保宏", "保宏", "","Y","N"),
     BaTong("BaTong", "巴通", "巴通", "","",""),
     ANTU(OmsPlatformEnum.OMS_ANTU.getCode(), OmsPlatformEnum.OMS_ANTU.getName(), "安兔", "","",""),
+    SPT(OmsPlatformEnum.OMS_SPT.getCode(), OmsPlatformEnum.OMS_SPT.getName(), "速派通", "","",""),
 
 
     ;
@@ -100,6 +103,15 @@ public enum LogisticsPlatformEnum implements EnumMessage {
         return null;
     }
 
+    public static String getNameByCode(String code) {
+        LogisticsPlatformEnum[] values = values();
+        for (LogisticsPlatformEnum value : values) {
+            if (value.code.equals(code)) {
+                return value.getName();
+            }
+        }
+        return "";
+    }
     public static String getNameByName(String name) {
         LogisticsPlatformEnum[] values = values();
         for (LogisticsPlatformEnum value : values) {

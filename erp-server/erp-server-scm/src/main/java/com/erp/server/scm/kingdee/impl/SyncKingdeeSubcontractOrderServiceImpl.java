@@ -19,6 +19,7 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -83,7 +84,11 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SubcontractOrderEntity entity, String operate) {
         //生成任务
-       return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -155,8 +160,6 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
                 resultMap.put("purchaseUserCode", findUserDTO.getCode());
             }
         }
-        //是否是新品首批
-        resultMap.put("isFirstMassProduct",entity.getIsFirstMassProduct());
 
 
         //采购明细
@@ -200,6 +203,8 @@ public class SyncKingdeeSubcontractOrderServiceImpl implements SyncKingdeeSubcon
             jsonObject.set("qty",detailEntity.getQty());
             jsonObject.set("planDeliveryDate",LocalDateTimeUtil.format(detailEntity.getPlanDeliveryDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             jsonObject.set("price",detailEntity.getPrice());
+            //新品首批
+            jsonObject.set("firstMassProduct", detailEntity.getFirstMassProduct());
             //单据日期
             jsonObject.set("billDate",LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 

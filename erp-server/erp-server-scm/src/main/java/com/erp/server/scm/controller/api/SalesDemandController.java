@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -52,7 +53,7 @@ import java.util.Objects;
 public class SalesDemandController extends BaseController {
 
     @Resource
-   private SalesDemandService salesDemandService;
+    private SalesDemandService salesDemandService;
 
    /**
     * 分页查询
@@ -362,7 +363,7 @@ public class SalesDemandController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();

@@ -5,9 +5,11 @@ import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.plm.dto.ProductLogisticsDTO;
 import com.erp.model.plm.dto.ProductLogisticsShowDTO;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description 产品物流信息服务类
@@ -23,6 +25,14 @@ public interface ProductLogisticsService extends IService<ProductLogisticsEntity
      * @return java.util.List<com.erp.model.plm.dto.ProductLogisticsShowDTO>
      **/
     List<ProductLogisticsShowDTO> list(String productId);
+    /**
+     * @Description 获取保险属性列表
+     * @Author jack
+     * @Date 2025-03-10
+     * @param insuranceProperty ,mapById
+     * @return String
+     **/
+    List<String> getInsurancePropertyList(String insuranceProperty, Map<String, BasicDictEntity> mapById);
 
     /**
      * @Description 产品物流信息查询列表

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -39,6 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -117,7 +119,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
             //填充仓库ID
             String warehouseId = warehouseMap.get(importExcelDto.getWarehouseName());
-            if(StringUtils.isBlank(warehouseId)){
+            if(CharSequenceUtil.isBlank(warehouseId)){
                 importExcelDto.setErrorInfo(importExcelDto.getErrorInfo() + ", 仓库不存在");
                 errorList.add(importExcelDto);
                 continue;
@@ -180,7 +182,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();

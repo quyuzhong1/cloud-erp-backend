@@ -1,14 +1,12 @@
 package com.erp.model.oms.dto;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.common.business.dto.AdvanceQueryDTO;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.annotation.Dict;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.UpdateStateDTO.BatchUpdateDTO;
+import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.oms.enums.ShopTypeEnum;
-import com.erp.model.wms.enums.WmsDataCompareTaskStatusEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -180,6 +178,30 @@ public class ShopDTO implements Serializable {
          * 扩展字段的 数据+值
          */
         private String extendData;
+        
+        /**
+         * 结算币别
+         */
+         private String settlementCurrency;
+        private String settlementCurrencyName;
+         /**
+         * 交易币别
+         */
+         private String tradeCurrency;
+        private String tradeCurrencyName;
+         /**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+         /**
+          * 停用时间
+          */
+         private LocalDateTime downTime;
+         /**
+         * 店铺退货仓库：名称字段为returnWarehouseName
+         */
+         private String returnWarehouse;
+         private String returnWarehouseName;
     }
 
 
@@ -317,7 +339,7 @@ public class ShopDTO implements Serializable {
         private String dictAreaCode;
 
         /**
-         * 国家id
+         * 站点，必须选一个
          */
         private List<String> dictCountryCodeList;
 
@@ -327,7 +349,7 @@ public class ShopDTO implements Serializable {
         private String domain;
 
         /**
-         * 仓库id
+         * 店铺平台仓库
          */
         private String warehouseId;
 
@@ -335,6 +357,37 @@ public class ShopDTO implements Serializable {
          * VOEC税号
          */
         private String voecTaxNo;
+        
+        /**
+         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "结算币别不能为空")
+         private String settlementCurrency;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+         @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 店铺退货仓库： 同店铺平台仓库获取方式
+         */
+//         @NotBlank(message = "店铺退货仓库不能为空")
+         private String returnWarehouse;
+
+        /**
+         * 渠道id
+         */
+        private List<String> channelIdList;
+
+        /**
+         * 平台经营模式
+         */
+        private String businessModel;
     }
 
 
@@ -488,7 +541,42 @@ public class ShopDTO implements Serializable {
          */
         private String customerCode;
 
+        /**
+         * 结算币别
+         */
+         private String settlementCurrency;
+         /**
+         * 交易币别
+         */
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+         /**
+          * 停用时间
+          */
+         private LocalDateTime downTime;
+         /**
+         * 店铺退货仓库：名称字段为returnWarehouseName
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.WMS , queryFieldName = "id" , returnFieldName = "name" , tableName = "warehouse")
+         private String returnWarehouse;
 
+        /**
+         * 渠道信息
+         */
+        private List<ShopChannelRefDTO.ViewDTO> shopChannelRefDTOList;
+
+        /**
+         * 平台经营模式
+         */
+        private String businessModel;
+
+        /**
+         * 平台经营模式名称
+         */
+        private String businessModelName;
     }
 
     @Data
@@ -551,6 +639,10 @@ public class ShopDTO implements Serializable {
         @NotBlank(message = "店铺名称不能为空")
         @Size(max = 100, message = "店铺名称最大100字符")
         private String name;
+        /**
+         * 站点，必须选一个
+         */
+        private List<String> dictCountryCodeList;
 
         /**
          * 店铺负责人
@@ -578,16 +670,55 @@ public class ShopDTO implements Serializable {
         private String salesOrgId;
 
         /**
+         * 渠道id
+         */
+        private List<String> channelIdList;
+        /**
          * 仓库id
          */
         private String warehouseId;
 
+        /**
+         * 国家id
+         */
+        private String dictCountryCode;
+
+        /**
+         * 国家名
+         */
+        private String countryName;
         /**
          * 客户的id
          * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
 //        @NotBlank(message = "客户的id不能为空")
         private String customerId;
+        
+        /**
+         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "结算币别不能为空")
+         private String settlementCurrency;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+         @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 店铺退货仓库：同店铺平台仓库获取方式
+         */
+//         @NotBlank(message = "店铺退货仓库不能为空")
+         private String returnWarehouse;
+
+        /**
+         * 平台经营模式
+         */
+        private String businessModel;
 
     }
     @Data
@@ -618,9 +749,38 @@ public class ShopDTO implements Serializable {
          * 接口地址：http://172.16.100.11:3002/project/110/interface/api/13777
          */
         private String customerId;
+        
+        /**
+         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "结算币别不能为空")
+         private String settlementCurrency;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+         @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
 
     }
 
+    /**
+     * 批量修改
+     * 状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopBatchUpdateDTO extends BatchUpdateDTO{
+    	/**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+    }
+    
     @Data
     @NoArgsConstructor
     public static class BatchSetCostDTO  {
@@ -846,6 +1006,14 @@ public class ShopDTO implements Serializable {
          */
         private String dictPlatform;
         /**
+         *
+         */
+        private String type;
+        /**
+         * 区域
+         */
+        private String dictAreaCode;
+        /**
          * 是否已授权
          */
         private Boolean showByAuth = false;
@@ -933,5 +1101,52 @@ public class ShopDTO implements Serializable {
          * 是否包含平台仓 true 包含
          */
         private Boolean  isHaveWarehouse;
+        
+        /**
+         * 结算币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "结算币别不能为空")
+         private String settlementCurrency;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+         @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 启用时间
+         */
+         @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+    }
+
+    /**
+     * 区域
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AreaDTO {
+
+       /**
+        * 区域
+        */
+        private String dictAreaCode;
+    }
+
+    /**
+     * 区域参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AreaParamDTO {
+
+        /**
+         * 关键词
+         */
+        private String searchKeyword;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
     }
 }

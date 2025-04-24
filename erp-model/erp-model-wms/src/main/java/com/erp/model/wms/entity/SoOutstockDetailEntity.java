@@ -175,7 +175,7 @@ public class SoOutstockDetailEntity extends BaseEntity<SoOutstockDetailEntity> {
 
     public static final String IS_CLOSE = "is_close";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

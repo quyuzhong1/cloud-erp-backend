@@ -16,6 +16,8 @@ import java.time.LocalDateTime;
  **/
 public class ProcessDTO {
 
+    private ProcessDTO() {
+    }
 
     /**
      * 部署流程入参

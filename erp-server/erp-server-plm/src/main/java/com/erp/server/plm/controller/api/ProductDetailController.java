@@ -2,6 +2,8 @@ package com.erp.server.plm.controller.api;
 
 import com.alibaba.excel.EasyExcel;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -14,7 +16,6 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
-import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductWarehouseLocationExcelDTO;
 import com.erp.model.plm.entity.ProductDetailApproverEntity;
@@ -25,9 +26,9 @@ import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.listener.ProductWarehouseLocationListener;
+import com.erp.server.plm.query.ProductDetailQueryHandler;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
-import okhttp3.Response;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.ibatis.annotations.Param;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -45,7 +46,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 产品管理
@@ -125,6 +129,7 @@ public class ProductDetailController extends BaseController {
      **/
     @PostMapping("/list")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
     public ApiResult<PagingVO<ProductDetailShowDTO>> list(@RequestBody PagingDTO<ProductSkuDTO> pagingDTO) {
         PagingVO<ProductDetailShowDTO> paging = productDetailService.paging(pagingDTO);
         return this.success(paging);
@@ -510,9 +515,31 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "采购信息-备注信息-新增-批量：id={id}")
     @PostMapping("/saveOrUpdatePurchaseRemarkBatch")
     //@RequestPermissions("plm:product:detail:saveOrUpdatePurchaseRemarkBatch")
-    public ApiResult saveOrUpdatePurchaseRemarkBatch(@RequestBody List<ProductPurchaseRemarkDTO> dto) {
-        Boolean flag = productPurchaseRemarkService.saveOrUpdateBatch(dto);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<?> saveOrUpdatePurchaseRemarkBatch(@RequestBody List<ProductPurchaseRemarkDTO> dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.size());
+        List<String> ids = dto.stream().map(ProductPurchaseRemarkDTO::getId).collect(Collectors.toList());
+        Map<String, ProductPurchaseRemarkEntity> entityMap = productPurchaseRemarkService.listByIds(ids)
+                .stream()
+                .collect(Collectors.toMap(ProductPurchaseRemarkEntity::getId, Function.identity()));
+        for (ProductPurchaseRemarkDTO remarkDTO : dto) {
+            ProductPurchaseRemarkEntity entity = entityMap.get(remarkDTO.getId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(remarkDTO.getId(), remarkDTO.getId(), "采购信息不存在"));
+                continue;
+            }
+            try {
+                Boolean result = productPurchaseRemarkService.saveOrUpdateBatch(Collections.singletonList(remarkDTO));
+                if (result){
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getProductId(), "采购信息-备注信息-新增成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getProductId(), "采购信息-备注信息-新增失败"));
+                }
+            }catch (Exception e){
+                log.error("采购信息-备注信息添加失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getProductId(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /*    *//**
@@ -626,14 +653,26 @@ public class ProductDetailController extends BaseController {
      * @Author Luo_WG
      * @Date 2022/10/9 10:28
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_BATCH_INSERT, desc = "产品信息-单位管理-新增|修改：单位名称={name}")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品信息-单位管理-新增|修改：单位名称={name}", keyIdName = "name")
     @PostMapping("/saveOrUpdateProductUnit")
     //@RequestPermissions("plm:product:detail:saveOrUpdateProductUnit")
-    public ApiResult saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
-        Boolean flag = productUnitService.saveOrUpdateBatch(productUnitList);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<?> saveOrUpdateProductUnit(@RequestBody @Validated List<ProductUnitDTO> productUnitList) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        for (ProductUnitDTO dto : productUnitList) {
+            try {
+                Boolean flag = productUnitService.saveOrUpdateBatch(Collections.singletonList(dto));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(dto.getId(), dto.getName(),"单位管理-新增|修改成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(dto.getId(),dto.getName(),"单位管理-新增|修改失败"));
+                }
+            }catch (Exception e){
+                log.error("单位管理-新增|修改失败",e);
+                resultDTOS.add(BatchResultDTO.fail(dto.getId(), dto.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
     /**
      * 产品信息-单位管理-查询
      *
@@ -676,9 +715,46 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入产品信息")
     @PostMapping("/importProductFile")
     //@RequestPermissions("plm:product:detail:importProductFile")
-    public ApiResult importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = productDetailService.importProductFile(excelFile, importType, response);
-        return flag == true ? success() : failure();
+    public ApiResult<ExcelImportFsDTO.UrlDTO> importProductFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        ExcelImportFsDTO.UrlDTO urlDTO = productDetailService.importProductFile(excelFile, importType, response);
+        return success(urlDTO);
+    }
+
+    /**
+     * excel更新导入
+     **/
+    @LogAction(value = LogActionEnum.IMPORT, desc = "更新产品信息")
+    @PostMapping("/importProductUpdate")
+    public ApiResult<ExcelImportFsDTO.UrlDTO> importProductUpdate(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        ExcelImportFsDTO.UrlDTO urlDTO = productDetailService.importProductUpdate(excelFile, response);
+        return success(urlDTO);
+    }
+
+    /**
+     * 下载导出更新模板
+     *
+     **/
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
+    @GetMapping("/exportUpdateTemplate")
+    public void exportUpdateTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/productUpdateTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -691,9 +767,19 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载导出模板")
     @GetMapping("/exportTemplate")
-    public void exportTemplate(HttpServletRequest request, HttpServletResponse response) {
-        String path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+    public void exportTemplate(@RequestParam(value = "importType") Integer importType,HttpServletRequest request, HttpServletResponse response) {
+        String path = "";
         String excelName = "template.xlsx";
+        if(importType == 1){//导入新增
+            path = "classpath:excel/productNoSpecDetailTemplate.xlsx";
+        }else if(importType == 2){//导入更新（待审核）
+            path = "classpath:excel/productUpdateNotApproveTemplate.xlsx";
+        }else if(importType == 3){//导入更新（已审核）
+            path = "classpath:excel/productUpdateApproveTemplate.xlsx";
+        }
+        if(StringUtils.isEmpty(path)){
+            throw new ServiceException(ApiError.ERROR_99999);
+        }
 
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -704,7 +790,7 @@ public class ProductDetailController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -724,6 +810,7 @@ public class ProductDetailController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出产品信息")
     @PostMapping(value = "/exportProduct")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:detail:list", tableAlias = "pd")
+    @WebAdvanceQuery(handler = ProductDetailQueryHandler.class)
     public ApiResult<Boolean> exportProduct(@RequestBody ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response) {
         productDetailService.exportProduct(productSkuExcelDTO, response);
         return success(true);
@@ -871,7 +958,7 @@ public class ProductDetailController extends BaseController {
         return success(skuList);
     }
     /**
-     * 获取已授权店铺
+     * 获取SKU下拉框-分页查询
      *
      * @return ApiResult<List < ShopInfoEntity>>
      * @author hyj
@@ -902,13 +989,8 @@ public class ProductDetailController extends BaseController {
      * @date 2023-01-11 14:58
      */
     @GetMapping("/search/skuWithCombination")
-    public ApiResult<List<SkuSimpleVO>> skuWithCombination(String searchKeyword) {
-        StopWatch stopWatch = new StopWatch();
-        stopWatch.start();
-        List<SkuSimpleVO> skuList = productDetailService.searchSkuWithCombination(searchKeyword);
-        stopWatch.stop();
-        log.warn(stopWatch.prettyPrint());
-        return success(skuList);
+    public ApiResult<List<SkuSimpleVO>> skuWithCombination(@RequestParam(value = "searchKeyword",required = false) String searchKeyword) {
+        return success(productDetailService.searchSkuWithCombination(searchKeyword));
     }
 
 
@@ -1138,9 +1220,34 @@ public class ProductDetailController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品详情批量更新字段:ids={ids},修改的字段名称编号={updateFiledCode}")
     @PostMapping("/updateBatchFiled")
-    public ApiResult updateBatchFiled(@RequestBody @Validated ProductDetailBatchUpdateDTO dto) {
-        Boolean flag = productDetailService.updateBatchFiled(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> updateBatchFiled(@RequestBody @Validated ProductDetailBatchUpdateDTO dto) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProductDetailEntity> entityMap = productDetailService.listByIds(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(ProductDetailEntity::getId, e -> e));
+        for (String id : dto.getIds()) {
+            ProductDetailEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品明细不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = productDetailService.updateBatchFiled(new ProductDetailBatchUpdateDTO(
+                        Collections.singletonList(id),
+                        dto.getUpdateFiledCode(),
+                        dto.getValues()
+                ));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"产品详情批量更新成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"产品详情批量更新失败"));
+                }
+            }catch (Exception e){
+                log.error("产品详情批量更新失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -1164,7 +1271,7 @@ public class ProductDetailController extends BaseController {
      */
     @GetMapping("/listSkuByProductId")
     public ApiResult<List<ProductDetailEntity>> listSkuByProductId(@RequestParam("productId") String productId) {
-        return success(productDetailService.queryByProductId(productId));
+        return success(productDetailService.getSkuListByProductId(productId));
     }
 
     /**
@@ -1248,7 +1355,7 @@ public class ProductDetailController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -1267,6 +1374,16 @@ public class ProductDetailController extends BaseController {
     }
 
     /**
+     * 首次推送sku到领星
+     */
+    @GetMapping("/initProductToLingXing")
+    public ApiResult<String> initProductToLingXing(@RequestParam(required = false) List<String> ids){
+        productDetailService.initProductToLingXing(ids);
+        return success();
+    }
+
+
+    /**
      *初始化目的国海关信息
      *
      * @param skuIds  skuIds
@@ -1278,5 +1395,57 @@ public class ProductDetailController extends BaseController {
     public ApiResult initProductCustom(@RequestBody(required = false) List<String> skuIds) {
         productDetailService.initProductCustom(skuIds);
         return success();
+    }
+
+    /**
+     * 打印EAN
+     * @param printEanDTO 打印参数
+     * @param response    响应
+     */
+    @PostMapping("/printEan")
+    public void printEan(@RequestBody PrintEanDTO printEanDTO, HttpServletResponse response) {
+        productDetailService.printEan(printEanDTO, response);
+    }
+
+    /**
+     * 目的国申报价重算
+     * @param dto
+     * @return
+     */
+    @PostMapping("/resetDestDeclarePrice")
+    public ApiResult<List<BatchResultDTO>> resetDestDeclarePrice(@RequestBody @Validated BaseIdsDTO.IdsDTO dto){
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailEntityList = productDetailService.listByIds(ids);
+        List<BatchResultDTO> resultDTOS = productDetailService.resetDestDeclarePrice(productDetailEntityList, Boolean.TRUE);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细
+     * @param dto 参数
+     */
+    @PostMapping("/listProductPackBySkuIds")
+    public ApiResult<List<ProductPackViewDTO>> listProductPackBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<ProductPackViewDTO> productPackViewDTOS = productDetailService.listProductPackBySkuIds(dto.getIds());
+        return success(productPackViewDTOS);
+    }
+
+    /**
+     * 修改产品包装尺寸
+     * @param dto 参数
+     */
+    @PostMapping("/batchUpdateProductPack")
+    public ApiResult<List<BatchResultDTO>> batchUpdateProductPack(@RequestBody @Validated BatchParamsDTO<ProductPackViewDTO> dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (ProductPackViewDTO viewDTO : dto.getParams()) {
+            try {
+                resultDTOS.add(productDetailService.updateProductPack(viewDTO));
+            } catch (Exception e) {
+                log.error("产品sku修改包装尺寸失败", e);
+                resultDTOS.add(BatchResultDTO.fail(viewDTO.getSkuId(), viewDTO.getSkuNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

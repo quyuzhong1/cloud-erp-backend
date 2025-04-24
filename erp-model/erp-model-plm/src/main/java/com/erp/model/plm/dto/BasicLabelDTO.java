@@ -124,14 +124,6 @@ public class BasicLabelDTO implements Serializable {
         @NotBlank(message = "标签名称不能为空")
         @Size(max = 50,message = "标签名称最大长度不能超过50位")
         private String name;
-
-//        /**
-//        * 类型
-//        */
-//        @NotBlank(message = "类型不能为空")
-//        @Size(max = 30,message = "类型最大长度不能超过30位")
-//        private String type;
-
         /**
         * 颜色
         */

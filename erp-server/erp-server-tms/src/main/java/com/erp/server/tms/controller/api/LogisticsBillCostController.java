@@ -4,6 +4,9 @@ package com.erp.server.tms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDTO;
+import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -16,16 +19,19 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditDataDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.EditViewDTO;
+import com.erp.model.tms.dto.LogisticsBillCostDTO.PushDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.enums.DictCostAttributionEnum;
 import com.erp.server.tms.query.LogisticsBillCostQueryHandler;
 import com.erp.server.tms.service.LogisticsBillCostService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +48,7 @@ import java.util.List;
 @RequestMapping("/logisticsBillCost")
 public class LogisticsBillCostController extends BaseController {
 
-    @Autowired
+    @Resource
     private LogisticsBillCostService logisticsBillCostService;
 
 
@@ -97,11 +103,11 @@ public class LogisticsBillCostController extends BaseController {
         menuCode = "tms:logisticsBillCost:update",
         serviceClass = LogisticsBillCostService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated LogisticsBillCostDTO.UpdateDTO dto) {
         logisticsBillCostService.update(dto,Boolean.FALSE);
         return success();
     }
-
+    
     /**
      *查询详情
      * @author Will
@@ -116,7 +122,7 @@ public class LogisticsBillCostController extends BaseController {
     }
 
     /**
-     * 状态变更
+     * 对账状态
      * @author Will
      * @date: 2023/11/13 15:35
      * @param dto
@@ -134,7 +140,7 @@ public class LogisticsBillCostController extends BaseController {
         for (String id : dto.getIds()) {
             BatchResultDTO submit;
             try {
-                submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus());
+                submit = logisticsBillCostService.updateReconciliationStatus(id,dto.getReconciliationStatus(),dto.getConfirmTime());
             }catch (Exception e){
                 log.error("自发货费用 状态变更",e);
                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
@@ -149,6 +155,41 @@ public class LogisticsBillCostController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    
+    /**
+     * 支付状态
+     * @author Will
+     * @date: 2023/11/13 15:35
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "状态变更:idList={idList}")
+    @PostMapping("/updatePayStatus")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    tableField = "create_user_id",
+    menuCode = "tms:logisticsBillCost:updatePayStatus",
+    serviceClass = LogisticsBillCostService.class,
+    keyIdName = "id")
+    public ApiResult<List<BatchResultDTO>> updatePayStatus(@RequestBody @Validated LogisticsBillCostDTO.PayStatusDTO dto) {
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	for (String id : dto.getIds()) {
+    		BatchResultDTO submit;
+    		try {
+    			submit = logisticsBillCostService.updatePayStatus(id,dto.getPayStatus(),dto.getPayTime());
+    		}catch (Exception e){
+    			log.error("自发货费用 状态变更",e);
+    			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+    			if (ObjectUtil.isEmpty(entity)) {
+    				submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 状态变更");
+    				resultDTOS.add(submit);
+    				continue;
+    			}
+    			submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+    		}
+    		resultDTOS.add(submit);
+    	}
+    	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
     /**
      * 下载模板
@@ -159,7 +200,7 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载自发货费用模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object>downloadTemplate(HttpServletResponse response) {
         logisticsBillCostService.downloadTemplate(response);
         return success();
     }
@@ -174,7 +215,7 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入自发货费用模板")
     @PostMapping("/import")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object>importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = logisticsBillCostService.importFile(excelFile, response);
         return result ? success() : failure();
     }
@@ -188,9 +229,172 @@ public class LogisticsBillCostController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出自发货费用模板")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody LogisticsBillCostDTO.PagingParamDTO dto) {
         Boolean flag = logisticsBillCostService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
+    /**
+     * 初始化头程对账单汇率
+     * @return
+     */
+    @PostMapping("/initExchangeRate")
+    public ApiResult initExchangeRate(){
+        logisticsBillCostService.initExchangeRate();
+        return success();
+    }
 
+    /**
+     * 新增付款/退款（仅创建）
+     * @author Will
+     * @date:  2023-11-06
+     * @param dto
+     * @return ApiResult
+     */
+     @PostMapping("/addPayAndRefund")
+     @LogAction(value = LogActionEnum.INSERT, desc = "新增付款/退款")
+         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+         tableField = "create_user_id",
+         menuCode = "tms:logisticsBillCost:update",
+         serviceClass = LogisticsBillCostService.class,
+         keyIdName = "id")
+     public ApiResult<Object> addPayAndRefund(@RequestBody @Validated List<LogisticsBillCostDTO.AddDataDTO> dtoList) {
+         logisticsBillCostService.addPayAndRefund(dtoList);
+         return success();
+     }
+     
+     /**
+      * 新增付款/退款（对账已确认）
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/addPayAndRefundConfirm")
+     @LogAction(value = LogActionEnum.INSERT, desc = "新增付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:update",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<Object> addPayAndRefundConfirm(@RequestBody @Validated LogisticsBillCostDTO.ConfirmAddDataDTO dto) {
+    	 logisticsBillCostService.addPayAndRefundConfirm(dto);
+    	 return success();
+     }
+    
+     /**
+      * 编辑付款/退款 数据显示
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/editView")
+     @LogAction(value = LogActionEnum.UPDATE, desc = "编辑付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:editView",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<List<EditViewDTO>> editView(@RequestBody @Validated BaseIdDTO dto) {
+     	return success(logisticsBillCostService.editView(dto.getId()));
+     }
+     
+     /**
+      * 编辑付款/退款 保存
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/edit")
+     @LogAction(value = LogActionEnum.UPDATE, desc = "编辑付款/退款")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:edit",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<Object> edit(@RequestBody @Validated List<EditDataDTO> dtoList) {
+     	logisticsBillCostService.edit(dtoList);
+     	return success();
+     }
+     
+     /**
+      * 下推分摊
+      * @author Will
+      * @date:  2023-11-06
+      * @param dto
+      * @return ApiResult
+      */
+     @PostMapping("/pushAllocation")
+     @LogAction(value = LogActionEnum.INSERT, desc = "下推分摊")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:pushAllocation",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<List<BatchResultDTO>> pushAllocation(@RequestBody @Validated PushDTO dto) {
+    	 List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+         for (String id : dto.getIds()) {
+             BatchResultDTO submit;
+             try {
+                 submit = logisticsBillCostService.pushAllocation(id,dto.getReportDate());
+             }catch (Exception e){
+                 log.error("自发货费用 状态变更",e);
+                 LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+                 if (ObjectUtil.isEmpty(entity)) {
+                     submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 下推分摊");
+                     resultDTOS.add(submit);
+                     continue;
+                 }
+                 submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+             }
+             resultDTOS.add(submit);
+         }
+         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+     }
+     
+     /**
+      * 删除
+      * @author Will
+      * @date: 2023/11/13 15:35
+      * @param dto
+      * @return ApiResult<List<BatchResultDTO>>
+      */
+     @LogAction(value = LogActionEnum.DELETE, desc = "状态变更:idList={idList}")
+     @PostMapping("/delete")
+     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+     tableField = "create_user_id",
+     menuCode = "tms:logisticsBillCost:updatePayStatus",
+     serviceClass = LogisticsBillCostService.class,
+     keyIdName = "id")
+     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+     	for (String id : dto.getIds()) {
+     		BatchResultDTO submit;
+     		try {
+     			submit = logisticsBillCostService.delete(id);
+     		}catch (Exception e){
+     			log.error("自发货费用 状态变更",e);
+     			LogisticsBillCostEntity entity = logisticsBillCostService.getById(id);
+     			if (ObjectUtil.isEmpty(entity)) {
+     				submit = BatchResultDTO.fail(id, id, "自发货费用不存在, 状态变更");
+     				resultDTOS.add(submit);
+     				continue;
+     			}
+     			submit = BatchResultDTO.fail(entity.getId(), entity.getTrackNo(), e.getMessage());
+     		}
+     		resultDTOS.add(submit);
+     	}
+     	return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+     }
+
+    /**
+     * 删除没有物流单的物流费用
+     * @return
+     */
+    @GetMapping("/deleteLogisticsBillCostNoBill")
+    public ApiResult<Object> deleteLogisticsBillCostNoBill(){
+        logisticsBillCostService.deleteLogisticsBillCostNoBill();
+        return success();
+    }
 }

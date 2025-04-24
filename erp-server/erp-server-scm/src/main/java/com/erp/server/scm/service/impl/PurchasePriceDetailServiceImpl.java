@@ -42,6 +42,7 @@ import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -62,6 +63,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -388,7 +390,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -447,6 +449,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 10:03
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateDisabled(UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         if (CollectionUtils.isEmpty(ids)) {
@@ -465,12 +468,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         //金蝶更新分录禁用
         DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList, disabled);
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+        // 新中台不适用
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+//            }
+//        });
         return Boolean.TRUE;
     }
 
@@ -712,6 +716,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     private List<PurchasePriceDetailEntity> getListByPurchasePriceId(String purchasePriceId) {
         LambdaQueryWrapper<PurchasePriceDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PurchasePriceDetailEntity::getPurchasePriceId, purchasePriceId);
+        queryWrapper.orderByDesc(PurchasePriceDetailEntity::getId);
         return this.list(queryWrapper);
 
     }

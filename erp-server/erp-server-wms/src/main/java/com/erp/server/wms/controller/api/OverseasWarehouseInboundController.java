@@ -63,7 +63,7 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:update",
             serviceClass = OverseasWarehouseInboundService.class,
             keyIdName = "owi")
-    public ApiResult<?> add(@RequestBody @Validated OverseasWarehouseInboundDTO.AddDTO dto) {
+    public ApiResult add(@RequestBody @Validated OverseasWarehouseInboundDTO.AddDTO dto) {
         overseasWarehouseInboundService.add(dto);
         return success();
     }
@@ -83,7 +83,7 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:update",
             serviceClass = OverseasWarehouseInboundService.class,
             keyIdName = "owi")
-    public ApiResult<?> update(@RequestBody @Validated OverseasWarehouseInboundDTO.UpdateDTO dto) {
+    public ApiResult update(@RequestBody @Validated OverseasWarehouseInboundDTO.UpdateDTO dto) {
         overseasWarehouseInboundService.update(dto);
         return success();
     }
@@ -237,7 +237,7 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:update",
             serviceClass = OverseasWarehouseInboundService.class,
             keyIdName = "owi")
-    public ApiResult<?> manualReceived(@RequestBody @Validated List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
+    public ApiResult manualReceived(@RequestBody @Validated List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = overseasWarehouseInboundDetailService.allManualReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
@@ -256,7 +256,7 @@ public class OverseasWarehouseInboundController extends BaseController {
             menuCode = "wms:overseasWarehouseInbound:update",
             serviceClass = OverseasWarehouseInboundService.class,
             keyIdName = "owi")
-    public ApiResult<?> manualFinish(@RequestBody @Validated List<OverseasWarehouseInboundDTO.FinishDTO> dtoList) {
+    public ApiResult manualFinish(@RequestBody @Validated List<OverseasWarehouseInboundDTO.FinishDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
         for (OverseasWarehouseInboundDTO.FinishDTO dto : dtoList) {
             BatchResultDTO submit;
@@ -360,7 +360,7 @@ public class OverseasWarehouseInboundController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出海外入库单")
     @PostMapping("/export")
-    public ApiResult<?> exportWarehouse(@RequestBody @Valid OverseasWarehouseInboundDTO.ExportDTO dto) {
+    public ApiResult exportWarehouse(@RequestBody @Valid OverseasWarehouseInboundDTO.ExportDTO dto) {
         Boolean result = overseasWarehouseInboundService.exportExcel(dto);
         return result ? success() : failure();
     }

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -32,6 +33,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -51,14 +53,14 @@ public class PoInStockController extends BaseController {
     private PoInstockService poInstockService;
     @Resource
     private PoReturnService poReturnService;
-    @Autowired
+    @Resource
     private SubcontractIssueService subcontractIssueService;
     /**
      * 列表查询
      * @author Will
      * @date: 2023/4/11 19:56
-     * @param dto 
-     * @return ApiResult<PagingVO<ListDTO>> 
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -112,8 +114,8 @@ public class PoInStockController extends BaseController {
     * 新增
     * @author Will
     * @date: 2023/4/11 19:58
-    * @param dto 
-    * @return ApiResult 
+    * @param dto
+    * @return ApiResult<?>
     */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增采购入库单")
     @PostMapping("/add")
@@ -122,9 +124,9 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:add",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
-        String id = poInstockService.add(dto,Boolean.FALSE);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<?> add(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
+        PoInstockEntity entity = poInstockService.add(dto,Boolean.FALSE);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
    /**
@@ -141,17 +143,17 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:add",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
-        String id = poInstockService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<?> addAndSubmit(@RequestBody @Validated PoInstockDTO.AddDTO dto) {
+        PoInstockEntity entity = poInstockService.addAndSubmit(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
-    
+
     /**
      * 修改
      * @author Will
      * @date: 2023/4/11 20:02
-     * @param dto 
-     * @return ApiResult 
+     * @param dto
+     * @return ApiResult<?>
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购入库单")
     @PostMapping("/update")
@@ -160,17 +162,17 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:update",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
+    public ApiResult<?>update(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
         Boolean flag = poInstockService.update(dto);
         return flag == true ? success() : failure();
     }
-    
+
     /**
      * 修改并提交
      * @author Will
      * @date: 2023/4/11 20:02
-     * @param dto 
-     * @return ApiResult 
+     * @param dto
+     * @return ApiResult<?>
      */
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交采购入库单")
     @PostMapping("/updateAndSubmit")
@@ -179,7 +181,7 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:update",
             serviceClass = PoInstockService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
+    public ApiResult<?>updateAndSubmit(@RequestBody @Validated PoInstockDTO.UpdateDTO dto) {
         Boolean flag = poInstockService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -188,8 +190,8 @@ public class PoInStockController extends BaseController {
      * 提交
      * @author Will
      * @date: 2023/4/11 20:00
-     * @param dto 
-     * @return ApiResult 
+     * @param dto
+     * @return ApiResult<?>
      */
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购入库单")
     @PostMapping("/submit")
@@ -198,9 +200,23 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:submit",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = poInstockService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoInstockEntity> entityMap = poInstockService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoInstockEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购入库单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poInstockService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("采购入库单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -237,9 +253,23 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:delete",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = poInstockService.delete(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?>delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoInstockEntity> entityMap = poInstockService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoInstockEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购入库单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poInstockService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("采购入库单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -256,9 +286,23 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:invalid",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
-    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = poInstockService.invalid(dto.getIds(),dto.getRemark());
-        return flag == true ? success() : failure();
+    public ApiResult<?>invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoInstockEntity> entityMap = poInstockService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoInstockEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购入库单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poInstockService.invalidEntity(entity, dto.getRemark()));
+            }catch (Exception e){
+                log.error("采购入库单作废失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -319,8 +363,8 @@ public class PoInStockController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(id,id,"采购入库单记录不存在"));
                 continue;
             }
-            List<PoReturnEntity> returnEntityList = purchaseReturnOrderList.stream().filter(e -> StringUtils.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
-            List<SubcontractIssueEntity> issueEntityList = subcontractIssueList.stream().filter(e -> StringUtils.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
+            List<PoReturnEntity> returnEntityList = purchaseReturnOrderList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
+            List<SubcontractIssueEntity> issueEntityList = subcontractIssueList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getSourceId()) && e.getSourceId().equals(id)).collect(Collectors.toList());
             try {
                 resultDTOS.add(poInstockService.disApprove(entity,returnEntityList, issueEntityList));
             }catch (Exception e){
@@ -345,11 +389,24 @@ public class PoInStockController extends BaseController {
             menuCode = "wms:poInStock:cancelProcess",
             serviceClass = PoInstockService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = poInstockService.cancelProcess(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<?>cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoInstockEntity> entityMap = poInstockService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoInstockEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购入库单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poInstockService.cancelProcess(entity));
+            }catch (Exception e){
+                log.error("采购入库单撤销失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
     /**
      * 导出
      * @author Will
@@ -359,7 +416,7 @@ public class PoInStockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购入库单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PoInstockDTO.ExportParamDTO dto) {
+    public ApiResult<?>exportExcel(@RequestBody PoInstockDTO.ExportParamDTO dto) {
         Boolean flag = poInstockService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
@@ -391,7 +448,7 @@ public class PoInStockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "下推退货单数据保存")
     @PostMapping("/generatePurchaseReturnOrder")
-    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+    public ApiResult<?>generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean flag = poInstockService.generatePurchaseReturnOrder(dto);
         return flag == true ? success() : failure();
     }
@@ -418,7 +475,7 @@ public class PoInStockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "下推采购入库单保存")
     @PostMapping("/generateStockIn")
-    public ApiResult generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
+    public ApiResult<?> generateStockIn(@RequestBody @Validated PurchaseOrderDTO.ListGenerateStockInDTO dto) {
         Boolean flag = poInstockService.generateStockIn(dto);
         return flag == true ? success() : failure();
     }

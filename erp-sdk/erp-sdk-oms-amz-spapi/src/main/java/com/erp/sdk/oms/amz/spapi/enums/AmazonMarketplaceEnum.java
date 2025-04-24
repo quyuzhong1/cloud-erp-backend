@@ -23,6 +23,7 @@ public enum AmazonMarketplaceEnum {
     MX("A1AM78C64UM0Y8", "墨西哥", "MX", AmazonEndpointsEnum.US_EAST_1, "https://sellercentral.amazon.com.mx"),
     BR("A2Q3Y263D00KWC", "巴西", "BR", AmazonEndpointsEnum.US_EAST_1, "https://sellercentral.amazon.com.br"),
     // 欧洲
+    IE("A28R8C7NBKEWEA", "爱尔兰", "IE", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.ie"),
     ES("A1RKKUPIHCS9HS", "西班牙", "ES", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral-europe.amazon.com"),
     GB("A1F83G8C2ARO7P", "英国", "GB", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral-europe.amazon.com"),
     FR("A13V1IB3VIYZZH", "法国", "FR", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral-europe.amazon.com"),
@@ -37,6 +38,7 @@ public enum AmazonMarketplaceEnum {
     TR("A33AVAJ2PDY3EV", "土耳其", "TR", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.com.tr"),
     AE("A2VIGQ35RCS4UG", "阿拉伯联合酋长国", "AE", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.ae"),
     IN("A21TJRUUN4KGV", "印度", "IN", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.in"),
+
     // 分开
     SA("A17E79C6D8DWNP", "沙特阿拉伯", "SA", AmazonEndpointsEnum.EN_WAST_1, "https://sellercentral.amazon.sa"),
     // 远东

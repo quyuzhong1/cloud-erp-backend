@@ -58,4 +58,24 @@ public interface LogisticsBillCostMapper extends BaseMapper<LogisticsBillCostEnt
     List<LogisticsBillCostDTO.OutStockDTO> listBillCostByOutstockIds(@Param("ids") List<String> ids);
 
     BigDecimal getActualLogisticCost(@Param("soId") String soId);
+
+    /**
+     * 查询汇率为0的费用
+     * @return
+     */
+    List<LogisticsBillCostDTO.ExchangeRateDTO> listBillCostByExchangeRate();
+
+    /**
+     * 更新店铺负责人
+     * @param shopId
+     * @param userId
+     * @param userName
+     */
+    void updateShopChargeId(@Param("shopId") String shopId, @Param("userId") String userId, @Param("userName") String userName);
+
+    /**
+     * 查询物流单费用没有物流单的数据
+     * @return
+     */
+    List<LogisticsBillCostDTO.BillCostNoBillDTO> selectLogisticsBillCostNoBill();
 }

@@ -1,8 +1,10 @@
 package com.erp.server.tms.service;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
+import com.sdk.tms.track123.dto.PlatformTrackDTO;
 
 import java.util.List;
 
@@ -51,16 +53,22 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      *@date 2023-11-16
      */
     LogisticsTrackDTO.ViewDTO listByTrackNo(String trackNo);
+    /**
+     * 处理mongoDb同步数据
+     * @param dto
+     */
+    void processTrackData(PlatformTrackDTO dto);
 
     /**
-     * 根据跟踪单号进行物理删除
-     * @param trackNo
+     * 更新3个月前物流单状态为系统完结
      */
-    void deleteByTrackNo(String trackNo);
+    void updateBeforeThreeMonthTrackNo(LogisticsBillDetailQueryDTO query);
 
     /**
-     * 同步修改订单状态
-     * @param logisticsTrackEntity
+     * 对接track123 webhook
+     * @param dto
      */
-    void checkTrackStatus(LogisticsTrackEntity logisticsTrackEntity);
+    void webhookByTrack123(LogisticsTrackDTO.TrackWebHookDTO dto);
+
+    void saveIncrementTrackData(String trackNo, List<LogisticsTrackEntity> newList);
 }

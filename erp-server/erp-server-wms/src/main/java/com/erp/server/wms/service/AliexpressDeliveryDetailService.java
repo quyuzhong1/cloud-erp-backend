@@ -1,9 +1,11 @@
 package com.erp.server.wms.service;
-import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 
+import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
+import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 /**
@@ -17,13 +19,15 @@ import java.util.List;
 public interface AliexpressDeliveryDetailService extends SuperService<AliexpressDeliveryDetailEntity> {
 
     /**
-    * 新增
-    * @author lrp
-    * @date: 2024-05-06
-    * @param dto
-    * @return
-    */
-    Boolean add(List<AliexpressDeliveryDetailDTO.AddDTO> dto);
+     * 新增
+     *
+     * @param dto
+     * @param platformCode
+     * @return
+     * @author lrp
+     * @date: 2024-05-06
+     */
+    Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> dto, @NotBlank @Size String platformCode);
 
 
 

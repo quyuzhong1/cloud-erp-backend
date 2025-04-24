@@ -28,13 +28,6 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
     List<ProductInfoEntity> ListProductInfoByIds(List<String> ids);
 
     /**
-     * 更新PLM同步过来的数据
-     * @Author Luo_WG
-     * @Date 2023/4/19 16:05
-     **/
-    Boolean saveOrUpdateProductInfo(List<ProductInfoEntity> productInfoEntity);
-
-    /**
      * 获取所有非空的spu no
      * @return
      */

@@ -27,7 +27,7 @@ import java.util.List;
 @Ignore
 public class SalesApiTest {
 
-    private final SalesApi api = null;
+    private final SalesApi api = new SalesApi(null);
 
     
     /**

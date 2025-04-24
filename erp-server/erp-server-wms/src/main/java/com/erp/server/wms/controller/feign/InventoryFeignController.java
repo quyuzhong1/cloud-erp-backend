@@ -4,9 +4,9 @@ import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.server.wms.service.InventoryService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
 
@@ -20,7 +20,7 @@ import java.util.List;
 @RequestMapping("/feign/inventory")
 public class InventoryFeignController extends BaseController {
 
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
 
     /**
@@ -76,5 +76,14 @@ public class InventoryFeignController extends BaseController {
     @PostMapping("/listInventoryBySkuIds")
     public List<InventoryEntity> listInventoryBySkuIds(@RequestBody @Valid InventoryQtyDTO.InventoryBySkuDTO dto) {
         return inventoryService.listInventoryBySkuIds(dto);
+    }
+    /**
+     * 根据sku获取库存列表
+     * @param skuNoList
+     * @return
+     */
+    @PostMapping("/listInventoryBySkuNos")
+    public List<InventoryEntity> listInventoryBySkuNos(@RequestBody List<String> skuNoList) {
+        return inventoryService.listInventoryBySkuNos(skuNoList);
     }
 }

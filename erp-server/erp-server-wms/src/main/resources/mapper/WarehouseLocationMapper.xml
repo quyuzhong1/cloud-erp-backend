@@ -152,6 +152,7 @@
         select wl.id,
                wl.code,
                wl.name,
+               wa.area_type as areaType,
                wl.status,
                wl.disabled,
                wl.remark,
@@ -163,9 +164,10 @@
                wt.id as warehouseId,
                wt.kingdee_warehouse_code as warehouseCode,
                wt.name as warehouseName
-        from warehouse_location wl inner join warehouse_location wa on wl.parent_id = wa.id
-                                   inner join warehouse wt on wl.warehouse_id = wt.id
-        where wl.is_deleted = false and wa.is_deleted = false and wt.is_deleted = false
+        from warehouse_location wl
+            INNER join warehouse_location wa on wl.parent_id = wa.id AND  wa.is_deleted = FALSE
+        inner join warehouse wt on wl.warehouse_id = wt.id
+        where wl.is_deleted = false  and wt.is_deleted = false
           and wt.approve_status = 'approve'
           and ${params.sqlMap.default}
         <if test="params.permissionSql != null and params.permissionSql != ''">
@@ -299,7 +301,8 @@
     <select id="listAreaByWarehouseId" resultType="com.erp.model.wms.dto.WarehouseLocationDTO$ViewDto">
         select id,
                code,
-               name
+               name,
+               area_type
         from warehouse_location
         where warehouse_id = #{warehouseId}
           and type = 'area'
@@ -410,5 +413,38 @@
           and wa.is_deleted = false
           and wl.is_deleted = false
           and wa.warehouse_id = #{warehouseId}
+    </select>
+    <select id="getOneWareInventoryQty"  resultType="com.erp.model.wms.dto.WarehouseLocationDTO$WareInventoryQtyDTO">
+        SELECT
+        DISTINCT
+        wl.ID,
+        wl.warehouse_id,
+        wl.code AS warehouseCode,
+        wl.NAME AS warehouseName,
+        wa.code as warehouseLocationCode,
+        wa.name as warehouseLocationName,
+        i.qty,
+        i.sku_id,
+        i.sku_no
+        FROM
+        warehouse_location AS wl
+        INNER JOIN inventory AS i ON wl.warehouse_id = i.warehouse_id
+        AND i.is_deleted =FALSE
+        INNER join warehouse_location as wa on wa.parent_id = wl.id
+        and i.warehouse_location = wa.code
+        and wa.is_deleted =FALSE
+        WHERE
+        wl.is_deleted = FALSE
+        AND wl.area_type != 'pickingArea'
+        AND i.qty > 0
+        AND i.dict_inventory_status = 'usable'
+        <if test="skuNo != null and skuNo != ''">
+            AND i.sku_no = #{skuNo}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            AND wl.warehouse_id = #{warehouseId}
+        </if>
+        ORDER BY i.qty DESC
+            limit 1
     </select>
 </mapper>

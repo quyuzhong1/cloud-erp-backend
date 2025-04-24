@@ -34,7 +34,7 @@ public enum InventoryClosedRecordEnum {
     public static String getNameByCode(String code) {
         for (InventoryClosedRecordEnum item : InventoryClosedRecordEnum.values()) {
             if (code.equals(item.getCode())) {
-                item.getName();
+                return item.getName();
             }
         }
         return "";

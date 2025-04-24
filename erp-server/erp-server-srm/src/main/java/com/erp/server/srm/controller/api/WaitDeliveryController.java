@@ -1,27 +1,24 @@
 package com.erp.server.srm.controller.api;
 
-import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortParamDTO;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.server.srm.query.WaitDeliveryQueryHandler;
 import com.erp.server.srm.service.DeliveryOrderService;
-import com.erp.server.srm.service.PurchaseOrderDetailService;
 import com.erp.server.srm.service.UserService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,8 +50,6 @@ public class WaitDeliveryController extends BaseController {
     private PurchaseOrderFeign purchaseOrderFeign;
     @Resource
     private DeliveryOrderService deliveryOrderService;
-    @Resource
-    private PurchaseOrderDetailService purchaseOrderDetailService;
 
     /**
      * srm待发货列表统计
@@ -129,7 +125,7 @@ public class WaitDeliveryController extends BaseController {
      */
     @PostMapping("/generateDeliveryOrder")
     @LogAction(value = LogActionEnum.INSERT, desc = "生成送货单")
-    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Validated List<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
+    public ApiResult<List<BatchResultDTO>> addDeliveryOrder(@RequestBody @Valid ValidList<DeliveryOrderDTO.AddDeliveryDTO> dtos) {
         List<BatchResultDTO> resultDTOS = deliveryOrderService.addDeliveryOrder(dtos);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

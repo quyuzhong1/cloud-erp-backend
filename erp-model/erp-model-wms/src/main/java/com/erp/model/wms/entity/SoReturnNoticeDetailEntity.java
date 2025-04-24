@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -77,6 +78,42 @@ public class SoReturnNoticeDetailEntity extends BaseEntity<SoReturnNoticeDetailE
     @TableField(exist = false)
     private String approveStatus;
 
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
+    /**
+     * 是否子sku
+     */
+    @TableField("is_child_sku_no")
+    private Boolean isChildSkuNo;
+    /**
+     *退货金额
+     */
+    @TableField("return_amount")
+    private BigDecimal returnAmount;
+    /**
+     *含税退货金额
+     */
+    @TableField("tax_return_amount")
+    private BigDecimal taxReturnAmount;
+    /**
+     *退货金额（本位币）
+     */
+    @TableField("return_amount_local_currency")
+    private BigDecimal returnAmountLocalCurrency;
+    /**
+     *含税退货金额（本位币）
+     */
+    @TableField("tax_return_amount_local_currency")
+    private BigDecimal taxReturnAmountLocalCurrency;
+    /**
+     * 汇率
+     */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
@@ -89,7 +126,7 @@ public class SoReturnNoticeDetailEntity extends BaseEntity<SoReturnNoticeDetailE
 
     public static final String RETURN_REASON_DICT = "return_reason_dict";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

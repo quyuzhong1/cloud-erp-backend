@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -69,7 +71,7 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     * 金额
     */
     @TableField("amount")
-    private BigDecimal amount;
+    private BigDecimal amount = BigDecimal.ZERO;
     /**
     * 是否赠品：true/false
     */
@@ -106,6 +108,60 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
      */
      @TableField("so_entry_id")
      private String soEntryId = "";
+     
+    /**
+     * 明细状态
+     */
+	@TableField("detail_status")
+	private String detailStatus = "";
+	
+	/**
+	 * 退货物流公司
+	 */
+	@TableField("return_logistics_company")
+	private String returnLogisticsCompany = "";
+	
+	/**
+	 * 退货物流单号
+	 */
+	@TableField("return_logistics_no")
+	private String returnLogisticsNo = "";
+	
+	/**
+	 * 退货运费金额
+	 */
+	@TableField("logistics_fee_amount")
+	private BigDecimal logisticsFeeAmount;
+	
+	/**
+	 * 退货运费币种
+	 */
+	@TableField("logistics_fee_currency")
+	private String logisticsFeeCurrency = "";
+	
+	/**
+	 * 退货运费承担方
+	 */
+	@TableField("logistics_fee_role")
+	private String logisticsFeeRole = "";
+	
+	/**
+	 * 币别
+	 */
+	@TableField("currency")
+	private String currency = "";
+	
+	/**
+	 * 方案类型：退款refund、退货退款return_and_refund
+	 */
+	@TableField("solution_type")
+	private String solutionType = "";
+	
+	/**
+	 * 是否收到货：true/false
+	*/
+    @TableField("receive_goods")
+    private Boolean receiveGoods;
     
     /**
     * 输入任务id
@@ -133,6 +189,28 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
     @TableField("data_encrypt")
     private String dataEncrypt;
 
+    /**
+     * 退款税费
+     */
+    @TableField("refund_tax")
+    private BigDecimal refundTax;
+    /**
+     * sku名称
+     */
+    @TableField("sku_name")
+    private String skuName;
+
+    /**
+     * 退货入库数量
+     */
+     @TableField("stockin_num")
+     private Integer stockinNum;
+     
+     /**
+      * 退货原始状态
+      */
+     @TableField("return_original_type")
+     private String returnOriginalType;
 
     public static final String MAIN_ID = "main_id";
 

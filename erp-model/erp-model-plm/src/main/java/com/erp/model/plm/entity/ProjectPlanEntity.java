@@ -17,7 +17,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_plan")
-public class ProjectPlanEntity extends BaseEntity {
+public class ProjectPlanEntity extends BaseEntity<ProjectPlanEntity> {
     private static final long serialVersionUID = 240838215899434939L;
 
     /**

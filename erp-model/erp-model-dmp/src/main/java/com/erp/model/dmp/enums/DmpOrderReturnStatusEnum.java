@@ -45,7 +45,7 @@ public enum  DmpOrderReturnStatusEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DmpBasicSystemCodeEnum statusEnum : DmpBasicSystemCodeEnum.values()) {
+        for (DmpOrderReturnStatusEnum statusEnum : DmpOrderReturnStatusEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }
@@ -57,8 +57,8 @@ public enum  DmpOrderReturnStatusEnum implements EnumMessage {
     /**
      * 通过code查询
      */
-    public static DmpBasicSystemCodeEnum getByCode(String code){
-        return Arrays.stream(DmpBasicSystemCodeEnum.values())
+    public static DmpOrderReturnStatusEnum getByCode(String code){
+        return Arrays.stream(DmpOrderReturnStatusEnum.values())
                 .filter(e-> e.getCode().equals(code))
                 .findFirst().orElse(null);
     }

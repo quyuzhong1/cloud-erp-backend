@@ -3,14 +3,11 @@ package com.erp.model.tms.dto;
 import com.common.business.enums.SourceTypeEnum;
 import com.erp.model.tms.enums.BillGenerateTimingEnum;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import javax.validation.constraints.NotBlank;
 
 /**
  * @author liuruipeng

@@ -1,17 +1,14 @@
 package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.core.anno.Panno;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
 
-import com.common.core.enums.PannoEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -185,9 +182,7 @@ public class FbaInventoryEntity extends BaseEntity<FbaInventoryEntity> {
 
     public static final String PLATFORM_CODE = "platform_code";
 
-    public static final String NAME = "name";
-
-    public static final String ASIN = "asin";
+    
 
     public static final String M_SKU = "m_sku";
 

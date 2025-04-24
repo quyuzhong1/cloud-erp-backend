@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -93,8 +94,8 @@ public class SoDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售订单产品信息")
     @PostMapping("/import")
-    public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "warehouseId") String warehouseId, HttpServletResponse response) {
-        SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile, response, warehouseId);
+    public ApiResult<SoDetailDTO.ImportDTO> importSku(@RequestParam(value = "excelFile") MultipartFile excelFile,@RequestParam(value = "customerId") String customerId, @RequestParam(value = "warehouseId") String warehouseId, @RequestParam(value = "isTax") Boolean isTax, HttpServletResponse response) {
+        SoDetailDTO.ImportDTO result = soDetailService.importSku(excelFile, response, warehouseId,isTax,customerId);
         return success(result);
     }
 
@@ -117,7 +118,7 @@ public class SoDetailController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "释放库存" ,keyIdName = "detailIdList")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "释放库存" ,keyIdName = "detailIdList")
     @PostMapping("/batchUnLockVirtualInventory")
     public ApiResult<List<BatchResultDTO>> batchUnLockVirtualInventory(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getDetailIdList().size());
@@ -139,7 +140,7 @@ public class SoDetailController extends BaseController {
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(entity.getId(), StrUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
+                resultDTO = BatchResultDTO.fail(entity.getId(),  CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }

@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
  **/
 public class CamundaDTO {
 
+    private CamundaDTO(){
+    }
+
     @Data
     @NoArgsConstructor
     public static class PropertiesDTO{

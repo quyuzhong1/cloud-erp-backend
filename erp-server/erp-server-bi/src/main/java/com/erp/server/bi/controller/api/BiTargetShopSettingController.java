@@ -10,7 +10,6 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.bi.dto.BiTargetYearDTO;
 import com.erp.model.bi.dto.excel.TargetShopSettingExportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetStaffSettingExportExcelDTO;
 import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetShopSettingService;
 import lombok.extern.slf4j.Slf4j;
@@ -140,7 +139,7 @@ public class BiTargetShopSettingController extends BaseController {
 //        menuCode = "dmp:biTargetShopSetting:update",
 //        serviceClass = BiTargetShopSettingService.class,
 //        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated BiTargetShopSettingDTO.UpdateDTO dto) {
+    public ApiResult<Void> update(@RequestBody @Validated BiTargetShopSettingDTO.UpdateDTO dto) {
         biTargetShopSettingService.update(dto);
         return success();
     }
@@ -153,7 +152,7 @@ public class BiTargetShopSettingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载目标管理店铺模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Void> downloadTemplate(HttpServletResponse response) {
         biTargetShopSettingService.downloadTemplate(response);
         return success();
     }
@@ -178,8 +177,8 @@ public class BiTargetShopSettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "店铺目标设置删除")
-    public ApiResult remove(@RequestBody @Validated  BiTargetShopSettingDTO.RemoveDTO dto) {
-        Boolean result = biTargetShopSettingService.delete(dto);
+    public ApiResult<Object> remove(@RequestBody @Validated  BiTargetShopSettingDTO.RemoveDTO dto) {
+        boolean result = biTargetShopSettingService.delete(dto);
         return result ? success() : failure();
     }
 

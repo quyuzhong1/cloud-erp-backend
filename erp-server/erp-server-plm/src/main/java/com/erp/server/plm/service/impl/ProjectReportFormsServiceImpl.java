@@ -1,7 +1,6 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
@@ -16,6 +15,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.mapper.ProjectReportFormsMapper;
 import com.erp.server.plm.service.ProjectReportFormsService;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -34,10 +34,10 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Override
-    public PagingVO<List<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(PagingDTO<ProjectReportFormsDTO.PagingParam> pagingDTO) {
+    public PagingVO<ProjectReportFormsDTO.PagingView> projectReportFormsPaging(PagingDTO<ProjectReportFormsDTO.PagingParam> pagingDTO) {
         pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
-        Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
-        List<Integer> statusList = new ArrayList();
+        Page<ProjectReportFormsDTO.PagingParam> query = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
+        List<Integer> statusList = new ArrayList<>();
         pagingDTO.getParams().setApprovalStatusList(statusList);
         if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(pagingDTO.getParams().getApprovalStatus())) {
             List<Integer> statusCodeList = Arrays.asList(ApprovalStatusEnum.values()).stream().filter(req -> !ApprovalStatusEnum.APPROVAL.getCode().equals(req.getCode())).map(ApprovalStatusEnum::getCode).collect(Collectors.toList());
@@ -57,7 +57,7 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
         List<ProjectReportFormsDTO.PagingView> pagingViewList = pageData.getRecords();
         for (ProjectReportFormsDTO.PagingView pagingView : pagingViewList) {
             FindUserDTO findUserDTO = userList.stream().filter(req -> req.getUserId().equals(pagingView.getProjectChargeId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(findUserDTO)) {
+            if (!ObjectUtils.isEmpty(findUserDTO)) {
                 pagingView.setProjectChargeName(findUserDTO.getUserName());
             }
             pagingView.setProgressStatusName(ProductProgressStatusEnum.getName(pagingView.getProgressStatus()));
@@ -73,12 +73,12 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
             if (pagingView.getProjectTaskCount() != null && pagingView.getProjectTaskCount() != 0) {
                 projectProgress = ((double) pagingView.getProjectFinishTaskCount() / pagingView.getProjectTaskCount()) * 100;
             }
-            approvalProgress = Math.round(approvalProgress * 100) / 100;
-            projectProgress = Math.round(projectProgress * 100) / 100;
+            approvalProgress = (double)  Math.round(approvalProgress * 100) / 100;
+            projectProgress = (double)  Math.round(projectProgress * 100) / 100;
             pagingView.setApprovalProgress(BigDecimal.valueOf(approvalProgress));
             pagingView.setProjectProgress(BigDecimal.valueOf(projectProgress));
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -95,15 +95,36 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
     }
 
     @Override
-    public Boolean exportExcelTaskDetail(ProjectReportFormsDTO.TaskDetailParam dto) {
-        downloadTaskFeign.saveDownloadTask("项目任务明细", EXPORT_PLM_PROJECT_REPORT_TASK_DETAIL.getCode(), dto);
+    public Boolean exportExcelTaskDetail(ProjectReportFormsDTO.PagingParam dto) {
+        List<Integer> statusList = new ArrayList<>();
+        dto.setApprovalStatusList(statusList);
+        if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(dto.getApprovalStatus())) {
+            List<Integer> statusCodeList = Arrays.asList(ApprovalStatusEnum.values()).stream().filter(req -> !ApprovalStatusEnum.APPROVAL.getCode().equals(req.getCode())).map(ApprovalStatusEnum::getCode).collect(Collectors.toList());
+            statusList.addAll(statusCodeList);
+            dto.setApprovalStatusList(statusList);
+        }
+        if (ProjectReportStatusEnum.APPROVAL.getCode().equals(dto.getApprovalStatus())) {
+            statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
+            dto.setApprovalStatusList(statusList);
+        }
+        if (ProjectReportStatusEnum.FINISHED.getCode().equals(dto.getApprovalStatus())) {
+            statusList.add(ProjectStateEnum.FINISH.getState());
+            dto.setProjectStatusList(statusList);
+        }
+        List<ProjectReportFormsDTO.PagingView> pagingViews = baseMapper.projectReportFormsExportExcel(dto);
+        List<String> ids = pagingViews.stream().map(ProjectReportFormsDTO.PagingView::getId).distinct().collect(Collectors.toList());
+        ProjectReportFormsDTO.TaskDetailParam param = new ProjectReportFormsDTO.TaskDetailParam();
+        param.setIds(ids);
+        downloadTaskFeign.saveDownloadTask("项目任务明细", EXPORT_PLM_PROJECT_REPORT_TASK_DETAIL.getCode(), param);
         return Boolean.TRUE;
     }
 
     @Override
     public PagingVO<ProjectReportFormsDTO.PagingView> exportProductPurchaseBusiness(PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
 
-        List<Integer> statusList = new ArrayList();
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page<ProjectReportFormsDTO.PagingView> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        List<Integer> statusList = new ArrayList<>();
         dto.getParams().setApprovalStatusList(statusList);
         if (ProjectReportStatusEnum.NOTAPPROVAL.getCode().equals(dto.getParams().getApprovalStatus())) {
             List<Integer> statusCodeList = Arrays.asList(ApprovalStatusEnum.values()).stream().filter(req -> !ApprovalStatusEnum.APPROVAL.getCode().equals(req.getCode())).map(ApprovalStatusEnum::getCode).collect(Collectors.toList());
@@ -112,17 +133,17 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
         }
         if (ProjectReportStatusEnum.APPROVAL.getCode().equals(dto.getParams().getApprovalStatus())) {
             statusList.add(ApprovalStatusEnum.APPROVAL.getCode());
-            dto.getParams().setProjectStatusList(statusList);
+            dto.getParams().setApprovalStatusList(statusList);
         }
         if (ProjectReportStatusEnum.FINISHED.getCode().equals(dto.getParams().getApprovalStatus())) {
             statusList.add(ProjectStateEnum.FINISH.getState());
             dto.getParams().setProjectStatusList(statusList);
         }
+        Page<ProjectReportFormsDTO.PagingView> page = baseMapper.projectReportFormsExportExcel(query, dto.getParams());
         List<FindUserDTO> userList = sysUserFeign.getUserList();
-        Page<ProjectReportFormsDTO.PagingView> page = baseMapper.projectReportFormsExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         for (ProjectReportFormsDTO.PagingView pagingView : page.getRecords()) {
             FindUserDTO findUserDTO = userList.stream().filter(req -> req.getUserId().equals(pagingView.getProjectChargeId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(findUserDTO)) {
+            if (!ObjectUtils.isEmpty(findUserDTO)) {
                 pagingView.setProjectChargeName(findUserDTO.getUserName());
             }
             pagingView.setProgressStatusName(ProductProgressStatusEnum.getName(pagingView.getProgressStatus()));
@@ -138,8 +159,8 @@ public class ProjectReportFormsServiceImpl extends SuperServiceImpl<ProjectRepor
             if (pagingView.getProjectTaskCount() != null && pagingView.getProjectTaskCount() != 0) {
                 projectProgress = ((double) pagingView.getProjectFinishTaskCount() / pagingView.getProjectTaskCount()) * 100;
             }
-            approvalProgress = Math.round(approvalProgress * 100) / 100;
-            projectProgress = Math.round(projectProgress * 100) / 100;
+            approvalProgress = (double)  Math.round(approvalProgress * 100) / 100;
+            projectProgress = (double)  Math.round(projectProgress * 100) / 100;
             pagingView.setApprovalProgress(BigDecimal.valueOf(approvalProgress));
             pagingView.setProjectProgress(BigDecimal.valueOf(projectProgress));
         }

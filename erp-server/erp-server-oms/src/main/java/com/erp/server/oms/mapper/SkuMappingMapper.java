@@ -3,14 +3,12 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.apache.poi.ss.formula.functions.T;
 
 import java.util.List;
 
@@ -25,7 +23,7 @@ import java.util.List;
 @Mapper
 public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
 
-    IPage<SkuMappingDTO.PagingViewDTO> paging(Page query, @Param("params") SkuMappingDTO.PagingParamDTO params, @Param("matchResult") Boolean matchResult);
+    IPage<SkuMappingDTO.PagingViewDTO> paging(Page query, @Param("params") SkuMappingDTO.PagingParamDTO params);
 
      /**
       * 库存SKU 分页
@@ -33,13 +31,12 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
       * @date 2023-08-22 12:25
       * @param query
       * @param params
-      * @param matchResult
       * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.oms.dto.SkuMappingDTO.WarehousePagingViewDTO>
       */
-    IPage<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(Page query, @Param("params") SkuMappingDTO.WarehousePagingParamDTO params,@Param("matchResult") Boolean matchResult);
+    IPage<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(Page query, @Param("params") SkuMappingDTO.WarehousePagingParamDTO params);
 
-    List<SkuMappingDTO.PagingViewDTO> listExport(@Param("params") SkuMappingDTO.ExportDTO params, @Param("matchResult")Boolean matchResult);
-    Page<SkuMappingDTO.PagingViewDTO> listExport(@Param("page")Page<SkuMappingDTO.PagingViewDTO> page, @Param("params") SkuMappingDTO.ExportDTO params, @Param("matchResult")Boolean matchResult);
+    List<SkuMappingDTO.PagingViewDTO> listExport(@Param("params") SkuMappingDTO.ExportDTO params);
+    Page<SkuMappingDTO.PagingViewDTO> listExport(@Param("page")Page<SkuMappingDTO.PagingViewDTO> page, @Param("params") SkuMappingDTO.ExportDTO params);
     /**
      * 获取到tab 统计数据
      * @author yl
@@ -59,8 +56,8 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
      * @param matchResult
      * @return java.util.List<com.erp.model.oms.dto.SkuMappingDTO.PagingViewDTO>
      */
-    List<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto,@Param("matchResult") Boolean matchResult);
-    Page<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("page") Page<SkuMappingDTO.WarehousePagingViewDTO> page, @Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto,@Param("matchResult") Boolean matchResult);
+    List<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto);
+    Page<SkuMappingDTO.WarehousePagingViewDTO> listWarehouseExport(@Param("page") Page<SkuMappingDTO.WarehousePagingViewDTO> page, @Param("params")SkuMappingDTO.ExportWarehouseSkuDTO dto);
 
     /**
      * 跟哭库存sku no list获取
@@ -110,4 +107,22 @@ public interface SkuMappingMapper extends BaseMapper<SkuMappingEntity> {
     List<SkuMappingEntity> listHistoryByListingId(@Param("listingId") String listingId);
 
     List<SkuMappingDTO.WarehouseSkuDTO> listByWarehouseAndPlatformSku(@Param("warehouseId") String warehouseId,@Param("platformSkuNoList") List<String> platformSkuNoList);
+
+    /**
+     * 根据参数查询sku映射记录
+     * @param params
+     * @return
+     */
+    List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(@Param("params") ListingInfoDTO.QueryDTO params);
+
+    IPage<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(Page<T> query, @Param("params")SkuMappingDTO.CustomerPagingParamDTO params);
+
+    /**
+     * 根据参数获取数据列表
+     * @param params
+     * @return
+     */
+    List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(@Param("params") ListingInfoDTO.QueryPlatformDTO params);
+
+    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(@Param("params")SkuMappingDTO.SkuParamDTO params);
 }

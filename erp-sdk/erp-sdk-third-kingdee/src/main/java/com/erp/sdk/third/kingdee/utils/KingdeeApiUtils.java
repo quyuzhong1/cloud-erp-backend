@@ -198,7 +198,7 @@ public class KingdeeApiUtils {
         try {
             dataList = client.executeBillQuery(param, entityClass);
         } catch (Exception e) {
-            throw new RuntimeException("金蝶查询列表数据失败[queryList]转Class:" + null == e.getMessage() ? e.toString() : e.getMessage());
+            throw new RuntimeException("金蝶查询列表数据失败[queryList]转Class:" + (Objects.isNull(e.getMessage()) ? e.toString() : e.getMessage()));
         }
         return dataList;
     }

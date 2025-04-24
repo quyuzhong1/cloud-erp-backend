@@ -2,6 +2,7 @@
 package com.erp.server.wms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
@@ -90,13 +91,13 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
             errorList.add(vwAllocationAllocationExcelDTO);
             return;
         }
-        if (StringUtils.isBlank(vwAllocationAllocationExcelDTO.getSkuNo())) {
+        if (CharSequenceUtil.isBlank(vwAllocationAllocationExcelDTO.getSkuNo())) {
             errorMsgList.add("SKU不能为空");
         }
         VirtualWarehouseAllocationDTO.DetailDto detailDto = new VirtualWarehouseAllocationDTO.DetailDto();
 
         //查看sku是否存在
-        if (StringUtils.isNotBlank(vwAllocationAllocationExcelDTO.getSkuNo())) {
+        if (CharSequenceUtil.isNotBlank(vwAllocationAllocationExcelDTO.getSkuNo())) {
             //根据sku编号查询sku
             Map<String, String> skuParams = new HashMap<>();
             skuParams.put("skuNo", vwAllocationAllocationExcelDTO.getSkuNo());
@@ -115,7 +116,7 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
         } else {
             detailDto.setQty(Integer.valueOf(vwAllocationAllocationExcelDTO.getQty()));
         }
-        if (StringUtils.isBlank(vwAllocationAllocationExcelDTO.getWarehouseName())) {
+        if (CharSequenceUtil.isBlank(vwAllocationAllocationExcelDTO.getWarehouseName())) {
             errorMsgList.add("实体仓不能为空");
         }
         List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getWarehouseName()));

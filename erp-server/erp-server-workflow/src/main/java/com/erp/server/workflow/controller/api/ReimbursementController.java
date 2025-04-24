@@ -10,11 +10,12 @@ import com.erp.server.workflow.service.WorkflowService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @Classname ReimbursementController
@@ -28,18 +29,18 @@ import java.util.List;
 public class ReimbursementController extends BaseController {
 
 
-    @Autowired
+    @Resource
     private WorkflowService workflowService;
 
 
-    @Autowired
+    @Resource
     private RepositoryService repositoryService;
-    @Autowired
+    @Resource
     private ProcessTaskService processTaskService;
 
     //删除流程
     @PostMapping("/removeProcess")
-    public ApiResult removeProcess(@RequestParam(value = "deploymentId")  String  deploymentId) {
+    public ApiResult<Objects> removeProcess(@RequestParam(value = "deploymentId")  String  deploymentId) {
         repositoryService.deleteDeployment(deploymentId);
         return success();
     }
@@ -47,21 +48,21 @@ public class ReimbursementController extends BaseController {
 
     //启动流程
     @PostMapping("/startProcess")
-    public ApiResult startProcess(@RequestBody @Validated StartProcessDTO dto) {
+    public ApiResult<Objects> startProcess(@RequestBody @Validated StartProcessDTO dto) {
         workflowService.startProcess(dto);
         return success();
     }
 
     //查看任务
     @GetMapping("/queryMyToDo")
-    public ApiResult queryMyToDo(String userId) {
+    public ApiResult<List<TaskShowDTO>> queryMyToDo(String userId) {
         List<TaskShowDTO> list = processTaskService.queryMyToDo(userId);
         return success(list);
     }
 
     //审批通过任务
     @PostMapping("/taskPass")
-    public ApiResult taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
+    public ApiResult<Objects> taskPass(@RequestBody @Validated ApproveProcessDTO dto) {
        processTaskService.taskPass(dto);
        return success();
     }
@@ -69,7 +70,7 @@ public class ReimbursementController extends BaseController {
 
     // 删除任务 不一定删除成功
     @PostMapping("/removeTask")
-    public ApiResult removeTask(String taskId) {
+    public ApiResult<Objects> removeTask(String taskId) {
         processTaskService.removeTask(taskId);
         return success();
     }
@@ -77,49 +78,49 @@ public class ReimbursementController extends BaseController {
 
     //驳回到上一级
     @PostMapping("/rejectGoBack")
-    public ApiResult rejectGoBack(@RequestBody @Validated ApproveProcessDTO dto) {
+    public ApiResult<Objects> rejectGoBack(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectGoBackProcess(dto);
         return success();
     }
 
     //驳回到起点
     @PostMapping("/rejectOrigin")
-    public ApiResult rejectOrigin(@RequestBody @Validated ApproveProcessDTO dto) {
+    public ApiResult<Objects> rejectOrigin(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.rejectOriginProcess(dto);
         return success();
     }
 
     //撤销流程
     @PostMapping("/withDraw")
-    public ApiResult withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
+    public ApiResult<Objects> withDraw(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.withDrawProcess(dto);
         return success();
     }
 
     //撤回流程
     @PostMapping("/fetchBack")
-    public ApiResult fetchBackProcess(@RequestBody @Validated ApproveProcessDTO dto) {
+    public ApiResult<Objects> fetchBackProcess(@RequestBody @Validated ApproveProcessDTO dto) {
         workflowService.fetchBackProcess(dto);
         return success();
     }
 
     //任务历史
     @GetMapping("/queryMyTaskHistory")
-    public ApiResult queryMyTaskHistory(QueryProcessDTO dto) {
+    public ApiResult<List<HistoricTaskInstance>> queryMyTaskHistory(QueryProcessDTO dto) {
         List<HistoricTaskInstance> list=processTaskService.historicTaskInstances(dto);
         return success(list);
     }
 
     //单个任务
     @GetMapping("/taskInfo")
-    public ApiResult queryTaskInfo(@RequestBody @Validated ApproveProcessDTO dto) {
+    public ApiResult<TaskShowDTO> queryTaskInfo(@RequestBody @Validated ApproveProcessDTO dto) {
         TaskShowDTO vo=processTaskService.queryTaskInfo(dto);
         return success(vo);
     }
 
     //查看流程审批情况
     @GetMapping("/queryProcessApprove")
-    public ApiResult queryProcessApprove(@RequestBody @Validated ProcessBaseDTO dto) {
+    public ApiResult<List<AuditorHandleDTO>> queryProcessApprove(@RequestBody @Validated ProcessBaseDTO dto) {
         List<AuditorHandleDTO> resultList=workflowService.queryApproveRecord(dto);
         return success(resultList);
     }
@@ -130,7 +131,7 @@ public class ReimbursementController extends BaseController {
      */
 
     @GetMapping("/queryProcessApproveById")
-    public ApiResult queryProcessApprove(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<List<ApproveNodeRecordVO>> queryProcessApprove(@RequestBody @Validated BaseIdDTO dto) {
         List<ApproveNodeRecordVO> resultList=workflowService.queryApproveRecordById(dto.getId());
         return success(resultList);
     }

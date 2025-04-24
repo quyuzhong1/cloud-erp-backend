@@ -1,5 +1,7 @@
 package com.common.business.enums;
 
+import java.util.Objects;
+
 /**
  * @author Will
  * @version 1.0
@@ -38,7 +40,7 @@ public enum SkuApproveConfigureEnum {
     public static String getNameByCode(Integer code) {
         SkuApproveConfigureEnum[] enums = values();
         for (SkuApproveConfigureEnum skuApproveConfigureEnum : enums) {
-            if (skuApproveConfigureEnum.getCode() == code) {
+            if (Objects.equals(skuApproveConfigureEnum.getCode(), code)) {
                 return skuApproveConfigureEnum.getName();
             }
         }
@@ -48,7 +50,7 @@ public enum SkuApproveConfigureEnum {
     public static SkuApproveConfigureEnum getEnumByType(String code){
         SkuApproveConfigureEnum[] enums = values();
         for (SkuApproveConfigureEnum skuApproveConfigureEnum : enums) {
-            if (skuApproveConfigureEnum.getCode().equals(code)) {
+            if (skuApproveConfigureEnum.getCode().toString().equalsIgnoreCase(code)) {
                 return skuApproveConfigureEnum;
             }
         }

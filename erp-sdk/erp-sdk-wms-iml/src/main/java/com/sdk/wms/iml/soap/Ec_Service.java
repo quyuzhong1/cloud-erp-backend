@@ -24,13 +24,16 @@ public class Ec_Service
 
     private final static URL EC_WSDL_LOCATION;
     private final static WebServiceException EC_EXCEPTION;
-    private final static QName EC_QNAME = new QName("http://www.example.org/Ec/", "Ec");
+    public static final String URL = "http://www.example.org/Ec/";
+    private final static QName EC_QNAME = new QName(URL, "Ec");
+
+    public static final String DEFAULT_SVC_WSDL = "http://oms.imlb2c.com/default/svc/wsdl";
 
     static {
         URL url = null;
         WebServiceException e = null;
         try {
-            url = new URL("http://oms.imlb2c.com/default/svc/wsdl");
+            url = new URL(DEFAULT_SVC_WSDL);
         } catch (MalformedURLException ex) {
             e = new WebServiceException(ex);
         }
@@ -69,7 +72,7 @@ public class Ec_Service
      */
     @WebEndpoint(name = "EcSOAP")
     public Ec getEcSOAP() {
-        return super.getPort(new QName("http://www.example.org/Ec/", "EcSOAP"), Ec.class);
+        return super.getPort(new QName("URL", "EcSOAP"), Ec.class);
     }
 
     /**
@@ -81,7 +84,7 @@ public class Ec_Service
      */
     @WebEndpoint(name = "EcSOAP")
     public Ec getEcSOAP(WebServiceFeature... features) {
-        return super.getPort(new QName("http://www.example.org/Ec/", "EcSOAP"), Ec.class, features);
+        return super.getPort(new QName("URL", "EcSOAP"), Ec.class, features);
     }
 
     private static URL __getWsdlLocation() {

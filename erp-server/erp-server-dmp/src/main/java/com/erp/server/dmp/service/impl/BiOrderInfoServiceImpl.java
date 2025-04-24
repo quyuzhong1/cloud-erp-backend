@@ -185,7 +185,8 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
             return orderInfoId;
         }
         String orderId = orderInfoId;
-        itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
+        List<BiOrderItemSplitEntity> biOrderItemSplitEntityList = itemList.stream().peek(entity -> entity.setOrderId(orderId)).collect(Collectors.toList());
+        log.debug("订单明细拆分：{}" , JSON.toJSONString(biOrderItemSplitEntityList));
 
         //保存未拆分数据
         biOrderItemSplitService.checkOrderItem(itemList, orderInfoEntity.getPlatformCreateTime().toLocalDate(), orderInfoEntity.getPlatformSign());

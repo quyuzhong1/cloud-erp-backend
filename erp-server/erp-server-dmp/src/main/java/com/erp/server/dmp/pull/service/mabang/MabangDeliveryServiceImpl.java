@@ -6,12 +6,15 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
 import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapUtil;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.StrUtils;
@@ -143,13 +146,14 @@ public class MabangDeliveryServiceImpl implements IReportSaveService<DeliveryEnt
         if(CollUtil.isNotEmpty(entityToMqlist)) {
             log.warn("马帮发货单列表, 需推送到MQ 共{}条数据", entityToMqlist.size());
             // 异步推送到MQ
-            entityToMqlist.stream().peek(msg ->{
+            List<DmpFbaDeliveryEntity> dmpFbaDeliveryEntityList = entityToMqlist.stream().peek(msg ->{
                 SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_FBA_DELIVERY_TAG.getName(),
                         msg, StrUtil.uuid().toLowerCase());
                 if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-                    throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                    throw new ServiceException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
                 }
             }).collect(Collectors.toList());
+            log.debug("马帮FBA发货数据为：{}" , JSON.toJSONString(dmpFbaDeliveryEntityList));
         }
     }
 

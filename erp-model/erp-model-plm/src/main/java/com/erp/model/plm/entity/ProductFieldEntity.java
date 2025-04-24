@@ -17,7 +17,7 @@ import java.util.Date;
  */
 @Data
 @TableName("product_field")
-public class ProductFieldEntity extends BaseEntity implements Serializable {
+public class ProductFieldEntity extends BaseEntity<ProductFieldEntity> implements Serializable {
 
     @TableField("scope")
     private Integer scope;

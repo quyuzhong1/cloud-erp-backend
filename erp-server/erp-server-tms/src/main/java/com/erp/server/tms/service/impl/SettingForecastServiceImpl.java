@@ -1,10 +1,11 @@
 package com.erp.server.tms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.enums.PackageStatusEnum;
@@ -208,7 +209,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
         }
 
         LocalDateTime orderTime = dto.getOrderTime();
-        SettingForecastEntity entity = this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last("LIMIT 1").one();
+        SettingForecastEntity entity = this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last(SqlConstants.LIMIT_1).one();
         if (Objects.nonNull(entity)) {
             SettingForecastDTO.ForecastStatusDTO forecastStatus = new SettingForecastDTO.ForecastStatusDTO();
             if (Objects.isNull(orderTime)) {
@@ -257,7 +258,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
     @Override
     public SettingForecastEntity getSettingForecastByLogisticsSupplierId(String logisticsSupplierId) {
-        return this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(SettingForecastEntity::getLogisticsSupplierId, logisticsSupplierId).last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -278,7 +279,7 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
         List<SettingForecastChannelEntity> settingForecastChannelList = settingForecastChannelService.listByMainIdList(Arrays.asList(dto.getId()));
         //渠道id集合
-        List<String> logisticsChannelIdList = settingForecastChannelList.stream().filter(obj -> StrUtil.equals(dto.getId(), obj.getMainId()))
+        List<String> logisticsChannelIdList = settingForecastChannelList.stream().filter(obj -> CharSequenceUtil.equals(dto.getId(), obj.getMainId()))
                 .map(SettingForecastChannelEntity::getLogisticsChannelId).collect(Collectors.toList());
         dto.setLogisticsChannelIdList(logisticsChannelIdList);
         dto.setTransferLogisticsChannelId(entity.getTransferLogisticsChannelId());
@@ -367,11 +368,11 @@ public class SettingForecastServiceImpl extends SuperServiceImpl<SettingForecast
 
         for (SettingForecastDTO.ListDTO listDTO : resultList) {
             //渠道id集合
-            List<String> logisticsChannelIdList = settingForecastChannelList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId()))
+            List<String> logisticsChannelIdList = settingForecastChannelList.stream().filter(obj -> CharSequenceUtil.equals(listDTO.getId(), obj.getMainId()))
                     .map(SettingForecastChannelEntity::getLogisticsChannelId).collect(Collectors.toList());
             listDTO.setLogisticsChannelIdList(logisticsChannelIdList);
             //渠道名称集合
-            List<String> logisticsChannelNameList = settingForecastChannelList.stream().filter(obj -> StrUtil.equals(listDTO.getId(), obj.getMainId()))
+            List<String> logisticsChannelNameList = settingForecastChannelList.stream().filter(obj -> CharSequenceUtil.equals(listDTO.getId(), obj.getMainId()))
                     .map(SettingForecastChannelEntity::getLogisticsChannelName).collect(Collectors.toList());
             listDTO.setLogisticsChannelNameList(logisticsChannelNameList);
         }

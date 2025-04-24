@@ -196,5 +196,18 @@ public interface PurchaseOrderMapper extends BaseMapper<PurchaseOrderEntity> {
      * @return
      */
     Integer srmWaitDeliveryCount(@Param("supplierId")String supplierId,@Param("code") String code);
+    /**
+     * 采购单号分页查询
+     * @author will
+     * @date 2024/11/11 11:41
+     * @param query
+     * @param params
+     * @return IPage<SourceCodeDTO>
+     */
+    IPage<PurchaseOrderDTO.SourceCodeDTO> purchaseCodePaging(Page query,@Param("params") PurchaseOrderDTO.SourceCodeParamDTO params);
 
+    /**
+     * 通过sku 供应商查询所有采购订单
+     */
+    List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@Param("skuIdList") List<String> skuIdList,@Param("supplierIdList") List<String> supplierIdList);
 }

@@ -94,6 +94,11 @@ public class LogisticsBillDetailEntity extends BaseEntity<LogisticsBillDetailEnt
      */
     @TableField("is_api_update")
     private Boolean isApiUpdate;
+    /**
+     * 最新物流轨迹记录
+     */
+    @TableField("track_content")
+    private String trackContent;
 
     /**
      * 平台订单号

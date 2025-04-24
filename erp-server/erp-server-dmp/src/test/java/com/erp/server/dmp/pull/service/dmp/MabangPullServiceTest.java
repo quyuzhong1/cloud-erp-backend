@@ -65,7 +65,6 @@ public class MabangPullServiceTest {
         String filterStr = String.join(" and ", queryFilters);
         String fieldKeys = "FId,FPUR_PATENTRY_FEntryID,FMaterialId.FNumber,FSrcEntryID,FIsPriceListPush";
         map.put("groupName", "测试分组");
-        map.put("groupName", "测试分组");
         map.put("id", "379804");
         map.put("Ids", "");
 

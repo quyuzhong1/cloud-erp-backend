@@ -1,10 +1,12 @@
 package com.erp.server.wms.service;
 
 import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.TransferInfoDetailEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -62,4 +64,20 @@ public interface TransferInfoDetailService extends SuperService<TransferInfoDeta
      * @return List<TransferInfoDetailEntity>
      */
     List<TransferInfoDetailEntity> listSourceDetailIds(List<String> sourceDetailIds);
+
+    /**
+     * 查询调拨明细信息包含审批需要信息 ： 仓管员
+     * @param mainIds 主表数据id
+     * @param isApprove 是否包含审核信息
+     * @return
+     */
+    Map<String, List<TransferInfoDetailDTO.ApproveDTO>> listApproveByMainIds(List<String> mainIds, Boolean isApprove);
+    /**
+     * 根据来源明细id查询
+     * @author will
+     * @date 2024/12/19 17:07
+     * @param sourceIdList
+     * @return List<ResponseDTO>
+     */
+    List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceIdList(List<String> sourceIdList);
 }

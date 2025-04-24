@@ -2,10 +2,7 @@ package com.erp.server.wms.controller.feign;
 
 
 import com.common.business.annotation.DataPermission;
-import com.common.business.dto.base.BaseApproveParamDTO;
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -13,6 +10,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.MachineInfoDTO;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
+import com.erp.model.wms.entity.MachineInfoEntity;
 import com.erp.model.wms.entity.MachineRefSoEntity;
 import com.erp.server.wms.service.MachineInfoService;
 import com.erp.server.wms.service.MachineRefSoService;
@@ -55,8 +53,8 @@ public class MachineInfoFeignController extends BaseController {
      */
     @PostMapping("/addMachineInfo")
     public String addMachineInfo(@RequestBody MachineInfoDTO.AddDTO dto) {
-        String id = machineInfoService.add(dto);
-        return id;
+        MachineInfoEntity entity = machineInfoService.add(dto);
+        return entity.getId();
     }
 
     /**

@@ -1,6 +1,7 @@
 package com.erp.server.msg.service;
 
 import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
@@ -12,6 +13,7 @@ import com.erp.server.msg.model.MsgResultVO;
 import com.erp.server.msg.model.MsgSendChannelWrapParam;
 import com.erp.server.msg.model.entity.MsgLog;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -32,7 +34,7 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
     @Resource
     private MsgContext msgContext;
 
-    @Autowired
+    @Resource
     private MongoTemplate mongoTemplate;
 
 
@@ -49,8 +51,8 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
      * @return
      */
     @Override
-    public MsgResultVO doSendMsg(MsgSendChannelWrapParam noticeMsgInfo) {
-        MsgResultVO sendResult = sendMsg(noticeMsgInfo);
+    public MsgResultVO<T> doSendMsg(MsgSendChannelWrapParam noticeMsgInfo) {
+        MsgResultVO<T> sendResult = sendMsg(noticeMsgInfo);
         MessageChannelEnum channelEnum = channel();
         log.info("通过渠道【{}】发送消息【{}】", channelEnum.getName(), sendResult.isSuccess() ? "成功" : "失败");
         recordLog(noticeMsgInfo, sendResult, channelEnum);
@@ -63,14 +65,14 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
      * @param sendResult
      * @param channelEnum
      */
-    private void recordLog(MsgSendChannelWrapParam noticeMsgInfo, MsgResultVO sendResult, MessageChannelEnum channelEnum) {
+    private void recordLog(MsgSendChannelWrapParam noticeMsgInfo, MsgResultVO<T> sendResult, MessageChannelEnum channelEnum) {
         // 记录日志
         MsgLog msgLog = new MsgLog();
         msgLog.setMsgId(noticeMsgInfo.getMsgId());
         msgLog.setMqTopic(RocketMqTopic.NOTICE_MSG_TOPIC);
         msgLog.setMqTag(RocketMqTagEnum.MSG_NOTICE_TAG.getName());
         msgLog.setSendChannelCode(channelEnum.getCode());
-        msgLog.setMsgSourceContent(JSONObject.toJSONString(noticeMsgInfo.getSourceMsgInfo()));
+        msgLog.setMsgSourceContent(JSON.toJSONString(noticeMsgInfo.getSourceMsgInfo()));
         msgLog.setCreateTime(LocalDateTime.now());
         if(ObjectUtil.isNotEmpty(sendResult)) {
             msgLog.setMsgChannelContent(sendResult.getRequestBody());
@@ -80,7 +82,7 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
             msgLog.setRetryTimes(0);
             msgLog.setNeedResend(sendResult.getNeedReSend());
         }
-        log.info("通过渠道【{}】发送消息【{}】，消息日志：【{}】", channelEnum.getName(), sendResult.isSuccess() ? "成功" : "失败", JSONObject.toJSONString(msgLog));
+        log.info("通过渠道【{}】发送消息【{}】，消息日志：【{}】", channelEnum.getName(), sendResult.isSuccess() ? "成功" : "失败", JSON.toJSONString(msgLog));
         try {
             mongoTemplate.insert(msgLog, MongoTableConstant.MSG_LOG);
         } catch (Exception e) {
@@ -92,6 +94,6 @@ public abstract class BaseMessageSendService implements IMessageSendService, Ini
      * 具体子类实现逻辑
      * @return
      */
-    public abstract MsgResultVO sendMsg(MsgSendChannelWrapParam noticeMsgInfo);
+    public abstract MsgResultVO<T> sendMsg(MsgSendChannelWrapParam noticeMsgInfo);
 
 }

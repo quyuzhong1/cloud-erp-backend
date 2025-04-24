@@ -4,6 +4,7 @@ package com.erp.server.scm.controller.api;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -11,11 +12,14 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
+import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.server.scm.query.PurchasePriceChangeQueryHandler;
+import com.erp.server.scm.service.PurchasePriceChangeDetailService;
 import com.erp.server.scm.service.PurchasePriceChangeService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -28,33 +32,32 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * 采购价目变更管理
+ * 采购调价单管理
  *
  * @author Lambda
  * @since 2023-03-15
  */
 @Slf4j
 @RestController
-@LogSystemModule("采购价目表")
+@LogSystemModule("采购调价表")
 @RequestMapping("/purchase/price/change")
 public class PurchasePriceChangeController extends BaseController {
 
 
     @Resource
     private PurchasePriceChangeService purchasePriceChangeService;
-
-
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
+    @Resource
+    private PurchasePriceChangeDetailService purchasePriceChangeDetailService;
 
 
     /**
-     * 采购价目变更分页列表
+     * 采购调价单分页列表
      *
      * @return
      */
@@ -100,14 +103,14 @@ public class PurchasePriceChangeController extends BaseController {
             menuCode = "scm:purchase:price:change:add",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
-    public ApiResult add(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
-        String id = purchasePriceChangeService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<?> add(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
+        PurchasePriceChangeEntity entity = purchasePriceChangeService.add(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
 
     /**
-     * 采购价目表  点击变更报价获取详情
+     * 采购调价表  点击变更报价获取详情
      *
      * @param dto
      * @return
@@ -145,14 +148,15 @@ public class PurchasePriceChangeController extends BaseController {
             menuCode = "scm:purchase:price:change:add",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
-        Boolean result = purchasePriceChangeService.addAndSubmit(dto);
-        return result == true ? success() : failure();
+    public ApiResult<?> addAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.AddDTO dto) {
+        PurchasePriceChangeEntity entity = purchasePriceChangeService.addAndSubmit(dto);
+        purchasePriceChangeService.sendMsg(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
 
     /**
-     * 采购价目变更详情
+     * 采购调价单详情
      *
      * @param dto
      * @return
@@ -171,19 +175,19 @@ public class PurchasePriceChangeController extends BaseController {
 
 
     /**
-     * 修改采购价目变更
+     * 修改采购调价单
      *
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购价目变更")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "修改采购调价单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:update",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
         String id = purchasePriceChangeService.updatePurchasePriceChange(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -194,64 +198,103 @@ public class PurchasePriceChangeController extends BaseController {
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核采购价目变更")
+    @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并审核采购调价单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:update",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
+    public ApiResult<?> updateAndSubmit(@RequestBody @Validated PurchasePriceChangeDTO.UpdateDTO dto) {
         Boolean result = purchasePriceChangeService.updateAndSubmit(dto);
+        purchasePriceChangeService.sendMsg(Collections.singletonList(dto.getId()), ApproveStatusEnum.WAIT_SUBMIT,"");
         return result == true ? success() : failure();
     }
 
 
     /**
-     * 删除采购价目
+     * 删除采购调价
      *
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.DELETE, desc = "删除采购价目变更")
+    @LogAction(value = LogActionEnum.DELETE, desc = "删除采购调价单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:delete",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceChangeService.deleteByIds(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchasePriceChangeEntity> entityMap = purchasePriceChangeService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceChangeEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购调价单不存在"));
+                continue;
+            }
+            try {
+                Boolean disabled = purchasePriceChangeService.deleteByIds(Collections.singletonList(id));
+                if (disabled){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "删除采购调价单成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "删除采购调价单失败"));
+                }
+            }catch (Exception e){
+                log.error("删除采购调价单失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
     /**
-     * 采购价目变更提交审核
+     * 采购调价单提交审核
      *
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购价目变更")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "提交采购调价单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:submit",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceChangeService.submitApprove(dto.getIds(),Boolean.TRUE);
-        return result == true ? success() : failure();
+    public ApiResult<?> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchasePriceChangeEntity> entityMap = purchasePriceChangeService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceChangeEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购调价单不存在"));
+                continue;
+            }
+            try {
+                Boolean disabled = purchasePriceChangeService.submitApprove(Collections.singletonList(id), Boolean.TRUE);
+                if (disabled){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "提交采购调价单成功"));
+                    purchasePriceChangeService.sendMsg(Collections.singletonList(id), ApproveStatusEnum.WAIT_SUBMIT,"");
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "提交采购调价单失败"));
+                }
+            }catch (Exception e){
+                log.error("提交采购调价单失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
     /**
-     * 采购价目变更审核
+     * 采购调价单审核
      *
      * @param dto
      * @return
      */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购价目变更")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "审核采购调价单")
     @PostMapping("/approve")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
@@ -259,13 +302,13 @@ public class PurchasePriceChangeController extends BaseController {
         for (String id : dto.getIds()) {
             PurchasePriceChangeEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"采购价目变更记录不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购调价单记录不存在"));
                 continue;
             }
             try {
                 resultDTOS.add(purchasePriceChangeService.approve(entity,dto.getType(),dto.getComment(),dto.getIsNeedProcess()));
             }catch (Exception e){
-                log.error("采购价目审核失败",e);
+                log.error("采购调价审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
             }
         }
@@ -281,22 +324,41 @@ public class PurchasePriceChangeController extends BaseController {
      * @author yl
      * @date 2023-03-23 17:57
      */
-    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购价目变更")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "撤销采购调价单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
             menuCode = "scm:purchase:price:change:cancelProcess",
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = purchasePriceChangeService.cancelProcess(dto.getIds());
-        return result == true ? success() : failure();
+    public ApiResult<?> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PurchasePriceChangeEntity> entityMap = purchasePriceChangeService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PurchasePriceChangeEntity entity = entityMap.get(id);
+            if (Objects.isNull(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "采购调价单不存在"));
+                continue;
+            }
+            try {
+                Boolean disabled = purchasePriceChangeService.cancelProcess(Collections.singletonList(id));
+                if (disabled) {
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "撤销采购调价单成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "撤销采购调价单失败"));
+                }
+            } catch (Exception e) {
+                log.error("撤销采购调价单失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
      * 更新明细备注
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新采购价目变更明细备注:ids={ids},备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新采购调价单明细备注:备注={remark}")
     @PostMapping("/updateDetailRemark")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "adjust_user_id",
@@ -304,9 +366,36 @@ public class PurchasePriceChangeController extends BaseController {
             serviceClass = PurchasePriceChangeService.class,
             keyIdName = "ids"
     )
-    public ApiResult updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
-        Boolean result = purchasePriceChangeService.updateDetailRemark(dto.getIds(),dto.getRemark());
-        return result ? success() : failure();
+    public ApiResult<?> updateDetailRemark(@RequestBody @Valid BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PurchasePriceChangeDetailEntity> detailList = purchasePriceChangeDetailService.listByIds(dto.getIds());
+        Map<String, PurchasePriceChangeDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(PurchasePriceChangeDetailEntity::getPurchasePriceChangeId).distinct().collect(Collectors.toList());
+        Map<String, PurchasePriceChangeEntity> entityMap = purchasePriceChangeService.mapByIds(mainIds);
+        for (String id : dto.getIds()) {
+            PurchasePriceChangeDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购调价明细不存在"));
+                continue;
+            }
+            PurchasePriceChangeEntity entity = entityMap.get(detailEntity.getPurchasePriceChangeId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购调价单不存在"));
+                continue;
+            }
+            try {
+                Boolean disabled = purchasePriceChangeService.updateDetailRemark(Collections.singletonList(id), dto.getRemark());
+                if (disabled){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "更新采购调价单明细备注"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "更新采购调价单明细备注"));
+                }
+            }catch (Exception e){
+                log.error("更新采购调价单明细备注失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -318,7 +407,7 @@ public class PurchasePriceChangeController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "采购调价表数据导出")
     @PostMapping("/export")
-    public ApiResult export(@RequestBody @Valid PurchasePriceChangeDTO.PagingParamDTO dto) {
+    public ApiResult<?> export(@RequestBody @Valid PurchasePriceChangeDTO.PagingParamDTO dto) {
         purchasePriceChangeService.export(dto);
         return success();
     }
@@ -331,7 +420,7 @@ public class PurchasePriceChangeController extends BaseController {
      * @return
      */
     @PostMapping("/updateHistoryDb")
-    public ApiResult tempUpdateHistoryDb() {
+    public ApiResult<?> tempUpdateHistoryDb() {
         purchasePriceChangeService.tempUpdateHistoryDb();
         return success();
     }

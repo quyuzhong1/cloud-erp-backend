@@ -1,7 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.DmpSyncTaskDTO;
@@ -15,7 +16,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -29,6 +30,7 @@ import com.erp.model.wms.enums.VirtualWarehouseAllocationSyncStatusEnum;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseAllocationDetailMapper;
@@ -44,7 +46,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -75,6 +80,10 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
+
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -92,7 +101,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单明细", virtualWarehouseAllocationDetailEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "分货单明细", virtualWarehouseAllocationDetailEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, virtualWarehouseAllocationDetailEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(virtualWarehouseAllocationDetailEntity.getId(), virtualWarehouseAllocationDetailEntity.getId());
@@ -105,7 +114,9 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
     @Override
     public Boolean batchUpdate(VirtualWarehouseAllocationDetailDTO.UpdateDTO updateDTO) {
         VirtualWarehouseAllocationDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "分货单明细"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "分货单明细");
+        }
         VirtualWarehouseAllocationDetailEntity virtualWarehouseAllocationDetailEntity = BeanMapperUtils.map(VirtualWarehouseAllocationDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -118,7 +129,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
 
         // 记录主单操作日志
         log.info("编辑 开始记录分货单明细日志数据，id：【{}】", virtualWarehouseAllocationDetailEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationDetailEntity.getId(), "分货单明细");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), virtualWarehouseAllocationDetailEntity.getId(), "分货单明细");
         operateLogService.addModuleOperateLogByObj(old, virtualWarehouseAllocationDetailEntity, null, virtualWarehouseAllocationDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -342,7 +353,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      * @return
      */
     @Override
-    public DmpPushTaskEntity viewSyncInfo(String id) {
+    public DmpPushTaskDTO.SyncInfoDTO viewSyncInfo(String id) {
         VirtualWarehouseAllocationDetailEntity vmAllocationDetailEntity = virtualWarehouseAllocationDetailService.getById(id);
         VirtualWarehouseAllocationEntity vmAllocationEntity;
         if (Objects.isNull(vmAllocationDetailEntity)) {
@@ -357,12 +368,12 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
         VirtualWarehousePushHandleRelationEntity handleRelation = virtualWarehousePushHandleRelationService.getOne(new LambdaQueryWrapper<VirtualWarehousePushHandleRelationEntity>()
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceId, vmAllocationEntity.getId())
                 .eq(VirtualWarehousePushHandleRelationEntity::getSourceDetailId, vmAllocationDetailEntity.getId()));
-        DmpPushTaskEntity productBomHistoryTask = new DmpPushTaskEntity();
+        DmpPushTaskDTO.SyncInfoDTO syncInfoDTO = new DmpPushTaskDTO.SyncInfoDTO();
         if (Objects.nonNull(handleRelation)) {
-            productBomHistoryTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
+            syncInfoDTO = dmpInoutTaskFeign.getErrorData(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.VIRTUAL_WAREHOUSE_ALLOCATION.getCode(),
                     handleRelation.getHandleDetailId(), PlatformEnum.WANGDIAN.getDesc(), PlatformEnum.ERP.getDesc()));
         }
-        return productBomHistoryTask;
+        return syncInfoDTO;
     }
 
     private void handleData(List<VirtualWarehouseAllocationDetailEntity> detailEntityList, String mainId) {
@@ -373,7 +384,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<VirtualWarehouseAllocationDTO.DetailDto> newList, List<VirtualWarehouseAllocationDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(VirtualWarehouseAllocationDTO.DetailDto::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(VirtualWarehouseAllocationDetailEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
@@ -489,7 +500,7 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
      */
     @Override
     public void initFailThirdCode(String errorMsg) {
-        if (StringUtils.isBlank(errorMsg)){
+        if (CharSequenceUtil.isBlank(errorMsg)){
             errorMsg = "check_fail";
         }
         List<VirtualWarehouseAllocationDetailEntity> list = this.lambdaQuery().like(VirtualWarehouseAllocationDetailEntity::getThirdCode, errorMsg).list();
@@ -497,6 +508,19 @@ public class VirtualWarehouseAllocationDetailServiceImpl extends SuperServiceImp
             return;
         }
         list.forEach(this::updateDetailData);
+    }
+
+    @Override
+    public List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList) {
+        return baseMapper.listAllocationData(skuIdList,warehouseIdList,virtualWarehouseIdList);
+    }
+
+    @Override
+    public List<VirtualWarehouseAllocationDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if(CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return  lambdaQuery().in(VirtualWarehouseAllocationDetailEntity::getMainId,mainIdList).list();
     }
 
     /**

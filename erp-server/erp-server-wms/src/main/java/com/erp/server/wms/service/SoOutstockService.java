@@ -1,9 +1,6 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformOutboundDTO;
-import com.common.business.dto.PlatformSoOutStockDTO;
-import com.common.business.dto.PlatformSoOutStockDetailDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
@@ -50,6 +47,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
      **/
     List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds);
+
+    /**
+     * 销售订单ids获取销售出库单主表信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 15:42
+     * @param soIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
+     **/
+    SoOutstockEntity getBySoId(String soId);
 
     /**
      * 添加销售出库单a
@@ -534,4 +540,17 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void deleteTransferInfo(List<SoOutstockEntity> list);
 
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
+
+
+    List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
+    /**
+     * 修复旺店通数据
+     * @author will
+     * @date 2024/12/31 18:45
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO handleWdtData(String id);
+
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
 }

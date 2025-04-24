@@ -10,6 +10,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
+import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.server.plm.mapper.BomRefSkuMapper;
 import com.erp.server.plm.service.BomSkuService;
@@ -139,7 +140,7 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
     @Transactional
     public void updateBomSku(String bomId, List<BomSkuDTO> bomSkuList) {
         //先删除
-        deleteBomSku(bomId);
+        deleteByBomId(bomId);
         saveBomSku(bomId, bomSkuList);
 
     }
@@ -260,22 +261,6 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
         return listAllSkuDTO;
     }
 
-
-    /**
-     * 根据Bomid 删除 bom sku 信息
-     *
-     * @param bomId
-     * @return void
-     * @author yl
-     * @date 2023-01-12 17:29
-     */
-    private void deleteBomSku(String bomId) {
-        LambdaQueryWrapper<BomSkuEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(BomSkuEntity::getBomId, bomId);
-        this.remove(queryWrapper);
-
-    }
-
     /**
      * 根据bom id  获取列表
      *
@@ -315,17 +300,17 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
 
 
     @Override
-    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(List<String> skuNos) {
+    public List<ProductBomInfoDTO.SkuBomVersion> listBomVersionBySkuNos(List<String> skuNos) {
         if (CollectionUtils.isEmpty(skuNos)) {
             return Collections.emptyList();
         }
         List<BomSkuEntity> list = lambdaQuery().in(BomSkuEntity::getParentSkuNo, skuNos).list();
         List<String> bomIds = list.stream().map(req -> req.getBomId()).distinct().collect(Collectors.toList());
         List<ProductBomHistoryEntity> productBomHistoryEntities = productBomHistoryService.listByBomIds(bomIds);
-        List<ProductBomInfoDTO.skuBomVersion> skuBomVersionList = new ArrayList<>();
+        List<ProductBomInfoDTO.SkuBomVersion> skuBomVersionList = new ArrayList<>();
         Map<String, List<BomSkuEntity>> map = list.stream().collect(Collectors.groupingBy(BomSkuEntity::getParentSkuNo));
         for (Map.Entry<String, List<BomSkuEntity>> stringListEntry : map.entrySet()) {
-            ProductBomInfoDTO.skuBomVersion bomVersion = new ProductBomInfoDTO.skuBomVersion();
+            ProductBomInfoDTO.SkuBomVersion bomVersion = new ProductBomInfoDTO.SkuBomVersion();
             bomVersion.setSkuNo(stringListEntry.getKey());
             List<String> bomVersionList = productBomHistoryEntities.stream().filter(req -> req.getBomId().equals(stringListEntry.getValue().get(0).getBomId())).map(req -> req.getBomVersion()).distinct().collect(Collectors.toList());
             Collections.reverse(bomVersionList);
@@ -333,5 +318,33 @@ public class BomSkuServiceImpl extends ServiceImpl<BomRefSkuMapper, BomSkuEntity
             skuBomVersionList.add(bomVersion);
         }
         return skuBomVersionList;
+    }
+
+    @Override
+    public List<BomDTO.BomSku> listAllBom(List<String> childSkuIdList) {
+        List<BomDTO.BomSku> list = baseMapper.listAllBomByChildSkuIdList(childSkuIdList);
+        list = list.stream().filter(v-> BomStateEnum.AUDIT_PASS.getState().equals(v.getState())).collect(Collectors.toList());
+        return list;
+    }
+
+    @Override
+    public List<BomChildrenSkuDTO> checkExistAndListCombinationSku(List<String> parentSkuNos) {
+        if (CollectionUtils.isEmpty(parentSkuNos)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.checkExistAndListCombinationSku(parentSkuNos);
+    }
+
+    /**
+     * 获取单品BOM信息
+     * @param skuIdList SKU ID列表，用于查询BOM信息
+     * @return 包含BomSku对象的列表，每个对象代表一个SKU的BOM信息如果输入列表为空，则返回空列表
+     */
+    @Override
+    public List<BomDTO.BomSku> getSingleBomInfo(List<String> skuIdList) {
+        if(CollectionUtils.isEmpty(skuIdList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.getSingleBomInfo(skuIdList);
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
@@ -18,6 +19,7 @@ import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import com.erp.server.plm.query.BomInfoHandler;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
@@ -33,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
@@ -71,8 +74,9 @@ public class BomInfoController extends BaseController {
             menuCode = "plm:bom:paging",
             tableAlias = "b"
     )
-    public ApiResult<PagingVO<List<BomPagingVO>>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
-        PagingVO<List<BomPagingVO>> pagingVO = bomInfoService.paging(dto);
+    @WebAdvanceQuery(handler = BomInfoHandler.class)
+    public ApiResult<PagingVO<BomPagingVO>> queryByPage(@RequestBody @Validated PagingDTO<SearchPagingDTO> dto) {
+        PagingVO<BomPagingVO> pagingVO = bomInfoService.paging(dto);
         return success(pagingVO);
     }
 
@@ -89,8 +93,8 @@ public class BomInfoController extends BaseController {
             menuCode = "plm:bom:paging",
             tableAlias = "b"
     )
-    public ApiResult<PagingVO<List<BomSkuPageDTO.ListDTO>>> skuPaging(@RequestBody @Validated PagingDTO<BomSkuPageDTO.PagingParamDTO> dto) {
-        PagingVO<List<BomSkuPageDTO.ListDTO>> pagingVO = bomInfoService.skuPaging(dto);
+    public ApiResult<PagingVO<BomSkuPageDTO.ListDTO>> skuPaging(@RequestBody @Validated PagingDTO<BomSkuPageDTO.PagingParamDTO> dto) {
+        PagingVO<BomSkuPageDTO.ListDTO> pagingVO = bomInfoService.skuPaging(dto);
         return success(pagingVO);
     }
 
@@ -103,7 +107,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增BOM")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated AddBomDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated AddBomDTO dto) {
         this.bomInfoService.insert(dto);
         return success();
     }
@@ -135,7 +139,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "bom审核通过")
     @PostMapping("/approvalPass")
-    public ApiResult approvalPass(@RequestBody @Validated AuditParamDTO dto) {
+    public ApiResult<Object> approvalPass(@RequestBody @Validated AuditParamDTO dto) {
         bomInfoService.approvalPass(dto);
         return success();
     }
@@ -149,7 +153,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.APPROVE, desc = "bom审核不通过")
     @PostMapping("/approvalNoPass")
-    public ApiResult approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
+    public ApiResult<Object> approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
         bomInfoService.approvalNoPass(dto);
         return success();
     }
@@ -163,7 +167,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.SUBMIT, desc = "bom提交审核")
     @PostMapping("/submitAudit")
-    public ApiResult submitAudit(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> submitAudit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.submitAudit(dto.getId());
         return result == true ? success() : failure();
     }
@@ -178,7 +182,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "bom反审核")
     @PostMapping("/restartAudit")
-    public ApiResult restartAudit(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> restartAudit(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.restartAudit(dto.getId());
         return result == true ? success() : failure();
     }
@@ -191,7 +195,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "冻结bom:id={id}")
     @PostMapping("/freeze")
-    public ApiResult freeze(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> freeze(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.freeze(dto.getId());
         return result == true ? success() : failure();
     }
@@ -204,7 +208,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "解冻bom:id={id}")
     @PostMapping("/defrost")
-    public ApiResult defrost(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> defrost(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.defrost(dto.getId());
         return result == true ? success() : failure();
     }
@@ -217,7 +221,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "报废bom:id={id}")
     @PostMapping("/scrap")
-    public ApiResult scrap(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> scrap(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.scrap(dto.getId());
         return result == true ? success() : failure();
     }
@@ -230,7 +234,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "恢复bom:id={id}")
     @PostMapping("/recover")
-    public ApiResult recover(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> recover(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.recover(dto.getId());
         return result == true ? success() : failure();
     }
@@ -243,7 +247,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "解除归档:id={id}")
     @PostMapping("/removeArchive")
-    public ApiResult removeArchive(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> removeArchive(@RequestBody @Validated BaseIdDTO dto) {
         Boolean result = bomInfoService.removeArchive(dto.getId());
         return result == true ? success() : failure();
     }
@@ -257,7 +261,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新bom")
     @PostMapping("/update")
-    public ApiResult edit(@RequestBody @Validated UpdateBomDTO dto) {
+    public ApiResult<Object> edit(@RequestBody @Validated UpdateBomDTO dto) {
         Boolean flag = this.bomInfoService.edit(dto);
         return flag == true ? success() : failure();
     }
@@ -270,7 +274,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除bom")
     @PostMapping("/delete")
-    public ApiResult deleteById(@RequestBody @Validated BaseIdDTO dto) {
+    public ApiResult<Object> deleteById(@RequestBody @Validated BaseIdDTO dto) {
         Boolean flag = bomInfoService.deleteById(dto.getId());
         return flag == true ? success() : failure();
     }
@@ -290,7 +294,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "发起变更:id={id}")
     @PostMapping("/startChange")
-    public ApiResult startChange(@RequestBody @Validated UpdateBomDTO dto) {
+    public ApiResult<Object> startChange(@RequestBody @Validated UpdateBomDTO dto) {
         Boolean result = bomInfoService.startChange(dto);
         return result == true ? success() : failure();
     }
@@ -301,7 +305,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出bom")
     @PostMapping("/exportExcel")
-    public ApiResult exportExcel(@RequestBody @Validated SearchPagingDTO dto) {
+    public ApiResult<Object> exportExcel(@RequestBody @Validated SearchPagingDTO dto) {
         bomInfoService.exportExcel(dto);
         return success();
     }
@@ -317,7 +321,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入bom")
     @PostMapping("/importFile")
-    public ApiResult importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object> importFile(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean flag = bomInfoService.importFile(excelFile,response);
         return flag == true ? success() : failure();
     }
@@ -332,7 +336,7 @@ public class BomInfoController extends BaseController {
     */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板bom")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/bomInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -344,7 +348,7 @@ public class BomInfoController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -361,7 +365,7 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "bom审核通过后改变 bom 状态:流程id={processId},具体业务表id={businessTableId}")
     @PostMapping("/workflow/pass")
-    public ApiResult processPass(@RequestBody ProcessPassDTO dto) {
+    public ApiResult<Object> processPass(@RequestBody ProcessPassDTO dto) {
         bomInfoService.bomProcessPass(dto);
         return success();
     }
@@ -388,7 +392,7 @@ public class BomInfoController extends BaseController {
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
     @PostMapping("/listBomVersionBySkuNos")
-    public ApiResult<List<ProductBomInfoDTO.skuBomVersion>> listBomVersionBySkuNos(@RequestBody ProductBomInfoDTO.skuBomVersionParams dto) {
+    public ApiResult<List<ProductBomInfoDTO.SkuBomVersion>> listBomVersionBySkuNos(@RequestBody ProductBomInfoDTO.SkuBomVersionParams dto) {
         return success(bomSkuService.listBomVersionBySkuNos(dto.getSkuNos()));
     }
 
@@ -400,9 +404,8 @@ public class BomInfoController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO<OverseasDeliveryPlanDTO.DeliverRecordDTO>>
      **/
     @PostMapping("/combinationSkuChildDetail")
-    public ApiResult<List<BomChildrenSkuDTO>> combinationSkuChildDetail(@RequestBody ProductBomInfoDTO.skuIdParams dto) {
-        List<BomChildrenSkuDTO> result =  bomSkuService.listBomChildBySkuIds(dto.getSkuIds());
-        return success(result);
+    public ApiResult<List<BomChildrenSkuDTO>> combinationSkuChildDetail(@RequestBody ProductBomInfoDTO.SkuIdParams dto) {
+        return success(bomSkuService.listBomChildBySkuIds(dto.getSkuIds()));
     }
 }
 

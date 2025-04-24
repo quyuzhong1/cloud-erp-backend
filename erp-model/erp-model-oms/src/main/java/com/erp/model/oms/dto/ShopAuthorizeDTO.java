@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 /**
  * 店铺授权DTO
@@ -68,6 +69,10 @@ public class ShopAuthorizeDTO implements Serializable {
      * 【虾皮】发起请求的ID
      */
     private String id;
+    /**
+     * 【虾皮】发起请求的店铺id
+     */
+    private String shop_id;
 
     /**
      * 【虾皮】主账号ID
@@ -109,6 +114,12 @@ public class ShopAuthorizeDTO implements Serializable {
             return this;
         }
 
+        // 美客多-本土站
+        if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
+            this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode());
+            return this;
+        }
+
         // 美客多
         if (StringUtils.isNotBlank(this.state) && StringUtils.isNotBlank(this.code) && StrUtil.startWith(this.state, PlatformDictEnum.MERCADOLIBRE.getCode())){
             this.setPlatformCode(PlatformDictEnum.MERCADOLIBRE.getCode());
@@ -128,9 +139,8 @@ public class ShopAuthorizeDTO implements Serializable {
         }
 
         // 虾皮
-        if (StringUtils.isNotBlank(this.code) &&
-                StringUtils.isNotBlank(this.id) &&
-                null != this.main_account_id
+        if (StringUtils.isNotBlank(this.code) && StringUtils.isNotBlank(this.id) &&
+                (StringUtils.isNotBlank(this.shop_id) || Objects.nonNull(this.main_account_id))
         ){
             this.setPlatformCode(PlatformDictEnum.SHOPEE.getCode());
             return this;

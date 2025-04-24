@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -43,7 +44,7 @@ public class QcProductController extends BaseController {
      */
     @GetMapping("/skuView")
     public ApiResult<ProductVO.ProductPackVO> getSkuInfo(@RequestParam("skuId") String skuId) {
-        if (StringUtils.isBlank(skuId)) {
+        if (CharSequenceUtil.isBlank(skuId)) {
             throw new ServiceException(ApiError.ERROR_95107);
         }
         List<String> skuIdList = new ArrayList<>();

@@ -27,7 +27,7 @@ public class ObjectMapperWork {
         } else if (obj instanceof String) {
             bigDecimal = new BigDecimal((String) obj);
         } else if (obj instanceof Number) {
-            bigDecimal = new BigDecimal(((Number) obj).doubleValue());
+            bigDecimal = BigDecimal.valueOf(((Number) obj).doubleValue());
         }
         return bigDecimal;
     }

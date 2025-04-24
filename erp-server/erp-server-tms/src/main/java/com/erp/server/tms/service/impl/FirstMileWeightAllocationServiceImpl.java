@@ -1,18 +1,17 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
-import com.common.core.excel.ExcelPrintUtils;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -21,9 +20,13 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.*;
-import com.erp.model.wms.dto.*;
+import com.erp.model.tms.enums.CostAllocationStatusEnum;
+import com.erp.model.tms.enums.ShippingFeeRuleEnum;
+import com.erp.model.tms.enums.WeightAllocationTypeEnum;
+import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WmsCartonDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -34,32 +37,20 @@ import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.server.tms.mapper.FirstMileWeightAllocationMapper;
 import com.erp.server.tms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
-
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.text.DecimalFormat;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import com.common.core.enums.ApiError;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.text.DecimalFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_ESTIMATED_BILL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_WEIGHT_ALLOCATION;
 
 /**
@@ -116,7 +107,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
 
     @Override
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> paging(PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
@@ -281,7 +271,9 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "没有找到装箱任务");
         }
         //装箱内容物详情
-        List<WmsCartonDTO.DetailDTO> cartonDetailList = wmsCartonFeign.listByPackingTaskId(packingTaskEntity.getId());
+        List<String> fbaShipmentCodes = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+
+        List<WmsCartonDTO.DetailDTO> cartonDetailList = wmsCartonFeign.listByPackingTaskId(packingTaskEntity.getId(),fbaShipmentCodes);
         Map<String, BigDecimal> cartonDetailMap = cartonDetailList.stream().distinct().collect(Collectors.toMap(
                 WmsCartonDTO.DetailDTO::getSkuId,
                 WmsCartonDTO.DetailDTO::getPackageWeight,
@@ -380,8 +372,12 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             for (FirstMileWeightAllocationEntity entity : boxEntityList) {
                 BigDecimal skuWeightSum = entity.getProductWeight().multiply(BigDecimal.valueOf(entity.getDeliveryQty()));
                 if(cfgWeightAllocationType.equals("outstockChargedWeight")){
-                    BigDecimal allocationWeight = skuWeightSum.multiply(weightByAllocationType).divide(boxWeightSum, 2, RoundingMode.DOWN);
-                    entity.setAllocationWeight(allocationWeight);
+                	if(skuWeightSum.compareTo(BigDecimal.ZERO) == 0 || boxWeightSum.compareTo(BigDecimal.ZERO) == 0) {
+                		entity.setAllocationWeight(BigDecimal.ZERO);
+                	}else {
+                		BigDecimal allocationWeight = skuWeightSum.multiply(weightByAllocationType).divide(boxWeightSum, 2, RoundingMode.DOWN);
+                        entity.setAllocationWeight(allocationWeight);
+                	}
                 }
                 if(cfgWeightAllocationType.equals("productWeight")){
                     entity.setAllocationWeight(entity.getProductWeight().multiply(BigDecimal.valueOf(entity.getDeliveryQty())));
@@ -431,14 +427,14 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
         Integer count = this.lambdaQuery().eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId).count();
         if(count > 0){
-            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "已下推重量分摊，不能再次下推");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "已下推重量分摊，不能再次下推");
         }
 
         FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
         //物流渠道
         LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillInfo.getChannelId());
         if(logisticsChannelEntity == null){
-            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "没有找到物流渠道");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "没有找到物流渠道");
         }
         //发货单
         String deliveryId = logisticsBillEntity.getOutstockId();
@@ -457,10 +453,12 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             packingTaskEntity = packingTaskFeign.getBySourceId(firstMileDeliveryEntity.getId());
         }
         if(packingTaskEntity == null){
-            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "没有找到装箱任务");
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "没有找到装箱任务");
         }
         //装箱内容物详情
-        List<WmsCartonDTO.DetailDTO> cartonDetailList = wmsCartonFeign.listByPackingTaskId(packingTaskEntity.getId());
+        List<String> fbaShipmentCodes = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+
+        List<WmsCartonDTO.DetailDTO> cartonDetailList = wmsCartonFeign.listByPackingTaskId(packingTaskEntity.getId(),fbaShipmentCodes);
         //系统配置
         CfgSettingDTO.ViewDTO cfgSettingView = cfgSettingService.view();
         String cfgWeightAllocationType = cfgSettingView.getAllocationSettingDTO().getWeightFirstAllocation();
@@ -531,7 +529,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             //1.单SKU时：直接取值毛重和净重
             //2.组合SKU时：销售套装取值 优先毛重*用例【取值版本为最新版本，后续改为发货单版本】
             if(singleSkuIds.contains(cartonDetail.getSkuId())){
-                ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId())).findFirst().get();
+                ProductPackEntity productPackEntity = productPackList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId())).findFirst().orElseThrow(() -> new ServiceException("【{}】没有找到产品包装信息",cartonDetail.getSkuNo()));
                 productPackEntity.handleData();
                 BigDecimal productWeight = productPackEntity.getGrossWeight().compareTo(BigDecimal.ZERO) != 0 ? productPackEntity.getGrossWeight() : productPackEntity.getNetWeight();
                 entity.setProductWeight(productWeight.divide(BigDecimal.valueOf(1000), 4, RoundingMode.HALF_UP));
@@ -549,7 +547,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             BigDecimal volumeSetting = BigDecimal.valueOf(weightAllocationDTO.getVolumeSetting());
             if(volumeSetting.compareTo(BigDecimal.ZERO) == 0){
                 String format = String.format("物流渠道【%s】的材积设置不能为0", logisticsChannelEntity.getName());
-                return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), format);
+                return BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), format);
             }
             BigDecimal volumeWeight = boxSize.divide(volumeSetting, 4, RoundingMode.HALF_UP);
             entity.setVolumeWeight(volumeWeight);
@@ -576,7 +574,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         if(success){
             updateCostAllocationStatus(logisticsBillId);
         }
-        return success ? BatchResultDTO.success(logisticsBillId, logisticsBillEntity.getTransportNo()) : BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getTransportNo(), "保存失败");
+        return success ? BatchResultDTO.success(logisticsBillId, logisticsBillEntity.getOutstockCode()) : BatchResultDTO.fail(logisticsBillId, logisticsBillEntity.getOutstockCode(), "保存失败");
     }
 
 
@@ -624,7 +622,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public void updateCalculateMonthBySourceId(String sourceId) {
-        if (!StrUtil.isBlank(sourceId)) {
+        if (!CharSequenceUtil.isBlank(sourceId)) {
             this.lambdaUpdate()
                     .set(FirstMileWeightAllocationEntity::getCalculateMonth, "")
                     .eq(FirstMileWeightAllocationEntity::getSourceId, sourceId)

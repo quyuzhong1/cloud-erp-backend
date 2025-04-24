@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -24,6 +25,7 @@ import java.util.List;
 @Setter
 @Accessors(chain = true)
 @TableName("setting_forecast")
+@EqualsAndHashCode
 public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
 
     /**
@@ -99,6 +101,18 @@ public class SettingForecastEntity extends BaseEntity<SettingForecastEntity> {
      */
     @TableField("is_auto_forecast")
     private Boolean isAutoForecast;
+    
+    /**
+     * 东莞仓运费  true 是
+     */
+    @TableField("dg_warseHouse")
+    private Boolean dgWarseHouse;
+    
+    /**
+     * 香港仓运费  true 是
+     */
+    @TableField("xg_warseHouse")
+    private Boolean xgWarseHouse;
 
     /**
      * 物流渠道id集合

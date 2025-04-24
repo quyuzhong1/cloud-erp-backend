@@ -1,6 +1,7 @@
 package com.erp.model.wms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
+import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.Arrays;
@@ -13,7 +14,7 @@ import java.util.Arrays;
  * @Date 2023-04-17 9:59
  * @Created by yl
  */
-public enum QcResultEnum {
+public enum QcResultEnum implements EnumMessage {
 
     CONFORMITY ("conformity", "合格"),
     NON_CONFORMITY("nonConformity", "不合格");

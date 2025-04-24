@@ -119,7 +119,8 @@ public class FileTaskContext {
                 log.error("文件任务[{}]处理失败", fileTask.getId(), e);
                 // 更新任务状态为失败
                 fileTask.setStatus(FileTaskStatusEnum.FAIL.name());
-                fileTask.setRemark(String.format("文件任务[%s]失败: %s", fileTask.getId(), e.getMessage()));
+                String remark = String.format("文件任务[%s]失败: %s", fileTask.getId(), e.getMessage());
+				fileTask.setRemark(remark.length() > 490 ? remark.substring(0, 490) : remark);
                 fileTaskRepository.updateById(fileTask);
             } finally {
                 // 设置任务完成时间

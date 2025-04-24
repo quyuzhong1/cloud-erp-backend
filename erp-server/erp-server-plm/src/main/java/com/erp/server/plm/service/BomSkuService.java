@@ -5,6 +5,7 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -158,5 +159,11 @@ public interface BomSkuService extends IService<BomSkuEntity> {
      * @param skuNos
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
-    List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(List<String> skuNos);
+    List<ProductBomInfoDTO.SkuBomVersion> listBomVersionBySkuNos(List<String> skuNos);
+
+    List<BomDTO.BomSku> listAllBom(List<String> childSkuIdList);
+
+    List<BomChildrenSkuDTO> checkExistAndListCombinationSku( List<String> parentSkuNos);
+
+    List<BomDTO.BomSku> getSingleBomInfo(List<String> skuIdList);
 }

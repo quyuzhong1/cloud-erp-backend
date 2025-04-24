@@ -1,14 +1,14 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -56,13 +56,33 @@ public class InventorySkuCostDetailEntity extends BaseEntity<InventorySkuCostDet
     @TableField("unit")
     private String unit;
     /**
-    * 产品成本（6位小数）
+    * 材料成本（6位小数）
     */
     @TableField("product_cost")
     private BigDecimal productCost;
+    /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+    /**
+     * 仓库名称
+     */
+    @TableField("warehouse_name")
+    private String warehouseName;
+    /**
+     * 头程运费（6位小数）
+     */
+    @TableField("first_mile_shipping_cost")
+    private BigDecimal firstMileShippingCost;
+    /**
+     * 清关税费（6位小数）
+     */
+    @TableField("clearance_customs_tax")
+    private BigDecimal clearanceCustomsTax;
 
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String MAIN_ID = "main_id";
 
@@ -72,7 +92,7 @@ public class InventorySkuCostDetailEntity extends BaseEntity<InventorySkuCostDet
 
     public static final String PRODUCT_NAME = "product_name";
 
-    public static final String UNIT = "unit";
+    public static final String FIELD_UNIT = "unit";
 
     public static final String PRODUCT_COST = "product_cost";
 

@@ -1,17 +1,18 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.validator.AddGroup;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
-import javax.validation.constraints.*;
+import java.util.Map;
 
 /**
  * <p>
@@ -30,17 +31,23 @@ public class ShippingTemplateDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class TabListDTO {
 
         /**
          * 类型（启用true,停用false）
          */
-        private Boolean tabFlag;
+        private String tabFlag;
 
         /**
          * 数量
          */
         private Integer count;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
     }
 
     /**
@@ -79,6 +86,15 @@ public class ShippingTemplateDTO implements Serializable {
          * 创建时间
          */
         private List<LocalDate> createTimeList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -177,6 +193,11 @@ public class ShippingTemplateDTO implements Serializable {
          * 币种符号
          */
         private String currencySymbol;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
 

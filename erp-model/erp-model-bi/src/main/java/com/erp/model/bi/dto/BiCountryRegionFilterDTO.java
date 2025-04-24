@@ -30,7 +30,7 @@ public class BiCountryRegionFilterDTO extends BiFilterDTO {
      */
     public boolean filterRegion(BiCountryAnalyzeDTO e) {
         // 区域和子区域都不过滤
-        if (StringUtils.isBlank(this.getSubregionCode()) && StringUtils.isBlank(this.getSubregionCode())){
+        if (StringUtils.isBlank(this.getSubregionCode())){
             return true;
         }
         // 子区域过滤

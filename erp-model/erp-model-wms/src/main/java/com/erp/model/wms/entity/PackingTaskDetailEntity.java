@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -54,6 +54,11 @@ public class PackingTaskDetailEntity extends BaseEntity<PackingTaskDetailEntity>
     */
     @TableField("fn_sku")
     private String fnSku;
+    /**
+     * 三方仓商品条码
+     */
+    @TableField("third_barcode")
+    private String thirdBarcode;
 
 
     public static final String MAIN_ID = "main_id";

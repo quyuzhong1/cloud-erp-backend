@@ -1,6 +1,7 @@
 package com.sdk.tms.tongyou.server;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
@@ -20,12 +21,14 @@ import java.util.Map;
 @Validated
 public class TongYouService {
 
+    public static final String CLIENT_SECRET = "clientSecret";
+
     /**
      *  查询全部已开通的渠道
      */
     public TongYouResponse<List<TongYouChannel>> getAllChannel(Map<String, String> authMap){
-        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_GET_CHANNEL,null,authMap.get("clientSecret"));
-        return JSONObject.parseObject(response,new TypeReference<TongYouResponse<List<TongYouChannel>>>() {}.getType());
+        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_GET_CHANNEL,null,authMap.get(CLIENT_SECRET));
+        return JSON.parseObject(response,new TypeReference<TongYouResponse<List<TongYouChannel>>>() {}.getType());
     }
 
 
@@ -49,21 +52,21 @@ public class TongYouService {
                 .address2(request.getRecipient().getAddress2())
                 .contactPerson(request.getRecipient().getContactPerson())
                 .build();
-        String sign = TongYouUtils.getCreateOrderSign(tongYouSignDTO,authMap.get("clientSecret"));
+        String sign = TongYouUtils.getCreateOrderSign(tongYouSignDTO,authMap.get(CLIENT_SECRET));
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_CREATE_ORDER,paramsMap,sign,authMap.get("clientSecret"));
-        log.warn("下单完成：{}",JSONObject.toJSONString(response));
-        return JSONObject.parseObject(response,TongYouCreateOrder.class);
+        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_CREATE_ORDER,paramsMap,sign,authMap.get(CLIENT_SECRET));
+        log.warn("下单完成：{}", JSON.toJSONString(response));
+        return JSON.parseObject(response,TongYouCreateOrder.class);
     }
 
     /**
      *  回调订单
      */
     public TongYouCallBackOrder callBackOrderInfo(TongYouCallBackOrderRequest request,Map<String, String> authMap){
-        String sign = TongYouUtils.getCallBackOrderSign(request.getLogisticsId(),request.getOrderNo(),authMap.get("clientSecret"));
+        String sign = TongYouUtils.getCallBackOrderSign(request.getLogisticsId(),request.getOrderNo(),authMap.get(CLIENT_SECRET));
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_ORDER_CALL_BACK,paramsMap,sign,authMap.get("clientSecret"));
-        return JSONObject.parseObject(response, TongYouCallBackOrder.class);
+        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_ORDER_CALL_BACK,paramsMap,sign,authMap.get(CLIENT_SECRET));
+        return JSON.parseObject(response, TongYouCallBackOrder.class);
     }
 
 
@@ -71,10 +74,10 @@ public class TongYouService {
      *  打印标签
      */
     public TongYouPrintLabel printLabel(TongYouPrintLabelRequest request,Map<String, String> authMap){
-        String sign = TongYouUtils.getPrintLabelSign(request.getLogisticsId(),request.getOrderNo(),request.getTrackNo(),authMap.get("clientSecret"));
+        String sign = TongYouUtils.getPrintLabelSign(request.getLogisticsId(),request.getOrderNo(),request.getTrackNo(),authMap.get(CLIENT_SECRET));
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_PRINT_LABEL,paramsMap,sign,authMap.get("clientSecret"));
-        return JSONObject.parseObject(response,TongYouPrintLabel.class);
+        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_PRINT_LABEL,paramsMap,sign,authMap.get(CLIENT_SECRET));
+        return JSON.parseObject(response,TongYouPrintLabel.class);
     }
 
 
@@ -83,8 +86,8 @@ public class TongYouService {
      */
     public TongYouOrderInfo getOrderInfo(TongYouGetOrderRequest request,Map<String, String> authMap){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_ORDER_GET,paramsMap,authMap.get("clientSecret"));
-        return JSONObject.parseObject(response,TongYouOrderInfo.class);
+        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_ORDER_GET,paramsMap,authMap.get(CLIENT_SECRET));
+        return JSON.parseObject(response,TongYouOrderInfo.class);
     }
 
     /**
@@ -92,8 +95,8 @@ public class TongYouService {
      */
     public TongYouResponse<String> updateWeight(TongYouUpdateWeightRequest request, Map<String, String> authMap){
         Map<String, Object> paramsMap = BeanUtil.beanToMap(request);
-        String sign = TongYouUtils.getUpdateWeightSign(request,authMap.get("clientSecret"));
-        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_UPDATE_WEIGHT,paramsMap,sign,authMap.get("clientSecret"));
-        return JSONObject.parseObject(response,new TypeReference<TongYouResponse<String>>() {}.getType());
+        String sign = TongYouUtils.getUpdateWeightSign(request,authMap.get(CLIENT_SECRET));
+        String response = TongYouUtils.sendPost(TongYouConstants.METHOD_UPDATE_WEIGHT,paramsMap,sign,authMap.get(CLIENT_SECRET));
+        return JSON.parseObject(response,new TypeReference<TongYouResponse<String>>() {}.getType());
     }
 }

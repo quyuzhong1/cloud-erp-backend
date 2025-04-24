@@ -49,10 +49,12 @@
         left join product_pack pp on pp.sku_id = pbs.sku_id and pp.is_deleted = false
         <where>
             pbi.is_deleted = false and pbi.state = 4
-            and pbs.parent_sku_id in
-            <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
+            <if test="parentSkuIds != null and parentSkuIds.size() > 0">
+                and pbs.parent_sku_id in
+                <foreach collection="parentSkuIds" item="item" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+            </if>
         </where>
     </select>
 
@@ -158,19 +160,22 @@
             pbsl.parent_sku_id ,
             pbsl.parent_sku_no ,
             pbi.serial_number,
+            pbi.type,
             pbsl.sku_id as skuId,
             pbsl.sku_no as skuNo,
-            pbsl.quantity as qty
+            pbsl.quantity as qty,
+        pbi.state
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
         inner join product_bom_sku pbsl on pbs.bom_id = pbsl.bom_id and pbsl.is_deleted = false
-        <where>
+        where
             pbi.is_deleted = false and pbi.state != 6
+        <if test="childSkuIdList != null and childSkuIdList.size > 0">
             and pbs.sku_id in
             <foreach collection="childSkuIdList" item="item" open="(" separator="," close=")">
                 #{item}
             </foreach>
-        </where>
+        </if>
     </select>
 
 
@@ -180,6 +185,7 @@
         pbi.bom_version as bomVersion,
         pbi.type,
         pbs.parent_sku_id as parentSkuId,
+        pbs.parent_sku_no as parentSkuNo,
         pbs.sku_id as skuId,
         pbs.sku_no as skuNo,
         pbs.quantity as quantity,
@@ -266,5 +272,50 @@
         FROM product_bom_sku st JOIN T ON st.parent_sku_id = T.sku_id and st.is_deleted = false
         )
         SELECT sku_id,sku_no,parent_sku_id, parent_sku_no,quantity FROM T;
+    </select>
+
+
+    <select id="checkExistAndListCombinationSku" resultType="com.erp.model.plm.dto.BomChildrenSkuDTO">
+        select
+        pbi.id as bomId,
+        pbi.bom_version as bomVersion,
+        pbi.type AS type,
+        pbs.parent_sku_id as parentSkuId,
+        pbs.parent_sku_no as parentSkuNo,
+        pbs.sku_id as skuId,
+        pbs.sku_no as skuNo,
+        pd.name as skuName
+        from product_bom_info pbi
+        inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
+        inner join product_detail pd on pbs.sku_id = pd.id and pd.is_deleted = false
+        <where>
+            pbi.is_deleted = false
+            and pbi.state = 4
+            and pbi.type = 'combination'
+            and pbs.parent_sku_no in
+            <foreach collection="parentSkuNos" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </where>
+        order by parentSkuId ,sku_id
+    </select>
+
+
+    <select id="getSingleBomInfo" resultType="com.erp.model.plm.dto.BomDTO$BomSku">
+        SELECT
+        bs.parent_sku_id,
+        bs.parent_sku_no,
+        bs.sku_id,
+        bs.sku_no,
+        bs.quantity as qty
+        FROM product_bom_sku bs LEFT JOIN product_bom_info b
+        ON bs.bom_id = b.id AND b.is_deleted = FALSE
+        WHERE bs.is_deleted = FALSE and b.type = 'single'
+        <if test="skuIdList !=null and skuIdList.size>0">
+            and bs.parent_sku_id IN
+            <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
+                #{skuId}
+            </foreach>
+        </if>
     </select>
 </mapper>

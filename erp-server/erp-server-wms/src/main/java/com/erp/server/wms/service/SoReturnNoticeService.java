@@ -4,12 +4,14 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.common.business.service.SuperService;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -44,6 +46,11 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
      * @return com.common.core.controller.vo.ApiResult
      **/
     String add(SoReturnNoticeDTO.Add dto);
+
+    /**
+     * 新增
+     **/
+    String addB2c(SoReturnNoticeDTO.Add dto);
 
     /**
      * 修改
@@ -178,4 +185,10 @@ public interface SoReturnNoticeService extends SuperService<SoReturnNoticeEntity
 
 
     PagingVO<SoReturnNoticeDTO.PagingView> exportSoReturnNotice(PagingDTO<SoReturnNoticeDTO.PagingParam> dto);
+
+    void generateSoB2cReturnNotice(List<SoB2cReturnDTO.GenerateSoReturnNoticeView> list);
+
+    BigDecimal calLocalCurrency(BigDecimal exchangeRate, BigDecimal returnAmount);
+
+    BigDecimal calReturnAmount(BigDecimal amount, Integer qty, Integer returnQty);
 }

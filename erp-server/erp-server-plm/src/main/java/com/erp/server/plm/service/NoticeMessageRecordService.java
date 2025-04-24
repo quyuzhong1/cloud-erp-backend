@@ -14,5 +14,5 @@ import java.util.List;
  */
 public interface NoticeMessageRecordService extends IService<NoticeMessageRecordEntity> {
 
-    PagingVO<List<NoticeMessageRecordEntity>> paging(PagingDTO<BaseSearchDTO> dto);
+    PagingVO<NoticeMessageRecordEntity> paging(PagingDTO<BaseSearchDTO> dto);
 }

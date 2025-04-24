@@ -15,9 +15,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SyncStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.constant.DmpConstant;
-import com.erp.model.dmp.dto.DmpInputTaskDTO;
-import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-import com.erp.model.dmp.dto.DmpPushTaskDTO;
+import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import org.apache.commons.collections4.CollectionUtils;
 import org.slf4j.MDC;
@@ -97,7 +95,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     @Override
     public Boolean update(DmpInputTaskDTO.UpdateDTO updateDTO) {
         DmpInputTaskEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务"));
         DmpInputTaskEntity dmpInputTaskEntity =  BeanMapperUtils.map(DmpInputTaskEntity.class, updateDTO);
 
         // 数据处理
@@ -130,6 +128,9 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
     	DmpInputTaskEntity dmpInputTaskEntity = null;
     	if(errorFlag) {
     		dmpInputTaskEntity = getById(id);
+    		if(dmpInputTaskEntity == null) {
+    			return true;
+    		}
 			errorBeforeStatus = dmpInputTaskEntity.getStatus() + "@@";
     	}
     	String errorMessage = errorBeforeStatus + "traceId=【" + MDC.get("traceId") + "】" + ExceptionUtil.stacktraceToString(e);
@@ -149,7 +150,7 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 	        warnMsgInfo.setTableId(id);
 	        warnMsgInfo.setKeyInfo(errorMessage);
 	        warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
-	        mqProducerService.sendWarnMsg(warnMsgInfo);
+//	        mqProducerService.sendWarnMsg(warnMsgInfo);
 	        
 	        String name = "";
 	        String cfgInputId = dmpInputTaskEntity.getCfgInputId();
@@ -162,6 +163,11 @@ public class DmpInputTaskServiceImpl extends SuperServiceImpl<DmpInputTaskMapper
 		}
     	
 		return update;
+	}
+
+	@Override
+	public List<DmpInoutDTO.LastOneDTO> lastBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList) {
+		return baseMapper.lastBySystemCodeAndBillType(systemCodeList, billTypeList, nextLevelIdList);
 	}
 
 }

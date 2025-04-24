@@ -159,4 +159,15 @@ public class WarehouseLocationReplenishController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 手动触发安全库存补货
+     * @date: 2024-09-26
+     * @author: jack
+     */
+    @GetMapping("/manualtriggerGenerateReplenishBill")
+    public ApiResult<List<BatchResultDTO>> manualtriggerGenerateReplenishBill(){
+        List<BatchResultDTO> resultDTOS = replenishService.generateReplenishBill();
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

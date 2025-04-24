@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -92,7 +93,7 @@ public class SoReturnReceiveController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoReturnReceiveDTO.Add dto) {
         String id = soReturnReceiveService.add(dto);
-        return StringUtils.isNotBlank(id) == true ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) == true ? success() : failure();
     }
 
     /**

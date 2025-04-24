@@ -38,7 +38,7 @@ public class AttachmentController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除附件信息")
     @PostMapping("/delete")
-    public ApiResult removeAttachment(@RequestBody AttachmentDTO.DeleteDTO dto) {
+    public ApiResult<Object> removeAttachment(@RequestBody AttachmentDTO.DeleteDTO dto) {
         attachmentService.removeAttachment(dto);
         return success();
     }

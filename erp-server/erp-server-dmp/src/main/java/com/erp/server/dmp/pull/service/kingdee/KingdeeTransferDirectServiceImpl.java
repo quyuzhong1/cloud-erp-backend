@@ -6,6 +6,8 @@ import cn.hutool.core.util.NumberUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.annotation.SaveData;
 import com.common.business.constant.MongoTableNameContant;
@@ -13,6 +15,7 @@ import com.common.business.dto.RequestDTO;
 import com.common.business.enums.PlatformApiEnum;
 import com.common.business.service.IReportSaveService;
 import com.common.core.constant.CommonConstants;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.MapUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.EnumTimePattern;
@@ -112,7 +115,7 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
 
 
         // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
+        List<DmpTransferInfoDTO> dmpTransferInfoDTOList = entityToMqlist.stream().peek(msg ->{
             if (ObjectUtil.isNotEmpty(msg.getBillDate())) {
                 if (msg.getBillDate().toLocalDate().compareTo(LocalDate.parse("2023-07-06")) <= 0) {
                     return;
@@ -121,10 +124,10 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.KINGDEE_TRANSFER_DIRECT_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getSourceId(), msg.getCode()));
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-                throw new RuntimeException(StrUtil.format("发送金蝶直接调拨MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new ServiceException(StrUtil.format("发送金蝶直接调拨MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
-
+        log.debug("金蝶调拨发送数据为：{}" , JSON.toJSONString(dmpTransferInfoDTOList));
     }
 
     @Override
@@ -215,9 +218,10 @@ public class KingdeeTransferDirectServiceImpl implements IReportSaveService<King
         Map<String, List<KingdeeTransferDirectItemEntity>> itemMap = resultAll.stream().map(entity ->
                 BeanUtil.toBeanIgnoreError(entity, KingdeeTransferDirectItemEntity.class))
                 .collect(Collectors.groupingBy(KingdeeTransferDirectItemEntity::getFBillNo));
-        entityList.stream().peek(m -> m.setItemList(itemMap.get(m.getFBillNo())))
+        List<KingdeeTransferDirectEntity> kingdeeTransferDirectEntityList = entityList.stream().peek(m -> m.setItemList(itemMap.get(m.getFBillNo())))
                 .distinct()
                 .collect(Collectors.toList());
+        log.debug("金蝶调拨原始数据为：{}" , JSON.toJSONString(kingdeeTransferDirectEntityList));
         return entityList;
     }
 

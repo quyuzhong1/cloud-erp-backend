@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
+import com.erp.model.tms.dto.RemotePostcodeDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.ExportQcReportExcelDTO;
 import com.erp.model.wms.dto.excel.QcBillExportExcelDTO;
@@ -37,12 +38,18 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/requisitionApplication")
     PagingVO<RequisitionApplicationDTO.ListDTO> exportRequisitionApplication(@RequestBody PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto);
 
+    @PostMapping("/feign/export/requisitionApplicationChange")
+    PagingVO<RequisitionApplicationChangeDTO.ListDTO> exportRequisitionApplicationChange(@RequestBody PagingDTO<RequisitionApplicationChangeDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/warehouseLocationSafetyInventory")
     PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(@RequestBody PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto);
 
     @PostMapping("/feign/export/listDiffExportData")
     PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(@RequestBody PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
 
+    /**
+     * 暂时不用
+     */
     @PostMapping("/feign/export/warehouseStatisticsData")
     PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> exportWarehouseStatisticsData(@RequestBody PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
 
@@ -105,6 +112,8 @@ public interface ExportWmsFeign {
 
     @PostMapping("/feign/export/packingTaskDetail")
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/unPackingTaskDetail")
+    PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
     @PostMapping("/feign/export/firstMilePackingTaskDetail")
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto);
@@ -139,6 +148,9 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/soDeliveryNotice")
     PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(@RequestBody PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
 
+    @PostMapping("/feign/export/soDeliveryNoticeChange")
+    PagingVO<SoDeliveryNoticeChangeDTO.ListDTO> exportSoDeliveryNoticeChange(@RequestBody PagingDTO<SoDeliveryNoticeChangeDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/soOutStock")
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto);
 
@@ -155,7 +167,7 @@ public interface ExportWmsFeign {
     PagingVO<StocktakingProfitLossDTO.ExportViewDTO> exportStocktakingProfitLoss(@RequestBody PagingDTO<StocktakingProfitLossDTO.ExportDTO> dto);
 
     @PostMapping("/feign/export/stocktakingTaskDetail")
-    PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(@RequestBody PagingDTO<BaseIdDTO> dto);
+    PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(@RequestBody PagingDTO<StocktakingTaskDTO.BaseIdDTO> dto);
 
     @PostMapping("/feign/export/subcontractIssue")
     PagingVO<SubcontractIssueDTO.ListDTO> exportSubcontractIssue(@RequestBody PagingDTO<SubcontractIssueDTO.PagingParamDTO> dto);
@@ -201,4 +213,84 @@ public interface ExportWmsFeign {
     @PostMapping("/feign/export/fbaShipmentPacking")
     PagingVO<FbaShipmentPackingDTO.ViewDTO> exportFbaShipmentPacking(@RequestBody PagingDTO<FbaShipmentDTO.PagingParamDTO> dto);
 
+    /**
+     * 订单需求明细导出
+     */
+    @PostMapping("/feign/export/listReportOrderDemandDetail")
+    PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto);
+    /**
+     * 缺货统计导出
+     */
+    @PostMapping("/feign/export/listReportOrderDemand")
+    PagingVO<ReportOrderDemandDTO.ListDTO> listReportOrderDemand(@RequestBody PagingDTO<ReportOrderDemandDTO.PagingParamDTO> dto);
+    /**
+     * 销售看板导出
+     */
+    @PostMapping("/feign/export/listReportOrderSales")
+    PagingVO<ReportOrderSalesDTO.ListDTO> listReportOrderSales(@RequestBody PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto);
+
+    /**
+     * 偏远邮编导出
+     */
+    @PostMapping("/feign/export/exportRemotePostcode")
+    PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody PagingDTO<RemotePostcodeDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出虚拟仓分货
+     */
+    @PostMapping("/feign/export/exportVirtualStatistics")
+    PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto);
+    /**
+     * 库龄分析导出
+     */
+    @PostMapping("/feign/export/exportWmsVirtualInventoryAge")
+    PagingVO<DynamicExcelDTO> exportWmsVirtualInventoryAge(PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto);
+    /**
+     * 历史库龄导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDTO> hisInventoryAgePaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeParamDTO> dto);
+
+    /**
+     * 历史库龄明细导出
+     */
+    @PostMapping("/feign/export/hisInventoryAgeDetailPaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> hisInventoryAgeDetailPaging(PagingDTO<VirtualInventoryAgeDTO.HisInventoryAgeDetailParamDTO> dto);
+
+    /**
+     * 库龄流水导出
+     */
+    @PostMapping("/feign/export/virtualTransFlowDetailPaging")
+    PagingVO<VirtualTransFlowDetailDTO.ListDTO> virtualTransFlowDetailPaging(PagingDTO<VirtualTransFlowDetailDTO.SearchParamDTO> dto);
+    /**
+     * 列表历史库龄明细导出
+     */
+    @PostMapping("/feign/export/framePaging")
+    PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
+    /**
+     * 导出b2b销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportSoB2bProcessing")
+    PagingVO<SoB2bProcessingDTO.ListDTO> exportSoB2bProcessing(PagingDTO<SoB2bProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出b2c销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportSoB2cProcessing")
+    PagingVO<SoB2cProcessingDTO.ListDTO> exportSoB2cProcessing(PagingDTO<SoB2cProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出头程销售订单虚拟仓订单跟踪
+     */
+    @PostMapping("/feign/export/exportFirstMileProcessing")
+    PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto);
+    /**
+     * 导出FBA在途核对列表
+     */
+    @PostMapping("/feign/export/exportFbaTransitReport")
+    PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto);
+
+    /**
+     * 导出虚拟仓设置
+     */
+    @PostMapping("/feign/export/exportVirtualWarehouse")
+    PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto);
 }

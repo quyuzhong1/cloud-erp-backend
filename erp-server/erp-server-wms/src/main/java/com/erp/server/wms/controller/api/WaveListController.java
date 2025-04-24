@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.collection.CollectionUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -70,7 +71,7 @@ public class WaveListController extends BaseController {
      * 打印拣货单
      */
     @PostMapping("/printPickingBill")
-    public ApiResult<List<SoB2cDeliveryDTO.PrintPickingMainViewDTO>> printPickingBill(@RequestBody BaseIdsDTO.IdsDTO dto){
+    public ApiResult<SoB2cDeliveryDTO.PrintPickingMainDTO> printPickingBill(@RequestBody BaseIdsDTO.IdsDTO dto){
         return success(waveListService.printPickingBill(dto.getIds()));
     }
 
@@ -82,7 +83,14 @@ public class WaveListController extends BaseController {
         List<SoB2cDeliveryDTO.PrintLogisticsWaybillDTO> list = waveListService.printLogisticsWaybillPreview(param);
         return ApiResult.success(list);
     }
-
+    /**
+     * 打印SKU条码预览
+     */
+    @PostMapping("/printSkuBarcodeView")
+    public ApiResult<List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO>> printSkuBarcodeView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> list = waveListService.printSkuBarcodeView(dto.getIds());
+        return ApiResult.success(list);
+    }
     /**
      * tabList
      */
@@ -98,5 +106,26 @@ public class WaveListController extends BaseController {
     @PostMapping("/printFinish")
     public ApiResult<?> printFinish(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
         return waveListService.printFinish(idsDTO);
+    }
+    /**
+     * 完成打印（SKU条码）
+     */
+    @PostMapping("/printFinishSkuBarcode")
+    public ApiResult<?> printFinishSkuBarcode(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        return waveListService.printFinishSkuBarcode(idsDTO);
+    }
+    /**
+     * 手动标记波次状态为完成
+     * @author jack
+     * @date 2024/9/29
+     * @param idsDTO
+     * @return List<WaveListEntity>
+     */
+    @PostMapping("/updateWaveStatus")
+    public ApiResult<?> updateWaveStatus(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        if(CollectionUtil.isEmpty(idsDTO.getIds())){
+            return failure();
+        }
+        return waveListService.updateWaveStatus(idsDTO.getIds());
     }
 }

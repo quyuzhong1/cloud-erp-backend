@@ -91,7 +91,7 @@ public interface WaveListService extends SuperService<WaveListEntity> {
     /**
      * 完成打印
      */
-    ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO);
+    ApiResult printFinish(BaseIdsDTO.IdsDTO idsDTO);
 
     /**
      * 高级查询查波次表的发货单id
@@ -103,7 +103,7 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * 打印拣货单
      * @param ids 波次号
      */
-    List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> printPickingBill(List<String> ids);
+    SoB2cDeliveryDTO.PrintPickingMainDTO printPickingBill(List<String> ids);
     /**
      * 更新波次列表状态
      * @author will
@@ -126,4 +126,36 @@ public interface WaveListService extends SuperService<WaveListEntity> {
      * @param deliveryId 发货单id
      */
     void cleanException(String deliveryId);
+
+    /**
+     * 手动标记波次状态为完成
+     * @author jack
+     * @date 2024/9/29
+     * @param ids
+     * @return List<WaveListEntity>
+     */
+    ApiResult<?> updateWaveStatus(List<String> ids);
+
+    /**
+     * 波次列表波次状态自动变更
+     */
+    void waveListStatusAutoChange(String deliveryId);
+    /**
+     * 格努波次id删除拣货单
+     */
+    void cleanPickingList( WaveListEntity waveListEntity);
+
+    /**
+     * 打印条码预览
+     * @param ids
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids);
+
+    /**
+     * 完成sku条码打印
+     * @param idsDTO
+     * @return
+     */
+    ApiResult<?> printFinishSkuBarcode(BaseIdsDTO.IdsDTO idsDTO);
 }

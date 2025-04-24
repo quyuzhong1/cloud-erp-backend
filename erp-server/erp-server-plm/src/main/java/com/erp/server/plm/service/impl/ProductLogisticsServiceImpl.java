@@ -1,14 +1,17 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BasicDictEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.BomSkuEntity;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.model.plm.enums.BasicDictTypeEnum;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
@@ -60,7 +63,44 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
      **/
     @Override
     public List<ProductLogisticsShowDTO> list(String productId) {
-        return productLogisticsMapper.list(productId);
+        List<ProductLogisticsShowDTO> list = productLogisticsMapper.list(productId);
+        if (CollUtil.isNotEmpty(list)) {
+            // 获取保险属性字典数据并缓存
+            List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
+            Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
+                    .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
+
+            list.forEach(item -> {
+                if(StringUtils.isNotBlank(item.getInsuranceProperty())){
+                    item.setInsurancePropertyList(Arrays.asList(item.getInsuranceProperty().split(",")));
+                    item.setInsurancePropertyNameList(getInsurancePropertyList(item.getInsuranceProperty(), insurancePropertyMap));
+                }
+            });
+        }
+        return list;
+    }
+
+    @Override
+    public List<String> getInsurancePropertyList(String insurancePropertyValue, Map<String, BasicDictEntity> mapById) {
+        if(StringUtils.isBlank(insurancePropertyValue)){
+            return Collections.emptyList();
+        }
+       List<String> insurancePropertyNsameList = new ArrayList<>();
+        if(insurancePropertyValue.contains(",")) {
+            String[] split = insurancePropertyValue.split(",");
+            for (String s : split) {
+                BasicDictEntity entity = mapById.get(s.trim());
+                if (Objects.nonNull(entity)) {
+                    insurancePropertyNsameList.add(entity.getName());
+                }
+            }
+        }else {
+            BasicDictEntity entity = mapById.get(insurancePropertyValue.trim());
+            if (Objects.nonNull(entity)) {
+                insurancePropertyNsameList.add(entity.getName());
+            }
+        }
+        return insurancePropertyNsameList;
     }
 
     /**
@@ -72,8 +112,29 @@ public class ProductLogisticsServiceImpl extends ServiceImpl<ProductLogisticsMap
      **/
     @Override
     public List<ProductLogisticsShowDTO> listBySkuId(String skuId) {
-        return productLogisticsMapper.listBySkuId(skuId);
+        // 验证和清理 skuId，防止 SQL 注入
+        if (StringUtils.isBlank(skuId)) {
+            return Collections.emptyList();
+        }
+        List<ProductLogisticsShowDTO> productLogisticsShowDTOS = productLogisticsMapper.listBySkuId(skuId);
+
+        if (CollUtil.isNotEmpty(productLogisticsShowDTOS)) {
+            // 获取保险属性字典数据并缓存
+            List<BasicDictEntity> dictList = basicDictService.listByType(BasicDictTypeEnum.INSURANCE_PROPERTY.getCode());
+            Map<String, BasicDictEntity>  insurancePropertyMap = dictList.stream()
+                    .collect(Collectors.toMap(BasicDictEntity::getValue, entity -> entity));
+
+            productLogisticsShowDTOS.forEach(item -> {
+                if(StringUtils.isNotBlank(item.getInsuranceProperty())){
+                    item.setInsurancePropertyList(Arrays.asList(item.getInsuranceProperty().split(",")));
+                    item.setInsurancePropertyNameList(getInsurancePropertyList(item.getInsuranceProperty(), insurancePropertyMap));
+                }
+            });
+        }
+        return productLogisticsShowDTOS;
     }
+
+
 
     /**
      * @param productLogisticsDTO 产品物流信息表

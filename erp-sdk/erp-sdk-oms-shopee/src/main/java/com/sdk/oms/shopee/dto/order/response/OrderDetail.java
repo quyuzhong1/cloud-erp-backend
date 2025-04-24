@@ -47,7 +47,7 @@ public class OrderDetail implements Serializable {
      * Enumerated type that defines the current status of the order.
      */
     @Alias("order_status")
-    private String status;
+    private String orderStatus;
     /**
      *
      * The list of pending terms, possible values: SYSTEM_PENDING for order under Shopee internal processing, KYC_PENDING for order under KYC checking(TW CB orders only)
@@ -201,12 +201,12 @@ public class OrderDetail implements Serializable {
      * including regular items(non-activity) and activity items.
      */
     @Alias("item_list")
-    private List<OrderItemDetail> items;
+    private List<OrderItemDetail> itemList;
 
     @Alias("package_list")
-    private List<Package> packages;
+    private List<Package> packageList;
 
     @Alias("invoice_data")
-    private Invoice invoice;
+    private Object invoiceData;
 
 }

@@ -1,5 +1,6 @@
 package com.common.core.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.templatemode.TemplateMode;
@@ -11,7 +12,12 @@ import org.thymeleaf.templateresolver.StringTemplateResolver;
  * @Date 2022-08-02 10:59
  * @Created by yl
  */
+@Slf4j
 public class ThymeleafUtil {
+
+    private ThymeleafUtil() {
+    }
+
     /**
      * 默认数据格式
      */

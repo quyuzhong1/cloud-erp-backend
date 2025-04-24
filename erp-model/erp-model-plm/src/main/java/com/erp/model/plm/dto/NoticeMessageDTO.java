@@ -1,12 +1,13 @@
 package com.erp.model.plm.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -96,4 +97,29 @@ public class NoticeMessageDTO implements Serializable {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    /**
+     * json数据
+     */
+    @JsonIgnore
+    private String dataJson;
+
+    /**
+     * json数据 转实体类
+     */
+    private ProductDetailChangeDTO productDetailChangeDTO;
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProductDetailChangeDTO{
+
+        private List<String> productBasicList = new ArrayList<>();
+
+        private List<String> productPackList = new ArrayList<>();
+
+    }
+
 }

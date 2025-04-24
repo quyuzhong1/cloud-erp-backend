@@ -205,4 +205,12 @@ public class DictCountryController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+    /**
+     * 刷新国旗图片
+     */
+    @GetMapping("/renewCountryImg")
+    public ApiResult<String> renewCountryImg() {
+        dictCountryService.renewCountryImg();
+        return success();
+    }
 }

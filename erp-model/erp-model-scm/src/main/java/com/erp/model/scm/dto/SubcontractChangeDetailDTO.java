@@ -222,7 +222,7 @@ public class SubcontractChangeDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class CommonDTO {
+    public static class CommonDTO implements Serializable {
 
         /**
         * skuId

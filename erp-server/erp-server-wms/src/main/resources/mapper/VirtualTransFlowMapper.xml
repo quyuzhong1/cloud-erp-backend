@@ -49,6 +49,14 @@
         vtf.virtual_inventory_id, vtf.org_id, vtf.warehouse_id, vtf.virtual_warehouse_id, vtf.dict_inventory_status, vtf.bill_date, vtf.sku_id, vtf.sku_no, vtf.source_type, vtf.source_id, vtf.source_code, vtf.source_detail_id, vtf.dict_biz_type, vtf.user_id, vtf.trade_time, vtf.qty, vtf.cur_inventory_qty, vtf.virtual_trans_rule_id, vtf.operation_mode, vtf.transaction_no, vtf.is_unapproved
     </sql>
 
+    <!-- 清空数据 -->
+    <delete id="cleanALlData">
+        delete from virtual_trans_flow_detail;
+        delete from virtual_inventory_detail;
+        delete from virtual_inventory_detail_his;
+        delete from virtual_inventory_his;
+    </delete>
+
     <!-- 虚拟库存流水总数查询 -->
     <select id="pagingCount" resultType="java.lang.Integer">
         select
@@ -139,6 +147,67 @@
         vtf.id desc
     </select>
 
+    <!-- 查询指定天数最后一条流水 -->
+    <select id="listLastVirtualQty" resultType="com.erp.model.wms.dto.ReportOrderSalesDTO$LastVirtualQtyDTO">
+        select
+               sku_id,
+               warehouse_id,
+               virtual_warehouse_id,
+               cur_inventory_qty,
+               dict_inventory_status
+        from virtual_trans_flow  where is_deleted = false
+        and id in (
+        select max(vtf.id) as maxId
+        from virtual_trans_flow vtf
+        where vtf.is_deleted = false and #{localDate} >= vtf.bill_date
+        and vtf.sku_id in
+        <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        and vtf.warehouse_id in
+        <foreach collection="warehouseIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        and vtf.virtual_warehouse_id in
+        <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        group by  vtf.sku_id,vtf.warehouse_id,vtf.virtual_warehouse_id,vtf.dict_inventory_status)
+    </select>
+
+    <!-- 查询即时库存id -->
+    <select id="listVirtualInventoryId" resultType="java.lang.String">
+        select
+            distinct virtual_inventory_id
+        from virtual_trans_flow
+        where is_deleted = false
+        <if test="skuId != null and skuId != ''">
+            and sku_id = #{skuId}
+        </if>
+        <if test="virtualInventoryId != null and virtualInventoryId != ''">
+            and virtual_inventory_id = #{virtualInventoryId}
+        </if>
+        <if test="virtualWarehouseId != null and virtualWarehouseId != ''">
+            and virtual_warehouse_id = #{virtualWarehouseId}
+        </if>
+        <if test="warehouseId != null and warehouseId != ''">
+            and warehouse_id = #{warehouseId}
+        </if>
+        <if test="fromTable != null and fromTable != ''">
+            and virtual_inventory_id in (select virtual_inventory_id from virtual_inventory_temp)
+        </if>
+    </select>
+
+    <!-- 查询虚拟仓数量 -->
+    <select id="getVirtualQty" resultType="java.lang.Integer">
+        select
+            sum(qty) as virtualQty
+        from virtual_trans_flow
+        where is_deleted = false and virtual_inventory_id = #{virtualInvId} and #{startDate} > bill_date
+        group by virtual_inventory_id
+    </select>
+
+
     <!-- 更新流水状态为反审核 -->
     <update id="updateUnapprovedById">
         update virtual_trans_flow set is_unapproved = true,version = version + 1,
@@ -146,4 +215,32 @@
         where id = #{id} and is_deleted = false
     </update>
 
+    <!-- 查询已审核可生成库龄流水的数据 -->
+    <select id="listApproveFlowDetail" resultType="com.erp.model.wms.entity.VirtualTransFlowEntity">
+        select
+            <include refid="Base_Column_List" />
+        from virtual_trans_flow vtf where is_deleted = false and is_unapproved = false
+        and ((
+            (source_type = '' and ((dict_inventory_status = 'usable' ) or (dict_inventory_status = 'frozen' and 0 > qty)) )
+                or (dict_inventory_status = 'usable' and qty > 0 and source_type = 'virtualWarehouseAllocation')
+                or (
+                    (dict_inventory_status = 'usable' and 0 > qty  and source_type in ('virtualWarehouseAllocation','soOutstock'))
+                     or (dict_inventory_status = 'frozen' and 0 > qty and (source_type in ('machineInfo','transferInfo','soOutstock') or (source_type = 'soB2cDelivery' and dict_biz_type = '06')) )
+                    )
+            )
+        or (
+        (dict_inventory_status = 'usable' and qty > 0  and source_type in ('soOutstock') and operation_mode = 'unApprove')
+        or (dict_inventory_status = 'frozen' and qty > 0 and source_type in ('machineInfo','transferInfo','soOutstock') and operation_mode = 'unApprove')
+        ))
+        <if test="dto.ids != null and dto.ids.size > 0">
+            and vtf.id in
+            <foreach collection="dto.ids" open="(" close=")" separator="," item="item" >
+                #{item}
+            </foreach>
+        </if>
+        <if test="dto.startDate != null">
+            and vtf.bill_date >= #{dto.startDate}
+        </if>
+        order by vtf.trade_time asc
+    </select>
 </mapper>

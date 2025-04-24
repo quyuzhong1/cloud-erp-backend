@@ -6,11 +6,12 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * @author zdy
  * @ClassName LogisticsBillDetailQueryDTO
- * @description: TODO
  * @date 2023年11月17日
  * @version: 1.0
  */
@@ -50,4 +51,24 @@ public class LogisticsBillDetailQueryDTO implements Serializable {
      * 物流运输类型（LogisticsTransportTypeEnum）
      */
     private String transportType;
+    /**
+     * 时间限制
+     */
+    private Integer day;
+    /**
+     * 物流轨迹时间
+     */
+    private LocalDateTime trackTime;
+    /**
+     * 物流轨迹更新时间
+     */
+    private LocalDateTime updateTime;
+    /**
+     * 跟踪号
+     */
+    private List<String> trackNoList;
+    /**
+     * 运单号
+     */
+    private List<String> transportNoList;
 }

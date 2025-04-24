@@ -144,5 +144,18 @@ public interface SysDepartmentService extends IService<SysDepartmentEntity> {
     List<SysDepartmentTreeDTO> getDeptByParentId(String deptId);
 
     List<SysDepartmentEntity> getDeptByNames(List<String> deptNameList);
+
+    /**
+     * 根据部门id获取部门列表
+     * @param ids
+     * @return
+     */
+    List<SysDepartmentEntity> getDeptByIds(List<String> ids);
+
+    /**
+     * 获取部门列表和生成上级IDS
+     */
+    List<SysDepartmentEntity> listByParentIds();
+
 }
 

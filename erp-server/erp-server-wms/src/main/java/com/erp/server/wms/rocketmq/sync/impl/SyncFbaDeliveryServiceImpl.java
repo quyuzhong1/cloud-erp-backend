@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -42,10 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -57,19 +55,19 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
 
-    @Autowired
+    @Resource
     private MachineInfoService machineInfoService;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private MQProducerService mqProducerService;
 
-    @Autowired
+    @Resource
     private MachineDetailService machineDetailService;
 
     @Resource
@@ -121,14 +119,14 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             // WMS加工单已作废，暂不重新生成，仅作消息提醒
             if(Objects.equals(machineInfoEntity.getInvalidStatus(), Boolean.TRUE)) {
                 log.warn("FBA发货单【{}】发生了改变，ERP加工单【{}】已作废，不修改ERP加工单信息", entity.getDeliveryNo(), machineInfoEntity.getCode());
-                this.sendNotice(syncTaskId, StrUtil.format("FBA发货单【{}】发生了仓库或数量改变，ERP加工单【{}】已作废，ERP加工单不同步FBA发货单数据", entity.getDeliveryNo(), machineInfoEntity.getCode() ));
+                this.sendNotice(syncTaskId, CharSequenceUtil.format("FBA发货单【{}】发生了仓库或数量改变，ERP加工单【{}】已作废，ERP加工单不同步FBA发货单数据", entity.getDeliveryNo(), machineInfoEntity.getCode() ));
             } else {
                 // 暂时改成只处理待提交的修改
                 if(Objects.equals(approveStatusEnum, ApproveStatusEnum.WAIT_SUBMIT) ) {
                     this.updateMachineFromFbaDelivery(entity, machineInfoEntity, warehouseEntity, sourceType, syncTaskId);
                 } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE) || Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING) || Objects.equals(approveStatusEnum, ApproveStatusEnum.REJECT) ) {
                     log.warn("FBA发货单【{}】发生了改变，ERP加工单【{}】状态已经为【{}】，不修改ERP加工单信息", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() );
-                    this.sendNotice(syncTaskId, StrUtil.format("FBA发货单【{}】发生了仓库或数量改变，ERP加工单【{}】状态已经为【{}】,请人工核实调整数据", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() ));
+                    this.sendNotice(syncTaskId, CharSequenceUtil.format("FBA发货单【{}】发生了仓库或数量改变，ERP加工单【{}】状态已经为【{}】,请人工核实调整数据", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() ));
                 }
             }
         } else if (entity.getDeliveryStatus().intValue() == FbaDeliveryStatusEnum.INVALID.getCode()) {
@@ -138,11 +136,11 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 machineInfoService.disApprove(machineInfoEntity);
             } else if (Objects.equals(approveStatusEnum, ApproveStatusEnum.APPROVE_ING)) {
                 // 撤销
-                machineInfoService.cancelProcess(Arrays.asList(machineInfoEntity.getId()));
+                machineInfoService.cancelProcess(Collections.singletonList(machineInfoEntity.getId()));
             }
             if(!Objects.equals(machineInfoEntity.getInvalidStatus(), InvalidStatusEnum.VOIDED.getStatus())) {
                 // 作废
-                machineInfoService.invalid(Arrays.asList(machineInfoEntity.getId()), StrUtil.format("FBA发货单{}作废", entity.getDeliveryNo()));
+                machineInfoService.invalid(Collections.singletonList(machineInfoEntity.getId()), CharSequenceUtil.format("FBA发货单{}作废", entity.getDeliveryNo()));
             } else {
                 log.warn("FBA发货单【{}】，ERP加工单【{}】都为作废状态，无需处理", entity.getDeliveryNo(), machineInfoEntity.getCode(), approveStatusEnum.getName() );
             }
@@ -225,7 +223,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
 
             String parentSkuId = skuList.stream().filter(s -> Objects.equals(s.getParentSkuNo(), parentSkuNo)).
                     findFirst().map(BomInfoEntity::getParentSkuId).orElse("");
-            if (StringUtils.isBlank(parentSkuId)) {
+            if (CharSequenceUtil.isBlank(parentSkuId)) {
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,parentSkuNo);
             }
             member.setSkuId(parentSkuId);
@@ -235,10 +233,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             member.setReferenceVersion(version);
 
             // 子件明细
-            // List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
-            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(parentSkuId));
-            // List<String> subSkuNos = bomList.stream().map(DmpBomEntity::getSkuNo).distinct().collect(Collectors.toList());
-            // List<SkuVO> subSkuList = plmTaskFeign.listBySkuNoList(subSkuNos);
+            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(parentSkuId));
 
             List<BomChildrenSkuDTO> bomList = bomChildrenSkuList.stream().filter(obj -> Objects.equals(obj.getParentSkuId(), parentSkuId)).collect(Collectors.toList());
 
@@ -250,7 +245,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 String subSkuId = bomList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(BomChildrenSkuDTO::getSkuId).orElse("");
 
                 if(StrUtils.isEmpty(subSkuId)) {
-                    String errmsg = StrUtil.format("FBA发货单同步生成加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo);
+                    String errmsg = CharSequenceUtil.format("FBA发货单同步生成加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo);
                     throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code, errmsg);
                 }
                 subDTO.setId(null);
@@ -258,7 +253,7 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
                 subDTO.setSkuNo(dmpBomEntity.getSkuNo());
                 subDTO.setQty(dmpBomEntity.getQuantity() * member.getQty());
                 subDTO.setWarehouseId(warehouseEntity.getId());
-                subDTO.setRemark(StrUtil.format("同步ERP：FBA发货单号{}", updateDTO.getSourceCode()));
+                subDTO.setRemark(CharSequenceUtil.format("同步ERP：FBA发货单号{}", updateDTO.getSourceCode()));
                 subComponentsList.add(subDTO);
             }
             member.setSubComponentsList(subComponentsList);
@@ -280,9 +275,9 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
         addDTO.setWorkType(WorkTypeEnum.ASSEMBLE.getCode());
         // 仓管员 取不到马帮的员工信息
         addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
-        List<WarehouseEntity> warehouseEntityList = warehouseService.listByKingdeeCodeList(Arrays.asList(entity.getWarehouseCode()));
+        List<WarehouseEntity> warehouseEntityList = warehouseService.listByKingdeeCodeList(Collections.singletonList(entity.getWarehouseCode()));
         if(CollUtil.isEmpty(warehouseEntityList)) {
-            String errmsg = StrUtil.format("FBA发货单同步生成ERP加工单仓库【{}】在ERP中不存在", entity.getWarehouseCode());
+            String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单仓库【{}】在ERP中不存在", entity.getWarehouseCode());
             throw new ServiceException(ApiError.ERROR_99076.code, errmsg);
         }
         WarehouseEntity warehouseEntity = warehouseEntityList.get(0);
@@ -307,8 +302,8 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
 
             String parentSkuId = skuList.stream().filter(s -> Objects.equals(s.getParentSkuNo(), dmpFbaDeliveryDetailEntity.getSkuNo())).
                     findFirst().map(BomInfoEntity::getParentSkuId).orElse("");
-            if (StringUtils.isBlank(parentSkuId)) {
-                String errmsg = StrUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中不存在", parentSkuNo);
+            if (CharSequenceUtil.isBlank(parentSkuId)) {
+                String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中不存在", parentSkuNo);
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code,errmsg);
             }
             member.setSkuId(parentSkuId);
@@ -320,9 +315,9 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
             // 子件明细
             // List<DmpBomEntity> bomList = dmpFbaDeliveryDetailEntity.getBomList();
             // bom信息
-            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Arrays.asList(parentSkuId));
+            List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(parentSkuId));
             if(CollUtil.isEmpty(bomChildrenSkuList)) {
-                String errmsg = StrUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中未查询到BOM信息",parentSkuNo);
+                String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单父级SKU【{}】在ERP中未查询到BOM信息",parentSkuNo);
                 throw new ServiceException(ApiError.ERROR_95173.code,errmsg);
             }
 
@@ -338,14 +333,14 @@ public class SyncFbaDeliveryServiceImpl implements SyncFbaDeliveryService {
 
                 String subSkuId = bomList.stream().filter(s -> Objects.equals(s.getSkuNo(), dmpBomEntity.getSkuNo())).findFirst().map(BomChildrenSkuDTO::getSkuId).orElse("");
                 if(StrUtils.isEmpty(subSkuId)) {
-                    String errmsg = StrUtil.format("FBA发货单同步生成ERP加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo);
+                    String errmsg = CharSequenceUtil.format("FBA发货单同步生成ERP加工单子级SKU【{}】在ERP中不存在，对应的父级SKU【{}】", dmpBomEntity.getSkuNo(), parentSkuNo);
                     throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU.code,errmsg);
                 }
                 subDTO.setSkuId(subSkuId);
                 subDTO.setSkuNo(dmpBomEntity.getSkuNo());
                 subDTO.setQty(dmpBomEntity.getQuantity() * member.getQty());
                 subDTO.setWarehouseId(warehouseEntity.getId());
-                subDTO.setRemark(StrUtil.format("同步ERP：FBA发货单号{}", addDTO.getSourceCode()));
+                subDTO.setRemark(CharSequenceUtil.format("同步ERP：FBA发货单号{}", addDTO.getSourceCode()));
                 subComponentsList.add(subDTO);
             }
             member.setSubComponentsList(subComponentsList);

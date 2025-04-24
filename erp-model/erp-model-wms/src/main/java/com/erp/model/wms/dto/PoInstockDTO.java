@@ -251,7 +251,27 @@ public class PoInstockDTO implements Serializable {
          * 退货方式名称
          */
         private String returnModeName;
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+        /**
+         * 采购组织
+         */
+        private String purchaseOrgName;
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+        /**
+         * 收料组织
+         */
+        private String receiveOrgName;
 
+        /**
+         * 委外订单单号
+         */
+        private String subcontractCode;
     }
 
 
@@ -576,10 +596,6 @@ public class PoInstockDTO implements Serializable {
          */
         private String stockInDeptName;
 
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
 
         /**
          * 供应商信息

@@ -62,7 +62,7 @@ public class BiDashboardController extends BaseController {
      * 获取默认的仪表盘
      */
     @GetMapping("/info")
-    public ApiResult<SubjectLayoutDetailsDTO> Info() {
+    public ApiResult<SubjectLayoutDetailsDTO> info() {
         SubjectLayoutDetailsDTO details = subjectService.dashboardInfo();
         if (Objects.isNull(details)) {
             throw new ServiceException(ApiError.ERROR_97019);
@@ -77,9 +77,9 @@ public class BiDashboardController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置仪表盘默认,id={id}")
     @PostMapping("/setDefault")
-    public ApiResult setShare(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean flag = subjectDefaultService.setDefault(dto.getId());
-        return flag == true ? success() : failure();
+    public ApiResult<Object> setShare(@RequestBody @Validated BaseIdDTO dto) {
+        boolean flag = subjectDefaultService.setDefault(dto.getId());
+        return flag ? success() : failure();
     }
 
 
@@ -100,7 +100,7 @@ public class BiDashboardController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "复制仪表盘:专题id={subjectId}")
     @PostMapping("/copy")
-    public ApiResult copy(@RequestBody @Validated CopySubjectDTO dto) {
+    public ApiResult<String> copy(@RequestBody @Validated CopySubjectDTO dto) {
         String id = subjectService.copyDashboard(dto);
         if (StringUtils.isBlank(id)) {
             return failure();

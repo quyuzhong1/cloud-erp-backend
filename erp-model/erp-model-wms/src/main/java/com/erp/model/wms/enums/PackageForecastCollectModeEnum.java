@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * @author Lambda
  * @Classname PackageForecastCollectModeEnum
- * @Description TODO
+ * @Description 组包预报揽收方式
  * @Date 2024-02-19 11:23
  * @Created by yl
  */

@@ -103,7 +103,17 @@ public class SoB2cErrorEntity implements Serializable{
      */
     @TableField("detail_id")
     private String detailId;
+    /**
+     * 系统自动重试次数
+     */
+    @TableField("retry_count")
+    private Integer retryCount = 0;
 
+    /**
+     * 错误码
+     */
+    @TableField("code")
+    private String code;
 
     public static final String MAIN_ID = "main_id";
 

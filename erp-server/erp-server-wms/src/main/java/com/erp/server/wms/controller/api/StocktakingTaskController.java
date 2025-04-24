@@ -1,9 +1,11 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -17,6 +19,7 @@ import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.model.wms.entity.StocktakingProfitLossEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
+import com.erp.server.wms.query.StocktakingTaskQueryHandler;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -81,6 +84,7 @@ public class StocktakingTaskController extends BaseController {
             menuCode = "wms:stocktakingTask:paging",
             tableAlias = "st"
     )
+    @WebAdvanceQuery(handler = StocktakingTaskQueryHandler.class)
     public ApiResult<PagingVO<StocktakingTaskDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<StocktakingTaskDTO.PagingParamDTO> dto) {
         PagingVO<StocktakingTaskDTO.PagingViewDTO> pagingVO = stocktakingTaskService.paging(dto);
         return success(pagingVO);
@@ -183,7 +187,7 @@ public class StocktakingTaskController extends BaseController {
                     // 删除缓存
                     List<StocktakingTaskDetailDTO.ViewDTO> detailList = stocktakingTaskDetailService.listByMainId(id);
                     detailList.forEach(detail -> {
-                        String key = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*",
+                        String key = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK, entity.getSourceCode(), "*",
                                 detail.getWarehouseId(), detail.getWarehouseLocation(), detail.getSkuId(), "*");
                         redisUtil.keys(key).forEach(item -> redisUtil.del(item));
                     });
@@ -197,7 +201,7 @@ public class StocktakingTaskController extends BaseController {
                     continue;
                 }
                 String message = e.getMessage();
-//                if(StrUtil.isBlank(message) && ObjectUtil.isNotEmpty(((UndeclaredThrowableException) e).getUndeclaredThrowable())){
+//                if(CharSequenceUtil.isBlank(message) && ObjectUtil.isNotEmpty(((UndeclaredThrowableException) e).getUndeclaredThrowable())){
 //                    message = ((UndeclaredThrowableException) e).getUndeclaredThrowable().getMessage();
 //                }
                 submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), message);

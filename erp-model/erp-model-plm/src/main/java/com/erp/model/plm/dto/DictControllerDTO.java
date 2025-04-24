@@ -1,10 +1,11 @@
 package com.erp.model.plm.dto;
 
-import com.erp.model.plm.entity.BasicCategoryEntity;
 import com.erp.model.plm.entity.BasicDictEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.io.Serializable;
 
 /**
  * @Description 产品分类DTO
@@ -12,7 +13,7 @@ import lombok.NoArgsConstructor;
  * @Author Cloud
  * @Date 2023/4/18 18:28
  **/
-public class DictControllerDTO {
+public class DictControllerDTO implements Serializable {
 
     @Data
     @AllArgsConstructor

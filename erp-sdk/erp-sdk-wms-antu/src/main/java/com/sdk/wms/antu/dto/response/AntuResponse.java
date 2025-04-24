@@ -11,7 +11,7 @@ import java.io.Serializable;
 @ToString
 @AllArgsConstructor
 public class AntuResponse<T> implements Serializable {
-
+    private static final long serialVersionUID = 1905122041950251207L;
     //Success 表示成功。
     private String ask;
 
@@ -42,8 +42,8 @@ public class AntuResponse<T> implements Serializable {
 
     @Data
     @ToString
-    public static class Pagination {
-
+    public static class Pagination implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         private Integer page;
 
         private Integer pageSize;

@@ -2,9 +2,9 @@ package com.erp.server.srm.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.erp.model.srm.entity.CfgOperateLogFieldEntity;
 import com.erp.model.srm.entity.DeliveryOrderDetailEntity;
-import com.erp.model.srm.entity.DeliveryOrderEntity;
 import com.erp.server.srm.mapper.CfgOperateLogFieldMapper;
 import com.erp.server.srm.service.CfgOperateLogFieldService;
 import org.springframework.stereotype.Service;
@@ -39,22 +39,10 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
                 new CfgOperateLogFieldEntity().setField("deliveryQty").setFieldName("送货数量").setClassPath(classPath).setType(0) .setEnumClass(""),
                 new CfgOperateLogFieldEntity().setField("giftQty").setFieldName("赠品数量").setClassPath(classPath).setType(0) .setEnumClass(""),
                 new CfgOperateLogFieldEntity().setField("remark").setFieldName("备注").setClassPath(classPath).setType(0) .setEnumClass("")
-//                new CfgOperateLogFieldEntity().setField("categoryName").setFieldName("分类名").setClassPath(classPath).setType(0) .setEnumClass(""),
-//
-//                new CfgOperateLogFieldEntity().setField("gradeId").setFieldName("等级").setClassPath(classPath).setType(3) .setEnumClass(""),
-//
-//                new CfgOperateLogFieldEntity().setField("purchaseUserName").setFieldName("采购员").setClassPath(classPath).setType(0) .setEnumClass(""),
-//
-//                new CfgOperateLogFieldEntity().setField("companyWebsite").setFieldName("公司网址").setClassPath(classPath).setType(0) .setEnumClass(""),
-//                new CfgOperateLogFieldEntity().setField("disabled").setFieldName("禁用状态").setClassPath(classPath).setType(1) .setEnumClass(""),
-//                new CfgOperateLogFieldEntity().setField("payMethodId").setFieldName("付款方式").setClassPath(classPath).setType(3) .setEnumClass(""),
-//                new CfgOperateLogFieldEntity().setField("payCurrency").setFieldName("付款币种").setClassPath(classPath).setType(0) .setEnumClass(""),
-//
-//                new CfgOperateLogFieldEntity().setField("companyAddress").setFieldName("公司地址").setClassPath(classPath).setType(0) .setEnumClass("")
-
-
         );
-        return this.saveBatch(logFields);
+
+        CfgOperateLogFieldServiceImpl bean = ApplicationContextUtils.getBean(CfgOperateLogFieldServiceImpl.class);
+        return bean.saveBatch(logFields);
 
     }
 }

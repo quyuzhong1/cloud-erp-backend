@@ -14,6 +14,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,9 @@ import java.util.Map;
 @Getter
 @Setter
 public class CfgRulePickingDTO {
+    private CfgRulePickingDTO() {
+        throw new IllegalStateException("Utility CfgRulePickingDTO class");
+    }
     @Getter
     @Setter
     public static class PagingView {
@@ -34,7 +38,8 @@ public class CfgRulePickingDTO {
     }
     @Getter
     @Setter
-    public static class PagingParam extends SortDTO {
+    public static class PagingParam extends SortDTO implements Serializable {
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 页面高级查询
          */
@@ -127,6 +132,10 @@ public class CfgRulePickingDTO {
          */
         private String sourceCode;
         /**
+         * 波次类型
+         */
+        private String waveType;
+        /**
          * sku明细数据
          */
         private List<CfgExecutionDataDetailDTO> details;
@@ -150,6 +159,7 @@ public class CfgRulePickingDTO {
          * sku编码
          */
         private String skuNo;
+        private String platformSkuNo;
         /**
          * 数量
          */

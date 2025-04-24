@@ -1,9 +1,15 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.core.anno.StateEnumValue;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.List;
+import java.util.Map;
+
+import java.util.Map;
 
 /**
  * @Classname BomSearchPagingDTO
@@ -23,5 +29,15 @@ public class SearchPagingDTO extends SortDTO {
      * 搜索关键字
      */
     private String searchKeyword;
+
+    /**
+     * 页面高级查询
+     */
+    private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+    /**
+     * sqlMap 默认key default
+     */
+    private Map<String, String> sqlMap;
 
 }

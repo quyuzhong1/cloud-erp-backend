@@ -17,7 +17,7 @@ import java.time.LocalDate;
  **/
 @TableName(value ="product_certificate")
 @Data
-public class ProductCertificateEntity extends BaseEntity implements Serializable {
+public class ProductCertificateEntity extends BaseEntity<ProductCertificateEntity> implements Serializable {
 
     /**
      * 产品sku表id

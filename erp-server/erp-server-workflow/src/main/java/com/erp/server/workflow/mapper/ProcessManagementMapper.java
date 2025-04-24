@@ -42,10 +42,10 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
     /**
      * 分页查询
      * @param page
-     * @param param
+     * @param params
      * @return IPage<ProcessManagementDTO.PagingResultDTO>
      */
-    IPage<ProcessManagementDTO.PagingResultDTO> paging(Page page, @Param("param") ProcessManagementDTO.SearchDTO param);
+    IPage<ProcessManagementDTO.PagingResultDTO> paging(Page<?> page, @Param("param") ProcessManagementDTO.SearchDTO params);
 
     /**
      * 导出

@@ -1,7 +1,9 @@
 package com.erp.server.wms.service;
+
+import com.common.business.service.SuperService;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.common.business.service.SuperService;
 
 import java.util.List;
 
@@ -79,5 +81,19 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
      * @date 2024/7/2 11:45
      * @param mainId
      */
-    void cleanVirtualWarehouseIdByMianId(String mainId);
+    void cleanVirtualFrozenQtyByMianId(String mainId);
+    /**
+     * 查询要货申请数据
+     * @author will
+     * @date 2024/9/26 16:53
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail();
+
+    /**
+     * 根据来源明细id获取明细记录
+     * @param sourceDetailIds
+     * @return
+     */
+    List<RequisitionApplicationDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
 }

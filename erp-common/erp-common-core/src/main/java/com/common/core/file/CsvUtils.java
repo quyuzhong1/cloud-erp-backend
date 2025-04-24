@@ -1,6 +1,8 @@
 package com.common.core.file;
 
 
+import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 
 import java.io.*;
@@ -15,7 +17,11 @@ import java.util.List;
  * @author
  * @reviewer
  */
+@Slf4j
 public class CsvUtils {
+
+	private CsvUtils() {
+	}
 
 	public static Object resetNull(Object obj) {
 		return obj == null ? "" : obj;
@@ -41,7 +47,10 @@ public class CsvUtils {
 			if (parent != null && !parent.exists()) {
 				parent.mkdirs();
 			}
-			csvFile.createNewFile();
+			boolean newFile = csvFile.createNewFile();
+			if (!newFile){
+				log.warn("createCSVFile 文件已存在");
+			}
 
 			// GB2312使正确读取分隔符","
 			csvWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(
@@ -72,7 +81,10 @@ public class CsvUtils {
 			if (parent != null && !parent.exists()) {
 				parent.mkdirs();
 			}
-			file.createNewFile();
+			boolean newFile = file.createNewFile();
+			if (!newFile){
+				log.warn("createCSVFile 文件已存在");
+			}
 
 			// GB2312使正确读取分隔符","
 			bufferedWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8), 1024);
@@ -125,7 +137,10 @@ public class CsvUtils {
 		try {
 			File file = new File(filePath + "text03.csv");
 			if (!file.exists()) {
-				file.createNewFile();
+				boolean newFile = file.createNewFile();
+				if (!newFile){
+					log.warn("createCSVFile 文件已存在");
+				}
 			}
 			// 一次写入的文件大小小于10M时， bufferedWriter并不能显著降低时间,而且此时BufferedOutputStream仍是占优的
 			fWriter = new FileWriter(file, true);
@@ -135,7 +150,7 @@ public class CsvUtils {
 				writeRow(row, bufferedWriter);
 			}
 			bufferedWriter.flush();
-			System.out.println("BufferedWriter 执行耗时: " + (System.currentTimeMillis() - begin));
+			log.info("BufferedWriter 执行耗时: " + (System.currentTimeMillis() - begin));
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		} finally {

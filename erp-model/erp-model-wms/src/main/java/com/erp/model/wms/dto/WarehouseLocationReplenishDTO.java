@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.enums.ReplenishTypeEnum;
@@ -323,6 +324,10 @@ public class WarehouseLocationReplenishDTO implements Serializable {
          * 缺货仓位：发货缺货补货单可不传
          */
         private String warehouseLocation;
+        /**
+         * 发货缺货--补货推荐仓位
+         */
+        private String toWarehouseLocation;
     }
 
     @Data

@@ -55,7 +55,11 @@ public enum  BasicDictTypeEnum {
     /**
      * 立项状态
      */
-    APPROVAL_STATUS("approvalStatus", "立项状态")
+    APPROVAL_STATUS("approvalStatus", "立项状态"),
+    /**
+     * 保险属性
+     */
+    INSURANCE_PROPERTY("insuranceProperty", "保险属性")
     ;
 
 
@@ -83,7 +87,7 @@ public enum  BasicDictTypeEnum {
         return name;
     }
 
-    public static String getNameByCode(Integer code) {
+    public static String getNameByCode(String code) {
         BasicDictTypeEnum[] basicDictTypeEnums = values();
         for (BasicDictTypeEnum basicDictTypeEnum : basicDictTypeEnums) {
             if (basicDictTypeEnum.getCode().equals(code)) {

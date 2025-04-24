@@ -21,7 +21,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("basic_category")
-public class BasicCategoryEntity extends BaseEntity implements Serializable{
+public class BasicCategoryEntity extends BaseEntity<BasicCategoryEntity> implements Serializable{
 
     private static final long serialVersionUID = 1L;
 

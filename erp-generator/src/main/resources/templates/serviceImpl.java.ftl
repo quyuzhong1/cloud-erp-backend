@@ -138,16 +138,16 @@ public class ${table.serviceImplName} extends ${superServiceImplClass}<${table.m
     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(${table.dtoName}.UpdateDTO updateDTO) {
-        ${entity} old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "${docName!}"));
+    public Boolean update(${table.dtoName}.UpdateDTO addOrUpdateDTO) {
+        ${entity} old = super.getById(addOrUpdateDTO.getId());
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "${docName!}"));
         <#if fieldMap["approveStatus"]??>
         // 待提交和审核不通过允许修改
         if (!ApproveStatusEnum.allowUpdateStatus(old.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_1029);
         }
         </#if>
-        ${entity} ${entity?uncap_first} =  BeanMapperUtils.map(${entity}.class, updateDTO);
+        ${entity} ${entity?uncap_first} =  BeanMapperUtils.map(${entity}.class, addOrUpdateDTO);
 
         // 数据处理
         handleData(${entity?uncap_first});

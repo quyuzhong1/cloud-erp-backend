@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.CfgRuleStockUpMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.CfgRuleStockUpEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="purchase_approve_days" property="purchaseApproveDays" />
+       <result column="production_days" property="productionDays" />
+       <result column="supplier_delivery_days" property="supplierDeliveryDays" />
+       <result column="qc_days" property="qcDays" />
+       <result column="purchase_cycle_days" property="purchaseCycleDays" />
+       <result column="safe_days" property="safeDays" />
+       <result column="instock_days" property="instockDays" />
+       <result column="stocking_ratio" property="stockingRatio" />
+       <result column="new_stocking_ratio" property="newStockingRatio" />
+       <result column="platform_type" property="platformType" />
+       <result column="ref_id" property="refId" />
+       <result column="ref_type" property="refType" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        purchase_approve_days, production_days, supplier_delivery_days, qc_days, purchase_cycle_days, safe_days, instock_days, stocking_ratio, new_stocking_ratio, platform_type, ref_id, ref_type
+    </sql>
+
+
+</mapper>

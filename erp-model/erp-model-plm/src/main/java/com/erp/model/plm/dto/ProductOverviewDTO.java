@@ -186,7 +186,7 @@ public class ProductOverviewDTO implements Serializable {
         /**
          *任务进度
          */
-        private  productProgressShowDTO  productProgressShow;
+        private ProductProgressShowDTO productProgressShow;
     }
 
     /**

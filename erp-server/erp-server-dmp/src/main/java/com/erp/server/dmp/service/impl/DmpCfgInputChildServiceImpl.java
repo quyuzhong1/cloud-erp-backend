@@ -63,7 +63,7 @@ public class DmpCfgInputChildServiceImpl extends SuperServiceImpl<DmpCfgInputChi
     @Override
     public Boolean update(DmpCfgInputChildDTO.UpdateDTO updateDTO) {
         DmpCfgInputChildEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "父子任务关系"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "父子任务关系"));
         DmpCfgInputChildEntity dmpCfgInputChildEntity =  BeanMapperUtils.map(DmpCfgInputChildEntity.class, updateDTO);
 
         // 数据处理

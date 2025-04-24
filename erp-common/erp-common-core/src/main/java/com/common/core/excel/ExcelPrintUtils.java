@@ -114,7 +114,7 @@ public class ExcelPrintUtils {
 				stream = new FileInputStream(fileName);
 			}
 		} catch (Exception e) {
-			System.out.println("获取打印模板文件流" + fileName + "异常!");
+			log.info("获取打印模板文件流" + fileName + "异常!");
 		}
 		return stream;
 	}
@@ -543,7 +543,7 @@ public class ExcelPrintUtils {
 					.registerConverter(new SqlDateNumberConverter())
 					.registerConverter(new SqlDateStringConverter())
 					.registerConverter(new SqlTimestampStringConverter())
-					.head(head).registerWriteHandler(horizontalCellStyleStrategy).sheet(sheetName).doWrite(data);
+					.head(head).registerWriteHandler(horizontalCellStyleStrategy).registerWriteHandler(new ExcelCellWidthStyleStrategy()).sheet(sheetName).doWrite(data);
 			return out.toByteArray();
 		} catch (Exception e) {
 			throw new ServiceException(e.getMessage());
@@ -691,6 +691,10 @@ public class ExcelPrintUtils {
 			EasyExcelListConverter listConverter = new EasyExcelListConverter();
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey()), listConverter);
 			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(listConverter.supportJavaTypeKey(), listConverter.supportExcelTypeKey()), listConverter);
+			// 图片转换器
+			ByteArrayImageConverter byteArrayImageConverter = new ByteArrayImageConverter();
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey()), byteArrayImageConverter);
+			excelWriter.writeContext().currentWriteHolder().converterMap().put(ConverterKeyBuild.buildKey(byteArrayImageConverter.supportJavaTypeKey(), byteArrayImageConverter.supportExcelTypeKey()), byteArrayImageConverter);
 			WriteSheet writeSheet = EasyExcelFactory.writerSheet().build();
 			//列表数据
 			excelWriter.fill(list, writeSheet);
@@ -750,8 +754,7 @@ public class ExcelPrintUtils {
 	}
 
 	public byte[] sheetPatchExport(List<Pair<Integer,List<?>>> pairList , String fileName, String excelPath) throws IOException {
-		try (ByteArrayOutputStream out = new ByteArrayOutputStream();
-			 BufferedOutputStream bos = new BufferedOutputStream(out)) {
+		try (ByteArrayOutputStream out = new ByteArrayOutputStream();BufferedOutputStream bos = new BufferedOutputStream(out)) {
 			//模板的路径
 			ClassPathResource classPathResource = new ClassPathResource(excelPath);
 			InputStream inputStream = classPathResource.getInputStream();
@@ -1084,7 +1087,7 @@ public class ExcelPrintUtils {
 			response.reset();
 			// 设置文件头
 			response.setHeader("Content-Disposition",
-					"attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+					"attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
 			response.setContentType("application/msexcel");
 			wb.write(output);
 			wb.close();
@@ -1252,6 +1255,6 @@ public class ExcelPrintUtils {
 		String filePath = "C:\\Users\\Administrator\\Desktop\\新建 XLS 工作表.xls";
 		InputStream inputStream = new FileInputStream(filePath);
 		List<Map<String, String>> makeDataInputStream = makeDataInputStream(inputStream);
-		System.out.println(makeDataInputStream);
+		log.info(makeDataInputStream);
 	}
 }

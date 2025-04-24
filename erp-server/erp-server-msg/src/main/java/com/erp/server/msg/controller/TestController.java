@@ -1,6 +1,7 @@
 package com.erp.server.msg.controller;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -17,6 +18,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.server.msg.config.MsgContext;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.redisson.api.RLock;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
@@ -42,25 +45,27 @@ import java.util.concurrent.TimeUnit;
 @RequestMapping(value = "/test")
 public class TestController extends BaseController {
 
-    @Autowired
+    public static final String TITLE = "产品提醒: 张三 新建产品名称【iphone14】";
+    public static final String CONTENT = "**产品名称: **iphone14\n**产品日期：**2023-04-20";
+    @Resource
     private MsgContext msgContext;
 
-    @Autowired
+    @Resource
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
 
-    @Autowired
+    @Resource
     private RedissonClient redisson;
 
+    final String USER_ID = "1645710077245652993";
     /**
      * 发送消息
      */
     @RequestMapping("/sendMsg")
-    public ApiResult sendMsg() {
-        
+    public ApiResult<T> sendMsg() {
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
-        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
-        noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
-        noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
+        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList(USER_ID)));
+        noticeMsgInfoDTO.setTitle(TITLE);
+        noticeMsgInfoDTO.setContent(CONTENT);
         noticeMsgInfoDTO.setUrgent(true);
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
         msgContext.routeSend(noticeMsgInfoDTO);
@@ -71,25 +76,15 @@ public class TestController extends BaseController {
      * 发送单条消息（MQ）
      */
     @RequestMapping("/sendMsgMq")
-    public ApiResult sendMsgMq() {
+    public ApiResult<T> sendMsgMq() {
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
-        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList("1645710077245652993")));
-        noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
+        noticeMsgInfoDTO.setReceiverUserIds(new ArrayList<>(Arrays.asList(USER_ID)));
+        noticeMsgInfoDTO.setTitle(TITLE);
         // 请注意：飞书中的**和**中间的数据表示加粗
-        noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
+        noticeMsgInfoDTO.setContent(CONTENT);
         noticeMsgInfoDTO.setUrgent(true);
-        //noticeMsgInfoDTO.setSendChannels(CollUtil.newArrayList(MessageChannelEnum.FEISHU));
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
-        // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
-        /*
-        String tagName = RocketMqTagEnum.MSG_NOTICE_TAG.getName();
-        SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
-                noticeMsgInfoDTO, IdUtil.simpleUUID());
-        if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
-        }
-         */
-        SendResult sendResult = mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, null);
+        mqProducerService.sendNoticeMsg(noticeMsgInfoDTO, null);
         return success();
     }
 
@@ -98,7 +93,7 @@ public class TestController extends BaseController {
      * 发送预警消息
      */
     @RequestMapping("/sendWarnMsg")
-    public ApiResult sendWarnMsg() {
+    public ApiResult<T> sendWarnMsg() {
         WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
         warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
         warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
@@ -115,7 +110,7 @@ public class TestController extends BaseController {
      * 发送预警消息MQ
      */
     @RequestMapping("/sendWarnMsgMQ")
-    public ApiResult sendWarnMsgMQ() {
+    public ApiResult<T> sendWarnMsgMQ() {
         WarnMsgInfoDTO warnMsgInfoDTO = new WarnMsgInfoDTO();
         warnMsgInfoDTO.setTitle("销售出库单推送金蝶异常");
         warnMsgInfoDTO.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
@@ -132,12 +127,12 @@ public class TestController extends BaseController {
      * 批量发送消息（MQ）
      */
     @RequestMapping("/sendMultiMsgMq")
-    public ApiResult sendMultiMsgMq() {
+    public ApiResult<T> sendMultiMsgMq() {
         NoticeMsgInfoDTO noticeMsgInfoDTO = new NoticeMsgInfoDTO();
-        noticeMsgInfoDTO.setReceiverUserIds(CollUtil.newArrayList("1645710077245652993","1631292025469009921"));
-        noticeMsgInfoDTO.setTitle("产品提醒: 张三 新建产品名称【iphone14】");
+        noticeMsgInfoDTO.setReceiverUserIds(CollUtil.newArrayList(USER_ID,"1631292025469009921"));
+        noticeMsgInfoDTO.setTitle(TITLE);
         // 请注意：飞书中的**和**中间的数据表示加粗
-        noticeMsgInfoDTO.setContent("**产品名称: **iphone14\n**产品日期：**2023-04-20");
+        noticeMsgInfoDTO.setContent(CONTENT);
         noticeMsgInfoDTO.setUrgent(true);
         noticeMsgInfoDTO.setNoticeTypeEnum(NoticeTypeEnum.SCM_TASK);
         // 默认tag请指定为msg_notice_default_tag，可以根据不同业务自行指定
@@ -145,7 +140,7 @@ public class TestController extends BaseController {
         SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.NOTICE_MSG_TOPIC, tagName,
                 noticeMsgInfoDTO, IdUtil.simpleUUID());
         if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
-            throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+            throw new IllegalArgumentException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
         }
         return success();
     }
@@ -165,25 +160,18 @@ public class TestController extends BaseController {
             Boolean isLock = rLock.tryLock(5, TimeUnit.SECONDS);
             log.info("线程" + Thread.currentThread().getName() + "获取锁" + isLock);
             if(!isLock) {
-                throw new RuntimeException("服务拥挤，请稍后再试");
-            }
-            //执行具体业务逻辑
-            //控制器不使用Thread.sleep会阻塞
-            //Thread.sleep(10000);
-            while(1 == 1) {
-                if( 2 > 3) {
-                    break;
-                }
+                throw new IllegalArgumentException("服务拥挤，请稍后再试");
             }
         } catch (InterruptedException e) {
-            throw new RuntimeException("操作失败，请稍后再试");
+            Thread.currentThread().interrupt();
+            throw new IllegalArgumentException("操作失败，请稍后再试");
         } finally {
             log.info("线程" + Thread.currentThread().getName() + "尝试释放锁");
             if(rLock.isLocked() && rLock.isHeldByCurrentThread()){ // 锁是否存在，是当前执行线程的锁
                 rLock.unlock(); // 释放锁
             }
         }
-        return new ApiResult(200, "");
+        return success();
     }
 
 

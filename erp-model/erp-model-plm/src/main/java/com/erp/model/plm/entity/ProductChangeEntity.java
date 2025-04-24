@@ -18,7 +18,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_change")
-public class ProductChangeEntity extends BaseEntity implements Serializable {
+public class ProductChangeEntity extends BaseEntity<ProductChangeEntity> implements Serializable {
     private static final long serialVersionUID = -79726809443887610L;
 
     /**

@@ -3,10 +3,8 @@ package com.erp.model.wms.dto;
 import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 

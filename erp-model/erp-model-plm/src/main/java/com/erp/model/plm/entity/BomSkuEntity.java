@@ -18,7 +18,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_bom_sku")
-public class BomSkuEntity extends BaseEntity implements Serializable {
+public class BomSkuEntity extends BaseEntity<BomSkuEntity> implements Serializable {
     private static final long serialVersionUID = -92121071004214361L;
 
     /**

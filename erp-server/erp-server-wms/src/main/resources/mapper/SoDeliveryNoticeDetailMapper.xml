@@ -72,4 +72,27 @@
             #{sourceId}
         </foreach>
     </select>
+
+    <select id="listBySourceDetailIdList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO$ListDTO">
+        SELECT
+        sdn.id AS mainId,
+        sdnd.id AS detailId,
+        sdn.source_id AS sourceId,
+        sdnd.source_detail_id AS sourceDetailId,
+        sdnd.sku_id, sdnd.sku_no,
+        sdnd.delivery_qty,
+        sdnd.is_close,
+        sdnd.remark,
+        sdn.warehouse_id,
+        sdn.warehouse_name
+        FROM so_delivery_notice sdn
+        INNER JOIN so_delivery_notice_detail sdnd
+        ON sdn.id=sdnd.main_id and sdnd.is_deleted = FALSE
+        WHERE sdn.is_deleted = FALSE
+        AND sdn.invalid_status = FALSE
+        AND sdnd.source_detail_id IN
+        <foreach collection="sourceDetailIdList" item="sourceDetailId" open="(" close=")" separator=",">
+            #{sourceDetailId}
+        </foreach>
+    </select>
 </mapper>

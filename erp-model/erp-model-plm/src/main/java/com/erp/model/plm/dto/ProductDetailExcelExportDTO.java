@@ -6,9 +6,6 @@ import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.alibaba.excel.annotation.write.style.ContentRowHeight;
 import com.alibaba.excel.annotation.write.style.HeadRowHeight;
 import com.common.business.annotation.MenuCode;
-import com.common.core.anno.FieldValid;
-import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.erp.model.plm.enums.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -42,6 +39,18 @@ public class ProductDetailExcelExportDTO {
     @MenuCode("plm:product:detail:listProinfo")
     private String spuNo;
     /**
+     * 款名（中文）
+     */
+    @ExcelProperty("款名（中文）")
+    @MenuCode("plm:product:detail:listProinfo")
+    private String spuName;
+    /**
+     * 款名（英文）
+     */
+    @ExcelProperty("款名（英文）")
+    @MenuCode("plm:product:detail:listProinfo")
+    private String spuNameEn;
+    /**
      * sku编号
      */
     @ExcelProperty("sku编号")
@@ -61,6 +70,13 @@ public class ProductDetailExcelExportDTO {
     @ExcelProperty("二级分类")
     @MenuCode("plm:product:detail:listProinfo")
     private String secondaryCategory;
+
+    /**
+     * 二级分类
+     */
+    @ExcelProperty("应用分类")
+    @MenuCode("plm:product:detail:listProinfo")
+    private String applicationCategoryName;
 
     /**
      * 产品经理
@@ -254,7 +270,7 @@ public class ProductDetailExcelExportDTO {
      * ean码
      */
     @ExcelProperty("ean码")
-    @MenuCode("plm:product:detail:listProductPurchase")
+    @MenuCode("plm:product:detail:listProinfo")
     private String ean;
 
     /**
@@ -445,6 +461,12 @@ public class ProductDetailExcelExportDTO {
     @ExcelProperty("报关产品属性")
     @MenuCode("plm:product:detail:listLogistics")
     private String productProperty;
+    /**
+     * 保险属性
+     */
+    @ExcelProperty("保险属性")
+    @MenuCode("plm:product:detail:listLogistics")
+    private String insuranceProperty;
 
     /**
      * 报关申报价（$）
@@ -610,4 +632,10 @@ public class ProductDetailExcelExportDTO {
      */
     @ExcelIgnore
     private String productPropertyId;
+
+    /**
+     * 报关产品属性Id
+     */
+    @ExcelIgnore
+    private String applicationCategoryId;
 }

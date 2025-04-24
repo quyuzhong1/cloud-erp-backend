@@ -1,7 +1,6 @@
 package com.erp.server.srm.service;
 import com.erp.model.srm.entity.AttachmentEntity;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.srm.dto.AttachmentDTO;
 
 import java.util.List;

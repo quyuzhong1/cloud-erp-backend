@@ -1,5 +1,6 @@
 package com.erp.server.dmp.push.service.business.impl;
 
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -13,10 +14,12 @@ import com.erp.model.dmp.entity.PlatformEntity;
 import com.erp.model.dmp.enums.KingdeeDocStatusEnum;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.sdk.third.kingdee.utils.KingdeeUtils;
 import com.erp.server.dmp.push.service.business.KingdeeBomInfoConsumerService;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.kingdee.bos.webapi.entity.RepoResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,6 +43,9 @@ import java.util.stream.Collectors;
 public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumerService {
     @Resource
     private KingdeeCommonService kingdeeCommonService;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     /**
      * 同步bomINFO
@@ -109,6 +115,13 @@ public class KingdeeBomInfoConsumerServiceImpl implements KingdeeBomInfoConsumer
         try {
             model = kingdeeCommonService.view(apiUtils, platformEntity.getId(), map);
         } catch (Exception e) {
+            //是否进行基础性校验
+            String value = cfgSettingService.getValue(SettingEnum.KINGDEE_BASE_CHECK_KEY);
+            if (StrUtil.isNotBlank(value)) {
+                Boolean isCheck = Boolean.valueOf(value);
+                param.setIsVerifyBaseDataField(isCheck);
+            }
+
             //未查找到数据，新增数据
             RepoResult save = apiUtils.saveKingDee(param);
             //新增成功后编辑用量

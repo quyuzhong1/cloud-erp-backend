@@ -874,6 +874,8 @@ public class OrdersV0ApiTest {
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
+                	log.debug("" , e);
+                	Thread.currentThread().interrupt();
                 }
             } catch (Exception e) {
                 log.error("标记发货请求失败={}", JSONUtil.toJsonStr(body));

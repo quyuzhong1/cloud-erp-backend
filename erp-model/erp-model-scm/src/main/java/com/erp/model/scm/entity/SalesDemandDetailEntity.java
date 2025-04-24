@@ -86,6 +86,12 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
     private String destWarehouseName;
 
     /**
+     * 新品首批
+     */
+    @TableField("first_mass_product")
+    private String firstMassProduct;
+
+    /**
      * 备注
      */
     @TableField("remark")
@@ -122,7 +128,7 @@ public class SalesDemandDetailEntity extends BaseEntity<SalesDemandDetailEntity>
 
     public static final String DEST_WAREHOUSE_NAME = "dest_warehouse_name";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String VARIANT_PROPERTY = "variant_property";
 

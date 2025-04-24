@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -10,27 +10,31 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.TransferLogisticsChannelDTO;
 import com.erp.model.tms.dto.transfer.TransferLogisticsOrderDTO;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 import com.erp.model.tms.entity.TransferLogisticsAuthEntity;
 import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.tms.convert.TransferLogisticsChannelConverter;
 import com.erp.server.tms.handler.TransferLogisticsRegistry;
 import com.erp.server.tms.mapper.TransferLogisticsChannelMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,29 +50,34 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<TransferLogisticsChannelMapper, TransferLogisticsChannelEntity> implements TransferLogisticsChannelService {
-    @Autowired
+    public static final String Name = "物流渠道单";
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private TransferDeclareService transferDeclareService;
-    @Autowired
+    @Resource
     private TransferLogisticsRegistry transferLogisticsRegistry;
-    @Autowired
+    @Resource
     private TransferLogisticsAuthService transferLogisticsAuthService;
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    @Lazy
+    private TransferLogisticsChannelServiceImpl service;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(TransferLogisticsChannelDTO.AddDTO addDTO) {
         TransferLogisticsChannelEntity logisticsChannelEntity = new TransferLogisticsChannelEntity();
         BeanMapperUtils.copy(addDTO, logisticsChannelEntity);
-        // 数据处理
-        handleData(logisticsChannelEntity);
         boolean save = super.save(logisticsChannelEntity);
         if (!save) {
             throw new ServiceException("物流渠道单保存失败");
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流渠道单", logisticsChannelEntity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), Name, logisticsChannelEntity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(logisticsChannelEntity.getId(), logisticsChannelEntity.getCode());
     }
@@ -80,15 +89,15 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     @Override
     public Boolean update(TransferLogisticsChannelDTO.UpdateDTO updateDTO) {
         TransferLogisticsChannelEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道单"));
+        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, Name));
         TransferLogisticsChannelEntity logisticsChannelEntity = BeanMapperUtils.map(TransferLogisticsChannelEntity.class, updateDTO);
-        handleData(logisticsChannelEntity);
+
         boolean save = super.updateById(logisticsChannelEntity);
         if (!save) {
             throw new ServiceException("物流渠道更新失败");
         }
         // 记录主单操作日志
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), "物流渠道单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsChannelEntity.getCode(), Name);
         operateLogService.addModuleOperateLogByObj(old, logisticsChannelEntity, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), logisticsChannelEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -102,7 +111,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public TransferLogisticsChannelDTO.ViewDTO view(String id) {
         TransferLogisticsChannelEntity channelEntity = this.getById(id);
         if (Objects.isNull(channelEntity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         TransferLogisticsChannelDTO.ViewDTO view = new TransferLogisticsChannelDTO.ViewDTO();
         BeanMapperUtils.copy(channelEntity, view);
@@ -121,10 +130,10 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         if(ObjectUtil.isNotEmpty(declareEntity)){
             throw new ServiceException(ApiError.ERROR_CHANNEL_QUOTE);
         }
-        String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "盘点计划");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "删除盘点计划单数据");
 
-        removeById(id);
+        service.removeById(id);
 
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
 
@@ -134,7 +143,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
     public BatchResultDTO updateStatus(String id, Boolean disabled) {
         TransferLogisticsChannelEntity entity = this.getById(id);
         if (Objects.isNull(entity)) {
-            new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "物流渠道");
         }
         Boolean dbDisabled = entity.getDisabled();
         if (dbDisabled.equals(disabled)) {
@@ -142,7 +151,7 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         }
         entity.setDisabled(disabled);
         this.updateById(entity);
-        String msg = StrUtil.format("用户【{}】修改【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
+        String msg = CharSequenceUtil.format("用户【{}】修改【{}】的【{}】单据{}操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getName(), "物流渠道", disabled ? "停用" : "启用");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_LOGISTICS_CHANNEL.getCode(), entity.getId(), "启用/停用");
         return BatchResultDTO.success(entity.getId(), entity.getName(), OperationTypeEnum.DISABLED);
 
@@ -200,15 +209,20 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         queryWrapper.eq(TransferLogisticsChannelEntity::getLogisticsPlatform, transferLogisticsChannelEntity.getLogisticsPlatform());
         queryWrapper.eq(TransferLogisticsChannelEntity::getCode, transferLogisticsChannelEntity.getCode());
         queryWrapper.eq(TransferLogisticsChannelEntity::getIsDeleted, false);
-        queryWrapper.last("limit 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         TransferLogisticsChannelEntity one  = baseMapper.selectOne(queryWrapper);
         //检查数据是否存在
         if (Objects.nonNull(one)){
-            transferLogisticsChannelEntity.setId(one.getId());
-            transferLogisticsChannelEntity.setUpdateTime(LocalDateTime.now());
-            return this.updateById(transferLogisticsChannelEntity);
+            return this.lambdaUpdate()
+                    .set(TransferLogisticsChannelEntity::getUpdateTime, LocalDateTime.now())
+                    .set(TransferLogisticsChannelEntity::getCode, transferLogisticsChannelEntity.getCode())
+                    .set(TransferLogisticsChannelEntity::getName, transferLogisticsChannelEntity.getName())
+                    .set(TransferLogisticsChannelEntity::getLogisticsPlatform, transferLogisticsChannelEntity.getLogisticsPlatform())
+                    .eq(TransferLogisticsChannelEntity::getId, one.getId())
+                    .update();
+        } else {
+            return this.save(transferLogisticsChannelEntity);
         }
-        return this.save(transferLogisticsChannelEntity);
     }
 
     @Override
@@ -232,10 +246,27 @@ public class TransferLogisticsChannelServiceImpl extends SuperServiceImpl<Transf
         return baseMapper.listLogisticsChannel(new ArrayList<>(),channelIds);
     }
 
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(TransferLogisticsChannelEntity logisticsChannelEntity) {
+    @Override
+    public TransferLogisticsChannelDTO.EditDeliveryCountryDTO editDeliveryCountry(String id) {
+        TransferLogisticsChannelDTO.EditDeliveryCountryDTO deliveryCountryDTO = new TransferLogisticsChannelDTO.EditDeliveryCountryDTO();
+        TransferLogisticsChannelEntity entity = this.getById(id);
+        deliveryCountryDTO.setId(entity.getId());
+        if (CharSequenceUtil.isBlank(entity.getDeliveryCountry())) {
+            return deliveryCountryDTO;
+        }
+        DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getDeliveryCountry());
+        if (ObjectUtil.isNotEmpty(countryEntity)) {
+            deliveryCountryDTO.setCountryCode(countryEntity.getId());
+            deliveryCountryDTO.setCountryName(countryEntity.getNameCn());
+        }
+        return deliveryCountryDTO;
+    }
 
+    @Override
+    public Boolean updateDeliveryCountry(TransferLogisticsChannelDTO.EditDeliveryCountryDTO dto) {
+        return this.lambdaUpdate()
+                .set(TransferLogisticsChannelEntity::getDeliveryCountry, dto.getCountryCode())
+                .eq(TransferLogisticsChannelEntity::getId, dto.getId())
+                .update();
     }
 }

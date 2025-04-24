@@ -8,6 +8,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
+import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.model.dmp.entity.DmpSoDetailEntity;
 import com.erp.model.dmp.entity.DmpSoInfoEntity;
@@ -119,6 +120,7 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                         dmpDataMap.put("orderStatus", ApproveStatusEnum.WAIT_SUBMIT.getCode());
                         dmpDataMap.put("deliveryStatus", SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
                         dmpDataMap.put("invalidStatus", Boolean.TRUE);
+                        dmpDataMap.put("isCancel", Boolean.TRUE);
                     }
                 }
                 Object shippingTypeObj = dmpDataMap.get("logisticType");
@@ -175,19 +177,24 @@ public class TikTokOrderDmpHandler extends DmpInputDbConvertDmpHandler {
                 //发货时间
                 Object deliveryTimeObj = dmpDataMap.get("deliveryTime");
                 if (deliveryTimeObj != null) {
-                    // 使用Instant类将Unix时间戳转换为LocalDateTime对象
-                    LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj + "")), ZoneId.systemDefault());
-                    dmpDataMap.put("deliveryTime", payTime);
+                    if (Long.valueOf(deliveryTimeObj + "") > 0) {
+                        // 使用Instant类将Unix时间戳转换为LocalDateTime对象
+                        LocalDateTime payTime = LocalDateTime.ofInstant(Instant.ofEpochSecond(Long.valueOf(deliveryTimeObj + "")), ZoneId.systemDefault());
+                        dmpDataMap.put("deliveryTime", payTime);
+                    }
                 }
 
                 //支付信息
                 Object paymentObj = dmpDataMap.get("payment");
                 if (paymentObj != null) {
                     Map<String, Object> paymentMap = (Map<String, Object>) paymentObj;
+                    dmpDataMap.put("payStatus", Boolean.TRUE);
+                    dmpDataMap.put("totalTaxFee", paymentMap.get("tax"));
                     dmpDataMap.put("payAmount", paymentMap.get("totalAmount"));
-                    dmpDataMap.put("allAmount", paymentMap.get("subTotal"));
+                    dmpDataMap.put("allAmount", paymentMap.get("originalTotalProductPrice"));
                     dmpDataMap.put("currencyCode", paymentMap.get("currency"));
                     dmpDataMap.put("shippingAmount", paymentMap.get("shippingFee"));
+                    dmpDataMap.put("totalDiscount", MathUtil.valueOf(paymentMap.get("sellerDiscount")).add(MathUtil.valueOf(paymentMap.get("platformDiscount"))));
                 }
             }
         }

@@ -1,7 +1,7 @@
 package com.erp.server.oms.shopify;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.enums.PlatformDictEnum;
@@ -12,6 +12,7 @@ import com.erp.model.oms.entity.*;
 import com.erp.model.wms.enums.QcBillStatusEnum;
 import com.erp.server.oms.ErpServerOmsApplication;
 import com.erp.server.oms.service.*;
+import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClient;
 import com.sdk.oms.shopify.api.graphql.ShopifyGraphQLClientService;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClient;
 import com.sdk.oms.shopify.api.rest.ShopifyRestClientService;
@@ -24,6 +25,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.python.antlr.ast.Str;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -80,7 +82,7 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void shopifyOrders() {
-        String accessToken = "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";
+        String accessToken = "";
         String shopifyShopDomain = "jim-shop-test.myshopify.com";
         ShopifyPage<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getOrders(2);
         String nextPageInfo = orders.getNextPageInfo();
@@ -94,8 +96,20 @@ public class ErpServerOmsShopifyApplicationTests {
     }
 
     @Test
+    public void shopifyOrdersByIds() {
+        String accessToken = "";
+        String shopifyShopDomain = "luna-shop-test.myshopify.com";
+        List<String> orderIds = Arrays.asList("5604730831040","5604730962112");
+        ShopifyPage<ShopifyOrder> orders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getOrderByIds(orderIds);
+        String nextPageInfo = orders.getNextPageInfo();
+        System.out.println("有分页=" + nextPageInfo);
+        System.out.println("订单结果：\n" + JSONUtil.toJsonStr(orders));
+    }
+
+
+    @Test
     public void filterShopifyOrders() {
-        String accessToken = "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";
+        String accessToken = "";
         String shopifyShopDomain = "luna-shop-test.myshopify.com";
 
         System.setProperty("socksProxyHost", "127.0.0.1");
@@ -103,8 +117,8 @@ public class ErpServerOmsShopifyApplicationTests {
 
         //1、通过检索订单列表，按指定条件获取订单ID，订单付款状态：部分付款，已付款，部分退款，已退款，已作废；订单创建时间：当天\
 //        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-11-27T00:00:00+08:00");
-        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2023-05-01T00:00:00-04:00");
-        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-08-16T00:00:00-04:00");
+        OffsetDateTime lastOffSetTime = OffsetDateTime.parse("2024-10-15T00:00:00+08:00");
+        OffsetDateTime nextOffSetTime = OffsetDateTime.parse("2024-10-17T14:05:00+08:00");
 
 
         List<ShopifyOrder> shopifyOrders = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
@@ -117,7 +131,7 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void filterShopifyProduct() {
-        String accessToken = "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";
+        String accessToken = "";
         String shopifyShopDomain = "jim-shop-test.myshopify.com";
         //
 
@@ -142,7 +156,7 @@ public class ErpServerOmsShopifyApplicationTests {
             return;
         }
         // platform-token:平台名称:店铺ID
-        String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
+        String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.SHOPIFY.getCode(), shopId);
 
         ShopifyShopInfoDTO dto = new ShopifyShopInfoDTO()
                 // 店铺ID
@@ -164,7 +178,7 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void getFulfillmentOrdersFromOrder() {
-        String accessToken = "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";
+        String accessToken = "";
         String shopifyShopDomain = "jim-shop-test.myshopify.com";
         // 订单单号ID
 //        String orderId = "5484776030507";
@@ -186,7 +200,7 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void givenSomeShopifyFulfillmentCreationRequestWhenCreatingShopifyFulfillmentThenCreateAndReturnFulfillmentWithFulfillmentOrderApi() throws Exception {
-        String accessToken = "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";
+        String accessToken = "";
         String shopifyShopDomain = "jim-shop-test.myshopify.com";
 
         ShopifyRestClient shopifySdk = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken);
@@ -230,7 +244,7 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void transaction() {
-        String accessToken = "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";
+        String accessToken = "";
         String shopifyShopDomain = "jim-shop-test.myshopify.com";
         String orderId = "5484775768363";
         List<ShopifyTransaction> transactionList = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken).getOrderTransactions(orderId);
@@ -239,17 +253,15 @@ public class ErpServerOmsShopifyApplicationTests {
 
     @Test
     public void getFulfillmentList() {
-        String accessToken = "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";
+        String accessToken = "";
         String shopifyShopDomain = "jim-shop-test.myshopify.com";
         // 订单单号ID
-//        String orderId = "5484776030507";
 
 
         ShopifyFulfillmentServicesRoot fulfillmentServices = shopifyRestClientService.getShopifyRestClient(shopifyShopDomain, accessToken)
                 .getFulfillmentServices();
 
         System.out.println("订单fulfillmentServices结果：\n" + JSONUtil.toJsonStr(fulfillmentServices));
-        // {"fulfillmentServices":[{"id":"66455634219","name":"Snow City Warehouse","serviceName":"Snow City Warehouse","handle":"snow-city-warehouse","fulfillmentOrdersOptIn":true,"includePendingStock":false,"locationId":"92033057067","callbackUrl":"https://mock.shop/","trackingSupport":false,"inventoryManagement":false,"adminGraphqlApiId":"gid://shopify/ApiFulfillmentService/66455634219","permitsSkuSharing":true}]}
     }
 
     @Test
@@ -350,4 +362,31 @@ public class ErpServerOmsShopifyApplicationTests {
             }
         }
     }
+
+    @Test
+    public void shopifyGraphQLReturnTest() {
+
+        ShopifyGraphQLClient shopifyGraphQLClient = shopifyGraphQLClientService.getShopifyGraphQLClient("luna-shop-test.myshopify.com", "");
+        // 退款
+        String orderReturn = shopifyGraphQLClient.getOrderReturn("5530425884864");
+        // 退货
+//        String orderReturn = shopifyGraphQLClient.getOrderReturn("5533574234304");
+        System.out.println("订单退货信息结果");
+        System.out.println(orderReturn);
+    }
+
+    @Test
+    public void shopifyReturnTest() {
+        ShopifyRestClient shopifyRestClient = shopifyRestClientService.getShopifyRestClient("luna-shop-test.myshopify.com", "");
+        // 退款
+//        String orderReturn = shopifyRestClient.getOrderRefunds("5530425884864");
+        // 退货
+//        String orderReturn = shopifyRestClient.getOrderRefunds("5533574234304");
+        String orderReturn = shopifyRestClient.getOrderRefunds("5630271684800");
+        System.out.println("订单退货信息结果");
+        System.out.println(orderReturn);
+    }
+
+
+
 }

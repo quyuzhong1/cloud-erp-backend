@@ -14,7 +14,7 @@ import java.util.Date;
  */
 @TableName(value ="product_operate_log")
 @Data
-public class ProductOperateRecordEntity extends BaseEntity implements Serializable {
+public class ProductOperateRecordEntity extends BaseEntity<ProductOperateRecordEntity> implements Serializable {
 
     /**
      * 产品表id

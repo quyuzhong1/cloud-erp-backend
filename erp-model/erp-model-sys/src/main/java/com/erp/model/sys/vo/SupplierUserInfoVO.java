@@ -8,7 +8,6 @@ import java.util.Date;
 /**
  * @author zdy
  * @ClassName SupplierUserVO
- * @description: TODO
  * @date 2024年01月05日
  * @version: 1.0
  */

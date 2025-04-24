@@ -88,14 +88,14 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.SubcontractReturnDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  subcontract_return
-        WHERE is_deleted=FALSE
+        sr.approve_status AS tabFlag,
+        count(sr.*)  AS count
+        FROM  subcontract_return sr
+        WHERE sr.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY sr.approve_status
     </select>
 
 </mapper>

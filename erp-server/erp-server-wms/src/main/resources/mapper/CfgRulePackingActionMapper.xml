@@ -32,7 +32,18 @@
         FROM cfg_rule_picking crp
         INNER JOIN cfg_rule_picking_action crpa ON crpa.is_deleted = FALSE AND crpa.rule_id = crp.id
         INNER JOIN inventory inv ON inv.is_deleted = FALSE and inv.warehouse_id = crpa.warehouse_id AND
-        inv.dict_inventory_status = 'usable' AND inv.qty > 0
+        inv.dict_inventory_status = 'usable'
+        <if test="determiningCondition != null and determiningCondition != '' ">
+            <if test="determiningCondition == 'gt'">
+                AND inv.qty > 0
+            </if>
+            <if test="determiningCondition == 'eq'">
+                AND inv.qty = 0
+            </if>
+            <if test="determiningCondition == 'lt'">
+                AND inv.qty &lt; 0
+            </if>
+        </if>
         INNER JOIN warehouse_location wl on wl.parent_id = crpa.warehouse_area_id and inv.warehouse_location = wl.code
         and crpa.warehouse_id = wl.warehouse_id
         WHERE crp.is_deleted = FALSE

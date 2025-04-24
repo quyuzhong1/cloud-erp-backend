@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @Classname SkuVO
@@ -178,14 +179,28 @@ public class SkuVO implements Serializable {
      */
     private BigDecimal actualTaxCost;
     /**
+     * 税率
+     */
+    private BigDecimal taxRate;
+    /**
      * 成本价格（不含税）
      */
     private BigDecimal notTaxCostPrice;
+    /**
+     * 成本价格来源
+     */
+    private String costSource;
+    //材料成本
+    private BigDecimal productCost;
+    //头程运费
+    private BigDecimal firstMileShippingCost;
+    //清关税费
+    private BigDecimal clearanceCustomsTax;
 
     /**
      * 标准零售价
      */
-    private BigDecimal retailPrice;
+    private BigDecimal retailPrice = BigDecimal.ZERO;
 
     /**
      * 一级供应商
@@ -253,11 +268,15 @@ public class SkuVO implements Serializable {
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 审核状态
+         */
+        private List<Integer> statusList;
     }
 
     @Data
     @NoArgsConstructor
-    public static class PropertyDTO {
+    public static class PropertyDTO implements Serializable{
         /**
          * 是否带电
          */

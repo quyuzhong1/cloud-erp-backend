@@ -1,8 +1,11 @@
 package com.erp.server.wms.mapper;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
+import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +18,11 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface RequisitionApplicationDetailMapper extends BaseMapper<RequisitionApplicationDetailEntity> {
-
+    /**
+     * 查询要货申请数据
+     * @author will
+     * @date 2024/9/26 17:41
+     * @return List<ViewDTO>
+     */
+    List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail();
 }

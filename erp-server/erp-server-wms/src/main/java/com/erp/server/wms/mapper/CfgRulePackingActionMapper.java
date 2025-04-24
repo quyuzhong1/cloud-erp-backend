@@ -19,5 +19,5 @@ import java.util.List;
 @Mapper
 public interface CfgRulePackingActionMapper extends BaseMapper<CfgRulePackingActionEntity> {
 
-    List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(@Param("ruleIds") List<String> ruleIds, @Param("warehouseIds") List<String> warehouseIds, @Param("skuIds") List<String> skuIds);
+    List<CfgRulePickingDTO.CfgRulePickingInventoryDTO> listLocationByRule(@Param("ruleIds") List<String> ruleIds, @Param("warehouseIds") List<String> warehouseIds, @Param("skuIds") List<String> skuIds, @Param("determiningCondition")String determiningCondition);
 }

@@ -1,24 +1,18 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
-
-import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.Serializable;
-import java.util.Map;
-import java.util.Objects;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -186,6 +180,44 @@ public class WarehouseLocationMoveDTO implements Serializable {
         * 创建人名称
         */
         private String createUserName;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatus;
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatusName;
+
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatus;
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatusName;
 
         public String getWarehouseId() {
             if (StringUtils.isBlank(warehouseId)){
@@ -680,6 +712,14 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 仓位名称
          */
         private String inWarehouseLocationName;
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatus;
+        /**
+         * 上架仓位库存状态名称
+         */
+        private String inInventoryStatusName;
 
         /**
          * 取出仓位
@@ -690,6 +730,34 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 取出仓位名称
          */
         private String outWarehouseLocationName;
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatus;
+        /**
+         * 取出仓位库存状态名称
+         */
+        private String outInventoryStatusName;
+
+        /**
+         * 来源id
+         */
+        private String sourceId;
+
+        /**
+         * 来源编号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
     }    /**
      * PDA:分页列表
      */
@@ -944,5 +1012,70 @@ public class WarehouseLocationMoveDTO implements Serializable {
          * 上架仓位库存状态
          */
         private String inInventoryStatus;
+    }
+
+
+    /**
+     * 生成拣货单--缺货--仓位移动实体
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenPickToSkuMove{
+
+        /**
+         *
+         */
+        private String id;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * sku编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 调拨数量
+         */
+        private Integer qty;
+        /**
+         * 仓位
+         */
+        private String inWarehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String inWarehouseLocationName;
+
+        /**
+         * 取出仓位
+         */
+        private String outWarehouseLocation;
+
+        /**
+         * 取出仓位名称
+         */
+        private String outWarehouseLocationName;
+
+        /**
+         * 取货仓位库存状态
+         */
+        private String outInventoryStatus;
+        /**
+         * 上架仓位库存状态
+         */
+        private String inInventoryStatus;
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouse;
     }
 }

@@ -308,7 +308,7 @@ public class KingdeeDepartmentServiceImpl extends SuperServiceImpl<KingdeeDepart
 
         Optional.ofNullable(entity).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶部门不存在"));
         Boolean result = this.removeById(id);
-        if (result && StringUtils.isNotBlank(entity.getKingdeeId())) {
+        if (result) {
             //金蝶推送
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSysDeptService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_DELETE.getCode());
             //推送金蝶

@@ -59,7 +59,7 @@ public class PlmAttachmentEntity extends BaseEntity<PlmAttachmentEntity> {
 
     public static final String BUSINESS_ID = "business_id";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String ATTACH_URL = "attach_url";
 

@@ -39,6 +39,11 @@ public interface BiSubjectShareService extends IService<BiSubjectShareEntity> {
      * @author yl
      * @date 2022-12-09 11:02
      */
+    /**
+     * @deprecated
+     * This method is deprecated and will be removed in future versions.
+     * Please use {@link #getUserVisibleModuleIdsNew(String)} instead.
+     */
     @Deprecated
     List<String> getShareToMeDashboardIds(String userId, List<String> roleIdList);
 

@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -24,11 +24,11 @@ import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
@@ -45,7 +45,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarrierMapper, LogisticsCarrierEntity> implements LogisticsCarrierService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -65,10 +65,10 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流快递/海运/空运公司列单" , logisticsCarrierEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流快递/海运/空运公司列单" , logisticsCarrierEntity.getId());
+        
         operateLogService.addModuleOperateLog(msg, null, logisticsCarrierEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        
 
         return new BaseResultDTO.AddDTO(logisticsCarrierEntity.getId(), logisticsCarrierEntity.getId());
     }
@@ -90,12 +90,12 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
         if(!save) {
             throw new ServiceException("物流快递/海运/空运公司列单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        
 
         // 记录主单操作日志
             log.info("编辑 开始记录物流快递/海运/空运公司列单日志数据，id：【{}】", logisticsCarrierEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsCarrierEntity.getId(), "物流快递/海运/空运公司列单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsCarrierEntity.getId(), "物流快递/海运/空运公司列单");
+        
         operateLogService.addModuleOperateLogByObj(old, logisticsCarrierEntity, null, logisticsCarrierEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -161,7 +161,7 @@ public class LogisticsCarrierServiceImpl extends SuperServiceImpl<LogisticsCarri
     * 新增修改处理数据
     */
     private void handleData(LogisticsCarrierEntity logisticsCarrierEntity) {
-    // TODO 验证数据 & 数据赋值
+    
     }
 
     /**

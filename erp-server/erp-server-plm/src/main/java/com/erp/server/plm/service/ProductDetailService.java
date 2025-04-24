@@ -2,6 +2,7 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.ExcelImportFsDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -9,11 +10,14 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.entity.TaskRefSkuConfigEntity;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
+import com.erp.model.sys.openapi.UploadSkuDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -214,9 +218,18 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Author Luo_WG
      * @Date 2022/9/22 10:55
      * @param productNoSpecDTO:新增产品无规格sku信息请求参数
+     * @return String
+     **/
+    String inportExcel(ProductNoSpecDTO productNoSpecDTO);
+
+    /**
+     * @Description 新增无规格sku信息 并推送金蝶
+     * @Author jack
+     * @Date 2025-02-07
+     * @param productNoSpecDTO:新增产品无规格sku信息请求参数
      * @return java.lang.Boolean
      **/
-    Boolean inportExcel(ProductNoSpecDTO productNoSpecDTO);
+    Boolean inportExcelAndSync(ProductNoSpecDTO productNoSpecDTO,ProductDetailEntity productBy);
 
     /**
      * 导出excel的sku数据
@@ -227,6 +240,8 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @Date 2022/10/9 11:49
      **/
     void exportProduct(ProductSkuExcelDTO productSkuExcelDTO, HttpServletResponse response);
+
+    PagingVO<ProductDetailExcelExportDTO> exportProductDetail(PagingDTO<ProductSkuExcelDTO>productSkuExcelDTO );
 
     /**
      * 根据sku id集合
@@ -456,14 +471,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<SkuVO> searchSkuInfo(ProductDetailDTO.SearchDTO dto);
 
     /**
-     * 获取所有明细信息包括删除，用来同步到DMP
-     * @Author Luo_WG
-     * @Date 2023/4/19 16:12
-     * @return java.util.List<com.erp.model.plm.entity.ProductDetailEntity>
-     **/
-    List<ProductDetailEntity> getProductDetailAll();
-
-    /**
      * 更改产品状态
      * @author yl
      * @date 2023-06-14 11:12
@@ -660,7 +667,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param response
      * @return java.lang.Boolean
      **/
-    Boolean importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
+    ExcelImportFsDTO.UrlDTO importProductFile(MultipartFile excelFile, Integer importType, HttpServletResponse response);
 
 
     /**
@@ -692,8 +699,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     List<SkuVO> accessoriesSku(String searchKeyword);
 
-    List<ProductDetailExcelDTO> getProductDetailExportData(String metaInfo);
-
     /**
      * 获取已审核sku 未计算目的国申报价数据
      * @return
@@ -703,10 +708,9 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     /**
      * 重算目的国申报单价
      * @param details
+     * @param isManual 是否手动计算
      */
-    void recalDestDeclarePrice(List<ProductDetailEntity> details);
-
-    void initProductSizeAndBoxSize();
+    List<BatchResultDTO> resetDestDeclarePrice(List<ProductDetailEntity> details, Boolean isManual);
 
     /**
      * 历史数据sku 增加默认值 并且把已存在目的国海关编码值移到custom中
@@ -797,6 +801,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
 
     String dimensionalWeightMeasure(DimensionalWeightDTO dto);
     void initProductToWangDian(List<String> ids);
+    void initProductToLingXing(List<String> ids);
     PagingVO<SkuVO> pagingSelect(PagingDTO<SkuVO.SelectDTO> dto);
 
     /**
@@ -815,4 +820,58 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @date 2024-09-20
      */
     List<SkuVO.ProductChargeInfoDTO> listProductChargeInfoByIds(List<String> skuIds);
+
+    /**
+     * 获取已审核，已上市数据
+     */
+    List<SkuVO> listApproveAndListingSku();
+
+    /**
+     * 获取skuId
+     */
+    List<String> getCategoryByQuerySql(String compareCodeSplicingValueSql);
+    /**
+     * 获取skuId
+     */
+    List<String> getBrandByQuerySql(String compareCodeSplicingValueSql);
+
+
+    /**
+     * 打印EAN
+     * @param printEanDTO 打印参数
+     * @param response    响应
+     */
+    void printEan(PrintEanDTO printEanDTO, HttpServletResponse response);
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细
+     * @param ids skuIds
+     */
+    List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids);
+    /**
+     * 修改产品包装尺寸
+     * @param viewDTO 参数
+     */
+    BatchResultDTO updateProductPack(ProductPackViewDTO viewDTO);
+
+    void uploadSkuImage(UploadSkuDTO dto);
+
+    /**
+     * 导入更新
+     * @param excelFile 文件
+     * @param response 响应
+     */
+    ExcelImportFsDTO.UrlDTO importProductUpdate(MultipartFile excelFile, HttpServletResponse response);
+
+    /**
+     * @description: 推送金蝶
+     * @param list
+     */
+    void sendPushTask (List<ProductDetailEntity> list, String operate);
+
+    List<ProductDetailDTO.SkuChangeInfoDTO> getProductBasicChangeField(ProductInfoDTO productInfoDTO, ProductInfoEntity oldEntity);
+
+    List<ProductDetailDTO.SkuChangeInfoDTO> getProductPackChangeField(ProductPackDTO productPackDTO, ProductPackEntity oldEntity);
+
+    void handleProductChangeNotification(List<ProductDetailDTO.NoticeDTO> noticeDTOList, Boolean isTransaction);
 }

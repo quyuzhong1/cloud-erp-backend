@@ -16,7 +16,7 @@ import java.util.Date;
  */
 @Data
 @TableName(value ="project_task_ref_sku")
-public class ProjectTaskRefSkuEntity extends BaseEntity implements Serializable {
+public class ProjectTaskRefSkuEntity extends BaseEntity<ProjectTaskRefSkuEntity> implements Serializable {
 
     /**
      * 任务id

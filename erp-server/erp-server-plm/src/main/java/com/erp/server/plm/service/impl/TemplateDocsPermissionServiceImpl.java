@@ -45,7 +45,7 @@ public class TemplateDocsPermissionServiceImpl extends ServiceImpl<TemplateDocsP
      */
     @Override
     public void saveTemplateDocsPermission(String templateId, String productId, List<CopySourceDTO> sourceDeliveryList, List<CopySourceDTO> taskSourceList, List<CopySourceDTO> sourceRoleList) {
-        List<DocsPermissionEntity> list = docsPermissionService.getDocsPermissionByProductId(productId);
+        List<DocsPermissionEntity> list = docsPermissionService.getAllDeliveryDocsIds(productId);
         if (CollectionUtils.isNotEmpty(list)) {
             List<TemplateDocsPermissionEntity> saveList = new ArrayList<>();
             for (DocsPermissionEntity item : list) {

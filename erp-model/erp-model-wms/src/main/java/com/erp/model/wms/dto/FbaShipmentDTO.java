@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -443,8 +442,8 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO extends SortDTO {
-
+    public static class PagingParamDTO extends SortDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 页面高级查询
          */
@@ -870,4 +869,32 @@ public class FbaShipmentDTO implements Serializable {
         private Integer requisitionQty;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SyncViewDTO {
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+        /**
+         * 授权状态Name
+         */
+        private String authStatusName;
+        /**
+         * 最近同步时间
+         */
+        private LocalDateTime lastSyncTime;
+        /**
+         * 同步结果
+         */
+        private String syncResult;
+    }
 }

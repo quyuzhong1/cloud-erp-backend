@@ -12,5 +12,9 @@ public interface SyncKingdeeCustomerService {
      */
     List<DmpPushTaskEntity> syncDataToKingdee(CustomerInfoEntity entity, String operate);
     
+    void syncDataToSdy(CustomerInfoEntity entity, String operate);
+    
     Map<String, Object> newSyncDataToKingdee(CustomerInfoEntity entity, String operate);
+    
+    Map<String, Object> newSyncDataToSdy(CustomerInfoEntity entity, String operate);
 }

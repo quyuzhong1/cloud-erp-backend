@@ -45,6 +45,8 @@
         tfmr.approve_status AS approveStatus,
         tfmr.approve_user_id AS approveUserId,
         tfmr.approve_user_name AS approveUserName,
+        tfmr.pay_status,
+        tfmr.pay_time,
         tfmr.reconciliation_date AS reconciliationDate,
         tfmr.submit_date AS submitDate,
         tfmr.approve_date AS approveDate,
@@ -84,8 +86,6 @@
             SUM(other_cost) AS actualOtherCost,
             SUM(other_tax_cost) AS actualOtherTaxCost,
             SUM(total_logistics_cost) AS totalCost,
-            MAX(source_code) as source_code,
-            MAX(transport_no) as transport_no,
         main_id
         FROM
         tms_first_mile_reconciliation_detail

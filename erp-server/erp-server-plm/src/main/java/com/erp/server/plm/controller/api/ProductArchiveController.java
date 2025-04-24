@@ -1,6 +1,7 @@
 package com.erp.server.plm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -11,6 +12,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProductArchiveDTO;
 import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.server.plm.query.ProductActhQueryHandler;
 import com.erp.server.plm.service.ProductArchiveService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -44,8 +46,9 @@ public class ProductArchiveController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "plm:product:archive:paging", tableAlias = "pt")
-    public ApiResult<PagingVO<List<ProductArchiveDTO>>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
-        PagingVO<List<ProductArchiveDTO>> pagingVO = productArchiveService.paging(dto);
+    @WebAdvanceQuery(handler = ProductActhQueryHandler.class)
+    public ApiResult<PagingVO<ProductArchiveDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
+        PagingVO<ProductArchiveDTO> pagingVO = productArchiveService.paging(dto);
 
         return success(pagingVO);
     }
@@ -55,8 +58,7 @@ public class ProductArchiveController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新激活：id={productId}")
     @PostMapping("/activate")
-    //@RequestPermissions("plm:product:archive:activate")
-    public ApiResult activate(String productId) {
+    public ApiResult<Object> activate(String productId) {
         boolean flag = productArchiveService.activate(productId);
         return flag==true?success():failure("激活失败");
     }

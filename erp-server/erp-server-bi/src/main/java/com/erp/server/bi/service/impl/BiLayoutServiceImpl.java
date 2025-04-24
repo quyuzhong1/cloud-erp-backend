@@ -95,12 +95,12 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         subject.setCategoryName(categoryName);
         Boolean result = subjectService.updateById(subject);
         String shareFlag = subject.getShareFlag();
-        if (result) {
+        if (Boolean.TRUE.equals(result)) {
             // 检查和添加分享记录
             subjectShareService.checkAndAddSubjectShare(dto.getShareUserIdList(), subjectId, shareFlag);
         }
         List<LayoutDTO> layoutList = dto.getLayoutList();
-        List<String> LayoutIds = new ArrayList<>();
+        List<String> layoutIds = new ArrayList<>();
         for (LayoutDTO layout : layoutList) {
             BiLayoutEntity entity = new BiLayoutEntity();
             String layoutId = IdWorker.getIdStr();
@@ -111,14 +111,14 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             Integer columnCount = LayoutBlockEnum.getCount(blockNo);
             entity.setColumnCount(columnCount);
             Boolean flag = this.save(entity);
-            if (flag) {
-                LayoutIds.add(layoutId);
+            if (Boolean.TRUE.equals(flag)) {
+                layoutIds.add(layoutId);
                 //保存布局与 模块关系
                 layoutRefModuleService.addLayoutRefModule(subjectId, layoutId, blockNo, layout.getModuleIdList());
             }
         }
         //保存专题与布局关系表
-        subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
+        subjectRefLayoutService.addSubjectRefLayout(subjectId, layoutIds);
         return true;
     }
 
@@ -141,7 +141,6 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         }
         List<String> roleIdList = sysUserFeign.getRoleIdList(userId);
         subjectShareService.checkPermission(userId, subject, roleIdList);
-//        List<String> shareUserIdList = subjectShareService.getUserIdsBySubjectId(subjectId);
         List<BiSubjectShareEntity> shareEntityList =  subjectShareService.findBySubjectId(subjectId);
         List<String> shareFlagIdList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(shareEntityList)){
@@ -228,33 +227,37 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         subjectRefLayoutService.deleteBySubjectId(subjectId);
         //删除 模块与布局关系表
         layoutRefModuleService.deleteBySubjectId(subjectId);
-        List<String> LayoutIds = new ArrayList<>();
+        List<String> layoutIds = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(layoutDetailsList)) {
-            for (LayoutDetailsDTO item : layoutDetailsList) {
-                BiLayoutEntity entity = new BiLayoutEntity();
-                String id = item.getId();
-                if (StringUtils.isBlank(id)) {
-                    id = IdWorker.getIdStr();
-                }
-                entity.setId(id);
-                String blockNo = item.getBlockNo();
-                entity.setBlockNo(blockNo);
-                entity.setHeight(item.getHeight());
-                Integer columnCount = LayoutBlockEnum.getCount(blockNo);
-                entity.setColumnCount(columnCount);
-                Boolean saveResult = this.saveOrUpdate(entity);
-                if (saveResult) {
-                    LayoutIds.add(id);
-                    //保存布局与 模块关系
-                    layoutRefModuleService.addLayoutRefModule(subjectId, id, blockNo, item.getModuleIdList());
-                }
-            }
-            //保存专题与布局关系表
-            subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
+            saveLayout(subjectId, layoutDetailsList, layoutIds);
         }
 
 
         return subjectId;
+    }
+
+    private void saveLayout(String subjectId, List<LayoutDetailsDTO> layoutDetailsList, List<String> layoutIds) {
+        for (LayoutDetailsDTO item : layoutDetailsList) {
+            BiLayoutEntity entity = new BiLayoutEntity();
+            String id = item.getId();
+            if (StringUtils.isBlank(id)) {
+                id = IdWorker.getIdStr();
+            }
+            entity.setId(id);
+            String blockNo = item.getBlockNo();
+            entity.setBlockNo(blockNo);
+            entity.setHeight(item.getHeight());
+            Integer columnCount = LayoutBlockEnum.getCount(blockNo);
+            entity.setColumnCount(columnCount);
+            Boolean saveResult = this.saveOrUpdate(entity);
+            if (Boolean.TRUE.equals(saveResult)) {
+                layoutIds.add(id);
+                //保存布局与 模块关系
+                layoutRefModuleService.addLayoutRefModule(subjectId, id, blockNo, item.getModuleIdList());
+            }
+        }
+        //保存专题与布局关系表
+        subjectRefLayoutService.addSubjectRefLayout(subjectId, layoutIds);
     }
 
 
@@ -270,8 +273,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
     public Boolean deleteLayoutModule(DeleteLayoutModuleDTO dto) {
         String moduleId = dto.getModuleId();
         //删除布局模块
-        Boolean result = layoutRefModuleService.deleteLayoutModuleId(dto.getLayoutId(), moduleId);
-        return result;
+        return layoutRefModuleService.deleteLayoutModuleId(dto.getLayoutId(), moduleId);
     }
 
     /**
@@ -316,7 +318,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             layout.setBlockNo(item.getBlockNo());
             Boolean flag = this.save(layout);
             //保存成功 就去看布局与模块关系
-            if (flag) {
+            if (Boolean.TRUE.equals(flag)) {
                 layoutIdList.add(newLayoutId);
                 //复制布局与模块 关系
                 layoutRefModuleService.copyLayoutRefModule(newSubjectId, newLayoutId, copyLayoutId);
@@ -353,10 +355,10 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
         //专题id
         String subjectId = subjectService.addSubject(subject);
         if (StringUtils.isBlank(subjectId)) {
-            return subjectId;
+            return "";
         }
 
-        List<String> LayoutIds = new ArrayList<>();
+        List<String> layoutIds = new ArrayList<>();
         for (LayoutDTO layout : layoutList) {
             BiLayoutEntity entity = new BiLayoutEntity();
             String layoutId = IdWorker.getIdStr();
@@ -367,16 +369,17 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
             Integer columnCount = LayoutBlockEnum.getCount(blockNo);
             entity.setColumnCount(columnCount);
             Boolean flag = this.save(entity);
-            if (flag) {
-                LayoutIds.add(layoutId);
+            if (Boolean.TRUE.equals(flag)) {
+                layoutIds.add(layoutId);
                 //保存布局与 模块关系
                 layoutRefModuleService.addLayoutRefModule(subjectId, layoutId, blockNo, layout.getModuleIdList());
             }
         }
         //保存专题与布局关系表
-        subjectRefLayoutService.addSubjectRefLayout(subjectId, LayoutIds);
+        subjectRefLayoutService.addSubjectRefLayout(subjectId, layoutIds);
         return subjectId;
     }
+
 
 
     /**
@@ -431,11 +434,7 @@ public class BiLayoutServiceImpl extends ServiceImpl<BiLayoutMapper, BiLayoutEnt
                 BiModuleEntity module = moduleList.stream().filter(m -> m.getId().equals(moduleId)).
                         findFirst().orElse(null);
                 refModule.setId(moduleId);
-                if (visibleModuleIdList.contains(moduleId)) {
-                    refModule.setVisible(true);
-                } else {
-                    refModule.setVisible(false);
-                }
+                refModule.setVisible(visibleModuleIdList.contains(moduleId));
                 if (module != null) {
                     refModule.setSysModuleId(module.getSysModuleId());
                     refModule.setCode(module.getCode());

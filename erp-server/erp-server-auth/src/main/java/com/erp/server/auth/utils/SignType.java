@@ -1,8 +1,11 @@
 package com.erp.server.auth.utils;
 
-public interface SignType {
+public class SignType {
+	private SignType() {
+		
+	}
+	
+    public static final String AES = "AES";
 
-    String AES = "AES";
-
-    String MD5 = "MD5";
+    public static final String MD5 = "MD5";
 }

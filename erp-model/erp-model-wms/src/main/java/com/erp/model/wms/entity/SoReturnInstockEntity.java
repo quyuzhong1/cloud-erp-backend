@@ -211,14 +211,33 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
     @TableField("created")
     private LocalDateTime created;
 
+    /**
+     * 退货物流单号
+     */
+    @TableField("return_logistic_code")
+    private String returnLogisticCode;
+    /**
+     * 平台订单编码
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode;
+
+    /**
+     * 比重
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
     @TableField(exist = false)
     private List<SoReturnInstockDetailEntity> detailEntityList;
 
     public static final String APPROVE_STATUS = "approve_status";
-
-    public static final String CODE = "code";
-
-    public static final String TYPE = "type";
 
     public static final String SALES_ORG_ID = "sales_org_id";
 

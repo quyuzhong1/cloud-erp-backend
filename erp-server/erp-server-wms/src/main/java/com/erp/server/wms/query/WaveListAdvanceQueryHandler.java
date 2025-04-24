@@ -1,13 +1,8 @@
 package com.erp.server.wms.query;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.query.AbstractQueryHandler;
-import com.erp.model.wms.entity.PickingCartTypeEntity;
 import com.erp.model.wms.enums.WaveStatusEnum;
-import com.erp.server.wms.service.PickingCartTypeService;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.Resource;
 
 /**
  * 波次列表高级查询
@@ -19,7 +14,7 @@ public class WaveListAdvanceQueryHandler extends AbstractQueryHandler {
 
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
-        if(field.equals("wl.status")){
+        if("wl.status".equals(field)){
             for (WaveStatusEnum statusEnum : WaveStatusEnum.values()) {
                 if(value.equals(statusEnum.getCode())){
                     super.buildDefaultDTO("wl.status", value);

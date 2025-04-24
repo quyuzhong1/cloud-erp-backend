@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -14,7 +15,9 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class TaskChargeDistributionDTO {
+public class TaskChargeDistributionDTO  implements Serializable {
+
+    private static final long serialVersionUID = 2405172041950251807L;
 
     /**
      * 分配类型（0角色，1人员，2上级人员负责人）

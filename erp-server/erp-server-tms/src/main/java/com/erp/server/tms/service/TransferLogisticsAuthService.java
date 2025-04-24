@@ -131,7 +131,7 @@ public interface TransferLogisticsAuthService extends SuperService<TransferLogis
      * @param logisticsPlatform
      * @return com.common.core.controller.vo.ApiResult
      **/
-    ApiResult authLogistics(String id, String logisticsPlatform);
+    ApiResult<Object>authLogistics(String id, String logisticsPlatform);
 
     /**
      * 根据授权信息进行校验
@@ -141,7 +141,7 @@ public interface TransferLogisticsAuthService extends SuperService<TransferLogis
      * @param authConfig
      * @return com.common.core.controller.vo.ApiResult
      **/
-    ApiResult authLogistics(String logisticsPlatform,Map<String, String> authConfig);
+    ApiResult<Object>authLogistics(String logisticsPlatform,Map<String, String> authConfig);
 
     /**
      * 修改物流授权状态

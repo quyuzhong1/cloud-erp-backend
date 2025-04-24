@@ -10,6 +10,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -69,7 +70,10 @@ public class VirtualInventoryDTO implements Serializable {
          * 虚拟仓冻结库存
          */
         private Integer virtualFrozenQty;
-
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
         /**
          * 虚拟库存明细
          */
@@ -129,6 +133,14 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer realQty;
         /**
+         * 实体仓在途库存
+         */
+        private Integer inTransitQty;
+        /**
+         * 实体仓待检库存
+         */
+        private Integer waitQcQty;
+        /**
          * 实体仓已分配数
          */
         private Integer distributionQty;
@@ -175,14 +187,14 @@ public class VirtualInventoryDTO implements Serializable {
         private String skuId;
 
         /**
-         * 仓库状态
+         * 虚拟仓可用数量
          */
-        private String dictInventoryStatus;
+        private Integer virtualUsableQty;
 
         /**
-         * 虚拟仓数量
+         * 虚拟仓冻结数量
          */
-        private Integer virtualQty;
+        private Integer virtualFrozenQty;
 
         /**
          * 实体仓可用数量
@@ -193,6 +205,16 @@ public class VirtualInventoryDTO implements Serializable {
          * 实体仓冻结数量
          */
         private Integer frozenQty;
+
+        /**
+         * 实体仓在途库存
+         */
+        private Integer inTransitQty;
+
+        /**
+         * 实体仓待检库存
+         */
+        private Integer waitQcQty;
     }
 
 
@@ -364,6 +386,10 @@ public class VirtualInventoryDTO implements Serializable {
          */
         private Integer warehouseAllocationQty = 0;
         /**
+         * 实体仓实际库存
+         */
+        private Integer realQty = 0;
+        /**
          * 实体仓可用库存
          */
         private Integer warehouseUsableQty = 0;
@@ -466,7 +492,7 @@ public class VirtualInventoryDTO implements Serializable {
         /**
          * 库存状态
          */
-        private String dictInventoryStatus;
+        private List<String> dictInventoryStatusList;
     }
 
     @Data
@@ -648,6 +674,11 @@ public class VirtualInventoryDTO implements Serializable {
          * 虚拟仓可用库存
          */
         private Integer virtualUsableQty;
+
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
     }
 
 

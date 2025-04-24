@@ -10,7 +10,6 @@ import java.util.Map;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -26,7 +25,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Accessors(chain = true)
 @TableName(value = "cfg_rule_out", autoResultMap = true)
 public class CfgRuleOutEntity extends BaseEntity<CfgRuleOutEntity> {
-
+    private static final long serialVersionUID = 2405172041950251807L;
     /**
     * 配置规则类型
     */
@@ -37,12 +36,6 @@ public class CfgRuleOutEntity extends BaseEntity<CfgRuleOutEntity> {
     */
     @TableField(value = "rule_content", typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> ruleContent;
-
-
-    public static final String TYPE = "type";
-
-    public static final String RULE_CONTENT = "rule_content";
-
     @Override
     public Serializable pkVal() {
         return null;

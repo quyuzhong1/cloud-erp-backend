@@ -160,6 +160,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     viewShopDTO.setShopName(shopInfoEntity.getName());
                     viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
                     viewShopDTO.setDisabled(shopInfoEntity.getDisabled());
+                    viewShopDTO.setType(shopInfoEntity.getType());
                     detailList.add(viewShopDTO);
                 }
             } else {
@@ -175,6 +176,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     viewShopDTO.setShopName(shopInfoEntity.getName());
                     viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
                     viewShopDTO.setDisabled(shopInfoEntity.getDisabled());
+                    viewShopDTO.setType(shopInfoEntity.getType());
                     detailList.add(viewShopDTO);
                 }
             }
@@ -235,6 +237,8 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     viewShopDTO.setName(shopInfoEntity.getName());
                     viewShopDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
                     viewShopDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+                    viewShopDTO.setCountryId(shopInfoEntity.getDictCountryCode());
+                    viewShopDTO.setCountryName(shopInfoEntity.getCountryName());
                     resultList.add(viewShopDTO);
                 }
             } else {
@@ -243,7 +247,7 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     //店铺信息
                     ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
                     if (ObjectUtils.isEmpty(shopInfoEntity)) {
-                        throw new ServiceException(ApiError.ERROR_92058);
+                        continue;
                     }
                     ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
                     viewShopDTO.setShopId(shopSysUserAuthEntity.getShopId());
@@ -254,6 +258,8 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
                     viewShopDTO.setName(shopInfoEntity.getName());
                     viewShopDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
                     viewShopDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
+                    viewShopDTO.setCountryId(shopInfoEntity.getDictCountryCode());
+                    viewShopDTO.setCountryName(shopInfoEntity.getCountryName());
                     resultList.add(viewShopDTO);
                 }
             }

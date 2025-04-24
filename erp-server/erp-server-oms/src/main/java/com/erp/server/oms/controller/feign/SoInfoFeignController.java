@@ -1,25 +1,27 @@
 package com.erp.server.oms.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.controller.BaseController;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.dto.SoInfoToSdyDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
+import com.erp.server.oms.kingdee.SyncKingdeeSoService;
 import com.erp.server.oms.service.SoDetailService;
 import com.erp.server.oms.service.SoInfoService;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,6 +40,9 @@ public class SoInfoFeignController extends BaseController {
 
     @Resource
     private SoInfoService soInfoService;
+
+    @Resource
+    private SyncKingdeeSoService syncKingdeeSoService;
 
     /**
      * 根据主键id查询销售单主表信息
@@ -61,6 +66,9 @@ public class SoInfoFeignController extends BaseController {
      **/
     @PostMapping("/listSoInfoByIds")
     public List<SoInfoEntity> listSoInfoByIds(@RequestBody List<String> ids) {
+        if (CollUtil.isEmpty(ids)) {
+            return Collections.emptyList();
+        }
         return soInfoService.listByIds(ids);
     }
 
@@ -188,5 +196,25 @@ public class SoInfoFeignController extends BaseController {
     @PostMapping("/updateFrozenQty")
     public void updateFrozenQty(@RequestBody @Validated List<SoDetailDTO.UpdateFrozenQtyDTO> soParamList){
          soDetailService.updateFrozenQty(soParamList);
+    }
+
+    /**
+     * 查询所有虚拟仓B2B销售订单数据
+     * @author will
+     * @date 2024/9/26 16:57
+     * @return List<ViewDTO>
+     */
+    @GetMapping("/listAllVirtualSoDetail")
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoDetail(){
+       return soDetailService.listAllVirtualSoDetail();
+    }
+
+    /**
+     * 同步速递云B2B订单
+     * @param soInfoToSdyDTO
+     */
+    @PostMapping("/sdyFieldOrderHandler")
+    public void sdyFieldOrderHandler(@RequestBody SoInfoToSdyDTO soInfoToSdyDTO) {
+        soInfoService.sdyFieldOrderHandler(soInfoToSdyDTO.getSoId(), soInfoToSdyDTO.getOperateEnum());
     }
 }

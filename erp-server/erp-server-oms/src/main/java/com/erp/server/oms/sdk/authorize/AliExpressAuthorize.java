@@ -1,5 +1,6 @@
 package com.erp.server.oms.sdk.authorize;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -74,7 +75,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     private AliExpressAuthService aliExpressAuthService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<WarnMsgInfoDTO> mqProducerService;
 
     /**
      * 获取授权地址
@@ -106,7 +107,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         // 添加到缓存
         // 缓存state
-        String key = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, state);
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, state);
         redisUtil.set(key, shopInfo.getId(), RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
 
         String url = cfgAppClient.getUrl();
@@ -127,7 +128,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
     @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean shopAuthorize(ShopAuthorizeDTO dto, HttpServletResponse response) {
         // 校验是否是本系统发起
-        String stateKey = StrUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, dto.getState());
+        String stateKey =  CharSequenceUtil.format(RedisCacheConstants.AUTH_ALIEXPRESS_STATE, dto.getState());
         log.error("stateKey:：{}",stateKey);
         Object shopIdObj = redisUtil.get(stateKey);
         if (null == shopIdObj){
@@ -201,7 +202,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 shopInfoDTO.setBaseUrl(cfgAppClient.getUrl());
                 shopInfoDTO.setName(shopInfo.getName());
                 shopInfoDTO.setToken(token);
-                String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), shopId);
+                String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), shopId);
                 redisUtil.set(tokenKey, shopInfoDTO,expiresIn);
 
                 redisUtil.del(stateKey);
@@ -238,10 +239,9 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         }
         shopInfo.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
         Boolean result = shopInfoService.updateById(shopInfo);
-        if (result) {
+        if (Boolean.TRUE.equals(result)) {
             shopAuthService.removeByShopId(shopId);
 //            // 删除授权
-//            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
             // 禁用启用任务和取消报告计划任务
             dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
                     shopInfo.getName(),
@@ -270,7 +270,6 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
         if (Objects.isNull(cfgAppClient)) {
             return Boolean.FALSE;
         }
-        String appClientId= cfgAppClient.getId();
         String clientId = cfgAppClient.getClientId();
         String baseUrl= cfgAppClient.getUrl();
         String clientSecret=cfgAppClient.getClientSecret();
@@ -306,7 +305,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 shopInfoDTO.setBaseUrl(baseUrl);
                 shopInfoDTO.setName("");
                 shopInfoDTO.setToken(accessToken);
-                String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), authEntity.getShopId());
+                String tokenKey = CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), authEntity.getShopId());
                 redisUtil.set(tokenKey, shopInfoDTO, expiresIn);
             } else {
                 log.error("::::: 速卖通刷新token失败 ::::: 入参===》{}，错误信息：{}：" , request.toString(), jsonObject.toJSONString());
@@ -328,7 +327,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
      */
     private void refreshErrorWarn(ShopAuthEntity authEntity, String errorMsgStr) {
         //记录错误次数
-        String refreshTokenKey = StrUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), authEntity.getShopId());
+        String refreshTokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_REFRESH_PLATFORM_TOKEN, PlatformDictEnum.ALI_EXPRESS.getCode(), authEntity.getShopId());
         redisUtil.incr(refreshTokenKey, 1);
 
         //获取错误次数
@@ -343,7 +342,7 @@ public class AliExpressAuthorize implements IShopAuthorizeService<T> {
                 WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
                 warnMsgInfo.setBizName(PlatformDictEnum.MERCADOLIBRE.getName());
                 warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_OMS);
-                warnMsgInfo.setTitle(StrUtil.format("平台【{}】店铺id{}刷新token失败", PlatformDictEnum.ALI_EXPRESS.getName(), authEntity.getShopId()));
+                warnMsgInfo.setTitle( CharSequenceUtil.format("平台【{}】店铺id{}刷新token失败", PlatformDictEnum.ALI_EXPRESS.getName(), authEntity.getShopId()));
                 warnMsgInfo.setTableName("shop_auth");
                 warnMsgInfo.setTableId(authEntity.getId());
                 warnMsgInfo.setKeyInfo(errorMsgStr);

@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -11,16 +11,15 @@ import com.erp.model.tms.dto.TmsDeclareBillDetailDTO;
 import com.erp.model.tms.entity.TmsDeclareBillDetailEntity;
 import com.erp.model.tms.entity.TmsDeclareBillEntity;
 import com.erp.server.tms.mapper.TmsDeclareBillDetailMapper;
-import com.erp.server.tms.service.CommonService;
 import com.erp.server.tms.service.OperateLogService;
 import com.erp.server.tms.service.TmsDeclareBillDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -35,7 +34,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclareBillDetailMapper, TmsDeclareBillDetailEntity> implements TmsDeclareBillDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -63,12 +62,12 @@ public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclare
         if(!save) {
             throw new ServiceException("报关单明细保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
+        
 
         // 记录主单操作日志
             log.info("编辑 开始记录报关单明细日志数据，id：【{}】", tmsDeclareBillDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsDeclareBillDetailEntity.getId(), "报关单明细");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), tmsDeclareBillDetailEntity.getId(), "报关单明细");
+        
         operateLogService.addModuleOperateLogByObj(old, tmsDeclareBillDetailEntity, null, tmsDeclareBillDetailEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -87,6 +86,6 @@ public class TmsDeclareBillDetailServiceImpl extends SuperServiceImpl<TmsDeclare
     * 新增修改处理数据
     */
     private void handleData(TmsDeclareBillDetailEntity tmsDeclareBillDetailEntity) {
-    // TODO 验证数据 & 数据赋值
+    
     }
 }

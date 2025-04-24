@@ -123,51 +123,6 @@
         </if>
     </select>
 
-    <select id="listSoDetailByMainIds" resultType="com.erp.model.oms.entity.SoDetailEntity">
-        SELECT
-        sd.id,
-        sd.main_id,
-        sd.sku_id,
-        sd.sku_no,
-        sd.qty,
-        sd.price,
-        sd.tax_rate,
-        sd.amount,
-        sd.all_amount_local_currency,
-        sd.currency,
-        sd.currency_symbol,
-        sd.exchange_rate,
-        sd.is_gift,
-        sd.is_reissue,
-        sd.is_close,
-        sd.remark,
-        sd.delivery_status,
-        sd.kingdee_detail_id,
-        sd.platform_sku_no,
-        sd.purchase_price,
-        sd.sale_cost,
-        sd.sale_profit,
-        sd.sale_profit_rate,
-        sd.tax_amount,
-        sd.warehouse_location,
-        sd.amount_local_currency,
-        sd.all_amount_local_currency,
-        sd.discount_amount,
-        sd.tax_amount_before,
-        sd.exchange_rate
-        FROM so_detail sd
-        INNER JOIN so_info si ON sd.main_id = si.id AND sd.is_deleted = FALSE
-        WHERE si.is_deleted = FALSE
-        <if test="mainIds !=null and mainIds.size>0">
-            AND si.id IN
-            <foreach collection="mainIds" item="mainId" open="(" separator="," close=")">
-                #{mainId}
-            </foreach>
-
-        </if>
-        ORDER BY sd.id ASC
-    </select>
-
     <select id="listApproveCount" resultType="com.erp.model.oms.dto.SoDetailDTO$TypeCountDTO">
         SELECT
         si.approve_status AS type,
@@ -208,5 +163,29 @@
             ${permissionSql}
         </if>
         GROUP BY tt."type"
+    </select>
+
+    <!-- 查询所有虚拟仓B2B销售订单数据 -->
+    <select id="listAllVirtualSoDetail" resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO">
+        select
+            si.warehouse_id as warehouseId,
+            si.virtual_warehouse_id as virtualWarehouseId,
+            sd.sku_id as skuId,
+            sd.qty as orderQty,
+            si.approve_status as approveStatus,
+            sd.delivery_status as status,
+            si.invalid_status as invalidStatus,
+            si.id as sourceId,
+            si.code as sourceCode,
+            'soInfo' as sourceType,
+            sd.id as sourceDetailId,
+            si.create_time as date,
+            sd.frozen_qty as frozenQty
+        from so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        <where>
+            si.is_deleted = false and si.virtual_warehouse_id != ''
+        </where>
+        order by si.id desc
     </select>
 </mapper>

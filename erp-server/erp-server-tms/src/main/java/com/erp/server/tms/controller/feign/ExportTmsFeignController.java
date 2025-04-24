@@ -6,10 +6,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.excel.CfgReconciliationFieldExportExcelDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.server.tms.query.*;
 import com.erp.server.tms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 @RestController
@@ -41,6 +38,10 @@ public class ExportTmsFeignController {
     private LogisticsAddressService logisticsAddressService;
     @Resource
     private LogisticsBillCostService logisticsBillCostService;
+    @Resource
+    private SmallBagCostAllocationService smallBagCostAllocationService;
+    @Resource
+    private TransferDeclareCostAllocationService transferDeclareCostAllocationService;
     @Resource
     private LogisticsBillService logisticsBillService;
     @Resource
@@ -69,6 +70,10 @@ public class ExportTmsFeignController {
     private FirstMileEstimatedBillService firstMileEstimatedBillService;
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
+    @Resource
+    private RemotePostcodeService remotePostcodeService;
+    @Resource
+    private LogisticsLargeService logisticsLargeService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -76,24 +81,6 @@ public class ExportTmsFeignController {
         dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
         return tmsDeclareBillService.export(dto);
     }
-    /*@PostMapping("/b2BDeclareBill")
-    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportB2BDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
-        dto.getParams().setType(SourceTypeEnum.B2B_DECLARE_BILL.getCode());
-        return tmsDeclareBillService.exportDeclare(dto);
-    }
-    @PostMapping("/fmDeclareBillDeclare")
-    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.ExportDTO> exportFmDeclareBillDeclare(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
-        dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        return tmsDeclareBillService.exportDeclareBillDeclare(dto);
-    }
-    @PostMapping("/fmDeclareBill")
-    @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
-        dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
-        return tmsDeclareBillService.exportDeclareBill(dto);
-    }*/
 
     @PostMapping("/b2cDeclareReconciliationDetail")
     public PagingVO<TmsB2cDeclareReconciliationDetailDTO.ListDTO> exportB2cDeclareReconciliationDetail(@RequestBody PagingDTO<TmsB2cDeclareReconciliationDetailDTO.ExportDTO> dto) {
@@ -158,6 +145,26 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = LogisticsBillCostQueryHandler.class)
     public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsBillCost(@RequestBody PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
         return logisticsBillCostService.exportLogisticsBillCost(dto);
+    }
+    @PostMapping("/smallBagCostAllocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+    tableField = "create_user_id",
+    menuCode = "tms:smallBagCostAllocation:paging",
+    tableAlias = "t"
+    		)
+    @WebAdvanceQuery(handler = SmallBagCostAllocationQueryHandler.class)
+    public PagingVO<SmallBagCostAllocationDTO.ListDTO> exportSmallBagCostAllocation(@RequestBody PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
+    	return smallBagCostAllocationService.paging(dto);
+    }
+    @PostMapping("/transferDeclareCostAllocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+    tableField = "create_user_id",
+    menuCode = "tms:transferDeclareCostAllocation:paging",
+    tableAlias = "t"
+    		)
+    @WebAdvanceQuery(handler = TransferDeclareCostAllocationQueryHandler.class)
+    public PagingVO<TransferDeclareCostAllocationDTO.ListDTO> exportTransferDeclareCostAllocation(@RequestBody PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto) {
+    	return transferDeclareCostAllocationService.paging(dto);
     }
 
     @PostMapping("/logisticsBill")
@@ -288,5 +295,34 @@ public class ExportTmsFeignController {
     @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
         return firstMileWeightAllocationService.paging(dto);
+    }
+    /**
+     * 偏远邮编到处
+     */
+    @PostMapping("/exportRemotePostcode")
+    @WebAdvanceQuery
+    public PagingVO<RemotePostcodeDTO.ExportListDTO> exportRemotePostcode(@RequestBody @Valid PagingDTO<RemotePostcodeDTO.ExportDTO> dto) {
+        return remotePostcodeService.listExport(dto);
+    }
+    /**
+     * 物流大表
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportLogisticsLarge")
+    @WebAdvanceQuery(handler = LogisticsLargeQueryHandler.class)
+    public PagingVO<LogisticsLargeDTO.PagingViewDTO> exportLogisticsLarge(@RequestBody @Valid PagingDTO<LogisticsLargeDTO.PagingParamDTO> dto) {
+        return logisticsLargeService.paging(dto);
+    }
+
+
+    /**
+     * 头程报关导出查询
+     */
+    @PostMapping("/fmDeclareBill")
+    @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
+    public PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
+        dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
+        return tmsDeclareBillService.export(dto);
     }
 }

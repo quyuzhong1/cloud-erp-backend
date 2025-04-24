@@ -3,6 +3,8 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.crypto.digest.DigestUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformProductDTO;
@@ -23,6 +25,7 @@ import com.sdk.tms.track123.model.response.OceanTrackInfo;
 import com.sdk.tms.track123.model.response.OceanTrackingDetail;
 import com.sdk.tms.track123.model.response.Rejected;
 import io.seata.common.util.CollectionUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -31,10 +34,14 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Scope("prototype")
 public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
+
+	private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
 	@Override
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -68,10 +75,13 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 		}
 		Map<String, String> map = new HashMap<>();
 		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
-		for(String changId : changeIds) {
-			PlatformTrackDTO logisticsTrackEntity = this.convert(dmpLogisticsTrackEntityMap.get(changId), cfgOutputId);
-			if(logisticsTrackEntity != null) {
-				map.put(changId, JSON.toJSONString(logisticsTrackEntity));
+
+		List<DmpLogisticsTrackEntity> trackEntityList = new ArrayList<>(dmpLogisticsTrackEntityMap.values());
+		Map<String, List<DmpLogisticsTrackEntity>> trackMap = trackEntityList.stream().collect(Collectors.groupingBy(DmpLogisticsTrackEntity::getTrackNo));
+		for (Map.Entry<String, List<DmpLogisticsTrackEntity>> stringListEntry : trackMap.entrySet()) {
+			PlatformTrackDTO platformTrackDTO = this.convert(stringListEntry.getValue(), cfgOutputId);
+			if (platformTrackDTO != null) {
+				map.put(stringListEntry.getValue().get(0).getId(), JSON.toJSONString(platformTrackDTO));
 			}
 		}
 		return map;
@@ -80,24 +90,36 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 	/**
      * 解析订单数据
      **/
-    public PlatformTrackDTO convert(DmpLogisticsTrackEntity dmpLogisticsTrackEntity , String cfgOutputId) {
-    	if(this.validateDataBlack(dmpLogisticsTrackEntity, cfgOutputId)) {
+    public PlatformTrackDTO convert(List<DmpLogisticsTrackEntity> trackEntityList , String cfgOutputId) {
+    	if (CollectionUtils.isEmpty(trackEntityList)) {
     		return null;
-    	}
+		}
+		if(this.validateDataBlack(trackEntityList.get(0), cfgOutputId)) {
+			return null;
+		}
+
 		PlatformTrackDTO platformTrackDTO = new PlatformTrackDTO();
 
-		platformTrackDTO.setTrackNo(dmpLogisticsTrackEntity.getTrackNo());
+		platformTrackDTO.setTrackNo(trackEntityList.get(0).getTrackNo());
 
 		List<PlatformTrackDetail> details = new ArrayList<>();
 
+		for (DmpLogisticsTrackEntity dmpLogisticsTrackEntity : trackEntityList) {
+			PlatformTrackDetail platformTrackDetail = new PlatformTrackDetail();
+			platformTrackDetail.setContent(dmpLogisticsTrackEntity.getContent());
+			platformTrackDetail.setTrackNo(dmpLogisticsTrackEntity.getTrackNo());
+			platformTrackDetail.setTrackTime(dmpLogisticsTrackEntity.getTrackTime());
+			platformTrackDetail.setStatus(dmpLogisticsTrackEntity.getStatus());
+			platformTrackDetail.setOrderStatus(dmpLogisticsTrackEntity.getOrderStatus());
+			if(null != dmpLogisticsTrackEntity.getTrackTime()){
+				// 设置唯一值
+				platformTrackDetail.setMd5(getDataMd5(dmpLogisticsTrackEntity));
+			} else {
+				log.warn("Track123 数据异常: 无跟踪时间:{}", JSONUtil.toJsonStr(dmpLogisticsTrackEntity));
+			}
+			details.add(platformTrackDetail);
+		}
 
-		PlatformTrackDetail platformTrackDetail = new PlatformTrackDetail();
-		platformTrackDetail.setContent(dmpLogisticsTrackEntity.getContent());
-		platformTrackDetail.setTrackNo(dmpLogisticsTrackEntity.getTrackNo());
-		platformTrackDetail.setTrackTime(dmpLogisticsTrackEntity.getTrackTime());
-		platformTrackDetail.setStatus(dmpLogisticsTrackEntity.getStatus());
-
-		details.add(platformTrackDetail);
 		platformTrackDTO.setDetails(details);
 
 
@@ -105,4 +127,17 @@ public class Track123MQTaskHandler extends DmpOutputRocketMQTaskHandler{
 		platformTrackDTO.setUniqueId(UUID.randomUUID().toString());
         return platformTrackDTO;
     }
+
+	@Override
+	protected List<String> getSourceCodeKeys() {
+		return Arrays.asList("trackNo");
+	}
+
+	/**
+	 * 获取唯一值
+	 */
+	private String getDataMd5(DmpLogisticsTrackEntity dmpEntity) {
+		String trackTime = dmpEntity.getTrackTime().format(TIME_FORMAT);
+		return DigestUtil.md5Hex(dmpEntity.getTrackNo() + "-" + dmpEntity.getContent() + "-" + trackTime);
+	}
 }

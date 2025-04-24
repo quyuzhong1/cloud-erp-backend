@@ -192,6 +192,11 @@ public class DmpOutputTaskRecordDTO implements Serializable {
          * 是否需要同步
          */
         private Boolean isNeedSync;
+        
+        /**
+         * 备注
+         */
+        private String remark;
 
     }
 
@@ -222,7 +227,7 @@ public class DmpOutputTaskRecordDTO implements Serializable {
     public static class TabListDTO {
         /**
          * 类型：/dmp/common/enumDropDown?type=DmpPushMonitorTab
-         * all全部、init:待推送、pushIng:推送中、finish:推送成功、error:推送失败、noNeedSync:无需同步
+         * all全部、init:待推送、pushIng:推送中、finish:推送成功、error:推送失败、noNeedSync:无需同步、history:已归档
          */
         private String tabFlag;
 

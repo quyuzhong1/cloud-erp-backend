@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -137,7 +138,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<MachineSubComponentsDTO.UpdateDTO> newList, List<MachineSubComponentsEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(MachineSubComponentsDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(MachineSubComponentsEntity
                 ::getId).collect(Collectors.toList());
@@ -150,7 +151,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
      */
     private void doOpHandleDetails (List<MachineSubComponentsEntity> newList, String detailId,String mainId, Boolean isUpdate) {
         //需要新增数据
-        List<MachineSubComponentsEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<MachineSubComponentsEntity> addList = newList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
 
         //SKU信息
         List<String> skuIds = newList.stream().map(MachineSubComponentsEntity::getSkuId).collect(Collectors.toList());
@@ -159,7 +160,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             throw new ServiceException(ApiError.ERROR_95084);
         }
         //需要修改的数据
-        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(MachineSubComponentsEntity::getId).collect(Collectors.toList());
+        List<String> ids = newList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(MachineSubComponentsEntity::getId).collect(Collectors.toList());
         List<MachineSubComponentsEntity> list = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(ids)) {
             list = this.listByIds(ids);
@@ -182,7 +183,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
 
         for (MachineSubComponentsEntity detail:newList) {
             //单位
-            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
+            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && CharSequenceUtil.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
             //仓库名称
             WarehouseEntity warehouseEntity = warehouseList.stream().filter(obj -> obj.getId().equals(detail.getWarehouseId())).findFirst().orElse(null);
@@ -198,7 +199,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
             detail.setDetailId(detailId);
 
             //修改操作日志
-            if (StringUtils.isNotBlank(detail.getId())) {
+            if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
                     throw new ServiceException(ApiError.ERROR_99056);
                 }
@@ -233,7 +234,7 @@ public class MachineSubComponentsServiceImpl extends SuperServiceImpl<MachineSub
         for (MachineSubComponentsEntity entity : list) {
             //仓库
             WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getWarehouseId())).findFirst().orElse(new WarehouseEntity());
-            if (warehouseIdList.contains(inWarehouse.getId()) && StrUtil.isBlank(entity.getWarehouseLocation())) {
+            if (warehouseIdList.contains(inWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getWarehouseLocation())) {
                 throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,inWarehouse.getName());
             }
         }

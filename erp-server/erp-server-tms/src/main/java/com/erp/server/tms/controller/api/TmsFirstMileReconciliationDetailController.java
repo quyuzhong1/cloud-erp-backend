@@ -97,7 +97,7 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载头程对账单模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> exportTemplate(@ModelAttribute @Validated TmsFirstMileReconciliationDetailDTO.ExcelDownloadTemplateDTO dto, HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportTemplate(@ModelAttribute @Validated TmsFirstMileReconciliationDetailDTO.ExcelDownloadTemplateDTO dto, HttpServletRequest request, HttpServletResponse response) {
         switch (dto.getTypeEnum()) {
             case STANDARD:
                 String standardPath = "classpath:excel/firstMileReconciliationDetailTemplate.xlsx";
@@ -109,8 +109,9 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
                 // SCM来源物流商ID
                 String supplierId = logisticsSupplierService.getByIdOpt(logisticSupplierId).orElseThrow(() -> new ServiceException("物流供应商不存在")).getSupplierId();
                 LinkedList<String> headerNameList = cfgReconciliationFieldService.thirdFieldListName(Collections.singletonList(CfgReconciliationTypeEnum.FIRST_MILE.getCode()), supplierId, true);
+                headerNameList.addFirst("币种");
                 if (!headerNameList.contains("物流运单号")){
-                    headerNameList.addFirst("物流运单号");
+                	headerNameList.addFirst("物流运单号");
                 }
                 // 去重
                 String configExcelName = "templateConfig.xlsx";
@@ -187,4 +188,14 @@ public class TmsFirstMileReconciliationDetailController extends BaseController {
         return success(true);
     }
 
+    /**
+     * 重置总物流单费用
+     * @param codeList
+     * @return
+     */
+    @PostMapping("/initTotalLogisticsCost")
+    public ApiResult<Object>initTotalLogisticsCost(@RequestBody List<String> codeList){
+        tmsFirstMileReconciliationDetailService.initTotalLogisticsCost(codeList);
+        return ApiResult.success();
+    }
 }

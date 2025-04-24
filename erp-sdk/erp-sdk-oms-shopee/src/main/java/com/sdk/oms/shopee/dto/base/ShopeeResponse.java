@@ -1,7 +1,7 @@
 package com.sdk.oms.shopee.dto.base;
 
 import cn.hutool.core.annotation.Alias;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONObject;
 import lombok.Data;
 
 import java.io.Serializable;

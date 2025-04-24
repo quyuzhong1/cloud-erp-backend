@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseChildDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
@@ -14,13 +15,11 @@ import com.erp.model.oms.dto.OrderCategoryDTO;
 import com.erp.model.oms.dto.OrderCategoryDetailDTO;
 import com.erp.model.oms.entity.OrderCategoryDetailEntity;
 import com.erp.model.oms.entity.OrderCategoryEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.server.oms.mapper.OrderCategoryMapper;
 import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.OrderCategoryService;
-import com.common.business.service.impl.SuperServiceImpl;
-import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -128,7 +127,7 @@ public class OrderCategoryServiceImpl extends SuperServiceImpl<OrderCategoryMapp
     public PagingVO<OrderCategoryDTO.PagingViewDTO> paging(PagingDTO<OrderCategoryDTO.PagingParamDTO> dto) {
         OrderCategoryDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params);
         List<OrderCategoryDTO.PagingViewDTO> list = pageData.getRecords();
         return new PagingVO<>(pageData);

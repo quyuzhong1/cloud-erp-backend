@@ -5,6 +5,7 @@ import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -12,15 +13,11 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  * 时间时区转换工具类
  * Created by xcf on 2022/1/20.
  */
+@Slf4j
 public class TimeZoneUtil {
 
-//    public static void main(String[] args) {
-//        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//        Date date = new Date();
-//        System.out.println(format.format(date));
-//        Date zoneDate = TimeZoneUtil.conversion(date, "E9", "0");
-//        System.out.println(format.format(zoneDate));
-//    }
+    private TimeZoneUtil() {
+    }
 
     /**
      * 时区转换
@@ -56,8 +53,8 @@ public class TimeZoneUtil {
             }
         }
 
-//        System.out.println("原："+originalTimeZone+", 现："+returnTimeZone);
-//        System.out.println("追加小时数："+appendHours);
+        log.info("原："+originalTimeZone+", 现："+returnTimeZone);
+        log.info("追加小时数："+appendHours);
 
         Calendar cal = Calendar.getInstance();
         cal.setTime(date);

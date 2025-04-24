@@ -3,25 +3,21 @@ package com.erp.model.workflow.dto;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.servlet.annotation.HandlesTypes;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @Classname 流程定义参数
@@ -103,6 +99,15 @@ public class ProcessDefinitionDTO {
          */
         private Boolean isDeploy;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     @Data
@@ -135,6 +140,15 @@ public class ProcessDefinitionDTO {
          * 是否已发布
          */
         private Boolean isDeploy;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -200,6 +214,10 @@ public class ProcessDefinitionDTO {
          */
         private LocalDateTime createTime;
 
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     @Data

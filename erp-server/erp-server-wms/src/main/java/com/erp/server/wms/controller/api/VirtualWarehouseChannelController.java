@@ -1,8 +1,8 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.erp.server.wms.service.VirtualWarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.Resource;
 
@@ -22,8 +22,6 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 
-import java.util.List;
-
 /**
  * 虚拟仓渠道
  *
@@ -40,39 +38,10 @@ public class VirtualWarehouseChannelController extends BaseController {
     private VirtualWarehouseChannelService virtualWarehouseChannelService;
 
     /**
-     * 新增
-     *
-     * @param dto
-     * @return ApiResult<String>
-     * @author hyj
-     * @date: 2024-06-02
-     */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓渠道新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualWarehouseChannelDTO.AddDTO dto) {
-        return success(virtualWarehouseChannelService.add(dto));
-    }
-
-    /**
-     * 新增
-     *
-     * @param batchAddDTO
-     * @return ApiResult<String>
-     * @author hyj
-     * @date: 2024-06-02
-     */
-    @PostMapping("/batchAdd")
-    @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓渠道新增")
-    public ApiResult<BaseResultDTO.AddDTO> batchAdd(@RequestBody @Validated VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO) {
-        return success(virtualWarehouseChannelService.batchAdd(batchAddDTO));
-    }
-
-
-    /**
      * 修改
      *
-     * @param dto
-     * @return ApiResult
+     * @param batchUpdateDTO
+     * @return ApiResult<String>
      * @author hyj
      * @date: 2024-06-02
      */
@@ -83,10 +52,23 @@ public class VirtualWarehouseChannelController extends BaseController {
             menuCode = "wms:virtualWarehouseChannel:update",
             serviceClass = VirtualWarehouseChannelService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated VirtualWarehouseChannelDTO.UpdateDTO dto) {
-        virtualWarehouseChannelService.update(dto);
-        return success();
+    public ApiResult<BaseResultDTO.AddDTO> batchUpdate(@RequestBody @Validated VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO) {
+        return success(virtualWarehouseChannelService.batchUpdate(batchUpdateDTO));
     }
 
+
+    /**
+     * 详情
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseChannel:view",
+            serviceClass = VirtualWarehouseService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<VirtualWarehouseChannelDTO.ViewDTO> view(@RequestParam(value = "id") String id) {
+        return success(virtualWarehouseChannelService.view(id));
+    }
 
 }

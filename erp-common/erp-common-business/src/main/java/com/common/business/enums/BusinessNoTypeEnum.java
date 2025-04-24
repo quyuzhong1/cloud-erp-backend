@@ -88,8 +88,28 @@ public enum BusinessNoTypeEnum {
     CODE_QCFT(67, "QCFT","期初头程分摊",BusinessNoConstant.QCFT),
     CODE_CHCB(68, "CHCB","SKU成本分摊",BusinessNoConstant.CHCB),
     CODE_SCLC(69, "SCLC","试产量产单",BusinessNoConstant.SCLC),
+    THD(70, "THD","B2C退货单",BusinessNoConstant.THD),
 
     CODE_TLD(67, "tld","委外发退料单",BusinessNoConstant.TLD),
+    CODE_FHBG(70, "FHBG","发货通知变更单",BusinessNoConstant.FHBG),
+    CODE_JSRQ(70, "JSRQ","计算日期",BusinessNoConstant.JSRQ),
+    CODE_S(71, "S","发货建议",BusinessNoConstant.S),
+    CODE_P(72, "P","采购建议",BusinessNoConstant.P),
+    CODE_PP(73, "PP","采购建议",BusinessNoConstant.PP),
+    CODE_FHJY(71, "FHJY","发货建议",BusinessNoConstant.FHJY),
+    CODE_CGJY(72, "CGJY","采购建议",BusinessNoConstant.CGJY),
+
+    CODE_TKD(71, "TKD","退款单",BusinessNoConstant.TKD),
+    CODE_XLSS(80, "XLSS","销量试算",BusinessNoConstant.XLSS),
+    CODE_YHBG(75, "YHBG","要货申请变更单",BusinessNoConstant.YHBG),
+    CODE_MOULD(90, "MJ","模具管理",BusinessNoConstant.MJ),
+    CODE_N(81, "N","库龄批次号",BusinessNoConstant.N),
+    CODE_INV(82, "INV","发票号",BusinessNoConstant.INV),
+    CODE_XSBH(83, "XSBH","全托管订单",BusinessNoConstant.XSBH),
+    CODE_SHSQ(83, "SHSQ","售后",BusinessNoConstant.SHSQ),
+
+    CODE_XSJM(83, "xsjm","销售价目编号", BusinessNoConstant.XSJM),
+    CODE_XSTJ(84, "xstj","销售价目调价编号", BusinessNoConstant.XSTJ),
     ;
 
 
@@ -145,7 +165,7 @@ public enum BusinessNoTypeEnum {
     public static BusinessNoTypeEnum getEnumByType(String code) {
         BusinessNoTypeEnum[] businessNoTypeEnums = values();
         for (BusinessNoTypeEnum businessNoTypeEnum : businessNoTypeEnums) {
-            if (businessNoTypeEnum.getCode().equals(code)) {
+            if (businessNoTypeEnum.getCode().toString().equals(code)) {
                 return businessNoTypeEnum;
             }
         }

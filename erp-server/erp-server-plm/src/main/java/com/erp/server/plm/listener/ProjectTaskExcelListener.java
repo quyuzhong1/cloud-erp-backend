@@ -207,29 +207,21 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
         }
 
         String priority = projectTaskExcelDTO.getPriority();
-        if (StringUtils.isNotBlank(priority)) {
-            if (!priority.equals("高") && !priority.equals("中") && !priority.equals("低")) {
-                errorMsgList.add("[任务优先级]请输入'高'或'中''低'");
-            }
+        if (StringUtils.isNotBlank(priority) && !priority.equals("高") && !priority.equals("中") && !priority.equals("低")) {
+             errorMsgList.add("[任务优先级]请输入'高'或'中''低'");
         }
 
         String isMilepost = projectTaskExcelDTO.getIsMilepost();
-        if (StringUtils.isNotBlank(isMilepost)) {
-            if (!isMilepost.equals("是") && !isMilepost.equals("否")) {
-                errorMsgList.add("[设置里程碑]请输入'是'或'否'");
-            }
+        if (StringUtils.isNotBlank(isMilepost) && !isMilepost.equals("是") && !isMilepost.equals("否")) {
+             errorMsgList.add("[设置里程碑]请输入'是'或'否'");
         }
 
-        if (projectTaskExcelDTO.getPlanStartTime() != null) {
-            if (projectTaskExcelDTO.getPlanEndTime() == null) {
-                errorMsgList.add("[计划开始时间]存在的同时[计划结束时间]不能为空，");
-            }
+        if (projectTaskExcelDTO.getPlanStartTime() != null && projectTaskExcelDTO.getPlanEndTime() == null) {
+             errorMsgList.add("[计划开始时间]存在的同时[计划结束时间]不能为空，");
         }
 
-        if (projectTaskExcelDTO.getPlanEndTime() != null) {
-            if (projectTaskExcelDTO.getPlanStartTime() == null) {
-                errorMsgList.add("[计划结束时间]存在的同时[计划开始时间]不能为空，");
-            }
+        if (projectTaskExcelDTO.getPlanEndTime() != null && projectTaskExcelDTO.getPlanStartTime() == null) {
+             errorMsgList.add("[计划结束时间]存在的同时[计划开始时间]不能为空，");
         }
 
         //存在错误数据则直接返回
@@ -313,7 +305,7 @@ public class ProjectTaskExcelListener extends AnalysisEventListener<ProjectTaskE
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 
     public List<ProjectTaskExcelDTO> getDateList() {

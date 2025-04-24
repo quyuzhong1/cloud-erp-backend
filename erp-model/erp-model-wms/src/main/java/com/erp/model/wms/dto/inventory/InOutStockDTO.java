@@ -1,13 +1,14 @@
 package com.erp.model.wms.dto.inventory;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.validator.ValidGroup;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -25,38 +26,38 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
         /**
          * 单据类型
          */
-        @NotNull(message = "单据类型不能为空")
+        @NotNull(message = "单据类型不能为空", groups = {ValidGroup.Update.class})
         private InventorySourceTypeEnum sourceType;
 
         /**
          * 单据id
          */
-        @NotEmpty(message = "单据id不能为空")
+        @NotEmpty(message = "单据id不能为空", groups = {ValidGroup.Update.class})
         private String sourceId;
 
         /**
          * 单据编号
          */
-        @NotEmpty(message = "单据编号不能为空")
+        @NotEmpty(message = "单据编号不能为空", groups = {ValidGroup.Update.class})
         private String sourceCode;
 
         /**
          * 单据日期
          */
-        @NotNull(message = "单据日期不能为空")
+        @NotNull(message = "单据日期不能为空", groups = {ValidGroup.Update.class})
         private LocalDate billDate;
 
         /**
          * 原单明细id
          */
-        @NotEmpty(message = "原单明细id不能为空")
+        @NotEmpty(message = "原单明细id不能为空", groups = {ValidGroup.Update.class})
         private String sourceDetailId;
 
         /**
          * 库存变更数量
          * 增加或减少库存都传正数，程序判断正数或负数
          */
-        @NotNull(message = "库存变更数量不能为空")
+        @NotNull(message = "库存变更数量不能为空", groups = {ValidGroup.Update.class})
         // @Min(value = 1,message = "库存变更数量不能小于1")
         private Integer qty;
 
@@ -71,7 +72,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
         private Long lockWaitTime;
 
 
-        public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus) {
+        public static InOutStockDTO initByReturnOrder(PoReturnEntity entity, PoReturnDetailEntity detail, InventorySourceTypeEnum sourceType, Integer qty, InventoryStatusEnum inventoryStatus, Boolean isUsePurchase) {
                 InOutStockDTO inOutStockDTO = new InOutStockDTO();
                 inOutStockDTO.setSourceType(sourceType);
                 inOutStockDTO.setSourceId(entity.getId());
@@ -80,8 +81,13 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 inOutStockDTO.setBillDate(entity.getBillDate());
                 inOutStockDTO.setSkuId(detail.getSkuId());
                 inOutStockDTO.setSkuNo(detail.getSkuNo());
-                inOutStockDTO.setWarehouseId(entity.getReturnWarehouseId());
-                inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
+                if (isUsePurchase && StringUtils.isNotBlank(entity.getDeliveryWarehouseId())) {
+                        inOutStockDTO.setWarehouseId(entity.getDeliveryWarehouseId());
+                        inOutStockDTO.setWarehouseLocation(detail.getPurchaseWarehouseLocation());
+                }else{
+                        inOutStockDTO.setWarehouseId(entity.getReturnWarehouseId());
+                        inOutStockDTO.setWarehouseLocation(detail.getWarehouseLocation());
+                }
                 // 根据捕获数量增加在途
                 inOutStockDTO.setQty(qty);
                 inOutStockDTO.setInventoryStatus(inventoryStatus);
@@ -96,7 +102,7 @@ public class InOutStockDTO extends InventoryStockBaseDTO implements Serializable
                 stockDTO.setSourceDetailId(sourceDetailId);
                 stockDTO.setSkuId(skuId);
                 stockDTO.setSkuNo(skuNo);
-                stockDTO.setWarehouseLocation(StrUtil.isNotBlank(entity.getBatchNo()) ? "" : warehouseLocation);
+                stockDTO.setWarehouseLocation(CharSequenceUtil.isNotBlank(entity.getBatchNo()) ? "" : warehouseLocation);
                 stockDTO.setQty(qty);
                 stockDTO.setBillDate(entity.getBillDate());
                 return stockDTO;

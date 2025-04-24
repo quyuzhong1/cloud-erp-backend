@@ -1,13 +1,12 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * <p>
@@ -20,7 +19,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_template")
-public class ProjectTemplateEntity extends BaseEntity implements Serializable {
+public class ProjectTemplateEntity extends BaseEntity<ProjectTemplateEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -41,19 +40,5 @@ public class ProjectTemplateEntity extends BaseEntity implements Serializable {
      */
     @TableField("status")
     private Integer status;
-
-    /**
-     * 是否默认，项目模板存在默认数据(1默认，0非默认)
-     */
-//    @TableField("is_default")
-//    private Integer isDefault;
-
-
-    /**
-     * 产品属性id
-     * 对应basic_dict 表 type=productProperty 表id
-     */
-//    @TableField("product_property_id")
-//    private String productPropertyId;
 
 }

@@ -40,6 +40,9 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         if("sb2cd.warehouse_id".equals(field)){
         	return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
         }
+        if("sb2cd.virtual_warehouse_id".equals(field)){
+            return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id and sbd.virtual_warehouse_id "+ compareCodeSplicingValueSql +" ) ";
+        }
         //标签类型
         if("lable".equals(field)){
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
@@ -72,8 +75,7 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                         sb.append(" exists (select id from so_b2c_ref sbf where sbf.is_deleted = false and type = 'merge' and sbf.target_id = sb2c.id ) ");
                     }
                     if(valueStr.equals("aliexpressTaxed")){
-                        sb.append(" (sb2cd.label_json ~ 'U_TAXED' or sb2cd.label_json ~ 'I_TAXED') ");
-                        sb.append(" and exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and (label_json ~ 'U_TAXED' or label_json ~ 'I_TAXED')) ");
+                        sb.append(" exists ( select id from so_b2c_detail where is_deleted = false and main_id = sb2c.id and (label_json ~ 'U_TAXED' or label_json ~ 'I_TAXED')) ");
                     }
                     if(valueStr.equals("cainiaoWarehouse")){
                         sb.append(" sb2c.label_json ~ 'cainiaoInternationalWarehouse' ");
@@ -143,11 +145,6 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
             return " EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.main_id = sb2c.id and sbd.warehouse_id "+ compareCodeSplicingValueSql +" ) ";
         }
 
-        if("deliveryTime".equals(field)){
-            compareCodeSplicingValueSql = compareCodeSplicingValueSql.replace("deliveryTime","sout.bill_date");
-            return " EXISTS (SELECT 1 from so_outstock sout where sout.so_id = sb2c.id and sout.is_deleted = false and sout.bill_date "+compareCodeSplicingValueSql+" )";
-        }
-
         //是否缺货 （待配货和配货中且sku数量大于可用库存且不是忽略库存计算SKU） 因为需要查询PLM系统和WMS系统，所以无法在这里直接处理
         if("isOutStock".equals(field)){
             Boolean bool = (Boolean) value;
@@ -172,13 +169,13 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     }
                     isFirst = false;
                     if (valueStr.equals("platformWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment')");
+                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment' or sb2c.label_json ~ 'fulfilled_by_shopee')");
                     }
                     if (valueStr.equals("transitWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json ~ 'drop_off' or sb2c.label_json ~ 'cross_docking')");
+                        sb.append(" (sb2c.label_json ~ 'drop_off' or sb2c.label_json ~ 'cross_docking' or sb2c.label_json ~ 'dropoff' or sb2c.label_json ~ 'pickup')");
                     }
                     if (valueStr.equals("selfDelivery")) {
-                        sb.append(" (sb2c.label_json !~ 'AFN' and sb2c.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.label_json !~ 'WFSFulfilled' and sb2c.label_json !~ '3PLFulfilled' and sb2c.label_json !~ 'fulfillment')");
+                        sb.append(" (sb2c.label_json !~ ('AFN|cainiaoInternationalWarehouse|WFSFulfilled|3PLFulfilled|fulfillment|fulfilled_by_shopee'))");
                     }
                 }
             }
@@ -190,13 +187,13 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
                     }
                     isFirst = false;
                     if (valueStr.equals("platformWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json !~ 'AFN' and sb2c.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.label_json !~ 'WFSFulfilled' and sb2c.label_json !~ '3PLFulfilled' and sb2c.label_json !~ 'fulfillment')");
+                        sb.append(" (sb2c.label_json !~ ('AFN|cainiaoInternationalWarehouse|WFSFulfilled|3PLFulfilled|fulfillment|fulfilled_by_shopee'))");
                     }
                     if (valueStr.equals("transitWarehouseDelivery")) {
-                        sb.append(" (sb2c.label_json !~ 'drop_off' and sb2c.label_json !~ 'cross_docking')");
+                        sb.append(" (sb2c.label_json !~ ('drop_off|cross_docking|dropoff|pickup'))");
                     }
                     if (valueStr.equals("selfDelivery")) {
-                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment')");
+                        sb.append(" (sb2c.label_json ~ 'AFN' or sb2c.label_json ~ 'cainiaoInternationalWarehouse' or sb2c.label_json ~ 'WFSFulfilled' or sb2c.label_json ~ '3PLFulfilled' or sb2c.label_json ~ 'fulfillment' or sb2c.label_json ~ 'fulfilled_by_shopee')");
                     }
                 }
             }
@@ -256,32 +253,31 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         List<String> payStatusList = new ArrayList<>(1);
         //单据状态
         List<String> billStatusList = new ArrayList<>(1);
-
-        if(value.equals("all")){
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-        }
         // 待付款
         if (SoB2cTabEnum.ENUM_PAYMENT.getCode().equals(value)) {
             payStatusList.add(SoB2cPayStatusEnum.ENUM_PAYMENT.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
-        //待处理
+        //待提审  显示订单审核状态为待提交、审核不通过，订单状态非冻结的订单，订单非作废
         if (SoB2cTabEnum.ENUM_PENDING.getCode().equals(value)) {
-            return "sb2c.bill_status != 'frozen' and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and (sb2c.approve_status in ('waitSubmit','reject') or (sb2c.approve_status = 'approve' and sb2c.abnormal_type = 'distributionReject'))";
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
+            approveStatusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+            approveStatusList.add(ApproveStatusEnum.REJECT.getStatus());
+            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE,"frozen", QueryDataTypeEnum.STRING);
         }
-        //审核中
+        //待审核
         if (SoB2cTabEnum.ENUM_APPROVE_ING.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
-        }
-        //待配货
-        if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {
-            approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
-            billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
-            super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.is_frozen", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
+            super.buildSplicingSQLDTO("sb2c.bill_status", QueryConditionEnum.NE,"frozen", QueryDataTypeEnum.STRING);
         }
         //配货中
         if (SoB2cTabEnum.ENUM_IN_DISTRIBUTION.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode());
@@ -289,27 +285,32 @@ public class SoB2cQueryHandler extends AbstractQueryHandler {
         }
         //待发货
         if (SoB2cTabEnum.ENUM_WAIT_SHIPPED.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //已发货
         if (SoB2cTabEnum.ENUM_SHIPPED.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             approveStatusList.add(ApproveStatusEnum.APPROVE.getStatus());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //冻结中
         if (SoB2cTabEnum.ENUM_FROZEN.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             billStatusList.add(SoB2cBillStatusEnum.ENUM_FROZEN.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }
         //已作废
         if (SoB2cTabEnum.ENUM_INVALID.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,true, QueryDataTypeEnum.BOOLEAN);
         }
         //订单异常
         if (SoB2cTabEnum.ENUM_ORDER_ERROR.getCode().equals(value)) {
+            payStatusList.add(SoB2cPayStatusEnum.ENUM_PAID.getCode());
             super.buildSplicingSQLDTO("sb2c.sign_order_error", QueryConditionEnum.NE,"", QueryDataTypeEnum.STRING);
             super.buildSplicingSQLDTO("sb2c.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
         }

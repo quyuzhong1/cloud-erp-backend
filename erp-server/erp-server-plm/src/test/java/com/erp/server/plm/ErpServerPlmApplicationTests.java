@@ -22,15 +22,5 @@ class ErpServerPlmApplicationTests {
     @Resource
     private BomSkuService bomSkuService;
 
-    @Test
-    void contextLoads() {
-        System.out.println("sss");
-    }
 
-    @Test
-    void test(){
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomSkuService.listBomChildBySkuIds(Collections.singletonList("1676898684391919618"));
-        System.out.println("BOM");
-        System.out.println(JSONUtil.toJsonStr(bomChildrenSkuDTOS));
-    }
 }

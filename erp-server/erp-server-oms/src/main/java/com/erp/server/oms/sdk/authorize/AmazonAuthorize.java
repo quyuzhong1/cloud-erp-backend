@@ -1,5 +1,6 @@
 package com.erp.server.oms.sdk.authorize;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.RedisCacheConstants;
@@ -30,6 +31,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -71,38 +73,30 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
     public String getShopAuthorizeUrl(ShopAuthorizeUrlDTO dto) {
         // 获取需要授权的店铺列表
         List<ShopInfoEntity> shopInfoEntityList = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(dto.getShopIdList())){
-            shopInfoEntityList = dto.getShopInfoEntityList();
-        }
+        if (!CollectionUtils.isEmpty(dto.getShopIdList())) shopInfoEntityList = dto.getShopInfoEntityList();
 
         if (CollectionUtils.isEmpty(shopInfoEntityList) && StringUtils.isNotBlank(dto.getShopId())){
             ShopInfoEntity shopInfo = shopInfoService.getById(dto.getShopId());
-            if (!Objects.isNull(shopInfo)) {
-                shopInfoEntityList.add(shopInfo);
-            }
+            if (!Objects.isNull(shopInfo)) shopInfoEntityList.add(shopInfo);
         }
 
-        if (CollectionUtils.isEmpty(shopInfoEntityList)){
-            throw new ServiceException("店铺不存在");
-        }
+        if (CollectionUtils.isEmpty(shopInfoEntityList)) throw new ServiceException("店铺不存在");
+        // 请求卖家授权
+        // 批量缓存店铺
+        return shopInfoAuth(shopInfoEntityList);
+    }
 
+    @NotNull
+    private String shopInfoAuth(List<ShopInfoEntity> shopInfoEntityList) {
         // 获取市场枚举
         AmazonMarketplaceEnum marketplaceEnum = null;
         for (ShopInfoEntity shopInfo : shopInfoEntityList) {
             AmazonMarketplaceEnum currentMarketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfo.getDictCountryCode());
-            if (null == marketplaceEnum){
-                marketplaceEnum = currentMarketplaceEnum;
-            } else {
-                // 批量授权的店铺对应市场是否一致
-                if (!marketplaceEnum.getEndpointsEnum().equals(currentMarketplaceEnum.getEndpointsEnum())){
-                    throw new ServiceException("批量授权的地区不一致");
-                }
-            }
+            // 批量授权的店铺对应市场是否一致
+            if (null == marketplaceEnum) marketplaceEnum = currentMarketplaceEnum;
+            else if (!marketplaceEnum.getEndpointsEnum().equals(currentMarketplaceEnum.getEndpointsEnum()))  throw new ServiceException("批量授权的地区不一致");
         }
-
-        if (null == marketplaceEnum) {
-            throw new ServiceException("该店铺国家在亚马逊市场未开放");
-        }
+        if (null == marketplaceEnum) throw new ServiceException("该店铺国家在亚马逊市场未开放");
         // 请求卖家授权地址
         String sellerCentralUrl = "";
         if (1 == shopInfoEntityList.size()){
@@ -116,6 +110,36 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         }
 
         // 获取客户端配置
+        CfgAppClientEntity cfgAppClient = getCfgAppClientEntity();
+        // 生成随机数据
+        String resultState = randomGSAState();
+
+        // 缓存state
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, resultState);
+        Object obj = redisUtil.get(key);
+        if (null != obj) {
+            throw new ServiceException("该店铺真正申请授权中");
+        }
+        // 批量缓存店铺
+        List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        redisUtil.set(key, shopIds, RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
+        return String.format(cfgAppClient.getUrl(), sellerCentralUrl, resultState);
+    }
+
+    @NotNull
+    private static String randomGSAState() {
+        SecureRandom secureRandom = new SecureRandom();
+        // 生成 256 字节的随机数据
+        byte[] randomBytes = new byte[256];
+        secureRandom.nextBytes(randomBytes);
+        // 进行 Base64 编码
+        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
+        // 账号要求
+        return "GSA_" + state.substring(4);
+    }
+
+    @NotNull
+    private CfgAppClientEntity getCfgAppClientEntity() {
         AppClientEnum appClient = AppClientEnum.AMAZON_AUTHORIZE;
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         findDTO.setBusinessType(appClient.getBusinessType());
@@ -125,39 +149,13 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         if (Objects.isNull(cfgAppClient)) {
             throw new ServiceException("亚马逊授权链接配置不存在");
         }
-        // 生成随机数据
-        SecureRandom secureRandom = new SecureRandom();
-        // 生成 256 字节的随机数据
-        byte[] randomBytes = new byte[256];
-        secureRandom.nextBytes(randomBytes);
-        // 进行 Base64 编码
-        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-        // 账号要求
-        String resultState = "GSA_" + state.substring(4);
-
-        // 缓存state
-        String key = StrUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, resultState);
-        Object obj = redisUtil.get(key);
-        if (null != obj) {
-            throw new ServiceException("该店铺真正申请授权中");
-        }
-        // 批量缓存店铺
-        List<String> shopIds = shopInfoEntityList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
-        redisUtil.set(key, shopIds, RedisCacheConstants.THIRD_PARTY_AUTH_EXPIRATION);
-        return String.format(cfgAppClient.getUrl(), sellerCentralUrl , resultState);
+        return cfgAppClient;
     }
 
     public static void main(String[] args) {
         // 生成随机数据
-        SecureRandom secureRandom = new SecureRandom();
-        // 生成 256 字节的随机数据
-        byte[] randomBytes = new byte[256];
-        secureRandom.nextBytes(randomBytes);
-        // 进行 Base64 编码
-        String state = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-        // 账号要求
-        String resultState = "GSA_" + state.substring(4);
-        System.out.println(resultState);
+        String resultState = randomGSAState();
+        log.info(resultState);
     }
 
     /**
@@ -171,7 +169,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             throw new ServiceException("信息state不存在");
         }
         // 校验是否是本系统发起
-        String key = StrUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, dto.getState());
+        String key =  CharSequenceUtil.format(RedisCacheConstants.AUTH_AMAZON_STATE, dto.getState());
         Object shopIdObj = redisUtil.get(key);
         if (null == shopIdObj) {
             throw new ServiceException("信息已失效, 请重新发起授权");
@@ -210,7 +208,13 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
                 cfgAppClient.getClientSecret(),
                 cfgAppClient.getRedirectUrl(),
                 dto.getSpapi_oauth_code());
+        //遍历店铺并且授权
+        forShopAuthor(dto, shopIds, configMap, cfgAppClient, tokenDTO);
+        redisUtil.del(key);
+        return Boolean.TRUE;
+    }
 
+    private void forShopAuthor(ShopAuthorizeDTO dto, List<String> shopIds, Map<SettingEnum, String> configMap, CfgAppClientEntity cfgAppClient, AmazonTokenDTO tokenDTO) {
         for (String shopId : shopIds) {
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             if (null == shopInfo) {
@@ -252,7 +256,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
             }
 
             // platform-token:平台名称:店铺ID
-            String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.AMAZON.getCode(), shopId);
+            String tokenKey =  CharSequenceUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, PlatformDictEnum.AMAZON.getCode(), shopId);
             redisShopInfoDTO.setAccessToken(tokenDTO.getAccessToken());
             redisShopInfoDTO.setRefreshToken(tokenDTO.getRefreshToken());
             redisUtil.set(tokenKey, redisShopInfoDTO, tokenDTO.getExpiresIn());
@@ -265,8 +269,6 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
                     shopInfo.getDictCountryCode(),
                     shopInfo.getPlatformShopCode()));
         }
-        redisUtil.del(key);
-        return Boolean.TRUE;
     }
 
     /**
@@ -286,9 +288,7 @@ public class AmazonAuthorize implements IShopAuthorizeService<T> {
         }
         shopInfo.setAuthStatus(AuthStatusEnum.CANCEL.getCode());
         Boolean result = shopInfoService.updateById(shopInfo);
-        if (result) {
-            // 删除授权
-//            dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(shopInfo.getId(), shopInfo.getName(), shopInfo.getDictPlatform()));
+        if (Boolean.TRUE.equals(result)) {
             // 禁用启用任务和取消报告计划任务
             dmpTaskFeign.allAddOrUpdateTaskAndSchedule(new PlatformTaskDTO.DisabledDTO(shopInfo.getId(),
                     shopInfo.getName(),

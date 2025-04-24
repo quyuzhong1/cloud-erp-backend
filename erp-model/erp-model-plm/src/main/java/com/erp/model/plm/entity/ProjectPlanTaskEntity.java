@@ -28,7 +28,7 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_plan_task")
 @NoArgsConstructor
-public class ProjectPlanTaskEntity extends BaseEntity {
+public class ProjectPlanTaskEntity extends BaseEntity<ProjectPlanTaskEntity> {
     private static final long serialVersionUID = 184565397899617521L;
 
     /**

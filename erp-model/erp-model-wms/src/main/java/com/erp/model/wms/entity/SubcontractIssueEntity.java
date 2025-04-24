@@ -124,13 +124,13 @@ public class SubcontractIssueEntity extends BaseEntity<SubcontractIssueEntity> {
     @TableField("sync_kingdee_id")
     private String syncKingdeeId;
 
-    public static final String CODE = "code";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String TYPE = "type";
+    
 
-    public static final String DATE = "date";
+    
 
     public static final String SOURCE_ID = "source_id";
 

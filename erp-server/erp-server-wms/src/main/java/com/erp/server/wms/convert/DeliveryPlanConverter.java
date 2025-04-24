@@ -37,6 +37,7 @@ public interface DeliveryPlanConverter {
 
     @Mappings({
             @Mapping(target = "approveQty", ignore = true),
+            @Mapping(target = "platformFnSku", source = "fnSku"),
             @Mapping(target = "pickingQty", ignore = true)
     })
     RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO dto);

@@ -327,7 +327,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
         Integer userState = entity.getUserState();
         //表示禁用
-        if (UserStateConstants.USER_DISABLE == userState) {
+        if (UserStateConstants.USER_DISABLE.equals(userState)) {
             throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();
@@ -357,6 +357,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         vo.setBindingPlatform(bindingPlatform);
         vo.setBindingState(bindingState);
+        // 当前用户所属部门
+        SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(uid);
+        vo.setDeptId(sysDepartmentUserNumberDTO.getDepartmentId());
+        vo.setDeptName(sysDepartmentUserNumberDTO.getDepartmentName());
         return vo;
     }
 
@@ -655,7 +659,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         Integer userState = userEntity.getUserState();
         //表示禁用
-        if (UserStateConstants.USER_DISABLE == userState) {
+        if (UserStateConstants.USER_DISABLE.equals(userState)) {
             throw new ServiceException(ApiError.ERROR_1011);
         }
         SysUserDTO vo = new SysUserDTO();
@@ -1066,6 +1070,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             userDTO.setCode(entity.getCode());
             userDTO.setMobile(entity.getMobile());
             userDTO.setEmail(entity.getEmail());
+            userDTO.setRealName(entity.getRealName());
             userDTO.setIsMyState(0);
             if (Objects.nonNull(sysDepartmentUserNumberDTO)) {
                 userDTO.setDepartmentId(sysDepartmentUserNumberDTO.getDepartmentId());

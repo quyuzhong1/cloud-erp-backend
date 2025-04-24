@@ -27,7 +27,7 @@ public interface ProcessDefinitionMapper extends BaseMapper<ProcessDefinitionEnt
      * @param params
      * @return
      */
-    IPage<ProcessDefinitionDTO.ListDTO> paging(Page page, @Param("params") ProcessDefinitionDTO.QueryDTO params);
+    IPage<ProcessDefinitionDTO.ListDTO> paging(Page<?> page, @Param("params") ProcessDefinitionDTO.QueryDTO params);
 
     /**
      * 查询流程定义

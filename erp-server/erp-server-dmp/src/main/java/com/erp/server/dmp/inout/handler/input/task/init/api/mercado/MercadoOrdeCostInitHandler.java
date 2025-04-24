@@ -5,7 +5,6 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.core.anno.ParamData;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.PannoEnum;
@@ -24,11 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.mercado.constant.MercadoConstant;
 import com.sdk.oms.mercado.dto.MercadoShopInfoDTO;
 import com.sdk.oms.mercado.dto.mercado.cost.CostDTO;
-import com.sdk.oms.mercado.dto.mercado.shipment.ShipmentViewDTO;
 import com.sdk.oms.mercado.service.MercadoSdkClientService;
-import com.sdk.oms.tiktok.constant.TikTokConstant;
-import com.sdk.oms.tiktok.dto.TikTokShopInfoDTO;
-import com.sdk.oms.tiktok.service.TikTokSdkClientService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
@@ -109,7 +104,9 @@ public class MercadoOrdeCostInitHandler extends DmpInputInitHandler {
 					}
 					try {
 						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
 					sleepTime = sleepTime + 1000;
 					count = count + 1;
 				}
@@ -128,6 +125,8 @@ public class MercadoOrdeCostInitHandler extends DmpInputInitHandler {
 			try {
 				costDTO = objectMapper.readValue(JSONUtil.toJsonStr(shipmentResult.getData()), CostDTO.class);
 			} catch (JsonProcessingException e) {
+				System.out.println(e.getMessage());
+				e.printStackTrace();
 				log.error("美客多费用明细接口数据解析错误，数据={}", shipmentResult.getData());
 				throw new RuntimeException(StrUtil.format("调用url={},入参params={}, 费用明细数据解析失败，返回值 responseMap={}",
 						url + path, orderParams.toString(), JSONUtil.toJsonStr(shipmentResult)));

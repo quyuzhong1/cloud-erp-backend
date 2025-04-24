@@ -90,7 +90,7 @@ public interface SoDeliveryNoticeDetailService extends SuperService<SoDeliveryNo
      * @param soDetailIds
      * @return java.lang.Integer
      */
-    Integer getPushDownBySoDetailIds(List<String> soDetailIds);
+    List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(List<String> soDetailIds);
 
     /**
      * 关闭关联单据的关闭状态

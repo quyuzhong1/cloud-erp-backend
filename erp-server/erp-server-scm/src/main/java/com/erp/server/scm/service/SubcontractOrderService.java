@@ -7,7 +7,6 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.dto.SubcontractChangeDTO;
 import com.erp.model.scm.dto.SubcontractOrderDTO;
@@ -60,7 +59,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @param dto
      * @return
      */
-     String add(SubcontractOrderDTO.AddDTO dto);
+     SubcontractOrderEntity add(SubcontractOrderDTO.AddDTO dto);
 
      /**
      * 修改
@@ -69,7 +68,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @param dto
      * @return
      */
-     void update(SubcontractOrderDTO.UpdateDTO dto);
+     SubcontractOrderEntity update(SubcontractOrderDTO.UpdateDTO dto);
 
      /**
      * 新增并提交审核
@@ -78,7 +77,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @param dto
      * @return
      */
-     void addAndSubmit(SubcontractOrderDTO.AddDTO dto);
+     SubcontractOrderEntity addAndSubmit(SubcontractOrderDTO.AddDTO dto);
 
      /**
      * 修改并提交审核
@@ -87,16 +86,16 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @param dto
      * @return
      */
-     void updateAndSubmit(SubcontractOrderDTO.UpdateDTO dto);
+     BatchResultDTO updateAndSubmit(SubcontractOrderDTO.UpdateDTO dto);
 
      /**
      * 提交审核
      * @author will
      * @date: 2023-06-08
-     * @param ids
+     * @param entity 主实体
      * @return
      */
-     void submit(List<String> ids);
+     BatchResultDTO submitEntity(SubcontractOrderEntity entity);
 
     /**
     * 审核
@@ -133,7 +132,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     * @param ids
     * @return
     */
-    void delete(List<String> ids);
+    BatchResultDTO deleteEntity(SubcontractOrderEntity entity);
 
     /**
     * 撤销
@@ -142,7 +141,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
     * @param ids
     * @return
     */
-    void cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(SubcontractOrderEntity entity);
 
     /**
     * 导出Excel
@@ -184,7 +183,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @date: 2023/6/12 14:16
      * @param list
      */
-    void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list,Boolean isAuto);
+    void generatePo(ValidList<SubcontractOrderDTO.GeneratePoDTO> list);
     /**
      * 添加已有产品显示
      * @author Will
@@ -200,7 +199,7 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @param ids
      * @param remark
      */
-    void invalid(List<String> ids, String remark);
+    BatchResultDTO invalidEntity(SubcontractOrderEntity entity, String remark);
     /**
      * @description: 委外变更
      * @author Will
@@ -243,4 +242,11 @@ public interface SubcontractOrderService extends SuperService<SubcontractOrderEn
      * @return List<ListSelectDTO>
      */
     List<SubcontractOrderDTO.ListSelectDTO> listSubcontractOrder();
+
+    /**
+     * @description: 委外订单下推采购订单后，更新采购申请单（采购订单生成状态）
+     * @author jack
+     * @date: 2025-02-18
+     */
+    void  updateCreatePoTypeBySubcontractOrderIds(List<String> idList);
 }

@@ -42,7 +42,7 @@ public class MerchantFulfillmentApiTest {
     @Resource
     private CfgAppClientService cfgAppClientService;
 
-    private final MerchantFulfillmentApi api = null;
+    private final MerchantFulfillmentApi api = new MerchantFulfillmentApi(null);
 
     
     /**

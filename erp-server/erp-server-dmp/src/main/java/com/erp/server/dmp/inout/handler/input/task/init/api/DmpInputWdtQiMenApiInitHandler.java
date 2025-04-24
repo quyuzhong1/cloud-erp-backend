@@ -70,6 +70,9 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 			if("wms.stockin.PreStockin.search".equals(apiType)) {
 				parseObject.put("mtFrom", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 				parseObject.put("mtTo", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+			}else if("aftersales.refund.Refund.search".equals(apiType)) {
+				parseObject.put("modifiedFrom", dmpInputWdtApiInitRequest.getStartTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+				parseObject.put("modifiedTo", dmpInputWdtApiInitRequest.getEndTime().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 			}else if("setting.Shop.queryShop".equals(apiType) || "setting.Warehouse.queryWarehouse".equals(apiType)){
 				
 			}else {
@@ -159,6 +162,8 @@ public class DmpInputWdtQiMenApiInitHandler implements DmpInputApiInitHandler{
 			}
 		}catch (ServiceException e) {
 			throw e;
+		}catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 		}catch (Exception e) {
 			throw new ServiceException("调用旺店通奇门" + apiType + "接口报错，错误原因：" + ExceptionUtil.stacktraceToOneLineString(e));
 		}

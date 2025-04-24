@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.SoDeliveryNoticeChangeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.SoDeliveryNoticeChangeEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="source_code" property="sourceCode" />
+       <result column="source_id" property="sourceId" />
+       <result column="so_code" property="soCode" />
+       <result column="so_id" property="soId" />
+       <result column="invalid_status" property="invalidStatus" />
+       <result column="customer_id" property="customerId" />
+       <result column="customer_name" property="customerName" />
+       <result column="approve_user_id" property="approveUserId" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="change_reason" property="changeReason" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, approve_status, source_code, source_id, so_code, so_id, invalid_status, customer_id, customer_name, approve_user_id, approve_user_name, approve_time, change_reason
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ListDTO">
+        select sdnc.id,
+               sdnc.code,
+               sdnc.source_id as noticeId,
+               sdnc.source_code as noticeCode,
+               sdnc.so_id as soId,
+               sdnc.so_code as soCode,
+               sdnc.approve_status as approveStatus,
+        sdnc.invalid_status as invalidStatus,
+        sdnc.customer_name as customerName,
+        sdncd.sku_id as skuId,
+        sdncd.sku_no as skuNo,
+        sdncd.product_name as productName,
+        sdncd.source_detail_id as sourceDetailId,
+        sdncd.so_detail_id as soDetailId,
+        sdncd.change_type as changeType,
+        sdncd.origin_qty as originQty,
+        sdncd.new_qty as newQty,
+        sdncd.id as detailId,
+        sdnc.create_user_name as createUserName,
+        sdnc.approve_user_name as approveUserName,
+        sdnc.create_time as createTime,
+        sdnc.approve_time as approveTime,
+        sdnd.picking_qty as pickedQty
+        from so_delivery_notice_change sdnc
+        inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id and sdncd.is_deleted = false
+        left join so_delivery_notice_detail sdnd on sdnd.id = sdncd.source_detail_id and sdnd.is_deleted = false
+        where   ${params.sqlMap.default}
+        and sdnc.is_deleted = false
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        sdnc.create_time desc
+    </select>
+
+    <select id="tabList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$TabListDTO">
+        SELECT
+        approve_status AS tabFlag,
+        count(*)  AS count
+        FROM  so_delivery_notice_change sdnc
+        WHERE is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY approve_status
+    </select>
+    <select id="listViewDetailList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ViewDetail">
+        select sdncd.id as detailId,
+               sdncd.source_detail_id as sourceDetailId,
+               sdncd.so_detail_id as soDetailId,
+               sdncd.sku_id as skuId,
+               sdncd.sku_no as skuNo,
+               sdncd.product_name as productName,
+               sdncd.change_type as changeType,
+               sdncd.new_qty as newNoticeQty,
+               sdncd.bom_version as bomVersion,
+               sdncd.platform_sku_no as platformSkuNo,
+               sd.qty as saleQty,
+                (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sdnd.source_detail_id and a.is_deleted = false) as allNoticeQty,
+               COALESCE(sdnd.delivery_qty,0) as currentNoticeQty,
+                (select  COALESCE(sum(a.qty),0) from picking_detail a where a.source_detail_id = sdnd.id and a.is_deleted = false) as pickedQty,
+               sd.remark
+                from so_delivery_notice_change sdnc
+        inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id
+        LEFT join so_delivery_notice_detail sdnd on sdnd.id = sdncd.source_detail_id and sdnd.is_deleted = false
+        LEFT join so_detail sd on sd.id = sdncd.so_detail_id  and sd.is_deleted = false
+        where sdnc.is_deleted = false and sdncd.is_deleted = false
+        and sdnc.id = #{id}
+        </select>
+    <select id="productPaging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ProductDTO">
+        select
+            sd.id as soDetailId,
+            sdnd.id as sourceDetailId,
+            sd.sku_id as skuId,
+            sd.sku_no as skuNo,
+            sd.qty as saleQty,
+            sd.bom_version as bomVersion,
+            sd.platform_sku_no as platformSkuNo,
+        (select  COALESCE(sum(a.delivery_qty),0) from so_delivery_notice_detail a where a.source_detail_id = sd.id and a.is_deleted = false) as allNoticeQty,
+        COALESCE(sdnd.delivery_qty,0) as currentNoticeQty,
+        sdnd.picking_qty as pickedQty,
+        sd.remark
+        from so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false
+        inner join so_delivery_notice sdn on sdn.source_id = si.id and sdn.is_deleted = false and sdn.id = #{params.noticeId}
+        left join so_delivery_notice_detail sdnd on sdnd.is_deleted = false and sdnd.source_detail_id = sd.id and sdnd.main_id = sdn.id
+        where ${params.sqlMap.default}
+          and si.is_deleted = false and si.id = #{params.soId}
+        <if test="params.skuNoList !=null and params.skuNoList.size>0">
+            AND sd.sku_no IN
+            <foreach collection="params.skuNoList" item="sku" open="(" separator="," close=")">
+                #{sku}
+            </foreach>
+        </if>
+        <if test="params.detailIds !=null and params.detailIds.size>0">
+            AND sdnd.id IN
+            <foreach collection="params.detailIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+    </select>
+
+</mapper>

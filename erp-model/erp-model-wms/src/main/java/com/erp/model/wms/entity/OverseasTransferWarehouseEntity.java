@@ -3,11 +3,9 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -23,7 +21,11 @@ import com.common.business.enums.ApproveStatusEnum;
 @Accessors(chain = true)
 @TableName("overseas_transfer_warehouse")
 public class OverseasTransferWarehouseEntity extends BaseEntity<OverseasTransferWarehouseEntity> {
-
+    /**
+     * 第三方服务商表id
+     */
+    @TableField("overseas_provider_id")
+    private String overseasProviderId;
     /**
     * 平台类型
     */
@@ -65,12 +67,26 @@ public class OverseasTransferWarehouseEntity extends BaseEntity<OverseasTransfer
      */
     @TableField("logistics_product_name")
     private String logisticsProductName;
+    /**
+     * 仓库状态 0:不可用;1:可用;2:停用
+     */
+    @TableField("platform_warehouse_status")
+    private String platformWarehouseStatus;
+
+    /**
+     * 国家二字码
+     */
+    @TableField("country")
+    private String country;
+    /**
+     * 国家中文名
+     */
+    @TableField("country_name")
+    private String countryName;
 
     public static final String DICT_PLATFORM = "dict_platform";
 
     public static final String PLATFORM_WAREHOUSE_CODE = "platform_warehouse_code";
-
-    public static final String NAME = "name";
 
     public static final String PLATFORM_STATUS = "platform_status";
 

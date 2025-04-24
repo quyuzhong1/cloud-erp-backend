@@ -1,0 +1,81 @@
+package com.erp.server.mrp.calculation.handler;
+
+import com.erp.model.mrp.dto.CfgRuleCommonDTO;
+import com.erp.model.mrp.dto.CfgRuleStrategyDTO;
+import com.erp.model.mrp.dto.ReplenishmentResultDTO;
+import com.erp.model.mrp.enums.CfgRuleCommonTypeEnum;
+import com.erp.model.mrp.enums.CfgRuleInventoryNodeEnum;
+import com.erp.model.mrp.enums.CfgRulePlatformTypeEnum;
+import com.erp.model.mrp.enums.ReplenishmentInventoryTypeEnum;
+import com.erp.model.wms.enums.DeliveryPlanTypeEnum;
+import com.erp.server.mrp.calculation.service.InventoryService;
+import com.erp.server.mrp.service.CfgRuleCommonService;
+import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+@Component
+public class FbaPlanDeliveryHandler extends AbstractSkuCalculationHandler {
+    @Resource
+    private HistorySalesHandler historySalesHandler;
+    @Resource
+    private InventoryService inventoryService;
+    @Resource
+    private CfgRuleCommonService cfgRuleCommonService;
+
+    @Override
+    public SkuCalculationHandler getNextHandler(List<ReplenishmentResultDTO> r) {
+        return historySalesHandler;
+    }
+
+    @Override
+    public boolean shouldHandle(ReplenishmentResultDTO dto) {
+        return CfgRulePlatformTypeEnum.AMAZON.getCode().equals(dto.getReplenishment().getPlatformType());
+
+    }
+
+    @Override
+    public void doHandle(ReplenishmentResultDTO replenishmentResultDTO, List<ReplenishmentResultDTO> r) {
+        String baseKey = CfgRuleCommonTypeEnum.getBaseInventoryRedisKey();
+        List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> estimatedDeliveryDetails = new ArrayList<>();
+        CfgRuleStrategyDTO cfgRuleStrategyDTO = replenishmentResultDTO.getCfgRuleStrategy();
+        //获取需要计算库存的FBA预计发货配置
+        List<CfgRuleCommonDTO.StrategyResultDTO> inventoryResult = cfgRuleStrategyDTO.getInventoryResult();
+        //补货计划
+        Set<String> replenishmentPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaReplenishmentPlan());
+        if (!CollectionUtils.isEmpty(replenishmentPlan)) {
+            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getReplenishmentPlan(replenishmentResultDTO, replenishmentPlan, cfgRuleStrategyDTO.getExpireTimeResult(),
+                    ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY);
+            if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
+                estimatedDeliveryDetails.addAll(fbaPlanDelivery);
+            }
+        }
+        //发货计划_补货计划下推
+        Set<String> replenishmentDeliveryPlan = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaDeliveryPlanByReplenishment());
+        if (!CollectionUtils.isEmpty(replenishmentDeliveryPlan)) {
+            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, replenishmentDeliveryPlan, cfgRuleStrategyDTO.getExpireTimeResult(),
+                    CfgRuleInventoryNodeEnum.FBA_DELIVERY_PLAN_BY_REPLENISHMENT.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
+            if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
+                estimatedDeliveryDetails.addAll(fbaPlanDelivery);
+            }
+        }
+        //发货计划_手动新增
+        Set<String> codes = cfgRuleCommonService.findByKey(baseKey, inventoryResult, baseKey + ":" + CfgRuleInventoryNodeEnum.getFbaDeliveryPlanByManual());
+        if (!CollectionUtils.isEmpty(codes)) {
+            List<ReplenishmentResultDTO.EstimatedDeliveryDetailDTO> fbaPlanDelivery = inventoryService.getPlanDelivery(replenishmentResultDTO, codes,
+                    cfgRuleStrategyDTO.getExpireTimeResult(), CfgRuleInventoryNodeEnum.FBA_DELIVERY_PLAN_BY_MANUAL.getCode(), ReplenishmentInventoryTypeEnum.FBA_ESTIMATED_DELIVERY, DeliveryPlanTypeEnum.FBA.getCode());
+            if (!CollectionUtils.isEmpty(fbaPlanDelivery)) {
+                estimatedDeliveryDetails.addAll(fbaPlanDelivery);
+            }
+        }
+        replenishmentResultDTO.setFbaDeliveryDetails(estimatedDeliveryDetails);
+        Integer qty = estimatedDeliveryDetails.stream()
+                .map(ReplenishmentResultDTO.EstimatedDeliveryDetailDTO::getQty)
+                .reduce(0, Math::addExact);
+        replenishmentResultDTO.getReplenishmentDetail().setFbaPlanDeliveryQty(qty);
+    }
+}

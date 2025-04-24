@@ -50,7 +50,11 @@
         <if test="type != null and type != ''">
             and auth.type = #{type}
         </if>
+        <if test="dictPlatform != null and dictPlatform != ''">
+            and info.dict_platform = #{dictPlatform}
+        </if>
 
+        ORDER BY auth.update_time desc
     </select>
     <select id="getAuthShopByPlatformType" resultType="com.erp.model.oms.entity.ShopAuthEntity">
         SELECT

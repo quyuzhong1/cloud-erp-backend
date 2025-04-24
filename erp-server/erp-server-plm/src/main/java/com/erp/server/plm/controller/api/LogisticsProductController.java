@@ -7,6 +7,7 @@ package com.erp.server.plm.controller.api;/**
  */
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -19,6 +20,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.server.plm.query.LogisticsProductQueryHandler;
 import com.erp.server.plm.service.LogisticsProductService;
 import com.erp.server.plm.service.ProductLogisticsService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -62,6 +65,7 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     public ApiResult<PagingVO<LogisticsProductDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsProductDTO.PagingVO> pagingVO = logisticsProductService.paging(dto);
         return success(pagingVO);
@@ -88,6 +92,7 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @PostMapping("/update/paging")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     public ApiResult<PagingVO<LogisticsProductDTO.UpdatePagingDTO>> updatePaging(@RequestBody @Valid PagingDTO<LogisticsProductDTO.UpdatePagingParamDTO> dto) {
         PagingVO<LogisticsProductDTO.UpdatePagingDTO> pagingVO = logisticsProductService.updatePaging(dto);
         return success(pagingVO);
@@ -116,7 +121,7 @@ public class LogisticsProductController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改物流产品")
-    public ApiResult update(@RequestBody @Valid LogisticsProductDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Valid LogisticsProductDTO.UpdateDTO dto) {
         Boolean updateResult = logisticsProductService.update(dto);
         return updateResult?success():failure();
 
@@ -249,8 +254,9 @@ public class LogisticsProductController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出物流产品信息")
+    @WebAdvanceQuery(handler = LogisticsProductQueryHandler.class)
     @PostMapping("/export")
-    public ApiResult exportExcel(@RequestBody @Valid LogisticsProductDTO.ExportDTO dto) {
+    public ApiResult<Object> exportExcel(@RequestBody @Valid LogisticsProductDTO.ExportDTO dto) {
         Boolean result = logisticsProductService.exportExcel(dto);
         return result ? success() : failure();
     }
@@ -261,7 +267,7 @@ public class LogisticsProductController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入物流产品信息")
     @PostMapping("/importExcel")
-    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object> importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = logisticsProductService.importExcel(excelFile, response);
         return result ? success() : failure();
     }
@@ -272,7 +278,7 @@ public class LogisticsProductController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载模板物流产品")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/logisticsProductTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -284,7 +290,7 @@ public class LogisticsProductController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();

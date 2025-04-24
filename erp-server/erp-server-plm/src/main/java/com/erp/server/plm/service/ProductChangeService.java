@@ -2,6 +2,8 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
@@ -70,4 +72,16 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
      * @return List<String>
      */
     List<String> listChangeField(String id);
+
+    /**
+     * tab页
+     */
+    List<ProductChangePagingVO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 检查库存是否大于零
+     * 此方法用于检查给定商品的库存是否大于零如果库存大于零，则根据库存状态统计数量，并抛出异常
+     *
+     */
+    void checkInventoryGreaterThanZero(ProductInfoEntity productInfoEntity, String propertyId , String skuId) ;
 }

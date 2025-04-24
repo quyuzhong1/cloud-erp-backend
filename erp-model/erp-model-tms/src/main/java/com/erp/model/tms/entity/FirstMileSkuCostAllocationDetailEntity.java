@@ -1,13 +1,14 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -115,7 +116,7 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
 
     public static final String ALLOCATION_TYPE = "allocation_type";
 
-    public static final String AMOUNT = "amount";
+    public static final String FIELD_AMOUNT = "amount";
 
     public static final String ALLOCATED_AMOUNT = "allocated_amount";
 

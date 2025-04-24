@@ -13,13 +13,13 @@ import java.util.stream.Stream;
  * 头程物流运输状态
  * @author Lambda
  * @Classname LogisticTrackStatusEnum
- * @Description TODO
  * @Date 2023-11-15 17:38
  * @Created by yl
  */
 public enum FmLogisticTrackStatusEnum implements EnumMessage {
     WAIT_ORDER("waitOrder","待下单"),
     ORDERED("ordered","已下单"),
+    PICKUP("pickup","已揽收"),
     INSPECTING("Inspecting","查验中"),
     TRACK_ING("trackIng","运输中"),
     ARRIVED("arrived","已到港"),

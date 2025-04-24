@@ -76,8 +76,7 @@ public class BaoHongService {
     public BaoHongResponse<String> createOrder(CreateOrderInfo createOrderInfo){
 //        createOrderInfo.getOrderProduct().forEach(v->v.setCurrencyCode("USD"));
         createOrderInfo.getOrderProduct().forEach(v->v.setPurposeDeclaredValue(null));
-        log.info("==========BaoHongService.createOrder==========start");
-        log.info("createOrderInfo:{}",createOrderInfo);
+        log.warn("==========BaoHongService.createOrder==========createOrderInfo:{}",createOrderInfo);
         TransferLogisticsContext.setRequestJson(JSONObject.toJSONString(createOrderInfo));
         HeaderRequest headerRequest = BaoHongUtils.getOrderHeader();
         ServiceForOrder service = BaoHongUtils.getOrderService();

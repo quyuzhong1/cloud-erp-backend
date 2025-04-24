@@ -83,4 +83,19 @@ public interface VirtualInventoryDiffService extends SuperService<VirtualInvento
      * 明细数据
      */
     PagingVO<VirtualInventoryDTO.WarehouseStatisticsExcelDTO> exportWarehouseStatisticsData(PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto);
+    /**
+     * 按SKU显示库存分配差异
+     * @author will
+     * @date 2025/2/19 19:10
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryDiffDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualInventoryDiffDTO.SendNoticeSkuDTO> listDiffSkuSendNotice();
+
+    /**
+     * 按汇总显示库存分配差异
+     * @author will
+     * @date 2025/2/19 19:10
+     * @return java.util.List<com.erp.model.wms.dto.VirtualInventoryDiffDTO.SendNoticeSkuDTO>
+     */
+    List<VirtualInventoryDiffDTO.SendNoticeTotalDTO> listDiffTotalSendNotice();
 }

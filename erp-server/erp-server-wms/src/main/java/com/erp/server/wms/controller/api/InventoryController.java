@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -10,12 +11,15 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
+import com.erp.server.wms.handler.InventoryQueryHandler;
+import com.erp.server.wms.query.WmsInventoryQueryHandler;
 import com.erp.server.wms.service.InventoryService;
 import com.erp.server.wms.service.TransactionFlowService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,10 +36,10 @@ import java.util.List;
 @RequestMapping(value = "/inventory")
 public class InventoryController extends BaseController {
 
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
 
-    @Autowired
+    @Resource
     private TransactionFlowService transactionFlowService;
 
     /**
@@ -44,6 +48,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<InventoryDTO.SearchParamDTO> dto) {
         return success(inventoryService.paging(dto));
     }
@@ -55,6 +60,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "即时库存导出")
     @PostMapping(value = "/exportInventoryExcel")
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<Boolean> exportInventoryExcel(@RequestBody InventoryDTO.ExportSearchParamDTO dto) {
         inventoryService.exportExcel(dto);
         return success(true);
@@ -66,6 +72,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageTransFlow")
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryDTO.TransFlowPagingViewDTO>> pageTransFlow(@RequestBody @Validated PagingDTO<InventoryDTO.TransFlowSearchParamDTO> dto) {
         return success(transactionFlowService.pagingForInv(dto));
     }
@@ -76,6 +83,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/exportTransFlow")
+    @WebAdvanceQuery(handler = WmsInventoryQueryHandler.class)
     public ApiResult<Boolean> exportTransFlow(@RequestBody InventoryDTO.ExportInvFlowSearchParamDTO dto) {
         transactionFlowService.exportTransFlow(dto);
         return success(true);
@@ -88,6 +96,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageInOutStock")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO>> pageInOutStock(@RequestBody @Validated PagingDTO<InventoryDTO.InOutStockTransFlowSearchParamDTO> dto) {
         return success(transactionFlowService.paging(dto));
     }
@@ -99,6 +108,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "出入库流水导出")
     @PostMapping(value = "/exportExcelInOutStock")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<Boolean> exportExcelInOutStock(@RequestBody InventoryDTO.ExportInOutStockTransFlowSearchParamDTO dto) {
         transactionFlowService.exportExcel(dto);
         return success(true);
@@ -110,6 +120,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/pageInOutStockSummary")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryDTO.InOutStockSummaryPagingViewDTO>> pageInOutStockSummary(@RequestBody @Validated PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> dto) {
         return success(transactionFlowService.pagingSummary(dto));
     }
@@ -121,8 +132,9 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "出入库列表导出")
     @PostMapping(value = "/exportExcelInOutStockSummary")
-    public ApiResult<Boolean> exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto) {
-        transactionFlowService.exportSummaryExcel(dto);
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
+    public ApiResult<Boolean> exportExcelInOutStockSummary(@RequestBody InventoryDTO.ExcelInOutStockSummarySearchParamDTO dto, HttpServletResponse response) {
+        transactionFlowService.exportSummaryExcel(dto,response);
         return success(true);
     }
 
@@ -159,6 +171,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/transport/paging")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryReportDTO.TransportPagingDTO>> transportPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.TransportSearchParamDTO> dto) {
         return success(transactionFlowService.transportPagingList(dto));
     }
@@ -170,6 +183,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "在途库存导出")
     @PostMapping(value = "/exportTransport")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<Boolean> exportTransport(@RequestBody InventoryReportDTO.ExportTransportSearchParamDTO dto) {
         transactionFlowService.exportTransportExcel(dto);
         return success(true);
@@ -191,6 +205,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/inventoryAge/paging")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<PagingVO<LinkedHashMap>> inventoryAgePaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.InventoryAgeSearchParamDTO> dto) {
         return success(inventoryService.inventoryAgePaging(dto));
     }
@@ -202,6 +217,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "库龄计算表导出")
     @PostMapping(value = "/exportInventoryAge")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<Boolean> exportInventoryAge(@RequestBody InventoryReportDTO.ExportInventoryAgeSearchParamDTO dto) {
         inventoryService.exportInventoryAge(dto);
         return success(true);
@@ -227,6 +243,7 @@ public class InventoryController extends BaseController {
      * @return
      */
     @PostMapping("/dailyInventoryPaging")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryReportDTO.ListDailyInventoryDTO>> dailyInventoryPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
         return success(transactionFlowService.dailyInventoryPaging(dto));
     }
@@ -238,6 +255,7 @@ public class InventoryController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "每日库存导出")
     @PostMapping(value = "/exportDailyInventory")
+    @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<Boolean> exportDailyInventory(@RequestBody InventoryReportDTO.DailyInventoryParamDTO dto) {
         transactionFlowService.exportDailyInventory(dto);
         return success(true);
@@ -267,16 +285,16 @@ public class InventoryController extends BaseController {
      * 查询Tab
      */
     @GetMapping("/tabList")
-    public ApiResult<List<InventoryDTO.tabDto>> tabList(){
-        List<InventoryDTO.tabDto> list = new ArrayList<>(3);
+    public ApiResult<List<InventoryDTO.TabDto>> tabList(){
+        List<InventoryDTO.TabDto> list = new ArrayList<>(3);
 
         long countWarehouse = inventoryService.countByWarehouse();
         long countArea = inventoryService.countByArea();
         long countLocation = inventoryService.countByLocation();
 
-        list.add(new InventoryDTO.tabDto("warehouse", countWarehouse));
-        list.add(new InventoryDTO.tabDto("warehouseArea", countArea));
-        list.add(new InventoryDTO.tabDto("warehouseLocation", countLocation));
+        list.add(new InventoryDTO.TabDto("warehouse", countWarehouse, "按仓库"));
+        list.add(new InventoryDTO.TabDto("warehouseArea", countArea, "按库区"));
+        list.add(new InventoryDTO.TabDto("warehouseLocation", countLocation, "按仓位"));
 
         return ApiResult.success(list);
     }

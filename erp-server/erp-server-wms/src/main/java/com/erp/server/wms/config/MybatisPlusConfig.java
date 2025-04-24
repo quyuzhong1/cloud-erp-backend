@@ -36,7 +36,11 @@ public class MybatisPlusConfig {
     @Bean
     public MybatisPlusInterceptor mybatisPlusInterceptor() {
         MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
-        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL));
+//        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.POSTGRE_SQL));
+        PaginationInnerInterceptor paginationInnerInterceptor = new PaginationInnerInterceptor(DbType.POSTGRE_SQL);
+        //关闭生成countSql 优化掉join
+        paginationInnerInterceptor.setOptimizeJoin(false);
+        interceptor.addInnerInterceptor(paginationInnerInterceptor);
         interceptor.addInnerInterceptor(new OptimisticLockerInnerInterceptor());
         return interceptor;
 

@@ -1,21 +1,25 @@
 package com.erp.server.oms.controller.feign;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.PlatformDeliveryInterceptDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
 import com.common.business.dto.WalmartShipDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.UpdateStateDTO;
+import com.common.business.dto.base.*;
 import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
+import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -25,6 +29,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -62,6 +68,9 @@ public class SoB2cFeignController extends BaseController {
 
     @Resource
     private SoB2cSplitService soB2cSplitService;
+
+    @Resource
+    private SyncSoB2cService syncSoB2cService;
 
 
     /**
@@ -309,8 +318,8 @@ public class SoB2cFeignController extends BaseController {
      * @Date 2023/12/27 20:14
      **/
     @PostMapping("/updateSoB2cStatus")
-    Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status) {
-        return soB2cService.updateSoB2cStatus(soB2cIds, status);
+    Boolean updateSoB2cStatus(@RequestParam("soB2cIds") List<String> soB2cIds, @RequestParam("status") String status, @RequestParam("isManualDelivery")Boolean isManualDelivery) {
+        return soB2cService.updateSoB2cStatus(soB2cIds, status, isManualDelivery);
     }
 
     /**
@@ -450,9 +459,9 @@ public class SoB2cFeignController extends BaseController {
      * @author Lambda
      * @create 2024-01-05 9:44
      */
-    @GetMapping("/listTrackNoEmptyList")
-    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList() {
-        return soB2cLogisticsService.listTrackNoEmptyList();
+    @PostMapping("/listTrackNoEmptyList")
+    public List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList(@RequestBody SoB2cDTO.QueryDTO queryDTO) {
+        return soB2cLogisticsService.listTrackNoEmptyList(queryDTO);
     }
 
     /**
@@ -795,5 +804,143 @@ public class SoB2cFeignController extends BaseController {
     @PostMapping("/listSoB2cData")
     public SoB2cDTO.SoB2cDataDTO listSoB2cData(@RequestBody @Validated SoB2cDTO.SoB2cDataParamDTO paramDTO) {
         return soB2cService.listSoB2cData(paramDTO);
+    }
+
+    /**
+     * 取消订单预报
+     */
+    @PostMapping("/cancelOrderForecast")
+    public ApiResult<List<BatchResultDTO>> cancelOrderForecast(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = soB2cService.cancelOrderForecast(dto.getIds(), false);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 取消物流单
+     * @return
+     */
+    @PostMapping("/cancelLogistic")
+    public ApiResult<List<BatchResultDTO>> cancelLogistic(@RequestBody @Validated BaseIdsDTO.IdsDTO idDTO) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(idDTO.getIds().size());
+        List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(idDTO.getIds());
+        List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(idDTO.getIds());
+        for (String id : idDTO.getIds()) {
+            BatchResultDTO result;
+            try {
+                result = soB2cLogisticsService.cancelLogistic(id,soB2cEntityList,soB2cLogisticsEntityList, false);
+            } catch (Exception e) {
+                log.error("B2C销售订单取消物流单失败", e);
+                SoB2cEntity entity = soB2cService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    result = BatchResultDTO.fail(id, id, "B2C销售订单不存在, 获取物流单号失败");
+                    resultDTOS.add(result);
+                    continue;
+                }
+                result = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(result);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 查询所有虚拟仓B2C销售订单数据
+     * @author will
+     * @date 2024/9/26 17:10
+     * @return List<ViewDTO>
+     */
+    @GetMapping("/listAllVirtualSoB2cDetail")
+    public List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail(){
+        return soB2cDetailService.listAllVirtualSoB2cDetail();
+    }
+
+    /**
+     * 根据销售订单id获取订单 渠道+仓库+重量 基础信息
+     * @param ids
+     * @return
+     */
+    @PostMapping("/getB2cLogisticsByIds")
+    public List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(@RequestBody List<String> ids){
+        return soB2cService.getB2cLogisticsByIds(ids);
+    }
+    /**
+     * 更新物流预估费用
+     * @param b2cSoId
+     * @param totalShippingCost
+     */
+    @GetMapping("/updateLogisticsFee")
+    public void updateLogisticsFee(@RequestParam(value = "b2cSoId")String b2cSoId,
+                                   @RequestParam(value = "totalShippingCost") BigDecimal totalShippingCost,
+                                   @RequestParam(value = "currency") String currency){
+        soB2cLogisticsService.updateLogisticsFee(b2cSoId, totalShippingCost,currency);
+    }
+
+    /**
+     * 更新 超过订单金额比例标识
+     * @param b2cSoId
+     * @param isOverEstimatedShipCost
+     */
+    @GetMapping("/updateOverEstimatedShipCost")
+    public void updateOverEstimatedShipCost(@RequestParam(value = "b2cSoId") String b2cSoId,
+                                     @RequestParam(value = "isOverEstimatedShipCost") Boolean isOverEstimatedShipCost){
+        soB2cService.updateOverEstimatedShipCost(b2cSoId, isOverEstimatedShipCost);
+    }
+
+    /**
+     * 同步速递云线上订单/配货单
+     * @param soId
+     * @param operateEnum
+     */
+    @GetMapping("/syncSdyOrderHandler")
+    public void syncSdyOrderHandler(@RequestParam("soId") String soId, @RequestParam("operateEnum") String operateEnum, @RequestParam("sourceType") String sourceType) {
+        SoB2cEntity soB2cEntity = this.getById(soId);
+        if (null == soB2cEntity){
+            ServiceException.runError("未找到B2C销售订单:{}", soId);
+        }
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(soId);
+        if (CollectionUtils.isEmpty(soB2cDetailEntityList)){
+            ServiceException.runError("未找到B2C销售订单明细:{}", soId);
+        }
+        syncSoB2cService.syncSdyOrderHandler(soB2cEntity, soB2cDetailEntityList, operateEnum, sourceType);
+    }
+
+    /**
+     * 同步销售出库单的单据日期
+     * @param soId
+     * @param soOutstockDate
+     */
+    @GetMapping("/writeBackSoOutstockDate")
+    public void writeBackSoOutstockDate(@RequestParam("soId") String soId, @RequestParam("soOutstockDate") String soOutstockDate) {
+        soB2cService.writeBackSoOutstockDate(soId, soOutstockDate);
+    }
+
+    /**
+     * 销售订单审核
+     * @Author Luo_WG
+     * @Date 2023/7/4 12:28
+     * @param dto
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/approve")
+    public List<BatchResultDTO> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            try {
+                resultDTOS.add(soB2cService.approve(new ApproveOneDTO(id, dto.getType(), dto.getComment()), null, ""));
+            }catch (Exception e){
+                log.error("B2B销售订单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, id, e.getMessage()));
+            }
+        }
+        return resultDTOS;
+    }
+
+    /**
+     * 查询订单关联的拆分信息
+     * */
+    @PostMapping("/getSplitCombination")
+    public SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId) {
+        return soB2cRefService.getSplitCombination(soId);
     }
 }

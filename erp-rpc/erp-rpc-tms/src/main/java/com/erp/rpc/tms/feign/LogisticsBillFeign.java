@@ -3,11 +3,9 @@ package com.erp.rpc.tms.feign;
 import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.response.CancelResponseVO;
 import com.erp.model.tms.vo.response.InterceptResponseVO;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 
@@ -215,4 +212,14 @@ public interface LogisticsBillFeign {
      */
     @PostMapping("/feign/logisticsBill/updateLogisticWeight")
     ApiResult<String> updateLogisticWeight(@RequestBody LogisticsBillDTO.UpdateWeight dto);
+
+    /**
+     * 获取物流面单
+     * @Author zdy
+     * @Date 2025/02/17 14:34
+     * @param dto
+     * @return com.erp.model.oms.dto.SoB2cDTO.WaybillDTO
+     **/
+    @PostMapping("/feign/logisticsBill/getLogisticsLabel")
+    BatchResultDTO getLogisticsLabel(@RequestBody LogisticsBillDTO.PrintLogisticsWaybillDTO dto);
 }

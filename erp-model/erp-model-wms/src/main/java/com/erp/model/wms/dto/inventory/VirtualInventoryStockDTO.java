@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -58,6 +59,11 @@ public class VirtualInventoryStockDTO implements Serializable {
              * 仓库存状态
              */
             private InventoryStatusEnum inventoryStatus;
+
+            /**
+             * 交易时间
+             */
+            private LocalDateTime tradeTime;
         }
 
         @Data
@@ -387,6 +393,11 @@ public class VirtualInventoryStockDTO implements Serializable {
              * 单据日期
              */
             private LocalDate billDate;
+
+            /**
+             * 交易时间
+             */
+            private LocalDateTime tradeTime;
 
             /**
              * 原单明细id

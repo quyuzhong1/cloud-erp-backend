@@ -93,7 +93,6 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
 
     private void getTrackData(LogisticsBillDetailQueryDTO query, List<OceanResponseData> responseDataList, CfgAppClientEntity cfgAppClient) {
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillFeign.listTrackDto(query);
-        if (list.size() > MathUtil.NUMBER_100){
             //列表数据较多情况下，进行分割集合
             List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
             //物流商数据处理
@@ -103,13 +102,6 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
                     responseDataList.add(responseData);
                 }
             });
-        }else {
-            //物流商数据处理
-            OceanResponseData responseData = this.processTrackData(list, cfgAppClient);
-            if (Objects.nonNull(responseData)){
-                responseDataList.add(responseData);
-            }
-        }
         log.info("========同步物流轨迹数据完成==========");
     }
 
@@ -168,19 +160,20 @@ public class Track123OceanLogisticsHandler extends AbstractLogisticsTrackHandler
                                     }
                                     acceptedToSaveDto.setDetails(details);
                                     resultList.add(acceptedToSaveDto);
-                                } else {
-                                    List<PlatformTrackDetail> details = new ArrayList<>();
-                                    PlatformTrackDetail detail = new PlatformTrackDetail();
-                                    detail.setTrackNo(oceanTrackInfo.getTrackingNo());
-                                    //转换类型
-                                    detail.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());
-                                    LocalDateTime eventTime = LocalDateTime.parse(oceanTrackInfo.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                                    detail.setTrackTime(eventTime);
-                                    detail.setContent("暂无信息");
-                                    details.add(detail);
-                                    acceptedToSaveDto.setDetails(details);
-                                    resultList.add(acceptedToSaveDto);
                                 }
+//                                else {
+//                                    List<PlatformTrackDetail> details = new ArrayList<>();
+//                                    PlatformTrackDetail detail = new PlatformTrackDetail();
+//                                    detail.setTrackNo(oceanTrackInfo.getTrackingNo());
+//                                    //转换类型
+//                                    detail.setStatus(LogisticTrackStatusEnum.OCEAN_TRACK_ING.getCode());
+//                                    LocalDateTime eventTime = LocalDateTime.parse(oceanTrackInfo.getCreateTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+//                                    detail.setTrackTime(eventTime);
+//                                    detail.setContent("暂无信息");
+//                                    details.add(detail);
+//                                    acceptedToSaveDto.setDetails(details);
+//                                    resultList.add(acceptedToSaveDto);
+//                                }
                             }
                         });
                     }

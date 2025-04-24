@@ -21,6 +21,7 @@
        <result column="trade_create_time" property="tradeCreateTime" />
        <result column="out_bound_time" property="outBoundTime" />
        <result column="warehouse_name" property="warehouseName" />
+        <result column="is_outstock" property="isOutstock" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -51,10 +52,10 @@
             ad.trade_create_time AS tradeCreateTime,
             ad.out_bound_time AS outBoundTime,
             ad.warehouse_name AS warehouseName,
+            ad.is_outstock AS isSystemOut,
             add.platform_sku as platformSku,
             add.sku_no as skuNo,
-            add.order_line_qty as qty,
-        case when (select 1 from so_outstock so where so.so_id = ad.so_id and so.is_deleted = false and so.approve_status = 'approve' limit 1) is null then false else true end as isSystemOut
+            add.order_line_qty as qty
         FROM aliexpress_delivery ad
         INNER join aliexpress_delivery_detail add on ad.id = add.main_id and add.is_deleted = false
         WHERE
@@ -83,10 +84,10 @@
             ad.trade_create_time AS tradeCreateTime,
             ad.out_bound_time AS outBoundTime,
             ad.warehouse_name AS warehouseName,
+            ad.is_outstock AS isSystemOut,
             add.platform_sku as platformSku,
             add.sku_no as skuNo,
-            add.order_line_qty as qty,
-        case when (select 1 from so_outstock so where so.so_id = ad.so_id and so.is_deleted = false limit 1) is null then false else true end as isSystemOut
+            add.order_line_qty as qty
         FROM aliexpress_delivery ad
                  INNER join aliexpress_delivery_detail add on ad.id = add.main_id and add.is_deleted = false
         WHERE

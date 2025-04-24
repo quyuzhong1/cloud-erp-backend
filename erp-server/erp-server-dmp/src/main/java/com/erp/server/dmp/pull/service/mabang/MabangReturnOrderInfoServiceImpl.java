@@ -137,13 +137,14 @@ public class MabangReturnOrderInfoServiceImpl implements IReportSaveService<Retu
                 .collect(Collectors.toList());
 
         // 异步推送到MQ
-        entityToMqlist.stream().peek(msg ->{
+        List<BiReturnOrderInfoEntity> biReturnOrderInfoEntityList = entityToMqlist.stream().peek(msg ->{
             SendResult result = mqProducerService.syncClassMsg(RocketMqTopic.DMP_ERP_ORDER_TOPIC, RocketMqTagEnum.MABANG_RETURN_ORDER_TAG.getName(),
                     msg, StrUtil.format("{}_{}", msg.getReturnCode(), msg.getPlatformOrderId()));
             if (!SendStatus.SEND_OK.equals(result.getSendStatus())){
                 throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
         }).collect(Collectors.toList());
+        log.debug("马帮退货订单：{}" , biReturnOrderInfoEntityList);
 
     }
 

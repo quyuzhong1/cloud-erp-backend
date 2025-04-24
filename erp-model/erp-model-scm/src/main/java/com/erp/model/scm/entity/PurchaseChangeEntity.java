@@ -99,12 +99,6 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
     private String receiveOrgName;
 
     /**
-     * 新品首批（false否,true是）
-     */
-    @TableField("is_first_mass_product")
-    private Boolean isFirstMassProduct;
-
-    /**
      * 审核时间
      */
     @TableField(value = "approve_time",updateStrategy = FieldStrategy.IGNORED)
@@ -173,7 +167,7 @@ public class PurchaseChangeEntity extends BaseEntity<PurchaseChangeEntity> {
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 

@@ -6,10 +6,15 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.erp.model.dmp.entity.*;
+import com.erp.server.dmp.push.service.lingxing.LxCommonService;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,16 +24,19 @@ import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpCfgInputEntity;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
 import com.erp.model.dmp.entity.DmpPushMsgEntity;
+import com.erp.model.dmp.entity.DmpPushMsgHisEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.DmpCfgOutputTypeEnum;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -36,7 +44,10 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.push.service.sdy.SdyCommonService;
+import com.erp.server.dmp.service.DmpPushMsgHisService;
 import com.erp.server.dmp.service.DmpPushMsgService;
+import com.erp.server.dmp.service.impl.DmpOutputTaskRecordMergeServiceImpl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
@@ -49,7 +60,9 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 
 	@Autowired
 	private DmpPushMsgService dmpPushMsgService;
-	
+	@Autowired
+	private DmpPushMsgHisService dmpPushMsgHisService;
+
 	@Override
 	public List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
 		DmpCfgOutputEntity dmpCfgOutputEntity = dmpResponse.getDmpCfgOutputEntity();
@@ -57,17 +70,17 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			throw new ServiceException("非api输出类型，请勿配置DmpOutputErpPushTaskHandler");
 		}
 		List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
-		
+
 		String cfgOutputId = dmpCfgOutputEntity.getId();
 		String mainId = dmpResponse.getDmpCfgInputConvertEntity().getMainId();
 		DmpCfgInputEntity dmpCfgInputEntity = dmpHandlerCache.getDmpCfgInputEntityList(d -> d.getId().equals(mainId)).get(0);
 		String typeId = dmpCfgInputEntity.getTypeId();
 		String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(typeId)).get(0).getApiType();
 		List<String> apiTypeList = Arrays.asList(apiType.split(","));
-		
+
 		String systemId = dmpCfgOutputEntity.getSystemId();
 		String code = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
-		
+
 		List<DmpPushMsgEntity> dmpPushMsgEntityList = new ArrayList<>();
 		Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
 		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
@@ -88,7 +101,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				}
 			}
 		}
-		
+
 		if(CollUtil.isNotEmpty(dmpPushMsgEntityList)) {
 			dmpPushMsgEntityList.sort((d1 , d2) -> d1.getMessageUpdateTime().compareTo(d2.getMessageUpdateTime()));
 			LocalDateTime now = LocalDateTime.now();
@@ -111,51 +124,39 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				i = i + 1;
 			}
 		}
-		
+
 		return dmpOutputTaskRecordEntityList;
 	}
 
 	@Override
 	protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity,
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+		String id = dmpOutputTaskRecordEntity.getId();
 		String dataId = dmpOutputTaskRecordEntity.getDataId();
+		String requestData = dmpOutputTaskRecordEntity.getRequestData();
 		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
-		
+		String syncOperate = dmpPushMsgEntity.getSyncOperate();
+		if(SyncOperateEnum.OPERATE_SYNC_ERROR.getCode().equals(syncOperate)) {
+			String responseData = JSON.parseObject(requestData).getString("remark");
+			dmpOutputUtils.updateStatus(id, DmpOutputTaskRecordStatusEnum.ERROR.getCode(), responseData , responseData);
+			return;
+		}
+
 		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
 		String sourceId = dmpPushMsgEntity.getSourceId();
-		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
-				.eq(DmpPushMsgEntity::getSourceId, sourceId)
-				.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
-				.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
-				.ne(DmpPushMsgEntity::getId, dataId)
-				.select(DmpPushMsgEntity::getId)
-				.list();
-		if(CollUtil.isNotEmpty(sourceList)) {
-			Integer count = dmpOutputTaskRecordService.lambdaQuery()
-					.in(DmpOutputTaskRecordEntity::getDataId, sourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
-					.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
-					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-					.count();
-			if(count > 0) {
-				dmpOutputTaskRecordService.lambdaUpdate()
-					.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功")
-					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-					.update();
-				return;
-			}
+		if(this.validateSourceId(dmpCfgOutputEntity, dmpOutputTaskRecordEntity , false)) {
+			return;
 		}
-		
+
 		String parentId = dmpPushMsgEntity.getParentId();
-		String requestData = dmpOutputTaskRecordEntity.getRequestData();
-		if(StringUtils.isNotBlank(parentId) && "operateApprove".equals(dmpPushMsgEntity.getSyncOperate())) {
+		if(StringUtils.isNotBlank(parentId) && SyncOperateEnum.OPERATE_APPROVE.getCode().equals(syncOperate)) {
 			String[] split = parentId.split(",");
 			for(String s : split) {
 				List<DmpPushMsgEntity> list = dmpPushMsgService.lambdaQuery()
 						.eq(DmpPushMsgEntity::getSourceId, s)
 						.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
-						.eq(DmpPushMsgEntity::getSyncOperate, dmpPushMsgEntity.getSyncOperate())
+						.eq(DmpPushMsgEntity::getSyncOperate, syncOperate)
+						.select(DmpPushMsgEntity::getId)
 						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
 						.list();
 				if(CollUtil.isEmpty(list)) {
@@ -198,30 +199,56 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 								}
 							}
 						}
+						if(StringUtils.isNotBlank(code) && code.startsWith("CGRK")) {
+							JSONArray jsonArray = parseObject.getJSONArray("list");
+							if(CollUtil.isNotEmpty(jsonArray)) {
+								if(jsonArray.stream().allMatch(j -> {
+									JSONObject JSONObject = (JSONObject)j;
+									JSONArray FInStockEntry_Link = JSONObject.getJSONArray("FInStockEntry_Link");
+									return FInStockEntry_Link.stream().allMatch(f -> {
+										JSONObject link = (JSONObject)f;
+										String poKingdeeDetailId = link.getString("poKingdeeDetailId");
+										return StringUtils.isNotBlank(poKingdeeDetailId);
+									});
+								})) {
+									break;
+								}
+							}
+						}
 					} catch (Exception e) {
 						log.error("处理上游单据失败" , e);
 					}
-					dmpOutputTaskRecordService.lambdaUpdate()
-						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
-						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.update();
-					return;
-				}
-				
-				List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
-						.in(DmpOutputTaskRecordEntity::getDataId, list.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.list();
-				if(CollUtil.isNotEmpty(parentOutputList)) {
-					dmpOutputTaskRecordService.lambdaUpdate()
-						.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
-						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
-						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
-						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-						.update();
-					return;
+
+					List<DmpPushMsgHisEntity> histList = dmpPushMsgHisService.lambdaQuery()
+							.eq(DmpPushMsgHisEntity::getSourceId, s)
+							.eq(DmpPushMsgHisEntity::getTargetPlatform, systemCode)
+							.eq(DmpPushMsgHisEntity::getSyncOperate, syncOperate)
+							.select(DmpPushMsgHisEntity::getId)
+							.orderByDesc(DmpPushMsgHisEntity::getMessageUpdateTime)
+							.list();
+					if(CollUtil.isEmpty(histList)) {
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未拉取到")
+							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+						return;
+					}
+				}else {
+					List<DmpOutputTaskRecordEntity> parentOutputList = dmpOutputTaskRecordService.lambdaQuery()
+							.in(DmpOutputTaskRecordEntity::getDataId, list.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.list();
+					if(CollUtil.isNotEmpty(parentOutputList)) {
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.set(DmpOutputTaskRecordEntity::getResponseData, "上游单据未推送成功")
+							.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+							.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+							.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+							.update();
+						return;
+					}
 				}
 			}
 			List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
@@ -231,19 +258,91 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				return;
 			}
 		}
-		
-		String id = dmpOutputTaskRecordEntity.getId();
+
+		String status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
+		if(requestData.trim().startsWith("{")) {
+			Boolean isQuerySync = JSON.parseObject(requestData).getBoolean(DmpOutputConstant.IS_QUERY_SYNC);
+			if (isQuerySync != null && isQuerySync) {
+				if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(syncOperate)) {
+					List<DmpPushMsgEntity> leSourceList = dmpPushMsgService.lambdaQuery()
+							.eq(DmpPushMsgEntity::getSourceId, sourceId)
+							.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
+							.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
+							.ne(DmpPushMsgEntity::getId, dataId)
+							.ne(DmpPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_DELETE.getCode())
+							.list();
+					if(CollUtil.isEmpty(leSourceList)) {
+						dmpOutputUtils.updateStatus(id, DmpOutputTaskRecordStatusEnum.ERROR.getCode(), "首次不允许推送删除操作" , "");
+						return;
+					}
+					List<DmpOutputTaskRecordEntity> leOutputRecordList = dmpOutputTaskRecordService.lambdaQuery()
+						.in(DmpOutputTaskRecordEntity::getDataId, leSourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+						.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
+						.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.notLike(DmpOutputTaskRecordEntity::getRequestData, DmpOutputConstant.IS_QUERY_SYNC)
+						.list();
+					if(CollUtil.isEmpty(leOutputRecordList)) {
+						return;
+					}else {
+						String leRequestData = leOutputRecordList.get(0).getRequestData();
+						JSONObject parseObject = JSON.parseObject(leRequestData);
+						parseObject.put("status", "已删除");
+						requestData = parseObject.toJSONString();
+						dmpOutputTaskRecordService.lambdaUpdate()
+							.eq(DmpOutputTaskRecordEntity::getId, id)
+							.set(DmpOutputTaskRecordEntity::getRequestData, requestData)
+							.update();
+					}
+				}else {
+					List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+					if(CollUtil.isNotEmpty(erpQuerySync)) {
+						requestData = erpQuerySync.get(0).getRequestData();
+						//如果查询同步后还是没有数据，当删除处理
+						isQuerySync = JSON.parseObject(requestData).getBoolean(DmpOutputConstant.IS_QUERY_SYNC);
+						if (isQuerySync != null && isQuerySync) {
+							List<DmpPushMsgEntity> geSourceList = dmpPushMsgService.lambdaQuery()
+									.eq(DmpPushMsgEntity::getSourceId, sourceId)
+									.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
+									.ge(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
+									.ne(DmpPushMsgEntity::getId, dataId)
+									.eq(DmpPushMsgEntity::getSyncOperate, SyncOperateEnum.OPERATE_DELETE.getCode())
+									.list();
+							if(CollUtil.isEmpty(geSourceList)) {
+								return;
+							}else {
+								dmpOutputUtils.updateStatus(id, status, "后续有删除操作，直接更新为推送成功" , "");
+							}
+						}
+					}
+				}
+			}
+		}
+
 		String outputTypeId = dmpCfgOutputEntity.getTypeId();
 		DmpCfgApiEntity outputDmpCfgApiEntity = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(outputTypeId)).get(0);
 		String apiClass = outputDmpCfgApiEntity.getApiClass();
 		Object bean = ApplicationContextUtils.getBean(DmpHandlerUtils.dealBeanClass(apiClass));
 		String outputMethod = outputDmpCfgApiEntity.getApiType();
 		Method method = null;
-		
-		String status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
+
 		String responseData = "";
 		String message = "";
 		if(StringUtils.isNotBlank(requestData) && !"null".equals(requestData)) {
+			if(systemCode.equals(DmpBasicSystemCodeEnum.SDY.getCode())) {
+				Map<String, String> sdyObject = new HashMap<>();
+				sdyObject.put(SdyCommonService.REQUEST_URL, outputMethod);
+				sdyObject.put(SdyCommonService.REQUEST_DATA, requestData);
+				requestData = JSON.toJSONString(sdyObject);
+				outputMethod = SdyCommonService.REQUEST_SDY;
+			}
+			if(systemCode.equals(DmpBasicSystemCodeEnum.LING_XING.getCode())) {
+				Map<String, String> syncObject = new HashMap<>();
+				syncObject.put(LxCommonService.REQUEST_URL, outputMethod);
+				syncObject.put(LxCommonService.REQUEST_DATA, requestData);
+				requestData = JSON.toJSONString(syncObject);
+				outputMethod = LxCommonService.REQUEST_LX;
+			}
+
 			try {
 				method = bean.getClass().getMethod(outputMethod, Object.class);
 			} catch (NoSuchMethodException | SecurityException e) {
@@ -290,5 +389,67 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 	protected List<String> getSourceCodeKeys() {
 		return Arrays.asList("sourceCode");
 	}
+
+	@Override
+	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpOutputTaskRequest, DmpOutputTaskResponse dmpResponse) {
+		return null;
+	}
+
+	/**
+	 * 校验数据是否删除处理
+	 */
+	private String isDeletedHandler(List<DmpOutputTaskRecordEntity> list, String sourceCode) {
+		DmpOutputTaskRecordEntity taskRecordEntity = list.stream().filter(req -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(req.getStatus()) && req.getIsNeedSync()).findFirst().orElse(null);
+		if (ObjectUtil.isNotEmpty(taskRecordEntity) && !taskRecordEntity.getRequestData().contains("isQuerySync")) {
+			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO1 = JSON.parseObject(taskRecordEntity.getRequestData(), ShudiyunB2cOrderDTO.class);
+			shudiyunB2cOrderDTO1.setStatus("已删除");
+			return JSON.toJSONString(shudiyunB2cOrderDTO1);
+		} else {
+			List<String> ids = list.stream().map(BaseEntity::getId).collect(Collectors.toList());
+			dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.set(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
+					.in(DmpOutputTaskRecordEntity::getId, ids)
+					.update();
+			return "";
+		}
+	}
 	
+	public boolean validateSourceId(DmpCfgOutputEntity dmpCfgOutputEntity,
+			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity , boolean isMerge) {
+		String dataId = dmpOutputTaskRecordEntity.getDataId();
+		DmpPushMsgEntity dmpPushMsgEntity = dmpPushMsgService.getById(dataId);
+		String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(dmpCfgOutputEntity.getSystemId())).get(0).getCode();
+		String sourceId = dmpPushMsgEntity.getSourceId();
+		List<DmpPushMsgEntity> sourceList = dmpPushMsgService.lambdaQuery()
+				.eq(DmpPushMsgEntity::getSourceId, sourceId)
+				.eq(DmpPushMsgEntity::getTargetPlatform, systemCode)
+				.le(DmpPushMsgEntity::getMessageUpdateTime, dmpPushMsgEntity.getMessageUpdateTime())
+				.ne(DmpPushMsgEntity::getId, dataId)
+				.select(DmpPushMsgEntity::getId)
+				.list();
+		if(CollUtil.isNotEmpty(sourceList)) {
+			List<DmpOutputTaskRecordEntity> leDataIdList = dmpOutputTaskRecordService.lambdaQuery()
+					.in(DmpOutputTaskRecordEntity::getDataId, sourceList.stream().map(DmpPushMsgEntity::getId).collect(Collectors.toList()))
+					.ne(DmpOutputTaskRecordEntity::getId , dmpOutputTaskRecordEntity.getId())
+					.list();
+			if(CollUtil.isNotEmpty(leDataIdList)) {
+				if(leDataIdList.stream().anyMatch(l -> !l.getStatus().equals(DmpOutputTaskRecordStatusEnum.FINISH.getCode()))) {
+					dmpOutputTaskRecordService.lambdaUpdate()
+						.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一sourceId")
+						.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+						.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+						.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+						.update();
+					return true;
+				}
+				
+				if(isMerge) {
+					DmpOutputTaskRecordMergeServiceImpl dmpOutputTaskRecordMergeServiceImpl = ApplicationContextUtils.getBean(DmpOutputTaskRecordMergeServiceImpl.class);
+					return dmpOutputTaskRecordMergeServiceImpl.validateMerge(leDataIdList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()), dmpOutputTaskRecordEntity);
+				}
+			}
+		}
+		return false;
+	}
 }

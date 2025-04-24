@@ -1,7 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BaseSelectDTO;
@@ -20,8 +20,6 @@ import com.erp.server.wms.mapper.OverseasTransferWarehouseMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -30,7 +28,7 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -44,7 +42,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<OverseasTransferWarehouseMapper, OverseasTransferWarehouseEntity> implements OverseasTransferWarehouseService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
@@ -70,7 +68,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓签收记录" , overseasTransferWarehouseEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "海外仓签收记录" , overseasTransferWarehouseEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, overseasTransferWarehouseEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -85,7 +83,9 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Override
     public Boolean update(OverseasTransferWarehouseDTO.UpdateDTO updateDTO) {
         OverseasTransferWarehouseEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "海外仓签收记录");
+        }
         OverseasTransferWarehouseEntity overseasTransferWarehouseEntity =  BeanMapperUtils.map(OverseasTransferWarehouseEntity.class, updateDTO);
 
         // 数据处理
@@ -99,7 +99,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
 
         // 记录主单操作日志
             log.info("编辑 开始记录海外仓签收记录日志数据，id：【{}】", overseasTransferWarehouseEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasTransferWarehouseEntity.getId(), "海外仓签收记录");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), overseasTransferWarehouseEntity.getId(), "海外仓签收记录");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, overseasTransferWarehouseEntity, null, overseasTransferWarehouseEntity.getId(), msg);
         return Boolean.TRUE;
@@ -108,6 +108,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Override
     public Boolean saveOrUpdateByPlatform(OverseasTransferWarehouseEntity entity) {
         LambdaUpdateWrapper<OverseasTransferWarehouseEntity> updateWrapper = new LambdaUpdateWrapper<OverseasTransferWarehouseEntity>()
+                .eq(OverseasTransferWarehouseEntity::getOverseasProviderId, entity.getOverseasProviderId())
                 .eq(OverseasTransferWarehouseEntity::getDictPlatform, entity.getDictPlatform())
                 .eq(OverseasTransferWarehouseEntity::getLogisticsProductCode, entity.getLogisticsProductCode())
                 .eq(OverseasTransferWarehouseEntity::getPlatformWarehouseCode, entity.getPlatformWarehouseCode())
@@ -118,7 +119,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Override
     public List<BaseSelectDTO> baseSelectlist(String sourceId) {
         // 空返回所有
-        if (StringUtils.isBlank(sourceId)){
+        if (CharSequenceUtil.isBlank(sourceId)){
             List<OverseasTransferWarehouseEntity> list = lambdaQuery().list();
             return convertResult(list);
         }
@@ -167,7 +168,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
     @Override
     public List<BaseSelectDTO> LogisticsProductList(String id, String code) {
         // 兼容传递ID
-        if (StringUtils.isNotBlank(id)){
+        if (CharSequenceUtil.isNotBlank(id)){
             OverseasProviderWarehouseEntity entity = overseasProviderWarehouseService.getByWarehouseId(id);
             if (null == entity){
                 return Collections.emptyList();
@@ -183,7 +184,7 @@ public class OverseasTransferWarehouseServiceImpl extends SuperServiceImpl<Overs
         }
 
         return list.stream()
-                .filter(e-> StringUtils.isNotBlank(e.getLogisticsProductCode()))
+                .filter(e-> CharSequenceUtil.isNotBlank(e.getLogisticsProductCode()))
                 .map(e-> new BaseSelectDTO(e.getId(), e.getLogisticsProductCode(), e.getLogisticsProductName()))
                 .collect(Collectors.toList());
     }

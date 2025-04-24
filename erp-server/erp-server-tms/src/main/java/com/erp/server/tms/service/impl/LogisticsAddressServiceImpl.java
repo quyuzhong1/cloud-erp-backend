@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -33,7 +33,6 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,16 +57,16 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_A
 @Slf4j
 @Service
 public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddressMapper, LogisticsAddressEntity> implements LogisticsAddressService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
     @Resource
     private ShopInfoFeign shopInfoFeign;
 
-    @Autowired
+    @Resource
     @Lazy
     private LogisticsChannelService logisticsChannelService;
     @Resource
@@ -89,8 +88,8 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流地址");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流地址");
+        
         operateLogService.addModuleOperateLog(msg, null, logisticsAddressEntity.getId(), "新增操作");
 
 
@@ -116,7 +115,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
         }
         // 记录主单操作日志
         log.info("编辑 开始记录物流地址单日志数据，id：【{}】", logisticsAddressEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), logisticsAddressEntity.getId(), "物流地址单");
         operateLogService.addModuleOperateLogByObj(old, logisticsAddressEntity, null, logisticsAddressEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -180,14 +179,10 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
     }
 
     @Override
-    public List<LogisticsAddressEntity> listByTypeAndChannelId(String type, String channelId,String shopId) {
-        //根据类型和渠道ID查询地址
-        List<LogisticsAddressEntity> list=baseMapper.listByTypeAndChannelId(type,channelId);
-        List<LogisticsAddressEntity> shopAddressList=list.stream().filter(a->shopId.equals(a.getShopId())).collect(Collectors.toList());
-        if(CollectionUtils.isNotEmpty(shopAddressList)){
-             return shopAddressList;
-        }
-        return list.stream().filter(a->"all".equals(a.getShopId())).collect(Collectors.toList());
+    public List<LogisticsAddressEntity> listByTypeAndShopId(LogisticsAddressTypeEnum type, String shopId) {
+        return lambdaQuery().eq(LogisticsAddressEntity::getType, type)
+                .eq(LogisticsAddressEntity::getShopId, shopId)
+                .list();
     }
 
     @Override
@@ -223,7 +218,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
             return Collections.emptyList();
         }
         List<LogisticsAddressEntity> addressList =
-                this.lambdaQuery().select(LogisticsAddressEntity::getId,LogisticsAddressEntity::getName,LogisticsAddressEntity::getShopId)
+                this.lambdaQuery().select(LogisticsAddressEntity::getAddressId,LogisticsAddressEntity::getId,LogisticsAddressEntity::getName,LogisticsAddressEntity::getShopId)
                 .eq(LogisticsAddressEntity::getType,dto.getType())
                 .in(LogisticsAddressEntity::getShopId, dto.getShopIds())
                 .list();
@@ -267,7 +262,7 @@ public class LogisticsAddressServiceImpl extends SuperServiceImpl<LogisticsAddre
      * 新增修改处理数据
      */
     private void handleData(LogisticsAddressEntity entity) {
-        // TODO 验证数据 & 数据赋值
+        
         String name = entity.getName();
         String id = entity.getId();
         Integer count = this.lambdaQuery().eq(LogisticsAddressEntity::getName, name).

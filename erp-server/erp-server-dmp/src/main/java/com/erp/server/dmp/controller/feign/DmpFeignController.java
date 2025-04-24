@@ -1,5 +1,6 @@
 package com.erp.server.dmp.controller.feign;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -70,7 +71,8 @@ public class DmpFeignController extends BaseController {
 
     @Resource
     private CfgApiAuthService cfgApiAuthService;
-
+    @Resource
+    private DmpOutputTaskRecordService dmpOutputTaskRecordService;
 
     @PostMapping("/getShopById")
     public BiShopInfoDTO getShopById(@RequestBody String shopId) {
@@ -142,6 +144,18 @@ public class DmpFeignController extends BaseController {
     @PostMapping("/getRate")
     public BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode) {
         return biSettlementExchangeRateService.findByCurrencyAndDate(date, sourceCurrencyCode);
+    }
+    
+    /**
+     * 获取月度汇率
+     *
+     * @param date
+     * @param sourceCurrencyCode
+     * @return
+     */
+    @PostMapping("/getMonthRate")
+    public BigDecimal getMonthRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode) {
+    	return biSettlementExchangeRateService.findByCurrencyAndMonth(date, sourceCurrencyCode);
     }
 
     /**
@@ -272,5 +286,21 @@ public class DmpFeignController extends BaseController {
     public CfgApiAuthEntity getByKey(@RequestBody CfgApiAuthDTO.FeignDTO feignDTO) {
         CfgApiAuthEntity authEntity = cfgApiAuthService.getByKey(feignDTO.getKey(), feignDTO.getApiGroup(), feignDTO.getApiPlatformId());
         return ObjectUtils.isEmpty(authEntity) ? new CfgApiAuthEntity() :authEntity ;
+    }
+
+    /**
+     * 获取推送记录
+     * @author zdy
+     * @date: 2025/04/01 12:00
+     * @param sourceCode
+     * @param outputClass
+     * @return Boolean
+     */
+    @GetMapping("/outputTaskRecord/getOutputTaskRecord")
+    public DmpOutputTaskRecordEntity getOutputTaskRecord(@RequestParam(value = "sourceCode") String sourceCode, @RequestParam(value = "outputClass") String outputClass) {
+        if (CharSequenceUtil.isAllBlank(sourceCode,outputClass)){
+            return null;
+        }
+        return dmpOutputTaskRecordService.getOutputTaskRecord(sourceCode, outputClass);
     }
 }

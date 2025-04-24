@@ -1,8 +1,5 @@
 package com.erp.model.tms.vo.request;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.erp.model.plm.entity.ProductLogisticsEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,9 +12,6 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 public class LogisticsProductVO  implements Serializable {
-
-    //申报单价
-//    private BigDecimal price;
 
     //数量
     private Integer quantity;
@@ -49,6 +43,10 @@ public class LogisticsProductVO  implements Serializable {
 
     private String id;
 
+    private String platformLineNumber;
+
+
+    private Integer deliveryQty;
 
     /**
      * 产品sku表id
@@ -183,4 +181,12 @@ public class LogisticsProductVO  implements Serializable {
      * sku名称
      */
     private String skuName;
+    /**
+     * 真实售价
+     */
+    private BigDecimal price;
+    /**
+     * 售价原币种
+     */
+    private String currency;
 }

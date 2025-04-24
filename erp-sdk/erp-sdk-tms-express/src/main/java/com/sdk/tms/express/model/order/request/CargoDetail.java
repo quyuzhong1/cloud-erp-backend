@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 /**
  * @author zdy
  * @ClassName CargoDetail
- * @description: TODO
+
  * @date 2023年10月30日
  * @version: 1.0
  */

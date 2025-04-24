@@ -33,8 +33,8 @@ public class GoodCangWarehouseResp extends CleanBaseDTO implements Serializable 
 
     @Data
     @ToString
-    public static class PhysicalWarehouse {
-
+    public static class PhysicalWarehouse implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         //物理仓名称
         private String name;
 
@@ -46,8 +46,8 @@ public class GoodCangWarehouseResp extends CleanBaseDTO implements Serializable 
 
         @Data
         @ToString
-        public static class Address {
-
+        public static class Address implements Serializable{
+            private static final long serialVersionUID = 1905122041950251207L;
             //州 省份
             private String state;
 

@@ -2,17 +2,20 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.validator.AddGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 public class SoReturnReceiveDTO {
+    private SoReturnReceiveDTO() {
+        throw new IllegalStateException("Utility SoReturnReceiveDTO class");
+    }
     /**
      * 分页参数
      */
@@ -102,6 +105,8 @@ public class SoReturnReceiveDTO {
          * id
          */
         private String id;
+
+        private String type;
         /**
          * 明细表id
          */
@@ -215,6 +220,48 @@ public class SoReturnReceiveDTO {
          * 仓库Id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *销售金额
+         */
+        private BigDecimal amount;
+        /**
+         *含税销售金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
     /**
@@ -277,6 +324,10 @@ public class SoReturnReceiveDTO {
         private String sellerId;
 
         /**
+         * 销售员名称
+         */
+        private String sellerName;
+        /**
          * 销售部门id
          */
         private String salesDeptId;
@@ -299,9 +350,26 @@ public class SoReturnReceiveDTO {
         private String type;
 
         /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.Add> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -368,9 +436,26 @@ public class SoReturnReceiveDTO {
         private String type;
 
         /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.Update> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -499,10 +584,32 @@ public class SoReturnReceiveDTO {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
         private List<SoReturnReceiveDetailDTO.View> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -648,6 +755,20 @@ public class SoReturnReceiveDTO {
          * 入库日期
          */
         private LocalDate instockDate;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+
+        /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**

@@ -6,14 +6,11 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.ListingAdvanceQueryDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.ListingInfoEntity;
+import com.erp.model.oms.entity.OmsPushMsgEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.scm.dto.OperateLogDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -78,11 +75,14 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * 更改sku 对照表
      *
      * @param dto
+     * @param skuMapping
+     * @param listing
+     * @param shopId
      * @return java.lang.String
      * @author yl
      * @date 2023-06-30 10:21
      */
-    String updatePlatformSku(SkuMappingDTO.UpdatePlatformDTO dto);
+    BatchResultDTO updatePlatformSku(SkuMappingDTO.UpdatePlatformDTO dto, SkuMappingEntity skuMapping, ListingInfoEntity listing, String shopId);
 
     /**
      * 销售订单添加客户sku
@@ -206,14 +206,17 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      */
     BatchResultDTO delete(String id);
 
-    /**  获取到sku 对应的信息
-     * @description
+    /**
+     * 获取到sku 对应的信息
+     *
      * @param listSkuParamList
+     * @param warehouseId
+     * @return
+     * @description
      * @author Lambda
-     * @return 
      * @create 2023-12-25 15:47
      */
-    List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList,String dictPlatform,String type);
+    List<SkuMappingDTO.ListSkuResultDTO> listBySkuList(List<SkuMappingDTO.ListingSkuParamDTO> listSkuParamList, String dictPlatform, String type, String warehouseId);
 
     /**
      * 逻辑删除映射 SkuMappingEntity
@@ -267,4 +270,60 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
     PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto);
 
     PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto);
+    /**
+     * 构建查询映射关系参数DTO
+     * @param platformSkuList 平台sku列表
+     * @param platformSpuList 平台spu列表
+     * @param dictPlatform 销售平台
+     * @param shopIdList   店铺ID列表
+     * @param platformOrderCreateTime 平台订单创建时间=映射生效日期(空=按最新映射关系)
+     * @param isExpire 映射是否已过期
+     * @return 请求参数DTO
+     */
+    ListingInfoParamDTO constructDto(List<String> platformSkuList,
+                                     List<String> platformSpuList,
+                                     String dictPlatform,
+                                     List<String> shopIdList,
+                                     LocalDateTime platformOrderCreateTime,
+                                     Boolean isExpire);
+
+    List<OmsPushMsgEntity> syncDataToSdy(LocalDateTime startTime , LocalDateTime endTime);
+
+    Map<String, Object> newSyncDataToSdy(SkuMappingEntity entity, String operate);
+
+    void updateNotMatch(SkuMappingDTO.UpdateNotMatchDTO dto);
+
+    PagingVO<SkuMappingDTO.SyncPlatformProductView> syncPlatformProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+
+    PagingVO<SkuMappingDTO.SyncWarehouseProductView> syncWarehouseProductView(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+    void syncPlatformProduct(List<String> ids);
+
+    void syncWarehouseProduct(List<String> ids);
+
+    /**
+     * 根据参数获取映射列表
+     * @param queryDTO
+     * @return
+     */
+    List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO);
+
+    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
+
+    String addCustomer(SkuMappingDTO.AddCustomerRequest dto);
+
+    String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
+
+    Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
+    /**
+     * 根据参数获取数据列表
+     * @param params
+     * @return
+     */
+    List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(ListingInfoDTO.QueryPlatformDTO params);
+
+    List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
+
+    List<SkuMappingDTO.CustomerInventorySkuInfoDTO> getErpSkuByCustomerSku(SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO);
+
+//    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 }

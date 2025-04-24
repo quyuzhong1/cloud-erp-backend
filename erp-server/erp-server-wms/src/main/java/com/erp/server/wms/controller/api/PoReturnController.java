@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -13,6 +14,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchasePriceDTO;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
@@ -30,6 +32,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -92,9 +95,9 @@ public class PoReturnController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "新增采购退货单")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
-        String id = poReturnService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+    public ApiResult<?> add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
+        PoReturnEntity entity = poReturnService.add(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
     /**
@@ -111,7 +114,7 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:update",
             serviceClass = PoReturnService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean flag = poReturnService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -149,9 +152,23 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:submit",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = poReturnService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoReturnEntity> entityMap = poReturnService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoReturnEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购退货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poReturnService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("采购退货单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -168,9 +185,9 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:add",
             serviceClass = PoReturnService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
-        Boolean flag = poReturnService.addAndSubmit(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> addAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
+        PoReturnEntity entity = poReturnService.addAndSubmit(dto);
+        return success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode()));
     }
 
     /**
@@ -187,7 +204,7 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:update",
             serviceClass = PoReturnService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
+    public ApiResult<?> updateAndSubmit(@RequestBody @Validated PurchaseReturnOrderDTO.UpdateDTO dto) {
         Boolean flag = poReturnService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -277,16 +294,30 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:cancelProcess",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = poReturnService.cancelProcess(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoReturnEntity> entityMap = poReturnService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoReturnEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购退货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poReturnService.cancelProcessEntity(entity));
+            } catch (Exception e){
+                log.error("采购退货单撤销失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
      * 批量作废
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param remarkDTO idsDTO
+     * @param dto idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.INVALID, desc = "作废采购退货单")
@@ -296,16 +327,31 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:invalid",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
-    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
-        Boolean flag = poReturnService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
-        return flag == true ? success() : failure();
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoReturnEntity> entityMap = poReturnService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoReturnEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购退货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poReturnService.invalidEntity(entity, dto.getRemark()));
+            }catch (Exception e){
+                log.error("采购退货单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
     /**
      * 批量删除
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param idsDTO idsDTO
+     * @param dto idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "删除采购退货单")
@@ -315,9 +361,23 @@ public class PoReturnController extends BaseController {
             menuCode = "wms:purchaseReturnOrder:delete",
             serviceClass = PoReturnService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = poReturnService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, PoReturnEntity> entityMap = poReturnService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            PoReturnEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购退货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(poReturnService.deleteEntity(entity));
+            }catch (Exception e){
+                log.error("采购退货单审核失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -342,7 +402,7 @@ public class PoReturnController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购退货单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto) {
+    public ApiResult<?> exportExcel(@RequestBody PurchaseReturnOrderDTO.PagingParamDTO dto) {
         Boolean flag = poReturnService.exportExcel(dto);
         return flag ? success() : failure();
     }
@@ -357,7 +417,7 @@ public class PoReturnController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "采购订单下推退货单")
     @PostMapping("/generatePurchaseReturnOrder")
-    public ApiResult generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
+    public ApiResult<?> generatePurchaseReturnOrder(@RequestBody @Validated PoInstockDTO.ListGeneratePurchaseReturnOrderDTO dto) {
         Boolean  flag = poReturnService.generatePurchaseReturnOrder(dto);
         return flag?success():failure();
     }
@@ -382,7 +442,7 @@ public class PoReturnController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "下推自动生成采购订单")
     @PostMapping("/autoGeneratePurchaseOrder")
-    public ApiResult autoGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<?> autoGeneratePurchaseOrder(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean flag = poReturnService.autoGeneratePurchaseOrder(dto);
         return flag?success():failure();
     }
@@ -395,7 +455,7 @@ public class PoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @GetMapping("/dataRepairTemp")
-    public ApiResult dataRepairTemp() {
+    public ApiResult<?> dataRepairTemp() {
         Boolean flag = poReturnService.dataRepairTemp();
         return flag?success():failure();
     }
@@ -433,5 +493,22 @@ public class PoReturnController extends BaseController {
     @PostMapping("/batchGetPurchasePrice")
     public ApiResult<List<PurchasePriceDTO.PriceDTO>> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list) {
         return success(poReturnService.batchGetPurchasePrice(list));
+    }
+    /**
+     * 下推采购订单View
+     * @return
+     */
+    @PostMapping("/pushDownPurchaseView")
+    public ApiResult<List<PurchasePriceDTO.PushDownPurchaseView>> pushDownPurchaseView(@RequestBody @Validated BaseIdsDTO.IdsDTO baseIdsDTO) {
+        return success(poReturnService.pushDownPurchaseView(baseIdsDTO.getIds()));
+    }
+
+    /**
+     * 下推采购订单
+     * @return
+     */
+    @PostMapping("/pushDownPurchase")
+    public ApiResult<Boolean> pushDownPurchase(@RequestBody @Validated List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseViews) {
+        return success(poReturnService.pushDownPurchase(pushDownPurchaseViews));
     }
 }

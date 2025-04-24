@@ -32,14 +32,6 @@ public interface SalesOrderService extends IService<BiOrderInfoEntity> {
      */
     PagingVO<SkuSalesDTO.PagingSalesInfoDTO> queryByPageBySku(PagingDTO<SkuSalesDTO.SearchSkuDTO> dto);
 
-
-    /**
-     * 一级模块 spu 销售额
-     * @param dto
-     * @return
-     */
-    List<SalesVO> getBySpu(BiFilterDTO dto);
-
     XyAxesResultVO getByCountry(BiFilterDTO dto);
 
     /**

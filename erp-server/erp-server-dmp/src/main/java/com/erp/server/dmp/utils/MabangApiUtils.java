@@ -37,7 +37,7 @@ public class MabangApiUtils {
 
     private static Integer APP_KEY = 200780;
 
-    private static String SECRET_KEY = "13c324fa18feaaeb0ebcc8a7746ebfca";
+    private static String MANGBANG_KEY = "13c324fa18feaaeb0ebcc8a7746ebfca";
 
     @Value("${openApi.mabang.appKey}")
     public void setAppKey(Integer appKey){
@@ -46,7 +46,7 @@ public class MabangApiUtils {
 
     @Value("${openApi.mabang.secretKey}")
     public void setSecretKey(String secretKey) {
-        MabangApiUtils.SECRET_KEY = secretKey;
+        MabangApiUtils.MANGBANG_KEY = secretKey;
     }
 
     /**
@@ -300,7 +300,7 @@ public class MabangApiUtils {
         paramMap.put("timestamp", new Long(System.currentTimeMillis() / 1000).toString());
         paramMap.put("data",params);
         String paramStr = JSONUtil.toJsonStr(paramMap);
-        String sign = HmacSHA256Utils.hmacSHA256(paramStr, MabangApiUtils.SECRET_KEY);
+        String sign = HmacSHA256Utils.hmacSHA256(paramStr, MabangApiUtils.MANGBANG_KEY);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Content-Type", "application/json");
         headerMap.put("Authorization", sign);
@@ -345,7 +345,7 @@ public class MabangApiUtils {
         paramMap.put("data",params);
         String paramStr = JSONUtil.toJsonStr(paramMap);
         log.info("发送至马帮的请求参数【{}】", paramStr);
-        String sign = HmacSHA256Utils.hmacSHA256(paramStr, MabangApiUtils.SECRET_KEY);
+        String sign = HmacSHA256Utils.hmacSHA256(paramStr, MabangApiUtils.MANGBANG_KEY);
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Content-Type", "application/json");
         headerMap.put("Authorization", sign);

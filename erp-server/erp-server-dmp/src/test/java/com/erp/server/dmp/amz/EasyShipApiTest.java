@@ -26,7 +26,7 @@ import com.erp.sdk.oms.amz.spapi.api.*;
 @Ignore
 public class EasyShipApiTest {
 
-    private final EasyShipApi api = null;
+    private final EasyShipApi api = new EasyShipApi(null);
 
     
     /**

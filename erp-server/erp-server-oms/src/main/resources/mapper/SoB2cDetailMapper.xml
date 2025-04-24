@@ -54,6 +54,10 @@
             #{item}
         </foreach>
     </update>
+    <update id="updateExtendData">
+        UPDATE so_b2c_detail SET extend_data = #{extendData}, update_time = now(),version = version + 1
+        WHERE  id = #{id}
+    </update>
     <!--查詢需要出库单要的数据-->
     <select id="listOutstockByMainId" resultType="com.erp.model.oms.dto.SoB2cDetailDTO$OutstockDTO">
            SELECT
@@ -113,6 +117,29 @@
         <foreach collection="ids" item="item" open="(" close=")" separator=",">
             #{item}
         </foreach>
+    </select>
+
+    <!-- 查询所有虚拟仓B2C销售订单数据 -->
+    <select id="listAllVirtualSoB2cDetail" resultType="com.erp.model.wms.dto.ReportOrderDataDTO$ViewDTO">
+        select
+            sbd.warehouse_id as warehouseId,
+            sbd.virtual_warehouse_id as virtualWarehouseId,
+            sbd.sku_id as skuId,
+            sbd.qty as orderQty,
+            sb.approve_status as approveStatus,
+            sb.bill_status as status,
+            sb.invalid_status as invalidStatus,
+            sb.id as sourceId,
+            sb.code as sourceCode,
+            'soB2c' as sourceType,
+            sbd.id as sourceDetailId,
+            sb.create_time as date
+        from so_b2c sb
+        inner join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
+        <where>
+            sb.is_deleted = false and sbd.virtual_warehouse_id != '' and sbd.sku_id != ''
+        </where>
+        order by sb.id desc
     </select>
 
 

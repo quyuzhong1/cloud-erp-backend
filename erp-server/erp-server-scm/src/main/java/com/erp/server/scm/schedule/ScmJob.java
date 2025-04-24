@@ -2,8 +2,6 @@ package com.erp.server.scm.schedule;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.erp.model.dmp.enums.KingdeePushModuleEnum;
-import com.erp.model.oms.dto.KingdeeReceiptConditionDTO;
-import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.model.scm.dto.KingdeePaymentConditionDTO;
 import com.erp.model.scm.entity.KingdeePaymentConditionEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
@@ -70,19 +68,6 @@ public class ScmJob {
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));
         XxlJobHelper.log("=====采购订单自动确认 结束任务=====");
-    }
-
-    /**
-     * 同步采购信息已审核已确认订单到srm
-     */
-    @XxlJob("syncPurchaseToSrm")
-    public void syncPurchaseToSrm() {
-        XxlJobHelper.log("=====同步采购信息已审核已确认订单 开始任务=====");
-        long start = System.currentTimeMillis();
-        purchaseOrderService.syncConfirmOrder();
-        long end = System.currentTimeMillis();
-        XxlJobHelper.log("主线程花费时间：{}", (end - start));
-        XxlJobHelper.log("=====同步采购信息已审核已确认订单 结束任务=====");
     }
 
     /**

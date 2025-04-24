@@ -69,9 +69,9 @@ public class WorkOptionEntity extends BaseEntity<WorkOptionEntity> {
 
     public static final String DICT_BASIC_NAME = "dict_basic_name";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
     @Override
     public Serializable pkVal() {

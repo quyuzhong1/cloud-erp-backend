@@ -292,14 +292,20 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
 
+    /**
+     * 订单标签
+     */
+    @TableField("trade_label")
+    private String tradeLabel;
+
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
 
-    public static final String CODE = "code";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String TYPE = "type";
+    
 
     public static final String SO_ID = "so_id";
 

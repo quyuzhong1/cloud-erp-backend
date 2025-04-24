@@ -49,7 +49,7 @@
         main_id, name, code, effective_time, effective_time_unit, track_query_mode, paper_length, paper_width, sorting_code, fee_rule,
         max_customs_amount, max_customs_currency, min_customs_amount, min_customs_currency, max_weight, weight_unit, tax_model,
         is_ioss_prepay, is_api_sign, is_api_insurance,disabled,paper_size,source_id,source_type,sync_source_id,max_length,size_unit,
-        max_width,max_height,declare_code_type,delivery_type,undeliverable_decision
+        max_width,max_height,declare_code_type,delivery_type,undeliverable_decision,is_platform_ship
     </sql>
 
     <select id="listLogisticsChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ListSelectDTO">
@@ -199,6 +199,126 @@
         code asc
         ) wls
 
+    </select>
+    <select id="getWarnReportByChannel" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$WarnReportDTO">
+        select
+        lc.name as channelName,
+        count(lbd.id) as total
+        from logistics_bill_detail lbd
+        inner join logistics_bill lb on lbd.main_id = lb.id and lb.is_deleted = false
+        LEFT JOIN logistics_channel lc on lb.channel_id = lc.id and lc.is_deleted = false
+        where lbd.track_status not in('sign','manualComplete','systemComplete','deliveryFail')
+        and (lbd.track_no != '' or lb.transport_no != '')
+        and lbd.is_deleted = false AND lc.name != ''
+        <if test="query.updateTime != null">
+            and lbd.update_time &lt; #{query.updateTime}
+        </if>
+        <if test="query.trackTime != null">
+            and lbd.track_time > #{query.trackTime}
+        </if>
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'expressDelivery'">
+            and lb.order_type in ('B2B','B2C','AfterSale')
+        </if>
+        <if test="query.transportType != null and query.transportType != '' and query.transportType == 'ocean'">
+            and lb.order_type = 'firstMile'
+        </if>
+        <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
+            and lbd.track_query_mode = #{query.trackQueryMode}
+        </if>
+        <if test="query.registerStatus != null">
+            and lbd.register_status = #{query.registerStatus}
+        </if>
+        <if test="query.trackEnable != null">
+            and lbd.track_enable = #{query.trackEnable}
+        </if>
+        <if test="query.trackNoList != null and query.trackNoList.size > 0">
+            and lbd.track_no in
+            <foreach collection="query.trackNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="query.transportNoList != null and query.transportNoList.size > 0">
+            and lb.transport_no in
+            <foreach collection="query.transportNoList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        GROUP BY channelName
+        ORDER BY total desc
+    </select>
+    <select id="listChannelWarehouse"
+            resultType="com.erp.model.tms.dto.LogisticsChannelDTO$ChannelWarehouseDTO">
+        select
+            lc.id as channelId,
+            lc.code as channelCode,
+            lc.name as channelName,
+            lc.effective_time,
+            lc.effective_time_unit,
+            lc.shipment_over_limit_rate as shipmentOverLimitRate,
+            ls.supplier_id,
+            ls.supplier_name,
+            lcw."type",
+            lcw.warehouse_id
+        from logistics_channel lc
+                 LEFT JOIN logistics_supplier ls on ls.id = lc.main_id and ls.is_deleted = FALSE
+                 LEFT JOIN logistics_auth la on la.main_id = lc.main_id and la.is_deleted = FALSE
+                 LEFT JOIN logistics_channel_warehouse lcw on lc.id = lcw.logistics_channel_id and lcw.is_deleted = FALSE
+        where lc.is_deleted = FALSE
+        <if test="platform != null and platform != ''">
+            and la.logistics_platform = #{platform}
+        </if>
+        <if test="authStatus != null and authStatus != ''">
+            and ls.auth_status = #{authStatus}
+        </if>
+        <if test="warehousePlatformType != null and warehousePlatformType != ''">
+            and ls."type" = #{warehousePlatformType}
+        </if>
+        <if test="disabled != null">
+            and lc.disabled = #{disabled}
+        </if>
+    </select>
+    <select id="estimateIsOutOfRangeDelivery" resultType="java.lang.Boolean">
+        SELECT EXISTS
+                   (
+                       SELECT
+                           lc.ID
+                       FROM
+                           logistics_channel lc
+                               INNER JOIN logistics_channel_remote_postcode lcrp ON lc.ID = lcrp.logistics_channel_id
+                               AND lcrp.is_deleted =
+                                   FALSE INNER JOIN remote_postcode rp ON rp.ID = lcrp.remote_postcode_id
+                               AND rp.is_deleted = FALSE
+                               AND rp.disabled =
+                                   FALSE INNER JOIN remote_postcode_detail rpd ON rpd.main_id = rp.ID
+                               AND rpd.is_deleted = FALSE
+                       WHERE
+                           lc.is_deleted = FALSE
+                         AND lc.ID = #{ logisticsChannelId }
+                         AND (
+                           ( rpd.match_type = 'preciseMatch' AND rpd.country = #{ country } AND rpd.post_code = #{ postCode } )
+                               OR ( rpd.match_type = 'prefixMatch' AND #{ postCode } LIKE concat ( rpd.post_code, '%' ) )
+                               OR ( rpd.match_type = 'suffixMatch' AND #{ postCode } LIKE concat ( '%', rpd.post_code ) )
+                               OR ( rpd.match_type = 'fuzzyMatch' AND #{ postCode } LIKE concat ( '%', rpd.post_code, '%' ) )
+                           )
+                       LIMIT 1
+                   )
+    </select>
+    <select id="paging" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PagingViewDTO">
+        select ls.id,
+               ls.supplier_name as name,
+               ls.short_name as shortName,
+               ls.type,
+               lc.id as channelId,
+               lc.name as channelName
+        from logistics_supplier ls
+        inner join logistics_channel lc on ls.id = lc.main_id and lc.is_deleted = false
+        where ${params.sqlMap.default}
+        and ls.is_deleted = false
+        and lc.disabled = false
+        and ls.disabled = false
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
     </select>
 
 

@@ -48,7 +48,7 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<ShippingTemplateOtherCostMapper, ShippingTemplateOtherCostEntity> implements ShippingTemplateOtherCostService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
 
@@ -56,7 +56,7 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
     @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private ShippingTemplateCostSettingService shippingTemplateCostSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)

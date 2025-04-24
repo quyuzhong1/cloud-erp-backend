@@ -75,7 +75,7 @@ public class InitFirstMileAllocationController extends BaseController {
         menuCode = "tms:initFirstMileAllocation:update",
         serviceClass = InitFirstMileAllocationService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated InitFirstMileAllocationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated InitFirstMileAllocationDTO.UpdateDTO dto) {
         initFirstMileAllocationService.update(dto);
         return success();
     }
@@ -310,7 +310,7 @@ public class InitFirstMileAllocationController extends BaseController {
      */
     @PostMapping("/exportExcel")
     @WebAdvanceQuery(handler = InitFirstMileAllocationQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto) {
+    public ApiResult<Object> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto) {
         initFirstMileAllocationService.exportExcel(dto);
         return success(Boolean.TRUE);
     }
@@ -321,7 +321,7 @@ public class InitFirstMileAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载期初导入模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
         initFirstMileAllocationService.downloadTemplate(response);
         return success();
     }

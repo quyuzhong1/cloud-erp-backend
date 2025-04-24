@@ -4,17 +4,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class ProductBomInfoDTO {
+public class ProductBomInfoDTO implements Serializable {
     /**
      * 查询sku版本返回值
      */
     @Data
     @NoArgsConstructor
-    public static class skuBomVersion {
+    public static class SkuBomVersion {
         /**
          * sku编码
          */
@@ -30,7 +31,7 @@ public class ProductBomInfoDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class skuBomVersionParams{
+    public static class SkuBomVersionParams {
         /**
          * sku编码
          */
@@ -39,7 +40,7 @@ public class ProductBomInfoDTO {
 
     @Data
     @NoArgsConstructor
-    public static class skuIdParams {
+    public static class SkuIdParams {
         /**
          * 产品id
          */

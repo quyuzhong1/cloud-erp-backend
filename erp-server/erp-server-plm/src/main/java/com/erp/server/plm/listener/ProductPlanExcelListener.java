@@ -5,14 +5,14 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.enums.MonthEnum;
+import com.common.business.enums.ProductTypeEnum;
+import com.common.business.enums.SeasonEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
-import com.common.business.enums.MonthEnum;
-import com.common.business.enums.ProductTypeEnum;
-import com.common.business.enums.SeasonEnum;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BasicDictTypeEnum;
@@ -21,7 +21,6 @@ import com.erp.model.plm.enums.ThreeGenerationPlanningEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.plm.service.*;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -52,6 +51,8 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
     private ProductPlanPurchaseService  productPlanPurchaseService;
 
     private ProductPlanRemarkService productPlanRemarkService;
+
+    private ApplicationCategoryService applicationCategoryService;
     /**
      * 错误数据返回集合
      */
@@ -65,7 +66,8 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
 
     public ProductPlanExcelListener(ProductPlanService productPlanService, BasicDictService basicDictService,
                                     BasicCategoryService basicCategoryService, ProductPlanSaleService productPlanSaleService, ProductPlanSaleInfoService productPlanSaleInfoService,
-                                    ProductPlanPurchaseService  productPlanPurchaseService,ProductPlanRemarkService productPlanRemarkService, SysUserFeign sysUserFeign) {
+                                    ProductPlanPurchaseService  productPlanPurchaseService,ProductPlanRemarkService productPlanRemarkService, SysUserFeign sysUserFeign,
+                                    ApplicationCategoryService applicationCategoryService) {
         this.productPlanService = productPlanService;
         this.basicDictService = basicDictService;
         this.basicCategoryService = basicCategoryService;
@@ -75,6 +77,7 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
         this.productPlanRemarkService = productPlanRemarkService;
         this.sysUserFeign = sysUserFeign;
         this.list = new ArrayList<>();
+        this.applicationCategoryService = applicationCategoryService;
     }
 
     @Override
@@ -148,6 +151,17 @@ public class ProductPlanExcelListener extends AnalysisEventListener<ProductPlanE
                 productPlanEntity.setCategoryId(basicCategoryEntity.getId());
             }
         }
+
+        //产品应用分类
+        String applicationCategory = productPlanExcelDTO.getApplicationCategory();
+        if (StringUtils.isNotBlank(applicationCategory)) {
+            ApplicationCategoryEntity applicationCategoryEntity = applicationCategoryService.getByName(applicationCategory);
+            if (ObjectUtils.isEmpty(applicationCategoryEntity)) {
+                errorMsgList.add("应用分类不存在");
+            }
+            productPlanEntity.setApplicationCategoryId(applicationCategoryEntity.getId());
+        }
+
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             productPlanExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));

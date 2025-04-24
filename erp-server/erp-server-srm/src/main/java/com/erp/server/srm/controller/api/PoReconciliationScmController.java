@@ -96,7 +96,7 @@ public class PoReconciliationScmController extends BaseController {
             menuCode = "srm:poReconciliation:scm:update",
             serviceClass = PoReconciliationService.class,
             keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated PoReconciliationDTO.ScmUpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated PoReconciliationDTO.ScmUpdateDTO dto) {
         poReconciliationScmService.update(dto);
         return success();
     }
@@ -164,7 +164,7 @@ public class PoReconciliationScmController extends BaseController {
      * @author Will
      * @date: 2024/1/23 11:48
      * @param dto
-     * @return ApiResult<?>
+     * @return ApiResult<Object>
      */
     @PostMapping("/confirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "采方确认")
@@ -173,7 +173,7 @@ public class PoReconciliationScmController extends BaseController {
             menuCode = "srm:poReconciliation:scm:confirm",
             serviceClass = PoReconciliationService.class,
             keyIdName = "ids")
-    public ApiResult<?> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -199,7 +199,7 @@ public class PoReconciliationScmController extends BaseController {
      * @author Will
      * @date: 2024/1/23 11:48
      * @param dto
-     * @return ApiResult<?>
+     * @return ApiResult<Object>
      */
     @PostMapping("/cancelConfirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "取消确认")
@@ -208,7 +208,7 @@ public class PoReconciliationScmController extends BaseController {
             menuCode = "srm:poReconciliation:scm:cancelConfirm",
             serviceClass = PoReconciliationService.class,
             keyIdName = "ids")
-    public ApiResult<?> cancelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> cancelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -234,7 +234,7 @@ public class PoReconciliationScmController extends BaseController {
      * @author Will
      * @date: 2024/1/23 14:16
      * @param dto
-     * @return ApiResult<?>
+     * @return ApiResult<Object>
      */
     @PostMapping("/delete")
     @LogAction(value = LogActionEnum.DELETE, desc = "删除")
@@ -243,7 +243,7 @@ public class PoReconciliationScmController extends BaseController {
             menuCode = "srm:poReconciliation:scm:delete",
             serviceClass = PoReconciliationService.class,
             keyIdName = "ids")
-    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -269,7 +269,7 @@ public class PoReconciliationScmController extends BaseController {
      * @author Will
      * @date: 2024/1/23 14:16
      * @param dto
-     * @return ApiResult<?>
+     * @return ApiResult<Object>
      */
     @PostMapping("/receive")
     @LogAction(value = LogActionEnum.RECEIVE, desc = "单据签收")
@@ -278,7 +278,7 @@ public class PoReconciliationScmController extends BaseController {
             menuCode = "srm:poReconciliation:scm:delete",
             serviceClass = PoReconciliationService.class,
             keyIdName = "ids")
-    public ApiResult<?> receive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> receive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;

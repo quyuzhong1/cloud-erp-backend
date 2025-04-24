@@ -1,5 +1,7 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -9,7 +11,6 @@ import com.erp.server.wms.mapper.DictBasicMapper;
 import com.erp.server.wms.service.DictBasicService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -98,7 +99,7 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
 
     private List<DictBasicEntity> listByKey(String type) {
-        if (StringUtils.isBlank(type)) {
+        if (CharSequenceUtil.isBlank(type)) {
             return Collections.emptyList();
         }
         List<DictBasicEntity> allList = this.lambdaQuery().
@@ -125,6 +126,24 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 //        }
         return list;
 
+    }
+
+    /**
+     * 根据类型和值获取到对应信息
+     *
+     * @param type
+     * @param value
+     * @return com.erp.model.wms.entity.DictBasicEntity
+     * @author yl
+     * @date 2023-06-28 16:25
+     */
+    @Override
+    public DictBasicEntity getByTypeAndValue(String type, String value) {
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DictBasicEntity::getType, type);
+        queryWrapper.eq(DictBasicEntity::getValue, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 
 

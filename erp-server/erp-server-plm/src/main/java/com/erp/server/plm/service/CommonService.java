@@ -1,6 +1,7 @@
 package com.erp.server.plm.service;
 
 import com.common.business.dto.FindUserDTO;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -29,4 +30,12 @@ public interface CommonService {
      * @return List<String>
      */
     List<String> listProcessCurBusinessIds (String businessKey);
+    /**
+     * 上传图片
+     * @author will
+     * @date 2024/12/26 18:31
+     * @param multipartFileList
+     * @return List<String>
+     */
+    List<String> uploadImg(MultipartFile[] multipartFileList);
 }

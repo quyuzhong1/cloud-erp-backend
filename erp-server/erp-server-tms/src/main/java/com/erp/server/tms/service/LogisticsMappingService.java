@@ -80,4 +80,12 @@ public interface LogisticsMappingService extends SuperService<LogisticsMappingEn
      * @return LogisticsMappingEntity
      */
     LogisticsMappingEntity getByLogisticsMappingParam(LogisticsMappingDTO.SearchParamDTO paramDTO);
+    /**
+     * @description: 根据物流渠道id获取物流映射表
+     * @author jack
+     * @date: 2024/10/09
+     * @param id
+     * @return List<LogisticsMappingEntity>
+     */
+    List<LogisticsMappingEntity> listDbByChannelId(String id);
 }

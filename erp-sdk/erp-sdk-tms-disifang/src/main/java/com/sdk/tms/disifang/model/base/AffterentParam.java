@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * @author zdy
  * @ClassName AffterentParam
- * @description: TODO
+
  * @date 2023年11月02日
  * @version: 1.0
  */

@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.enums.ApiError;
@@ -133,14 +133,14 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         List<ContrastTrendVO> contrastTrendVOList = baseMapper.shopContrastTrend(biFilterDTO);
 
         List<BiShopInfoEntity> dmpShopInfoEntities = biShopInfoService.shopList();
-        if (CollectionUtil.isEmpty(dmpShopInfoEntities)) {
+        if (CollUtil.isEmpty(dmpShopInfoEntities)) {
             return Collections.emptyList();
         }
         List<List<Object>> result = new ArrayList<>();
         List<Object> shopName = new LinkedList<>();
         List<Object> lastYearSales = new LinkedList<>();
         List<Object> thisYearSales = new LinkedList<>();
-        if (CollectionUtil.isEmpty(contrastTrendVOList)) {
+        if (CollUtil.isEmpty(contrastTrendVOList)) {
             return Collections.emptyList();
         }
         Map<String, Map<String, BigDecimal>> shopNoMap = contrastTrendVOList.stream()
@@ -149,7 +149,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         String thisYearKey = String.valueOf(LocalDate.now().minusYears(1L).getYear());
         for (BiShopInfoEntity biShopInfoEntity : dmpShopInfoEntities) {
             Map<String, BigDecimal> yearMap = shopNoMap.get(biShopInfoEntity.getPlatformShopNo());
-            if (CollectionUtil.isEmpty(yearMap)) {
+            if (CollUtil.isEmpty(yearMap)) {
                 continue;
             }
             lastYearSales.add(yearMap.getOrDefault(lastYearKey, BigDecimal.ZERO));
@@ -194,100 +194,159 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/27 10:41
      **/
     @Override
-    @Cacheable(cacheNames = "cache:bi:saleDetailSku",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:saleDetailSku", keyGenerator = "myKeyGenerator")
     public List<SaleDetailVO> saleDetailSku(BiFilterDTO biFilterDTO) {
-        //获取销售额
+        // 获取销售额
         TargetSaleSumVO targetSaleSumVO = biOrderInfoService.sumSales(biFilterDTO);
 
-        //查询去年sku销售信息
-        Date date = DateUtil.addDateYears(new Date(), -1);
+        // 获取去年和前年销售额信息
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = getSkuYearSaleAmount(-1);
+        BigDecimal yearSakeAmount = getYearSaleAmount(-1);
+
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = getSkuYearSaleAmount(-2);
+        BigDecimal yearSakeAmountT = getYearSaleAmount(-2);
+
+        // 获取退货信息
+        String start = getRingRatioDate(biFilterDTO);
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.returnOrderAmountByDate(start, getFormattedStartDate(biFilterDTO));
+
+        // 获取销售明细数据
+        List<SaleDetailVO> saleDetailList = baseMapper.saleDetailSku(biFilterDTO);
+
+        // 计算每个SKU的销售额和销售比例
+        for (SaleDetailVO saleDetailVO : saleDetailList) {
+            calculateSaleProportion(saleDetailVO, targetSaleSumVO);
+            calculateYearSaleInfo(saleDetailVO, skuYearSakeAmountVOS, yearSakeAmount);
+            calculateYearBeforeLastSaleInfo(saleDetailVO, skuYearSakeAmountVOST, yearSakeAmountT);
+            calculateReturnOrderRingRatio(saleDetailVO, skuYearSakeAmountVOS1);
+        }
+
+        return saleDetailList;
+    }
+
+    // 获取指定年份的SKU销售额
+    private List<SkuYearSaleAmountVO> getSkuYearSaleAmount(int yearsAgo) {
+        Date date = DateUtil.addDateYears(new Date(), yearsAgo);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        Integer year = calendar.get(Calendar.YEAR);//获取年
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); // 设置时间格式
+        Integer year = calendar.get(Calendar.YEAR);
 
-        String startTime = sdf.format(DateUtil.getYearFirst(year));
-        String endTime = sdf.format(DateUtil.getYearLast(year));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.skuYearSaleAmount(startTime, endTime);
-        BigDecimal yearSakeAmount = baseMapper.yearSaleAmount(startTime, endTime);
+        String startTime = new SimpleDateFormat(DateUtil.fmt_day).format(DateUtil.getYearFirst(year));
+        String endTime = new SimpleDateFormat(DateUtil.fmt_day).format(DateUtil.getYearLast(year));
 
-        //查询前年sku销售信息
-        date = DateUtil.addDateYears(new Date(), -2);
-        calendar = Calendar.getInstance();
+        return baseMapper.skuYearSaleAmount(startTime, endTime);
+    }
+
+    // 获取指定年份的销售总额
+    private BigDecimal getYearSaleAmount(int yearsAgo) {
+        Date date = DateUtil.addDateYears(new Date(), yearsAgo);
+        Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        year = calendar.get(Calendar.YEAR);//获取年
-        startTime = sdf.format(DateUtil.getYearFirst(year));
-        endTime = sdf.format(DateUtil.getYearLast(year));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.skuYearSaleAmount(startTime, endTime);
-        BigDecimal yearSakeAmountT = baseMapper.yearSaleAmount(startTime, endTime);
+        Integer year = calendar.get(Calendar.YEAR);
 
+        String startTime = new SimpleDateFormat(DateUtil.fmt_day).format(DateUtil.getYearFirst(year));
+        String endTime = new SimpleDateFormat(DateUtil.fmt_day).format(DateUtil.getYearLast(year));
+
+        return baseMapper.yearSaleAmount(startTime, endTime);
+    }
+
+    // 获取环比日期
+    private String getRingRatioDate(BiFilterDTO biFilterDTO) {
         Date endDate = Date.from(biFilterDTO.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
         Date startDate = Date.from(biFilterDTO.getStartTime().atZone(ZoneId.systemDefault()).toInstant());
-        String start = DateUtil.getRingRatioDate(endDate, startDate);
-        //设置时间格式
+        return DateUtil.getRingRatioDate(endDate, startDate);
+    }
+
+    // 获取格式化的开始日期
+    private String getFormattedStartDate(BiFilterDTO biFilterDTO) {
         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.returnOrderAmountByDate(start, f.format(startDate));
+        Date startDate = Date.from(biFilterDTO.getStartTime().atZone(ZoneId.systemDefault()).toInstant());
+        return f.format(startDate);
+    }
 
-        //组装近两年销售额信息
-        List<SaleDetailVO> saleDetailList = baseMapper.saleDetailSku(biFilterDTO);
-        for (SaleDetailVO saleDetailVO : saleDetailList) {
-            if (saleDetailVO.getSaleAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                saleDetailVO.setSaleProportion(BigDecimal.ZERO);
+    // 计算销售比例
+    private void calculateSaleProportion(SaleDetailVO saleDetailVO, TargetSaleSumVO targetSaleSumVO) {
+        if (saleDetailVO.getSaleAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            saleDetailVO.setSaleProportion(BigDecimal.ZERO);
+        } else {
+            if (targetSaleSumVO.getValue() != null) {
+                saleDetailVO.setSaleProportion(
+                        saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN)
+                            .multiply(BigDecimal.valueOf(100)));
             } else {
-                if (targetSaleSumVO.getValue() != null) {
-                    saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setSaleProportion(BigDecimal.ZERO);
-                }
+                saleDetailVO.setSaleProportion(BigDecimal.ZERO);
             }
-            //计算去年sku销售额
-            SkuYearSaleAmountVO skuYearSakeAmountVO = skuYearSakeAmountVOS.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVO != null) {
-                saleDetailVO.setLastYearSaleAmount(skuYearSakeAmountVO.getAmount());
-                if (yearSakeAmount != null) {
-                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
-                }
+        }
+    }
 
+    // 计算去年销售额及比例
+    private void calculateYearSaleInfo(SaleDetailVO saleDetailVO, List<SkuYearSaleAmountVO> skuYearSakeAmountVOS, BigDecimal yearSakeAmount) {
+        SkuYearSaleAmountVO skuYearSakeAmountVO = skuYearSakeAmountVOS.stream()
+                .filter(p -> p.getName().equals(saleDetailVO.getName()))
+                .findFirst().orElse(null);
+
+        if (skuYearSakeAmountVO != null) {
+            saleDetailVO.setLastYearSaleAmount(skuYearSakeAmountVO.getAmount());
+            if (yearSakeAmount != null) {
+                saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
             } else {
                 saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
-                saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
             }
-            //计算前年sku销售额
-            SkuYearSaleAmountVO skuYearSakeAmountVOT = skuYearSakeAmountVOST.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVOT != null) {
-                saleDetailVO.setYearBeforeLastSaleAmount(skuYearSakeAmountVOT.getAmount());
-                if (yearSakeAmountT != null) {
-                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
-                }
+        } else {
+            saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
+            saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
+        }
+    }
+
+    // 计算前年销售额及比例
+    private void calculateYearBeforeLastSaleInfo(SaleDetailVO saleDetailVO, List<SkuYearSaleAmountVO> skuYearSakeAmountVOST, BigDecimal yearSakeAmountT) {
+        SkuYearSaleAmountVO skuYearSakeAmountVOT = skuYearSakeAmountVOST.stream()
+                .filter(p -> p.getName().equals(saleDetailVO.getName()))
+                .findFirst().orElse(null);
+
+        if (skuYearSakeAmountVOT != null) {
+            saleDetailVO.setYearBeforeLastSaleAmount(skuYearSakeAmountVOT.getAmount());
+            if (yearSakeAmountT != null) {
+                saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
             } else {
-                saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
                 saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
             }
+        } else {
+            saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
+            saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
+        }
+    }
 
-            //退货环比
-            SkuYearSaleAmountVO skuYearSakeAmountVO1 = skuYearSakeAmountVOS1.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVO1 != null) {
-                if (skuYearSakeAmountVO1.getAmount() != null) {
-                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
-                }
+    // 计算退货环比
+    private void calculateReturnOrderRingRatio(SaleDetailVO saleDetailVO, List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1) {
+        SkuYearSaleAmountVO skuYearSakeAmountVO1 = skuYearSakeAmountVOS1.stream()
+                .filter(p -> p.getName().equals(saleDetailVO.getName()))
+                .findFirst().orElse(null);
+
+        if (skuYearSakeAmountVO1 != null) {
+            if (skuYearSakeAmountVO1.getAmount() != null) {
+                saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount()
+                        .subtract(skuYearSakeAmountVO1.getAmount())
+                        .divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN)
+                        .multiply(BigDecimal.valueOf(100)));
             } else {
                 saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
             }
+        } else {
+            saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
         }
-        return saleDetailList;
     }
+
 
     @Override
     @Cacheable(cacheNames = "cache:bi:salePriceDistribution",keyGenerator = "myKeyGenerator")
     public List<SalePriceDistributionVO> salePriceDistribution(BiFilterDTO biFilterDTO) {
-        Optional.ofNullable(biFilterDTO.getRangeType()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SALE_RANGE_EXIST));
-        Optional.ofNullable(biFilterDTO.getSettleMethod()).orElseThrow(() -> new ServiceException(ApiError.ERROR_SETTLE_METHOD_EXIST));
+        if (biFilterDTO.getRangeType() == null) {
+            throw new ServiceException(ApiError.ERROR_SALE_RANGE_EXIST);
+        }
+        if (biFilterDTO.getSettleMethod() == null) {
+            throw new ServiceException(ApiError.ERROR_SETTLE_METHOD_EXIST);
+        }
         return biOrderInfoService.salePriceDistribution(biFilterDTO);
     }
 
@@ -300,79 +359,33 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/27 10:41
      **/
     @Override
-    @Cacheable(cacheNames = "cache:bi:saleDetailShop",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:saleDetailShop", keyGenerator = "myKeyGenerator")
     public List<SaleDetailVO> saleDetailShop(BiFilterDTO biFilterDTO) {
-        //获取销售额
+        // 获取销售额
         TargetSaleSumVO targetSaleSumVO = biOrderInfoService.sumSales(biFilterDTO);
 
-        //查询去年sku销售信息
-        Date date = DateUtil.addDateYears(new Date(), -1);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        Integer year = calendar.get(Calendar.YEAR);//获取年
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); // 设置时间格式
-        String startTime = sdf.format(DateUtil.getYearFirst(year));
-        String endTime = sdf.format(DateUtil.getYearLast(year));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.shopYearSaleAmount(startTime, endTime);
-        BigDecimal yearSakeAmount = baseMapper.yearSaleAmount(startTime, endTime);
+        // 获取去年和前年销售额信息
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = getYearlySaleData(-1);
+        BigDecimal yearSakeAmount = getYearSaleAmount(-1);
 
-        //查询前年sku销售信息
-        date = DateUtil.addDateYears(new Date(), -2);
-        calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        year = calendar.get(Calendar.YEAR);//获取年
-        startTime = sdf.format(DateUtil.getYearFirst(year));
-        endTime = sdf.format(DateUtil.getYearLast(year));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.shopYearSaleAmount(startTime, endTime);
-        BigDecimal yearSakeAmountT = baseMapper.yearSaleAmount(startTime, endTime);
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = getYearlySaleData(-2);
+        BigDecimal yearSakeAmountT = getYearSaleAmount(-2);
 
-        Date endDate = Date.from(biFilterDTO.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
-        Date startDate = Date.from(biFilterDTO.getStartTime().atZone(ZoneId.systemDefault()).toInstant());
-        String start = DateUtil.getRingRatioDate(endDate, startDate);
-        //设置时间格式
-        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.returnOrderAmountByDate(start, f.format(startDate));
+        // 获取退货信息
+        String start = getRingRatioDate(biFilterDTO);
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.returnOrderAmountByDate(start, getFormattedStartDate(biFilterDTO));
 
-        //组装近两年销售额信息
+        // 获取销售明细数据
         List<SaleDetailVO> saleDetailList = baseMapper.saleDetailShop(biFilterDTO);
+
+        // 计算每个SKU的销售额和销售比例
         for (SaleDetailVO saleDetailVO : saleDetailList) {
-            if (saleDetailVO.getSaleAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                saleDetailVO.setSaleProportion(BigDecimal.ZERO);
-            } else {
-                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-            }
-            //计算去年sku销售额
-            SkuYearSaleAmountVO skuYearSakeAmountVO = skuYearSakeAmountVOS.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVO != null) {
-                saleDetailVO.setLastYearSaleAmount(skuYearSakeAmountVO.getAmount());
-                if (yearSakeAmount != null) {
-                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
-                }
-            }
-            //计算前年sku销售额
-            SkuYearSaleAmountVO skuYearSakeAmountVOT = skuYearSakeAmountVOST.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVOT != null) {
-                saleDetailVO.setYearBeforeLastSaleAmount(skuYearSakeAmountVOT.getAmount());
-                if (yearSakeAmountT != null) {
-                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
-                }
-            }
-
-            //退货环比
-            SkuYearSaleAmountVO skuYearSakeAmountVO1 = skuYearSakeAmountVOS1.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVO1 != null) {
-                if (skuYearSakeAmountVO1.getAmount() != null) {
-                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
-                }
-            }
-
+            calculateSaleProportion(saleDetailVO, targetSaleSumVO);
+            calculateYearSaleInfo(saleDetailVO, skuYearSakeAmountVOS, yearSakeAmount);
+            calculateYearBeforeLastSaleInfo(saleDetailVO, skuYearSakeAmountVOST, yearSakeAmountT);
+            calculateReturnOrderRingRatio(saleDetailVO, skuYearSakeAmountVOS1);
         }
+
         return saleDetailList;
     }
 
@@ -385,87 +398,47 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
      * @Date 2022/12/27 10:41
      **/
     @Override
-    @Cacheable(cacheNames = "cache:bi:saleDetailUser",keyGenerator = "myKeyGenerator")
+    @Cacheable(cacheNames = "cache:bi:saleDetailUser", keyGenerator = "myKeyGenerator")
     public List<SaleDetailVO> saleDetailUser(BiFilterDTO biFilterDTO) {
-        //获取销售额
+        // 获取销售额
         TargetSaleSumVO targetSaleSumVO = biOrderInfoService.sumSales(biFilterDTO);
 
-        //查询去年sku销售信息
-        Date date = DateUtil.addDateYears(new Date(), -1);
+        // 获取去年和前年销售额信息
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = getYearlySaleData(-1);
+        BigDecimal yearSakeAmount = getYearSaleAmount(-1);
+
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = getYearlySaleData(-2);
+        BigDecimal yearSakeAmountT = getYearSaleAmount(-2);
+
+        // 获取退货信息
+        String start = getRingRatioDate(biFilterDTO);
+        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.returnOrderAmountByDate(start, getFormattedStartDate(biFilterDTO));
+
+        // 获取销售明细数据
+        List<SaleDetailVO> saleDetailList = baseMapper.saleDetailUser(biFilterDTO);
+
+        // 计算每个SKU的销售额和销售比例
+        for (SaleDetailVO saleDetailVO : saleDetailList) {
+            calculateSaleProportion(saleDetailVO, targetSaleSumVO);
+            calculateYearSaleInfo(saleDetailVO, skuYearSakeAmountVOS, yearSakeAmount);
+            calculateYearBeforeLastSaleInfo(saleDetailVO, skuYearSakeAmountVOST, yearSakeAmountT);
+            calculateReturnOrderRingRatio(saleDetailVO, skuYearSakeAmountVOS1);
+        }
+
+        return saleDetailList;
+    }
+
+    // 获取指定年份的SKU销售额
+    private List<SkuYearSaleAmountVO> getYearlySaleData(int yearsAgo) {
+        Date date = DateUtil.addDateYears(new Date(), yearsAgo);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        Integer year = calendar.get(Calendar.YEAR);//获取年
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd"); // 设置时间格式
-        String startTime = sdf.format(DateUtil.getYearFirst(year));
-        String endTime = sdf.format(DateUtil.getYearLast(year));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS = baseMapper.userYearSaleAmount(startTime, endTime);
-        BigDecimal yearSakeAmount = baseMapper.yearSaleAmount(startTime, endTime);
+        Integer year = calendar.get(Calendar.YEAR);
 
-        //查询前年sku销售信息
-        date = DateUtil.addDateYears(new Date(), -2);
-        calendar = Calendar.getInstance();
-        calendar.setTime(date);
-        year = calendar.get(Calendar.YEAR);//获取年
-        startTime = sdf.format(DateUtil.getYearFirst(year));
-        endTime = sdf.format(DateUtil.getYearLast(year));
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOST = baseMapper.userYearSaleAmount(startTime, endTime);
-        BigDecimal yearSakeAmountT = baseMapper.yearSaleAmount(startTime, endTime);
+        String startTime = new SimpleDateFormat(DateUtil.fmt_day).format(DateUtil.getYearFirst(year));
+        String endTime = new SimpleDateFormat(DateUtil.fmt_day).format(DateUtil.getYearLast(year));
 
-        Date endDate = Date.from(biFilterDTO.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
-        Date startDate = Date.from(biFilterDTO.getStartTime().atZone(ZoneId.systemDefault()).toInstant());
-        String start = DateUtil.getRingRatioDate(endDate, startDate);
-        //设置时间格式
-        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.returnOrderAmountByDate(start, f.format(startDate));
-
-        //组装近两年销售额信息
-        List<SaleDetailVO> saleDetailList = baseMapper.saleDetailUser(biFilterDTO);
-        for (SaleDetailVO saleDetailVO : saleDetailList) {
-            if (saleDetailVO.getSaleAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                saleDetailVO.setSaleProportion(BigDecimal.ZERO);
-            } else {
-                saleDetailVO.setSaleProportion(saleDetailVO.getSaleAmount().divide(targetSaleSumVO.getValue(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-            }
-            //计算去年sku销售额
-            SkuYearSaleAmountVO skuYearSakeAmountVO = skuYearSakeAmountVOS.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVO != null) {
-                saleDetailVO.setLastYearSaleAmount(skuYearSakeAmountVO.getAmount());
-                if (yearSakeAmount != null) {
-                    saleDetailVO.setLastYearSaleProportion(skuYearSakeAmountVO.getAmount().divide(yearSakeAmount, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
-                }
-            } else {
-                saleDetailVO.setLastYearSaleAmount(BigDecimal.ZERO);
-                saleDetailVO.setLastYearSaleProportion(BigDecimal.ZERO);
-            }
-            //计算前年sku销售额
-            SkuYearSaleAmountVO skuYearSakeAmountVOT = skuYearSakeAmountVOST.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVOT != null) {
-                saleDetailVO.setYearBeforeLastSaleAmount(skuYearSakeAmountVOT.getAmount());
-                if (yearSakeAmountT != null) {
-                    saleDetailVO.setYearBeforeLastSaleProportion(skuYearSakeAmountVOT.getAmount().divide(yearSakeAmountT, 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                } else {
-                    saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
-                }
-            } else {
-                saleDetailVO.setYearBeforeLastSaleAmount(BigDecimal.ZERO);
-                saleDetailVO.setYearBeforeLastSaleProportion(BigDecimal.ZERO);
-            }
-
-            //退货环比
-            SkuYearSaleAmountVO skuYearSakeAmountVO1 = skuYearSakeAmountVOS1.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-            if (skuYearSakeAmountVO1 != null) {
-                if (skuYearSakeAmountVO1.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                    saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
-                } else {
-                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-                }
-            } else {
-                saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
-            }
-        }
-        return saleDetailList;
+        return baseMapper.userYearSaleAmount(startTime, endTime);
     }
 
     /**
@@ -486,9 +459,6 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         //查询去年sku销售信息
         LocalDateTime startTime = LocalDateTime.of(biFilterDTO.getStartTime().minusYears(1).toLocalDate(), LocalTime.MIN);
         LocalDateTime endTime = LocalDateTime.of(biFilterDTO.getEndTime().minusYears(1).toLocalDate(), LocalTime.MAX);
-//        biFilterDTO.setDateType(StrUtil.isNotBlank(biFilterDTO.getDateType()) ? biFilterDTO.getDateType() : "DAY");
-        // 固定是天
-//        biFilterDTO.setDateType(DateTypeEnum.DAY.getType());
         // 组装去年filter
         SkuDateFilterDTO lastYearBiFilterDTO = new SkuDateFilterDTO();
         BeanUtils.copyProperties(biFilterDTO, lastYearBiFilterDTO);
@@ -516,12 +486,7 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
         lastYearBiFilterDTO.setEndTime(LocalDateTime.of(startTime.getYear(), 1,1,0,0,0));
         BigDecimal yearSakeAmountT = baseMapper.yearSaleAmountBySku(twoYearAgeBiFilterDTO,settleRate);
         if (Objects.isNull(yearSakeAmountT)){ yearSakeAmountT = BigDecimal.ZERO;}
-//        Date endDate = Date.from(biFilterDTO.getEndTime().atZone(ZoneId.systemDefault()).toInstant());
-//        Date startDate = Date.from(biFilterDTO.getStartTime().atZone(ZoneId.systemDefault()).toInstant());
-//        String start = DateUtil.getRingRatioDate(endDate, startDate);
-//        //设置时间格式
-//        SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//        List<SkuYearSaleAmountVO> skuYearSakeAmountVOS1 = baseMapper.dateReturnOrderAmountByDate(start, f.format(startDate), biFilterDTO.getSkuNo(), biFilterDTO.getDateType(), biFilterDTO.getSettleMethod());
+
         // 退货信息
         List<SkuYearSaleAmountVO> returnOrderList = baseMapper.dateReturnOrder(biFilterDTO);
         Map<String, BigDecimal> returnOrderMap = returnOrderList.stream().collect(Collectors.toMap(SkuYearSaleAmountVO::getName, SkuYearSaleAmountVO::getAmount));
@@ -556,8 +521,8 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                     currentLastYearSaleAmount.divide(yearSakeAmount, 4, RoundingMode.DOWN).multiply(BigDecimal.valueOf(100)));
 
             //计算前年sku销售额
-            String TwoYearAgeKey = biFilterDTO.getEndTime().minusYears(2).toString();
-            BigDecimal currentTwoYearAgeAmount = twoYearAgeSaleMap.getOrDefault(TwoYearAgeKey, BigDecimal.ZERO);
+            String twoYearAgeKey = biFilterDTO.getEndTime().minusYears(2).toString();
+            BigDecimal currentTwoYearAgeAmount = twoYearAgeSaleMap.getOrDefault(twoYearAgeKey, BigDecimal.ZERO);
             saleDetailVO.setYearBeforeLastSaleAmount(currentTwoYearAgeAmount);
             // 占比
             saleDetailVO.setYearBeforeLastSaleProportion(
@@ -565,17 +530,6 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
                     currentTwoYearAgeAmount.divide(yearSakeAmountT, 4, RoundingMode.DOWN).multiply(BigDecimal.valueOf(100)));
 
 
-            //退货环比
-//            SkuYearSaleAmountVO skuYearSakeAmountVO1 = skuYearSakeAmountVOS1.stream().filter(p -> p.getName().equals(saleDetailVO.getName())).findFirst().orElse(null);
-//            if (null != skuYearSakeAmountVO1 && null != skuYearSakeAmountVO1.getAmount()) {
-//                if (skuYearSakeAmountVO1.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
-//                    saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
-//                } else {
-//                    saleDetailVO.setReturnOrderRingRatio(saleDetailVO.getReturnOrderAmount().subtract(skuYearSakeAmountVO1.getAmount()).divide(skuYearSakeAmountVO1.getAmount(), 4, BigDecimal.ROUND_DOWN).multiply(BigDecimal.valueOf(100)));
-//                }
-//            } else {
-//                saleDetailVO.setReturnOrderRingRatio(BigDecimal.ZERO);
-//            }
         }
         return saleDetailList;
     }
@@ -591,31 +545,9 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
     @Override
     @Cacheable(cacheNames = "cache:bi:skuDateSaleTrend",keyGenerator = "myKeyGenerator")
     public List<SkuDateSaleTrendVO> skuDateSaleTrend(SkuDateFilterDTO biFilterDTO) {
-//        List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = null;
         biFilterDTO.setSku(Arrays.asList(biFilterDTO.getSkuNo()));
         String settleRate = getSettleRate(biFilterDTO.getSettleMethod());
-        List<SkuDateSaleTrendVO> skuDateSaleTrendVOS = baseMapper.skuSaleTrend(biFilterDTO, settleRate);
-//        switch (biFilterDTO.getDateType()) {
-//            case "DAY":
-//                skuDateSaleTrendVOS = baseMapper.skuDaySaleTrend(biFilterDTO);
-//                break;
-//            case "WEEK":
-//                skuDateSaleTrendVOS = baseMapper.skuWeekSaleTrend(biFilterDTO);
-//                break;
-//            case "MONTH":
-//                skuDateSaleTrendVOS = baseMapper.skuMonthSaleTrend(biFilterDTO);
-//                break;
-//            case "QUARTER":
-//                skuDateSaleTrendVOS = baseMapper.skuQuarterSaleTrend(biFilterDTO);
-//                break;
-//            case "YEAR":
-//                skuDateSaleTrendVOS = baseMapper.skuYearSaleTrend(biFilterDTO);
-//                break;
-//            default:
-//                skuDateSaleTrendVOS = baseMapper.skuDaySaleTrend(biFilterDTO);
-//                break;
-//        }
-        return skuDateSaleTrendVOS;
+        return baseMapper.skuSaleTrend(biFilterDTO, settleRate);
     }
 
     @Override
@@ -659,16 +591,6 @@ public class BiComprehensiveAnalyseServiceImpl extends ServiceImpl<BiComprehensi
 
         Map<String, String> skuItemName = salesOrderService.getSkuItemName();
         resultDto.setNameCn(skuItemName.get(dto.getSkuNo()));
-        // 最新订单
-//        DmpOrderItemEntity orderItemEntity = dmpOrderItemService.lambdaQuery()
-//                .eq(DmpOrderItemEntity::getSkuNo, dto.getSkuNo())
-//                .orderByDesc(DmpOrderItemEntity::getId)
-//                .last("LIMIT 1")
-//                .one();
-//        if(null != orderItemEntity){
-//            // 设置最新名称
-//           resultDto.setNameCn(orderItemEntity.getItemName());
-//        }
 
         // 平台首次下单时间
         if (null != salesDTO && null != salesDTO.getFirstOrderDate()){

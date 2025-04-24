@@ -4,7 +4,9 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 抄送状态枚举
@@ -54,10 +56,6 @@ public enum TimeoutStatusEnum {
     }
 
     public static List<TimeoutStatusEnum> getAll() {
-        List<TimeoutStatusEnum> resultList = new ArrayList<>();
-        for (TimeoutStatusEnum optionEnum : TimeoutStatusEnum.values()) {
-            resultList.add(optionEnum);
-        }
-        return resultList;
+        return Arrays.stream(TimeoutStatusEnum.values()).collect(Collectors.toList());
     }
 }

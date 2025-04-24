@@ -1,6 +1,5 @@
 package com.erp.server.file.business.wms;
 
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;

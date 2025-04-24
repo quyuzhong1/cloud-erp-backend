@@ -3,14 +3,13 @@ package com.erp.model.wms.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.experimental.Accessors;
 
 /**
  * <p>
@@ -193,13 +192,25 @@ public class SoReturnNoticeEntity extends BaseEntity<SoReturnNoticeEntity> {
      */
     @TableField("so_id")
     private String soId;
+    /**
+     * 比重
+     */
+    @TableField("currency")
+    private String currency;
 
+    /**
+     * 币种符号
+     */
+    @TableField("currency_symbol")
+    private String currencySymbol;
+
+    /**
+     * 退货物流单号
+     */
+    @TableField("return_logistic_code")
+    private String returnLogisticCode;
 
     public static final String APPROVE_STATUS = "approve_status";
-
-    public static final String CODE = "code";
-
-    public static final String TYPE = "type";
 
     public static final String SALES_ORG_ID = "sales_org_id";
 

@@ -1,12 +1,14 @@
 package com.erp.rpc.wms.feign;
 
-import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -37,6 +39,24 @@ public interface WmsVirtualWarehouseFeign {
      */
     @PostMapping("/getVirtualWarehouse")
     List<VirtualWarehouseRelationEntity> getVirtualWarehouse(@RequestBody @Valid VirtualWarehouseChannelDTO.PlatformDTO platformDTO);
+
+    /**
+     * 根据平台查询虚拟仓配置信息
+     * @author will
+     * @date 2024/9/3 18:09
+     * @param platformList
+     * @return List<VirtualWarehouseDTO>
+     */
+    @PostMapping("/listCfgRuleVirtualWarehouse")
+    List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> listCfgRuleVirtualWarehouse(@RequestBody List<String> platformList);
+
+    /**
+     * 高级查询虚拟仓
+     * @param compareCodeSplicingValueSql 高级查询参数
+     */
+    @GetMapping("/listWarehouseBySql")
+    List<String> listWarehouseBySql(@RequestParam String compareCodeSplicingValueSql);
+
 }
 
 

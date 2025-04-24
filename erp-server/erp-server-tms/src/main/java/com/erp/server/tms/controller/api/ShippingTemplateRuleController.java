@@ -1,23 +1,24 @@
 package com.erp.server.tms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
+import com.erp.server.tms.service.ShippingTemplateRuleService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.ShippingTemplateRuleService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
+import javax.annotation.Resource;
 
 /**
  * 运费模板渠道关联表
@@ -31,7 +32,7 @@ import com.erp.model.tms.dto.ShippingTemplateRuleDTO;
 @RequestMapping("/shippingTemplateRule")
 public class ShippingTemplateRuleController extends BaseController {
 
-    @Autowired
+    @Resource
     private ShippingTemplateRuleService shippingTemplateRuleService;
 
     /**
@@ -62,7 +63,7 @@ public class ShippingTemplateRuleController extends BaseController {
         menuCode = "tms:shippingTemplateRule:update",
         serviceClass = ShippingTemplateRuleService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated ShippingTemplateRuleDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated ShippingTemplateRuleDTO.UpdateDTO dto) {
 //        shippingTemplateRuleService.update(dto);
         return success();
     }

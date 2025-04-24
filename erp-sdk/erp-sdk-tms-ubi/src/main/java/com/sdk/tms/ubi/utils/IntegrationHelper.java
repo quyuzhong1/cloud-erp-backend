@@ -9,27 +9,31 @@ import java.util.*;
 /**
  * @author zdy
  * @ClassName IntegrationHelper
- * @description: TODO
+
  * @date 2023年10月26日
  * @version: 1.0
  */
 public class IntegrationHelper {
+
+    private IntegrationHelper() {
+    }
 
     private static final char NEW_LINE = (char) 0x000A;
 
     private static final String HEADERS_AUTHORIZATION_PREFIX = "WallTech ";
 
     private static final String HMAC_SHA1_ALGORITHM = "HmacSHA1";
+    public static final String UTF_8 = "UTF-8";
 
     private static String calculate(String secretAccessKey, String data) {
         try {
-            SecretKeySpec signingKey = new SecretKeySpec(secretAccessKey.getBytes("UTF-8"), HMAC_SHA1_ALGORITHM);
+            SecretKeySpec signingKey = new SecretKeySpec(secretAccessKey.getBytes(UTF_8), HMAC_SHA1_ALGORITHM);
 
             Mac mac = Mac.getInstance(HMAC_SHA1_ALGORITHM);
             mac.init(signingKey);
 
-            byte[] rawHmac = mac.doFinal(data.getBytes("UTF-8"));
-            return new String(Base64.getEncoder().encode(rawHmac), "UTF-8");
+            byte[] rawHmac = mac.doFinal(data.getBytes(UTF_8));
+            return new String(Base64.getEncoder().encode(rawHmac), UTF_8);
         }
         catch (Exception e) {
             throw new IllegalStateException(e);

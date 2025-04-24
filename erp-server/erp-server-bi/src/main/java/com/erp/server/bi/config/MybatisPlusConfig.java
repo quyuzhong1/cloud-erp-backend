@@ -1,19 +1,14 @@
 package com.erp.server.bi.config;
 
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.DbType;
 import com.baomidou.mybatisplus.autoconfigure.ConfigurationCustomizer;
-import com.baomidou.mybatisplus.core.incrementer.DefaultIdentifierGenerator;
 import com.baomidou.mybatisplus.core.incrementer.IdentifierGenerator;
 import com.baomidou.mybatisplus.extension.MybatisMapWrapperFactory;
 import com.baomidou.mybatisplus.extension.plugins.MybatisPlusInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.OptimisticLockerInnerInterceptor;
 import com.baomidou.mybatisplus.extension.plugins.inner.PaginationInnerInterceptor;
-import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.IdGeneratorUtil;
-import com.common.business.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 

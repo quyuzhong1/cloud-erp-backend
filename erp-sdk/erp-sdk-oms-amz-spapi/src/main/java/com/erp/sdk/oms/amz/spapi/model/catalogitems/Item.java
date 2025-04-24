@@ -323,17 +323,6 @@ public class Item {
                 .filter(e-> e.getMarketplaceId().equalsIgnoreCase(marketPlaceId))
                 .map(e-> StrUtil.format("{}/{}", e.getColor(), e.getSize()).replace("null", "-"))
                 .collect(Collectors.joining("\n"));
-//        ItemAttributes attributes = this.getAttributes();
-//        if (null == attributes) {
-//            return "";
-//        }
-//        Map<String, Object> tempMap = BeanUtil.beanToMap(attributes);
-//        if (!tempMap.isEmpty()) {
-//            return tempMap.entrySet().stream()
-//                    .map(e -> StrUtil.format("{}:{}", e.getKey(), e.getValue().toString()))
-//                    .collect(Collectors.joining(","));
-//        }
-//        return "";
     }
 
     /**
@@ -384,23 +373,20 @@ public class Item {
         if (AmazonIdentifiersTypeEnum.ASIN.equals(identifierType)){
             return this.getAsin();
         }
-        // 日本
-        if (AmazonIdentifiersTypeEnum.UPC.equals(identifierType)){
-            ItemIdentifiersByMarketplace identifiersByMarketplace = this.getIdentifiers()
+        ItemIdentifiersByMarketplace identifiersByMarketplace = this.getIdentifiers()
                     .stream()
                     .filter(e -> marketplaceEnum.getMarketplaceId().equalsIgnoreCase(e.getMarketplaceId()))
                     .findFirst()
                     .orElse(null);
-            if (null != identifiersByMarketplace){
+        if (null != identifiersByMarketplace){
                 ItemIdentifier itemIdentifier = identifiersByMarketplace.getIdentifiers()
                         .stream()
-                        .filter(e -> "UPC".equalsIgnoreCase(e.getIdentifierType()))
+                        .filter(e -> identifierType.getCode().equalsIgnoreCase(e.getIdentifierType()))
                         .findFirst()
                         .orElse(null);
                 if (null != itemIdentifier){
                     return itemIdentifier.getIdentifier();
                 }
-            }
         }
         return this.getAsin();
     }

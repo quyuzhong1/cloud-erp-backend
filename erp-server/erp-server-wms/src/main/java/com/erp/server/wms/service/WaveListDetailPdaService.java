@@ -17,5 +17,5 @@ public interface WaveListDetailPdaService extends SuperService<WaveListDetailEnt
 
     WaveListDetailPdaDTO.FinishResultDTO finish(WaveListDetailPdaDTO.FinishParamDTO finishParamDTO);
 
-    ApiResult<?> scanSkuOrEanCode(String skuId, String code);
+    ApiResult scanSkuOrEanCode(String skuId, String code);
 }

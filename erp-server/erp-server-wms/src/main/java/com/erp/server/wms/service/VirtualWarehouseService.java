@@ -1,12 +1,12 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ShopDTO;
-import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
-import com.erp.model.wms.entity.VirtualWarehouseEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
 
 import java.util.List;
 
@@ -29,18 +29,6 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      * @date: 2024-06-02
      */
     BaseResultDTO.AddDTO add(VirtualWarehouseDTO.AddDTO dto);
-//    /**
-//     * 新增
-//     *
-//     * @param dto
-//     * @return
-//     * @author hyj
-//     * @date: 2024-06-02
-//     */
-//    BaseResultDTO.AddDTO addAndBind(VirtualWarehouseDTO.AddDTO dto);
-    //绑定信息
-//    void bindInfo(List<String> warehouseIdList, List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList,
-//                          List<ThirdMappingDTO.AddDTO> thirdMappingList, String virtualWarehouseEntityId);
     /**
      * 修改
      *
@@ -93,4 +81,23 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
      */
     List<VirtualWarehouseDTO.SelectDTO> listByParam(VirtualWarehouseDTO.SearchDTO searchDTO);
 
+    /**
+     * 根据高级查询查找虚拟仓
+     * @param compareCodeSplicingValueSql 高级查询
+     */
+    List<String> listWarehouseBySql(String compareCodeSplicingValueSql);
+
+    /**
+     * 导出
+     * @param dto
+     * @return
+     */
+    Boolean exportExcel(VirtualWarehouseDTO.PagingParamDTO dto);
+
+    /**
+     * 导出虚拟仓设置
+     * @param dto
+     * @return
+     */
+    PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto);
 }

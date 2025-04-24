@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.wms.mapper.FirstMileProcessingMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.wms.entity.FirstMileProcessingEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="requisition_application_id" property="requisitionApplicationId" />
+       <result column="requisition_application_code" property="requisitionApplicationCode" />
+       <result column="first_mile_delivery_id" property="firstMileDeliveryId" />
+       <result column="first_mile_delivery_code" property="firstMileDeliveryCode" />
+       <result column="delivery_approve_status" property="deliveryApproveStatus" />
+       <result column="delivery_qty" property="deliveryQty" />
+       <result column="sku_id" property="skuId" />
+       <result column="warehouse_id" property="warehouseId" />
+       <result column="virtual_warehouse_id" property="virtualWarehouseId" />
+       <result column="frozen_time" property="frozenTime" />
+       <result column="frozen_qty" property="frozenQty" />
+       <result column="outstock_order_id" property="outstockOrderId" />
+       <result column="outstock_order_code" property="outstockOrderCode" />
+       <result column="outstock_order_type" property="outstockOrderType" />
+       <result column="outstock_order_status" property="outstockOrderStatus" />
+       <result column="outstock_order_time" property="outstockOrderTime" />
+       <result column="outstock_qty" property="outstockQty" />
+       <result column="parent_sku_id" property="parentSkuId" />
+       <result column="bom_version" property="bomVersion" />
+       <result column="approve_qty" property="approveQty" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        fmp.id,
+        fmp.create_user_id,
+        fmp.create_user_name,
+        fmp.create_time,
+        fmp.update_user_id,
+        fmp.update_user_name,
+        fmp.update_time as updateTime,
+        fmp.version,
+        fmp.is_deleted,
+        fmp.requisition_application_id as requisitionApplicationId,
+        fmp.requisition_application_code as requisitionApplicationCode,
+        fmp.requisition_application_status as requisitionApplicationStatus,
+        fmp.first_mile_delivery_id as firstMileDeliveryId,
+        fmp.first_mile_delivery_code as firstMileDeliveryCode,
+        fmp.delivery_approve_status as deliveryApproveStatus,
+        fmp.delivery_qty as deliveryQty,
+        fmp.sku_id as skuId,
+        fmp.warehouse_id as warehouseId,
+        fmp.virtual_warehouse_id as virtualWarehouseId,
+        fmp.frozen_time as frozenTime,
+        fmp.frozen_qty as frozenQty,
+        fmp.outstock_order_id as outstockOrderId,
+        fmp.outstock_order_code as outstockOrderCode,
+        fmp.outstock_order_type as outstockOrderType,
+        fmp.outstock_order_status as outstockOrderStatus,
+        fmp.outstock_order_time as outstockOrderTime,
+        fmp.outstock_qty as outstockQty,
+        fmp.parent_sku_id as parentSkuId,
+        fmp.bom_version as bomVersion,
+        fmp.approve_qty as approveQty,
+        pd.sku_no as skuNo,
+        pd.name as productName,
+        wh.name as warehouseName,
+        vw.name as virtualWarehouseName
+    </sql>
+
+
+    <!-- 删除多余头程订单 -->
+    <delete id="deleteFirstMileOrder">
+        DELETE FROM first_mile_processing  where is_deleted = false and bill_date >= #{startDate}
+    </delete>
+
+    <!-- 删除头程订单 -->
+    <delete id="deleteFirstMileProcessing">
+        DELETE FROM first_mile_processing fmp
+        where is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            and  fmp.id in
+            <foreach collection="params.ids" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.requisitionApplicationDetailIdList != null and params.requisitionApplicationDetailIdList.size > 0">
+            and  fmp.requisition_application_detail_id in
+            <foreach collection="params.requisitionApplicationDetailIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.firstMileDeliveryDetailIdList != null and params.firstMileDeliveryDetailIdList.size > 0">
+            and  fmp.first_mile_delivery_detail_id in
+            <foreach collection="params.firstMileDeliveryDetailIdList" separator="," item="item" open="(" close=")">
+                #{item}
+            </foreach>
+        </if>
+
+    </delete>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.wms.dto.FirstMileProcessingDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from first_mile_processing fmp
+        left join product_detail pd on fmp.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on fmp.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on fmp.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        where ${params.sqlMap.default}
+        and fmp.is_deleted = false
+        <if test="params.label != null and params.label == 'outstock'">
+            and  (fmp.outstock_order_id != '' or  exists (select 0 from first_mile_processing_detail where is_deleted = false and outstock_order_id !='' and main_id = fmp.id) )
+        </if>
+        <if test="params.label != null and params.label == 'frozen'">
+            and fmp.frozen_qty != 0 and ((fmp.first_mile_delivery_id != '' and fmp.outstock_order_id = '') or EXISTS (select 0 from first_mile_processing_detail where is_deleted = false and first_mile_delivery_id != '' and outstock_order_id ='' and main_id = fmp.id ) )
+        </if>
+        <if test="params.label != null and params.label == 'unShipped'">
+            and (fmp.outstock_order_id = '' or exists (select 0 from first_mile_processing_detail where is_deleted = false and   outstock_order_id ='' and main_id = fmp.id))  and fmp.frozen_time is not null and EXTRACT(DAY FROM (now() - fmp.frozen_time)) >= 7
+        </if>
+        <if test="params.label != null and params.label == 'requisitionFrozen'">
+            and (fmp.approve_qty > fmp.delivery_qty and fmp.approve_qty > (select COALESCE(sum(delivery_qty),0) as deliveryQty from first_mile_processing_detail where is_deleted = false and main_id = fmp.id)) and fmp.requisition_application_status in ('handleIng','handle') and fmp.frozen_qty > 0
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fmp.requisition_application_id DESC,fmp.first_mile_delivery_id desc
+    </select>
+
+    <!-- 头程订单跟踪信息 -->
+    <select id="listFirstMileProcessing" resultType="com.erp.model.wms.entity.FirstMileProcessingEntity">
+        -- thirdWarehouse类型 或2024-09-24 18:00:00时间点前的fba类型单据
+        SELECT
+        ra.create_time as billDate,
+        ra.id as requisitionApplicationId,
+        ra.code as requisitionApplicationCode,
+        ra.status as requisitionApplicationStatus,
+        ra.type,
+        rad.id as requisitionApplicationDetailId,
+        fmd.id as firstMileDeliveryId,
+        fmd.code as firstMileDeliveryCode,
+        fmd.approve_status as deliveryApproveStatus,
+        fmdd.id as firstMileDeliveryDetailId,
+        fmdd.delivery_qty as deliveryQty,
+        rad.sku_id as skuId,
+        rad.from_warehouse_id as warehouseId,
+        rad.from_virtual_warehouse_id as virtualWarehouseId,
+        ra.handle_time as frozenTime,
+        rad.virtual_frozen_qty as frozenQty,
+        rad.approve_qty as approveQty,
+        '' as outstockOrderId,
+        '' as outstockOrderStatus,
+        0 as outstockQty,
+        '' as outstockOrderCode,
+        null as outstockOrderTime,
+        '' as outstockOrderType
+        FROM requisition_application ra
+        INNER JOIN requisition_application_detail rad
+        ON ra.id = rad.main_id AND rad.is_deleted = false
+        LEFT JOIN first_mile_delivery fmd
+        ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.invalid_status = false
+        LEFT JOIN first_mile_delivery_detail fmdd
+        ON  fmdd.is_deleted = false and fmdd.source_detail_id = rad.id and fmd.id = fmdd.main_id
+        WHERE (ra.type = 'thirdWarehouse' or (ra.type = 'fba' and '2024-09-24 18:00:00' > fmd.create_time ))
+        AND ra.is_deleted = false
+        AND ra.invalid_status = 'false'
+        AND rad.from_virtual_warehouse_id != ''
+        <if test="startDate != null">
+            and ra.create_time >= #{startDate}
+        </if>
+        UNION ALL
+        -- fba类型且2024-09-24 18:00:00点之后的单走货件
+        SELECT
+        ra.create_time as billDate,
+        ra.id as requisitionApplicationId,
+        ra.code as requisitionApplicationCode,
+        ra.status as requisitionApplicationStatus,
+        ra.type,
+        rad.id as requisitionApplicationDetailId,
+        fmd.id as firstMileDeliveryId,
+        fmd.code as firstMileDeliveryCode,
+        fmd.approve_status as deliveryApproveStatus,
+        fmdd.id as firstMileDeliveryDetailId,
+        fmdd.delivery_qty as deliveryQty,
+        rad.sku_id as skuId,
+        rad.from_warehouse_id as warehouseId,
+        rad.from_virtual_warehouse_id as virtualWarehouseId,
+        ra.handle_time as frozenTime,
+        rad.virtual_frozen_qty as frozenQty,
+        rad.approve_qty as approveQty,
+        '' as outstockOrderId,
+        '' as outstockOrderStatus,
+        0 as outstockQty,
+        '' as outstockOrderCode,
+        null as outstockOrderTime,
+        '' as outstockOrderType
+        FROM requisition_application ra
+        INNER JOIN requisition_application_detail rad
+        ON ra.id = rad.main_id AND rad.is_deleted = false
+        INNER JOIN first_mile_delivery fmd
+        ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.invalid_status = false
+        INNER join (
+        select fmdd.id,fmdd.main_id,fmdd.delivery_qty,fsd.sku_id,fsd.fn_sku from first_mile_delivery_detail fmdd
+        inner join fba_shipment_detail fsd on fsd.is_deleted = false and fmdd.source_detail_id = fsd.id
+        where fmdd.is_deleted = false
+        ) fmdd on fmd.id = fmdd.main_id and rad.sku_id = fmdd.sku_id and rad.platform_fn_sku = fmdd.fn_sku
+        WHERE ra.type = 'fba' and fmd.create_time > '2024-09-24 18:00:00'
+        AND ra.is_deleted = false
+        AND ra.invalid_status = 'false'
+        AND rad.from_virtual_warehouse_id != ''
+        <if test="startDate != null">
+            and ra.create_time >= #{startDate}
+        </if>
+        UNION ALL
+        -- 查询fba无发货单数据
+        SELECT
+        ra.create_time as billDate,
+        ra.id as requisitionApplicationId,
+        ra.code as requisitionApplicationCode,
+        ra.status as requisitionApplicationStatus,
+        ra.type,
+        rad.id as requisitionApplicationDetailId,
+        '' as firstMileDeliveryId,
+        '' as firstMileDeliveryCode,
+        '' as deliveryApproveStatus,
+        '' as firstMileDeliveryDetailId,
+        0 as deliveryQty,
+        rad.sku_id as skuId,
+        rad.from_warehouse_id as warehouseId,
+        rad.from_virtual_warehouse_id as virtualWarehouseId,
+        ra.handle_time as frozenTime,
+        rad.virtual_frozen_qty as frozenQty,
+        rad.approve_qty as approveQty,
+        '' as outstockOrderId,
+        '' as outstockOrderStatus,
+        0 as outstockQty,
+        '' as outstockOrderCode,
+        null as outstockOrderTime,
+        '' as outstockOrderType
+        FROM requisition_application ra
+        INNER JOIN requisition_application_detail rad
+        ON ra.id = rad.main_id AND rad.is_deleted = false
+        left JOIN first_mile_delivery fmd
+        ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.invalid_status = false
+        left join (
+        select fmdd.id,fmdd.main_id,fmdd.delivery_qty,fsd.sku_id,fsd.fn_sku from first_mile_delivery_detail fmdd
+        left join fba_shipment_detail fsd on fsd.is_deleted = false and fmdd.source_detail_id = fsd.id
+        where fmdd.is_deleted = false
+        ) fmdd on fmd.id = fmdd.main_id and rad.sku_id = fmdd.sku_id and rad.platform_fn_sku = fmdd.fn_sku
+        WHERE ra.type = 'fba'  and (fmd.create_time > '2024-09-24 18:00:00' or fmd.create_time ISNULL)
+        AND ra.is_deleted = false
+        AND ra.invalid_status = 'false' AND rad.from_virtual_warehouse_id != '' AND fmdd.id ISNULL
+        <if test="startDate != null">
+            and ra.create_time >= #{startDate}
+        </if>
+    </select>
+
+    <!--导出分页查询- -->
+    <select id="exportPaging" resultType="com.erp.model.wms.dto.FirstMileProcessingDTO$ListDTO">
+        select
+        <include refid="Base_Column_List" />
+        from first_mile_processing fmp
+        left join product_detail pd on fmp.sku_id = pd.id and pd.is_deleted = false
+        left join warehouse wh on fmp.warehouse_id = wh.id and wh.is_deleted = false
+        left join virtual_warehouse vw on fmp.virtual_warehouse_id = vw.id and vw.is_deleted = false
+        where ${params.sqlMap.default}
+        and fmp.is_deleted = false
+        <if test="params.label != null and params.label == 'outstock'">
+            and  (fmp.outstock_order_id != '' or  exists (select 0 from first_mile_processing_detail where is_deleted = false and outstock_order_id !='' and main_id = fmp.id) )
+        </if>
+        <if test="params.label != null and params.label == 'frozen'">
+            and fmp.frozen_qty != 0 and ((fmp.first_mile_delivery_id != '' and fmp.outstock_order_id = '') or EXISTS (select 0 from first_mile_processing_detail where is_deleted = false and first_mile_delivery_id != '' and outstock_order_id ='' and main_id = fmp.id ) )
+        </if>
+        <if test="params.label != null and params.label == 'unShipped'">
+            and (fmp.outstock_order_id = '' or exists (select 0 from first_mile_processing_detail where is_deleted = false and   outstock_order_id ='' and main_id = fmp.id))  and fmp.frozen_time is not null and EXTRACT(DAY FROM (now() - fmp.frozen_time)) >= 7
+        </if>
+        <if test="params.label != null and params.label == 'requisitionFrozen'">
+            and (fmp.approve_qty > fmp.delivery_qty and fmp.approve_qty > (select COALESCE(sum(delivery_qty),0) as deliveryQty from first_mile_processing_detail where is_deleted = false and main_id = fmp.id)) and fmp.requisition_application_status in ('handleIng','handle') and fmp.frozen_qty > 0
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fmp.requisition_application_id DESC,fmp.first_mile_delivery_id desc
+    </select>
+</mapper>

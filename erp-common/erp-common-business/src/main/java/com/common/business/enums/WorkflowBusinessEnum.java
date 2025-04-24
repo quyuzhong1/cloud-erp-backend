@@ -1,11 +1,14 @@
 package com.common.business.enums;
 
+import lombok.Getter;
+
 /**
  * @Classname BusinessProcessEnum
 
  * @Date 2022-10-18 17:20
  * @Created by yl
  */
+@Getter
 public enum WorkflowBusinessEnum {
 
     REVIEW_TASK("reviewTask", "评审任务","plm"),
@@ -21,36 +24,12 @@ public enum WorkflowBusinessEnum {
     SCHEDULE_TASK("taskSchedule","任务排期审核","plm");
 
 
-    private String businessType;
+    private final String businessType;
 
-    private String businessName;
+    private final String businessName;
 
-    private String platform;
+    private final String platform;
 
-    public void setBusinessType(String businessType) {
-        this.businessType = businessType;
-    }
-
-    public void setBusinessName(String businessName) {
-        this.businessName = businessName;
-    }
-
-    public void setPlatform(String platform) {
-        this.platform = platform;
-    }
-
-
-    public String getBusinessType() {
-        return businessType;
-    }
-
-    public String getBusinessName() {
-        return businessName;
-    }
-
-    public String getPlatform() {
-        return platform;
-    }
 
     WorkflowBusinessEnum(String businessType, String businessName,String platform) {
         this.businessType = businessType;

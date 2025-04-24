@@ -1,32 +1,36 @@
 package com.erp.server.plm.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.erp.model.plm.dto.*;
-import com.erp.server.plm.query.PilotApplicationQueryHandler;
-import lombok.extern.slf4j.Slf4j;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
-import com.erp.server.plm.service.PilotApplicationService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
+import com.common.core.entity.BaseEntity;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.plm.dto.PilotApplicationDTO;
+import com.erp.model.plm.dto.PilotApplicationRefTaskDTO;
+import com.erp.model.plm.dto.ProductPackViewDTO;
+import com.erp.model.plm.dto.ProductSearchDTO;
+import com.erp.model.plm.entity.PilotApplicationDetailEntity;
+import com.erp.model.plm.entity.PilotApplicationEntity;
+import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.erp.server.plm.service.PilotApplicationDetailService;
+import com.erp.server.plm.service.PilotApplicationService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
-import com.erp.model.plm.entity.PilotApplicationEntity;
 
 /**
  * 试产/量产申请
@@ -42,6 +46,8 @@ public class PilotApplicationController extends BaseController {
 
     @Resource
     private PilotApplicationService pilotApplicationService;
+    @Resource
+    private PilotApplicationDetailService pilotApplicationDetailService;
 
     /**
     * 新增
@@ -70,7 +76,7 @@ public class PilotApplicationController extends BaseController {
         menuCode = "plm:pilotApplication:update",
         serviceClass = PilotApplicationService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated PilotApplicationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated PilotApplicationDTO.UpdateDTO dto) {
         pilotApplicationService.update(dto);
         return success();
     }
@@ -83,7 +89,7 @@ public class PilotApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:pilotApplication:paging",
-            tableAlias = ""
+            tableAlias = "pa"
     )
     public ApiResult<List<PilotApplicationDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(pilotApplicationService.tabList(dto));
@@ -100,7 +106,7 @@ public class PilotApplicationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "plm:pilotApplication:paging",
-            tableAlias = ""
+            tableAlias = "pa"
     )
     @WebAdvanceQuery(handler = PilotApplicationQueryHandler.class)
     public ApiResult<PagingVO<PilotApplicationDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PilotApplicationDTO.PagingParamDTO> dto) {
@@ -202,6 +208,8 @@ public class PilotApplicationController extends BaseController {
             BatchResultDTO approveResult;
             try {
                 approveResult = pilotApplicationService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), dto);
+                //回写产品管理--采购信息--一级和二级供应商
+                pilotApplicationService.writeProductPurchaseBack(id);
                 pilotApplicationService.approvePilotApplicationNotice(id);
             }catch (Exception e){
                 log.error("试产申请审核失败",e);
@@ -366,7 +374,7 @@ public class PilotApplicationController extends BaseController {
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "试产申请导出Excel数据")
     @WebAdvanceQuery(handler = PilotApplicationQueryHandler.class)
-    public ApiResult<?> exportList(@RequestBody @Validated PilotApplicationDTO.ExportDTO dto) {
+    public ApiResult<Object> exportList(@RequestBody @Validated PilotApplicationDTO.ExportDTO dto) {
         pilotApplicationService.exportList(dto);
         return success();
     }
@@ -466,5 +474,120 @@ public class PilotApplicationController extends BaseController {
     public ApiResult<List<ProductSearchDTO.SkuListDTO>> listSkuBySkuNos(@RequestBody ProductSearchDTO.SkuParamDTO skuParamDTO) {
         List<ProductSearchDTO.SkuListDTO> list = pilotApplicationService.listSkuBySkuNos(skuParamDTO);
         return this.success(list);
+    }
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细,过滤包装数据完整的数据
+     * @param dto 参数
+     */
+    @PostMapping("/listProductPackBySkuIds")
+    public ApiResult<List<ProductPackViewDTO>> listProductPackBySkuIds(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<ProductPackViewDTO> productPackViewDTOS = pilotApplicationService.listProductPackBySkuIds(dto.getIds());
+        return success(productPackViewDTOS);
+    }
+
+    /**
+     * 作废
+     * @author zdy
+     * @date 2025/04/15 11:29
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/invalid")
+    @LogAction(value = LogActionEnum.INVALID, desc = "作废")
+    public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = pilotApplicationService.invalid(id,dto.getRemark());
+            }catch (Exception e){
+                log.error("试产量产单作废失败",e);
+                PilotApplicationEntity entity = pilotApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "试产量产单不存在, 作废失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 取消作废
+     *
+     * @param dto
+     * @return ApiResult<List < BatchResultDTO>>
+     * @author zdy
+     * @date: 2025/04/15 11:29
+     */
+    @PostMapping("/unInvalid")
+    public ApiResult<List<BatchResultDTO>> unInvalid(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        for (String id : ids) {
+            BatchResultDTO unInvalidResult;
+            try {
+                unInvalidResult = pilotApplicationService.unInvalid(id);
+            } catch (Exception e) {
+                log.error("试产量产单取消作废失败", e);
+                PilotApplicationEntity entity = pilotApplicationService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    unInvalidResult = BatchResultDTO.fail(id, id, "试产量产单不存在, 取消作废失败");
+                    resultDTOS.add(unInvalidResult);
+                    continue;
+                }
+                unInvalidResult = BatchResultDTO.fail(id, entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(unInvalidResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+    /**
+     * 更新备注
+     * @author Will
+     * @date: 2023/7/19 14:58
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新试产量产单:明细备注={remark}")
+    @PostMapping("/updateRemark")
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.listByIds(dto.getIds());
+        Map<String, PilotApplicationDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(PilotApplicationDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<PilotApplicationEntity> entityList = pilotApplicationService.listByIds(mainIds);
+        Map<String, PilotApplicationEntity> entityMap = entityList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        for (String id : dto.getIds()) {
+            PilotApplicationDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"试产量产单明细不存在"));
+                continue;
+            }
+            PilotApplicationEntity entity = entityMap.get(detailEntity.getMainId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"试产量产单不存在"));
+                continue;
+            }
+            try {
+                BaseIdsDTO.RemarkDTO remarkDTO = new BaseIdsDTO.RemarkDTO();
+                remarkDTO.setRemark(dto.getRemark());
+                remarkDTO.setIds(Collections.singletonList(id));
+                Boolean flag = pilotApplicationDetailService.updateRemark(remarkDTO);
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(), "修更新备注试产量产单成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), "修更新备注试产量产单失败"));
+                }
+            }catch (Exception e){
+                log.error("试产量产单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

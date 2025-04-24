@@ -1,14 +1,14 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
 
 
 /**
@@ -147,19 +147,19 @@ public class LogisticsAddressEntity extends BaseEntity<LogisticsAddressEntity> {
     private String shopId;
 
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String COMPANY_NAME = "company_name";
 
-    public static final String CONTACT = "contact";
+    public static final String FIELD_CONTACT = "contact";
 
-    public static final String EMAIL = "email";
+    public static final String FIELD_EMAIL = "email";
 
     public static final String TEL_NUMBER = "tel_number";
 
-    public static final String COUNTRY = "country";
+    public static final String FIELD_COUNTRY = "country";
 
 
     public static final String ADDRESS_FIRST = "address_first";

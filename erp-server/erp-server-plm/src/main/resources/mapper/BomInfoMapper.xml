@@ -8,6 +8,7 @@
         <result column="name" property="name"></result>
         <result column="updateUserName" property="updateUserName"></result>
         <result column="updateTime" property="updateTime"></result>
+        <result column="createTime" property="createTime"></result>
         <collection property="childList" ofType="com.erp.model.plm.dto.BomCombinationDTO$ChildDTO">
             <id column="detailId" property="id"></id>
             <result column="childSkuId" property="childSkuId"></result>
@@ -35,7 +36,8 @@
                bs.parent_sku_no
         FROM product_bom_sku bs LEFT JOIN product_bom_info b
         ON bs.bom_id = b.id AND b.is_deleted = FALSE
-        WHERE bs.is_deleted = FALSE
+        WHERE
+        ${params.sqlMap.default} AND bs.is_deleted = FALSE
         <if test="bomIdList !=null and bomIdList.size>0">
             AND b.id IN
             <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
@@ -57,13 +59,6 @@
                 #{skuId}
             </foreach>
             )
-        </if>
-        <if test="stateList !=null and stateList.size>0">
-            AND
-            b.state IN
-            <foreach collection="stateList" item="state" open="(" separator="," close=")">
-                #{state}
-            </foreach>
         </if>
         <if test="params.permissionSql  !=null  and  params.permissionSql!='' ">
             ${params.permissionSql}
@@ -109,7 +104,7 @@
         bs.quantity
         FROM product_bom_sku bs LEFT JOIN product_bom_info b
         ON bs.bom_id = b.id AND b.is_deleted = FALSE
-        WHERE bs.is_deleted = FALSE
+        WHERE ${params.sqlMap.default} AND bs.is_deleted = FALSE
             <if test="bomIdList !=null and bomIdList.size>0">
                 AND b.id IN
                 <foreach collection="bomIdList" item="id" open="(" separator="," close=")">
@@ -129,13 +124,6 @@
                         #{skuId}
                     </foreach>
                 )
-            </if>
-            <if test="stateList !=null and stateList.size>0">
-                AND
-                b.state IN
-                <foreach collection="stateList" item="state" open="(" separator="," close=")">
-                    #{state}
-                </foreach>
             </if>
         ORDER BY b.create_time DESC
     </select>
@@ -228,6 +216,7 @@
             COALESCE(pc.target_tax_cost,0) as targetTaxCost,
             pbi.update_user_name as updateUserName,
             pbi.update_time as updateTime,
+            pbi.create_time as createTime,
             pp.main_supplier as mainSupplierId
         from product_bom_info pbi
         inner join product_bom_sku pbs on pbi.id = pbs.bom_id and pbs.is_deleted = false
@@ -236,7 +225,7 @@
         left join product_cost pc on cpd.id = pc.sku_id and pc.is_deleted = false
         left join product_purchase pp on cpd.id = pp.sku_id and pp.is_deleted = false
         <where>
-            pbi.is_deleted = false and pbi.source_type = 'productCombination'
+            ${params.sqlMap.default} and pbi.is_deleted = false and pbi.source_type = 'productCombination'
             <if test="params.skuNo != null and params.skuNo != ''">
                 and pbs.parent_sku_no iLIKE concat('%', #{params.skuNo}::text,'%')
             </if>

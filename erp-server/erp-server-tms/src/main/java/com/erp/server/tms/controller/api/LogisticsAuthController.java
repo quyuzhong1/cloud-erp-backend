@@ -2,6 +2,7 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.enums.LogisticsPlatformEnum;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
 import com.erp.server.tms.service.LogisticsAuthFieldService;
@@ -9,6 +10,7 @@ import com.erp.server.tms.service.LogisticsSupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -27,6 +29,7 @@ import com.erp.model.tms.dto.LogisticsAuthDTO;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物流商管理
@@ -59,14 +62,24 @@ public class LogisticsAuthController extends BaseController {
      */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "物流授权表新增")
+    @Transactional(rollbackFor = Exception.class)
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated LogisticsAuthDTO.AddDTO dto) {
+        Map<String, String> authMap = dto.getFieldMap();
+        String logisticsPlatform = dto.getLogisticsPlatform();
+        if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)
+                ||LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+            authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
+        }
         BaseResultDTO.AddDTO result = logisticsAuthService.add(dto);
         String id = result.getId();
         if (StringUtils.isNotBlank(id)) {
             //先进行授权是否成功鉴权
-            ApiResult apiResult = logisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
+            ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);
             if (apiResult.isSuccess()) {
-                logisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(),dto.getFieldMap());
+                logisticsAuthService.syncUpdateSaleChannel(logisticsPlatform,authMap);
             } else {
                logisticsAuthService.removeById(id);
                logisticsAuthFieldService.removeByAuthId(id);
@@ -110,12 +123,17 @@ public class LogisticsAuthController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "物流商授权更新")
     public ApiResult update(@RequestBody @Validated LogisticsAuthDTO.UpdateDTO dto) {
         BaseResultDTO.UpdateDTO result=  logisticsAuthService.update(dto);
+        Map<String, String> authMap = dto.getFieldMap();
+        String logisticsPlatform = dto.getLogisticsPlatform();
         String id = result.getId();
         if (StringUtils.isNotBlank(id)) {
+            if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+                authMap = logisticsAuthService.addShopAuth(authMap, logisticsPlatform);
+            }
             //先进行授权是否成功鉴权
-            ApiResult apiResult = logisticsAuthService.authLogistics(dto.getLogisticsPlatform(),dto.getFieldMap());
+            ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);
             if (apiResult.isSuccess()) {
-                logisticsAuthService.syncUpdateSaleChannel(dto.getLogisticsPlatform(),dto.getFieldMap());
+                logisticsAuthService.syncUpdateSaleChannel(logisticsPlatform,authMap);
             } else {
                 logisticsAuthService.removeById(id);
                 logisticsAuthService.updateLogisticsAuthStatus(dto.getMainId(), LogisticsAuthStatusEnum.NOT.getCode());

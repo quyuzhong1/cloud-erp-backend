@@ -59,10 +59,24 @@ public enum SettingEnum {
     AMAZON_FBA_SHIPMENT_SKIP_LIST("amazon_fba_shipment_skip", SettingEnum.AMAZON_FBA_SHIPMENT_SKIP, "亚马逊FBA货件暂时跳过亚马逊请求列表(英文逗号拼接)"),
 
     NEW_DMP_PUSH_SWTICH_LIST("push_swtich", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台推送开关"),
-    NEW_DMP_PULL_SWITCH_LIST("pull_switch", SettingEnum.NEW_DMP_PUSH_SWTICH, "新中台拉取开关"),
+    NEW_DMP_PULL_SWITCH_LIST("pull_switch", SettingEnum.NEW_DMP_PULL_SWITCH, "新中台拉取开关"),
 
     //支持推送仓位的金蝶仓库
     PUSH_KINGDEE_WAREHOUSE_LOCATION_LIST("push_kingdee_warehouse_location",SettingEnum.PUSH_KINGDEE_WAREHOUSE_LOCATION,"支持推送仓位的金蝶仓库"),
+    //是否支持金蝶基础性校验
+    KINGDEE_BASE_CHECK_KEY("kingdee_base_check",SettingEnum.KINGDEE_BASE_CHECK,"是否支持金蝶基础性校验"),
+    IMG_UPLOAD_SIZE_KEY("img_upload_size",SettingEnum.IMG_UPLOAD_SIZE,"图片上传大小"),
+
+
+    //oms_shopify_hmac
+    OMS_SHOPIFY_SECRET_KEY("secretKey","oms_shopify_hmac","HmacSHA256"),
+    OMS_SHOPIFY_CLIENT_SECRET("clientSecret","oms_shopify_hmac","DfFGCAXMY7pptKfhz7IkWEa0zC0xddhY"),
+
+    //after_sale
+    AFTER_SALSE_NODE("afterSaleNode","after_sale","售后维修节点"),
+    AFTER_SALSE_SUBSCRIBE_MSG("afterSaleSubscribeMsg","after_sale","售后微信消息订阅"),
+    AFTER_SALSE_ORDER_CANCEL_MSG("afterSaleOrderCancelMsg","after_sale","订单取消通知"),
+    AFTER_SALSE_ORDER_APPROVE_MSG("afterSaleOrderApproveMsg","after_sale","审核通过提醒"),
     ;
 
     @EnumValue
@@ -129,7 +143,7 @@ public enum SettingEnum {
     /**
      * 新中台拉取开关
      */
-    public static final String NEW_DMP_PULL_SWITCH = "new_dmp_push_switch";
+    public static final String NEW_DMP_PULL_SWITCH = "new_dmp_pull_switch";
 
     /**
      * 亚马逊报告
@@ -146,7 +160,15 @@ public enum SettingEnum {
      */
     public static final String PUSH_KINGDEE_WAREHOUSE_LOCATION = "push_kingdee_warehouse_location";
 
+    /**
+     * 是否支持金蝶基础性校验
+     */
+    public static final String KINGDEE_BASE_CHECK = "kingdee_base_check";
 
+    /**
+     * 图片上传大小
+     */
+    public static final String IMG_UPLOAD_SIZE = "img_upload_size";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

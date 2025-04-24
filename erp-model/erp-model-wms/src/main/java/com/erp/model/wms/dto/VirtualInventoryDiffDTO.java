@@ -2,11 +2,13 @@ package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +48,16 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 超出分配,true是，false否
          */
         private Boolean isExceed;
+
+        /**
+         * 仅看虚拟仓相关
+         */
+        private Boolean isViewVirtual;
+
+        /**
+         * 去除0库存
+         */
+        private Boolean isDeleteZeroInventory;
     }
 
 
@@ -55,6 +67,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO {
+        /**
+         * 主键id
+         */
+        private String id;
         /**
          * skuId【可排序】
          */
@@ -83,6 +99,14 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 实体仓冻结库存
          */
         private Integer frozenQty;
+        /**
+         * 实体仓在途库存
+         */
+        private Integer inTransitQty;
+        /**
+         * 实体仓待检库存
+         */
+        private Integer waitQcQty;
 
         /**
          * 实体仓实际库存
@@ -97,13 +121,29 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private Integer unDistributionQty;
         /**
+         * 实体仓已下推数量
+         */
+        private Integer totalVirtualQty;
+        /**
          * 虚拟仓库存
          */
         private Integer virtualQty;
         /**
+         * 虚拟仓可用库存
+         */
+        private Integer virtualUsableQty;
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
+        /**
          * 库存差异，true是，false否
          */
         private Boolean isDiff;
+        /**
+         * 库存差异，true是，false否
+         */
+        private String isDiffName;
         /**
          * 超出分配
          */
@@ -113,6 +153,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 超出分配数量
          */
         private Integer exceedQty;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -120,6 +164,7 @@ public class VirtualInventoryDiffDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class SearchParamDetailDTO extends SortDTO {
         /**
          * skuId
@@ -170,6 +215,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * SKU【可排序】
          */
         private String skuId;
+        /**
+         * SKU编码
+         */
+        private String skuNo;
         /**
          * 实体仓库【可排序】
          */
@@ -227,6 +276,10 @@ public class VirtualInventoryDiffDTO implements Serializable {
          */
         private String warehouseName;
         /**
+         * 实体仓实际库存
+         */
+        private Integer realQty;
+        /**
          * 实体仓可用库存
          */
         private Integer usableQty;
@@ -234,11 +287,14 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 实体仓冻结库存
          */
         private Integer frozenQty;
-
         /**
-         * 实体仓实际库存
+         * 实体仓在途库存
          */
-        private Integer realQty;
+        private Integer inTransitQty;
+        /**
+         * 实体仓待检库存
+         */
+        private Integer waitQcQty;
         /**
          * 实体仓已分配数
          */
@@ -247,6 +303,14 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 实体仓未分配数
          */
         private Integer unDistributionQty;
+        /**
+         * 库存差异
+         */
+        private Boolean isDiff;
+        /**
+         * 库存差异名称
+         */
+        private String isDiffName;
         /**
          * 虚拟仓库
          */
@@ -362,5 +426,69 @@ public class VirtualInventoryDiffDTO implements Serializable {
          * 推荐数量
          */
         private Integer qty;
+    }
+
+    /**
+     * 飞书通知DTO(按sku+仓库)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SendNoticeSkuDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 实体仓实际
+         */
+        private Integer realQty;
+        /**
+         *  分配数量
+         */
+        private Integer distributionQty;
+        /**
+         * 未分配数量
+         */
+        private Integer unDistributionQty;
+    }
+
+    /**
+     * 飞书通知DTO(汇总)
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SendNoticeTotalDTO {
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         *  差异数量
+         */
+        private Integer diffQty;
     }
 }

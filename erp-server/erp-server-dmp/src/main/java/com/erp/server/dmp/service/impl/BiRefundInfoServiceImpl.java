@@ -3,6 +3,9 @@ package com.erp.server.dmp.service.impl;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import lombok.extern.slf4j.Slf4j;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -24,6 +27,7 @@ import java.util.stream.Collectors;
 /**
  * 退款列表服务类
  */
+@Slf4j
 @Service
 public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiRefundInfoEntity>
     implements BiRefundInfoService {
@@ -99,7 +103,7 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
                 return refundInfoId;
             }
             //如果数据有变动需要更新数据库订单信息
-            if (!dmpReturnOrderInfoEntity.toString().equals(dmpReturnOrderInfoEntity.toString())) {
+            if (!dmpReturnOrderInfoEntity.toString().equals(returnOrderInfoEntity.toString())) {
                 returnOrderInfoEntity.setId(dmpReturnOrderInfoEntity.getId());
                 updateById(returnOrderInfoEntity);
             }
@@ -118,7 +122,8 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
             return refundInfoId;
         }
         String orderId = refundInfoId;
-        itemList.stream().peek(entity -> entity.setRefundId(orderId)).collect(Collectors.toList());
+        List<BiRefundItemEntity> biRefundItemEntityList = itemList.stream().peek(entity -> entity.setRefundId(orderId)).collect(Collectors.toList());
+        log.debug("BI退款：{}" , JSON.toJSONString(biRefundItemEntityList));
         biRefundItemService.checkOrderItem(itemList, returnOrderInfoEntity.getPlatformSign());
         return refundInfoId;
     }

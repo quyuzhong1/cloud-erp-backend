@@ -106,7 +106,7 @@ public class WarehouseLocationMoveEntity extends BaseEntity<WarehouseLocationMov
     @TableField("source_type")
     private String sourceType;
 
-    public static final String CODE = "code";
+    
 
     public static final String APPROVE_STATUS = "approve_status";
 

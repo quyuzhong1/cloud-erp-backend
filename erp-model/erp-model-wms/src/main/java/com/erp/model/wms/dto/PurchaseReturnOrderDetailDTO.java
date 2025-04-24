@@ -14,9 +14,10 @@ import java.math.BigDecimal;
  * @Date 2023/4/6 17:18
  **/
 @Data
-@NoArgsConstructor
 public class PurchaseReturnOrderDetailDTO {
-
+    private PurchaseReturnOrderDetailDTO() {
+        throw new IllegalStateException("Utility PurchaseReturnOrderDetailDTO class");
+    }
     /**
      * 添加
      */
@@ -93,6 +94,11 @@ public class PurchaseReturnOrderDetailDTO {
          * 仓位
          */
         private String warehouseLocation;
+
+        /**
+         * 采购订单仓位
+         */
+        private String purchaseWarehouseLocation;
     }
 
     /**

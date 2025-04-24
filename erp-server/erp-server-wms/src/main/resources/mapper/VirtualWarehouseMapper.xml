@@ -112,17 +112,64 @@
         SELECT  DISTINCT vw.id,vw.name,vw.code ,vw.disabled from virtual_warehouse vw
                           left join virtual_warehouse_relation vwr on vw.id = vwr.virtual_warehouse_id and vwr.is_deleted = false
                           left join virtual_warehouse_channel vwc on vwc.virtual_warehouse_id = vw.id and vwc.is_deleted = false
+                          left join virtual_warehouse_channel_partition_ref vwcpr on vwcpr.main_id = vwc.id and vwcpr.is_deleted = false
         where vw.is_deleted = false
         <if test="params.relationId != null and params.relationId != ''">
-            and ((vwc.type = 'shop' and vwc.dict_platform = #{params.dictPlatform} and vwc.relation_id = #{params.relationId})
-            or (vwc.type = 'platform' and vwc.dict_platform = #{params.dictPlatform}))
+            and (vwc.relation_id = #{params.relationId} or vwc.relation_id is null or vwc.relation_id = '')
         </if>
-        <if test="params.dictPlatform != null and params.dictPlatform != '' and (params.relationId == null or params.relationId == '')">
-            and vwc.type = 'platform' and vwc.dict_platform = #{params.dictPlatform}
+        <if test="params.relationId == null or params.relationId == ''">
+            and (vwc.relation_id is null or vwc.relation_id = '')
+        </if>
+        <if test="params.dictPlatform != null and params.dictPlatform != ''">
+            and vwc.dict_platform = #{params.dictPlatform}
+        </if>
+        <if test="params.partitionId != null and params.partitionId != ''">
+            and (vwcpr.partition_id = #{params.partitionId} or vwcpr.partition_id is null or vwcpr.partition_id = '')
+        </if>
+        <if test="params.partitionId == null or params.partitionId == ''">
+            and (vwcpr.partition_id is null or vwcpr.partition_id = '')
         </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and vwr.warehouse_id = #{params.warehouseId}
         </if>
+    </select>
+    <select id="listWarehouseBySql" resultType="java.lang.String">
+        select id from virtual_warehouse  WHERE is_deleted=false and code ${compareCodeSplicingValueSql}
+    </select>
+
+    <!-- 导出虚拟仓设置 -->
+    <select id="exportVirtualWarehouse" resultType="com.erp.model.wms.dto.VirtualWarehouseDTO$ExportDTO">
+        select
+            vw.id,
+            vw.code,
+            vw.name,
+            vwr.warehouse_id,
+            wh.name as warehouseName,
+            vw.disabled,
+            vwc.dict_platform,
+            vwc.relation_id as shopId,
+            vwcpr.partition_id,
+            vw.create_user_name,
+            vw.create_time,
+            vw.update_user_name,
+            vw.update_time
+        from virtual_warehouse vw
+        left join virtual_warehouse_channel vwc on vw.id = vwc.virtual_warehouse_id and vwc.is_deleted = false
+        left join virtual_warehouse_channel_partition_ref vwcpr on vwc.id = vwcpr.main_id and vwcpr.is_deleted = false
+        left join virtual_warehouse_relation vwr on vw.id = vwr.virtual_warehouse_id and vwr.is_deleted = false
+        left join warehouse wh on vwr.warehouse_id = wh.id and wh.is_deleted = false
+        where ${params.sqlMap.default}
+          and vw.is_deleted = false
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        vw.id desc
     </select>
 
 

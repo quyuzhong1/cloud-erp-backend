@@ -1,4 +1,5 @@
 package com.erp.server.oms.mapper;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -28,7 +29,7 @@ public interface SoB2cLogisticsMapper extends BaseMapper<SoB2cLogisticsEntity> {
      * @return 
      * @create 2024-01-05 9:31
      */
-    List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList();
+    List<SoB2cLogisticsDTO.TrackNoDTO> listTrackNoEmptyList(@Param("queryDTO") SoB2cDTO.QueryDTO queryDTO);
     /**
      * 根据物流单号或者运单号查询
      * @author will

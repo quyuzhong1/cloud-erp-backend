@@ -1,12 +1,11 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -65,7 +64,11 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 唯一ID
+         * 速卖通=中台明细ID
+         */
+        private String uniqueId;
     }
 
     /**
@@ -102,7 +105,6 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
         */
         private Integer orderLineQty;
 
-
         /**
          * erp sku编号
          */
@@ -114,6 +116,55 @@ public class AliexpressDeliveryDetailDTO implements Serializable {
          */
         private String skuId;
 
+        /**
+         * 平台发货状态
+         * AliexpressDeliveryOrderStatusEnum
+         */
+        private String platformDeliveryStatus;
+
+        /**
+         * 明细单价
+         */
+        private BigDecimal price;
+
+        /**
+         * 币别(速卖通发货单明细来源单价币种)
+         */
+        private String currency;
+        /**
+         * 实际支付金额
+         */
+        private BigDecimal payAmount;
+
+        /**
+         * 实际支付币别
+         */
+        private String payCurrency;
+
+        /**
+         * 折扣金额
+         */
+        private BigDecimal discountAmount;
+
+        /**
+         * 折扣币别
+         */
+        private String discountCurrency;
+
+        /**
+         * 货品id
+         */
+        private String scItemId;
+
+        /**
+         * 平台skuId
+         */
+        private String platformSkuId;
+
+        /**
+         * 平台产品ID
+         */
+        private String platformSpuNo;
     }
 
 

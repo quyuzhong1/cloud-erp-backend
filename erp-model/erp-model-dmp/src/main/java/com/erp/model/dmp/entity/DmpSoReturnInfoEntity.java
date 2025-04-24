@@ -184,6 +184,69 @@ public class DmpSoReturnInfoEntity extends BaseEntity<DmpSoReturnInfoEntity> {
     */
     @TableField("bill_date")
     private LocalDateTime billDate;
+    /**
+     * 来源ID:shopify=dmp_so_info主键id
+     */
+    @TableField("source_id")
+    private String sourceId;
+    /**
+    * 卖家运费折扣
+    */
+    @TableField("shipping_fee_seller_discount")
+    private BigDecimal shippingFeeSellerDiscount;
+    /**
+    * 平台运费折扣
+    */
+    @TableField("shipping_fee_platform_discount")
+    private BigDecimal shippingFeePlatformDiscount;
+    /**
+    * 退款税费
+    */
+    @TableField("refund_tax")
+    private BigDecimal refundTax;
+
+    /**
+     * 备注明细
+     */
+     @TableField("remark_name")
+     private String remarkName = "";
+
+     /**
+      * 入库状态
+      */
+     @TableField("stockin_status")
+     private String stockinStatus = "";
+    /**
+     * 退货物流商编码
+     */
+    @TableField("logistics_supplier_code")
+    private String logisticsSupplierCode;
+    /**
+     * 退货物流商名称
+     */
+    @TableField("logistics_supplier_name")
+    private String logisticsSupplierName;
+
+    /**
+     * 退货物流单号
+     */
+    @TableField("tracking_number")
+    private String trackingNumber;
+
+    /**
+     * 退货方式：
+     * SELLER_SHIPPED 卖家提供退货运输服务，
+     * BUYER_SHIPPED 买家提供退货运输服务，
+     * PLATFORM_SHIPPED 平台提供退货配送服务
+     */
+    @TableField("return_method")
+    private String returnMethod;
+
+    /**
+     * 平台原始销售订单号
+     */
+    @TableField("platform_order_code")
+    private String platformOrderCode;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

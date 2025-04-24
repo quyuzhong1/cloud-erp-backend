@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -18,25 +18,21 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SubcontractIssueDetailDTO;
 import com.erp.model.wms.entity.SubcontractIssueDetailEntity;
 import com.erp.model.wms.entity.SubcontractIssueEntity;
+import com.erp.model.wms.entity.SubcontractReturnDetailEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.SubcontractIssueTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.SubcontractIssueDetailMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SubcontractIssueDetailService;
-import com.erp.server.wms.service.SubcontractIssueService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -51,25 +47,29 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<SubcontractIssueDetailMapper, SubcontractIssueDetailEntity> implements SubcontractIssueDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private SubcontractIssueService subcontractIssueService;
+
+    @Resource
+    private SubcontractReturnDetailService subcontractReturnDetailService;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public void add(List<SubcontractIssueDetailDTO.AddDTO> details, String mainId) {
-        if (CollectionUtil.isEmpty(details)) {
+        if (CollUtil.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_1041, SourceTypeEnum.SUBCONTRACT_ISSUE.getName());
         }
         List<SubcontractIssueDetailEntity> list = BeanMapperUtils.copyList(SubcontractIssueDetailEntity.class, details);
@@ -91,7 +91,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             throw new ServiceException("委外发料明细单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外发料明细单" , mainId);
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外发料明细单" , mainId);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_ISSUE.getCode(), mainId, "新增操作");
     }
 
@@ -102,13 +102,13 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(List<SubcontractIssueDetailDTO.UpdateDTO> details, String mainId) {
-        if (CollectionUtil.isEmpty(details)) {
+        if (CollUtil.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_1041, SourceTypeEnum.SUBCONTRACT_ISSUE.getName());
         }
         List<SubcontractIssueDetailEntity> list = BeanMapperUtils.copyList(SubcontractIssueDetailEntity.class, details);
 
         //原明细数据
-        List<SubcontractIssueDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<SubcontractIssueDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> deleteIds = getDeleteIds(list, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<SubcontractIssueDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -142,8 +142,8 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
 
     @Override
     public List<SubcontractIssueDetailEntity> listByMainIds(List<String> mainIdList) {
-        if (CollectionUtil.isEmpty(mainIdList)) {
-            return Collections.EMPTY_LIST;
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
         }
        return lambdaQuery().in(SubcontractIssueDetailEntity::getMainId,mainIdList).list();
     }
@@ -156,7 +156,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
     @Override
     public List<SubcontractIssueDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList) {
         if (CollectionUtils.isEmpty(sourceDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listBySourceDetailIdList(sourceDetailIdList);
     }
@@ -164,7 +164,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
     @Override
     public List<SubcontractIssueDetailEntity> listBySubcontractOrderDetailIdList(List<String> subcontractOrderDetailIdList) {
         if (CollectionUtils.isEmpty(subcontractOrderDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
     }
@@ -173,7 +173,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<SubcontractIssueDetailEntity> newList, List<SubcontractIssueDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(SubcontractIssueDetailEntity::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(SubcontractIssueDetailEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
@@ -183,7 +183,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
     * 新增修改处理数据
     */
     private void handleData(List<SubcontractIssueDetailEntity> list,SubcontractIssueEntity subcontractIssueEntity) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //委外明细id集合
@@ -205,7 +205,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
 
         for (SubcontractIssueDetailEntity detailEntity : list) {
             //来源明细id默认委外明细id
-            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(subcontractIssueEntity.getSourceType()) && StrUtil.isBlank(detailEntity.getSourceDetailId())) {
+            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(subcontractIssueEntity.getSourceType()) && CharSequenceUtil.isBlank(detailEntity.getSourceDetailId())) {
                 detailEntity.setSourceDetailId(detailEntity.getSubcontractOrderDetailId());
             }
             //委外子SKU明细信息
@@ -242,7 +242,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             detailEntity.setWarehouseName(warehouseName);
 
             //操作日志
-            if (StringUtils.isNotBlank(detailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 SubcontractIssueDetailEntity old = this.getById(detailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98026);
@@ -251,7 +251,7 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
             }
         }
         //添加操作日志
-        List<SubcontractIssueDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<SubcontractIssueDetailEntity> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
         //新增不需要添加新增SKU的日志
         if (CollectionUtils.isNotEmpty(addList) && addList.size() != list.size()) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(subcontractIssueEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
@@ -276,19 +276,28 @@ public class SubcontractIssueDetailServiceImpl extends SuperServiceImpl<Subcontr
         //委外明细已关联的委外发料
         List<SubcontractIssueDetailEntity> subcontractIssueDetailList = this.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
 
+        //委外退料
+        List<SubcontractReturnDetailEntity> subcontractReturnDetailList = subcontractReturnDetailService.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
+
         for (SubcontractIssueDetailEntity entity : list) {
             SubcontractOrderDetailEntity detailEntity = subcontractOrderDetailList.stream().filter(obj -> obj.getId().equals(entity.getSubcontractOrderDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(detailEntity)) {
                 throw new ServiceException(ApiError.ERROR_98072);
             }
+
             //正常领料需要验证发料数量
             if (SubcontractIssueTypeEnum.NORMAL.getCode().equals(subcontractIssueEntity.getType())) {
                 //已下推发料数量
                 Integer totalIssueQty = subcontractIssueDetailList.stream().filter(obj -> obj.getSubcontractOrderDetailId().equals(entity.getSubcontractOrderDetailId())
                                 && SubcontractIssueTypeEnum.NORMAL.getCode().equals(obj.getType()) && !obj.getId().equals(entity.getId()))
                         .map(SubcontractIssueDetailEntity::getIssueQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (MathUtil.add(totalIssueQty,entity.getIssueQty()) > detailEntity.getDeliveryQty()) {
-                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty);
+                //下推的退料数量
+                Integer returnQty = subcontractReturnDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSubcontractOrderDetailId(),detailEntity.getId())).map(SubcontractReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
+                /**
+                 * 发料数量 = 领料数量- 已发料数量 + 退料数量
+                 */
+                if (entity.getIssueQty() > detailEntity.getDeliveryQty() - totalIssueQty + returnQty ) {
+                    throw new ServiceException(ApiError.ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED,detailEntity.getSkuNo(),detailEntity.getDeliveryQty() - totalIssueQty + returnQty);
                 }
             }
         }

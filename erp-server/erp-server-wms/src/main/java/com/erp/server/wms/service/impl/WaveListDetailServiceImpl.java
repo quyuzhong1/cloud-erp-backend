@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -107,7 +108,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
         List<WaveListDetailDTO.DeliveryInfoDTO> rowList = new ArrayList<>(waveDetailList.size());
         //发货单列表
         for (WaveListDetailEntity deliveryLevel : waveDetailList) {
-            List<String> pickIds = pickingList.stream().filter(obj -> StrUtil.equals(obj.getSourceCode(), deliveryLevel.getDeliveryCode())).map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
+            List<String> pickIds = pickingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceCode(), deliveryLevel.getDeliveryCode())).map(PickingListsEntity::getId).distinct().collect(Collectors.toList());
             List<PickingDetailEntity> pickingDetailGroup = pickingDetailList.stream().filter(item -> pickIds.contains(item.getMainId())).collect(Collectors.toList());
             Map<String, List<PickingDetailEntity>> collect = pickingDetailGroup.stream().collect(Collectors.groupingBy(item -> item.getSkuId() + "#" + item.getSkuNo()));
             //sku列表
@@ -149,7 +150,7 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ApiResult<?> moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO) {
+    public ApiResult moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO) {
         LoginUser user = UserContext.getNonLoginUser();
 
         WaveListDetailEntity entity = baseMapper.selectOne(new QueryWrapper<WaveListDetailEntity>().eq("id", moveOutDTO.getWaveId()).eq("delivery_id", moveOutDTO.getDeliveryId()));
@@ -188,10 +189,12 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
 
     /**
      * 移出波次
-     * @param deliveryId 发货单ID
+     *
+     * @param deliveryId  发货单ID
+     * @param isIntercept
      */
     @Override
-    public ApiResult<?> moveOut(String deliveryId) {
+    public ApiResult moveOut(String deliveryId, Boolean isIntercept) {
         LoginUser user = UserContext.getNonLoginUser();
         List<WaveListDetailEntity> entityList = baseMapper.selectList(new QueryWrapper<WaveListDetailEntity>()
                 .eq("delivery_id", deliveryId));
@@ -211,7 +214,11 @@ public class WaveListDetailServiceImpl extends SuperServiceImpl<WaveListDetailMa
             waveListService.getBaseMapper().delete(new QueryWrapper<WaveListEntity>().in("id", mainIds));
         }
         WaveListDetailEntity entity = entityList.stream().findFirst().orElse(new WaveListDetailEntity());
-        operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
+        if(isIntercept){
+            operateLogService.addModuleOperateLog(String.format("移除发货单--订单发起拦截，自动取消发货单【%s】拣货波次", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
+        }else{
+            operateLogService.addModuleOperateLog(String.format("移除波次中的发货单【%s】", entity.getDeliveryCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getMainId(), "编辑操作", user.getUid(), user.getRealName());
+        }
         return ApiResult.success();
     }
 

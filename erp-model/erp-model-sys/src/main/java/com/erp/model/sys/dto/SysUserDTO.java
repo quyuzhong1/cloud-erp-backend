@@ -1,7 +1,6 @@
 package com.erp.model.sys.dto;
 
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.erp.model.sys.vo.SysMenuVO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -74,5 +73,15 @@ public class SysUserDTO implements Serializable {
 
     //绑定状态
     private Integer bindingState;
+
+    /**
+     * 部门id
+     */
+    private String deptId;
+
+    /**
+     * 部门名称
+     */
+    private String deptName;
 
 }

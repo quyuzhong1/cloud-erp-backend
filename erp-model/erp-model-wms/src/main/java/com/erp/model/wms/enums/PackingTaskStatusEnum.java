@@ -32,10 +32,12 @@ public enum PackingTaskStatusEnum implements EnumMessage {
      */
     private String name;
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
     }

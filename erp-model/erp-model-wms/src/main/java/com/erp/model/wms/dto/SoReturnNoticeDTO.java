@@ -1,22 +1,22 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.enums.ApproveStatusEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 public class SoReturnNoticeDTO {
+    private SoReturnNoticeDTO() {
+        throw new IllegalStateException("Utility SoReturnNoticeDTO class");
+    }
     /**
      * 分页参数
      */
@@ -99,6 +99,10 @@ public class SoReturnNoticeDTO {
          * 主键id
          */
         private String id;
+        /**
+         * 销售id
+         */
+        private String soId;
         /**
          * 明细主键id
          */
@@ -204,6 +208,45 @@ public class SoReturnNoticeDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
     /**
@@ -248,10 +291,29 @@ public class SoReturnNoticeDTO {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
         private List<SoReturnNoticeDetailDTO.Add> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
     }
 
     /**
@@ -264,6 +326,7 @@ public class SoReturnNoticeDTO {
          * 主键id
          */
         private String id;
+
         /**
          * 销售单id
          */
@@ -284,10 +347,28 @@ public class SoReturnNoticeDTO {
          * 仓库id
          */
         private String warehouseId;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
         private List<SoReturnNoticeDetailDTO.Update> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -408,10 +489,32 @@ public class SoReturnNoticeDTO {
          * 仓库名称
          */
         private String warehouseName;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
         /**
          * 明细信息
          */
         private List<SoReturnNoticeDetailDTO.View> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -424,6 +527,8 @@ public class SoReturnNoticeDTO {
          * id
          */
         private String id;
+
+        private String type;
         /**
          * 主表id
          */
@@ -519,5 +624,18 @@ public class SoReturnNoticeDTO {
          * 审核状态
          */
         private String approveStatus;
+
+        /**
+         * 退货物流单号
+         */
+        private String returnLogisticCode;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
     }
 }

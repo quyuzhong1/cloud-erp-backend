@@ -3,6 +3,7 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,6 +25,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @Accessors(chain = true)
 @TableName("dict_city")
+@EqualsAndHashCode
 public class DictCityEntity extends BaseEntity<DictCityEntity> {
 
     /**
@@ -120,27 +122,27 @@ public class DictCityEntity extends BaseEntity<DictCityEntity> {
     private String countryName;
 
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
     public static final String COUNTRY_CODE = "country_code";
 
-    public static final String TIMEZONE = "timezone";
+    public static final String FIELD_TIMEZONE = "timezone";
 
     public static final String ZIP_CODE = "zip_code";
 
-    public static final String LATITUDE = "latitude";
+    public static final String FIELD_LATITUDE = "latitude";
 
-    public static final String LONGITUDE = "longitude";
+    public static final String FIELD_LONGITUDE = "longitude";
 
     public static final String PARENT_ID = "parent_id";
 
-    public static final String LEVEL = "level";
+    public static final String FIELD_LEVEL = "level";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
-    public static final String INDEX = "index";
+    public static final String FIELD_INDEX = "index";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
     public DictCityEntity(String provinceName, String code, String parentId, int level, String type, int index, String provinceCode) {
         this.name = provinceName;

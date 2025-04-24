@@ -42,9 +42,17 @@ public enum ModuleOperateLogFieldTypeEnum {
     public static String getNameByCode(Integer code) {
         for (ModuleOperateLogFieldTypeEnum item : ModuleOperateLogFieldTypeEnum.values()) {
             if (code.equals(item.getCode())) {
-                item.getName();
+                return item.getName();
             }
         }
         return "";
+    }
+    public static ModuleOperateLogFieldTypeEnum getEnumByCode(Integer code) {
+        for (ModuleOperateLogFieldTypeEnum item : ModuleOperateLogFieldTypeEnum.values()) {
+            if (item.getCode().equals(code)) {
+               return item;
+            }
+        }
+        return null;
     }
 }

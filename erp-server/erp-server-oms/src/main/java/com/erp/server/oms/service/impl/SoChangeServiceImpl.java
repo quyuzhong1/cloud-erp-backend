@@ -1,6 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -25,10 +26,12 @@ import com.common.core.utils.*;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.SoChangeDTO;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
+import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
+import com.erp.model.oms.enums.SoChangeTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.scm.enums.PageListTypeEnum;
@@ -49,7 +52,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -104,10 +107,10 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private CustomerAddressService customerAddressService;
 
-    @Autowired
+    @Resource
     private SoChangeQueryHandler soChangeQueryHandler;
 
     @Resource
@@ -169,6 +172,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         Boolean addResult = this.save(soChange);
         if (addResult) {
             //添加日志
+            SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soId);
+            dto.getDetailList().forEach(v->{
+                v.setCurrency(soInfo.getCurrency());
+                v.setCurrencySymbol(soInfo.getCurrencySymbol());
+            });
             soChangeDetailService.addDetailList(id, dto.getDetailList());
             String content = String.format("新增了一个{%s}-销售变更单-{%s}", ApproveStatusEnum.WAIT_SUBMIT.getName(), code);
             addModuleOperateLog(content, ModuleTypeEnum.SO_CHANGE.getCode(), id, "新增操作");
@@ -228,6 +236,11 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
         Boolean updateResult = this.updateById(soChange);
         if (updateResult) {
+            SoInfoDTO.CustomerDTO soInfo = soInfoService.getSoCustomer(soChange.getSoId());
+            dto.getDetailList().forEach(v->{
+                v.setCurrency(soInfo.getCurrency());
+                v.setCurrencySymbol(soInfo.getCurrencySymbol());
+            });
             operateLogService.addModuleOperateLogByObj(old, soChange, ModuleTypeEnum.SO_CHANGE.getCode(), id, "", "");
             soChangeDetailService.updateDetailList(id, dto.getDetailList());
             return id;
@@ -424,7 +437,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
     public PagingVO<SoChangeDTO.PagingViewDTO> paging(PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
         SoChangeDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
 
         IPage pageData = baseMapper.paging(query, params);
         List<SoChangeDTO.PagingViewDTO> list = pageData.getRecords();
@@ -442,7 +455,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
         }
 
         //客户id
@@ -771,7 +784,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> listApiResult = workflowFeign.curApprover(dtoList);
         Integer code = listApiResult.getCode();
         if (200 != code) {
-            throw new ServiceException(new ApiResult<>(ApiError.Default.code,listApiResult.getMsg()));
+            throw new ServiceException(new ApiResult<>(ApiError.DEFAULT.code,listApiResult.getMsg()));
         }
         for (SoChangeDTO.PagingViewDTO item : page.getRecords()) {
             BillTypeEnum orderType = item.getOrderType();
@@ -864,6 +877,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
+
         List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
         if (dto.getType().equals(ApproveType.PASS)) {
             //销售变更单校验
@@ -881,8 +895,12 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             list.forEach(obj -> {
                 DmpPushTaskEntity pushTaskEntity = syncKingdeeSoChangeService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 pushTaskList.add(pushTaskEntity);
+
+
+                soInfoService.sdyFieldOrderHandler(obj.getSoId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
             });
         }
+
         //推送金蝶
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -1021,6 +1039,9 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
         list.forEach(obj -> {
             String sellerId = soInfoList.stream().filter(s -> s.getId().equals(obj.getSoId())).
                     map(SoInfoEntity::getSellerId).findFirst().orElse("");
+            String customerId = soInfoList.stream().filter(s -> s.getId().equals(obj.getSoId())).
+                    map(SoInfoEntity::getCustomerId).findFirst().orElse("");
+            obj.setCustomerId(customerId);
             if (StringUtils.isNotBlank(sellerId)) {
                 ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
                 startDTO.setBusinessId(obj.getId());

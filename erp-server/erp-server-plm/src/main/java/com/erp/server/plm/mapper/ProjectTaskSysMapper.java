@@ -22,7 +22,7 @@ import java.util.List;
 @Mapper
 public interface ProjectTaskSysMapper extends BaseMapper<ProjectTaskSysEntity> {
 
-    IPage paging(Page query, @Param("params") SysTaskPagingSearchDTO params);
+    IPage<SysTaskPagingDTO> paging(Page<SysTaskPagingSearchDTO> query, @Param("params") SysTaskPagingSearchDTO params);
 
     List<SysTaskPagingDTO> getSysTaskDocsNames();
 }

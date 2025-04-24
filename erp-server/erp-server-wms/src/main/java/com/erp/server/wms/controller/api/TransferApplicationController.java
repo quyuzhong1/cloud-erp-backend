@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -101,7 +102,7 @@ public class TransferApplicationController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated TransferApplicationDTO.AddDTO dto) {
         String id = transferApplicationService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -120,7 +121,7 @@ public class TransferApplicationController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated TransferApplicationDTO.AddDTO dto) {
         String id = transferApplicationService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

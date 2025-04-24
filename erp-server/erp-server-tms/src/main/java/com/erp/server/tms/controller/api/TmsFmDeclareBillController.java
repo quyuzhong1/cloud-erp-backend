@@ -127,7 +127,7 @@ public class TmsFmDeclareBillController extends BaseController {
         menuCode = "tms:tmsFmDeclareBill:update",
         serviceClass = TmsDeclareBillService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsDeclareBillDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsDeclareBillDTO.UpdateDTO dto) {
         tmsDeclareBillService.update(dto,SourceTypeEnum.FM_DECLARE_BILL);
         return success();
     }
@@ -243,7 +243,7 @@ public class TmsFmDeclareBillController extends BaseController {
      */
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单")
-    public ApiResult export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
+    public ApiResult<Object>export(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO) {
         downloadTaskFeign.saveDownloadTask("头程报关单导出", EXPORT_TMS_TMS_FM_DECLARE_BILL.getCode(), pagingParamDTO);
         return success();
     }
@@ -253,7 +253,7 @@ public class TmsFmDeclareBillController extends BaseController {
      */
 /*    @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
-    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO){
+    public ApiResult<Object>exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO){
         downloadTaskFeign.saveDownloadTask("头程报关单导出", EXPORT_TMS_TMS_FM_DECLARE_BILL_DECLARE.getCode(), pagingParamDTO);
         return success();
     }*/
@@ -261,7 +261,7 @@ public class TmsFmDeclareBillController extends BaseController {
     @PostMapping("/exportDeclare")
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出头程报关单报关信息")
     @WebAdvanceQuery(handler = TmsFmDeclareQueryHandler.class)
-    public ApiResult exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
+    public ApiResult<Object>exportDeclare(@RequestBody @Valid TmsDeclareBillDTO.PagingParamDTO pagingParamDTO, HttpServletResponse response) throws IOException {
         pagingParamDTO.setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         tmsDeclareBillService.exportDeclare(pagingParamDTO,response);
         return success();

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -14,11 +15,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.server.wms.query.WarehouseQueryHandler;
+import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -79,7 +80,7 @@ public class WarehouseController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated WarehouseDTO.AddDTO dto) {
         String id = warehouseService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -127,7 +128,7 @@ public class WarehouseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用仓库:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+    public ApiResult updateStatus(@RequestBody @Validated WarehouseUpdateStateDTO dto) {
         Boolean result = warehouseService.updateStatus(dto);
         return result == true ? success() : failure();
     }
@@ -148,7 +149,7 @@ public class WarehouseController extends BaseController {
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
         String id  = warehouseService.updateWarehouse(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -283,6 +284,7 @@ public class WarehouseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓库数据")
     @PostMapping("/exportWarehouse")
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.ExportDTO dto) {
         warehouseService.exportWarehouse(dto);
         return success();
@@ -363,8 +365,8 @@ public class WarehouseController extends BaseController {
      * @date 2023-11-29
      */
     @GetMapping("/listOverseasWarehouse")
-    public ApiResult<List<WarehouseDTO.ListDTO>> listOverseasWarehouse() {
-        List<WarehouseDTO.ListDTO> list = warehouseService.listOverseasWarehouse();
+    public ApiResult<List<WarehouseDTO.PullDownDTO>> listOverseasWarehouse() {
+        List<WarehouseDTO.PullDownDTO> list = warehouseService.listOverseasWarehouse();
         return success(list);
     }
 

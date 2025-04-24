@@ -65,7 +65,7 @@ public class GoodCangLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
             Map<String, String> warehouseMap = overseasProviderWarehouseEntityList.stream()
                     .collect(Collectors.toMap(OverseasProviderWarehouseEntity::getPlatformWarehouseCode,
-                            OverseasProviderWarehouseEntity::getId));
+                            OverseasProviderWarehouseEntity::getId,(v1,v2)->v1));
 
             goodCangResponse.getData().forEach(data -> data.setErpWarehouseId(warehouseMap.get(data.getWarehouseCode())));
 
@@ -91,7 +91,7 @@ public class GoodCangLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             Map<String, Object> authObjMap = authMap.entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, e -> (Object) e.getValue()));

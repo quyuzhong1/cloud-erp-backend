@@ -1,19 +1,17 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.business.config.JsonTypeHandler;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Map;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.Map;
 
 
 /**
@@ -232,9 +230,9 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
 
     public static final String DECLARE_PLATFORM = "declare_platform";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
     public static final String PRODUCT_NAME = "product_name";
 
@@ -244,19 +242,19 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
 
     public static final String GOOD_ID = "good_id";
 
-    public static final String SPU = "spu";
+    public static final String FIELD_SPU = "spu";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String DECLARE_PRICE = "declare_price";
 
     public static final String GROSS_WEIGHT = "gross_weight";
 
-    public static final String LENGTH = "length";
+    public static final String FIELD_LENGTH = "length";
 
-    public static final String WIDTH = "width";
+    public static final String FIELD_WIDTH = "width";
 
-    public static final String HEIGHT = "height";
+    public static final String FIELD_HEIGHT = "height";
 
     public static final String IS_BATTERY = "is_battery";
 
@@ -284,7 +282,7 @@ public class ProductRegistrationEntity extends BaseEntity<ProductRegistrationEnt
 
     public static final String BATTERY_NOTE = "battery_note";
 
-    public static final String URL = "url";
+    public static final String FIELD_URL = "url";
 
     @Override
     public Serializable pkVal() {

@@ -65,7 +65,7 @@ public class DmpThirdRegionServiceImpl extends SuperServiceImpl<DmpThirdRegionMa
     @Override
     public Boolean update(DmpThirdRegionDTO.UpdateDTO updateDTO) {
         DmpThirdRegionEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "第三方区域"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "第三方区域"));
         DmpThirdRegionEntity dmpThirdRegionEntity =  BeanMapperUtils.map(DmpThirdRegionEntity.class, updateDTO);
 
         // 数据处理

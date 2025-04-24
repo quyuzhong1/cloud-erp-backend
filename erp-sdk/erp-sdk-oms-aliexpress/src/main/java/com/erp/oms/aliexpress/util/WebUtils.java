@@ -33,9 +33,23 @@ public abstract class WebUtils {
             return null;
         }
 
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            // 遍历客户端证书链中的每个证书
+            for (X509Certificate cert : chain) {
+                // 检查当前证书的有效性，如果证书无效则抛出 CertificateException 异常
+                cert.checkValidity();
+                // 可以在此处添加其他检查逻辑。
+            }
+        }
 
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            // 遍历客户端证书链中的每个证书
+            for (X509Certificate cert : chain) {
+                // 检查当前证书的有效性，如果证书无效则抛出 CertificateException 异常
+                cert.checkValidity();
+                // 可以在此处添加其他检查逻辑。
+            }
+        }
     }
 
     public static void setIgnoreSSLCheck(boolean ignoreSSLCheck) {
@@ -199,20 +213,10 @@ public abstract class WebUtils {
                     SSLContext ctx = SSLContext.getInstance("TLS");
                     ctx.init(null, new TrustManager[] { new TrustAllTrustManager() }, new SecureRandom());
                     connHttps.setSSLSocketFactory(ctx.getSocketFactory());
-                    connHttps.setHostnameVerifier(new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    });
+
                 } catch (Exception e) {
                     throw new IOException(e.toString());
                 }
-            } else if (ignoreHostCheck) {
-                connHttps.setHostnameVerifier(new HostnameVerifier() {
-                    public boolean verify(String hostname, SSLSession session) {
-                        return true;
-                    }
-                });
             }
             conn = connHttps;
         }

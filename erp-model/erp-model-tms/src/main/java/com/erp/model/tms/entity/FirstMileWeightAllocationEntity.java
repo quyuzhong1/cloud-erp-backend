@@ -1,13 +1,14 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
 
 
 /**
@@ -35,7 +36,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     @TableField("source_code")
     private String sourceCode;
     /**
-    * 发货单明细id
+    * @deprecated 发货单明细id
     */
     @Deprecated
     @TableField("delivery_detail_id")
@@ -67,7 +68,7 @@ public class FirstMileWeightAllocationEntity extends BaseEntity<FirstMileWeightA
     @TableField("sku_no")
     private String skuNo;
     /**
-    * 平台skuId
+    * @deprecated 平台skuId
     */
     @Deprecated
     @TableField("platform_sku_id")

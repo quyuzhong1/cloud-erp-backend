@@ -16,7 +16,7 @@ import java.util.List;
  */
 @TableName(value ="product_variant_option")
 @Data
-public class ProductVariantOptionEntity extends BaseEntity implements Serializable {
+public class ProductVariantOptionEntity extends BaseEntity<ProductVariantOptionEntity> implements Serializable {
 
     /**
      * 产品id

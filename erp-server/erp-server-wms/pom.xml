@@ -35,6 +35,13 @@
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-model-mrp</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
         <!--公共服务结束-->
 
         <dependency>
@@ -58,10 +65,14 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.5.4</version>
-            <scope>runtime</scope>
         </dependency>
 
-        
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-rpc-mrp</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-rpc-sys</artifactId>
@@ -208,7 +219,7 @@
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-sdk-oms-mercado</artifactId>
+            <artifactId>erp-sdk-oms-mercado-cbt</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
@@ -238,6 +249,18 @@
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-wms-antu</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-oms-shopee</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-oms-mercado-local</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

@@ -15,9 +15,8 @@ import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.oms.feign.ShopeeFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.sdk.oms.shopee.dto.PlatformShopeeOrderDTO;
 import com.sdk.oms.shopee.dto.order.request.OrderRequest;
 import com.sdk.oms.shopee.dto.order.response.OrderDetail;
@@ -47,9 +46,8 @@ import java.util.stream.Collectors;
 @PlatformType(PlatformDictEnum.SHOPEE)
 @BusinessType(BusinessTypeEnum.ORDER)
 public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrderDTO, PlatformOrderDTO> {
-
     @Resource
-    private ShopeeFeign shopeeFiegn;
+    private ShopInfoFeign shopInfoFeign;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -61,18 +59,13 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
         long timeFrom = Timestamp.valueOf(lastTime).getTime() / 1000;
         log.info("shopId:{},lastTime:{},timeFrom:{}",data.getShopId(), lastTime, timeFrom);
         LocalDateTime nextTime = data.getNextTime();
-        if (lastTime.compareTo(nextTime) == 0){
+        if (lastTime.isEqual(nextTime)){
             //nextTime +1天
             nextTime = lastTime.plusDays(1);
         }
         long timeTo = Timestamp.valueOf(nextTime).getTime() / 1000;
         log.info("shopId:{},nextTime:{},timeTo:{}",data.getShopId(), nextTime, timeTo);
         //获取主店铺token
-        //根据主店铺获取子店铺token
-//        ApiResult<List<ShopAuthEntity>> shopeeShop = shopeeFiegn.getShopeeShopList("shopee_shop", AuthStatusEnum.ALREADY.getCode());
-//        if (CollectionUtils.isEmpty(shopeeShop.getData())) {
-//            return Collections.emptyList();
-//        }
         CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
         AppClientEnum appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
         findDTO.setBusinessType(appClientEnum.getBusinessType());
@@ -88,7 +81,7 @@ public class ShopeeOrderHandler extends AbstractOrderHandler<PlatformShopeeOrder
             return Collections.emptyList();
         }
         List<OrderDetail> orderDTOS = new ArrayList<>();
-        ApiResult<ShopAuthEntity> shopeeShopById = shopeeFiegn.getShopeeShopById(data.getShopId());
+        ApiResult<ShopAuthEntity> shopeeShopById = shopInfoFeign.getShopAuthById(data.getShopId());
         if (Objects.nonNull(shopeeShopById) && Objects.nonNull(shopeeShopById.getData())
                 && "shopee_shop".equalsIgnoreCase(shopeeShopById.getData().getType())) {
             OrderRequest orderRequest = OrderRequest.builder()

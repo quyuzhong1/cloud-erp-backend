@@ -36,9 +36,6 @@ public class CfgProductCategoryFieldServiceImpl extends SuperServiceImpl<CfgProd
         CfgProductCategoryFieldEntity cfgProductCategoryFieldEntity = new CfgProductCategoryFieldEntity();
         BeanMapperUtils.copy(addDTO, cfgProductCategoryFieldEntity);
 
-        // 数据处理
-        handleData(cfgProductCategoryFieldEntity);
-
         boolean save = super.save(cfgProductCategoryFieldEntity);
         if(!save) {
             throw new ServiceException("产品分类字段配置单保存失败");
@@ -54,12 +51,10 @@ public class CfgProductCategoryFieldServiceImpl extends SuperServiceImpl<CfgProd
     @Override
     public Boolean update(CfgProductCategoryFieldDTO.UpdateDTO updateDTO) {
         CfgProductCategoryFieldEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "产品分类字段配置单"));
+        CfgProductCategoryFieldEntity oldEntity = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "产品分类字段配置单"));
         CfgProductCategoryFieldEntity cfgProductCategoryFieldEntity =  BeanMapperUtils.map(CfgProductCategoryFieldEntity.class, updateDTO);
 
-        // 数据处理
-        handleData(cfgProductCategoryFieldEntity);
-        log.info("编辑 开始修改产品分类字段配置单数据，id：【{}】", old.getId());
+        log.info("编辑 开始修改产品分类字段配置单数据，id：【{}】", oldEntity.getId());
         boolean save = super.updateById(cfgProductCategoryFieldEntity);
         if(!save) {
             throw new ServiceException("产品分类字段配置单保存失败");
@@ -68,11 +63,4 @@ public class CfgProductCategoryFieldServiceImpl extends SuperServiceImpl<CfgProd
         return Boolean.TRUE;
     }
 
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(CfgProductCategoryFieldEntity cfgProductCategoryFieldEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 }

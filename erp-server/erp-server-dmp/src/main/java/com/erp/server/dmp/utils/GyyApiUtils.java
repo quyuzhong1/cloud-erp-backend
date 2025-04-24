@@ -27,7 +27,7 @@ import java.util.*;
 public class GyyApiUtils {
     private static Integer APP_KEY = 135174;
 
-    private static String SECRET_KEY = "7e10a52a116149d38a760c9bf4dd3cbc";
+    private static String GYY_KEY = "7e10a52a116149d38a760c9bf4dd3cbc";
 
     private static String SESSION_KEY ="7daa147a1cea4ae189b57d95bc2a66ce";
     @Value("${openApi.gyy.appKey}")
@@ -36,7 +36,7 @@ public class GyyApiUtils {
     }
     @Value("${openApi.gyy.secretKey}")
     public void setSecretKey(String secretKey) {
-        GyyApiUtils.SECRET_KEY = secretKey;
+        GyyApiUtils.GYY_KEY = secretKey;
     }
     @Value("${openApi.gyy.sessionKey}")
     public void setSessionKey(String sessionKey) {
@@ -358,7 +358,7 @@ public class GyyApiUtils {
         paramMap.put("page_size", pageSize);
         paramMap.putAll(params);
         String paramStr = JSONUtil.toJsonStr(paramMap);
-        paramMap.put("sign", sign(paramStr, GyyApiUtils.SECRET_KEY));
+        paramMap.put("sign", sign(paramStr, GyyApiUtils.GYY_KEY));
         return paramMap;
     }
 

@@ -103,7 +103,7 @@ public class TmsB2cDeclareReconciliationDetailController extends BaseController 
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载报关对账单模板")
     @GetMapping("/exportExcelTemplate")
-    public ApiResult exportTemplate(@ModelAttribute @Validated TmsB2cDeclareReconciliationDetailDTO.ExcelDownloadTemplateDTO dto, HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Object>exportTemplate(@ModelAttribute @Validated TmsB2cDeclareReconciliationDetailDTO.ExcelDownloadTemplateDTO dto, HttpServletRequest request, HttpServletResponse response) {
         switch (dto.getTypeEnum()) {
             case STANDARD:
                 String standardPath = "classpath:excel/declareReconciliationDetailTemplate.xlsx";

@@ -76,5 +76,14 @@ public class DictCityServiceFeignController {
         return dictThirdCityService.listByDictIdList(dictIds,platform);
     }
 
-
+    /**
+     * 根据名称查询
+     */
+    @PostMapping("/listCityByNames")
+    public List<DictCityEntity> listCityByNames(@RequestBody List<String> names) {
+        if (CollectionUtils.isEmpty(names)) {
+            return Collections.EMPTY_LIST;
+        }
+        return dictCityService.listCityByNames(names);
+    }
 }

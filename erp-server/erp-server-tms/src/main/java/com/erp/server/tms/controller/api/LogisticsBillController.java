@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -10,9 +11,13 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
+import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
@@ -24,10 +29,19 @@ import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsTrackService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -102,7 +116,7 @@ public class LogisticsBillController extends BaseController {
      * @date 2023-11-09 10:54
      */
     @PostMapping("/export")
-    public ApiResult exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
+    public ApiResult<Object>exportExcel(@RequestBody @Valid LogisticsBillDTO.PagingParamDTO dto) {
         Boolean result = logisticsBillService.exportExcel(dto);
         return result ? success() : failure();
     }
@@ -121,17 +135,19 @@ public class LogisticsBillController extends BaseController {
         if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(transportNo)){
             return failure("运单号和跟踪号不能同时为空");
         }
-        if (StringUtils.isBlank(trackNo) && StringUtils.isBlank(logisticsChannelId)){
-            trackNo = transportNo;
-        }
-        if (StringUtils.isNotBlank(logisticsChannelId)){
+        //默认使用运单号
+        String number = transportNo;
+        //根据渠道设置进行判断使用哪个字段
+        if (CharSequenceUtil.isNotBlank(logisticsChannelId)){
             LogisticsChannelEntity channelEntity = logisticsChannelService.getById(logisticsChannelId);
-            if (Objects.isNull(channelEntity) || StringUtils.isBlank(channelEntity.getTrackQueryType())
-                    || !TrackQueryTypeEnum.TRACK_NO.getCode().equals(channelEntity.getTrackQueryType())){
-                trackNo = transportNo;
+            if (Objects.nonNull(channelEntity)){
+                number = TrackQueryTypeEnum.TRACK_NO.getCode().equals(channelEntity.getTrackQueryType()) && CharSequenceUtil.isNotBlank(trackNo) ? trackNo : transportNo;
             }
         }
-        LogisticsTrackDTO.ViewDTO list = logisticsTrackService.listByTrackNo(trackNo);
+        if (CharSequenceUtil.isBlank(number) && CharSequenceUtil.isNotBlank(trackNo)){
+            number = trackNo;
+        }
+        LogisticsTrackDTO.ViewDTO list = logisticsTrackService.listByTrackNo(number);
         return success(list);
 
     }
@@ -167,14 +183,66 @@ public class LogisticsBillController extends BaseController {
     }
 
     /**
-     * 初始化历史物流单手机号数据
-     *
+     * 初始化头程发货单业务单号
      * @return
      */
-    @PostMapping("/initLogisticsBillPhone")
-    public ApiResult<LogisticsTrackDTO.ViewDTO> initLogisticsBillPhone(@RequestBody LogisticsBillDTO.BillPhoneDTO dto) {
-        logisticsBillService.initLogisticsBillPhone(dto);
+    @PostMapping("/initLogisticsBillBusinessCode")
+    public ApiResult<Object>initLogisticsBillBusinessCode(){
+        logisticsBillService.initLogisticsBillBusinessCode();
         return success();
+    }
 
+    /**
+     * 删除没有销售出库单/发货单的物流单
+     * @return
+     */
+    @GetMapping("/deleteLogisticsBillNoOutstock")
+    public ApiResult<Object> deleteLogisticsBillNoOutstock(@RequestParam(value = "orderType") String orderType){
+        logisticsBillService.deleteLogisticsBillNoOutstock(orderType);
+        return success();
+    }
+    /**
+     * 添加物流单明细并补充物流费用
+     * @return
+     */
+    @GetMapping("/addNoLogisticsBillDetailByBill")
+    public ApiResult<Object> addNoLogisticsBillDetailByBill(){
+        logisticsBillService.addNoLogisticsBillDetailByBill();
+        return success();
+    }
+    /**
+     * 下载物流轨迹模板
+     */
+    @GetMapping("/exportTrackTemplate")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载小包物流单模板")
+    public ApiResult<Object> exportTrackTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "excel/tmsTrackLogistics.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
+    /**
+     * 小包物流单导入
+     */
+    @PostMapping("/importTrack")
+    @LogAction(value = LogActionEnum.IMPORT, desc = "小包物流单导入")
+    public ApiResult<Boolean> importTrack(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) throws Exception {
+        return success(logisticsBillService.importTrack(excelFile,response));
     }
 }

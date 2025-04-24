@@ -1,14 +1,14 @@
 package com.erp.model.tms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 
 /**
@@ -152,7 +152,7 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
     private String orgName;
 
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String RECONCILIATION_ID = "reconciliation_id";
 
@@ -166,7 +166,7 @@ public class FirstMileCostAllocationEntity extends BaseEntity<FirstMileCostAlloc
 
     public static final String ACCOUNT_PERIOD = "account_period";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
     public static final String SUPPLIER_ID = "supplier_id";
 

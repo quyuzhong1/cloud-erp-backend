@@ -146,6 +146,7 @@ public enum CfgRuleOutEnum {
         RECEIVE_COUNTRY("receiveCountry", "收货国家"),
         FROM_WAREHOUSE("fromWarehouse", "发货仓库"),
         DEST_WAREHOUSE("destWarehouse", "目的仓库"),
+        SALE_ORG("saleOrg", "销售组织"),
         ;
         private String code;
         private String name;

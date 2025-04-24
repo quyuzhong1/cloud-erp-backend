@@ -12,7 +12,6 @@ import java.util.Objects;
 /**
  * @author zdy
  * @ClassName TypeConversionWorker
- * @description: TODO
  * @date 2023年11月08日
  * @version: 1.0
  */
@@ -48,7 +47,7 @@ public class TypeConversionWorker {
     @Named("yOrNToBoolean")
     public Boolean yOrNToBoolean(Object obj) {
         if (Objects.isNull(obj)) {
-            return null;
+            return false;
         }
         if (Objects.equals("Y", obj)){
             return true;
@@ -71,8 +70,6 @@ public class TypeConversionWorker {
         }
         if (Objects.equals(Boolean.TRUE, obj)){
             return "Y";
-        }else if (Objects.equals(Boolean.FALSE, obj)){
-            return "N";
         }else {
             return "N";
         }

@@ -142,7 +142,7 @@ public class GoodCangHandlerServiceImplTest {
 //                        .collectZipcode("13214564")
 //                        .collectStreet("21")
 //                        .build())
-//                .items(Arrays.asList(ThirdWarehouseCreateInboundReq.Item.builder()
+//                .items(Collections.singletonList(ThirdWarehouseCreateInboundReq.Item.builder()
 //                        .productSku("BGQH2N-000900EU")
 //                        .boxNo(1)
 //                        .quantity(1)

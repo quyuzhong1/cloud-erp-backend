@@ -1,6 +1,7 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.RedisService;
 import com.common.core.utils.StrUtils;
@@ -15,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Objects;
 
@@ -27,10 +29,10 @@ import java.util.Objects;
 @Slf4j
 public class BaseDataJob {
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private RedisService redisService;
 
     /**
@@ -40,7 +42,7 @@ public class BaseDataJob {
     public ReturnT<String> warehouseCacheClean() {
         String jobParam = XxlJobHelper.getJobParam();
         String warehouseName = StrUtils.null2EmptyWithTrim(jobParam);
-        if(StrUtil.isNotEmpty(warehouseName)) {
+        if(CharSequenceUtil.isNotEmpty(warehouseName)) {
             log.warn("定时器传入的需要清除缓存的仓库名称：{}", warehouseName);
             WarehouseEntity warehouseEntity = warehouseService.lambdaQuery().eq(WarehouseEntity::getName, warehouseName).last("LIMIT 1").one();
             if(Objects.nonNull(warehouseEntity)) {

@@ -1,5 +1,6 @@
 package com.erp.model.scm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -11,11 +12,11 @@ import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
  * @Classname SupplierPhaseDTO
-
  * @Date 2023-03-16 12:10
  * @Created by yl
  */
@@ -29,7 +30,7 @@ public class SupplierPhaseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends PermissionsDTO implements Serializable{
+    public static class AddDTO extends PermissionsDTO implements Serializable {
         /**
          * 供应商表id
          */
@@ -91,7 +92,6 @@ public class SupplierPhaseDTO implements Serializable {
          */
         @NotBlank(message = "当前阶段不能为空")
         private String currentPhase;
-
 
 
     }
@@ -223,9 +223,19 @@ public class SupplierPhaseDTO implements Serializable {
     @AllArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
-        @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")
-        private String searchType;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+
+//        @StateEnumValue(strValues = {"all", "waitApprove"}, message = "搜索类型有误")
+        private String searchType;
 
 
         /**
@@ -234,8 +244,7 @@ public class SupplierPhaseDTO implements Serializable {
         private List<String> categoryIdList;
 
 
-
-        @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
+//        @StateEnumValue(strValues = {"upgrade", "degrade"}, message = "操作类型有误")
         private String operateType;
 
 
@@ -251,5 +260,40 @@ public class SupplierPhaseDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class TabFlagDTO {
+
+        /**
+         * tabFlag
+         */
+        private String tabFlag;
+
+        /**
+         * tabFlagName
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ApproveCountDTO {
+        /**
+         * 类型
+         */
+        private String approveStatus;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 
 }

@@ -61,7 +61,7 @@ public class LogisticsController extends BaseController {
      * @return
      */
     @PostMapping("/getChannel")
-    public ApiResult getChannel(@RequestParam(value = "platform") String platform) {
+    public ApiResult<Object>getChannel(@RequestParam(value = "platform") String platform) {
         List<BatchResultDTO> batchResultDTOS = logisticsBaseService.syncLogisticsChannel(platform);
         return success(batchResultDTOS);
     }
@@ -74,7 +74,9 @@ public class LogisticsController extends BaseController {
      */
     @PostMapping("/batchUpdateTrackInfo")
     public ApiResult<List<BatchResultDTO>> batchUpdateTrackInfo(@RequestBody List<LogisticsTrackDTO.UpdateTrackDTO> updateDTOS) {
-        if (CollectionUtils.isEmpty(updateDTOS)) return failure("数据不能为空");
+        if (CollectionUtils.isEmpty(updateDTOS)) {
+            return failure("数据不能为空");
+        }
         List<BatchResultDTO> resultDTOS = logisticsBaseService.batchUpdateTrackInfo(updateDTOS, LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode());
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }

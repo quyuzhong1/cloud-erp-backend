@@ -30,6 +30,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * 数据源管理
@@ -81,7 +82,7 @@ public class DmpRefundInfoController extends BaseController {
     @LogAction(value = LogActionEnum.EXPORT, desc = "退款数据导出")
     @PostMapping(value = "/exportExcel")
     @DataPermission(operationType = DataAttributeEnum.LIST, tableField = "charge_id", menuCode = "bi:dmpRefundInfo:paging", tableAlias = "dri")
-    public ApiResult exportExcel(@RequestBody DmpRefundInfoSearchDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody DmpRefundInfoSearchDTO dto, HttpServletResponse response) {
         biRefundInfoService.exportExcel(dto, response);
         return success();
     }
@@ -97,9 +98,9 @@ public class DmpRefundInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "退款数据导入")
     @PostMapping("/importRefundFile")
-    public ApiResult importRefundFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
-        Boolean flag = biRefundInfoService.importOrderFile(excelFile, importType, response);
-        return flag == true ? this.success() : this.failure();
+    public ApiResult<Object> importRefundFile(@RequestParam(value = "excelFile") MultipartFile excelFile, @RequestParam(value = "importType") Integer importType, HttpServletResponse response) {
+        boolean flag = biRefundInfoService.importOrderFile(excelFile, importType, response);
+        return flag ? this.success() : this.failure();
     }
 
 
@@ -112,7 +113,7 @@ public class DmpRefundInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "退款数据下载模板")
     @GetMapping("/exportTemplate")
-    public ApiResult exportTemplate(HttpServletRequest request, HttpServletResponse response) {
+    public ApiResult<Void> exportTemplate(HttpServletRequest request, HttpServletResponse response) {
         String path = "classpath:excel/dmpRefundInfoTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
@@ -124,12 +125,12 @@ public class DmpRefundInfoController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return  success();
     }

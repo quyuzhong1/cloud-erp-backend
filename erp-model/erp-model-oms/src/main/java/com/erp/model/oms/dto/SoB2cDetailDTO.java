@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -126,6 +127,10 @@ public class SoB2cDetailDTO implements Serializable {
         * 明细标签
         */
        private String labelJson;
+        /**
+         * 扩展字段
+         */
+       private String extendData;
 
        /**
         * 来源平台（SoB2cSourcePlatformEnum枚举，selfAddERP新增，thirdPlatform第三方平台新增）
@@ -174,6 +179,22 @@ public class SoB2cDetailDTO implements Serializable {
          * 申报标签名称
          */
         private String declareLabelName;
+        /**
+         * 送货数量
+         */
+        private Integer deliveryQty;
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+        /**
+         * 上架数量
+         */
+        private Integer instockQty;
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
 
         /**
          * 子件缺货信息
@@ -378,6 +399,16 @@ public class SoB2cDetailDTO implements Serializable {
          * 还原id
          */
         private String revertId;
+        /**
+         * 成本价格来源
+         */
+        private String costSource;
+        //材料成本
+        private BigDecimal productCost;
+        //头程运费
+        private BigDecimal firstMileShippingCost;
+        //清关税费
+        private BigDecimal clearanceCustomsTax;
     }
 
     /**
@@ -400,6 +431,11 @@ public class SoB2cDetailDTO implements Serializable {
          * 拆分的Id 如果用户拆分BOM套装则这个值为原本的明细id
          */
         private String splitDetailId;
+
+        /**
+         * 平台明细行号
+         */
+        private String platformLineNumber;
     }
 
     /**
@@ -487,6 +523,29 @@ public class SoB2cDetailDTO implements Serializable {
          * 平台 产品id
          */
         private String platformSpuNo;
+
+        /**
+         * 含税成本（本位币）
+         */
+        private BigDecimal taxCost;
+        /**
+         * 成本价格来源
+         */
+        private String costSource;
+        //材料成本
+        private BigDecimal productCost;
+        //头程运费
+        private BigDecimal firstMileShippingCost;
+        //清关税费
+        private BigDecimal clearanceCustomsTax;
+        /**
+         * 是否赠品：true/false
+         */
+        private Boolean isGift;
+        /**
+         * 税率
+         */
+        private BigDecimal taxRate;
     }
 
 

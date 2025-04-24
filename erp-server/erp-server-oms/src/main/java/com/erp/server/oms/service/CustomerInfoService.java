@@ -4,8 +4,10 @@ import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.vo.CustomerInfoVO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -196,7 +198,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @author yl
      * @date 2023-05-15 15:30
      */
-    Boolean updateStatus(UpdateStateDTO.BatchUpdateDTO dto);
+    Boolean updateStatus(CustomerBatchUpdateDTO dto);
 
 
     /**
@@ -334,6 +336,7 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
      * @return
      */
     CustomerInfoEntity getCustomerById(String id);
+    CustomerInfoEntity getCustomerByCode(String code);
 
     /**
      * 根据客户名称获取信息
@@ -376,5 +379,16 @@ public interface CustomerInfoService extends SuperService<CustomerInfoEntity> {
 
     PagingVO<CustomerDTO.PageSelectDTO> pagingSelect(PagingDTO<CustomerDTO.SelectDTO> dto);
 
-    PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto);
+    PagingVO<CustomerDTO.PagingExportDTO> exportCustomer(PagingDTO<CustomerDTO.ExportDTO> dto);
+
+    List<CustomerDTO.InfoDTO> listSimpleName(CustomerDTO.PageSelectDTO dto);
+
+    List<cn.hutool.core.lang.Pair<Integer,List<?>>> exportCustomerPairList(PagingDTO<CustomerDTO.ExportDTO> dto);
+
+    /**
+     * 初始化处理客户销售部门数据
+     */
+    void initHistoryCustomerDeptId();
+
+    VirtualWarehouseDTO.VwDTO getVirtualWarehouseByCustomerId(CustomerDTO.VirtualDTO dto);
 }

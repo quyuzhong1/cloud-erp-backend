@@ -1,12 +1,12 @@
 package com.erp.server.plm.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.dto.ProjectTaskTimeRecordDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -29,6 +29,8 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.collection.CollUtil.isEmpty;
+import static cn.hutool.core.collection.CollUtil.isNotEmpty;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_TASK_TIME_RECORD;
 
 /**
@@ -53,7 +55,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
     @Override
     public PagingVO<ProjectTaskTimeRecordPageVO> pageRecord(PagingDTO<ProjectTaskTimeRecordDTO.PageRecordDto> dto) {
         // 查询 产品数据分组
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<ProjectTaskTimeRecordDTO.PageRecordDto> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         if (null != dto.getParams().getEndDate()) {
             dto.getParams().setEndDate(dto.getParams().getEndDate().plusDays(1));
         }
@@ -61,12 +63,12 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
         IPage<ProjectTaskTimeRecordPageVO> recordPage = baseMapper.pageTaskTimeRecord(query, dto.getParams(), dto.getPermissionSql());
         // 根据task id查询日期数据进行处理
         List<ProjectTaskTimeRecordPageVO> records = recordPage.getRecords();
-        if (CollectionUtil.isEmpty(records)) {
-            return new PagingVO(recordPage);
+        if (isEmpty(records)) {
+            return new PagingVO<>(recordPage);
         }
         initPlanWorkTime(records);
 
-        return new PagingVO(recordPage);
+        return new PagingVO<>(recordPage);
     }
 
     private void initPlanWorkTime(List<ProjectTaskTimeRecordPageVO> records) {
@@ -74,9 +76,9 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
         listDTO.setIsWorkDay(Boolean.FALSE);
         List<SysCalendarListVO> holidayList = sysUserFeign.listCalendar(listDTO);
         List<LocalDate> holidays = holidayList.stream().map(SysCalendarListVO::getCalendarDate).collect(Collectors.toList());
-        records.stream().forEach(record -> {
+        records.stream().forEach(item -> {
             // 根据id查询
-            List<ProjectTaskEntity> taskEntityList = projectTaskService.getByTaskIds(Arrays.asList(record.getTaskIds().split(",")));
+            List<ProjectTaskEntity> taskEntityList = projectTaskService.getByTaskIds(Arrays.asList(item.getTaskIds().split(",")));
             // 计算计划工时
             Integer planWorkDay = taskEntityList.stream().mapToInt(task -> {
                 LocalDate planEndTime = task.getPlanEndTime();
@@ -87,7 +89,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
                 return LocalDateUtil.countDaysForLocalDate(planStartTime, planEndTime, holidays);
             }).sum();
             // 赋值
-            record.setPlanTaskTime(planWorkDay);
+            item.setPlanTaskTime(planWorkDay);
         });
     }
 
@@ -101,7 +103,7 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
     @Transactional(rollbackFor = Exception.class)
     public Boolean saveOrUpdateByProjectTaskList(List<ProjectTaskEntity> taskList) {
         log.info("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>{}", JSONUtil.toJsonStr(taskList));
-        if (CollectionUtil.isEmpty(taskList)) {
+        if (isEmpty(taskList)) {
             log.info("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>需要处理任务工时数据为空");
             return false;
         }
@@ -132,17 +134,13 @@ public class ProjectTaskTimeRecordServiceImpl extends ServiceImpl<ProjectTaskTim
                 updateList.add(updateEntity);
             }
         });
-        if (CollectionUtil.isNotEmpty(insertList)) {
-            if (!saveBatch(insertList)) {
+        if (isNotEmpty(insertList) && !saveBatch(insertList)) {
                 log.error("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>insertList更新/保存工时记录失败请重试！");
-                throw new RuntimeException("保存工时记录失败请重试！");
-            }
+                throw new ServiceException("保存工时记录失败请重试！");
         }
-        if (CollectionUtil.isNotEmpty(updateList)) {
-            if (!updateBatchById(updateList)) {
+        if (isNotEmpty(updateList) && !updateBatchById(updateList)) {
                 log.error("ProjectTaskTimeRecordServiceImpl>>>saveOrUpdateByProjectTaskList>>updateList更新/保存工时记录失败请重试！");
-                throw new RuntimeException("更新工时记录失败请重试！");
-            }
+                throw new ServiceException("更新工时记录失败请重试！");
         }
         return true;
     }

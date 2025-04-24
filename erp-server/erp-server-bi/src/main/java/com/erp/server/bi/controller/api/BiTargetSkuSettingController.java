@@ -12,9 +12,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.bi.dto.*;
-import com.erp.model.bi.dto.excel.TargetShopSettingExportExcelDTO;
 import com.erp.model.bi.dto.excel.TargetSkuSettingExportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetStaffSettingExportExcelDTO;
 import com.erp.server.bi.convert.BiExportConverter;
 import com.erp.server.bi.service.BiTargetSkuSettingService;
 import lombok.extern.slf4j.Slf4j;
@@ -138,7 +136,7 @@ public class BiTargetSkuSettingController extends BaseController {
 //        menuCode = "dmp:biTargetSkuSetting:update",
 //        serviceClass = BiTargetSkuSettingService.class,
 //        keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated BiTargetSkuSettingDTO.UpdateDTO dto) {
+    public ApiResult<Void> update(@RequestBody @Validated BiTargetSkuSettingDTO.UpdateDTO dto) {
         biTargetSkuSettingService.update(dto);
         return success();
     }
@@ -151,7 +149,7 @@ public class BiTargetSkuSettingController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载目标单品模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Void> downloadTemplate(HttpServletResponse response) {
         biTargetSkuSettingService.downloadTemplate(response);
         return success();
     }
@@ -176,8 +174,8 @@ public class BiTargetSkuSettingController extends BaseController {
      */
     @PostMapping("/remove")
     @LogAction(value = LogActionEnum.DELETE, desc = "单品目标设置删除")
-    public ApiResult remove(@RequestBody @Validated BiTargetSkuSettingDTO.RemoveDTO dto) {
-        Boolean result = biTargetSkuSettingService.delete(dto);
+    public ApiResult<Void> remove(@RequestBody @Validated BiTargetSkuSettingDTO.RemoveDTO dto) {
+        boolean result = biTargetSkuSettingService.delete(dto);
         return result ? success() : failure();
     }
 

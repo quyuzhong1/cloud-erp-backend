@@ -70,12 +70,6 @@ public class TransferApplicationDetailEntity extends BaseEntity<TransferApplicat
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
-
-    public static final String UNIT = "unit";
-
-    public static final String REMARK = "remark";
-
     @Override
     public Serializable pkVal() {
         return null;

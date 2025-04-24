@@ -188,6 +188,11 @@ public class DmpSkuInfoEntity extends BaseEntity<DmpSkuInfoEntity> {
     */
     @TableField("weight_unit")
     private String weightUnit;
+    /**
+     * 第三方ID
+     */
+    @TableField("third_id")
+    private String thirdId;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";

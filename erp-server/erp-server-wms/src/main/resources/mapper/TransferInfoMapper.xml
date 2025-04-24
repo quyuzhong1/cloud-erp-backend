@@ -41,6 +41,7 @@
             ti.transfer_direction as transferDirection,
             ti.approve_status as approveStatus,
             ti.invalid_status as invalidStatus,
+            ti.batch_no,
             tid.id as detailId,
             tid.sku_id as skuId,
             tid.sku_no as skuNo,

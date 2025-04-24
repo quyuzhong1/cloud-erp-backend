@@ -2,7 +2,6 @@ package com.erp.model.sys.vo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.omg.PortableServer.SERVANT_RETENTION_POLICY_ID;
 
 import java.io.Serializable;
 

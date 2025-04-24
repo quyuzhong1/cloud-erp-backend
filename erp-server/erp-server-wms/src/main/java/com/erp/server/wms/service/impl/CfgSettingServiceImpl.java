@@ -2,11 +2,10 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -24,10 +23,10 @@ import com.erp.server.wms.service.DictBasicService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +43,7 @@ import java.util.Optional;
 @Service
 public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, CfgSettingEntity> implements CfgSettingService {
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
 
@@ -84,11 +83,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
     @Override
     public CfgSettingEntity getByKey(String key) {
-        if (StringUtils.isBlank(key)) {
+        if (CharSequenceUtil.isBlank(key)) {
             return null;
         }
-        CfgSettingEntity entity = baseMapper.getByKey(key);
-        return entity;
+        return baseMapper.getByKey(key);
     }
 
     @Override
@@ -97,13 +95,12 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
             return new CfgSettingValueDTO.PoReturnSettingDTO();
         }
-        CfgSettingValueDTO.PoReturnSettingDTO dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
-        return dto;
+        return BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.PoReturnSettingDTO.class);
     }
 
     @Override
     public Boolean getPackageSupplierSetting(String logisticsSupplierId) {
-        if (StringUtils.isBlank(logisticsSupplierId)){
+        if (CharSequenceUtil.isBlank(logisticsSupplierId)){
             return Boolean.FALSE;
         }
         CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.PACKAGE_SETTING.getCode());
@@ -147,10 +144,23 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             return "semiAuto";
         }
         CfgSettingValueDTO.SubcontractInStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
-        if(Objects.isNull(dto) || StrUtil.isBlank(dto.getAutoInStockSetting())){
+        if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAutoInStockSetting())){
             return "semiAuto";
         }
         return dto.getAutoInStockSetting();
+    }
+
+    @Override
+    public String getSubcontractReturnStockSetting() {
+        CfgSettingEntity entity = baseMapper.getByKey(CfgSettingEnum.SUBCONTRACT_RETURN_STOCK.getCode());
+        if (ObjectUtil.isEmpty(entity) || ObjectUtil.isEmpty(entity.getDataJson())) {
+            return "semiAuto";
+        }
+        CfgSettingValueDTO.SubcontractReturnStock dto = BeanUtil.toBean(entity.getDataJson(), CfgSettingValueDTO.SubcontractReturnStock.class);
+        if(Objects.isNull(dto) || CharSequenceUtil.isBlank(dto.getAutoReturnStockSetting())){
+            return "semiAuto";
+        }
+        return dto.getAutoReturnStockSetting();
     }
 
     /**
@@ -220,11 +230,38 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case SUBCONTRACT_IN_STOCK:
                 jsonObject = JSONUtil.parseObj(addDTO.getSubcontractInStock());
                 break;
+            case SUBCONTRACT_RETURN_STOCK:
+                jsonObject = JSONUtil.parseObj(addDTO.getSubcontractReturnStock());
+                break;
+            case FS_REQUISITION_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionNoticeDTO());
+                break;
+            case FS_REQUISITION_WAITHANDLE_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionWaitHandleDTO());
+                break;
+            case FS_REQUISITION_HANDLEING_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionHandleIngNoticeDTO());
+                break;
+            case FS_REQUISITION_PACKING_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionPackingNoticeDTO());
+                break;
+            case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsFirstMileDeliveryWaitHandleNoticeDTO());
+                break;
+            case FS_REQUISITION_CHANGE_SUBMIT_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionChangeSubmitNoticeDTO());
+                break;
+            case FS_REQUISITION_CHANGE_APPROVE_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsRequisitionChangeApproveNoticeDTO());
+                break;
+            case FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getFsWlrNoticeDTO());
+                break;
             default:
                 break;
         }
         //查询是否是修改
-        String id = cfgSettingList.stream().filter(obj -> StrUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
+        String id = cfgSettingList.stream().filter(obj -> CharSequenceUtil.equals(obj.getKey(),listDTO.getValue())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
         entity.setId(id);
         entity.setIndex(listDTO.getSort());
         entity.setKey(listDTO.getValue());
@@ -241,7 +278,7 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      */
     private void handlePoReconciliationSetting (CfgSettingValueDTO.PoReconciliationSettingDTO poReconciliationSettingDTO) {
         //设置时间为空
-        if (StrUtil.equals(ReconciliationTypeEnum.CREAT_BY_MONTH.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
+        if (CharSequenceUtil.equals(ReconciliationTypeEnum.CREAT_BY_MONTH.getCode(),poReconciliationSettingDTO.getReconciliationType())) {
             poReconciliationSettingDTO.setEndDate(null);
         }
     }
@@ -254,8 +291,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      * @param viewDTO
      */
     private void handleViewEnum (CfgSettingEntity cfgSetting,CfgSettingDTO.ViewDTO viewDTO) {
-
+        //获取枚举
         CfgSettingEnum cfgSettingEnum = CfgSettingEnum.getEnum(cfgSetting.getKey());
+        if(null == cfgSettingEnum){
+            return;
+        }
         switch (cfgSettingEnum) {
             case SUBCONTRACT_ISSUE:
                 CfgSettingValueDTO.SubcontractIssueSettingDTO subcontractIssueSettingDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractIssueSettingDTO.class);
@@ -289,9 +329,45 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
                 CfgSettingValueDTO.CfgPrint cfgPrint = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.CfgPrint.class);
                 viewDTO.setCfgPrint(cfgPrint);
                 break;
+            case FS_REQUISITION_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionNoticeDTO(fsRequisitionNoticeDTO);
+                break;
             case SUBCONTRACT_IN_STOCK:
                 CfgSettingValueDTO.SubcontractInStock subcontractInStock = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractInStock.class);
                 viewDTO.setSubcontractInStock(subcontractInStock);
+                break;
+            case SUBCONTRACT_RETURN_STOCK:
+                CfgSettingValueDTO.SubcontractReturnStock subcontractReturnStock = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.SubcontractReturnStock.class);
+                viewDTO.setSubcontractReturnStock(subcontractReturnStock);
+                break;
+            case FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE:
+                CfgSettingValueDTO.FsQcNoticeDTO fsWlrNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsQcNoticeDTO.class);
+                viewDTO.setFsWlrNoticeDTO(fsWlrNoticeDTO);
+                break;
+            case FS_REQUISITION_WAITHANDLE_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionWaitHandle = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionWaitHandleDTO(fsRequisitionWaitHandle);
+                break;
+            case FS_REQUISITION_HANDLEING_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionHandleIngNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionHandleIngNoticeDTO(fsRequisitionHandleIngNotice);
+                break;
+            case FS_REQUISITION_PACKING_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionPackingNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionPackingNoticeDTO(fsRequisitionPackingNotice);
+                break;
+            case FS_FIRSTMILEDELIVERY_WAITHANDLE_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsFirstMileDeliveryWaitHandleNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsFirstMileDeliveryWaitHandleNoticeDTO(fsFirstMileDeliveryWaitHandleNotice);
+                break;
+            case FS_REQUISITION_CHANGE_SUBMIT_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeSubmitHandleNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionChangeSubmitNoticeDTO(fsRequisitionChangeSubmitHandleNotice);
+                break;
+            case FS_REQUISITION_CHANGE_APPROVE_NOTICE:
+                CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeApproveHandleNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
+                viewDTO.setFsRequisitionChangeApproveNoticeDTO(fsRequisitionChangeApproveHandleNotice);
                 break;
             default:
                 break;
@@ -305,8 +381,8 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
      * @date: 2024/1/11 15:57
      * @return List<CfgSettingEntity>
      */
-    private List<CfgSettingEntity> listCfgSetting () {
-        List<CfgSettingEntity> list = baseMapper.listCfgSetting();
-        return list;
+    @Override
+    public List<CfgSettingEntity> listCfgSetting () {
+        return baseMapper.listCfgSetting();
     }
 }

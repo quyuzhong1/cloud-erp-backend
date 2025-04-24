@@ -298,6 +298,98 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField("frozen_type")
     private String frozenType;
 
+    /**
+     * 是否更换发货sku（默认false）
+     */
+    @TableField("is_change_sku")
+    private Boolean isChangeSku;
+
+    /**
+     * 是否标记不出库发货（默认false）
+     */
+    @TableField("is_not_outbound")
+    private Boolean isNotOutbound;
+
+    /**
+     * 是否手动发货标记（默认false）
+     * 标记销售订单手动标发 发货单不存在时以销售订单手动标发标记为准，发货单存在时以发货单手动标发标记为准
+     */
+    @TableField("is_manual_delivery")
+    private Boolean isManualDelivery;
+
+    /**
+     * 总优惠金额
+     */
+    @TableField("total_discount")
+    private BigDecimal totalDiscount;
+
+    /**
+     * 取消商品总价
+     */
+    @TableField("total_cancel_goods_amount")
+    private BigDecimal totalCancelGoodsAmount;
+
+    /**
+     * 取消商品币别
+     */
+    @TableField("cancel_goods_currency")
+    private String cancelGoodsCurrency;
+
+    /**
+     * 订单交易子状态
+     * 枚举：OrderSubTypeEnum
+     */
+    @TableField("transaction_sub_type")
+    private String transactionSubType;
+
+    /**
+     * 是否超范围派送，是：true  否：false
+     */
+    @TableField("is_out_of_range_delivery")
+    private Boolean isOutOfRangeDelivery;
+
+    /**
+     * 是否预估运费超限，是：true  否：false
+     */
+    @TableField("is_over_estimated_ship_cost")
+    private Boolean isOverEstimatedShipCost;
+
+    /**
+     * 销售出库时间  来源：销售出库单的bill_date
+     */
+    @TableField("so_outstock_date")
+    private LocalDate soOutstockDate;
+
+    /**
+     * 第三方编号
+     */
+    @TableField("third_code")
+    private String thirdCode;
+
+    /**
+     * 第三方来源系统
+     */
+    @TableField("third_system")
+    private String thirdSystem;
+
+    /**
+     * 发票状态 VatInvoiceStatusEnum
+     */
+    @TableField("vat_invoice_status")
+    private String vatInvoiceStatus;
+
+    /**
+     * 总税费
+     */
+    @TableField("total_tax_fee")
+    private BigDecimal totalTaxFee;
+
+    /**
+     * 总税后支付金额(速卖通)
+     */
+    @TableField("after_tax_amount")
+    private BigDecimal afterTaxAmount;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
@@ -369,6 +461,10 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 ", payAmount=" + payAmount +
                 ", dictPayMethod='" + dictPayMethod + '\'' +
                 ", buyerRemark='" + buyerRemark + '\'' +
+                ", isCancel=" + isCancel +
+                ", totalTaxFee=" + totalTaxFee +
+                ", afterTaxAmount=" + afterTaxAmount +
+                ", totalDiscount=" + totalDiscount +
                 '}';
     }
 
@@ -384,8 +480,8 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 return "AFN".equalsIgnoreCase(labelJsonDTO.getFulfillmentChannel());
             }
         }
-        // 速卖通
-        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.dictPlatform)) {
+        // 速卖通 虾皮
+        if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.dictPlatform) || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 Boolean isAliexpressPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
@@ -395,10 +491,6 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 return false;
             }
         }
-        // 虾皮
-        if (PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(this.dictPlatform)) {
-            return true;
-        }
         //沃尔玛
         if (PlatformDictEnum.WALMART.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
@@ -407,12 +499,32 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
                 return "WFSFulfilled".equalsIgnoreCase(labelJsonDTO.getShipNodeType()) || "3PLFulfilled".equalsIgnoreCase(labelJsonDTO.getShipNodeType());
             }
         }
-        //美客多
+        //美客多-全球
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(this.dictPlatform)) {
             if (StrUtil.isNotBlank(this.labelJson)) {
                 SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
                 //平台仓发货
                 return "fulfillment".equalsIgnoreCase(labelJsonDTO.getLogisticType());
+            }
+        }
+        //美客多-本土
+        if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(this.dictPlatform)) {
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                //平台仓发货
+                return "fulfillment".equalsIgnoreCase(labelJsonDTO.getLogisticType());
+            }
+        }
+        if(PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(this.dictPlatform)
+        ||PlatformDictEnum.RAKUTEN.getCode().equalsIgnoreCase(this.dictPlatform)
+        ||PlatformDictEnum.EBAY.getCode().equalsIgnoreCase(this.dictPlatform)){
+            if (StrUtil.isNotBlank(this.labelJson)) {
+                SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(this.labelJson, SoB2cDTO.LabelDTO.class);
+                if(Objects.isNull(labelJsonDTO.getIsPlatformWarehouseOrder())){
+                    return false;
+                }
+                //平台仓发货
+                return labelJsonDTO.getIsPlatformWarehouseOrder();
             }
         }
         return false;

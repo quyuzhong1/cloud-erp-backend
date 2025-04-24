@@ -1,5 +1,7 @@
 package com.erp.model.scm.dto;
 
+import cn.hutool.json.JSONArray;
+import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -108,11 +110,26 @@ public class PurchaseApplicationDetailDTO implements Serializable {
         private String purchaseOrgName;
 
         /**
+         * 新品首批
+         */
+        @NotNull(message = "新品首批不能为空")
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
+
+        /**
          * 备注
          */
         @Size(max = 255,message = "备注不能大于255字符")
         private String remark;
 
+        /**
+         * 采购建议合并id集合
+         */
+        private List<PurchaseSuggestMergeDTO.PushSourceDTO> sourceJsonList;
     }
 
     @Data
@@ -176,5 +193,56 @@ public class PurchaseApplicationDetailDTO implements Serializable {
          * 该sku已申请的数量
          */
         private int qty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PurchaseApplicationDTO {
+        private String id;
+        /**
+         * 采购申请单号
+         */
+        private String code;
+        /**
+         * 采购申请id
+         */
+        private String purchaseApplicationId;
+
+        /**
+         * 来源单据详情id
+         */
+        private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku编码
+         */
+        private String skuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
+        /**
+         * 采购建议数据id
+         */
+        private JSONArray sourceJson;
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProductName;
     }
 }

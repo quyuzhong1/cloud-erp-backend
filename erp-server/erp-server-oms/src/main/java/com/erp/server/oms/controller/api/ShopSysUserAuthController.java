@@ -6,7 +6,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.server.oms.service.ShopSysUserAuthService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/shopSysUserAuth")
 public class ShopSysUserAuthController extends BaseController {
 
-    @Autowired
+    @Resource
     private ShopSysUserAuthService shopSysUserAuthService;
 
     /**

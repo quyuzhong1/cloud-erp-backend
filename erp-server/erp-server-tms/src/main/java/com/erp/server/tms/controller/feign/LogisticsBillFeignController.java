@@ -295,4 +295,16 @@ public class LogisticsBillFeignController {
     public List<LogisticsBillEntity> listBySoOutStockIdList(@RequestBody List<String> outstockIdList) {
         return logisticsBillService.listBySoOutStockIdList(outstockIdList);
     }
+
+    /**
+     * 获取物流面单
+     * @Author zdy
+     * @Date 2025/02/17 14:34
+     * @param dto
+     * @return com.erp.model.oms.dto.SoB2cDTO.WaybillDTO
+     **/
+    @PostMapping("/getLogisticsLabel")
+    public BatchResultDTO getLogisticsLabel(@RequestBody LogisticsBillDTO.PrintLogisticsWaybillDTO dto) {
+        return logisticsBillService.getLogisticsLabel(dto);
+    }
 }

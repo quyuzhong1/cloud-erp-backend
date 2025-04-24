@@ -1,14 +1,22 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.UpdateStateDTO.BatchUpdateDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ServiceCodeNameEnum;
+import com.erp.model.oms.enums.CustomerInfoBusinessModeEnum;
+import com.erp.model.oms.enums.CustomerInfoCheckTypeEnum;
+import com.erp.model.oms.enums.CustomerInfoPeriodSettingEnum;
+import com.erp.model.oms.enums.CustomerInfoTransactionalModeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -75,6 +83,18 @@ public class CustomerDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
         /**
          * 客户名称
          */
@@ -163,8 +183,82 @@ public class CustomerDTO implements Serializable {
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         private LocalDateTime createTime;
 
+        /**
+         * 结算币别 
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
+        private String currency;
+        private String currencyName;
+        
+         /**
+         * 财务组织 名称字段financialOrganizationName
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+         private String financialOrganization;
+         private String financialOrganizationName;
+         /**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+         /**
+          * 停用时间
+          */
+          private LocalDateTime downTime;
+         /**
+         * 交易币别 
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "name" , tableName = "dict_currency")
+         private String tradeCurrency;
+         /**
+         * 平台类型: 名称字段businessModeName
+         */
+         @Dict(enumClass = CustomerInfoBusinessModeEnum.class)
+         private String businessMode;
+         /**
+         * 交易模式:名称字段transactionalModeName
+         */
+         @Dict(enumClass = CustomerInfoTransactionalModeEnum.class)
+         private String transactionalMode;
+         /**
+         * 账期设置：名称字段periodSettingName
+         */
+         @Dict(enumClass = CustomerInfoPeriodSettingEnum.class)
+         private String periodSetting;
+         /**
+         * 确收方式: 名称字段checkTypeName
+         */
+         @Dict(enumClass = CustomerInfoCheckTypeEnum.class)
+         private String checkType;
+         /**
+         * 国家id
+         */
+        private String countryId;
+
+        /**
+         * 国家名称
+         */
+        private String countryName;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class VirtualDTO {
+
+        @NotBlank(message = "客户id不能为空")
+        private String customerId;
+
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+    }
     @Data
     @NoArgsConstructor
     public static class PageSelectDTO {
@@ -180,6 +274,18 @@ public class CustomerDTO implements Serializable {
          * 名称
          */
         private String code;
+        /**
+         * 简称
+         */
+        private String shortName;
+        /**
+         * 简称
+         */
+        private String approveStatus;
+        /**
+         *
+         */
+        private Boolean disabled;
     }
     /**
      * 远程搜索
@@ -319,7 +425,11 @@ public class CustomerDTO implements Serializable {
 
         @NotBlank(message = "销售员不能为空")
         private String sellerId;
-
+        /**
+         * 销售部门id
+         */
+        @NotBlank(message = "销售部门id不能为空")
+        private String salesDeptId;
         /**
          * 来源id
          */
@@ -371,7 +481,41 @@ public class CustomerDTO implements Serializable {
         @Valid
         private List<InvoiceDTO.AddDTO> invoiceList;
 
-
+         /**
+         * 财务组织 http://172.16.100.11:3002/project/36/interface/api/30795
+         */
+        @NotBlank(message = "财务组织不能为空")
+         private String financialOrganization;
+         /**
+         * 启用时间
+         */
+        @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 平台类型: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoBusinessMode
+         */
+        @NotBlank(message = "平台类型不能为空")
+         private String businessMode;
+         /**
+         * 交易模式: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoTransactionalMode
+         */
+        @NotBlank(message = "交易模式不能为空")
+         private String transactionalMode;
+         /**
+         * 账期设置：http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoPeriodSetting
+         */
+        @NotBlank(message = "账期设置不能为空")
+         private String periodSetting;
+         /**
+         * 确收方式: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoCheckType
+         */
+        @NotBlank(message = "确收方式不能为空")
+         private String checkType;
     }
 
     /**
@@ -392,6 +536,18 @@ public class CustomerDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
         /**
          * 审核状态code
          */
@@ -419,7 +575,6 @@ public class CustomerDTO implements Serializable {
          * 内部组织id
          */
         private String innerOrgId;
-
 
         /**
          * 内部组织
@@ -479,6 +634,19 @@ public class CustomerDTO implements Serializable {
          * 销售员id
          */
         private String sellerId;
+        /**
+         * 销售员名称
+         */
+        private String sellerName;
+        /**
+         * 销售部门id
+         */
+        @NotBlank(message = "销售部门id不能为空")
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
 
         /**
          * 付款方
@@ -572,6 +740,45 @@ public class CustomerDTO implements Serializable {
          * 销售员信息
          */
         private List<SellerDTO.ViewDTO> sellerList;
+        
+         /**
+         * 财务组织 名称字段financialOrganizationName
+         */
+         @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+         private String financialOrganization;
+         /**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+         /**
+          * 停用时间
+          */
+          private LocalDateTime downTime;
+         /**
+         * 交易币别 
+         */
+         private String tradeCurrency;
+         /**
+         * 平台类型: 名称字段businessModeName
+         */
+         @Dict(enumClass = CustomerInfoBusinessModeEnum.class)
+         private String businessMode;
+         /**
+         * 交易模式:名称字段transactionalModeName
+         */
+         @Dict(enumClass = CustomerInfoTransactionalModeEnum.class)
+         private String transactionalMode;
+         /**
+         * 账期设置：名称字段periodSettingName
+         */
+         @Dict(enumClass = CustomerInfoPeriodSettingEnum.class)
+         private String periodSetting;
+         /**
+         * 确收方式: 名称字段checkTypeName
+         */
+         @Dict(enumClass = CustomerInfoCheckTypeEnum.class)
+         private String checkType;
+               
     }
 
 
@@ -580,7 +787,18 @@ public class CustomerDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class CustomerBatchUpdateDTO extends BatchUpdateDTO{
+    	/**
+         * 启用时间
+         */
+         private LocalDateTime enableTime;
+    }
+    	/**
+    	 * 修改
+    	 */
+    	@Data
+    	@NoArgsConstructor
+    	public static class UpdateDTO {
 
         /**
          * id
@@ -649,6 +867,11 @@ public class CustomerDTO implements Serializable {
 
         @NotBlank(message = "销售员不能为空")
         private String sellerId;
+            /**
+             * 销售部门id
+             */
+            @NotBlank(message = "销售部门id不能为空")
+            private String salesDeptId;
         /**
          * 付款方
          */
@@ -735,7 +958,41 @@ public class CustomerDTO implements Serializable {
          */
         private List<InvoiceDTO.ViewDTO> invoiceList;
 
-
+         /**
+         * 财务组织 http://172.16.100.11:3002/project/36/interface/api/30795
+         */
+        @NotBlank(message = "财务组织不能为空")
+         private String financialOrganization;
+         /**
+         * 启用时间
+         */
+        @NotNull(message = "启用时间不能为空")
+         private LocalDateTime enableTime;
+         /**
+         * 交易币别 http://172.16.100.11:3002/project/36/interface/api/8485
+         */
+        @NotBlank(message = "交易币别不能为空")
+         private String tradeCurrency;
+         /**
+         * 平台类型: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoBusinessMode
+         */
+        @NotBlank(message = "平台类型不能为空")
+         private String businessMode;
+         /**
+         * 交易模式: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoTransactionalMode
+         */
+        @NotBlank(message = "交易模式不能为空")
+         private String transactionalMode;
+         /**
+         * 账期设置：http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoPeriodSetting
+         */
+        @NotBlank(message = "账期设置不能为空")
+         private String periodSetting;
+         /**
+         * 确收方式: http://172.16.100.11:3002/project/110/interface/api/13480 type=CustomerInfoCheckType
+         */
+        @NotBlank(message = "确收方式不能为空")
+         private String checkType;
     }
 
     @Data
@@ -770,6 +1027,10 @@ public class CustomerDTO implements Serializable {
          * name
          */
         private String name;
+        /**
+         * 简称
+         */
+        private String shortName;
 
         private ApproveStatusEnum approveStatus;
 
@@ -778,6 +1039,11 @@ public class CustomerDTO implements Serializable {
          * false 没有
          */
         private Boolean disabled;
+
+        /**
+         * 币种
+         */
+        private String currency;
     }
 
     /**
@@ -914,6 +1180,16 @@ public class CustomerDTO implements Serializable {
 
         private String receiveConditionName;
 
+        //----销售组织信息----
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+
 
     }
 
@@ -962,6 +1238,258 @@ public class CustomerDTO implements Serializable {
          * 销售员部门名称
          */
         private String deptName;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingExportDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 简称
+         */
+        private String shortName;
+        /**
+         *区域
+         */
+        private String areaId;
+        private String areaName;
+
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
+        /**
+         *国家
+         */
+        private String countryId;
+        private String countryName;
+        /**
+         *省份
+         */
+        private String provinceId;
+        private String provinceName;
+        /**
+         *城市
+         */
+        private String cityId;
+        private String cityName;
+        /**
+         *销售员
+         */
+        private String sellerId;
+        private String sellerName;
+        /**
+         * 平台类型: 名称字段businessModeName
+         */
+//        @Dict(enumClass = CustomerInfoBusinessModeEnum.class)
+        private String businessMode;
+        private String businessModeName;
+        /**
+         * 平台类型
+         */
+        private String platformType;
+        private String platformTypeName;
+        /**
+         *公司类别
+         */
+        private String companyCategoryDict;
+        private String companyCategoryDictName;
+        /**
+         *单据状态
+         */
+        private ApproveStatusEnum approveStatus;
+        private String approveStatusName;
+        /**
+         *启用状态
+         */
+        private Boolean disabled;
+        private String disabledName;
+        /**
+         *使用组织
+         */
+        private String useOrgId;
+        private String useOrgName;
+        /**
+         *客户分组
+         */
+        private String groupName;
+        /**
+         *对应组织
+         */
+        private String innerOrgId;
+        private String innerOrgName;
+        /**
+         *客户属性
+         */
+        private String customerProperty;
+        /**
+         *通讯地址
+         */
+        private String mailAddress;
+        /**
+         *最新审核人
+         */
+        private String approveUserName;
+        /**
+         *创建人
+         */
+        private String createUserId;
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+        /**
+         * 销售部门id
+         */
+        private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
+
+        private List<InvoiceDTO.ViewDTO> invoiceList;
+
+        private List<CustomerDTO.PagingAddressContactExportDTO> addressContactList;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class  PagingInvoiceExportDTO{
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 编码
+         */
+        private String code;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PagingAddressContactExportDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 名称
+         */
+        private String name;
+        /**
+         * 编码
+         */
+        private String code;
+
+        //----------联系人信息-----------
+        /**
+         * 联系人
+         */
+        private String person;
+
+        /**
+         * 职位
+         */
+        private String position;
+
+        /**
+         * 联系电话
+         */
+        private String personTelNumber;
+
+        /**
+         * 邮箱
+         */
+        private String personEmail;
+        /**
+         * 是否默认
+         * true 是
+         * false 不是
+         */
+        private Boolean personIsDefault;
+        private String personIsDefaultName;
+        /**
+         * 是否禁用
+         * true 是
+         * false 不是
+         */
+        private Boolean personDisabled;
+        private String personDisabledName;
+        /**
+         *备注
+         */
+        private String personRemark;
+
+        //----------地址信息-----------
+        /**
+         * 地址
+         */
+        private String address;
+
+        /**
+         * 地址类型
+         */
+        private String type;
+        private String typeName;
+
+        /**
+         * 电话
+         */
+        private String addressTelNumber;
+
+        /**
+         * 邮箱
+         */
+        private String addressEmail;
+
+        /**
+         * 是否默认
+         * true 是
+         * false 不是
+         */
+        private Boolean addressIsDefault;
+        private String addressIsDefaultName;
+
+        /**
+         * 是否禁用
+         * true 是
+         * false 不是
+         */
+        private Boolean addressDisabled;
+        private String addressDisabledName;
+
+        /**
+         * 备注
+         */
+        private String addressRemark;
     }
 
 }

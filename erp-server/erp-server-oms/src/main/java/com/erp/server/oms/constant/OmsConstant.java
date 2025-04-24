@@ -7,54 +7,56 @@ package com.erp.server.oms.constant;
  * @Date 2023-03-20 19:54
  * @Created by yl
  */
-public interface OmsConstant {
-
+public class OmsConstant {
 
     /**
      * 所有
      */
-    String ALL = "all";
+    public static final String ALL = "all";
 
     /**
      * 待审核
      */
-    String WAIT_APPROVE = "waitApprove";
+    public static final String WAIT_APPROVE = "waitApprove";
 
     /**
      * 已审核
      */
-    String APPROVE = "approve";
+    public static final String APPROVE = "approve";
 
     /**
      * 审核不通过
      */
-    String REJECT = "reject";
+    public static final String REJECT = "reject";
 
     /**
      * 待发货
      */
-    String WAIT_DELIVERY = "waitDelivery";
+    public static final String WAIT_DELIVERY = "waitDelivery";
 
 
     /**
      * 已发货
      */
-    String DELIVERY = "delivery";
+    public static final String DELIVERY = "delivery";
 
     /**
      * 待提交
      */
-    String WAIT_SUBMIT = "waitSubmit";
+    public static final String WAIT_SUBMIT = "waitSubmit";
 
     /**
      * 已匹配
      */
-    String ALREADY = "already";
+    public static final String ALREADY = "already";
 
     /**
      * 未匹配
      */
-    String NOT = "not";
+    public static final String NOT = "not";
 
-    Integer SKU_MAPPING_RULE_SIZE = 5;
+    public static final Integer SKU_MAPPING_RULE_SIZE = 5;
+
+    private OmsConstant() {
+    }
 }

@@ -62,18 +62,6 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
     List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto);
 
     /**
-     * 修改订单上传状态
-     * @Author Luo_WG
-     * @Date 2024/1/27 18:45
-     * @param id
-     * @param status
-     * @param shippingOrderNo 第三方服务商订单号
-     * @param failureReason 失败原因
-     * @return java.lang.Boolean
-     **/
-    Boolean updateOrderUploadStatus(String id, String status, String shippingOrderNo, String failureReason);
-
-    /**
      * 修改中转状态
      * @Author Luo_WG
      * @Date 2024/1/27 18:45
@@ -107,14 +95,6 @@ public interface TransferDeclareDetailService extends SuperService<TransferDecla
      */
     TransferDeclareDetailEntity getBySoId(String soId);
 
-    /**
-     * 修改出库状态
-     * @Author Luo_WG
-     * @Date 2024/2/1 18:39
-     * @param dto
-     * @return java.lang.Boolean
-     **/
-//    Boolean updateOutstockStatus(TransferDeclareDTO.UpdateOutstockStatusDTO dto);
     /**
      * @description: 根据销售订单编号集合查询中专报关
      * @author Will

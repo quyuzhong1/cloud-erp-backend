@@ -23,9 +23,9 @@ public class Invoice implements Serializable {
     @Alias( "issue_date")
     private Long issueDate;
     @Alias( "total_value")
-    private float totalValue;
+    private Float totalValue;
     @Alias( "products_total_value")
-    private float productsTotalValue;
+    private Float productsTotalValue;
     @Alias( "tax_code")
     private String taxCode;
 }

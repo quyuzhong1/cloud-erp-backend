@@ -143,8 +143,6 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
 
     private void chekPhaseName(List<TaskPhaseDTO> list, String productId) {
         List<ProjectPhaseEntity> phaseList = getByProductId(productId);
-        //List<SysTaskPhaseEntity> sysTaskPhaseList = sysTaskPhaseService.getSysTaskPhaseNames();
-        //List<String> sysTaskPhase = sysTaskPhaseList.stream().map(SysTaskPhaseEntity::getName).collect(Collectors.toList());
 
         int size = list.stream().map(TaskPhaseDTO::getName).distinct().collect(Collectors.toList()).size();
         if (size != list.size()) {
@@ -154,7 +152,7 @@ public class ProjectPhaseServiceImpl extends ServiceImpl<ProjectPhaseMapper, Pro
         for (TaskPhaseDTO phase : list) {
             String id = phase.getId();
             String name = phase.getName();
-            List<String> phaseNames = new ArrayList<>();
+            List<String> phaseNames ;
             if (StringUtils.isNotBlank(id)) {
                 phaseNames = phaseList.stream().filter(p -> !p.getId().equals(id)).map(ProjectPhaseEntity::getName).collect(Collectors.toList());
             } else {

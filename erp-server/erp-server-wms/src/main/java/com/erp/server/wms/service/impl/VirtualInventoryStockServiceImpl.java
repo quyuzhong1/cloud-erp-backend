@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -21,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -34,10 +36,10 @@ import java.util.stream.Collectors;
 @InventoryHandler(InventoryBizTypeEnum.IN_OUT_STOCK)
 public class VirtualInventoryStockServiceImpl extends AbstractVirtualInventoryServiceImpl {
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private RedissonClient redisson;
 
     @Override
@@ -47,7 +49,7 @@ public class VirtualInventoryStockServiceImpl extends AbstractVirtualInventorySe
         for(VirtualInventoryStockDTO.StockBaseDTO baseParam : paramList) {
             if (baseParam instanceof VirtualInventoryStockDTO.OutInStockDTO) {
                 // 按照虚拟仓库+实体仓库+SKU+库存状态进行锁定
-                String lockKey = StrUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_VIRTUAL_INVENTORY_SKU.getCode(), baseParam.getVirtualWarehouseId(), baseParam.getWarehouseId(),baseParam.getSkuId());
+                String lockKey = CharSequenceUtil.format( "{}:{}:{}:{}", DistributedLockEnum.WMS_VIRTUAL_INVENTORY_SKU.getCode(), baseParam.getVirtualWarehouseId(), baseParam.getWarehouseId(),baseParam.getSkuId());
                 if (lockKeyList.contains(lockKey)) {
                     continue;
                 }
@@ -130,7 +132,7 @@ public class VirtualInventoryStockServiceImpl extends AbstractVirtualInventorySe
     public <T extends VirtualInventoryStockDTO.StockBaseDTO> void singleHandler(T baseParam, VirtualInventoryBusinessTypeEnum businessType, List<VirtualTransRuleDTO.StockParamDTO> transactionRuleParams, String transactionNo) {
         VirtualInventoryStockDTO.OutInStockDTO param = (VirtualInventoryStockDTO.OutInStockDTO)baseParam;
         if(CollUtil.isEmpty(transactionRuleParams)) {
-            throw new ServiceException(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+            throw new ServiceException(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
         }
         log.warn("从配置读取库存交易规则，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
         // 交易规则按照状态排序

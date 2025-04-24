@@ -1,7 +1,9 @@
 package com.common.business.dto;
 
+import com.common.business.enums.BillApproveStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 
 import java.math.BigDecimal;
 
@@ -31,6 +33,10 @@ public class PlatformOrderDetailDTO {
      * 平台sku编号
      */
     private String platformSkuNo;
+    /**
+     * 平台skuId
+     */
+    private String platformSkuId;
 
     /**
      * 平台产品id
@@ -85,6 +91,10 @@ public class PlatformOrderDetailDTO {
      */
     private String labelJson;
     /**
+     * 扩展字段数据
+     */
+    private String extendData;
+    /**
      * 库存组织id
      */
     private String warehouseOrgId;
@@ -113,5 +123,8 @@ public class PlatformOrderDetailDTO {
      */
     private Boolean isDetailRefund = false;
 
-
+    /**
+     * 第三方明细ID/编号
+     */
+    private String thirdDetailId = "";
 }

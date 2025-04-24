@@ -36,4 +36,28 @@ public class BaseIdDTO extends PermissionsDTO  {
         private Boolean disabled;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class ChangeDTO {
+        /**
+         * 主表id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+        /**
+         * 明细id
+         */
+        @NotBlank(message = "明细id不能为空")
+        private String detailId;
+        /**
+         * 源数据id
+         */
+        private String sourceId;
+        /**
+         * 目标id
+         */
+        @NotBlank(message = "变更数据不能为空")
+        private String targetId;
+    }
 }

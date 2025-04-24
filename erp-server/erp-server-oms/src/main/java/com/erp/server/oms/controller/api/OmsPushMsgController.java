@@ -1,24 +1,24 @@
 package com.erp.server.oms.controller.api;
 
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import javax.annotation.Resource;
-import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import com.common.business.annotation.DataPermission;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.common.business.dto.base.*;
+import com.erp.model.oms.dto.OmsPushMsgDTO;
+import com.erp.server.oms.service.OmsPushMsgService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.common.core.controller.BaseController;
-import com.erp.server.oms.service.OmsPushMsgService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.oms.dto.OmsPushMsgDTO;
+import javax.annotation.Resource;
 
 /**
  * 本地推送消息表
@@ -62,7 +62,7 @@ public class OmsPushMsgController extends BaseController {
         menuCode = "oms:omsPushMsg:update",
         serviceClass = OmsPushMsgService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated OmsPushMsgDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated OmsPushMsgDTO.UpdateDTO dto) {
         omsPushMsgService.update(dto);
         return success();
     }

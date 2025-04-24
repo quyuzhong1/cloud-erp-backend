@@ -72,7 +72,7 @@ public class VirtualInventoryEntity extends BaseEntity<VirtualInventoryEntity> {
 
     public static final String DICT_INVENTORY_STATUS = "dict_inventory_status";
 
-    public static final String QTY = "qty";
+    
 
     @Override
     public Serializable pkVal() {

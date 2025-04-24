@@ -11,17 +11,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.util.CollectionUtils;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.stream.Collectors;
-
 /**
  * Gateway Plugin Properties
  * @Author Luo_WG

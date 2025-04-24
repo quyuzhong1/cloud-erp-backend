@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
  **/
 @TableName(value ="product_logistics")
 @Data
-public class ProductLogisticsEntity extends BaseEntity implements Serializable {
+public class ProductLogisticsEntity extends BaseEntity<ProductLogisticsEntity> implements Serializable {
 
     /**
      * 产品sku表id
@@ -258,4 +258,10 @@ public class ProductLogisticsEntity extends BaseEntity implements Serializable {
 
     @TableField(exist = false)
     private static final long serialVersionUID = 1L;
+
+    /**
+     * 保险属性
+     */
+    @TableField("insurance_property")
+    private String insuranceProperty;
 }

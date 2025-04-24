@@ -155,7 +155,6 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
             if (SourceTypeEnum.SO_MULTI_CHANNEL.getCode().equalsIgnoreCase(convertDto.getSourceType())) {
                 // 不需要下载地址
                 newDto.setDownloadAddressStatus(-1);
-//                business = BusinessTypeEnum.SO_MULTI_CHANNEL.getCode();
             }
 
             businessService.pullDetailProcess(newDto, convertDto, category, platform, business);
@@ -535,7 +534,6 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
         List<String> skipList;
         if (listStr.contains(",")) {
             skipList = Arrays.stream(listStr.split(",")).collect(Collectors.toList());
-            ;
         } else {
             skipList = Collections.singletonList(listStr);
         }
@@ -736,6 +734,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
         Map<String, WarehouseDTO.ListDTO> finalWarehouseMap = warehouseMap;
         return allList.stream()
                 .map(e -> parseDateLocaleShopIdWarehouseId(e, timeList, shopMap, centerMap, finalWarehouseMap))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toList());
     }
 
@@ -750,27 +749,28 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
     ) {
         // 按仓储中心补充仓库
         // 多渠道订单以仓储中心对应国家作为站点
-        CfgAmzFulfillmentCenterEntity centerEntity = centerMap.get(e.getFulfillmentCenterId());
+        try {
+            CfgAmzFulfillmentCenterEntity centerEntity = centerMap.get(e.getFulfillmentCenterId());
 
-        // Map<国家代号, 店铺>
-        Map<String, ShopInfoEntity> curMap = shopMap.get(e.getPlatformShopCode());
+            // Map<国家代号, 店铺>
+            Map<String, ShopInfoEntity> curMap = shopMap.get(e.getPlatformShopCode());
 
-        // 设置仓库中心对应仓库
-        if (null != centerEntity && !curMap.isEmpty()){
-            if (org.apache.commons.lang.StringUtils.isNotBlank(centerEntity.getCountry())){
+            // 设置仓库中心对应仓库
+            if (null != centerEntity && !curMap.isEmpty() && org.apache.commons.lang.StringUtils.isNotBlank(centerEntity.getCountry())){
                 ShopInfoEntity shopInfo = curMap.get(centerEntity.getCountry());
                 // 补充仓库信息
                 fillWarehouseInfo(e, warehouseMap, shopInfo);
             }
+            if (e.hasMultiChannel()) {
+                // 多渠道订单
+                parseMultiChannel(e, timeList, curMap, centerEntity);
+            } else {
+                // B2C订单
+                parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
+            }
+        } catch (Exception ex) {
+            log.error("解析亚马逊订单错误：{}", ExceptionUtil.stacktraceToString(ex));
         }
-        if (e.hasMultiChannel()) {
-            // 多渠道订单
-            parseMultiChannel(e, timeList, curMap, centerEntity);
-        } else {
-            // B2C订单
-            parseB2cOrder(e, timeList, curMap, centerEntity, warehouseMap);
-        }
-
         return e;
     }
 
@@ -795,7 +795,7 @@ public class AmazonDownloadServiceImpl implements AmazonDownloadService {
                     fillWarehouseInfo(e, warehouseMap, shopInfo);
                 } else {
                     // 仓储中心配置为空
-                    if (org.apache.commons.lang.StringUtils.isBlank(centerEntity.getCountry())){
+                    if (StringUtils.isBlank(centerEntity.getCountry())){
                         // 补充仓库信息
                         fillWarehouseInfo(e, warehouseMap, shopInfo);
                     }

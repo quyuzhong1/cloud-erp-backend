@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -120,7 +121,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         String returnWarehouseId = dto.getReturnWarehouseId();
         WarehouseEntity warehouse = warehouseService.getById(returnWarehouseId);
         String warehouseOrgId = Objects.nonNull(warehouse) ? warehouse.getOrgId() : "";
-        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             //获取界面传过来的采购单详情表id集合
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.AddDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -256,7 +257,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
     public Boolean update(PurchaseReturnOrderDTO.UpdateDTO dto, String id) {
         PoReturnEntity entity = poReturnService.getById(id);
 
-        List<String> addList = dto.getPurchasePriceDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(PurchaseReturnOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
+        List<String> addList = dto.getPurchasePriceDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(PurchaseReturnOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         //原明细数据
         List<PoReturnDetailEntity> oldList = this.getDetailByMainId(dto.getId());
         List<String> deleteIds = getDeleteIds(dto.getPurchasePriceDetailList(), oldList);
@@ -275,7 +276,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
         Integer returnQty = 0;
         //创建保存详情的集合
         List<PoReturnDetailEntity> listDetail = new ArrayList<>();
-        if (StringUtils.isNotBlank(dto.getPurchaseOrderId())) {
+        if (CharSequenceUtil.isNotBlank(dto.getPurchaseOrderId())) {
             //获取界面传过来的采购单详情表id集合
             List<String> orderDetailIds = dto.getPurchasePriceDetailList().stream().map(PurchaseReturnOrderDetailDTO.UpdateDTO::getPurchaseOrderDetailId).collect(Collectors.toList());
             //根据ids查询采购单详情
@@ -349,7 +350,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
                     throw new ServiceException(ApiError.ERROR_99006);
                 }
                 //修改操作日志
-                if (StringUtils.isNotBlank(poReturnDetailEntity.getId())) {
+                if (CharSequenceUtil.isNotBlank(poReturnDetailEntity.getId())) {
                     PoReturnDetailEntity old = this.getById(poReturnDetailEntity.getId());
                     operateLogService.addModuleOperateLogByObj(old, poReturnDetailEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
                 }
@@ -375,7 +376,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
     }
 
     private List<String> getDeleteIds(List<PurchaseReturnOrderDetailDTO.UpdateDTO> newList, List<PoReturnDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(PurchaseReturnOrderDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(PoReturnDetailEntity
                 ::getId).collect(Collectors.toList());
@@ -424,7 +425,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             poReturnDetailEntity.setMainSupplierId(skuVO.getSupplierId());
             listDetail.add(poReturnDetailEntity);
             //修改操作日志
-            if (StringUtils.isNotBlank(poReturnDetailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(poReturnDetailEntity.getId())) {
                 PoReturnDetailEntity old = this.getById(poReturnDetailEntity.getId());
                 operateLogService.addModuleOperateLogByObj(old, poReturnDetailEntity, ModuleTypeEnum.PURCHASE_RETURN_ORDER.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
             }
@@ -491,7 +492,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
     @Override
     public List<WarehouseReceiveDTO.PoReturnDetailDTO> listReturnOrderDetailByReceiveIds(List<String> receiveIds) {
         if (CollectionUtils.isEmpty(receiveIds)){
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listReturnOrderDetailByReceiveIds(receiveIds);
     }
@@ -537,7 +538,7 @@ public class PoReturnDetailServiceImpl extends SuperServiceImpl<PoReturnDetailMa
             CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
             warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
         }
-        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getWarehouseLocation())).count();
         //判断仓位是否需要必填
         if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());

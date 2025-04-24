@@ -6,14 +6,18 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 
 public class SoReturnNoticeDetailDTO {
+    private SoReturnNoticeDetailDTO() {
+        throw new IllegalStateException("Utility SoReturnNoticeDetailDTO class");
+    }
     /**
      * 添加
      */
     @Data
     @NoArgsConstructor
-    public static class Add {
+    public static class Add  extends Common{
         /**
          * 退货数量
          */
@@ -29,6 +33,22 @@ public class SoReturnNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 退货类型
+         */
+        private String returnTypeDict;
+        /**
+         * 退货原因
+         */
+        private String returnReasonDict;
     }
 
     /**
@@ -36,7 +56,7 @@ public class SoReturnNoticeDetailDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class Update {
+    public static class Update extends Common{
         /**
          * 明细id
          */
@@ -60,6 +80,56 @@ public class SoReturnNoticeDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+        /**
+         * 退货类型
+         */
+        private String returnTypeDict;
+        /**
+         * 退货原因
+         */
+        private String returnReasonDict;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class Common {
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
+
     }
 
     /**
@@ -67,7 +137,7 @@ public class SoReturnNoticeDetailDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class View {
+    public static class View  extends Common{
         /**
          * id
          */
@@ -80,10 +150,6 @@ public class SoReturnNoticeDetailDTO {
          * 来源明细id
          */
         private String sourceDetailId;
-        /**
-         * skuId
-         */
-        private String skuId;
         /**
          * sku编号
          */

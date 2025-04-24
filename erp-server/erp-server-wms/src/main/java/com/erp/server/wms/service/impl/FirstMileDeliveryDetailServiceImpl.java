@@ -1,9 +1,11 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -13,11 +15,8 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDetailDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.entity.PackingTaskEntity;
-import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.FirstMileDeliveryDetailMapper;
@@ -26,11 +25,15 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import javax.annotation.Resource;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 /**
  * <p>
@@ -43,17 +46,18 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMileDeliveryDetailMapper, FirstMileDeliveryDetailEntity> implements FirstMileDeliveryDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
-    @Autowired
+    @Lazy
+    @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
-    @Autowired
+    @Resource
     private WmsCartonSpecService wmsCartonSpecService;
-    @Autowired
+    @Resource
     private PackingTaskService packingTaskService;
-    @Autowired
+    @Resource
     private SkuMappingFeign skuMappingFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -77,7 +81,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
     public void update(FirstMileDeliveryDTO.UpdateDTO updateDTO, String mainId) {
         List<FirstMileDeliveryDetailDTO.UpdateDTO> detailList = updateDTO.getDetailList();
         //原明细数据
-        List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> deleteIds = getDeleteIds(detailList, oldList);
         if (CollectionUtils.isNotEmpty(deleteIds)) {
             List<FirstMileDeliveryDetailEntity> removeList = oldList.stream().filter(obj -> deleteIds.contains(obj.getId())).collect(Collectors.toList());
@@ -150,7 +154,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
 
     @Override
     public List<FirstMileDeliveryDetailEntity> listDetailByMainId(String id) {
-        if(StringUtils.isBlank(id)){
+        if(CharSequenceUtil.isBlank(id)){
             return new ArrayList<>();
         }
         return lambdaQuery().eq(FirstMileDeliveryDetailEntity::getMainId,id).list();
@@ -174,12 +178,29 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         return firstMileDeliveryDetailEntityList;
     }
 
+    @Override
+    public List<FirstMileDeliveryDetailEntity> listByFbaShipmentCodes(List<String> shipmentCodes) {
+        if (CollectionUtils.isEmpty(shipmentCodes)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(FirstMileDeliveryDetailEntity::getFbaShipmentCode, shipmentCodes).list();
+
+    }
+
+    @Override
+    public List<FirstMileDeliveryDetailDTO.listFirstMileDTO> listFirstMileSource(List<String> firstMileDetailIdList) {
+        if (CollUtil.isEmpty(firstMileDetailIdList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listFirstMileSource(firstMileDetailIdList);
+    }
+
     /**
     * 新增修改处理数据
     */
     private void handleData(List<FirstMileDeliveryDetailEntity> list, String mainId, Boolean isUpdate, String deliveryWarehouseId) {
         //需要新增的数据
-        List<FirstMileDeliveryDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
 
         //获取sku信息
         List<String> skuIds = list.stream().map(FirstMileDeliveryDetailEntity::getSkuId).collect(Collectors.toList());
@@ -188,7 +209,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
         if (CollectionUtils.isEmpty(skuVOList)) {
             throw new ServiceException(ApiError.ERROR_95084);
         }
-        List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+        List<FirstMileDeliveryDetailEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
 
         //查询库存sku
         List<SkuMappingDTO.ListSkuParamDTO> skuParamDTOList = new ArrayList<>();
@@ -216,7 +237,7 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
             firstMileDeliveryDetailEntity.setStockSku(stockSku);
 
             //校验是否是修改，如果是就新增修改日志
-            if (StringUtils.isNotBlank(firstMileDeliveryDetailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(firstMileDeliveryDetailEntity.getId())) {
                 FirstMileDeliveryDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(firstMileDeliveryDetailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
@@ -235,10 +256,23 @@ public class FirstMileDeliveryDetailServiceImpl extends SuperServiceImpl<FirstMi
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<FirstMileDeliveryDetailDTO.UpdateDTO> newList, List<FirstMileDeliveryDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(FirstMileDeliveryDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(FirstMileDeliveryDetailEntity
                 ::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<FirstMileDeliveryDetailEntity> listByRequisitionApplicationIds(List<String> requisitionApplicationIds) {
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntities = firstMileDeliveryService.lambdaQuery()
+                .eq(FirstMileDeliveryEntity::getSourceType, SourceTypeEnum.REQUISITION_APPLICATION.getCode())
+                .in(FirstMileDeliveryEntity::getSourceId, requisitionApplicationIds)
+                .list();
+        if(CollUtil.isEmpty(firstMileDeliveryEntities)){
+            return Collections.emptyList();
+        }
+        List<String> firstMileDeliveryIds = firstMileDeliveryEntities.stream().map(FirstMileDeliveryEntity::getId).collect(Collectors.toList());
+        return listByMainIds(firstMileDeliveryIds);
     }
 }

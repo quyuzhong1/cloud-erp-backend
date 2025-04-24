@@ -1,6 +1,6 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.entity.BaseEntity;
 import lombok.AllArgsConstructor;
@@ -10,9 +10,11 @@ import lombok.NoArgsConstructor;
 import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 收货单DTO
@@ -22,14 +24,46 @@ import java.util.List;
  **/
 @Data
 @NoArgsConstructor
-public class WarehouseReceiveDTO {
+public class WarehouseReceiveDTO implements Serializable {
+    private static final long serialVersionUID = 1905122041950251207L;
+    /**
+     * 合计
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingTotalDTO {
 
+        /**
+         * 收货数量
+         */
+        private Integer receiveQty;
+
+        /**
+         * 采购数量
+         */
+        private Integer purchaseQty;
+
+        /**
+         * 赠品数量
+         */
+        private Integer giftQty;
+
+        /**
+         * 入库数量
+         */
+        private Integer stockInQty;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+    }
     /**
      * 添加
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO extends BaseEntity {
+    public static class AddDTO extends BaseEntity<AddDTO> {
 
         /**
          * 采购订单id
@@ -46,6 +80,10 @@ public class WarehouseReceiveDTO {
          */
         private String sourceId;
 
+        /**
+         * 来源code
+         */
+        private String sourceCode;
         /**
          * 来源类型
          */
@@ -131,47 +169,6 @@ public class WarehouseReceiveDTO {
         @Valid
         private List<WarehouseReceiveDetailDTO.UpdateDTO> warehouseReceiveDetailList;
     }
-
-
-//    /**
-//     * 质检需要的信息
-//     */
-//    @Data
-//    @NoArgsConstructor
-//    public static class QcDTO {
-//
-//
-//        private Boolean isFirstMassProduct;
-//        /**
-//         * 交货仓库id
-//         */
-//        private String deliveryWarehouseId;
-//
-//        private String supplierId;
-//
-//        private String purchaseOrderId;
-//
-//        private String purchaseOrderCode;
-//
-//
-//        private String skuId;
-//
-//
-//        private String skuNo;
-//
-//
-//        private String receiveQty;
-//
-//        private String productGrade;
-//
-//        /**
-//         *变体属性
-//         */
-//        private String variantProperty;
-//
-//
-//    }
-
 
     /**
      * 详情
@@ -291,11 +288,6 @@ public class WarehouseReceiveDTO {
          * 交货仓库名称
          */
         private String deliveryWarehouseName;
-
-        /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
 
         /**
          * 采购员Id
@@ -493,6 +485,27 @@ public class WarehouseReceiveDTO {
          * 创建时间
          */
         private LocalDateTime createTime;
+        /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+
+        /**
+         * 采购组织名
+         */
+        private String purchaseOrgName;
+        /**
+         * 收料组织id
+         */
+        private String receiveOrgId;
+        /**
+         * 收料组织名
+         */
+        private String receiveOrgName;
+        /**
+         * 送货单号
+         */
+        private String deliveryCode;
     }
 
     @Data
@@ -515,75 +528,18 @@ public class WarehouseReceiveDTO {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
-        /**
-         * 单据编号
-         */
-        private String code;
 
         /**
-         * 主键集合
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * skuNo集合
+         * sqlMap 默认key default
          */
-        private List<String> skuNoList;
+        private Map<String, String> sqlMap;
 
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 供应商id
-         */
-        private List<String> supplierIdList;
-
-        /**
-         * 采购订单编号
-         */
-        private String purchaseOrderCode;
-
-        /**
-         * 采购员id
-         */
-        private List<String> purchaseUserIdList;
-
-        /**
-         * 单据状态
-         */
-        private List<String> approveStatusList;
-        /**
-         * 入库状态
-         */
-        private List<String> inStockStatusList;
-
-        /**
-         * 作废状态（false未作废，true已作废）
-         */
         private Boolean invalidStatus;
-
-        /**
-         * 收货日期
-         */
-        private List<LocalDate> billDate;
-
-        /**
-         * 交货仓库id
-         */
-        private List<String> deliveryWarehouseIdList;
-
-        /**
-         * 创建人id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTime;
-
         /**
          * PDA用表头状态
          */
@@ -787,6 +743,16 @@ public class WarehouseReceiveDTO {
          * 采购订单明细id
          */
         private String purchaseOrderDetailId;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     /**
@@ -856,6 +822,16 @@ public class WarehouseReceiveDTO {
          * 库位
          */
         private String warehouseLocation;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批名称
+         */
+        private String firstMassProductName;
     }
 
     /**

@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -100,6 +101,25 @@ public class VirtualWarehouseAllocationController extends BaseController {
             keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateDTO dto) {
         virtualWarehouseAllocationService.update(dto);
+        return success();
+    }
+
+    /**
+     * 分货单是否统计修改
+     * @author will
+     * @date 2024/11/22 18:23
+     * @param dto
+     * @return ApiResult<?>
+     */
+    @PostMapping("/updateIsStatistics")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "分货单是否统计修改")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:update",
+            serviceClass = VirtualWarehouseAllocationService.class,
+            keyIdName = "id")
+    public ApiResult<?> updateIsStatistics(@RequestBody @Validated VirtualWarehouseAllocationDTO.UpdateIsStatisticsDTO dto) {
+        virtualWarehouseAllocationService.updateIsStatistics(dto);
         return success();
     }
 
@@ -253,7 +273,7 @@ public class VirtualWarehouseAllocationController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -325,6 +345,26 @@ public class VirtualWarehouseAllocationController extends BaseController {
     @PostMapping("/listVirtualInventory")
     public ApiResult<List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyDTO>> getVirtualInventory(@RequestBody @Validated List<VirtualWarehouseAllocationDTO.VirtualInventoryQtyParamDTO> list){
         return success(virtualWarehouseAllocationService.listVirtualInventory(list));
+    }
+
+
+    /**
+     * 导出分货统计
+     * @author will
+     * @date 2024/11/19 8:55
+     * @param dto
+     * @return ApiResult<Boolean>
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货统计")
+    @PostMapping("/exportStatistics")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:virtualWarehouseAllocation:paging",
+            tableAlias = "vma"
+    )
+    public ApiResult<Boolean> exportStatistics(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
+        virtualWarehouseAllocationService.exportStatistics(dto);
+        return success(true);
     }
 
 }

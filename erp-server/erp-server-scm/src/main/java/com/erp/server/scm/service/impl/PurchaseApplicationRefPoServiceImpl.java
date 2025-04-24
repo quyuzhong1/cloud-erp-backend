@@ -5,6 +5,7 @@ import com.erp.model.scm.dto.PurchaseApplicationRefPoDTO;
 import com.erp.model.scm.entity.PurchaseApplicationRefPoEntity;
 import com.erp.server.scm.mapper.PurchaseApplicationRefPoMapper;
 import com.erp.server.scm.service.PurchaseApplicationRefPoService;
+import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 
@@ -59,4 +60,14 @@ public class PurchaseApplicationRefPoServiceImpl extends SuperServiceImpl<Purcha
         return lambdaQuery().in(PurchaseApplicationRefPoEntity::getPurchaseApplicationDetailId,purchaseApplicationDetailIds).list();
     }
 
+    @Override
+    public Boolean getPurchaseApplicationByPurchaseOrderId(String purchaseOrderId) {
+        // 采购订单id不能为空
+        if (StringUtil.isBlank(purchaseOrderId)) {
+            return Boolean.FALSE;
+        }
+
+        // 查询采购申请单是否存在 ，存在则返回false表示不可编辑，不存在则返回true表示可编辑
+        return baseMapper.existsPurchaseApplicationByPurchaseOrderId(purchaseOrderId).equals(Boolean.TRUE) ? Boolean.FALSE : Boolean.TRUE;
+    }
 }

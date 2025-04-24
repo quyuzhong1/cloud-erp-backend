@@ -1,7 +1,7 @@
 package com.common.business.enums;
 
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.common.core.exception.ServiceException;
@@ -77,11 +77,11 @@ public enum BusinessTypeEnum implements EnumMessage {
     public static BusinessTypeEnum getByCodeAndThrow(String code) {
         BusinessTypeEnum businessType = getByCode(code);
         if (null == businessType){
-            throw new ServiceException(StrUtil.format("业务类型business = {} 不存在", code));
+            throw new ServiceException(CharSequenceUtil.format("业务类型business = {} 不存在", code));
         }
         SourceTypeEnum sourceType = businessType.getSourceType();
         if (ObjectUtil.isEmpty(sourceType)){
-            throw new ServiceException(StrUtil.format("来源类型business = {} 不存在", code));
+            throw new ServiceException(CharSequenceUtil.format("来源类型business = {} 不存在", code));
         }
         return businessType;
     }

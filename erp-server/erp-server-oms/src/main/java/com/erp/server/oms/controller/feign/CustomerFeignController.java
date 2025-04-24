@@ -86,7 +86,7 @@ public class CustomerFeignController extends BaseController {
     }
 
     @PostMapping("/listCustomerAddressByIds")
-    public List<CustomerAddressEntity> ListCustomerAddressByIds(@RequestBody List<String> ids) {
+    public List<CustomerAddressEntity> listCustomerAddressByIds(@RequestBody List<String> ids) {
         if (CollectionUtils.isEmpty(ids)) {
             return new ArrayList<>();
         }
@@ -171,14 +171,14 @@ public class CustomerFeignController extends BaseController {
     /**
      * 根据key 获取字典数据
      *
-     * @param Key
+     * @param key
      * @return java.util.List<com.erp.model.scm.dto.DictBasicDTO>
      * @author yl
      * @date 2023-03-17 14:16
      */
     @PostMapping("/getDictBasicByKey")
-    public List<DictBasicDTO.ViewDTO> getDictBasicByKey(@RequestBody String Key) {
-        return dictBasicService.getByKey(Key);
+    public List<DictBasicDTO.ViewDTO> getDictBasicByKey(@RequestBody String key) {
+        return dictBasicService.getByKey(key);
     }
 
     /**

@@ -53,4 +53,12 @@ public interface InventoryHisService extends SuperService<InventoryHisEntity> {
      * @param hisEntity 基准历史库存
      */
     void overrideInventoryHis(List<TransactionFlowEntity> flowList, InventoryHisEntity hisEntity);
+
+    /**
+     * 根据库存id删除库存历史
+     *
+     * @param InventoryIds
+     * @param startDate
+     */
+    void removeByInventoryIds(List<String> InventoryIds, LocalDate startDate);
 }

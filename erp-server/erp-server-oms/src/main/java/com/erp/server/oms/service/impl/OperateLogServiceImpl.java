@@ -18,12 +18,11 @@ import com.erp.model.oms.entity.CfgOperateLogFieldEntity;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.OperateLogEntity;
-import com.erp.model.scm.dto.OperateLogDTO;
+import com.erp.model.oms.dto.OperateLogDTO;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
-import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.OperateLogMapper;
 import com.erp.server.oms.service.CfgOperateLogFieldService;
@@ -32,6 +31,7 @@ import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.OperateLogService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -67,7 +67,7 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
 
     @Override
     public PagingVO<OperateLogDTO.ListDTO> paging(PagingDTO<OperateLogDTO.SearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         OperateLogDTO.SearchDTO params = dto.getParams();
         IPage pageData = baseMapper.paging(query, params);
         return new PagingVO(pageData);
@@ -383,7 +383,23 @@ public class OperateLogServiceImpl extends SuperServiceImpl<OperateLogMapper, Op
         }
         return this.saveBatch(list);
     }
+    @Override
+    public void batchAddModuleOperateLog(List<OperateLogDTO.AddModuleOperateLogDTO> operateLogList) {
+        if (CollectionUtils.isNotEmpty(operateLogList)) {
+            List<OperateLogEntity> addList = new ArrayList<>(operateLogList.size());
+            for (OperateLogDTO.AddModuleOperateLogDTO item : operateLogList) {
+                OperateLogEntity entity = new OperateLogEntity();
+                entity.setModuleType(item.getModuleType())
+                        .setBusinessId(item.getBusinessId())
+                        .setContent(item.getContent())
+                        .setOperation(item.getOperation());
+                addList.add(entity);
+            }
+            this.saveBatch(addList);
 
+        }
+
+    }
     @Override
     public void removeByBusinessIds(List<String> businessIds) {
         lambdaUpdate().in(OperateLogEntity::getBusinessId,businessIds).remove();

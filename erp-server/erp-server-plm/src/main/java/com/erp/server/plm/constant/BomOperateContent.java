@@ -1,16 +1,18 @@
 package com.erp.server.plm.constant;
 
+import java.io.Serializable;
+
 /**
  * @Classname BomOperateContent
 
  * @Date 2023-01-10 15:15
  * @Created by yl
  */
-public interface BomOperateContent {
+public class BomOperateContent implements Serializable {
 
-    String ADD = "新建一个BOM %s";
+    public static final String ADD = "新建一个BOM %s";
 
-    String DELETE = "删除一个BOM";
+    public static final String DELETE = "删除一个BOM";
 
-    String STATE_CHANGE = "状态由[%s]变更为[%s]";
+    public static final String STATE_CHANGE = "状态由[%s]变更为[%s]";
 }

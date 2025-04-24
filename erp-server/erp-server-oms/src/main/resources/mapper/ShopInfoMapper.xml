@@ -36,7 +36,6 @@
         sales_org_name,
         dict_area_code,
         dict_country_code,
-        dict_country_code,
         auth_status,
         disabled,
         auth_time,
@@ -48,7 +47,12 @@
         create_time,
         update_user_name,
         update_time,
-        si.extend_data
+        si.extend_data,
+        settlement_currency,
+        trade_currency,
+        enable_time,
+        down_time,
+        return_warehouse
         FROM shop_info si
         WHERE ${params.sqlMap.default}
         and si.is_deleted=FALSE
@@ -134,6 +138,9 @@
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((si.account = #{params.searchKeyword}) or (si.id = #{params.searchKeyword})  or si.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
+        <if test="params.dictAreaCode != null and params.dictAreaCode != ''">
+            and si.dict_area_code = #{params.dictAreaCode}
+        </if>
         <if test="params.dictPlatform != null and params.dictPlatform != ''">
             and si.dict_platform = #{params.dictPlatform}
         </if>
@@ -152,5 +159,38 @@
         </if>
         si.disabled asc
         ) shop
+    </select>
+
+    <!-- 区域分页查询 -->
+    <select id="pagingSelectArea" resultType="com.erp.model.oms.dto.ShopDTO$AreaDTO">
+        select
+            dict_area_code
+        from shop_info si
+        <where>
+            si.is_deleted = false
+            <if test="params.searchKeyword != null and params.searchKeyword != ''">
+                and si.dict_area_code = #{params.searchKeyword}
+            </if>
+            <if test="params.dictPlatform != null and params.dictPlatform != ''">
+                and si.dict_platform = #{params.dictPlatform}
+            </if>
+            group by dict_area_code  order by dict_area_code desc
+        </where>
+    </select>
+    <select id="pageAuthShop" resultType="com.erp.model.oms.dto.SkuMappingDTO$SyncPlatformProductView">
+        select si.id as shopId ,
+               si.name as shopName,
+               si.auth_status as authStatus,
+                si.dict_platform as dictPlatform
+        from shop_info si
+        where
+            ${params.sqlMap.default}
+        and  si.is_deleted = false and si.disabled = false
+        <if test="shopIds != null and shopIds.size > 0">
+            and si.id in
+            <foreach collection="shopIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
     </select>
 </mapper>

@@ -27,7 +27,7 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(AliexpressDeliveryDTO.AddDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(AliexpressDeliveryDTO.AddDTO dto);
 
     /**
      * 列表查询
@@ -60,4 +60,12 @@ public interface AliexpressDeliveryService extends SuperService<AliexpressDelive
      * 导出
      */
     PagingVO<AliexpressDeliveryDTO.ListDTO> exportAliexpressDelivery(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto);
+
+    /**
+     * 更新速卖通发货单 出库状态
+     * @param statusDTO
+     */
+    void updateAliexpressOustock(AliexpressDeliveryDTO.StatusDTO statusDTO);
+
+    List<AliexpressDeliveryEntity> getBySoId(String soId);
 }

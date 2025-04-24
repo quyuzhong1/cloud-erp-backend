@@ -1,5 +1,6 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -96,7 +97,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
                 transferInfoService.disApprove(transferInfoEntity, Boolean.FALSE, Boolean.TRUE);
             }
             if (ApproveStatusEnum.APPROVE_ING.getStatus().equals(oldTransferInfo.getApproveStatus())) {
-                transferInfoService.cancelProcess(Arrays.asList(oldTransferInfo.getId()));
+                transferInfoService.cancelProcess(Collections.singletonList(oldTransferInfo.getId()));
             }
             //存在则更新
             TransferInfoDTO.UpdateDTO updateDTO = BeanMapperUtils.map(TransferInfoDTO.UpdateDTO.class, newTransferInfo);
@@ -119,7 +120,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
      */
     private void submitAndApprove(String id) {
         //提交
-        Boolean submit = transferInfoService.submit(Arrays.asList(id), Boolean.FALSE);
+        Boolean submit = transferInfoService.submit(Collections.singletonList(id), Boolean.FALSE);
         if (!submit) {
             throw new ServiceException(ApiError.ERROR_1042);
         }
@@ -150,7 +151,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
         List<BaseIdDTO.CodeDTO> companyList = sysUserFeign.listAccountingCompanyByCodeList(Arrays.asList(entity.getInOrgCode(), entity.getOutOrgCode()));
 
         //仓管员信息
-        List<FindUserDTO> userList = sysUserFeign.listUserByCodeList(Arrays.asList(entity.getWarehouseKeeperCode()));
+        List<FindUserDTO> userList = sysUserFeign.listUserByCodeList(Collections.singletonList(entity.getWarehouseKeeperCode()));
 
         //主表id赋值
         if (ObjectUtils.isNotEmpty(viewDTO)) {
@@ -216,7 +217,7 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
             TransferInfoDetailEntity detailEntity = new TransferInfoDetailEntity();
             String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(dmpDetailEntity.getSkuNo())).
                     findFirst().map(SkuVO::getSkuId).orElse("");
-            if (StringUtils.isBlank(skuId)) {
+            if (CharSequenceUtil.isBlank(skuId)) {
                 throw new ServiceException(ApiError.ERROR_NOT_FOUND_SKU,dmpDetailEntity.getSkuNo());
             }
             //明细id赋值
@@ -231,13 +232,13 @@ public class SyncTransferInfoServiceImpl implements SyncTransferInfoService {
 
             //调入仓库
             String inWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(dmpDetailEntity.getInWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-            if (StringUtils.isBlank(inWarehouseId)) {
+            if (CharSequenceUtil.isBlank(inWarehouseId)) {
                 throw new ServiceException(ApiError.ERROR_99076,dmpDetailEntity.getInWarehouseCode());
             }
             detailEntity.setInWarehouseId(inWarehouseId);
             //调出仓库
             String outWarehouseId = warehouseList.stream().filter(obj -> obj.getKingdeeWarehouseCode().equals(dmpDetailEntity.getOutWarehouseCode())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
-            if (StringUtils.isBlank(outWarehouseId)) {
+            if (CharSequenceUtil.isBlank(outWarehouseId)) {
                 throw new ServiceException(ApiError.ERROR_99076,dmpDetailEntity.getOutWarehouseCode());
             }
             detailEntity.setOutWarehouseId(outWarehouseId);

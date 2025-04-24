@@ -1,20 +1,17 @@
 package com.erp.model.tms.vo.request;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.experimental.SuperBuilder;
+
+import java.io.Serializable;
 
 /**
  * 物流发件人信息
  */
 @Data
 @NoArgsConstructor
-public class SenderInfo  {
+public class SenderInfo  implements Serializable {
         //发件人id
         private String actId;
         //发件人税号

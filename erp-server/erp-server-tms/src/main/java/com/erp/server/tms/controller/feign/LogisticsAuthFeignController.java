@@ -46,6 +46,11 @@ public class LogisticsAuthFeignController {
         LogisticsSupplierDTO.AuthDTO result = logisticsAuthService.getAuthBySupplierId(logisticsSupplierId);
         return result;
     }
+
+    @GetMapping("/listAuthBySupplierId")
+    public List<LogisticsSupplierDTO.AuthDTO> listAuthBySupplierId(@RequestParam("logisticsSupplierIds") List<String> logisticsSupplierIds) {
+        return logisticsAuthService.listAuthBySupplierId(logisticsSupplierIds);
+    }
     /**
      * 根据渠道id查询渠道关联的平台信息
      * @Author Luo_WG
@@ -57,5 +62,14 @@ public class LogisticsAuthFeignController {
     public List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(@RequestBody List<String> channelIdList) {
         List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOS = logisticsAuthService.listAuthChannelView(channelIdList);
         return authChannelViewDTOS;
+    }
+
+
+    /**
+     * 获取所有海外仓发货的渠道
+     */
+    @PostMapping("/listAllChannelByOverseas")
+    List<String> listAllChannelByOverseas() {
+        return logisticsAuthService.listAllChannelByOverseas();
     }
 }

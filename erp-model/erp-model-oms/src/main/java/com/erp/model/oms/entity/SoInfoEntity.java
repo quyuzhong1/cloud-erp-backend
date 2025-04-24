@@ -303,6 +303,39 @@ public class SoInfoEntity extends BaseEntity<SoInfoEntity> {
     @TableField("is_declare")
     private Boolean isDeclare;
 
+    /**
+     * 是否上传物流面单(默认false)
+     */
+    @TableField("is_upload_label")
+    private Boolean isUploadLabel;
+
+    /**
+     * 订单交易子状态
+     * 枚举：OrderSubTypeEnum
+     */
+    @TableField("transaction_sub_type")
+    private String transactionSubType = "offlineOrder";
+
+    /**
+     * 分区id
+     */
+    @TableField("partition_id")
+    private String partitionId;
+
+    @TableField(exist = false)
+    private String customerCountry;
+
+    /**
+     * 收货国家id
+     */
+    @TableField("country_id")
+    private String countryId;
+    /**
+     * 收货国家
+     */
+    @TableField("country_name")
+    private String countryName;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

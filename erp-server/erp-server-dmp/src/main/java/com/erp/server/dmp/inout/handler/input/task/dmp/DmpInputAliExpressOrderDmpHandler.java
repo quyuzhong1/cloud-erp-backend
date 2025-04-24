@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -9,7 +10,10 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.core.utils.MathUtil;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -23,6 +27,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.AliExpressOrder;
+import com.erp.oms.aliexpress.dto.response.AmountInfo;
 import com.erp.oms.aliexpress.dto.response.OrderItemDetail;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
@@ -78,7 +83,7 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 		}
 		
 		Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
-		
+		BigDecimal payAmount = BigDecimal.ZERO;
 		for(Map.Entry<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMap : dmpInputDataDmpRelationMaps.entrySet()) {
 			List<TreeMap<String, Object>> dmpDataMaps = dmpInputDataDmpRelationMap.getValue();
 			List<Map<String, Object>> mongoDataMaps = dmpInputDataDmpRelationMap.getKey();
@@ -88,11 +93,14 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 				dmpDataMap.put("shopId", nextLevelId);
 				Object payAmountObj = mongoDataMap.get("pay_amount");
 				if(payAmountObj != null) {
-					Map<String, Object> payAmount = (Map)payAmountObj;
-					dmpDataMap.put("payAmount", payAmount.get("amount"));
-					dmpDataMap.put("currencyCode", payAmount.get("currency_code"));
+					Map<String, Object> payAmountMap = (Map)payAmountObj;
+					if (payAmountMap.get("amount") != null) {
+						payAmount = MathUtil.valueOf(payAmountMap.get("amount"));
+						dmpDataMap.put("payAmount", payAmount);
+					}
+					dmpDataMap.put("currencyCode", payAmountMap.get("currency_code"));
 				}
-				
+
 				// 平台取消
 		        boolean isCancel = sourceOrder.convertCancel();
 		        dmpDataMap.put("isCancel", isCancel);
@@ -114,7 +122,51 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 					if(memo != null) {
 						dmpDataMap.put("buyerRemark", memo);
 					}
-					
+
+					Object orderAmountObj = detailData.get("order_amount");
+					if(orderAmountObj != null) {
+						Map<String, Object> orderAmountMap = (Map) orderAmountObj;
+						Object amount = orderAmountMap.get("amount");
+						if (amount != null) {
+//							dmpDataMap.put("totalDiscount", MathUtil.valueOf(amount).subtract(payAmount));
+							dmpDataMap.put("allAmount", amount);
+						}
+					}
+
+					// 总优惠金额
+					Object promotionFeeObj = detailData.get("promotion_fee");
+					if(promotionFeeObj != null) {
+						Map<String, Object> promotionFeeMap = (Map) promotionFeeObj;
+						Object promotionFee = promotionFeeMap.get("amount");
+						if (promotionFee != null) {
+							dmpDataMap.put("totalDiscount",promotionFee);
+						}
+					}
+
+					// 税后支付金额
+					Object newSellerOrderAmountObj = detailData.get("new_seller_order_amount");
+					if(newSellerOrderAmountObj != null) {
+						Map<String, Object> promotionFeeMap = (Map) newSellerOrderAmountObj;
+						Object newSellerOrderAmount = promotionFeeMap.get("amount");
+						if (newSellerOrderAmount != null) {
+							dmpDataMap.put("afterTaxAmount", newSellerOrderAmount);
+						}
+					}
+
+
+					//退款
+					Object refundInfoObj = detailData.get("refund_info");
+					if(refundInfoObj != null) {
+						Map<String, Object> refundInfoMap = (Map) refundInfoObj;
+						if (refundInfoMap.get("refund_cash_amt") != null) {
+							Map<String, Object> refundCashAmtMap = (Map) refundInfoMap.get("refund_cash_amt");
+							if (ObjectUtil.isNotEmpty(refundCashAmtMap)) {
+								dmpDataMap.put("totalCancelGoodsAmount", refundCashAmtMap.get("amount"));
+								dmpDataMap.put("cancelGoodsCurrency", refundCashAmtMap.get("currency_code"));
+							}
+						}
+					}
+
 					// 标签json
 			        Map<String, Object> labelMap = new HashMap<>();
 			        //订单明细
@@ -124,6 +176,22 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			            long count = orderItemDetailList.stream().
 			                    filter(o -> AliexpressConstants.CAINIAO_INTERNATIONAL_WAREHOUSE.equals(o.getLogisticsWarehouseType())).count();
 			            isAliexpressPlatformWarehouseOrder = count > 0;
+			            
+			            dmpDataMap.put("allAmount", orderItemDetailList.stream().map(o -> {
+				        	Integer productCount = o.getProductCount();
+				        	if(productCount == null || productCount == 0) {
+				        		return BigDecimal.ZERO;
+				        	}
+				        	AmountInfo productPrice = o.getProductPrice();
+				        	if(productPrice == null) {
+				        		return BigDecimal.ZERO;
+				        	}
+				        	String amount = productPrice.getAmount();
+				        	if(StringUtils.isBlank(amount)) {
+				        		return BigDecimal.ZERO;
+				        	}
+				        	return new BigDecimal(amount).multiply(new BigDecimal(productCount));
+				        }).reduce(BigDecimal::add).orElse(BigDecimal.ZERO));
 			        }
 			        labelMap.put("logisticsWarehouseType", orderItemDetailList.stream().map(OrderItemDetail::getLogisticsWarehouseType).collect(Collectors.joining(",")));
 			        labelMap.put("isPlatformWarehouseOrder", isAliexpressPlatformWarehouseOrder);
@@ -136,11 +204,12 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			        }
 			        
 			        dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
-			        dmpDataMap.put("orderStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
+			        dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
 			        dmpDataMap.put("payStatus", sourceOrder.convertPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()));
 			        // 审核状态状态
 			        // （ApproveStatus字典类型）
-			        dmpDataMap.put("approveStatus", sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));
+			        dmpDataMap.put("orderStatus", sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));
+			        
 				}
 				
 			}

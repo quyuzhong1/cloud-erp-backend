@@ -79,6 +79,12 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
     private String warehouseLocation;
 
     /**
+     * 新品首批
+     */
+    @TableField("first_mass_product")
+    private String firstMassProduct;
+
+    /**
      * 备注
      */
     @TableField("remark")
@@ -100,7 +106,7 @@ public class PoInstockDetailEntity extends BaseEntity<PoInstockDetailEntity> {
      * 金蝶明细id
      */
     @TableField("kingdee_detail_id")
-    private String KingdeeDetailId;
+    private String kingdeeDetailId;
 
     /**
      * 含税单价

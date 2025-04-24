@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -11,6 +12,7 @@ import javax.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
@@ -54,7 +56,10 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         private List<String> productIds;
 
-
+        /**
+         * 应用分类
+         */
+        private List<String> applicationCategoryIds;
 
 
         /**
@@ -171,6 +176,16 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 项目状态：0未启动，1已启动，2进行中，3已完成，4已暂停，5已终止
          */
         private List<Integer> projectStatusList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
 
@@ -181,7 +196,10 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 产品ids
          */
         private List<String> ids;
-
+        /**
+         * 产品ids
+         */
+        private List<String> productIds;
         /**
          * 导出数据 类型
          * 0，产品列表
@@ -189,6 +207,13 @@ public class ProductSearchDTO extends PermissionsDTO {
          */
         @NotNull(message = "导出类型不能为空")
         private List<Integer> exportDataList;
+
+        private List<String> categoryIdList;
+
+        private String userId;
+
+        // 导出类型 0：我的项目 1：收藏项目 2：所有项目
+        private String exportType;
     }
 
 

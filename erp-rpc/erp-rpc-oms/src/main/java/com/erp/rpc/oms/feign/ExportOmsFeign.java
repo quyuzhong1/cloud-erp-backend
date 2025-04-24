@@ -5,9 +5,14 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
+import feign.Request;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
+import java.util.List;
 
 @FeignClient(name = "erp-oms", contextId = "exportOmsFeign", configuration = ExportFeignConfig.class)
 public interface ExportOmsFeign {
@@ -20,8 +25,13 @@ public interface ExportOmsFeign {
     PagingVO<SoReturnDTO.PagingView> exportSoReturn(@RequestBody PagingDTO<SoReturnDTO.PagingParam> dto);
     @PostMapping("/feign/export/soB2CAbnormal")
     PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/soB2CAbnormalPools")
+    PagingVO<SoB2cAbnormalDTO.PoolsDTO> exportSoB2CAbnormalPools(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto);
+
     @PostMapping("/feign/export/soB2C")
-    PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
+    PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(Request.Options options, @RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
+    @PostMapping("/feign/export/exportFullyManagedOrder")
+    PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(Request.Options options, @RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
     @PostMapping("/feign/export/soB2CDeclare")
     PagingVO<SoB2cDeclareProductDTO.ViewDTO> exportSoB2CDeclare(@RequestBody PagingDTO<SoB2cDeclareProductDTO.ListDTO> dto);
     @PostMapping("/feign/export/soB2CProductSales")
@@ -30,10 +40,29 @@ public interface ExportOmsFeign {
     PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto);
     @PostMapping("/feign/export/warehouseSku")
     PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto);
+    @PostMapping("/feign/export/customerSku")
+    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> exportCustomerSku(@RequestBody PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
     @PostMapping("/feign/export/shop")
     PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto);
     @PostMapping("/feign/export/customer")
-    PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto);
+    PagingVO<CustomerDTO.PagingExportDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/exportCustomerPairList")
+    List<cn.hutool.core.lang.Pair<Integer, List<?>>> exportCustomerPairList(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto);
     @PostMapping("/feign/export/so")
     PagingVO<SoInfoDTO.PagingViewDTO> exportSo(@RequestBody PagingDTO<SoInfoDTO.ExportDTO> dto);
+    @PostMapping("/feign/export/exportRefund")
+    PagingVO<SoB2cRefundDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportSoB2cReturn")
+    PagingVO<SoB2cReturnDTO.PagingViewDTO> exportSoB2cReturn(@RequestBody PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportInvoice")
+    PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto);
+    //销售调价导出
+    @PostMapping("/feign/export/soPriceChange")
+    PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto);
+    //销售价目导出
+    @PostMapping("/feign/export/soPrice")
+    PagingVO<SoPriceExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto);
+
 }

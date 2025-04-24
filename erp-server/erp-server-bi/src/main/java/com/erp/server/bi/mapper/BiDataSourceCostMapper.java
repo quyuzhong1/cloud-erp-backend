@@ -32,7 +32,7 @@ public interface BiDataSourceCostMapper extends BaseMapper<BiDataSourceCostEntit
      * @param params
      * @return IPage<BiDataSourceCostDTO>
      */
-    IPage<LinkedHashMap<String,Object>> paging(Page query, @Param("params") BiDataSourceCostSearchDTO params);
+    IPage<LinkedHashMap<String,Object>> paging(Page<Object> query, @Param("params") BiDataSourceCostSearchDTO params);
     /**
      * @description: 查询所有成本
      * @author Will

@@ -1,8 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.enums.ApproveStatusEnum;
@@ -57,6 +58,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -181,7 +183,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public WarehouseLocationDTO.LocationDetailDTO findById(String id) {
         WarehouseLocationEntity warehouseLocation = super.getById(id);
-        Optional.ofNullable(warehouseLocation).orElseThrow(()->new ServiceException("仓位信息不存在"));
+        if (Objects.isNull(warehouseLocation)){
+            throw new ServiceException("仓位信息不存在");
+        }
 
         WarehouseLocationTypeEnum warehouseLocationType = WarehouseLocationTypeEnum.getByCode(warehouseLocation.getType());
 
@@ -225,7 +229,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public List<WarehouseLocationEntity> listByWarehouseIdAndCode(List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam) {
         if (CollectionUtils.isEmpty(listParam)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listByWarehouseIdAndCode(listParam);
     }
@@ -277,9 +281,9 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public List<BaseDropDownDTO.CommonDTO> getWarehouseArea(String warehouseId,  WarehouseLocationTypeEnum returnType, String areaId) {
         // 根据仓库查询区域
         List<WarehouseLocationEntity> warehouseLocationList =  lambdaQuery()
-                .eq(StrUtil.isNotBlank(warehouseId), WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .eq(CharSequenceUtil.isNotBlank(warehouseId), WarehouseLocationEntity::getWarehouseId, warehouseId)
                 .eq(ObjectUtil.isNotEmpty(returnType), WarehouseLocationEntity::getType, returnType.getCode())
-                .eq(StrUtil.isNotBlank(areaId) && ObjectUtil.equals(WarehouseLocationTypeEnum.LOCATION, returnType), WarehouseLocationEntity::getParentId, areaId)
+                .eq(CharSequenceUtil.isNotBlank(areaId) && ObjectUtil.equals(WarehouseLocationTypeEnum.LOCATION, returnType), WarehouseLocationEntity::getParentId, areaId)
                 .eq(WarehouseLocationEntity::getDisabled, Boolean.FALSE)
                 .list();
         if (CollUtil.isEmpty(warehouseLocationList)) {
@@ -400,7 +404,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         
         WarehouseLocationDTO.SelectDTO params = JSON.parseObject(JSON.toJSONString(searchDTO.getParams()), WarehouseLocationDTO.SelectDTO.class);
         IPage<WarehouseLocationDTO.LocationListDTO> pagResult;
-        if (StringUtils.isNotBlank(params.getSkuNo())){
+        if (CharSequenceUtil.isNotBlank(params.getSkuNo())){
             pagResult = baseMapper.pagingSelectBySku(query, params);
         }else {
             pagResult = baseMapper.pagingSelect(query, params);
@@ -419,29 +423,61 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
-    public void addArea(WarehouseAreaDTO.Add dto) {
-        existCode(dto.getCode(), null, WarehouseLocationTypeEnum.AREA.getCode());
-        existName(dto.getName(), null, WarehouseLocationTypeEnum.AREA.getCode());
+    public String addArea(WarehouseAreaDTO.Add dto) {
+        existCode(dto.getCode(), null, WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
+        existName(dto.getName(), null, WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
         WarehouseLocationEntity entity = dto.getWarehouseAreaInfo();
         save(entity);
+        return entity.getId();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
     public void updateArea(WarehouseAreaDTO.Update dto) {
-        existCode(dto.getCode(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode());
-        existName(dto.getName(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode());
-        WarehouseLocationEntity entity;
-        entity = dto.getWarehouseAreaInfo();
-        entity.setId(dto.getId());
-        updateById(entity);
+        WarehouseLocationEntity oldWarehouseLocationEntity = getById(dto.getId());
+        if (Objects.isNull(oldWarehouseLocationEntity)) {
+            throw new ServiceException(ApiError.WAREHOUSE_AREA_NOT_EXIST.msg);
+        }
+        existCode(dto.getCode(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
+        existName(dto.getName(), dto.getId(), WarehouseLocationTypeEnum.AREA.getCode(), dto.getWarehouseId());
+        LambdaUpdateChainWrapper<WarehouseLocationEntity> updateWrapper = lambdaUpdate()
+                .set(WarehouseLocationEntity::getCode, dto.getCode())
+                .set(WarehouseLocationEntity::getName, dto.getName())
+                .eq(WarehouseLocationEntity::getId, dto.getId());
+        //所属仓库禁止修改。
+        if (StringUtils.isNotBlank(dto.getWarehouseId()) && !dto.getWarehouseId().equals(oldWarehouseLocationEntity.getWarehouseId())) {
+            throw new ServiceException(ApiError.WAREHOUSE_NOT_EDIT.msg);
+        }
+        //库区被使用后，库存类型禁止修改。
+        if (StringUtils.isNotBlank(dto.getAreaType()) && !dto.getAreaType().equals(oldWarehouseLocationEntity.getAreaType())) {
+            Integer count = checkAreaUsedOrNot(dto.getId());
+            if (count > 0) {
+                throw new ServiceException(ApiError.WAREHOUSE_AREA_USED.msg);
+            }
+            updateWrapper.set(WarehouseLocationEntity::getAreaType, dto.getAreaType());
+        }
+        updateWrapper.update();
+    }
+
+    private Integer checkAreaUsedOrNot(String id) {
+        return lambdaQuery()
+                .eq(WarehouseLocationEntity::getParentId, id)
+                .eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.LOCATION.getCode())
+                .count();
     }
 
     @Override
     public WarehouseAreaDTO.View viewArea(String id) {
         WarehouseLocationEntity entity = getById(id);
-        return BeanMapperUtils.map(WarehouseAreaDTO.View.class, entity);
+        WarehouseAreaDTO.View view = BeanMapperUtils.map(WarehouseAreaDTO.View.class, entity);
+        //库区被使用后，库存类型禁止修改。
+        if(checkAreaUsedOrNot(id)>0){
+            view.setCanEditAreaType(Boolean.FALSE);
+        }else{
+            view.setCanEditAreaType(Boolean.TRUE);
+        }
+        return view;
     }
 
     @Override
@@ -638,12 +674,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             }
 
             //仓库下没有该仓位，直接新增
-            WarehouseLocationEntity locationEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().in("warehouse_id", warehouseId).eq("type", "location").eq("code", row.getWarehouseLocationCode()).eq("is_deleted", false));
+            WarehouseLocationEntity locationEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().in("warehouse_id", warehouseId).eq("type", WarehouseLocationTypeEnum.LOCATION.getCode()).eq("code", row.getWarehouseLocationCode()).eq("is_deleted", false));
             if(locationEntity == null || locationEntity.getIsDeleted()){
                 WarehouseLocationEntity addEntity = buildAddEntity(row, areaEntity, warehouseId);
                 baseMapper.insert(addEntity);
                 WarehouseLocationEntity one = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", warehouseId).eq("code", row.getWarehouseLocationCode())
-                        .eq("type", "location").eq("is_deleted", false).eq("disabled", false));
+                        .eq("type", WarehouseLocationTypeEnum.LOCATION.getCode()).eq("is_deleted", false).eq("disabled", false));
 
                 areaEntity.setOccupyStatus(Boolean.TRUE);
                 baseMapper.updateById(areaEntity);
@@ -681,7 +717,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         WarehouseLocationEntity addEntity = new WarehouseLocationEntity();
         addEntity.setCode(row.getWarehouseLocationCode());
         addEntity.setName(row.getWarehouseLocationName());
-        addEntity.setType("location");
+        addEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
         addEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
         addEntity.setDisabled(false);
         addEntity.setIsDeleted(false);
@@ -725,7 +761,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Transactional(rollbackFor = Exception.class)
     @Override
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
-    public void updateDisabled(WarehouseLocationDTO.updateStatusDto dto) {
+    public void updateDisabled(WarehouseLocationDTO.UpdateStatusDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
         WarehouseLocationEntity entity = new WarehouseLocationEntity();
         entity.setId(dto.getId());
@@ -745,13 +781,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     public void add(WarehouseLocationDTO.AddDTO dto) {
         LoginUser user = UserContext.getNonLoginUser();
         WarehouseLocationEntity codeEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
-                .eq("code", dto.getCode()).eq("type", "location").eq("is_deleted", false));
+                .eq("code", dto.getCode()).eq("type", WarehouseLocationTypeEnum.LOCATION.getCode()).eq("is_deleted", false));
         if(codeEntity != null){
             throw new ServiceException("仓位编码重复");
         }
 
         WarehouseLocationEntity nameEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
-                .eq("name", dto.getName()).eq("type", "location").eq("is_deleted", false));
+                .eq("name", dto.getName()).eq("type", WarehouseLocationTypeEnum.LOCATION.getCode()).eq("is_deleted", false));
         if(nameEntity != null){
             throw new ServiceException("仓位名称重复");
         }
@@ -767,7 +803,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         }
 
         WarehouseLocationEntity insertEntity = new WarehouseLocationEntity();
-        insertEntity.setType("location");
+        insertEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
         insertEntity.setCode(dto.getCode());
         insertEntity.setName(dto.getName());
         insertEntity.setWarehouseId(dto.getWarehouseId());
@@ -776,7 +812,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         insertEntity.setRemark(dto.getRemark());
         baseMapper.insert(insertEntity);
         WarehouseLocationEntity one = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
-                .eq("code", dto.getCode()).eq("type", "location"));
+                .eq("code", dto.getCode()).eq("type", WarehouseLocationTypeEnum.LOCATION.getCode()));
 
         WarehouseLocationEntity updateEntity = new WarehouseLocationEntity();
         updateEntity.setId(dto.getWarehouseAreaId());
@@ -789,13 +825,13 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Transactional(rollbackFor = Exception.class)
     @Override
     @CacheEvict(cacheNames = "cache:wms:listByWarehouseIds", allEntries = true)
-    public void update(WarehouseLocationDTO.updateDto dto) {
+    public void update(WarehouseLocationDTO.UpdateDto dto) {
         LoginUser user = UserContext.getNonLoginUser();
         if(dto.getCode().length() > 32){
             throw new ServiceException("仓位编码过长");
         }
         WarehouseLocationEntity codeEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
-                .eq("code", dto.getCode()).eq("type", "location").eq("is_deleted", false));
+                .eq("code", dto.getCode()).eq("type", WarehouseLocationTypeEnum.LOCATION.getCode()).eq("is_deleted", false));
         if(codeEntity != null && !codeEntity.getId().equals(dto.getId())){
             throw new ServiceException("仓位编码重复");
         }
@@ -804,7 +840,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             throw new ServiceException("仓位名称过长");
         }
         WarehouseLocationEntity nameEntity = baseMapper.selectOne(new QueryWrapper<WarehouseLocationEntity>().eq("warehouse_id", dto.getWarehouseId())
-                .eq("name", dto.getName()).eq("type", "location").eq("is_deleted", false));
+                .eq("name", dto.getName()).eq("type", WarehouseLocationTypeEnum.LOCATION.getCode()).eq("is_deleted", false));
         if(nameEntity != null && !nameEntity.getId().equals(dto.getId())){
             throw new ServiceException("仓位名称重复");
         }
@@ -831,21 +867,23 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         generateLog(user, one, newEntity);
     }
 
-    private void existCode(String code, String id, String type) {
+    private void existCode(String code, String id, String type, String warehouseId) {
         int count = count(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getCode, code)
                 .eq(WarehouseLocationEntity::getType, type)
-                .ne(StringUtils.isNotBlank(id), WarehouseLocationEntity::getId, id));
+                .eq(WarehouseLocationEntity::getWarehouseId,warehouseId)
+                .ne(CharSequenceUtil.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "编码", code);
         }
     }
 
-    private void existName(String name, String id , String type) {
+    private void existName(String name, String id , String type, String warehouseId) {
         int count = count(Wrappers.<WarehouseLocationEntity>lambdaQuery()
                 .eq(WarehouseLocationEntity::getName, name)
                 .eq(WarehouseLocationEntity::getType, type)
-                .ne(StringUtils.isNotBlank(id), WarehouseLocationEntity::getId, id));
+                .eq(WarehouseLocationEntity::getWarehouseId, warehouseId)
+                .ne(CharSequenceUtil.isNotBlank(id), WarehouseLocationEntity::getId, id));
         if (count > 0) {
             throw new ServiceException(ApiError.WAREHOUSE_AREA_EXIST, "名称", name);
         }
@@ -857,22 +895,22 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
-    public List<WarehouseLocationDTO.tabDto> tabList() {
-        List<WarehouseLocationDTO.tabDto> list = new ArrayList<>(4);
+    public List<WarehouseLocationDTO.TabDto> tabList() {
+        List<WarehouseLocationDTO.TabDto> list = new ArrayList<>(4);
         Integer occupiedCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.OCCUPIED.getCode());
-        WarehouseLocationDTO.tabDto occupied = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.OCCUPIED.getCode(), occupiedCount);
+        WarehouseLocationDTO.TabDto occupied = new WarehouseLocationDTO.TabDto(WarehouseLocationStatusEnum.OCCUPIED.getCode(), occupiedCount);
         list.add(occupied);
 
         Integer recyclableCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.RECYCLABLE.getCode());
-        WarehouseLocationDTO.tabDto recyclable = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.RECYCLABLE.getCode(), recyclableCount);
+        WarehouseLocationDTO.TabDto recyclable = new WarehouseLocationDTO.TabDto(WarehouseLocationStatusEnum.RECYCLABLE.getCode(), recyclableCount);
         list.add(recyclable);
 
         Integer idleCount = warehouseLocationMapper.countByStatus(WarehouseLocationStatusEnum.IDLE.getCode());
-        WarehouseLocationDTO.tabDto idle = new WarehouseLocationDTO.tabDto(WarehouseLocationStatusEnum.IDLE.getCode(), idleCount);
+        WarehouseLocationDTO.TabDto idle = new WarehouseLocationDTO.TabDto(WarehouseLocationStatusEnum.IDLE.getCode(), idleCount);
         list.add(idle);
 
         Integer allCount = warehouseLocationMapper.countByStatus(null);
-        WarehouseLocationDTO.tabDto all = new WarehouseLocationDTO.tabDto("all", allCount);
+        WarehouseLocationDTO.TabDto all = new WarehouseLocationDTO.TabDto("all", allCount);
         list.add(all);
 
         return list;
@@ -892,7 +930,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -929,7 +967,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public List<WarehouseLocationEntity> listByLocationName(String warehouseLocationName) {
         return this.baseMapper.selectList(new QueryWrapper<WarehouseLocationEntity>()
-                .eq("type", "location")
+                .eq("type", WarehouseLocationTypeEnum.LOCATION.getCode())
                 .eq("name", warehouseLocationName)
                 .eq("is_deleted", false));
     }
@@ -964,18 +1002,18 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         );
         List<WarehouseLocationDTO.ReplenishAreaDTO> replenishAreaDTOList = new ArrayList<>(ids.size());
         for (String warehouseId : ids) {
-            List<WarehouseLocationEntity> areaList = entityList.stream().filter(item -> item.getWarehouseId().equals(warehouseId) && item.getType().equals("area")).collect(Collectors.toList());
+            List<WarehouseLocationEntity> areaList = entityList.stream().filter(item -> item.getWarehouseId().equals(warehouseId) && "area".equals(item.getType())).collect(Collectors.toList());
             List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> stockingAreaDTOList = new ArrayList<>();
             List<WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO> pickingAreaDTOList = new ArrayList<>();
             for (WarehouseLocationEntity areaEntity : areaList) {
-                if(! StringUtils.isNotBlank(areaEntity.getAreaType())){
+                if(! CharSequenceUtil.isNotBlank(areaEntity.getAreaType())){
                     continue;
                 }
-                if(areaEntity.getAreaType().equals("stockingArea")){
+                if("stockingArea".equals(areaEntity.getAreaType())){
                     WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO areaDTO = new WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO(areaEntity.getCode(), areaEntity.getName());
                     stockingAreaDTOList.add(areaDTO);
                 }
-                if(areaEntity.getAreaType().equals("pickingArea")){
+                if("pickingArea".equals(areaEntity.getAreaType())){
                     WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO areaDTO = new WarehouseLocationDTO.ReplenishAreaDTO.WarehouseAreaDTO(areaEntity.getCode(), areaEntity.getName());
                     pickingAreaDTOList.add(areaDTO);
                 }
@@ -1002,5 +1040,14 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     @Override
     public List<WarehouseLocationDTO.MappingDTO> listArea2LocationMapping(String warehouseId) {
         return warehouseLocationMapper.listArea2LocationMapping(warehouseId);
+    }
+
+
+    @Override
+    public WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo){
+        if(CharSequenceUtil.isBlank(warehouseId)||CharSequenceUtil.isBlank(skuNo)){
+            return null;
+        }
+        return warehouseLocationMapper.getOneWareInventoryQty(warehouseId,skuNo);
     }
 }

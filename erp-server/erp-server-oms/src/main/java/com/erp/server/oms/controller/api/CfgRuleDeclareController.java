@@ -1,11 +1,7 @@
 package com.erp.server.oms.controller.api;
-
-
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.UpdateStateDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -33,7 +29,7 @@ import javax.annotation.Resource;
 public class CfgRuleDeclareController extends BaseController {
 
     @Resource
-    private CfgRuleDeclareService CfgRuleDeclareService;
+    private CfgRuleDeclareService cfgRuleDeclareService;
 
     /**
     * 新增
@@ -45,7 +41,7 @@ public class CfgRuleDeclareController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "申报规则表新增")
     public ApiResult<String> add(@RequestBody @Validated CfgRuleDeclareDTO.AddDTO dto) {
-        return success(CfgRuleDeclareService.add(dto));
+        return success(cfgRuleDeclareService.add(dto));
     }
 
     /**
@@ -57,8 +53,8 @@ public class CfgRuleDeclareController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "申报规则表修改")
-    public ApiResult<?> update(@RequestBody @Validated CfgRuleDeclareDTO.UpdateDTO dto) {
-        CfgRuleDeclareService.update(dto);
+    public ApiResult<Object> update(@RequestBody @Validated CfgRuleDeclareDTO.UpdateDTO dto) {
+        cfgRuleDeclareService.update(dto);
         return success();
     }
 
@@ -73,7 +69,7 @@ public class CfgRuleDeclareController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery
     public ApiResult<PagingVO<CfgRuleDeclareDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CfgRuleDeclareDTO.PagingParamDTO> dto) {
-        PagingVO<CfgRuleDeclareDTO.PagingViewDTO> pagingVO = CfgRuleDeclareService.paging(dto);
+        PagingVO<CfgRuleDeclareDTO.PagingViewDTO> pagingVO = cfgRuleDeclareService.paging(dto);
         return success(pagingVO);
     }
     /**
@@ -86,7 +82,7 @@ public class CfgRuleDeclareController extends BaseController {
      */
     @GetMapping("/view")
     public ApiResult<CfgRuleDeclareDTO.ViewDTO> view(@RequestParam("id") String id) {
-        CfgRuleDeclareDTO.ViewDTO viewDTO = CfgRuleDeclareService.view(id);
+        CfgRuleDeclareDTO.ViewDTO viewDTO = cfgRuleDeclareService.view(id);
         return success(viewDTO);
     }
 
@@ -99,8 +95,8 @@ public class CfgRuleDeclareController extends BaseController {
      * @date 2023-08-30 14:13
      */
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
-        Boolean result = CfgRuleDeclareService.updateStatus(dto);
-        return result ? success() : failure();
+    public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+        Boolean result = cfgRuleDeclareService.updateStatus(dto);
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 }

@@ -56,4 +56,25 @@ public interface ThirdWarehouseService {
      * 出库取消接口 ThirdWarehouseCancelResultEnum
      */
     ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq, String authId);
+
+    /**
+     * 运费试算
+     */
+    ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq, String authId);
+
+    /**
+     * 上传文件
+     * @param uploadFileReq
+     * @param authId
+     * @return
+     */
+    ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(ThirdWarehouseUploadFileReq uploadFileReq, String authId);
+
+    /**
+     * 上传面单
+     * @param uploadFileReq
+     * @param authId
+     * @return
+     */
+    ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadFileReq, String authId);
 }

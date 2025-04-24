@@ -1,7 +1,6 @@
 package com.erp.rpc.dmp.feign;
 
 
-import com.common.business.dto.PlatformOrderDTO;
 import com.erp.model.dmp.DmpPullOtherOutStockDTO;
 import com.erp.model.dmp.dto.DmpPullSoOutStockDTO;
 import com.erp.model.dmp.dto.MongoDBUpdateDTO;
@@ -10,6 +9,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
 
 /**
  * DMP远程调用mongodb

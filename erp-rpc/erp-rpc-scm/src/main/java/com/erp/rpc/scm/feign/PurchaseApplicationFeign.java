@@ -1,5 +1,6 @@
 package com.erp.rpc.scm.feign;
 
+import com.common.business.config.FeignErrorDecoder;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
@@ -17,7 +18,7 @@ import java.util.List;
  * @date 2024-08-28
  * @author tanmujin
  */
-@FeignClient(name = "erp-scm", contextId = "purchaseApplication")
+@FeignClient(name = "erp-scm", contextId = "purchaseApplication",configuration = {FeignErrorDecoder.class})
 @RequestMapping("/feign/purchaseApplication")
 public interface PurchaseApplicationFeign {
 

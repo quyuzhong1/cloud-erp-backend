@@ -1,14 +1,14 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -136,7 +136,7 @@ public class SoB2cDeliveryInterceptEntity extends BaseEntity<SoB2cDeliveryInterc
     @TableField("delivery_id")
     private String deliveryId;
 
-    public static final String CODE = "code";
+    
 
     public static final String SOURCE_ID = "source_id";
 
@@ -162,7 +162,7 @@ public class SoB2cDeliveryInterceptEntity extends BaseEntity<SoB2cDeliveryInterc
 
     public static final String TRANSPORT_NO = "transport_no";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String HANDLE_USER_ID = "handle_user_id";
 

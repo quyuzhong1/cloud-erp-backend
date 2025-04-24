@@ -1,5 +1,5 @@
 package com.common.business.dto.base;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.enums.OperationTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -40,7 +40,7 @@ public class BatchResultDTO implements Serializable {
             return new BatchResultDTO(id, code, "", Boolean.TRUE);
         }
         code = null == code ? "" : code;
-        return new BatchResultDTO(id, code, StrUtil.format("{}_{}",operationType.getName(),"成功"), Boolean.TRUE);
+        return new BatchResultDTO(id, code, CharSequenceUtil.format("{}_{}",operationType.getName(),"成功"), Boolean.TRUE);
     }
 
     public static BatchResultDTO success(String id, String code) {
@@ -60,7 +60,7 @@ public class BatchResultDTO implements Serializable {
             return new BatchResultDTO(id, code, "", Boolean.FALSE);
         }
         code = null == code ? "" : code;
-        return new BatchResultDTO(id, code, StrUtil.format("{}_{}",operationType.getName(),"失败"), Boolean.FALSE);
+        return new BatchResultDTO(id, code, CharSequenceUtil.format("{}_{}",operationType.getName(),"失败"), Boolean.FALSE);
     }
 
     public static BatchResultDTO fail(String id, String code, String msg) {

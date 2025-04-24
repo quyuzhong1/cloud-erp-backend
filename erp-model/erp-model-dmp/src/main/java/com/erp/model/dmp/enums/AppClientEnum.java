@@ -6,7 +6,6 @@ import lombok.Getter;
 /**
  * @author Lambda
  * @Classname AppClientEnum
- * @Description TODO
  * @Date 2023-08-29 10:35
  * @Created by yl
  */
@@ -26,9 +25,13 @@ public enum AppClientEnum  {
     AMAZON_ACCESS_TOKEN("amazonAccessToken","sales","Amazon"),
     MERCADO_AUTHORIZE("mercadoAuthorize","sales","mercadolibre"),
     MERCADO_ACCESS_TOKEN("mercadoAccessToken","sales","mercadolibre"),
+    MERCADO_LOCAL_AUTHORIZE("mercadoLocalAuthorize","sales","mercadolibreLocal"),
+    MERCADO_LOCAL_ACCESS_TOKEN("mercadoLocalAccessToken","sales","mercadolibreLocal"),
     TIKTOK_AUTHORIZE("tikTokAuthorize","sales","TikTok"),
     TIKTOK_ACCESS_TOKEN("tikTokAccessToken","sales","TikTok"),
 
+    TIKTOK_FULLY_AUTHORIZE("tikTokAuthorize","sales","TikTokFully"),
+    TIKTOK_FULLY_ACCESS_TOKEN("tikTokAccessToken","sales","TikTokFully"),
 
     // 物流平台
     TRACK123_AUTHORIZE("track123Authorize","logistics","TRACK123"),

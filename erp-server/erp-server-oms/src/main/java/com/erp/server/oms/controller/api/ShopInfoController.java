@@ -1,12 +1,10 @@
 package com.erp.server.oms.controller.api;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -18,7 +16,7 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.oms.dto.ShopDTO.ShopBatchUpdateDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.server.oms.query.ShopQueryHandler;
@@ -27,7 +25,6 @@ import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -35,7 +32,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -221,40 +217,48 @@ public class ShopInfoController extends BaseController {
      * @date 2023-08-22 14:37
      */
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+    public ApiResult updateStatus(@RequestBody @Validated ShopBatchUpdateDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         Boolean disabled = dto.getDisabled();
         for (String id : ids) {
             BatchResultDTO submit;
-            String flagCode = id;
-            try {
-                ShopInfoEntity shop = shopInfoService.getById(id);
-                if (Objects.isNull(shop)) {
-                    submit = BatchResultDTO.fail(id, id, "店铺不存在");
-                } else {
-                    //仓库下绑定第三方店铺不能修改为禁用状态
-                    if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
-                        Boolean flag = checkDmpThirdMapping(id);
-                        if (!flag) {
-                            submit = BatchResultDTO.fail(id, shop.getName(), StrUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
-                        }else{
+            if(!disabled && dto.getEnableTime() == null) {
+            	submit = BatchResultDTO.fail(id, id, "修改状态为启用，启用时间必填");
+            }else {
+            	String flagCode = id;
+                try {
+                    ShopInfoEntity shop = shopInfoService.getById(id);
+                    if (Objects.isNull(shop)) {
+                        submit = BatchResultDTO.fail(id, id, "店铺不存在");
+                    } else {
+                    	if(!disabled) {
+                    		shop.setEnableTime(dto.getEnableTime());
+                    	}
+                        //仓库下绑定第三方店铺不能修改为禁用状态
+                        if (Objects.nonNull(disabled) && !Objects.equals(disabled, shop.getDisabled()) && Objects.equals(disabled, true)) {
+                            Boolean flag = checkDmpThirdMapping(id);
+                            if (!flag) {
+                                submit = BatchResultDTO.fail(id, shop.getName(), CharSequenceUtil.format(ApiError.EXIST_THIRD_SHOP_MAPPING.msg,shop.getName()));
+                            }else{
+                                flagCode = shop.getName();
+                                submit = shopInfoService.updateStatus(shop, disabled);
+                            }
+                        }else {
                             flagCode = shop.getName();
                             submit = shopInfoService.updateStatus(shop, disabled);
                         }
-                    }else {
-                        flagCode = shop.getName();
-                        submit = shopInfoService.updateStatus(shop, disabled);
                     }
+                } catch (Exception e) {
+                    log.error("店铺更改状态失败>>>>{}", e);
+                    submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
                 }
-            } catch (Exception e) {
-                log.error("店铺更改状态失败>>>>{}", e);
-                submit = BatchResultDTO.fail(id, flagCode, e.getMessage());
             }
             resultDTOS.add(submit);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
     /**
      * 店铺批量费用设置
@@ -482,10 +486,52 @@ public class ShopInfoController extends BaseController {
         return null != shopInfoEntity ? success() : failure();
     }
 
+    /**
+     * 区域远程分页下拉查询
+     * @author will
+     * @date 2024/8/28 16:50
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/pagingSelectArea")
+    public ApiResult<PagingVO<ShopDTO.AreaDTO>> pagingSelectArea(@RequestBody PagingDTO<ShopDTO.AreaParamDTO> dto) {
+        PagingVO<ShopDTO.AreaDTO> pagingVO = shopInfoService.pagingSelectArea(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 店铺下拉查询
+     * @author will
+     * @date 2024/8/28 16:50
+     * @param dto
+     * @return ApiResult<PagingVO<ListDTO>>
+     */
+    @PostMapping("/listSelect")
+    public ApiResult<List<ShopDTO.ListDTO>> listSelect(@RequestBody ShopDTO.SelectDTO dto) {
+        List<ShopDTO.ListDTO> list = shopInfoService.listSelect(dto);
+        return success(list);
+    }
+
+
+
+
     private Boolean checkDmpThirdMapping(String shopId) {
         ThirdMappingDTO.ViewParamDTO viewParamDTO=new ThirdMappingDTO.ViewParamDTO();
         viewParamDTO.setType(ThirdSysTypeEnum.SHOP.getCode());
         viewParamDTO.setSysId(shopId);
         return dmpThirdMappingFeign.getWhetherBind(viewParamDTO);
+    }
+
+    /**
+     * 获取已授权店铺 (多平台)
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author Will
+     * @date: 2023/10/18 10:00
+     */
+    @PostMapping("/listAuthPlatform")
+    public ApiResult<List<ShopInfoEntity>> listAuthPlatform(@RequestBody List<String> platformDTO) {
+        List<ShopInfoEntity> list = shopInfoService.listAuthPlatform(platformDTO);
+        return success(list);
     }
 }

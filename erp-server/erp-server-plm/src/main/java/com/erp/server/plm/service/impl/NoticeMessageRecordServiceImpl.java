@@ -7,9 +7,9 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
 import com.erp.model.plm.entity.NoticeMessageRecordEntity;
 import com.erp.server.plm.mapper.NoticeMessageRecordMapper;
 import com.erp.server.plm.service.CommonService;
@@ -17,8 +17,6 @@ import com.erp.server.plm.service.NoticeMessageRecordService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  *
@@ -31,7 +29,7 @@ public class NoticeMessageRecordServiceImpl extends ServiceImpl<NoticeMessageRec
     private CommonService commonService;
 
     @Override
-    public PagingVO<List<NoticeMessageRecordEntity>> paging(PagingDTO<BaseSearchDTO> dto) {
+    public PagingVO<NoticeMessageRecordEntity> paging(PagingDTO<BaseSearchDTO> dto) {
 
         BaseSearchDTO params = dto.getParams();
         String fsUnionId = params.getFlagId();
@@ -40,9 +38,9 @@ public class NoticeMessageRecordServiceImpl extends ServiceImpl<NoticeMessageRec
         }
         String userId = commonService.getUidByUnionId(ThirdConstants.FS_PLATFORM, fsUnionId);
         params.setFlagId(userId);
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage pageData = baseMapper.paging(query, params);
-        return new PagingVO(pageData);
+        Page<BaseSearchDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<NoticeMessageRecordEntity> pageData = baseMapper.paging(query, params);
+        return new PagingVO<>(pageData);
     }
 }
 

@@ -10,7 +10,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -341,4 +340,36 @@ public class DmpPushTaskDTO implements Serializable {
     }
 
 
+    /**
+     * 推送信息
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SyncInfoDTO  {
+
+        /**
+         * 目标平台名称
+         */
+        private String targetPlatformName;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+
+        /**
+         * 推送状态
+         */
+        private String status;
+
+        /**
+         * 失败说明
+         */
+        private String returnMsg;
+
+        /**
+         * 最后推送时间
+         */
+        private String lastSyncTime;
+    }
 }

@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import com.alibaba.excel.EasyExcel;
+import static com.alibaba.excel.EasyExcel.read;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -62,14 +62,14 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
 
     @Override
     public PagingVO<DmpRefundInfoDTO> paging(PagingDTO<DmpRefundInfoSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         DmpRefundInfoSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpRefundInfoDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             pageData.getRecords().forEach(obj -> obj.setRefundStatusName(RefundStatusEnum.getName(obj.getRefundStatus())));
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
@@ -84,7 +84,6 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
         List<DmpRefundInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpRefundInfoExcelDTO.class, list);
         String fileName = biOrderInfoService.getFileName("退款数据导出");
         ExcelUtil.export(fileName, "退款数据导出", excelList, DmpRefundInfoExcelDTO.class, response);
-        return;
     }
 
     @Override
@@ -100,12 +99,12 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
         //系统中已存在的退款订单
         List<BiRefundInfoEntity> refundList = this.list();
 
-        DmpRefundInfoExcelListener excelListenerUtil = new DmpRefundInfoExcelListener(importType,refundList, biOrderInfoService, biRefundInfoService, biShopInfoService, biRefundItemService,plmTaskFeign);
+        DmpRefundInfoExcelListener excelListenerUtil = new DmpRefundInfoExcelListener(refundList, biOrderInfoService, biRefundInfoService, biShopInfoService, biRefundItemService,plmTaskFeign);
         try {
-            EasyExcel.read(excelFile.getInputStream(), DmpRefundInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            read(excelFile.getInputStream(), DmpRefundInfoImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             List<DmpRefundInfoImportExcelDTO> list = excelListenerUtil.getDateList();
-            if (list.size() > 0) {
-                StringBuffer sb = new StringBuffer();
+            if (!list.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/dmpRefundInfo.xlsx";
                 String name = "dmpRefundInfo";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -115,7 +114,7 @@ public class BiRefundInfoServiceImpl extends ServiceImpl<BiRefundInfoMapper, BiR
                 return false;
             }
         } catch (IOException e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         return  true;
     }

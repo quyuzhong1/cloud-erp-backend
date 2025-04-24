@@ -20,7 +20,6 @@ import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -36,9 +35,9 @@ import java.util.Objects;
 @Component
 public class AliExpressShipperService {
     private void validate(String appKey,String appSecret,String token,String url){
-        if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
+        if (StringUtils.isBlank(appKey) || StringUtils.isBlank(appSecret) || StringUtils.isBlank(token) ) throw new ServiceException("授权信息不能为空");
     }
-    public ChannelResult getChanelList(Map<String, String> authMap) throws ApiException, InterruptedException {
+    public ChannelResult getChanelList(Map<String, String> authMap) throws ApiException {
         String appKey = authMap.get("clientId");
         String appSecret = authMap.get("clientSecret");
         String token = authMap.get("token");

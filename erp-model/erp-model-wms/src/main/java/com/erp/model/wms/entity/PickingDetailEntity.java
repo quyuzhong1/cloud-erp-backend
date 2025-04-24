@@ -34,6 +34,11 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
      */
     @TableField("sku_no")
     private String skuNo;
+    /**
+     * platformSkuNo
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
 
     /**
      * 数量
@@ -53,6 +58,11 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     @TableField("warehouse_location")
     private String warehouseLocation;
 
+    /**
+     * 变更前库位
+     */
+    @TableField("origin_warehouse_location")
+    private String originWarehouseLocation;
 
     /**
      * 来源明细id
@@ -84,14 +94,24 @@ public class PickingDetailEntity extends BaseEntity<PickingDetailEntity> {
     @TableField("is_out_stock")
     private Boolean isOutStock;
 
+    /**
+     * 实际拣货数量
+     */
+    @TableField("actual_qty")
+    private Integer actualQty;
+
+    @TableField(exist = false)
+    private Integer changeBeforeQty;
+
+    /**
+     * 变更类型
+     */
+    @TableField(exist = false)
+    private String changeType;
 
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
-
-    public static final String QTY = "qty";
-
-    public static final String UNIT = "unit";
 
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 

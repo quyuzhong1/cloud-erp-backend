@@ -1,14 +1,15 @@
 package com.erp.server.wms.kingdee.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -21,6 +22,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.BiDeliveryDetailInfoEntity;
 import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
@@ -32,11 +34,16 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.KingdeeDepartmentEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.*;
@@ -67,6 +74,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -138,7 +146,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SoOutstockEntity entity, String operate) {
         //生成任务
-        return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncB2cDataToKingdee(entity, operate));
+    	}
     }
 
 
@@ -155,8 +167,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncB2cDataToKingdee(SoOutstockEntity entity, String operate) {
-        //生成任务
-        return saveTask(entity, operate, this.newSyncB2cDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncB2cDataToKingdee(entity, operate));
+    	}
     }
 
 
@@ -174,7 +189,11 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncWdtDataToKingdee(SoOutstockEntity entity, String operate) {
         //生成任务
-        return saveTask(entity, operate, this.newSyncWdtDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncB2cDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -186,32 +205,32 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
      * @date: 2023/10/16 9:17
      */
     private DmpPushTaskEntity saveTask(SoOutstockEntity entity, String operate, Map<String, Object> resultMap) {
-    	SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
+        SettingEnum settingEnum = SettingEnum.NEW_DMP_PUSH_SWTICH_LIST;
         List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
-        		.eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_OUTSTOCK.getCode())
-        		.eq(CfgSettingEntity::getType, settingEnum.getType())
-        		.eq(CfgSettingEntity::getValue, "1")
-        		.list();
-        if(CollUtil.isEmpty(list)) {
-	    	//添加推送任务
-	        DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
-	        dmpSyncTaskDTO.setSourceId(entity.getId());
-	        dmpSyncTaskDTO.setSourceCode(entity.getCode());
-	        dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
-	        dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
-	        dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName());
-	        dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
-	        dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
-	        dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
-	        dmpSyncTaskDTO.setSyncOperate(operate);
-	        // B2C订单不推送到金蝶
-	        if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
-	            dmpSyncTaskDTO.setParentId("");
-	        } else {
-	            dmpSyncTaskDTO.setParentId(entity.getSoId());
-	        }
-            log.info("2.销售出库单增加旺店通的物流渠道名称："+ JSONUtil.toJsonStr(dmpSyncTaskDTO));
-	        return dmpMqFeign.saveTask(dmpSyncTaskDTO);
+                .eq(CfgSettingEntity::getKey, SourceTypeEnum.SO_OUTSTOCK.getCode())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .eq(CfgSettingEntity::getValue, "1")
+                .list();
+        if (CollUtil.isEmpty(list)) {
+            //添加推送任务
+            DmpPushTaskFeignDTO dmpSyncTaskDTO = new DmpPushTaskFeignDTO();
+            dmpSyncTaskDTO.setSourceId(entity.getId());
+            dmpSyncTaskDTO.setSourceCode(entity.getCode());
+            dmpSyncTaskDTO.setSourceType(SourceTypeEnum.SO_OUTSTOCK.getCode());
+            dmpSyncTaskDTO.setMqTopic(RocketMqTopic.SYNC_KINGDEE_ERP_TOPIC);
+            dmpSyncTaskDTO.setMqTag(RocketMqTagEnum.KINGDEE_SO_OUTSTOCK_TAG.getName());
+            dmpSyncTaskDTO.setMqData(JSONUtil.toJsonStr(resultMap));
+            dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
+            dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
+            dmpSyncTaskDTO.setSyncOperate(operate);
+            // B2C订单不推送到金蝶
+            if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
+                dmpSyncTaskDTO.setParentId("");
+            } else {
+                dmpSyncTaskDTO.setParentId(entity.getSoId());
+            }
+            log.info("2.销售出库单增加旺店通的物流渠道名称：" + JSONUtil.toJsonStr(dmpSyncTaskDTO));
+            return dmpMqFeign.saveTask(dmpSyncTaskDTO);
         }
 
         WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
@@ -222,9 +241,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
         if (!OrderTypeEnum.B2C.getCode().equalsIgnoreCase(entity.getOrderType())) {
-        	wmsPushMsgEntity.setParentId(entity.getSoId());
-	    }
-        log.info("2.销售出库单增加旺店通的物流渠道名称："+ JSONUtil.toJsonStr(wmsPushMsgEntity));
+            wmsPushMsgEntity.setParentId(entity.getSoId());
+        }
+        log.info("2.销售出库单增加旺店通的物流渠道名称：" + JSONUtil.toJsonStr(wmsPushMsgEntity));
         wmsPushMsgService.save(wmsPushMsgEntity);
 
         return null;
@@ -324,7 +343,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
 
                 //详情
                 List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainId(soInfoEntity.getId());
-                if (CollectionUtil.isNotEmpty(soDetailEntities)) {
+                if (CollUtil.isNotEmpty(soDetailEntities)) {
                     SoDetailEntity detailEntity = soDetailEntities.stream().filter(soDetailEntity -> Objects.nonNull(soDetailEntity.getExchangeRate())).findFirst().orElse(null);
                     if (Objects.nonNull(detailEntity) && Objects.nonNull(detailEntity.getExchangeRate())) {
                         exchangeRate = detailEntity.getExchangeRate();
@@ -332,27 +351,20 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                         exchangeRate = BigDecimal.ONE;
                     }
                     entity.setCurrencyRate(exchangeRate);
-
-                    //TODO 暂时设置为0等tms接通后补充
-                    //先计算运费收入（原币）
-//                if (Optional.ofNullable(soInfoEntity.getIsCollectShippingFee()).isPresent()) {
-//                    //运费收入（本位币）
-//                    entity.setShippingFee(soInfoEntity.getShippingFee().multiply(exchangeRate));
-//                } else {
                     //运费收入（本位币）
                     entity.setShippingFee(BigDecimal.ZERO);
-//                }
-
-                    BigDecimal itemTotalCost = BigDecimal.ZERO;
-                    BigDecimal orderTotalCost = BigDecimal.ZERO;
+                    AtomicReference<BigDecimal> itemTotalCost = new AtomicReference<>(BigDecimal.ZERO);
+                    AtomicReference<BigDecimal> orderTotalCost = new AtomicReference<>(BigDecimal.ZERO);
                     soDetailEntities.stream().forEach(
                             soDetailEntity -> {
-                                itemTotalCost.add(Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO));
-                                orderTotalCost.add(Optional.ofNullable(soDetailEntity.getAmount()).orElse(BigDecimal.ZERO));
+                                BigDecimal saleCost = Optional.ofNullable(soDetailEntity.getSaleCost()).orElse(BigDecimal.ZERO);
+                                itemTotalCost.set(MathUtil.add(saleCost, itemTotalCost.get()));
+                                BigDecimal amount = Optional.ofNullable(soDetailEntity.getAmount()).orElse(BigDecimal.ZERO);
+                                orderTotalCost.set(MathUtil.add(amount, orderTotalCost.get()));
                             }
                     );
-                    entity.setItemTotalCost(itemTotalCost);
-                    entity.setOrderTotalCost(orderTotalCost);
+                    entity.setItemTotalCost(itemTotalCost.get());
+                    entity.setOrderTotalCost(orderTotalCost.get());
                 }
             }
         } else if (OrderTypeEnum.B2C.getCode().equalsIgnoreCase(soOutstockEntity.getOrderType())) {
@@ -372,16 +384,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                     remark = view.getRemark();
 
                     List<SoB2cDetailDTO.ViewDTO> detailList = view.getDetailList();
-                BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-                entity.setItemTotalCost(itemTotalCost);
-                entity.setOrderTotalCost(view.getAmount());
-                entity.setShopName(view.getShopName());
-                entity.setShopNo(view.getShopId());
-                entity.setCustomerName(view.getReceiverDTO().getReceiverName());
+                    BigDecimal itemTotalCost = detailList.stream().map(req -> req.getAmount()).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                    entity.setItemTotalCost(itemTotalCost);
+                    entity.setOrderTotalCost(view.getAmount());
+                    entity.setShopName(view.getShopName());
+                    entity.setShopNo(view.getShopId());
+                    entity.setCustomerName(view.getReceiverDTO().getReceiverName());
 
+                }
             }
         }
-            }
 
 
         entity.setOrderNo(soCode);
@@ -401,16 +413,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (StringUtils.isNotEmpty(soOutstockEntity.getSalesDeptId())) {
 
             List<SysDepartmentEntity> dept = sysUserFeign.listDeptByIds(Collections.singletonList(soOutstockEntity.getSalesDeptId()));
-            if (CollectionUtil.isNotEmpty(dept)) {
+            if (CollUtil.isNotEmpty(dept)) {
                 entity.setSaleDeptName(dept.get(0).getName());
             }
         }
 
         //获取销售出库单详情
-        List<SoOutstockDetailEntity> details = soOutstockDetailService.listByMainIds(Arrays.asList(soOutstockEntity.getId()));
+        List<SoOutstockDetailEntity> details = soOutstockDetailService.listByMainIds(Collections.singletonList(soOutstockEntity.getId()));
 
         //明细字段转换
-        if (CollectionUtil.isEmpty(details)) {
+        if (CollUtil.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
         //订单明细
@@ -426,16 +438,17 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         List<SoDetailEntity> soDetailEntities = soInfoFeign.listSoDetailByMainIds(soDetailIds);
 
         List<String> skuIdList = details.stream().map(SoOutstockDetailEntity::getSkuId).collect(Collectors.toList());
-        Map<String, ProductDetailEntity> idProductDetailMap = FeignQuery.getByIds(ProductDetailEntity.class , skuIdList)
-        		.stream().collect(Collectors.toMap(ProductDetailEntity::getId, c -> c));
+        Map<String, ProductDetailEntity> idProductDetailMap = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList)
+                .stream().collect(Collectors.toMap(ProductDetailEntity::getId, c -> c));
         details.forEach(soOutstockDetailEntity -> {
             BiDeliveryDetailItemEntity dmpOrderItemEntity = SoOutstockConverter.INSTANCE.soOutstockToDmpDeliveryItem(soOutstockDetailEntity);
             dmpOrderItemEntity.setDeliveryDetailId(entity.getId());
             dmpOrderItemEntity.setSaleOrderNo(finalSoId);
             dmpOrderItemEntity.setPlatformOrderId(finalSoCode);
+            dmpOrderItemEntity.setStockName(soOutstockEntity.getWarehouseName());
             ProductDetailEntity productDetailEntity = idProductDetailMap.get(soOutstockDetailEntity.getSkuId());
             if (productDetailEntity != null) {
-				dmpOrderItemEntity.setItemName(productDetailEntity.getName());
+                dmpOrderItemEntity.setItemName(productDetailEntity.getName());
                 dmpOrderItemEntity.setItemId(productDetailEntity.getProductId());
                 dmpOrderItemEntity.setProductUnit(productDetailEntity.getUnitName());
                 dmpOrderItemEntity.setSpecifics(productDetailEntity.getVariantProperty());
@@ -445,7 +458,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 if (ObjectUtil.isNotEmpty(soB2cDetailEntity)) {
                     dmpOrderItemEntity.setCostPrice(soB2cDetailEntity.getAmount());
                     dmpOrderItemEntity.setSellPrice(soB2cDetailEntity.getPrice());
-                    dmpOrderItemEntity.setIsGift(soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0 ? 1 : 2);
+//                    dmpOrderItemEntity.setIsGift(soB2cDetailEntity.getAmount().compareTo(BigDecimal.ZERO) == 0 ? 1 : 2);
                     dmpOrderItemEntity.setAmount(soB2cDetailEntity.getAmount());
                 }
 
@@ -454,7 +467,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 if (ObjectUtil.isNotEmpty(soDetailEntity)) {
                     dmpOrderItemEntity.setCostPrice(soDetailEntity.getSaleCost());
                     dmpOrderItemEntity.setSellPrice(soDetailEntity.getPrice());
-                    dmpOrderItemEntity.setIsGift(soDetailEntity.getIsGift() ? 1 : 2);
+//                    dmpOrderItemEntity.setIsGift(soDetailEntity.getIsGift() ? 1 : 2);
                     dmpOrderItemEntity.setAmount(soDetailEntity.getAmount());
                 }
             }
@@ -466,9 +479,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     }
 
 
-	@Override
-	public Map<String, Object> newSyncDataToKingdee(SoOutstockEntity entity, String operate) {
-		Map<String, Object> resultMap = new HashMap<>();
+    @Override
+    public Map<String, Object> newSyncDataToKingdee(SoOutstockEntity entity, String operate) {
+        Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -483,29 +496,29 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         //获取销售出库单详情
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         //销售单信息
         SoInfoEntity soInfoById = soInfoFeign.getSoInfoById(entity.getSoId());
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = new ArrayList<>();
-        if (StringUtils.isNotBlank(soInfoById.getId())) {
-            soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soInfoById.getId()));
+        if (CharSequenceUtil.isNotBlank(soInfoById.getId())) {
+            soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soInfoById.getId()));
         }
 
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(soInfoById.getSalesOrgId(), entity.getWarehouseOrgId()));
         //客户信息
-        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
+        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Collections.singletonList(entity.getCustomerId()));
 
         //查询供应商信息
         SupplierEntity supplierEntity = null;
-        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getCarrierId())) {
             supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
         }
         //获取币别信息
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soInfoById.getCurrency()));
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(soInfoById.getCurrency()));
         //仓库
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Collections.singletonList(entity.getWarehouseId()));
 
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
@@ -527,25 +540,26 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("platformType", salesPlatformCode);
         }
 
-        //部门
-        if  (StringUtils.isNotBlank(soInfoById.getSalesDeptId())) {
-            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-            dto.setDeptId(entity.getSalesDeptId());
-            dto.setOrgId(entity.getSalesOrgId());
-            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
-            if (ObjectUtil.isNotEmpty(deptKingdee)) {
-                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
-            }
-        }
+//        //部门
+//        if (CharSequenceUtil.isNotBlank(soInfoById.getSalesDeptId())) {
+//            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+//            dto.setDeptId(entity.getSalesDeptId());
+//            dto.setOrgId(entity.getSalesOrgId());
+//            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+//            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+//                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+//            }
+//        }
 
         //销售员
         String sellerId = entity.getSellerId();
-
+        String salesDeptId = entity.getSalesDeptId();
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(soInfoById.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
@@ -553,11 +567,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
+                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
         //销售员
         String warehouseKeeperId = entity.getWarehouseKeeperId();
-        if(StringUtils.isNotBlank(warehouseKeeperId)){
+        if (CharSequenceUtil.isNotBlank(warehouseKeeperId)) {
             String warehouseOrgId = entity.getWarehouseOrgId();
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(warehouseOrgId);
@@ -572,7 +587,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         String billDate = soInfoById.getBillDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        String currency = StringUtils.isNotBlank(soInfoById.getCurrency()) ? soInfoById.getCurrency() : "CNY";
+        String currency = CharSequenceUtil.isNotBlank(soInfoById.getCurrency()) ? soInfoById.getCurrency() : "CNY";
         //汇率
         BigDecimal exchangeRate = dmpTaskFeign.getRate(billDate, currency);
         if (Objects.isNull(exchangeRate)) {
@@ -596,7 +611,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("carrierCode", supplierEntity.getCode());
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
-        resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
+        resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
+        //订单标签
+        resultMap.put("tradeLabel", entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soInfoById.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -619,7 +636,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //————————————————————物料信息——————————————————————
 
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getWarehouseId()));
 
         List<Map<String, Object>> fEntityList = new ArrayList<>();
         List<String> soKingdeeDetailIdList = soDetailEntitieList.stream().map(req -> req.getKingdeeDetailId()).collect(Collectors.toList());
@@ -653,7 +670,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 map.put("warehouseCode", warehouseCode);
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位
@@ -677,12 +694,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         resultMap.put("FEntity", fEntityList);
         return resultMap;
-	}
+    }
 
 
-	@Override
-	public Map<String, Object> newSyncWdtDataToKingdee(SoOutstockEntity entity, String operate) {
-		Map<String, Object> resultMap = new HashMap<>();
+    @Override
+    public Map<String, Object> newSyncWdtDataToKingdee(SoOutstockEntity entity, String operate) {
+        Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -696,27 +713,28 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             return resultMap;
         }
         //获取销售出库单详情
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         String sellerId = entity.getSellerId();
-        SysDepartmentUserNumberDTO deptUser = null;
-        String deptId = "";
-        if (StringUtils.isNotBlank(sellerId)) {
-            deptUser = sysUserFeign.getDeptByUserId(sellerId);
-        }
-        if (Objects.nonNull(deptUser)) {
-            deptId = deptUser.getDepartmentId();
-        }
+        String deptId = entity.getSalesDeptId();
+//        SysDepartmentUserNumberDTO deptUser = null;
+//        String deptId = "";
+//        if (CharSequenceUtil.isNotBlank(sellerId)) {
+//            deptUser = sysUserFeign.getDeptByUserId(sellerId);
+//        }
+//        if (Objects.nonNull(deptUser)) {
+//            deptId = deptUser.getDepartmentId();
+//        }
 
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getSalesOrgId(), entity.getWarehouseOrgId()));
         //客户信息
-        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
+        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Collections.singletonList(entity.getCustomerId()));
 
         //部门信息
-        SysDepartmentDTO dept =StringUtils.isNotBlank(deptId)? sysUserFeign.getUserDeptById(deptId):null;
+//        SysDepartmentEntity dept = CharSequenceUtil.isNotBlank(deptId) ? sysUserFeign.getUserDeptById(deptId) : null;
         //查询供应商信息
         SupplierEntity supplierEntity = null;
-        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getCarrierId())) {
             supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
         }
         //币别
@@ -746,25 +764,34 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //平台类型
             resultMap.put("platformType", salesPlatformCode);
         }
-        //销售部门
-        if (ObjectUtil.isNotEmpty(dept)) {
-            resultMap.put("salesDeptCode", dept.getCode());
-        }
+//        //部门
+//        if (CharSequenceUtil.isNotBlank(deptId)) {
+//            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+//            dto.setDeptId(entity.getSalesDeptId());
+//            dto.setOrgId(entity.getSalesOrgId());
+//            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+//            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+//                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+//            }
+//        }
+
         //销售组织
         String salesOrgId = entity.getSalesOrgId();
 
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(entity.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(deptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
-                resultMap.put("sellerCode", kingSellerInfo.getDeptCode());
+                resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
+                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
 
@@ -799,7 +826,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("carrierCode", supplierEntity.getCode());
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
-        resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
+        resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
+        //订单标签
+        resultMap.put("tradeLabel", entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
@@ -810,6 +839,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("salesOrgCode", salesOrgCode);
         }
 
+        //是否支持下推仓位
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getWarehouseId()));
 
         //————————————————————物料信息——————————————————————
         List<Map<String, Object>> fEntityList = new ArrayList<>();
@@ -840,11 +871,16 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                         .findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeWarehouseCode())).orElse(null);
                 map.put("warehouseCode", warehouseCode);
             }
-
-            map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            //是否下推仓位
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPush) {
+                //仓位
+                map.put("warehouseLocation", detailEntity.getWarehouseLocation());
+            }
             map.put("remark", detailEntity.getRemark());
             //销售订单金蝶id
-            map.put("soSyncKingdeeId",entity.getSyncKingdeeId());
+            map.put("soSyncKingdeeId", entity.getSyncKingdeeId());
             map.put("FSrcType", "SAL_SaleOrder");
             // 源单编号
             map.put("FSrcBillNo", entity.getSourceCode());
@@ -854,12 +890,12 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         resultMap.put("FEntity", fEntityList);
         return resultMap;
-	}
+    }
 
 
-	@Override
-	public Map<String, Object> newSyncB2cDataToKingdee(SoOutstockEntity entity, String operate) {
-		Map<String, Object> resultMap = new HashMap<>();
+    @Override
+    public Map<String, Object> newSyncB2cDataToKingdee(SoOutstockEntity entity, String operate) {
+        Map<String, Object> resultMap = new HashMap<>();
         //金蝶id
         resultMap.put("syncKingdeeId", entity.getSyncKingdeeId());
         //业务id
@@ -878,35 +914,36 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         if (Objects.isNull(soB2cEntity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_DETAIL_NOT_EXIST);
         }
-        List<SoB2cDetailEntity> soB2cDetailList = soB2cFeign.listDetailByMainIds(Arrays.asList(soId));
+        List<SoB2cDetailEntity> soB2cDetailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soId));
         //获取销售出库单详情
-        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Arrays.asList(entity.getId()));
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(Collections.singletonList(entity.getId()));
         String sellerId = entity.getSellerId();
-        SysDepartmentUserNumberDTO deptUser = null;
-        String deptId = "";
-        if (StringUtils.isNotBlank(sellerId)) {
-            deptUser = sysUserFeign.getDeptByUserId(sellerId);
-        }
-        if (Objects.nonNull(deptUser)) {
-            deptId = deptUser.getDepartmentId();
-        }
+        String deptId = entity.getSalesDeptId();
+//        SysDepartmentUserNumberDTO deptUser = null;
+//        String deptId = "";
+//        if (CharSequenceUtil.isNotBlank(sellerId)) {
+//            deptUser = sysUserFeign.getDeptByUserId(sellerId);
+//        }
+//        if (Objects.nonNull(deptUser)) {
+//            deptId = deptUser.getDepartmentId();
+//        }
 
         //组织信息
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(soB2cEntity.getOrgId(), entity.getWarehouseOrgId()));
         //客户信息
-        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
+        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Collections.singletonList(entity.getCustomerId()));
 
         //查询供应商信息
         SupplierEntity supplierEntity = null;
-        if (StringUtils.isNotBlank(entity.getCarrierId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getCarrierId())) {
             supplierEntity = scmTaskFeign.getSupplierById(entity.getCarrierId());
         }
         //获取币别信息
-        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Arrays.asList(soB2cEntity.getCurrency()));
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(Collections.singletonList(soB2cEntity.getCurrency()));
         //仓库
-        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Arrays.asList(entity.getWarehouseId()));
+        List<WarehouseEntity> warehouseList = warehouseService.listByIds(Collections.singletonList(entity.getWarehouseId()));
         //员工岗位
-        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Arrays.asList(entity.getWarehouseKeeperId()));
+        List<KingdeePostDTO.UserKingdeePostInfoDTO> userKingdeePostInfoList = sysUserFeign.listUserKingdeePostByUserIds(Collections.singletonList(entity.getWarehouseKeeperId()));
         //单据类型
         resultMap.put("orderType", entity.getOrderType());
         //单据日期
@@ -928,32 +965,34 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
 
         //部门
-        if  (StringUtils.isNotBlank(deptId)) {
-            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
-            dto.setDeptId(entity.getSalesDeptId());
-            dto.setOrgId(entity.getSalesOrgId());
-            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
-            if (ObjectUtil.isNotEmpty(deptKingdee)) {
-                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
-            }
-        }
+//        if (CharSequenceUtil.isNotBlank(deptId)) {
+//            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+//            dto.setDeptId(entity.getSalesDeptId());
+//            dto.setOrgId(entity.getSalesOrgId());
+//            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+//            if (ObjectUtil.isNotEmpty(deptKingdee)) {
+//                resultMap.put("salesDeptCode", deptKingdee.getKingdeeDeptCode());
+//            }
+//        }
         //销售组织
         String salesOrgId = soB2cEntity.getOrgId();
         //币别
-        String currency = StringUtils.isNotBlank(soB2cEntity.getCurrency()) ? soB2cEntity.getCurrency() : "CNY";
+        String currency = CharSequenceUtil.isNotBlank(soB2cEntity.getCurrency()) ? soB2cEntity.getCurrency() : "CNY";
 
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(soB2cEntity.getOrgId());
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(deptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
-                resultMap.put("sellerCode", kingSellerInfo.getDeptCode());
+                resultMap.put("sellerCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("seller", kingSellerInfo.getUserName());
+                resultMap.put("salesDeptCode", kingSellerInfo.getDeptCode());
             }
         }
 
@@ -988,15 +1027,15 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             resultMap.put("carrierCode", supplierEntity.getCode());
         }
         //2024.09.11 jack 同步物流渠道名称到金蝶销售出库单的物流渠道
-        resultMap.put("logisticsChannelName",entity.getLogisticsChannelName());
-
-
+        resultMap.put("logisticsChannelName", entity.getLogisticsChannelName());
+        //订单标签
+        resultMap.put("tradeLabel", entity.getTradeLabel());
         //————————————————————财务信息SubHeadEntity——————————————————————
         //结算币别
         CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(currency)).findFirst().orElse(new CurrencyDTO.ViewDTO());
         resultMap.put("currencyCode", viewDTO.getKingdeeCode());
         //结算组织
-        if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
+        if (CollectionUtils.isNotEmpty(accountingCompanyList) && Objects.isNull(resultMap.get("salesOrgCode"))) {
             String salesOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(salesOrgId)).map(BaseIdDTO.CodeDTO::getCode).findFirst().orElse(null);
             resultMap.put("salesOrgCode", salesOrgCode);
         }
@@ -1005,7 +1044,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         //————————————————————物料信息——————————————————————
 
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getWarehouseId()));
 
         List<Map<String, Object>> fEntityList = new ArrayList<>();
         for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
@@ -1037,7 +1076,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                 map.put("warehouseCode", warehouseCode);
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位
@@ -1045,8 +1084,8 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             }
             map.put("remark", detailEntity.getRemark());
             //销售订单金蝶id
-            String soSyncKingdeeId=Objects.nonNull(soB2cDetailEntity)? soB2cDetailEntity.getKingdeeDetailId():"";
-            map.put("soSyncKingdeeId",soSyncKingdeeId);
+            String soSyncKingdeeId = Objects.nonNull(soB2cDetailEntity) ? soB2cDetailEntity.getKingdeeDetailId() : "";
+            map.put("soSyncKingdeeId", soSyncKingdeeId);
             map.put("FSrcType", "SAL_SaleOrder");
             // 源单编号
             map.put("FSrcBillNo", soB2cEntity.getPlatformCode());
@@ -1056,5 +1095,359 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
         }
         resultMap.put("FEntity", fEntityList);
         return resultMap;
-	}
+    }
+
+
+    @Override
+    public Map<String, Object> syncDataToSdyFieldHandler(SoOutstockEntity entity,
+                                                         SoOutstockDetailEntity soOutstockDetailEntity,
+                                                         String operate,
+                                                         List<CurrencyDTO.ViewDTO> currencyList,
+                                                         List<ShopInfoEntity> shopInfoList,
+                                                         List<CustomerInfoEntity> customerInfoList,
+                                                         List<BaseIdDTO.CodeDTO> companyEntities,
+                                                         List<SkuVO> skuVOList,
+                                                         List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                                                         List<ProductDetailEntity> parentSkuList,
+                                                         List<SoB2cEntity> soB2cEntities,
+                                                         List<SoInfoEntity> soInfoEntities,
+                                                         List<SoB2cReceiverEntity> soB2cReceiverEntityList,
+                                                         List<DictBasicEntity> omsAllDictList,
+                                                         List<DictPartitionEntity> partitionEntityList,
+                                                         List<DictCountryEntity> countryEntityList,
+                                                         List<DictGlobalAreaEntity> dictGlobalEntityList,
+                                                         List<SysDepartmentEntity> deptList) {
+        DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        DateTimeFormatter localDate = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+
+        // 字典分组
+        Map<String, List<DictBasicEntity>> dictGroupMap = omsAllDictList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
+        // 销售平台
+        List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
+        // 数帝云子平台映射
+        List<DictBasicEntity> dictList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(), Collections.emptyList());
+        // 数帝云军区一级部门映射
+        List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
+        // 数帝云平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType(), Collections.emptyList());
+        // 对应客户信息
+        CustomerInfoEntity customerInfo = customerInfoList.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(null);
+
+        // 国家
+        String country = entity.getCountry();
+        // 军区
+        String partitionId = "";
+        // 当前数帝云平台二级部门映射
+        List<DictBasicEntity> sdyPlatformDeptEntityList = new LinkedList<>();
+
+        String transactionSubType = "";
+        String orderPlatformCode = entity.getSoCode();
+        if (OrderTypeEnum.B2C.getCode().equals(entity.getOrderType())) {
+            SoB2cEntity soB2cEntity = soB2cEntities.stream().filter(req -> req.getId().equals(entity.getSoId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soB2cEntity)) {
+                transactionSubType = OrderSubTypeEnum.ONLINE_ORDER.getCode();
+            } else {
+                transactionSubType = soB2cEntity.getTransactionSubType();
+                if (CharSequenceUtil.isBlank(soB2cEntity.getPlatformCode())) {
+                    orderPlatformCode = entity.getSoCode();
+                } else {
+                    orderPlatformCode = soB2cEntity.getPlatformCode();
+                }
+                sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(soB2cEntity.getDictPlatform())).collect(Collectors.toList());
+            }
+            SoB2cReceiverEntity receiverEntity = soB2cReceiverEntityList.stream().filter(req -> req.getMainId().equals(entity.getSoId())).findFirst().orElse(null);
+            if (null != receiverEntity){
+                partitionId = receiverEntity.getPartitionId();
+                if (StringUtils.isNotBlank(receiverEntity.getCountry())){
+                    country = receiverEntity.getCountry();
+                }
+            }
+        } else if (OrderTypeEnum.B2B.getCode().equals(entity.getOrderType())) {
+            SoInfoEntity soInfoEntity = soInfoEntities.stream().filter(req -> req.getId().equals(entity.getSoId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(soInfoEntity)) {
+                transactionSubType = OrderSubTypeEnum.OFFLINE_ORDER.getCode();
+            } else {
+                transactionSubType = soInfoEntity.getTransactionSubType();
+                orderPlatformCode = soInfoEntity.getCode();
+                partitionId = soInfoEntity.getPartitionId();
+            }
+            if(null != customerInfo){
+                sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+            }
+        }
+
+
+        ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
+
+        // 国家编码
+        shudiyunB2cOrderDTO.setCountry_code(country);
+        String finalCountry = country;
+        DictCountryEntity dictCountryEntity = countryEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalCountry)).findFirst().orElse(null);
+        if (null != dictCountryEntity){
+            // 国家名称
+            shudiyunB2cOrderDTO.setCountry(dictCountryEntity.getShortNameCn());
+            // 区域编码
+            shudiyunB2cOrderDTO.setRegion_code(dictCountryEntity.getSubregionCode());
+            // 区域名称
+            DictGlobalAreaEntity dictGlobalAreaEntity = dictGlobalEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(dictCountryEntity.getSubregionCode())).findFirst().orElse(null);
+            if (null != dictGlobalAreaEntity){
+                shudiyunB2cOrderDTO.setRegion_name(dictGlobalAreaEntity.getSubregionName());
+            }
+        }
+
+        String finalPartitionId = partitionId;
+        DictPartitionEntity dictPartitionEntity = null;
+        if ("qimen".equals(entity.getCreateUserName()) || "wangdiantong".equals(entity.getCreateUserName())){
+            dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getCode().equalsIgnoreCase("china")).findFirst().orElse(null);
+            sdyPlatformDeptEntityList = sdyPlatformDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(customerInfo.getPlatformType())).collect(Collectors.toList());
+        } else {
+            dictPartitionEntity = partitionEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(finalPartitionId)).findFirst().orElse(null);
+        }
+
+        if (null != dictPartitionEntity){
+            // 军区编码
+            shudiyunB2cOrderDTO.setMilitary_region_code(dictPartitionEntity.getCode());
+            // 军区名称
+            shudiyunB2cOrderDTO.setMilitary_region_name(dictPartitionEntity.getName());
+            // 军区一级部门映射
+            DictPartitionEntity finalDictPartitionEntity = dictPartitionEntity;
+            DictBasicEntity sdyPartitionDeptEntity = sdyPartitionDeptList.stream().filter(e -> e.getName().equalsIgnoreCase(finalDictPartitionEntity.getCode())).findFirst().orElse(null);
+            if (null != sdyPartitionDeptEntity && !CollectionUtils.isEmpty(sdyPlatformDeptEntityList)){
+                List<String> deptLevel2Ids = sdyPlatformDeptEntityList.stream().map(DictBasicEntity::getValue).distinct().collect(Collectors.toList());
+                SysDepartmentEntity departmentDTO = deptList.stream().filter(e ->
+                                e.getPath().contains(sdyPartitionDeptEntity.getValue())
+                                        && deptLevel2Ids.contains(e.getId())
+                        )
+                        .findFirst()
+                        .orElse(null);
+                if (null != departmentDTO){
+                    // 部门编码
+                    shudiyunB2cOrderDTO.setDepartment_code(departmentDTO.getCode());
+                    // 部门名称
+                    shudiyunB2cOrderDTO.setDepartment_name(departmentDTO.getName());
+                }
+            }
+        }
+
+        shudiyunB2cOrderDTO.setBiz_uni_key(entity.getId() + soOutstockDetailEntity.getId());
+        shudiyunB2cOrderDTO.setBiz_no(entity.getCode());
+        shudiyunB2cOrderDTO.setBiz_time(localDate.format(entity.getBillDate()));
+        //默认出库单
+        shudiyunB2cOrderDTO.setTransaction_type("销售出库单");
+        shudiyunB2cOrderDTO.setTransaction_sub_type(convertOutstockTransactionSubType(transactionSubType));
+        shudiyunB2cOrderDTO.setBiz_status(entity.getApproveStatus().getName());
+        shudiyunB2cOrderDTO.setStatus(shudiyunB2cOrderDTO.sdyStatusHandle(operate, entity.getVersion(), soOutstockDetailEntity.getVersion()));
+
+        //客户信息
+        if (ObjectUtil.isNotEmpty(customerInfo)) {
+            String salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(entity.getSalesOrgId())).map(req -> req.getCode()).findFirst().orElse("");
+            if (CharSequenceUtil.isNotBlank(salesOrgCode)) {
+                shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+            } else {
+                salesOrgCode = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).map(req -> req.getCode()).findFirst().orElse("");
+                shudiyunB2cOrderDTO.setSales_company_code(salesOrgCode);
+            }
+
+            BaseIdDTO.CodeDTO sysAccountingCompanyEntity = companyEntities.stream().filter(req -> req.getId().equals(customerInfo.getFinancialOrganization())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(sysAccountingCompanyEntity)) {
+                shudiyunB2cOrderDTO.setReceiving_company_code(sysAccountingCompanyEntity.getCode());
+                shudiyunB2cOrderDTO.setOrganization_code(sysAccountingCompanyEntity.getCode());
+                shudiyunB2cOrderDTO.setOrganization_name(sysAccountingCompanyEntity.getName());
+            }
+
+            if (customerInfo.getCurrency() != null) {
+                CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getCurrency())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(viewDTO)) {
+                    shudiyunB2cOrderDTO.setSettlement_currency_code(viewDTO.getId());
+                    shudiyunB2cOrderDTO.setSettlement_currency(viewDTO.getName());
+                }
+            }
+            if (customerInfo.getTradeCurrency() != null) {
+                CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(customerInfo.getTradeCurrency())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(viewDTO)) {
+                    shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
+                    shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+                }
+            }
+            shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
+            String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setPlatform_name(platformName);
+            shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
+            shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
+
+            String subPlatformType = customerInfo.getPlatformType();
+            if (StringUtils.isNotBlank(subPlatformType)) {
+                DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
+                }
+            }
+        }
+        shudiyunB2cOrderDTO.setRoot_node_no(orderPlatformCode);
+
+        //产品信息
+        shudiyunB2cOrderDTO.setGoods_no(soOutstockDetailEntity.getSkuNo());
+        SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(new SkuVO());
+        shudiyunB2cOrderDTO.setGoods_name(skuVO.getSkuName());
+        if (skuVO.getSpuNo() == null) {
+            shudiyunB2cOrderDTO.setSpec_no(skuVO.getSkuNo());
+            shudiyunB2cOrderDTO.setSpec_name(skuVO.getSkuName());
+        } else {
+            shudiyunB2cOrderDTO.setSpec_no(skuVO.getSpuNo());
+            shudiyunB2cOrderDTO.setSpec_name(skuVO.getSpuName());
+        }
+        shudiyunB2cOrderDTO.setSku_code(skuVO.getSkuNo());
+        shudiyunB2cOrderDTO.setSku_name(skuVO.getSkuName());
+        if (soOutstockDetailEntity.getAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            shudiyunB2cOrderDTO.setIs_gift(1);
+        } else {
+            shudiyunB2cOrderDTO.setIs_gift(0);
+        }
+        BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {
+            shudiyunB2cOrderDTO.setIs_comb(1);
+            shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+            BomChildrenSkuDTO finalBomChildrenSkuDTO1 = bomChildrenSkuDTO;
+            String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO1.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+            shudiyunB2cOrderDTO.setSuite_name(skuName);
+        } else {
+            bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getSkuId().equals(soOutstockDetailEntity.getSkuId())).findFirst().orElse(null);
+            if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO)) {
+                shudiyunB2cOrderDTO.setSuite_no(bomChildrenSkuDTO.getParentSkuNo());
+                BomChildrenSkuDTO finalBomChildrenSkuDTO = bomChildrenSkuDTO;
+                String skuName = parentSkuList.stream().filter(req -> req.getId().equals(finalBomChildrenSkuDTO.getParentSkuId())).map(ProductDetailEntity::getName).findFirst().orElse("");
+                shudiyunB2cOrderDTO.setSuite_name(skuName);
+            } else {
+                shudiyunB2cOrderDTO.setSuite_no(skuVO.getSkuNo());
+                shudiyunB2cOrderDTO.setSuite_name(skuVO.getSkuName());
+            }
+        }
+
+        shudiyunB2cOrderDTO.setRemark(soOutstockDetailEntity.getRemark());
+        shudiyunB2cOrderDTO.setWarehouse_no(entity.getWarehouseId());
+        shudiyunB2cOrderDTO.setWarehouse_name(entity.getWarehouseName());
+
+        // 商品状态
+        shudiyunB2cOrderDTO.setGoods_status("已发货");
+        if (entity.getActualDeliveryDate() != null) {
+            shudiyunB2cOrderDTO.setDelivery_time(localDateTime.format(entity.getActualDeliveryDate()));
+        }
+
+        shudiyunB2cOrderDTO.setGoods_transaction_quantity(soOutstockDetailEntity.getActualQty());
+        shudiyunB2cOrderDTO.setUnit(skuVO.getUnitName());
+        if (skuVO.getRetailPrice() != null) {
+            shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(skuVO.getRetailPrice());
+        } else {
+            shudiyunB2cOrderDTO.setGoods_benchmark_selling_price(BigDecimal.ZERO);
+        }
+
+        CurrencyDTO.ViewDTO viewDTO = currencyList.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getCurrency())).findFirst().orElse(null);
+        if (ObjectUtil.isNotEmpty(viewDTO)) {
+            shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
+            shudiyunB2cOrderDTO.setTransaction_currency_code(viewDTO.getId());
+        }
+
+        shudiyunB2cOrderDTO.setSource_system("SDC");
+        shudiyunB2cOrderDTO.setRoot_node_no_initial(orderPlatformCode);
+
+        return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
+    }
+
+
+    @Override
+    public void syncDataToSdy(SoOutstockEntity entity, List<SoOutstockDetailEntity> soOutstockDetailEntityList, String operate) {
+        Map<String, Object> map = new HashMap<>();
+        for (SoOutstockDetailEntity soOutstockDetailEntity : soOutstockDetailEntityList) {
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(soOutstockDetailEntity.getId());
+            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + soOutstockDetailEntity.getSkuNo());
+            wmsPushMsgEntity.setSyncOperate(operate);
+            map.put(DmpOutputConstant.IS_QUERY_SYNC, Boolean.TRUE);
+            map.put("detailId", soOutstockDetailEntity.getId());
+            map.put("operate", operate);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        }
+    }
+
+    @Override
+    public void syncDataToSdy(SoOutstockEntity entity,
+                              List<SoOutstockDetailEntity> detailEntities,
+                              String operate,
+                              List<CurrencyDTO.ViewDTO> currencyList,
+                              List<ShopInfoEntity> shopInfoList,
+                              List<CustomerInfoEntity> customerInfoList,
+                              List<BaseIdDTO.CodeDTO> companyEntities,
+                              List<SkuVO> skuVOList,
+                              List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+                              List<ProductDetailEntity> parentSkuList,
+                              List<SoB2cEntity> soB2cEntities,
+                              List<SoInfoEntity> soInfoEntities,
+                              List<SoB2cReceiverEntity> soB2cReceiverEntityList,
+                              List<DictBasicEntity> omsAllDictList,
+                              List<DictPartitionEntity> partitionEntityList,
+                              List<DictCountryEntity> countryEntityList,
+                              List<DictGlobalAreaEntity> dictGlobalEntityList,
+                              List<SysDepartmentEntity> deptList
+    ) {
+
+        for (SoOutstockDetailEntity detailEntity : detailEntities) {
+            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_OUTSTOCK.getCode());
+            wmsPushMsgEntity.setSourceId(detailEntity.getId());
+            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
+            wmsPushMsgEntity.setSyncOperate(operate);
+            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity,
+                    detailEntity,
+                    operate,
+                    currencyList,
+                    shopInfoList,
+                    customerInfoList,
+                    companyEntities,
+                    skuVOList,
+                    bomChildrenSkuDTOS,
+                    parentSkuList,
+                    soB2cEntities,
+                    soInfoEntities,
+                    soB2cReceiverEntityList,
+                    omsAllDictList,
+                    partitionEntityList,
+                    countryEntityList,
+                    dictGlobalEntityList,
+                    deptList
+            )));
+            wmsPushMsgService.save(wmsPushMsgEntity);
+        }
+    }
+
+
+    /**
+     * 出库单子状态转换
+     *
+     * @param transactionSubType
+     * @return
+     */
+    private String convertOutstockTransactionSubType(String transactionSubType) {
+        if (OrderSubTypeEnum.OFFLINE_ORDER.getCode().equals(transactionSubType) || OrderSubTypeEnum.ONLINE_ORDER.getCode().equals(transactionSubType)) {
+            //普通出库
+            transactionSubType = "普通出库";
+        } else if (OrderSubTypeEnum.GIFT_ORDER.getCode().equals(transactionSubType) || OrderSubTypeEnum.GIFT_REPLENISHMENT.getCode().equals(transactionSubType)) {
+            //赠品出库
+            transactionSubType = "赠品出库";
+        } else if (OrderSubTypeEnum.EXCHANGE_REPLACEMENT.getCode().equals(transactionSubType)) {
+            //换货补发
+            transactionSubType = "换货补发";
+        } else if (OrderSubTypeEnum.REPLENISHMENT.getCode().equals(transactionSubType)) {
+            //补发出库
+            transactionSubType = "补发出库";
+        } else {
+            //其他
+            transactionSubType = "其他";
+        }
+        return transactionSubType;
+    }
 }

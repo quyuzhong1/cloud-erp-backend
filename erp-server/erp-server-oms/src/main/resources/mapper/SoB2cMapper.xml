@@ -38,7 +38,7 @@
         sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
-        sb2c.platform_code as platformCode,
+        sb2c.platform_code AS platformCode,
         sb2c.shop_id as shopId,
         sb2c.approve_status as approveStatus,
         sb2c.pay_status as payStatus,
@@ -46,6 +46,8 @@
         sb2c.package_status as packageStatus,
         sb2c.transfer_status as transferStatus,
         sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
         sb2c.amount as amount,
         sb2c.currency as currency,
         sb2c.exchange_rate as exchangeRate,
@@ -67,15 +69,13 @@
         sb2c.approve_user_name as approveUserName,
         sb2c.frozen_type as frozenType,
         sb2c.is_change_receiver_address as isChangeReceiverAddress,
-        sb2cl.logistics_channel_name as logisticsChannelName,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
-             else sb2cl.actual_shipping_cost
-        end
-        as shippingCost,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
-             else sb2cl.actual_shipping_currency
-        end
-        as shippingCostCurrency,
+        sb2c.is_change_sku as isChangeSku,
+        sb2c.is_not_outbound as isNotOutbound,
+        sb2c.is_manual_delivery as isManualDelivery,
+        sb2c.is_over_estimated_ship_cost as isOverEstimatedShipCost,
+        sb2cl.ioss_tax_no as iossTaxNo,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
         sb2cl.logistics_channel_id as logisticsChannelId,
         sb2cl.logistics_channel_name as logisticsChannelName,
         sb2cr.customer_id as buyerId,
@@ -84,13 +84,98 @@
         sb2cr.country as country,
         sb2cr.email as email,
         sb2cr.tel_number as telNumber,
+        sb2cr.post_code as postCode,
+        sb2cr.province_name as provinceName,
+        sb2cr.city_name as cityName,
         sb2c.create_time as createTime,
         sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
         sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
         sb2cl.weight,
+        sb2cl.weight_unit as weightUnit,
+        sb2cl.length,
+        sb2cl.width,
+        sb2cl.height,
+        sb2cl.size_unit as sizeUnit,
         sb2cl.name as sellerLogisticName,
         sb2cl.code as logisticsCode,
-        sb2cl.track_no as trackCode
+        sb2cl.track_no as trackCode,
+        sbd.create_time as createDeliveryTime,
+		sbd.finish_print_time as finishPrintTime,
+        sb2c.is_out_of_range_delivery as isOutOfRangeDelivery,
+        fdp.id as partitionId,
+        fdp.code as partitionCode,
+        fdp.name as partitionName,
+        sb2c.vat_invoice_status as vatInvoiceStatus
+    </sql>
+    <sql id="Full_Managed_Column_List">
+        sb2c.id,
+        sb2c.code,
+        sb2c.dict_platform as dictPlatform,
+        sb2c.platform_code AS platformCode,
+        sb2c.shop_id as shopId,
+        sb2c.approve_status as approveStatus,
+        sb2c.pay_status as payStatus,
+        sb2c.bill_status as billStatus,
+        sb2c.package_status as packageStatus,
+        sb2c.transfer_status as transferStatus,
+        sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
+        sb2c.amount as amount,
+        sb2c.currency as currency,
+        sb2c.exchange_rate as exchangeRate,
+        sb2c.pay_time as payTime,
+        sb2c.buyer_remark as buyerRemark,
+        sb2c.remark as remark,
+        sb2c.abnormal_type as abnormalType,
+        sb2c.label_json as label,
+        sb2c.extend_data as extendData,
+        sb2c.is_intercept as isIntercept,
+        sb2c.source_id as sourceId,
+        sb2c.source_type as sourceType,
+        sb2c.source_code as sourceCode,
+        sb2c.platform_order_status as platformOrderStatus,
+        sb2c.is_match_order_rule as isMatchOrderRule,
+        sb2c.is_match_logistics_rule as isMatchLogisticsRule,
+        sb2c.sign_order_error as signOrderError,
+        sb2c.seller_order_code as sellerOrderCode,
+        sb2c.create_time as createTime,
+        sb2c.approve_time as approveTime,
+        sb2c.approve_user_id as approveUserId,
+        sb2c.approve_user_name as approveUserName,
+        sb2c.frozen_type as frozenType,
+        sb2c.is_change_receiver_address as isChangeReceiverAddress,
+        sb2c.is_change_sku as isChangeSku,
+        sb2c.is_not_outbound as isNotOutbound,
+        sb2c.is_manual_delivery as isManualDelivery,
+        sb2c.is_over_estimated_ship_cost as isOverEstimatedShipCost,
+        sb2cl.ioss_tax_no as iossTaxNo,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
+        sb2cl.logistics_channel_id as logisticsChannelId,
+        sb2cl.logistics_channel_name as logisticsChannelName,
+        sb2c.create_time as createTime,
+        sb2cl.transfer_logistics_supplier_id as transferLogisticsSupplierId,
+        sb2cl.transfer_logistics_channel_id as transferLogisticsChannelId,
+        sb2cl.weight,
+        sb2cl.weight_unit as weightUnit,
+        sb2cl.length,
+        sb2cl.width,
+        sb2cl.height,
+        sb2cl.size_unit as sizeUnit,
+        sb2cl.name as sellerLogisticName,
+        sb2cl.code as logisticsCode,
+        sb2cl.track_no as trackCode,
+        sb2cl.delivery_time as deliveryTime,
+        sbd.create_time as createDeliveryTime,
+		sbd.finish_print_time as finishPrintTime,
+        sb2c.is_out_of_range_delivery as isOutOfRangeDelivery,
+        sb2c.vat_invoice_status as vatInvoiceStatus,
+        sbe.id as extendId,
+        sbe.required_delivery_time as requiredDeliveryTime,
+        sbe.required_receive_time as requiredReceiveTime,
+        sbe.delivery_warning_time as deliveryWarningTime,
+        sbe.order_source_type as orderSourceType
     </sql>
 
     <!-- 通用查询结果列 -->
@@ -99,14 +184,8 @@
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         si.name as shopName,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost
-             else sb2cl.actual_shipping_cost
-        end
-        as shippingCost,
-        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency
-             else sb2cl.actual_shipping_currency
-        end
-        as shippingCostCurrency,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
         sb2c.seller_order_code as sellerOrderCode,
         sb2c.platform_code as platformCode,
         sb2c.approve_status as approveStatus,
@@ -116,6 +195,20 @@
         sb2c.pay_time as payTime,
         sb2c.exchange_rate as exchangeRate,
         sb2c.dict_pay_method as dictPayMethod,
+        sb2c.label_json as label,
+        sb2c.buyer_remark as buyerRemark,
+        sb2c.remark as remark,
+        sb2c.source_type as sourceType,
+        sb2c.is_intercept as isIntercept,
+        sb2c.is_frozen as isFrozen,
+        sb2c.is_cancel as isCancel,
+        sb2c.is_change_receiver_address as isChangeReceiverAddress,
+        sb2c.is_change_sku as isChangeSku,
+        sb2c.is_not_outbound as isNotOutbound,
+        sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
+        sb2cd.id as detailId,
         sb2cd.platform_spu_no as platformSpuNo,
         sb2cd.platform_sku_no as platformSkuNo,
         sb2cd.sku_id as skuId,
@@ -129,8 +222,7 @@
         sb2cd.warehouse_name as warehouseName,
         sb2cd.warehouse_location as warehouseLocation,
         sb2cd.virtual_warehouse_id as virtualWarehouseId,
-        sb2c.buyer_remark as buyerRemark,
-        sb2c.remark as remark,
+        sb2cd.label_json as labelJson,
         sb2cl.name,
         sb2cl.logistics_channel_name as logisticsChannelName,
         sb2cl.code as logisticsCode,
@@ -149,6 +241,8 @@
         sb2cl.length,
         sb2cl.width,
         sb2cl.height,
+        sb2cl.ioss_tax_no,
+        sb2cl.logistic_type,
         sb2cr.login_id as loginId,
         sb2cr.name as buyerName,
         sb2cr.email,
@@ -166,7 +260,93 @@
         sb2cr.post_code as postCode,
         sb2cr.receiver_tax_no as receiverTaxNo,
         si.country_name as countryName,
-        sbrc.categoryNames
+        sbd.create_time as createDeliveryTime,
+		sbd.finish_print_time as finishPrintTime,
+        fdp.id as partitionId,
+        fdp.code as partitionCode,
+        fdp.name as partitionName
+    </sql>
+    <!-- 通用查询结果列 -->
+    <sql id="Export_Fully_managed_Column_List">
+        sb2c.id,
+        sb2c.code,
+        sb2c.dict_platform as dictPlatform,
+        si.name as shopName,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_cost else sb2cl.actual_shipping_cost end as shippingCost,
+        case when sb2cl.actual_shipping_cost = 0 then sb2cl.estimated_shipping_currency else sb2cl.actual_shipping_currency end as shippingCostCurrency,
+        sb2c.seller_order_code as sellerOrderCode,
+        sb2c.platform_code as platformCode,
+        sb2c.approve_status as approveStatus,
+        sb2c.bill_status as billStatus,
+        sb2c.amount as amount,
+        sb2c.currency as currency,
+        sb2c.pay_time as payTime,
+        sb2c.exchange_rate as exchangeRate,
+        sb2c.dict_pay_method as dictPayMethod,
+        sb2c.label_json as label,
+        sb2c.buyer_remark as buyerRemark,
+        sb2c.remark as remark,
+        sb2c.source_type as sourceType,
+        sb2c.is_intercept as isIntercept,
+        sb2c.is_frozen as isFrozen,
+        sb2c.is_cancel as isCancel,
+        sb2c.is_change_receiver_address as isChangeReceiverAddress,
+        sb2c.is_change_sku as isChangeSku,
+        sb2c.is_not_outbound as isNotOutbound,
+        sb2c.invalid_status as invalidStatus,
+        sb2c.invalid_remark as invalidRemark,
+        sb2c.invalid_type as invalidType,
+        sb2c.create_time as createTime,
+        sb2cd.id as detailId,
+        sb2cd.platform_spu_no as platformSpuNo,
+        sb2cd.platform_sku_no as platformSkuNo,
+        sb2cd.sku_id as skuId,
+        sb2cd.sku_no as skuNo,
+        sb2cd.qty,
+        sb2cd.tax_cost as taxCost,
+        sb2cd.price as sourcePrice,
+        sb2cd.tax_rate as taxRate,
+        sb2cd.amount as sourceAmount,
+        sb2cd.currency as sourceCurrency,
+        ROUND(sb2cd.amount * sb2cd.exchange_rate,4) as baseAmount,
+        sb2cd.warehouse_id as warehouseId,
+        sb2cd.warehouse_name as warehouseName,
+        sb2cd.warehouse_location as warehouseLocation,
+        sb2cd.virtual_warehouse_id as virtualWarehouseId,
+        sb2cd.label_json as labelJson,
+        sb2cd.cost_source as costSource,
+        sb2cl.name,
+        sb2cl.logistics_channel_name as logisticsChannelName,
+        sb2cl.code as transportNo,
+        sb2cl.track_no as trackNo,
+        sb2cl.delivery_time as deliveryTime,
+        sb2cl.estimated_shipping_cost as estimatedShippingCost,
+        sb2cl.estimated_shipping_currency as estimatedShippingCurrency,
+        sb2cl.actual_shipping_cost as actualShippingCost,
+        sb2cl.actual_shipping_currency as actualShippingCurrency,
+        sb2cl.weight,
+        sb2cl.accessories_sku_id as accessoriesSkuId,
+        sb2cl.accessories_sku_no as accessoriesSkuNo,
+        sb2cl.accessories_qty as accessoriesQty,
+        sb2cl.accessories_nw as accessoriesNw,
+        sb2cl.accessories_cost as accessoriesCost,
+        sb2cl.accessories_cost_currency as accessoriesCostCurrency,
+        sb2cl.length,
+        sb2cl.width,
+        sb2cl.height,
+        sb2cl.ioss_tax_no,
+        sb2cl.logistic_type,
+        si.country_name as countryName,
+        sbd.create_time as createDeliveryTime,
+		sbd.finish_print_time as finishPrintTime,
+        fdp.id as partitionId,
+        fdp.code as partitionCode,
+        fdp.name as partitionName,
+        sbe.id as extendId,
+        sbe.required_delivery_time as requiredDeliveryTime,
+        sbe.required_receive_time as requiredReceiveTime,
+        sbe.delivery_warning_time as deliveryWarningTime,
+        sbe.order_source_type as orderSourceType
     </sql>
     <update id="updateBatchApproveById">
         <foreach collection="updateList" item="item" index="index" separator=";">
@@ -189,15 +369,13 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         where
         ${params.sqlMap.default}
-        and sb2c.is_deleted = false
-        and EXISTS (SELECT 1 from so_b2c_detail sbd where  sbd.is_deleted = false and sbd.main_id = sb2c.id) 
-        <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-            and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-        </if>
+        and sb2c.is_deleted = false  and sb2c.dict_platform != 'TikTokFully'
         <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-            and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+            AND EXISTS ( SELECT 1 FROM shop_sys_user_auth ssua WHERE ssua.is_deleted = FALSE AND sb2c.shop_id = ssua.shop_id AND ssua.user_id = #{shopAuthResultDTO.userId})
         </if>
         <if test="isOutStock != null and isOutStock == true">
             and sb2c.bill_status in( 'waitDistribution','inDistribution','waitShipped','frozen','partialShipped')
@@ -209,26 +387,30 @@
     <!-- 列表数量查询 -->
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct sb2c.id)
+        count(sb2c.id)
         from so_b2c sb2c 
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and sb2c.is_deleted = false
-            and EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id)
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
+            and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and EXISTS (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and ssua.user_id = #{shopAuthResultDTO.userId} and ssua.shop_id = sb2c.shop_id)
             </if>
         </where>
     </select>
 
     <!-- 合并列表查询 -->
     <select id="mergePaging" resultType="com.erp.model.oms.dto.SoB2cDTO$MergeListDTO">
+        WITH UniqueWarehouseB2C AS (
+        SELECT sb2c.id AS main_id
+        FROM so_b2c sb2c
+        JOIN so_b2c_detail sb2cd ON sb2c.id = sb2cd.main_id AND sb2cd.is_deleted = false
+        where sb2c.is_deleted = false
+        GROUP BY sb2c.id
+        HAVING COUNT(DISTINCT sb2cd.warehouse_id) = 1
+        )
         select
         sb2c.dict_platform as dictPlatform,
         sb2c.shop_id as shopId,
@@ -241,15 +423,18 @@
         sb2cd.warehouse_id as warehouseId,
         sb2cl.logistics_channel_id as logisticsChannelId
         from so_b2c sb2c
-        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
-        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
-        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        JOIN so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        JOIN so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        JOIN so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        JOIN shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
-            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee' and sb2c.dict_platform != 'mercadolibre'
+            ${params.sqlMap.default} and sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+            and sb2c.bill_status not in('waitShipped','shipped')
+            and sb2c.is_not_merge = false and sb2cl.code = ''
+            and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
+            and sb2c.dict_platform not in ('Shopee', 'mercadolibre','TikTokFully')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -280,11 +465,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         group by
@@ -295,17 +477,29 @@
 
     <!-- 合并列表数量查询 -->
     <select id="mergePagingCount" resultType="java.lang.Integer">
+        WITH UniqueWarehouseB2C AS (
+        SELECT sb2c.id AS main_id
+        FROM so_b2c sb2c
+        JOIN so_b2c_detail sb2cd ON sb2c.id = sb2cd.main_id AND sb2cd.is_deleted = false
+        where sb2c.is_deleted = false
+        GROUP BY sb2c.id
+        HAVING COUNT(DISTINCT sb2cd.warehouse_id) = 1
+        )
         select
         count(distinct sb2c.id)
         from so_b2c sb2c
-        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
-        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
-        inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        JOIN so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        JOIN so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        JOIN so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        JOIN shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
-            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee' and sb2c.dict_platform != 'mercadolibre'
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+            and sb2c.bill_status not in('waitShipped','shipped')
+            and sb2c.is_not_merge = false and sb2cl.code = ''
+            and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
+            and sb2c.dict_platform not in ('Shopee', 'mercadolibre','TikTokFully')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.code != null and params.code != '' ">
                 and sb2c.code iLIKE concat('%',#{params.code}::text,'%')
             </if>
@@ -336,11 +530,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         group by sb2c.dict_platform,sb2c.shop_id,sb2cr.name,sb2c.currency,sb2cr.receiver_name,sb2cr.first_address,sb2cr.second_address,sb2cr.full_address,sb2cd.warehouse_id,sb2cl.logistics_channel_id
@@ -349,6 +540,14 @@
 
     <!-- 合并列表合并数据查询 -->
     <select id="listMerge" resultMap="MergeResultMap">
+        WITH UniqueWarehouseB2C AS (
+        SELECT sb2c.id AS main_id
+        FROM so_b2c sb2c
+        JOIN so_b2c_detail sb2cd ON sb2c.id = sb2cd.main_id AND sb2cd.is_deleted = false
+        where sb2c.is_deleted = false
+        GROUP BY sb2c.id
+        HAVING COUNT(DISTINCT sb2cd.warehouse_id) = 1
+        )
         select
         sb2c.id,
         sb2c.code,
@@ -381,11 +580,14 @@
         left outer join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         left outer join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         left outer join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+        JOIN UniqueWarehouseB2C uwb ON sb2c.id = uwb.main_id
         <where>
-            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid' and sb2c.is_not_merge = false and (sb2c.approve_status = 'waitSubmit' or sb2c.approve_status = 'reject') and sb2c.label_json !~ 'AFN' and sb2cd.label_json !~ 'U_TAXED'
-            and sb2cd.label_json !~ 'I_TAXED' and sb2cd.label_json !~ 'cainiaoInternationalWarehouse' and sb2c.dict_platform != 'Shopee' and sb2c.dict_platform != 'mercadolibre'
+            sb2c.is_deleted = false and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+            and sb2c.bill_status not in('waitShipped','shipped')
+            and sb2c.is_not_merge = false and sb2cl.code = ''
+            and sb2c.label_json !~ ('AFN|U_TAXED|I_TAXED|cainiaoInternationalWarehouse')
+            and sb2c.dict_platform not in ('Shopee', 'mercadolibre','TikTokFully')
             and not exists (select id from so_b2c_ref where is_deleted = false and (target_id = sb2c.id or source_id = sb2c.id))
-            and exists (select main_id from so_b2c_detail where is_deleted = false and sb2c.id = main_id group by main_id having  count(DISTINCT warehouse_id) = 1)
             <if test="params.platformList != null and params.platformList.size > 0">
                 and sb2c.dict_platform in
                 <foreach collection="params.platformList" item="item" open="(" separator="," close=")">
@@ -446,11 +648,8 @@
                     #{item}
                 </foreach>
             </if>
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+                and exists (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and sb2c.shop_id=ssua.shop_id and ssua.user_id = #{shopAuthResultDTO.userId})
             </if>
         </where>
         order by sb2c.id desc
@@ -469,7 +668,7 @@
         LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id
         AND sbd.is_deleted = FALSE
         WHERE
-        sb.is_deleted = FALSE
+        ${params.sqlMap.default} and sb.is_deleted = FALSE and sb.dict_platform != 'TikTokFully'
         <if test="params.skuNo!=null and params.skuNo!=''">
             AND ((
             sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
@@ -521,7 +720,7 @@
         LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id
         AND sbd.is_deleted = FALSE
         WHERE
-        sb.is_deleted = FALSE
+        ${params.sqlMap.default} and sb.is_deleted = FALSE and sb.dict_platform != 'TikTokFully'
         <if test="params.skuNo!=null and params.skuNo!=''">
             AND ((
             sbd.sku_no ILIKE concat('%',#{params.skuNo}::text,'%')
@@ -682,7 +881,7 @@
                                 ON sb.id = sbl.main_id
                                     AND sbl.is_deleted = FALSE
             WHERE sb.is_deleted = FALSE
-              and  #{code} = ANY(string_to_array(sbl.track_no,','))
+              and  #{code} = sbl.track_no
             LIMIT 1
         )
         UNION ALL
@@ -833,15 +1032,34 @@
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
-        left join (
-            select so_b2c_id,array_to_string(array_agg(category_name), ',') as categoryNames from so_b2c_ref_category where is_deleted = false group by so_b2c_id
-        ) sbrc on sb2c.id = sbrc.so_b2c_id
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
+            <if test="isOutStock != null and isOutStock == true">
+                and sb2c.bill_status in( 'waitDistribution','inDistribution','waitShipped','frozen','partialShipped')
+                and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+            </if>
+        </where>
+        order by sb2c.id desc
+    </select>
+    <select id="exportFullyManagedExcel" resultType="com.erp.model.oms.dto.SoB2cDTO$ExcelExportDTO">
+        select
+        <include refid="Export_Fully_managed_Column_List"></include>
+        from so_b2c sb2c
+        inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_extend sbe on sb2c.id = sbe.main_id and sbe.is_deleted = false
+        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        left join foreign_dict_partition fdp on fdp.id = sbe.partition_id and fdp.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and sb2c.is_deleted = false
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -870,19 +1088,18 @@
             sb2cl.logistics_channel_name as logisticsChannelName,
             sb2c.pay_time as payTime,
             sbe.message,
-            sbe.signOrderErrorTime
+            sbe.signOrderErrorTime,
+        sbe.id as errorId,
+        sbe.type as errorType
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.sign_order_error != '' and sb2c.invalid_status = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -907,19 +1124,18 @@
             sb2cl.logistics_channel_name as logisticsChannelName,
             sb2c.pay_time as payTime,
             sbe.message,
-            sbe.signOrderErrorTime
+            sbe.signOrderErrorTime,
+        sbe.id as errorId,
+        sbe.type as errorType
         from so_b2c sb2c
         inner join so_b2c_detail sb2cd on sb2c.id = sb2cd.main_id and sb2cd.is_deleted = false
         inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
         inner join (
-            select main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
+            select id, main_id,type,create_time as signOrderErrorTime,message from so_b2c_error where id in (select max(id) from so_b2c_error GROUP BY main_id,type)
         )sbe on sb2c.id = sbe.main_id and sbe.type = sb2c.sign_order_error
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false and sb2c.sign_order_error != '' and sb2c.invalid_status = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -992,9 +1208,6 @@
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'all'">
-                and sb2c.shop_id in (select id from shop_info where is_deleted = false and disabled = false )
-            </if>
             <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
                 and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
             </if>
@@ -1004,5 +1217,268 @@
             </if>
         </where>
     </select>
+    <select id="generateSoB2cReturnView"
+            resultType="com.erp.model.oms.dto.SoB2cDTO$GenerateSoB2cReturnViewDTO">
+        SELECT sb.id,
+               sbd.id as detailId,
+               sb.code ,
+               sb.bill_status as billStatus,
+               sbd.sku_id as skuId,
+               sbd.sku_no as skuNo,
+               sbd.qty as saleQty,
+               sb.platform_code as platformOrderNo,
+               sb.dict_platform as dictPlatform,
+               sb.shop_id as shopId,
+               sb.amount,
+               sb.currency,
+               sbd.platform_sku_no as platformSkuNo
+        FROM so_b2c sb
+        inner join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
+        where sb.is_deleted = false
+        and sb.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 
+    <select id="listChangeDeliverySkuView"
+            resultType="com.erp.model.oms.dto.SoB2cDTO$ChangeDeliverySkuViewDTO">
+        SELECT sb.id,
+        sbd.id as detailId,
+        sb.code ,
+        sbd.sku_id as skuId,
+        sbd.sku_no as skuNo,
+        sbd.platform_sku_no as platformSkuNo
+        FROM so_b2c sb
+        left join so_b2c_detail sbd on sb.id = sbd.main_id and sbd.is_deleted = false
+        where sb.is_deleted = false
+        and sb.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="listCountUnionAll" resultType="com.erp.model.oms.dto.SoB2cDTO$TabListDTO">
+        <foreach collection="maps" item="item" separator=" UNION ALL ">
+            select
+            '${item.tabFlag}' as tabFlag,
+            '${item.tabFlagName}' as tabFlagName,
+            count(sb2c.id) as count
+            from so_b2c sb2c
+            inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+            inner join so_b2c_receiver sb2cr on sb2c.id = sb2cr.main_id and sb2cr.is_deleted = false
+            inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+            where
+                ${item.sql}
+                and sb2c.is_deleted = false
+                and EXISTS (SELECT 1 from so_b2c_detail sbd where sbd.is_deleted = false and sbd.main_id = sb2c.id)
+                <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                    and EXISTS (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and ssua.user_id = #{shopAuthResultDTO.userId} and ssua.shop_id = sb2c.shop_id)
+                </if>
+        </foreach>
+    </select>
+
+
+
+    <select id="listTikTokOrder" resultType="com.erp.model.oms.entity.SoB2cDetailEntity">
+        SELECT
+        sod.*
+        FROM so_b2c so
+        LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
+        WHERE so.dict_platform = 'TikTok'
+        AND sod.warehouse_id &lt;&gt; '' AND sod.warehouse_id IS NOT NULL
+        AND sod.is_deleted = TRUE
+    </select>
+
+    <select id="listTikTokOrderAll" resultType="com.erp.model.oms.entity.SoB2cDetailEntity">
+        SELECT
+        *
+        FROM so_b2c_detail
+        WHERE main_id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+    <select id="getB2cLogisticsByIds" resultType="com.erp.model.oms.dto.SoB2cDTO$LogisticsDTO">
+        SELECT
+            sb.id,
+            sb.code,
+            sb.amount,
+            sb.currency,
+            sb.exchange_rate,
+            sb.is_over_estimated_ship_cost,
+            sbd.warehouse_id,
+            sbl.logistics_channel_id,
+            sbl.estimated_shipping_cost,
+            sbl.estimated_shipping_currency,
+            sbl.length,
+            sbl.width,
+            sbl.weight,
+            sbl.height,
+            sbl.weight_unit,
+            sbr.country,
+            sbr.country_name,
+            sbr.city_name,
+            sbr.post_code,
+            sbr.province_name
+        FROM
+            so_b2c sb
+                LEFT JOIN so_b2c_logistics sbl ON sbl.main_id = sb.ID AND sbl.is_deleted =FALSE
+                LEFT JOIN so_b2c_detail sbd ON sb.ID = sbd.main_id AND sbd.is_deleted = FALSE
+                LEFT JOIN so_b2c_receiver sbr ON sb.ID = sbr.main_id AND sbr.is_deleted = FALSE
+        where sb.is_deleted =FALSE and sb.id in
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="tikTokOrderUpdate">
+        UPDATE so_b2c_detail
+        SET is_deleted = FALSE
+        WHERE id = #{id}
+    </update>
+
+    <update id="tikTokOrderUpdateDetail">
+        UPDATE so_b2c_detail
+        SET is_deleted = FALSE,
+        source_detail_id = #{sourceDetailId},
+        platform_line_number = #{platformLineNumber},
+        platform_package_id = #{platformPackageId}
+        WHERE id = #{id}
+    </update>
+    <update id="updateFbaNotVatInvoice">
+        UPDATE so_b2c sb2c
+        SET vat_invoice_status = #{vatInvoiceStatus},update_time = NOW(),version = sb2c.version + 1
+        WHERE sb2c.is_deleted = FALSE
+          and sb2c.bill_status = 'shipped'
+          and sb2c.label_json ~ 'AFN'
+          and sb2c.vat_invoice_status = ''
+          and sb2c.shop_id = #{shopId} and sb2c.platform_order_create_time >= #{enableTime}
+    </update>
+    <update id="updateTimeOutConfig">
+        UPDATE so_b2c_extend sbe
+        SET delivery_warning_time = sbe.required_delivery_time - ${offsetMinutes} * INTERVAL '1 minute'
+        FROM so_b2c sb
+        WHERE sb.id = sbe.main_id
+          AND sbe.is_deleted = FALSE
+          AND sb.is_deleted = FALSE
+          AND sbe.required_delivery_time IS NOT NULL
+        <if test="platformList != null and platformList.size > 0">
+            AND sb.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </update>
+    <update id="updateExtendData">
+        UPDATE so_b2c SET extend_data = #{extendData}, update_time = now(),version = version + 1
+        WHERE  id = #{id}
+    </update>
+
+    <select id="queryToSdy" resultType="com.erp.model.oms.entity.SoB2cEntity">
+        select * from (
+SELECT DISTINCT so.* FROM so_b2c so
+        LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
+        WHERE so.approve_status = 'approve'
+        AND so.is_deleted = FALSE
+        AND sod.is_deleted = FALSE
+        AND (so.pay_time >= #{startDate} AND so.pay_time &lt; #{endDate})
+        <if test="#{platformList} != null and platformList.size > 0">
+            and so.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+union all
+SELECT DISTINCT so.* FROM so_b2c so
+        LEFT JOIN so_b2c_detail sod ON so.id = sod.main_id
+        WHERE so.approve_status = 'approve'
+        AND so.is_deleted = FALSE
+        AND sod.is_deleted = FALSE
+        AND so.pay_time is null and so.platform_order_create_time >= #{startDate} AND so.platform_order_create_time &lt; #{endDate}
+        <if test="#{platformList} != null and platformList.size > 0">
+            and so.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        ) t
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+    <select id="fullyManagedPaging" resultType="com.erp.model.oms.dto.SoB2cDTO$ListDTO">
+        select
+        <include refid="Full_Managed_Column_List"></include>
+        from so_b2c sb2c
+        inner join so_b2c_extend sbe on sbe.main_id = sb2c.id and sbe.is_deleted = false
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.source_id = sb2c.id and sb2c.is_deleted = false and sbd.status != 'cancelDelivery'
+        where
+        ${params.sqlMap.default}
+        and sb2c.is_deleted = false  and sb2c.dict_platform = 'TikTokFully'
+        <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+            AND EXISTS ( SELECT 1 FROM shop_sys_user_auth ssua WHERE ssua.is_deleted = FALSE AND sb2c.shop_id = ssua.shop_id AND ssua.user_id = #{shopAuthResultDTO.userId})
+        </if>
+        <if test="isOutStock != null and isOutStock == true">
+            and sb2c.bill_status in( 'waitDistribution','inDistribution','waitShipped','frozen','partialShipped')
+            and sb2c.invalid_status = false and sb2c.pay_status = 'paid'
+        </if>
+        order by sb2c.id desc
+    </select>
+    <select id="listFullManagedCount" resultType="java.lang.Integer">
+        select
+        count(sb2c.id)
+        from so_b2c sb2c
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_extend sbe on sb2c.id = sbe.main_id and sbe.is_deleted = false
+        inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and sb2c.is_deleted = false and sb2c.dict_platform = 'TikTokFully'
+            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
+                and EXISTS (select 1 from shop_sys_user_auth ssua where ssua.is_deleted = false and ssua.user_id = #{shopAuthResultDTO.userId} and ssua.shop_id = sb2c.shop_id)
+            </if>
+        </where>
+    </select>
+    <select id="listDeliveryOrderByParam" resultType="com.erp.model.oms.dto.SoB2cDTO$DeliveryDTO">
+        select
+        sb2c.id,
+        sb2c.code,
+        sb2c.dict_platform,
+        sb2c.platform_order_status,
+        sb2c.shop_id,
+        sb2c.extend_data as extendData,
+        sbd.id as detailId,
+        sbd.extend_data as extendDetailData,
+        sbd.platform_sku_no as platformSkuNo,
+        sbd.platform_spu_no as platformSpuNo,
+        sb2cl.code as transportNo
+        from so_b2c sb2c
+        inner join so_b2c_logistics sb2cl on sb2c.id = sb2cl.main_id and sb2cl.is_deleted = false
+        inner join so_b2c_detail sbd on sb2c.id = sbd.main_id and sbd.is_deleted = false
+        where sb2c.is_deleted = false and sb2cl.code  != ''
+        <if test="platformList!= null and platformList.size > 0">
+            and sb2c.dict_platform in
+            <foreach collection="platformList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="billStatusList!= null and billStatusList.size > 0">
+            and sb2c.bill_status in
+            <foreach collection="billStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="platformStatusList!= null and platformStatusList.size > 0">
+            and sb2c.platform_order_status not in
+            <foreach collection="platformStatusList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="codeList!= null and codeList.size > 0">
+            and sb2c.code in
+            <foreach collection="codeList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

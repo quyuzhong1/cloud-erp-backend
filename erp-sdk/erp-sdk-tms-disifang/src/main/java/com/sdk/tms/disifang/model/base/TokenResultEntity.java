@@ -3,7 +3,7 @@ package com.sdk.tms.disifang.model.base;
 /**
  * @author zdy
  * @ClassName TokenResultEntity
- * @description: TODO
+
  * @date 2023年11月02日
  * @version: 1.0
  */

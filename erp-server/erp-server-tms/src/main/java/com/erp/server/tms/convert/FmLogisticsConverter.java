@@ -46,6 +46,7 @@ public interface FmLogisticsConverter {
             @Mapping(target = "sourceCode", source = "deliveryDTO.sourceCode"),
             @Mapping(target = "outstockId", source = "deliveryDTO.outstockId"),
             @Mapping(target = "outstockCode", source = "deliveryDTO.outstockCode"),
+            @Mapping(target = "businessCode", source = "deliveryDTO.businessCode"),
             @Mapping(target = "channelId", source = "addDTO.logisticsChannelId"),
 //            @Mapping(target = "orderTime", source = "addDTO.logisticsOrderTime"),
             @Mapping(target = "deliveryTime", source = "deliveryDTO.approveTime"),
@@ -57,6 +58,7 @@ public interface FmLogisticsConverter {
             @Mapping(target = "shippingMethod", source = "addDTO.shippingMethod"),
             @Mapping(target = "logisticsSupplierId", source = "addDTO.logisticsSupplierId"),
             @Mapping(target = "remark", source = "addDTO.remark"),
+            @Mapping(target = "shipmentType", expression = "java(com.erp.model.tms.enums.ShipmentTypeEnum.FIRST_MILE_DELIVER.getCode())"),
     })
     LogisticsBillEntity addLogisticsBill(FirstMileDeliveryDTO.GenerateLogisticDTO deliveryDTO, TmsFirstMileLogisticDTO.CommonDTO addDTO);
 

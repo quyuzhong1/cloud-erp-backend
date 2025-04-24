@@ -3,27 +3,27 @@ package com.erp.server.auth.utils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 @Slf4j
 public class MD5 {
-//	private static final Logger logger = Logger.getLogger(MD5.class);
 	/**
 	 * 该方法的加密都是小写字符
 	 * 
 	 * @param _str
 	 * @return
 	 */
-	public final static String str2md5(String _str) {
-		char hexDigits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+	public static final String str2md5(String strParam) {
+		char [] hexDigits = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 				'a', 'b', 'c', 'd', 'e', 'f' };
 		try {
-			byte[] strTemp = _str.getBytes();
+			byte[] strTemp = strParam.getBytes();
 			MessageDigest mdTemp = MessageDigest.getInstance("MD5");
 			mdTemp.update(strTemp);
 			byte[] md = mdTemp.digest();
 			int j = md.length;
-			char str[] = new char[j * 2];
+			char [] str = new char[j * 2];
 			int k = 0;
 			for (int i = 0; i < j; i++) {
 				byte byte0 = md[i];
@@ -71,7 +71,6 @@ public class MD5 {
 	 * digestHexStr是keyBean的唯�?�?个公共成员，是最新一次计算结果的 �? 16进制ASCII表示.
 	 */
 
-	public String digestHexStr;
 	/*
 	 * digest,是最新一次计算结果的2进制内部表示，表�?128bit的keyBean�?.
 	 */
@@ -84,23 +83,21 @@ public class MD5 {
 	public String getkeyBeanofStr(String inbuf) {
 		keyBeanInit();
 		try {
-			keyBeanUpdate(inbuf.getBytes("iso8859-1"), inbuf.length());
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			keyBeanUpdate(inbuf.getBytes(StandardCharsets.ISO_8859_1), inbuf.length());
+		} catch (Exception e) {
+			log.error("不支持字符");
 		}
 		keyBeanFinal();
-		digestHexStr = "";
+		StringBuilder digestHexStr = new StringBuilder();
 		for (int i = 0; i < 16; i++) {
-			digestHexStr += byteHEX(digest[i]);
+			digestHexStr.append(byteHEX(digest[i]));
 		}
-		return digestHexStr;
+		return digestHexStr.toString();
 	}
 
 	// 这是keyBean这个类的标准构�?�函数，JavaBean要求有一个public的并且没有参数的构�?�函�?
 	public MD5() {
 		keyBeanInit();
-		return;
 	}
 
 	/* keyBeanInit是一个初始化函数，初始化核心变量，装入标准的幻数 */
@@ -112,26 +109,25 @@ public class MD5 {
 		state[1] = 0xefcdab89L;
 		state[2] = 0x98badcfeL;
 		state[3] = 0x10325476L;
-		return;
 	}
 
 	/*
 	 * F, G, H ,I �?4个基本的keyBean函数，在原始的keyBean的C实现中，由于它们�?
 	 * �?单的位运算，可能出于效率的�?�虑把它们实现成了宏，在java中，我们把它�? �?�?实现成了private方法，名字保持了原来C中的�?
 	 */
-	private long F(long x, long y, long z) {
+	private long f(long x, long y, long z) {
 		return (x & y) | ((~x) & z);
 	}
 
-	private long G(long x, long y, long z) {
+	private long g(long x, long y, long z) {
 		return (x & z) | (y & (~z));
 	}
 
-	private long H(long x, long y, long z) {
+	private long h(long x, long y, long z) {
 		return x ^ y ^ z;
 	}
 
-	private long I(long x, long y, long z) {
+	private long i(long x, long y, long z) {
 		return y ^ (x | (~z));
 	}
 
@@ -140,29 +136,29 @@ public class MD5 {
 	 * rounds 1, 2, 3, and 4. Rotation is separate from addition to prevent
 	 * recomputation.
 	 */
-	private long FF(long a, long b, long c, long d, long x, long s, long ac) {
-		a += F(b, c, d) + x + ac;
+	private long ff(long a, long b, long c, long d, long x, long s, long ac) {
+		a += f(b, c, d) + x + ac;
 		a = ((int) a << s) | ((int) a >>> (32 - s));
 		a += b;
 		return a;
 	}
 
-	private long GG(long a, long b, long c, long d, long x, long s, long ac) {
-		a += G(b, c, d) + x + ac;
+	private long gg(long a, long b, long c, long d, long x, long s, long ac) {
+		a += g(b, c, d) + x + ac;
 		a = ((int) a << s) | ((int) a >>> (32 - s));
 		a += b;
 		return a;
 	}
 
-	private long HH(long a, long b, long c, long d, long x, long s, long ac) {
-		a += H(b, c, d) + x + ac;
+	private long hh(long a, long b, long c, long d, long x, long s, long ac) {
+		a += h(b, c, d) + x + ac;
 		a = ((int) a << s) | ((int) a >>> (32 - s));
 		a += b;
 		return a;
 	}
 
-	private long II(long a, long b, long c, long d, long x, long s, long ac) {
-		a += I(b, c, d) + x + ac;
+	private long ii(long a, long b, long c, long d, long x, long s, long ac) {
+		a += i(b, c, d) + x + ac;
 		a = ((int) a << s) | ((int) a >>> (32 - s));
 		a += b;
 		return a;
@@ -173,11 +169,14 @@ public class MD5 {
 	 * 函数由getkeyBeanofStr调用，调用之前需要调用keyBeaninit，因此把它设计成private�?
 	 */
 	private void keyBeanUpdate(byte[] inbuf, int inputLen) {
-		int i, index, partLen;
+		int i;
+		int index;
+		int partLen;
 		byte[] block = new byte[64];
 		index = (int) (count[0] >>> 3) & 0x3F;
 		// /* Update number of bits */
-		if ((count[0] += (inputLen << 3)) < (inputLen << 3)) {
+		long l = (count[0] += (inputLen << 3));
+		if (l < (inputLen << 3)) {
             count[1]++;
         }
 		count[1] += (inputLen >>> 29);
@@ -203,9 +202,10 @@ public class MD5 {
 	 */
 	private void keyBeanFinal() {
 		byte[] bits = new byte[8];
-		int index, padLen;
+		int index;
+		int padLen;
 		// /* Save number of bits */
-		Encode(bits, count, 8);
+		encode(bits, count, 8);
 		// /* Pad out to 56 mod 64.
 		index = (int) (count[0] >>> 3) & 0x3f;
 		padLen = (index < 56) ? (56 - index) : (120 - index);
@@ -213,7 +213,7 @@ public class MD5 {
 		// /* Append length (before padding) */
 		keyBeanUpdate(bits, 8);
 		// /* Store state in digest */
-		Encode(digest, state, 16);
+		encode(digest, state, 16);
 	}
 
 	/*
@@ -231,78 +231,81 @@ public class MD5 {
 	/*
 	 * keyBeanTransform是keyBean核心变换程序，有keyBeanUpdate调用，block是分块的原始字节
 	 */
-	private void keyBeanTransform(byte block[]) {
-		long a = state[0], b = state[1], c = state[2], d = state[3];
+	private void keyBeanTransform(byte [] block) {
+		long a = state[0];
+		long b = state[1];
+		long c = state[2];
+		long d = state[3];
 		long[] x = new long[16];
-		Decode(x, block, 64);
+		decode(x, block, 64);
 		/* Round 1 */
-		a = FF(a, b, c, d, x[0], S11, 0xd76aa478L); /* 1 */
-		d = FF(d, a, b, c, x[1], S12, 0xe8c7b756L); /* 2 */
-		c = FF(c, d, a, b, x[2], S13, 0x242070dbL); /* 3 */
-		b = FF(b, c, d, a, x[3], S14, 0xc1bdceeeL); /* 4 */
-		a = FF(a, b, c, d, x[4], S11, 0xf57c0fafL); /* 5 */
-		d = FF(d, a, b, c, x[5], S12, 0x4787c62aL); /* 6 */
-		c = FF(c, d, a, b, x[6], S13, 0xa8304613L); /* 7 */
-		b = FF(b, c, d, a, x[7], S14, 0xfd469501L); /* 8 */
-		a = FF(a, b, c, d, x[8], S11, 0x698098d8L); /* 9 */
-		d = FF(d, a, b, c, x[9], S12, 0x8b44f7afL); /* 10 */
-		c = FF(c, d, a, b, x[10], S13, 0xffff5bb1L); /* 11 */
-		b = FF(b, c, d, a, x[11], S14, 0x895cd7beL); /* 12 */
-		a = FF(a, b, c, d, x[12], S11, 0x6b901122L); /* 13 */
-		d = FF(d, a, b, c, x[13], S12, 0xfd987193L); /* 14 */
-		c = FF(c, d, a, b, x[14], S13, 0xa679438eL); /* 15 */
-		b = FF(b, c, d, a, x[15], S14, 0x49b40821L); /* 16 */
+		a = ff(a, b, c, d, x[0], S11, 0xd76aa478L); /* 1 */
+		d = ff(d, a, b, c, x[1], S12, 0xe8c7b756L); /* 2 */
+		c = ff(c, d, a, b, x[2], S13, 0x242070dbL); /* 3 */
+		b = ff(b, c, d, a, x[3], S14, 0xc1bdceeeL); /* 4 */
+		a = ff(a, b, c, d, x[4], S11, 0xf57c0fafL); /* 5 */
+		d = ff(d, a, b, c, x[5], S12, 0x4787c62aL); /* 6 */
+		c = ff(c, d, a, b, x[6], S13, 0xa8304613L); /* 7 */
+		b = ff(b, c, d, a, x[7], S14, 0xfd469501L); /* 8 */
+		a = ff(a, b, c, d, x[8], S11, 0x698098d8L); /* 9 */
+		d = ff(d, a, b, c, x[9], S12, 0x8b44f7afL); /* 10 */
+		c = ff(c, d, a, b, x[10], S13, 0xffff5bb1L); /* 11 */
+		b = ff(b, c, d, a, x[11], S14, 0x895cd7beL); /* 12 */
+		a = ff(a, b, c, d, x[12], S11, 0x6b901122L); /* 13 */
+		d = ff(d, a, b, c, x[13], S12, 0xfd987193L); /* 14 */
+		c = ff(c, d, a, b, x[14], S13, 0xa679438eL); /* 15 */
+		b = ff(b, c, d, a, x[15], S14, 0x49b40821L); /* 16 */
 		/* Round 2 */
-		a = GG(a, b, c, d, x[1], S21, 0xf61e2562L); /* 17 */
-		d = GG(d, a, b, c, x[6], S22, 0xc040b340L); /* 18 */
-		c = GG(c, d, a, b, x[11], S23, 0x265e5a51L); /* 19 */
-		b = GG(b, c, d, a, x[0], S24, 0xe9b6c7aaL); /* 20 */
-		a = GG(a, b, c, d, x[5], S21, 0xd62f105dL); /* 21 */
-		d = GG(d, a, b, c, x[10], S22, 0x2441453L); /* 22 */
-		c = GG(c, d, a, b, x[15], S23, 0xd8a1e681L); /* 23 */
-		b = GG(b, c, d, a, x[4], S24, 0xe7d3fbc8L); /* 24 */
-		a = GG(a, b, c, d, x[9], S21, 0x21e1cde6L); /* 25 */
-		d = GG(d, a, b, c, x[14], S22, 0xc33707d6L); /* 26 */
-		c = GG(c, d, a, b, x[3], S23, 0xf4d50d87L); /* 27 */
-		b = GG(b, c, d, a, x[8], S24, 0x455a14edL); /* 28 */
-		a = GG(a, b, c, d, x[13], S21, 0xa9e3e905L); /* 29 */
-		d = GG(d, a, b, c, x[2], S22, 0xfcefa3f8L); /* 30 */
-		c = GG(c, d, a, b, x[7], S23, 0x676f02d9L); /* 31 */
-		b = GG(b, c, d, a, x[12], S24, 0x8d2a4c8aL); /* 32 */
+		a = gg(a, b, c, d, x[1], S21, 0xf61e2562L); /* 17 */
+		d = gg(d, a, b, c, x[6], S22, 0xc040b340L); /* 18 */
+		c = gg(c, d, a, b, x[11], S23, 0x265e5a51L); /* 19 */
+		b = gg(b, c, d, a, x[0], S24, 0xe9b6c7aaL); /* 20 */
+		a = gg(a, b, c, d, x[5], S21, 0xd62f105dL); /* 21 */
+		d = gg(d, a, b, c, x[10], S22, 0x2441453L); /* 22 */
+		c = gg(c, d, a, b, x[15], S23, 0xd8a1e681L); /* 23 */
+		b = gg(b, c, d, a, x[4], S24, 0xe7d3fbc8L); /* 24 */
+		a = gg(a, b, c, d, x[9], S21, 0x21e1cde6L); /* 25 */
+		d = gg(d, a, b, c, x[14], S22, 0xc33707d6L); /* 26 */
+		c = gg(c, d, a, b, x[3], S23, 0xf4d50d87L); /* 27 */
+		b = gg(b, c, d, a, x[8], S24, 0x455a14edL); /* 28 */
+		a = gg(a, b, c, d, x[13], S21, 0xa9e3e905L); /* 29 */
+		d = gg(d, a, b, c, x[2], S22, 0xfcefa3f8L); /* 30 */
+		c = gg(c, d, a, b, x[7], S23, 0x676f02d9L); /* 31 */
+		b = gg(b, c, d, a, x[12], S24, 0x8d2a4c8aL); /* 32 */
 		/* Round 3 */
-		a = HH(a, b, c, d, x[5], S31, 0xfffa3942L); /* 33 */
-		d = HH(d, a, b, c, x[8], S32, 0x8771f681L); /* 34 */
-		c = HH(c, d, a, b, x[11], S33, 0x6d9d6122L); /* 35 */
-		b = HH(b, c, d, a, x[14], S34, 0xfde5380cL); /* 36 */
-		a = HH(a, b, c, d, x[1], S31, 0xa4beea44L); /* 37 */
-		d = HH(d, a, b, c, x[4], S32, 0x4bdecfa9L); /* 38 */
-		c = HH(c, d, a, b, x[7], S33, 0xf6bb4b60L); /* 39 */
-		b = HH(b, c, d, a, x[10], S34, 0xbebfbc70L); /* 40 */
-		a = HH(a, b, c, d, x[13], S31, 0x289b7ec6L); /* 41 */
-		d = HH(d, a, b, c, x[0], S32, 0xeaa127faL); /* 42 */
-		c = HH(c, d, a, b, x[3], S33, 0xd4ef3085L); /* 43 */
-		b = HH(b, c, d, a, x[6], S34, 0x4881d05L); /* 44 */
-		a = HH(a, b, c, d, x[9], S31, 0xd9d4d039L); /* 45 */
-		d = HH(d, a, b, c, x[12], S32, 0xe6db99e5L); /* 46 */
-		c = HH(c, d, a, b, x[15], S33, 0x1fa27cf8L); /* 47 */
-		b = HH(b, c, d, a, x[2], S34, 0xc4ac5665L); /* 48 */
+		a = hh(a, b, c, d, x[5], S31, 0xfffa3942L); /* 33 */
+		d = hh(d, a, b, c, x[8], S32, 0x8771f681L); /* 34 */
+		c = hh(c, d, a, b, x[11], S33, 0x6d9d6122L); /* 35 */
+		b = hh(b, c, d, a, x[14], S34, 0xfde5380cL); /* 36 */
+		a = hh(a, b, c, d, x[1], S31, 0xa4beea44L); /* 37 */
+		d = hh(d, a, b, c, x[4], S32, 0x4bdecfa9L); /* 38 */
+		c = hh(c, d, a, b, x[7], S33, 0xf6bb4b60L); /* 39 */
+		b = hh(b, c, d, a, x[10], S34, 0xbebfbc70L); /* 40 */
+		a = hh(a, b, c, d, x[13], S31, 0x289b7ec6L); /* 41 */
+		d = hh(d, a, b, c, x[0], S32, 0xeaa127faL); /* 42 */
+		c = hh(c, d, a, b, x[3], S33, 0xd4ef3085L); /* 43 */
+		b = hh(b, c, d, a, x[6], S34, 0x4881d05L); /* 44 */
+		a = hh(a, b, c, d, x[9], S31, 0xd9d4d039L); /* 45 */
+		d = hh(d, a, b, c, x[12], S32, 0xe6db99e5L); /* 46 */
+		c = hh(c, d, a, b, x[15], S33, 0x1fa27cf8L); /* 47 */
+		b = hh(b, c, d, a, x[2], S34, 0xc4ac5665L); /* 48 */
 		/* Round 4 */
-		a = II(a, b, c, d, x[0], S41, 0xf4292244L); /* 49 */
-		d = II(d, a, b, c, x[7], S42, 0x432aff97L); /* 50 */
-		c = II(c, d, a, b, x[14], S43, 0xab9423a7L); /* 51 */
-		b = II(b, c, d, a, x[5], S44, 0xfc93a039L); /* 52 */
-		a = II(a, b, c, d, x[12], S41, 0x655b59c3L); /* 53 */
-		d = II(d, a, b, c, x[3], S42, 0x8f0ccc92L); /* 54 */
-		c = II(c, d, a, b, x[10], S43, 0xffeff47dL); /* 55 */
-		b = II(b, c, d, a, x[1], S44, 0x85845dd1L); /* 56 */
-		a = II(a, b, c, d, x[8], S41, 0x6fa87e4fL); /* 57 */
-		d = II(d, a, b, c, x[15], S42, 0xfe2ce6e0L); /* 58 */
-		c = II(c, d, a, b, x[6], S43, 0xa3014314L); /* 59 */
-		b = II(b, c, d, a, x[13], S44, 0x4e0811a1L); /* 60 */
-		a = II(a, b, c, d, x[4], S41, 0xf7537e82L); /* 61 */
-		d = II(d, a, b, c, x[11], S42, 0xbd3af235L); /* 62 */
-		c = II(c, d, a, b, x[2], S43, 0x2ad7d2bbL); /* 63 */
-		b = II(b, c, d, a, x[9], S44, 0xeb86d391L); /* 64 */
+		a = ii(a, b, c, d, x[0], S41, 0xf4292244L); /* 49 */
+		d = ii(d, a, b, c, x[7], S42, 0x432aff97L); /* 50 */
+		c = ii(c, d, a, b, x[14], S43, 0xab9423a7L); /* 51 */
+		b = ii(b, c, d, a, x[5], S44, 0xfc93a039L); /* 52 */
+		a = ii(a, b, c, d, x[12], S41, 0x655b59c3L); /* 53 */
+		d = ii(d, a, b, c, x[3], S42, 0x8f0ccc92L); /* 54 */
+		c = ii(c, d, a, b, x[10], S43, 0xffeff47dL); /* 55 */
+		b = ii(b, c, d, a, x[1], S44, 0x85845dd1L); /* 56 */
+		a = ii(a, b, c, d, x[8], S41, 0x6fa87e4fL); /* 57 */
+		d = ii(d, a, b, c, x[15], S42, 0xfe2ce6e0L); /* 58 */
+		c = ii(c, d, a, b, x[6], S43, 0xa3014314L); /* 59 */
+		b = ii(b, c, d, a, x[13], S44, 0x4e0811a1L); /* 60 */
+		a = ii(a, b, c, d, x[4], S41, 0xf7537e82L); /* 61 */
+		d = ii(d, a, b, c, x[11], S42, 0xbd3af235L); /* 62 */
+		c = ii(c, d, a, b, x[2], S43, 0x2ad7d2bbL); /* 63 */
+		b = ii(b, c, d, a, x[9], S44, 0xeb86d391L); /* 64 */
 		state[0] += a;
 		state[1] += b;
 		state[2] += c;
@@ -312,8 +315,9 @@ public class MD5 {
 	/*
 	 * Encode把long数组按顺序拆成byte数组，因为java的long类型�?64bit的， 只拆�?32bit，以适应原始C实现的用�?
 	 */
-	private void Encode(byte[] output, long[] input, int len) {
-		int i, j;
+	private void encode(byte[] output, long[] input, int len) {
+		int i;
+		int j;
 		for (i = 0, j = 0; j < len; i++, j += 4) {
 			output[j] = (byte) (input[i] & 0xffL);
 			output[j + 1] = (byte) ((input[i] >>> 8) & 0xffL);
@@ -326,14 +330,14 @@ public class MD5 {
 	 * Decode把byte数组按顺序合成成long数组，因为java的long类型�?64bit的，
 	 * 只合成低32bit，高32bit清零，以适应原始C实现的用�?
 	 */
-	private void Decode(long[] output, byte[] input, int len) {
-		int i, j;
+	private void decode(long[] output, byte[] input, int len) {
+		int i;
+		int j;
 
 		for (i = 0, j = 0; j < len; i++, j += 4) {
             output[i] = b2iu(input[j]) | (b2iu(input[j + 1]) << 8)
                     | (b2iu(input[j + 2]) << 16) | (b2iu(input[j + 3]) << 24);
         }
-		return;
 	}
 
 	/*
@@ -348,36 +352,19 @@ public class MD5 {
 	 * �?因为java中的byte的toString无法实现这一点，我们又没有C语言中的 sprintf(outbuf,"%02X",ib)
 	 */
 	public static String byteHEX(byte ib) {
-		char[] Digit = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A',
+		char[] digit = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A',
 				'B', 'C', 'D', 'E', 'F' };
 		char[] ob = new char[2];
-		ob[0] = Digit[(ib >>> 4) & 0X0F];
-		ob[1] = Digit[ib & 0X0F];
-		String s = new String(ob);
-		return s;
+		ob[0] = digit[(ib >>> 4) & 0X0F];
+		ob[1] = digit[ib & 0X0F];
+		return new String(ob);
 	}
 
-	public static void main(String args[]) {
+	public static void main(String [] args) {
 
 		MD5 m = new MD5();
 		log.info(m.getkeyBeanofStr("123456"));
 		log.info(MD5.str2md5("123456"));
-		// if (Array.getLength(args) == 0) { // 如果没有参数，执行标准的Test Suite
-		// logger.info("keyBean Test suite:");
-		// logger.info("keyBean:" + m.getkeyBeanofStr(""));
-		// logger.info("keyBean:a" + m.getkeyBeanofStr("a"));
-		// logger.info("keyBean:abc" + m.getkeyBeanofStr("abc"));
-		// logger.info("keyBean:message digest" +
-		// m.getkeyBeanofStr("message digest"));
-		// logger.info("keyBean:" +
-		// m.getkeyBeanofStr("abcdefghijklmnopqrstuvwxyz"));
-		// logger.info("keyBean :"
-		// +
-		// m.getkeyBeanofStr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"));
-		// } else
-		// logger.info("keyBean(" + args[0] + ")=" +
-		// m.getkeyBeanofStr(args[0]));
-		//
 	}
 
 }

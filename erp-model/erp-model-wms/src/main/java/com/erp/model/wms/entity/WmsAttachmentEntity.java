@@ -54,7 +54,7 @@ public class WmsAttachmentEntity extends BaseEntity<WmsAttachmentEntity> {
 
     public static final String BUSINESS_ID = "business_id";
 
-    public static final String TYPE = "type";
+    
 
     @Override
     public Serializable pkVal() {

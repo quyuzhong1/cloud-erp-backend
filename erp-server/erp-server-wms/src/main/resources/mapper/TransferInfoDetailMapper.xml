@@ -42,5 +42,57 @@
             </foreach>
         </where>
     </select>
+    <select id="listApproveByMainIds" resultType="com.erp.model.wms.dto.TransferInfoDetailDTO$ApproveDTO">
+        select
+        tid.id  as id,
+        tid.main_id as mainId,
+        tid.sku_id,
+        tid.sku_no,
+        tid.qty,
+        tid.out_warehouse_id,
+        tid.in_warehouse_id,
+        tid.in_warehouse_location,
+        tid.out_warehouse_location,
+        tid.remark,
+        tid.source_detail_id,
+        inWarehouse.name as inWarehouseName,
+        inWarehouse.charge_id as inWarehouseChargeId,
+        outWarehouse.name as outWarehouseName,
+        outWarehouse.charge_id as outWarehouseChargeId
+        from transfer_info_detail AS tid
+        left join  warehouse AS  inWarehouse on tid.in_warehouse_id = inWarehouse.id
+        left join warehouse AS outWarehouse on outWarehouse.id = tid.out_warehouse_id
+        where tid.is_deleted = false and inWarehouse.is_deleted = false and outWarehouse.is_deleted = false
+        and tid.main_id in
+        <foreach collection="mainIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+
+    </select>
+
+    <!-- 根据来源明细id查询 -->
+    <select id="listTransferBySourceIdList"
+            resultType="com.erp.model.wms.dto.SoB2bProcessingDTO$ResponseDTO">
+        select
+            ti.id,
+            ti.code,
+            ti.approve_status,
+            ti.approve_time,
+            ti.source_id,
+            ti.source_type,
+            tid.sku_id,
+            tid.id as detailId,
+            tid.qty,
+            tid.out_warehouse_id as warehouseId,
+            COALESCE(pd.source_detail_id,tid.source_detail_id) as sourceDetailId
+        from transfer_info ti
+        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false
+        left join picking_detail pd on tid.source_detail_id = pd.id and pd.is_deleted = false
+        where ti.is_deleted = false and ti.invalid_status = false
+        and ti.source_id in
+        <foreach collection="sourceIdList" open="(" close=")" item="item" separator=",">
+            #{item}
+        </foreach>
+    </select>
 
 </mapper>

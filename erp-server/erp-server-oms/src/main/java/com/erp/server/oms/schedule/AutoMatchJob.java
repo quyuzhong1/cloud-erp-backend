@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 
 /**
  * SKU自动匹配JOB
@@ -19,6 +20,6 @@ public class AutoMatchJob {
 
     @XxlJob("skuAutoMatchJob")
     public void skuAutoMatchJob() {
-        skuMappingRuleService.handleSkuMapping();
+        skuMappingRuleService.handleSkuMapping(new ArrayList<>());
     }
 }

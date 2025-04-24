@@ -58,6 +58,16 @@ public class SoB2cErrorDTO implements Serializable {
         private String message;
 
         /**
+         * 失败原因
+         */
+        private String failureReason;
+
+        /**
+         * 解决方案
+         */
+        private String solution;
+
+        /**
         * 返回的json 字符串
         */
         private String returnJson;
@@ -291,6 +301,26 @@ public class SoB2cErrorDTO implements Serializable {
          * 异常类型
          */
         private String type;
+
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class TypeCountDTO{
+        /**
+         *
+         */
+        private Integer typeCount = 0;
+
+        /**
+         * 异常类型
+         */
+        private String type;
+        /**
+         * 异常类型名称
+         */
+        private String typeName;
 
     }
 }

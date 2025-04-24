@@ -15,11 +15,11 @@ public class Image implements Serializable {
      * image url
      */
     @Alias( "image_url_list")
-    private List<String> urls;
+    private List<String> imageUrlList;
 
     /**
      * image url
      */
     @Alias( "image_id_list")
-    private List<String> ids;
+    private List<String> imageIdList;
 }

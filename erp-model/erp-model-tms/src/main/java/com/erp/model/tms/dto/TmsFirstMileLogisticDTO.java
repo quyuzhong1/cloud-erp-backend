@@ -314,7 +314,11 @@ public class TmsFirstMileLogisticDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class UpdateChannelDTO {
-
+        /**
+         * id不能为空
+         */
+        @NotNull(message = "id不能为空")
+        private String id;
         /**
          * id集合
          */
@@ -343,6 +347,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 船司/航司id
          */
         private String carrierId;
+        /**
+         * 运输单号
+         */
+        private String transportNo;
     }
 
     /**
@@ -470,6 +478,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 超期统计
          */
         private OverdueStatistics overdueStatistics;
+        /**
+         * 重量分摊统计
+         */
+        private WeightAllocationStatistics weightAllocationStatistics;
 
         /**
          * 发货统计
@@ -543,6 +555,23 @@ public class TmsFirstMileLogisticDTO implements Serializable {
              * 已超期
              */
             private Integer expired;
+        }
+        /**
+         * 重量分摊统计
+         */
+        @Data
+        @NoArgsConstructor
+        public static class WeightAllocationStatistics {
+
+            /**
+             * 待生成
+             */
+            private Integer todoCount;
+
+            /**
+             * 已生成
+             */
+            private Integer doneCount;
         }
     }
 
@@ -719,7 +748,7 @@ public class TmsFirstMileLogisticDTO implements Serializable {
         private String invoicesStatusName;
 
         /**
-         * 对账状态
+         * 对账状态 toBeGenerated 待生成 toBeConfirmed 待确认 confirmed 已确认 reconciliation 已对账
          */
         @ExcelIgnore
         private String reconciliationStatus;
@@ -729,6 +758,33 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelProperty(value = "对账状态")
         private String reconciliationStatusName;
+        /**
+         * 装箱状态
+         */
+        @ExcelIgnore
+        private String packingStatus;
+        /**
+         * 装箱状态
+         * PackingStatusEnum
+         */
+        @ExcelProperty(value = "装箱状态")
+        private String packingStatusName;
+        /**
+         * 重量分摊状态
+         * WeightAllocationStatusEnum
+         */
+        @ExcelIgnore
+        private String weightAllocationStatus;
+        /**
+         * 重量分摊状态
+         */
+        @ExcelProperty(value = "重量分摊状态")
+        private String weightAllocationStatusName;
+        /**
+         * 暂估状态 waitConfirm 待确认 confirm 已确认
+         */
+        @ExcelIgnore
+        private String estimatedStatus;
         /**
          * 运输方式
          */
@@ -875,6 +931,10 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelProperty(value = "签收时间")
         private LocalDateTime signTime;
+        /**
+         * 开船时间
+         */
+        private LocalDateTime shipTime;
 
         /**
          * 预计时效(天)
@@ -932,6 +992,12 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          */
         @ExcelIgnore
         private Integer boxCount;
+
+        /**
+         * 创建时间
+         */
+        @ExcelIgnore
+        private LocalDateTime createTime;
     }
     /**
      * tab
@@ -1356,6 +1422,16 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 预估费用
          */
         private BigDecimal estimatedFee;
+        
+        /**
+         * 币种
+         */
+        private String currency;
+        
+        /**
+         * 币种
+         */
+        private String estimatedCurrency;
     }
 
     @Data
@@ -1474,11 +1550,21 @@ public class TmsFirstMileLogisticDTO implements Serializable {
          * 预估费用
          */
         private BigDecimal estimatedFee;
+        
+        /**
+         * 预估费用币种
+         */
+        private String estimatedCurrency;
 
         /**
          * 实际费用
          */
         private BigDecimal actualFee;
+        
+        /**
+         * 实际费用币种
+         */
+        private String actualCurrency;
 
         /**
          * 差异

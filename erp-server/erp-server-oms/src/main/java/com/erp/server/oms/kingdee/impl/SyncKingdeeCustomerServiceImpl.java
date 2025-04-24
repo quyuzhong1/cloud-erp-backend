@@ -1,5 +1,7 @@
 package com.erp.server.oms.kingdee.impl;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -11,7 +13,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.exception.ServiceException;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +30,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -39,6 +44,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.KingdeeReceiptConditionEntity;
 import com.erp.model.oms.entity.OmsPushMsgEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
@@ -47,6 +53,7 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.KingdeeFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -59,6 +66,7 @@ import com.erp.server.oms.service.CustomerInvoiceService;
 import com.erp.server.oms.service.DictBasicService;
 import com.erp.server.oms.service.KingdeeReceiptConditionService;
 import com.erp.server.oms.service.OmsPushMsgService;
+import com.erp.server.oms.service.ShopInfoService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -109,19 +117,26 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
     @Resource
     private OmsPushMsgService omsPushMsgService;
     
+    @Resource
+    private ShopInfoService shopInfoService;
+    
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public List<DmpPushTaskEntity> syncDataToKingdee(CustomerInfoEntity entity, String operate) {
-        Map<String, Object> resultMap = this.newSyncDataToKingdee(entity, operate);
+    	Map<String, Object> resultMap = null;
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		resultMap = DmpOutputConstant.getQuerySyncMap();
+    	}else {
+    		resultMap = this.newSyncDataToKingdee(entity, operate);
+    	}
         List<DmpPushTaskEntity> contractPushEnityLsit = new ArrayList<>();
         //生成任务
         DmpPushTaskEntity pushTaskEntity = saveTask(entity, operate, resultMap);
         contractPushEnityLsit.add(pushTaskEntity);
         
-        Object object = resultMap.get("customerList");
-        if(object != null) {
-        	List<CustomerContactEntity> contactEntities = (List<CustomerContactEntity>) object;
+        List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
+        if(CollUtil.isNotEmpty(contactEntities)) {
         	//审核通过联系人发送金蝶
             contactEntities.forEach(obj -> {
                 DmpPushTaskEntity taskEntity = syncKingdeeCustomerContactService.syncDataToKingdee(obj, SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -209,9 +224,14 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         resultMap.put("groupName", entity.getGroupName());
         //简称
         resultMap.put("shortName", entity.getShortName());
-        DictCountryEntity countryEntity = sysUserFeign.getCountryById(entity.getCountryId());
-        //国家
-        resultMap.put("countryCode", countryEntity.getKingdeeCode());
+        
+        String countryId = entity.getCountryId();
+        DictCountryEntity countryEntity = null;
+        if(StringUtils.isNotBlank(countryId)) {
+        	countryEntity = sysUserFeign.getCountryById(countryId);
+            //国家
+            resultMap.put("countryCode", countryEntity.getKingdeeCode());
+        }
 
         if (StringUtils.isNotBlank(entity.getProvinceId())) {
             DictCityEntity province = sysUserFeign.getCityById(entity.getProvinceId());
@@ -258,26 +278,22 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 
         //销售员
         String sellerId = entity.getSellerId();
-        String deptCode = "";
-
-
-
+        String salesDeptId = entity.getSalesDeptId();
         //获取业务员信息
         if (StringUtils.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode(useOrgCode);
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
             //销售员
             if (!Objects.isNull(kingSellerInfo)) {
                 resultMap.put("sellerUserCode", kingSellerInfo.getUserPostCode());
-                deptCode=kingSellerInfo.getDeptCode();
+                resultMap.put("sellerDeptCode", kingSellerInfo.getDeptCode());
             }
         }
-
-        resultMap.put("sellerDeptCode", deptCode);
         List<DictBasicDTO.ViewDTO> settleModeList = dictBasicService.getByKey("settleMode");
         DictBasicDTO.ViewDTO settleMode = settleModeList.stream().filter(req -> req.getValue().equals(entity.getSettleDict())).findFirst().orElse(new DictBasicDTO.ViewDTO());
         resultMap.put("settleModeCode", settleMode.getRemark());
@@ -309,11 +325,13 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
             platformTypeKingdeeCode = dictBasic.getRemark();
         }
         resultMap.put("platformType", platformTypeKingdeeCode);
-        String regionCode = countryEntity.getRegionCode();
-        if (StrUtil.isNotBlank(regionCode)) {
-            DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
-            if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
-                resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+        if(countryEntity != null) {
+        	String regionCode = countryEntity.getRegionCode();
+            if (CharSequenceUtil.isNotBlank(regionCode)) {
+                DictGlobalAreaEntity globalAreaEntity = sysUserFeign.getGlobalAreaById(regionCode);
+                if (ObjectUtil.isNotEmpty(globalAreaEntity)) {
+                    resultMap.put("globalAreaCode", globalAreaEntity.getKingdeeCode());
+                }
             }
         }
         resultMap.put("disabled", entity.getDisabled());
@@ -322,5 +340,90 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
         List<CustomerContactEntity> contactEntities = customerContactService.listEntityByMainId(entity.getId());
         resultMap.put("customerList", contactEntities);
         return resultMap;
+	}
+
+
+	@Override
+	public void syncDataToSdy(CustomerInfoEntity entity, String operate) {
+		OmsPushMsgEntity omsPushMsgEntity = new OmsPushMsgEntity();
+        omsPushMsgEntity.setSourceId(entity.getId());
+        omsPushMsgEntity.setSourceCode(entity.getCode());
+        omsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_CUSTOMER_INFO.getCode());
+        omsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        omsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        omsPushMsgEntity.setSyncOperate(operate);
+        omsPushMsgService.save(omsPushMsgEntity);
+	}
+
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(CustomerInfoEntity entity, String operate) {
+		Map<String, Object> resultMap = new HashMap<>();
+		
+		String subPlatformType = entity.getPlatformType();
+		String subPlatformTypeName = entity.getPlatformType();
+		if(StringUtils.isNotBlank(subPlatformType)) {
+			List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+			if(CollUtil.isNotEmpty(dictList)) {
+				subPlatformType = dictList.get(0).getName();
+                subPlatformTypeName = dictList.get(0).getValue();
+			}
+		}
+		
+		String financialOrganization = entity.getFinancialOrganization();
+		String useOrgId = entity.getUseOrgId();
+		Map<String, String> orgIdCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(financialOrganization , useOrgId))
+			.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, BaseIdDTO.CodeDTO::getCode));
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+
+        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
+        DictBasicEntity dictBasicEntity = dictBasicEntityList.stream().filter(req -> req.getValue().equals(entity.getPlatformType())).findFirst().orElse(null);
+
+        resultMap.put("oms_system", "SDC");
+		resultMap.put("biz_uni_key", entity.getId());
+		resultMap.put("platform_code", entity.getPlatformType());
+		if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
+            resultMap.put("platform_name", dictBasicEntity.getName());
+        }
+		resultMap.put("sub_platform_code", subPlatformType);
+		resultMap.put("sub_platform_name", subPlatformTypeName);
+		resultMap.put("shop_code", entity.getCode());
+		resultMap.put("shop_site", entity.getCountryId());
+		resultMap.put("shop_name", entity.getName());
+		resultMap.put("currency_code", entity.getTradeCurrency());
+		resultMap.put("settlement_currency_code", entity.getCurrency());
+		resultMap.put("business_mode", entity.getBusinessMode());
+		resultMap.put("transactional_mode", entity.getTransactionalMode());
+		resultMap.put("financial_organization_code", orgIdCodeMap.get(useOrgId));
+		resultMap.put("organization", orgIdCodeMap.get(financialOrganization));
+		resultMap.put("period_setting", entity.getPeriodSetting());
+		resultMap.put("check_type", entity.getCheckType());
+		resultMap.put("is_check", "是");
+		List<ShopInfoEntity> shopInfoList = shopInfoService.lambdaQuery().eq(ShopInfoEntity::getCustomerId, entity.getId()).list();
+		if(CollUtil.isNotEmpty(shopInfoList)) {
+			ShopInfoEntity shopInfoEntity = shopInfoList.get(0);
+			String warehouseId = shopInfoEntity.getWarehouseId();
+			String returnWarehouse = shopInfoEntity.getReturnWarehouse();
+			Map<String, String> wareIdCodeMaps = FeignQuery.getByIds(WarehouseEntity.class, Arrays.asList(warehouseId , returnWarehouse)).stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getKingdeeWarehouseCode));
+			resultMap.put("default_platform_warehouse", wareIdCodeMaps.get(warehouseId));
+			resultMap.put("default_platform_return_warehouse" , wareIdCodeMaps.get(returnWarehouse));
+		}
+		LocalDateTime enableTime = entity.getEnableTime();
+		if(enableTime != null) {
+			resultMap.put("enable_time", enableTime.format(formatter));
+		}
+		LocalDateTime downTime = entity.getDownTime();
+		if(downTime != null) {
+			resultMap.put("down_time", downTime.format(formatter));
+		}
+		
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "已删除");
+		}else {
+			resultMap.put("status", entity.getApproveStatus().getName());
+		}
+		return resultMap;
 	}
 }

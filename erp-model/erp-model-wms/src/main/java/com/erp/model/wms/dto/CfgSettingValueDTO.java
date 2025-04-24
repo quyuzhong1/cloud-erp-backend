@@ -1,9 +1,6 @@
 package com.erp.model.wms.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
@@ -209,6 +206,23 @@ public class CfgSettingValueDTO implements Serializable {
     }
 
     /**
+     * 飞书要货申请完成通知DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class FsRequisitionNoticeDTO{
+
+        /**
+         * 可以选择单据的操作人（创建人、处理人）
+         */
+        private List<String> roleIdList;
+
+        /**
+         * 抄送人员id集合,post请求,/api/plm/common/findUserList
+         */
+        private List<String> userIdList;
+    }
+    /**
      * 委外入库
      */
     @Data
@@ -221,5 +235,49 @@ public class CfgSettingValueDTO implements Serializable {
          * manual 不自动 auto 自动  semiAuto 部分自动
          */
         private String autoInStockSetting;
+    }
+    /**
+     * 委外入库
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    public static class SubcontractReturnStock {
+        /**
+         * 自动入库配置
+         * manual 不自动 auto 自动  semiAuto 部分自动
+         */
+        private String autoReturnStockSetting = "semiAuto";
+    }
+
+    /**
+     * 仓库
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SoWarehouseDTO{
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 销售组织id
+         */
+        private String orgId;
+    }
+
+    @Getter
+    @Setter
+    public static class QcUserDTO {
+
+        /**
+         * 名字
+         */
+        private String name;
     }
 }
