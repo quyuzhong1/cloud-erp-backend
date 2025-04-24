@@ -21,9 +21,8 @@ import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.Tools;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -36,8 +35,6 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.erp.server.dmp.service.DmpSoOutstockDetailService;
-import com.erp.server.dmp.service.DmpSoOutstockService;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -54,12 +51,6 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	@Autowired
 	private SysUserFeign sysUserFeign;
 	
-	@Autowired
-	private DmpSoOutstockService dmpSoOutstockService;
-	
-	@Autowired
-	private DmpSoOutstockDetailService dmpSoOutstockDetailService;
-
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
@@ -67,7 +58,6 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         Map<String, List<DmpSoOutstockDetailEntity>> dmpSoOutstockDetailEntityMap = new HashMap<>();
         List<DmpSoOutstockEntity> changeDmpSoOutstockEntity = new ArrayList<>();
         List<DmpSoOutstockDetailEntity> changeDmpSoOutstockDetailEntity = new ArrayList<>();
-        Set<String> deleteIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
@@ -82,9 +72,6 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                     for (BaseEntity v : value) {
                         DmpSoOutstockDetailEntity dmpSoOriginalDetailEntity = (DmpSoOutstockDetailEntity) v;
                         String mainId = dmpSoOriginalDetailEntity.getMainId();
-                        if("已删除".equals(dmpSoOriginalDetailEntity.getDataStatus())) {
-                        	deleteIds.add(mainId);
-                        }
                         List<DmpSoOutstockDetailEntity> list = dmpSoOutstockDetailEntityMap.get(mainId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
@@ -97,18 +84,6 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
             }
         }
 
-        if(CollUtil.isNotEmpty(deleteIds)) {
-        	List<DmpSoOutstockEntity> dbEntityList = dmpSoOutstockService.listByIds(deleteIds);
-        	for(DmpSoOutstockEntity dbEntity : dbEntityList) {
-        		dmpSoOutstockEntityMap.put(dbEntity.getId(), dbEntity);
-        	}
-        	List<DmpSoOutstockDetailEntity> dbDetailEntityList = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getMainId, deleteIds).list();
-        	Map<String, List<DmpSoOutstockDetailEntity>> mainDbEntityMaps = dbDetailEntityList.stream().collect(Collectors.groupingBy(DmpSoOutstockDetailEntity::getMainId));
-        	for(Map.Entry<String, List<DmpSoOutstockDetailEntity>> mainDbEntityMap : mainDbEntityMaps.entrySet()) {
-        		dmpSoOutstockDetailEntityMap.put(mainDbEntityMap.getKey(), mainDbEntityMap.getValue());
-        	}
-        }
-        
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
         Set<String> changeIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
@@ -202,6 +177,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     		if(validateDataBlack(dmpSoOutstockEntity, cfgOutputId)) {
     			return result;
     		}
+    		Tools.nullToBlank(dmpSoOutstockEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String country = dmpSoOutstockEntity.getCountry();
     		String province = dmpSoOutstockEntity.getProvince();
@@ -229,25 +205,42 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     			if(validateDataBlack(dmpSoOutstockDetailEntity, cfgOutputId)) {
     				continue;
     			}
+    			Tools.nullToBlank(dmpSoOutstockDetailEntity);
     			String detailId = dmpSoOutstockDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
     			shudiyunB2cOrderDTO.setCountry_code(country);
     			if(country != null) {
-    				shudiyunB2cOrderDTO.setCountry(cfgMaps.get("country").get(country));
+    				String countryName = cfgMaps.get("country").get(country);
+    				if(countryName == null) {
+    					countryName = "";
+    				}
+					shudiyunB2cOrderDTO.setCountry(countryName);
     			}
     			shudiyunB2cOrderDTO.setRegion_code(province);
     			if(province != null) {
-    				shudiyunB2cOrderDTO.setRegion_name(cfgMaps.get("province").get(province));
+    				String region_name = cfgMaps.get("province").get(province);
+    				if(region_name == null) {
+    					region_name = "";
+    				}
+					shudiyunB2cOrderDTO.setRegion_name(region_name);
     			}
     			shudiyunB2cOrderDTO.setMilitary_region_code(district);
     			if(district != null) {
-    				shudiyunB2cOrderDTO.setMilitary_region_name(cfgMaps.get("district").get(district));
+    				String military_region_name = cfgMaps.get("district").get(district);
+    				if(military_region_name == null) {
+    					military_region_name = "";
+    				}
+					shudiyunB2cOrderDTO.setMilitary_region_name(military_region_name);
     			}
     			String saleDeptName = dmpSoOutstockDetailEntity.getSaleDeptName();
 				shudiyunB2cOrderDTO.setDepartment_code(saleDeptName);
 				if(saleDeptName != null) {
-					shudiyunB2cOrderDTO.setDepartment_name(cfgMaps.get("department").get(saleDeptName));
+					String department_name = cfgMaps.get("department").get(saleDeptName);
+					if(department_name == null) {
+						department_name = "";
+					}
+					shudiyunB2cOrderDTO.setDepartment_name(department_name);
 				}
     			
     	        shudiyunB2cOrderDTO.setBiz_uni_key(thirdCode + dmpSoOutstockDetailEntity.getThirdDetailId());
@@ -262,19 +255,34 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setSales_company_code(saleOrgId);
     	        if(financialCompanyId != null) {
     	        	String financialCode = cfgMaps.get("companyCode").get(financialCompanyId);
+    	        	if(financialCode == null) {
+    	        		financialCode = "";
+    	        	}
     				shudiyunB2cOrderDTO.setReceiving_company_code(financialCode);
         	        shudiyunB2cOrderDTO.setOrganization_code(financialCode);
-        	        shudiyunB2cOrderDTO.setOrganization_name(cfgMaps.get("companyName").get(financialCompanyId));
+        	        String organization_name = cfgMaps.get("companyName").get(financialCompanyId);
+        	        if(organization_name == null) {
+        	        	organization_name = "";
+        	        }
+					shudiyunB2cOrderDTO.setOrganization_name(organization_name);
     	        }
     	        String payCurrency = dmpSoOutstockDetailEntity.getPayCurrency();
 				shudiyunB2cOrderDTO.setSettlement_currency_code(payCurrency);
 				if(payCurrency != null) {
-					shudiyunB2cOrderDTO.setSettlement_currency(cfgMaps.get("currency").get(payCurrency));
+					String settlement_currency = cfgMaps.get("currency").get(payCurrency);
+					if(settlement_currency == null) {
+						settlement_currency = "";
+					}
+					shudiyunB2cOrderDTO.setSettlement_currency(settlement_currency);
 				}
                 String currency = dmpSoOutstockDetailEntity.getCurrency();
 				shudiyunB2cOrderDTO.setTransaction_currency_code(currency);
 				if(currency != null) {
-					shudiyunB2cOrderDTO.setTransaction_currency(cfgMaps.get("currency").get(currency));
+					String transaction_currency = cfgMaps.get("currency").get(currency);
+					if(transaction_currency == null) {
+						transaction_currency = "";
+					}
+					shudiyunB2cOrderDTO.setTransaction_currency(transaction_currency);
 				}
                 String platformType = dmpSoOutstockDetailEntity.getPlatformType();
 				shudiyunB2cOrderDTO.setPlatform_id(platformType);
@@ -283,7 +291,11 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	            shudiyunB2cOrderDTO.setShop_name(shopName);
 	            shudiyunB2cOrderDTO.setSubplatform_no(platformType);
 	            if(platformType != null) {
-	            	shudiyunB2cOrderDTO.setSubplatform_name(cfgMaps.get("subPlatform").get(platformType));
+	            	String subplatform_name = cfgMaps.get("subPlatform").get(platformType);
+	            	if(subplatform_name == null) {
+	            		subplatform_name = "";
+	            	}
+					shudiyunB2cOrderDTO.setSubplatform_name(subplatform_name);
 	            }
                 
     	        shudiyunB2cOrderDTO.setRoot_node_no(dmpSoOutstockDetailEntity.getThirdOrderCode());

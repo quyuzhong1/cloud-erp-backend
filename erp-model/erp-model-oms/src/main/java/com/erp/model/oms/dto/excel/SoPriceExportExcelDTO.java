@@ -136,4 +136,11 @@ public class SoPriceExportExcelDTO implements Serializable {
     @ExcelProperty(value = "创建时间", index = 15,converter= LocalDateStringConverter.class)
     private LocalDateTime createTime;
 
+
+    /**
+     * 明细备注
+     */
+    @ColumnWidth(10)
+    @ExcelProperty(value = "明细备注", index = 16)
+    private String detailRemark;
 }

@@ -155,7 +155,7 @@
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
-        select approve_status, count(id) from after_sale where is_deleted = false group by approve_status
+        select afs.approve_status, count(1) from after_sale as afs where afs.is_deleted = false group by afs.approve_status
     </select>
 
     <select id="listExport" resultType="com.erp.model.dmp.dto.excel.DmpAfterSaleExcekDTO">
@@ -163,15 +163,15 @@
     </select>
     <select id="tabList" resultType="com.erp.model.dmp.dto.AfterSaleDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  after_sale
-        WHERE is_deleted=FALSE
-            and approve_status !='waitSubmit'
+        afs.approve_status AS tabFlag,
+        count(1)  AS count
+        FROM  after_sale as afs
+        WHERE afs.is_deleted=FALSE
+            and afs.approve_status !='waitSubmit'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY afs.approve_status
     </select>
     <select id="getRepairProgress" resultType="com.erp.model.dmp.dto.AfterSaleProgressDTO$RepairRecordListDTO"
             parameterType="com.erp.model.dmp.dto.AfterSaleDTO$ProgressDTO">

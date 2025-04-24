@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
@@ -14,12 +15,16 @@ import com.common.business.enums.SyncOperateEnum;
 import com.erp.model.dmp.dto.DmpReturnInstockDTO;
 import com.erp.model.dmp.dto.DmpReturnInstockDetailDTO;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.dto.DmpReturnInstockDTO;
 import com.erp.model.dmp.dto.DmpReturnInstockDetailDTO;
 import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -32,7 +37,19 @@ import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.SoReturnReceiveEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.SoReturnFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
+import com.erp.server.wms.service.DictBasicService;
+import com.erp.server.wms.service.SoOutstockDetailService;
+import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.SoReturnInstockDetailService;
+import com.erp.server.wms.service.SoReturnInstockService;
+import com.erp.server.wms.service.SoReturnReceiveService;
 import com.erp.server.wms.service.WmsPushMsgService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +66,31 @@ import java.util.stream.Collectors;
 public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockService {
     @Resource
     private WmsPushMsgService wmsPushMsgService;
+    
+    @Resource
+    private SoOutstockService soOutstockService;
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
+    @Resource
+    private SyncKingdeeSoOutstockService syncKingdeeSoOutstockService;
+    @Resource
+    private SysUserFeign sysUserFeign;
+    @Resource
+    private SoB2cFeign soB2cFeign;
+    @Resource
+    private SoInfoFeign soInfoFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private SoReturnInstockService soReturnInstockService;
+    @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
+    @Resource
+    private SoReturnFeign soReturnFeign;
+    @Resource
+    private SoReturnReceiveService soReturnReceiveService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     public Map<String, Object> syncDataToSdyFieldHandler(SoReturnInstockEntity entity,
@@ -596,83 +638,21 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
     @Override
     public void syncDataToSdy(SoReturnInstockEntity entity,
                               List<SoReturnInstockDetailEntity> detailEntities,
-                              String operate,
-                              List<SkuVO> skuVOList,
-                              List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
-                              List<CurrencyDTO.ViewDTO> currencyList,
-                              List<ProductDetailEntity> parentSkuList,
-                              List<CustomerInfoEntity> customerInfoList,
-                              List<BaseIdDTO.CodeDTO> companyEntities,
-                              List<SoReturnEntity> soReturnEntityList,
-                              List<SoReturnReceiveEntity> soReturnReceiveEntityList,
-                              List<SoReturnEntity> receiveReturnList,
-                              String country,
-                              String partitionId,
-                              String dictPlatform,
-                              List<DictBasicEntity> omsAllDictList,
-                              List<DictPartitionEntity> partitionEntityList,
-                              List<DictCountryEntity> countryEntityList,
-                              List<DictGlobalAreaEntity> dictGlobalEntityList,
-                              List<SysDepartmentEntity> deptList,
-                              List<CfgCountryPartitionEntity> countryPartitionEntityList
-    ) {
-        for (SoReturnInstockDetailEntity detailEntity : detailEntities) {
-            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
-            wmsPushMsgEntity.setSourceId(detailEntity.getId());
-            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
-            wmsPushMsgEntity.setSyncOperate(operate);
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncNewDataToSdyFieldHandler(entity,
-                    detailEntity,
-                    operate,
-                    skuVOList,
-                    bomChildrenSkuDTOS,
-                    currencyList,
-                    parentSkuList,
-                    customerInfoList,
-                    companyEntities,
-                    soReturnEntityList,
-                    soReturnReceiveEntityList,
-                    receiveReturnList,
-                    country,
-                    partitionId,
-                    dictPlatform,
-                    omsAllDictList,
-                    partitionEntityList,
-                    countryEntityList,
-                    dictGlobalEntityList,
-                    deptList,
-                    countryPartitionEntityList)));
-            wmsPushMsgService.save(wmsPushMsgEntity);
-        }
-    }
-
-    @Override
-    public void syncDataToSdy(SoReturnInstockEntity entity,
-                              List<SoReturnInstockDetailEntity> detailEntities,
                               String operate) {
-        for (SoReturnInstockDetailEntity detailEntity : detailEntities) {
-            WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
-            wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-            wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
-            wmsPushMsgEntity.setSourceId(detailEntity.getId());
-            wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
-            wmsPushMsgEntity.setSyncOperate(operate);
-            Map<String, Object> map = new HashMap<>();
-            if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-            	map.put("isQuerySync", Boolean.TRUE);
-                map.put("detailId", detailEntity.getId());
-                map.put("operate", operate);
-            }else {
-                map = this.syncNewDataToSdyFieldHandler(entity, detailEntity, operate, new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), "", "", "", new ArrayList<>(), new ArrayList<>(), 
-            			new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+    	if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		this.syncBatchDataToSdy(Arrays.asList(entity), detailEntities, operate, true, true);
+    	}else {
+    		for (SoReturnInstockDetailEntity detailEntity : detailEntities) {
+                WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+                wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+                wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
+                wmsPushMsgEntity.setSourceId(detailEntity.getId());
+                wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
+                wmsPushMsgEntity.setSyncOperate(operate);
+                wmsPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+                wmsPushMsgService.save(wmsPushMsgEntity);
             }
-            wmsPushMsgEntity.setPushData(JSON.toJSONString(map));
-            wmsPushMsgService.save(wmsPushMsgEntity);
-        }
+    	}
     }
 
     private String getRootNodeNoInitial(SoReturnInstockEntity entity,
@@ -707,5 +687,206 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 
         return rootNodeNoInitial;
     }
+
+	@Override
+	public Map<String ,Map<String, Object>> syncBatchDataToSdy(List<SoReturnInstockEntity> list,
+			List<SoReturnInstockDetailEntity> detailEntityList, String operate , boolean isSavePush , boolean isNewQuerySync) {
+		Map<String , Map<String, Object>> resultList = new HashMap<>();
+		
+		List<String> skuNos = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
+        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<String> skuIds = detailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
+        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
+
+        List<String> currencyCodeList = detailEntityList.stream().map(req -> req.getCurrency()).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> currencyList = sysUserFeign.listByCurrency(currencyCodeList);
+        //父类产品
+        List<String> parentSkuId = bomChildrenSkuDTOS.stream().map(BomChildrenSkuDTO::getParentSkuId).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> parentSkuList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(parentSkuId)) {
+            parentSkuList = FeignQuery.create(ProductDetailEntity.class)
+                    .in(ProductDetailEntity::getId, parentSkuId)
+                    .list();
+        }
+
+        //客户
+        List<String> customerIds = list.stream().map(req -> req.getCustomerId()).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = new ArrayList<>();
+        if (CollUtil.isNotEmpty(customerIds)) {
+            //组织
+            customerInfoList = FeignQuery.create(CustomerInfoEntity.class)
+                    .in(CustomerInfoEntity::getId, customerIds)
+                    .list();
+        }
+
+        //组织
+        List<String> financialOrganization = customerInfoList.stream().map(req -> req.getFinancialOrganization()).distinct().collect(Collectors.toList());
+        financialOrganization.addAll(list.stream().map(SoReturnInstockEntity::getSalesOrgId).distinct().collect(Collectors.toList()));
+        List<BaseIdDTO.CodeDTO> companyEntities = sysUserFeign.getAccountingCompanyList(financialOrganization);
+
+        List<String> soReturnIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnEntity> soReturnEntityList = soReturnFeign.listByIds(soReturnIds);
+
+        List<String> receiveIds = list.stream().filter(req -> SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(req.getSourceType())).map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnReceiveEntity> soReturnReceiveEntityList = soReturnReceiveService.listByIds(receiveIds);
+
+        List<String> returnIds = list.stream().map(req -> req.getSourceId()).distinct().collect(Collectors.toList());
+        List<SoReturnEntity> receiveReturnList = soReturnFeign.listByIds(returnIds);
+
+        Map<String, List<SoReturnInstockEntity>> instockGroupMap = list.stream().collect(Collectors.groupingBy(SoReturnInstockEntity::getType));
+
+        List<SoB2cEntity> soB2cEntityList = new LinkedList();
+        List<SoB2cReceiverEntity> receiverEntityList = new LinkedList();
+        // 查询B2C订单
+        List<SoReturnInstockEntity> b2cReturnInstockList = instockGroupMap.get("B2C");
+        if (CollectionUtils.isNotEmpty(b2cReturnInstockList)){
+            List<String> b2cSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(b2cSoIds)) {
+                receiverEntityList = FeignQuery.create(SoB2cReceiverEntity.class)
+                        .in(SoB2cReceiverEntity::getMainId, b2cSoIds)
+                        .list();
+
+                soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
+                        .in(SoB2cEntity::getId, b2cSoIds)
+                        .list();
+            }
+        }
+
+        List<SoInfoEntity> soInfoEntityList = new LinkedList();
+        // 查询B2B订单
+        List<SoReturnInstockEntity> b2bReturnInstockList = instockGroupMap.get("B2B");
+        if (CollectionUtils.isEmpty(b2bReturnInstockList)){
+            List<String> b2bSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
+                    .filter(StringUtils::isNotBlank)
+                    .distinct()
+                    .collect(Collectors.toList());
+            soInfoEntityList = FeignQuery.create(SoInfoEntity.class)
+                    .in(SoInfoEntity::getId, b2bSoIds)
+                    .list();
+        }
+
+        List<DictBasicEntity> omsAllDictList = FeignQuery.create(DictBasicEntity.class)
+                .in(DictBasicEntity::getType, Arrays.asList(DictBasicTypeEnum.SALES_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(),
+                        DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(),
+                        DictBasicTypeEnum.SDY_PLATFORM_LEVEL2_DEPT.getType()
+                )).list();
+
+        // 军区信息
+        List<DictPartitionEntity> partitionEntityList = FeignQuery.create(DictPartitionEntity.class).list();
+
+        // 国家信息
+        List<DictCountryEntity> countryEntityList = FeignQuery.create(DictCountryEntity.class).list();
+
+        // 子区域信息
+        List<DictGlobalAreaEntity> dictGlobalEntityList = FeignQuery.create(DictGlobalAreaEntity.class).list();
+
+        // 部门信息
+        List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
+
+        // 国家关联分区信息
+        List<CfgCountryPartitionEntity> countryPartitionEntityList = FeignQuery.create(CfgCountryPartitionEntity.class).list();
+
+        for (SoReturnInstockEntity entity : list) {
+            // 国家
+            String country = "";
+            // 分区
+            String partitionId = "";
+            // 平台
+            String dictPlatform = "";
+
+            if ("B2B".equalsIgnoreCase(entity.getType())){
+                SoInfoEntity soInfoEntity = soInfoEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                if (null != soInfoEntity){
+                    partitionId = soInfoEntity.getPartitionId();
+                    CustomerInfoEntity customerInfoEntity = customerInfoList.stream().filter(e -> e.getId().equalsIgnoreCase(soInfoEntity.getCustomerId())).findFirst().orElse(null);
+                    if (null != customerInfoEntity){
+                        country = customerInfoEntity.getCountryId();
+                        dictPlatform = customerInfoEntity.getPlatformType();
+                    }
+                }
+            } else if ("B2C".equalsIgnoreCase(entity.getType())){
+                SoB2cReceiverEntity receiverEntity = receiverEntityList.stream().filter(e -> e.getMainId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                if (null != receiverEntity){
+                    country = receiverEntity.getCountry();
+                    partitionId = receiverEntity.getPartitionId();
+                }
+                SoB2cEntity soB2cEntity = soB2cEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                if (null != soB2cEntity){
+                    dictPlatform = soB2cEntity.getDictPlatform();
+                }
+            }
+
+            List<SoReturnInstockDetailEntity> detailEntities = detailEntityList.stream().filter(req -> req.getMainId().equals(entity.getId())).collect(Collectors.toList());
+
+            for(SoReturnInstockDetailEntity detailEntity : detailEntities) {
+            	Map<String, Object> syncDataToSdyFieldHandler = null;
+            	if(isNewQuerySync) {
+            		syncDataToSdyFieldHandler = this.syncNewDataToSdyFieldHandler(entity,
+                            detailEntity,
+                            operate,
+                            skuVOList,
+                            bomChildrenSkuDTOS,
+                            currencyList,
+                            parentSkuList,
+                            customerInfoList,
+                            companyEntities,
+                            soReturnEntityList,
+                            soReturnReceiveEntityList,
+                            receiveReturnList,
+                            country,
+                            partitionId,
+                            dictPlatform,
+                            omsAllDictList,
+                            partitionEntityList,
+                            countryEntityList,
+                            dictGlobalEntityList,
+                            deptList,
+                            countryPartitionEntityList
+                    );
+            	}else {
+            		syncDataToSdyFieldHandler = this.syncDataToSdyFieldHandler(entity,
+                            detailEntity,
+                            operate,
+                            skuVOList,
+                            bomChildrenSkuDTOS,
+                            currencyList,
+                            parentSkuList,
+                            customerInfoList,
+                            companyEntities,
+                            soReturnEntityList,
+                            soReturnReceiveEntityList,
+                            receiveReturnList,
+                            country,
+                            partitionId,
+                            dictPlatform,
+                            omsAllDictList,
+                            partitionEntityList,
+                            countryEntityList,
+                            dictGlobalEntityList,
+                            deptList,
+                            countryPartitionEntityList
+                    );
+            	}
+            	String sourceId = detailEntity.getId();
+            	resultList.put(sourceId, syncDataToSdyFieldHandler);
+            	if(isSavePush) {
+            		WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+                    wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+                    wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_SO_RETURN_INSTOCK.getCode());
+                    wmsPushMsgEntity.setSourceId(sourceId);
+                    wmsPushMsgEntity.setSourceCode(entity.getCode() + "_" + detailEntity.getSkuNo());
+                    wmsPushMsgEntity.setSyncOperate(operate);
+                    wmsPushMsgEntity.setPushData(JSON.toJSONString(syncDataToSdyFieldHandler));
+                    wmsPushMsgService.save(wmsPushMsgEntity);
+            	}
+            }
+        }
+        
+        return resultList;
+	}
 
 }

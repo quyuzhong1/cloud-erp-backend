@@ -9,25 +9,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.Tools;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpReturnInstockDetailEntity;
-import com.erp.model.dmp.entity.DmpReturnInstockEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockDetailEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockEntity;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.erp.server.dmp.service.DmpReturnInstockDetailService;
-import com.erp.server.dmp.service.DmpReturnInstockService;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -40,19 +34,12 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 @Scope("prototype")
 public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandler {
-	
-	@Autowired
-	private DmpReturnInstockService dmpReturnInstockService;
-	
-	@Autowired
-	private DmpReturnInstockDetailService dmpReturnInstockDetailService;
 
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
         Map<String, DmpReturnInstockEntity> dmpReturnInstockEntityMap = new HashMap<>();
         Map<String, List<DmpReturnInstockDetailEntity>> dmpReturnInstockDetailEntityMap = new HashMap<>();
-        Set<String> deleteIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
@@ -66,9 +53,6 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
                     for (BaseEntity v : value) {
                         DmpReturnInstockDetailEntity dmpSoOriginalDetailEntity = (DmpReturnInstockDetailEntity) v;
                         String mainId = dmpSoOriginalDetailEntity.getMainId();
-                        if("已删除".equals(dmpSoOriginalDetailEntity.getDataStatus())) {
-                        	deleteIds.add(mainId);
-                        }
                         List<DmpReturnInstockDetailEntity> list = dmpReturnInstockDetailEntityMap.get(mainId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
@@ -80,18 +64,6 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
             }
         }
 
-        if(CollUtil.isNotEmpty(deleteIds)) {
-        	List<DmpReturnInstockEntity> dbEntityList = dmpReturnInstockService.listByIds(deleteIds);
-        	for(DmpReturnInstockEntity dbEntity : dbEntityList) {
-        		dmpReturnInstockEntityMap.put(dbEntity.getId(), dbEntity);
-        	}
-        	List<DmpReturnInstockDetailEntity> dbDetailEntityList = dmpReturnInstockDetailService.lambdaQuery().in(DmpReturnInstockDetailEntity::getMainId, deleteIds).list();
-        	Map<String, List<DmpReturnInstockDetailEntity>> mainDbEntityMaps = dbDetailEntityList.stream().collect(Collectors.groupingBy(DmpReturnInstockDetailEntity::getMainId));
-        	for(Map.Entry<String, List<DmpReturnInstockDetailEntity>> mainDbEntityMap : mainDbEntityMaps.entrySet()) {
-        		dmpReturnInstockDetailEntityMap.put(mainDbEntityMap.getKey(), mainDbEntityMap.getValue());
-        	}
-        }
-        
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
         Set<String> changeIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
@@ -130,6 +102,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     		if(validateDataBlack(dmpReturnInstockEntity, cfgOutputId)) {
     			return result;
     		}
+    		Tools.nullToBlank(dmpReturnInstockEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String thirdReturnInstockId = dmpReturnInstockEntity.getThirdReturnInstockId();
     		String thirdReturnInstockCode = dmpReturnInstockEntity.getThirdReturnInstockCode();
@@ -157,6 +130,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
     			if(validateDataBlack(dmpReturnInstockDetailEntity, cfgOutputId)) {
     				continue;
     			}
+    			Tools.nullToBlank(dmpReturnInstockDetailEntity);
     			String detailId = dmpReturnInstockDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
