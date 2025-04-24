@@ -182,6 +182,10 @@ public class GoodCangService {
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_CREATE_OUTBOUND_BILL,json);
         //处理返回值
         GoodCangResponse<String> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            log.error("谷仓创建出库单返回数据为空,返回值:{}", response);
+            return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
+        }
         if(Objects.nonNull(respDto.getOrderCode())){
             respDto.setData(respDto.getOrderCode());
         }
@@ -196,6 +200,10 @@ public class GoodCangService {
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_OUT_BOUND_CODE,paramsMap);
         //处理返回值
         GoodCangResponse<String> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<String>>() {}.getType());
+        if(Objects.isNull(respDto)){
+            log.error("谷仓获取出库单号返回数据为空,返回值:{}", response);
+            return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
+        }
         if(Objects.nonNull(respDto.getData())){
             respDto.setData(JSON.parseObject(respDto.getData()).get("order_code").toString());
         }
