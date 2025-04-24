@@ -127,9 +127,9 @@ public class SoUtils {
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax,4);
             //价税合计（折前）
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
+            BigDecimal taxAmount = MathUtil.multiply(taxPrice, new BigDecimal(qty),4);
             totalTaxAmountBefore = totalTaxAmountBefore.add(taxAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
         }
 
@@ -169,21 +169,21 @@ public class SoUtils {
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax,4);
             item.setTaxPrice(taxPrice);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiply(price, new BigDecimal(qty),4);
 
             //含税金额（折扣前）
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice, qty);
+            BigDecimal taxAmount = MathUtil.multiply(taxPrice, new BigDecimal(qty),4);
+            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice, new BigDecimal(qty),4);
             item.setTaxAmountBefore(taxAmountBefore);
             item.setAmount(amount);
 
             //折扣额=折扣总额*含税金额（折扣前）/总的价税合计（折前）
             BigDecimal detailDiscountAmount = BigDecimal.ZERO;
             if (Objects.nonNull(discountAmount) && totalTaxAmountBefore.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal discountFlag = MathUtil.multiply(discountAmount, taxAmount);
+                BigDecimal discountFlag = MathUtil.multiply(discountAmount, taxAmount,4);
                 detailDiscountAmount = MathUtil.divide(discountFlag, totalTaxAmountBefore, 2, BigDecimal.ROUND_DOWN);
                 log.warn("销售订单明细第【{}】条数据，价税合计（折扣前）比例【{}】，折扣额【{}】", (i + 1), detailDiscountAmount);
             }
@@ -243,7 +243,7 @@ public class SoUtils {
         BigDecimal divideNumber = MathUtil.add(taxRate, MathUtil.BigDecimal_100);
         //除的结果
         BigDecimal divideResult = MathUtil.divide(diff, divideNumber, 8, BigDecimal.ROUND_HALF_UP);
-        return MathUtil.multiply(divideResult, taxRate);
+        return MathUtil.multiply(divideResult, taxRate,4);
     }
 
 
