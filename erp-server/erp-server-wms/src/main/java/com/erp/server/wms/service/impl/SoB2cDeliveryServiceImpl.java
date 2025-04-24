@@ -1674,7 +1674,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //更新单据状态和拣货状态
-        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE);
+        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE, Boolean.TRUE, null);
         if (!update) {
             throw new ServiceException("完成打印失败");
         }
@@ -2477,7 +2477,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         return lambdaUpdate().in(SoB2cDeliveryEntity::getId,idList).set(SoB2cDeliveryEntity::getStatus,status)
                 .set(SoB2cDeliveryEntity::getIsPrintPicking,isPrintPicking)
                 .set(SoB2cDeliveryEntity::getIsPrintLogistic,isPrintLogistics)
-                .set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,isPrintSkuBarcode)
+                .set(Objects.nonNull(isPrintSkuBarcode),SoB2cDeliveryEntity::getIsPrintSkuBarcode,isPrintSkuBarcode)
                 .set(isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,LocalDateTime.now())
                 .set(!isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,null)
                 .update();
