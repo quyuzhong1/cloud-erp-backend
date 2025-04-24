@@ -635,7 +635,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     String code = qcInfoMap.get(detailEntity.getId()).getCode();
                     transferOutDetail.setRemark(StrUtil.format(remark,code));
                     transferOutDetail.setSourceDetailId(detailEntity.getId());
-                    transferOutDetail.setOutWarehouseLocation("空仓位");
+//                    transferOutDetail.setOutWarehouseLocation("");
                     transferOutDetail.setUnit("Pcs");
                     detailList.add(transferOutDetail);
                 }
@@ -766,6 +766,10 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         qcNoticeDetailService.lambdaUpdate()
                 .set(QcNoticeDetailEntity::getQcStatus, QcNoticeStatusEnum.WAIT.getCode())
+                .set(QcNoticeDetailEntity::getQcQty, 0)
+                .set(QcNoticeDetailEntity::getQcDiffQty, 0)
+                .set(QcNoticeDetailEntity::getQcGoodQty, 0)
+                .set(QcNoticeDetailEntity::getQcBadQty, 0)
                 .in(QcNoticeDetailEntity::getId, detailIds)
                 .update();
         //查询其余明细的质检状态,是否有包含任一的质检完成状态

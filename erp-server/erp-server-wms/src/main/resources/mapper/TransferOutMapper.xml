@@ -22,7 +22,8 @@
             tfo.approve_user_name AS approveUserName,
             tfo.create_user_name AS createUserName,
             tfo.create_time AS createTime,
-            tod.out_warehouse_location AS outWarehouseLocation
+            tod.out_warehouse_location AS outWarehouseLocation,
+            tfo.source_code AS sourceCode
         from transfer_out tfo
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
@@ -58,7 +59,8 @@
         tfo.approve_user_name AS approveUserName,
         tfo.create_user_name AS createUserName,
         tfo.create_time AS createTime,
-        tod.out_warehouse_location AS outWarehouseLocation
+        tod.out_warehouse_location AS outWarehouseLocation,
+        tfo.source_code AS sourceCode
         from transfer_out tfo
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
