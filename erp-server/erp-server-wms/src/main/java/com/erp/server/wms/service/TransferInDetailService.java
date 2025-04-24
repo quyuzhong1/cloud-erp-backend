@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.TransferInDetailDTO;
 import com.erp.model.wms.entity.TransferInDetailEntity;
@@ -46,7 +47,15 @@ public interface TransferInDetailService extends SuperService<TransferInDetailEn
      */
     List<TransferInDetailDTO.ViewDTO> listByMainId(String mainId);
 
-    
+    /**
+     * 主表id集合
+     * @author will
+     * @date 2025/4/22 17:49
+     * @param mainIdList
+     * @return List<TransferInDetailEntity>
+     */
+    List<TransferInDetailEntity> listByMainIdList(List<String> mainIdList);
+
     /**
      * 更改详情
      * @author yl
@@ -74,4 +83,12 @@ public interface TransferInDetailService extends SuperService<TransferInDetailEn
      * @return void
      */
     void checkQty(List<TransferInDetailDTO.UpdateDTO> detailList);
+    /**
+     * 更新明细金蝶id
+     * @author will
+     * @date 2025/4/23 17:44
+     * @param list
+     * @return void
+     */
+    void updateKingdeeDetailId(JSONArray list);
 }
