@@ -398,7 +398,7 @@ public class Tools {
 		return StringUtils.isNotBlank(str);
 	}
 	
-	public static void stringNullToBlank(Object obj) {
+	public static void nullToBlank(Object obj) {
 		if(obj == null) {
 			return;
 		}
