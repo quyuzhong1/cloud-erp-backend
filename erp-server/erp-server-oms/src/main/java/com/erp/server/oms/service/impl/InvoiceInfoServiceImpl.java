@@ -1156,8 +1156,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                                 byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
                                 if (AttachmentTypeEnum.INVOICE_INFO_PDF.getCode().equals(attachDTO.getType())) {
                                     fileName = fileName.concat(".pdf");
-                                } else if (AttachmentTypeEnum.INVOICE_INFO_XML.getCode().equals(attachDTO.getType())) {
-                                    fileName = fileName.concat(".xml");
                                 }
                                 return Pair.of(fileName, content); // 使用合适的Pair或自定义对象
                             } catch (Exception e) {
