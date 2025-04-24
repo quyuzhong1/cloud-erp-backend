@@ -53,6 +53,8 @@ public class ExportOmsFeignController {
     @Resource
     private InvoiceInfoService invoiceInfoService;
     @Resource
+    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
+    @Resource
     private FullyManagedOrderService fullyManagedOrderService;
 
     @Resource
@@ -60,8 +62,6 @@ public class ExportOmsFeignController {
     @Resource
     private SoPriceChangeService soPriceChangeService;
 
-    @Resource
-    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
 
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
@@ -222,6 +222,12 @@ public class ExportOmsFeignController {
         return invoiceInfoService.paging(dto, true);
     }
 
+    @PostMapping("/exportInvoiceInvalid")
+    @WebAdvanceQuery
+    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
+        return cfgInvoiceInvalidService.paging(dto);
+    }
+
     /**
      * 销售价目表导出
      * @param dto
@@ -250,11 +256,5 @@ public class ExportOmsFeignController {
     @WebAdvanceQuery(handler = SoPriceChangeQueryHandler.class)
     public PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
         return soPriceChangeService.exportSoPriceChange(dto);
-    }
-
-    @PostMapping("/exportInvoiceInvalid")
-    @WebAdvanceQuery
-    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
-        return cfgInvoiceInvalidService.paging(dto);
     }
 }

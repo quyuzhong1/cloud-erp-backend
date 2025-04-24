@@ -196,7 +196,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
             if (ObjectUtil.isEmpty(origin)) {
                 errorMsgList.add("原产地不存在");
             } else {
-                dictOrigin = origin.getName();
+                dictOrigin = origin.getValue();
             }
         }
 
@@ -242,15 +242,6 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 //            return;
 //        }
 
-        // 已存在
-        if (isApiPlatform){
-            if( ListingMatchResultEnum.TRUE.getCode().equals(mappingDto.getMatchResult())){
-                errorMsgList.add("该店铺平台sku已存在匹配关系");
-                skuMappingImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-                errorList.add(skuMappingImportExcelDTO);
-                return;
-            }
-        }
 
         String skuNo = skuMappingImportExcelDTO.getProductSkuNo();
 
