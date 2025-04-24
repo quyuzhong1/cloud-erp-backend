@@ -897,6 +897,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
+     * @param
      * @param warehouseId
      * @param qty
      * @param skuMappingDTOList

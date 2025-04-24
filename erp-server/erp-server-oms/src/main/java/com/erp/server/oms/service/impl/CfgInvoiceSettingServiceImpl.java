@@ -151,10 +151,14 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             throw new ServiceException("发票设置保存失败");
         }
         //保存附件
-        Class<CfgInvoiceSettingEntity> settingEntityClass = CfgInvoiceSettingEntity.class;
-        TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
-        String type = tableName.value();
-        omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
+        OmsAttachmentEntity omsAttachmentEntity = omsAttachmentService.getOne(new LambdaQueryWrapper<OmsAttachmentEntity>()
+                .eq(OmsAttachmentEntity::getAttachUrl, dto.getAttachmentUrlList().get(0)).eq(OmsAttachmentEntity::getIsDeleted, false));
+        if (ObjectUtil.isEmpty(omsAttachmentEntity)){
+            Class<CfgInvoiceSettingEntity> settingEntityClass = CfgInvoiceSettingEntity.class;
+            TableName tableName = settingEntityClass.getDeclaredAnnotation(TableName.class);
+            String type = tableName.value();
+            omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
+        }
         //调用TF
         UpdateCompanyDTO updateCompanyDTO = invoiceSettingConverter.invoiceSettinToUpdateCompanyDTOTo(cfgInvoiceSettingEntity);
         updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));

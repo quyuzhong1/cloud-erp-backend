@@ -19,7 +19,7 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
 
     List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
 
-    BaseResultDTO.AddDTO addOrUpdate(List<CfgInvoiceSettingDetailDTO.AddOrUpdateDTO> dtoList);
+    BaseResultDTO.AddDTO addOrUpdate(CfgInvoiceSettingDetailDTO.AddOrUpdateDTO dto);
 
     /**
      * 根据店铺id集合查询

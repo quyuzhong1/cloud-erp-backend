@@ -24,11 +24,73 @@ public class InvoiceTaxDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class CheckGenerateInvoiceDTO extends  ViewDTO{
+    public static class CheckGenerateInvoiceDTO{
         /**
          * 是否已生成税务信息,false则需要补全
          */
         private Boolean isGenerateInvoiceTax;
+
+        /**
+         * 主键id
+         */
+        private String  id;
+        /**
+         * 店铺id
+         */
+        private String  shopId;
+        /**
+         * 平台
+         */
+        private String platform;
+        /**
+         * 平台SKU
+         */
+        private String platformSkuNo;
+
+        /**
+         * 平台产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * listing表id
+         */
+        private String listingId;
+
+        /**
+         * 发票海关编码
+         */
+        private String invoiceHsCode;
+
+        /**
+         * 单位
+         */
+        private String unit;
+
+        /**
+         * 跨州税务编码
+         */
+        private String diffStateTaxCode;
+
+        /**
+         * 同州税务编码
+         */
+        private String sameStateTaxCode;
+
+        /**
+         * 原产地
+         */
+        private String dictOrigin;
+
+        /**
+         * 开票产品名称
+         */
+        private String invoiceProductName;
+
+        /**
+         * 类型，（invoiceType字典）
+         */
+        private String type;
     }
 
 

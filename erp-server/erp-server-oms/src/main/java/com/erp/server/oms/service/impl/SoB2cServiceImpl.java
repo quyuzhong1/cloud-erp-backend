@@ -357,6 +357,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
     @Resource
     private AliExpressOrderService aliExpressOrderService;
     @Resource
@@ -2240,6 +2241,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         String msg = "B2C销售订单【{}】提交发货";
         operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "提交发货");
+    }
+
+    private void updatePlatformStatus(SoB2cEntity entity, String status) {
+        if (Objects.isNull(entity) ||  CharSequenceUtil.isBlank(status)){
+            return;
+        }
+        this.lambdaUpdate().eq(SoB2cEntity::getId,entity.getId()).set(SoB2cEntity::getPlatformOrderStatus,status).update();
+        String msg = "销售订单【{}】平台订单状态由【{}】变更为【{}】";
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format(msg, entity.getCode(), entity.getPlatformOrderStatus(), status), ModuleTypeEnum.SO_B2C.getCode(), entity.getId(), "提交发货");
+
     }
 
     /**
