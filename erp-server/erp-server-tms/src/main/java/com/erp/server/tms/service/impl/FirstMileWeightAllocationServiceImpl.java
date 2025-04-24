@@ -518,7 +518,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             entity.setBoxWidth(cartonDetail.getBoxWidth());
             entity.setBoxHeight(cartonDetail.getBoxHeight());
             entity.setBoxSizeUnit(cartonDetail.getSizeUnit());
-            Optional<FirstMileDeliveryDetailEntity> deliveryDetailOptional = firstMileDeliveryDetailList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId())).findFirst();
+            Optional<FirstMileDeliveryDetailEntity> deliveryDetailOptional = firstMileDeliveryDetailList.stream().filter(item -> item.getSkuId().equals(cartonDetail.getSkuId()) && item.getFnSku().equals(cartonDetail.getFnSku())).findFirst();
             if(deliveryDetailOptional.isPresent()){
                 FirstMileDeliveryDetailEntity deliveryDetail = deliveryDetailOptional.get();
                 entity.setProductName(deliveryDetail.getProductName());

@@ -47,6 +47,7 @@
                wc.box_no boxNo,
                wcd.sku_id skuId,
                wcd.sku_no skuNo,
+               wcd.fn_sku fnSku,
                wcd.pack_qty packQty,
                wcs.package_weight packageWeight,
                wcs.box_length boxLength,
