@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -212,7 +214,21 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
 
     @Override
     public List<SupplierAccountEntity> getSupplierAccountList(String supplierId) {
-        return this.lambdaQuery().eq(SupplierAccountEntity::getSupplierId, supplierId).orderByDesc(SupplierAccountEntity::getIsDefault).list();
+        List<SupplierAccountEntity> list = this.lambdaQuery().eq(SupplierAccountEntity::getSupplierId, supplierId).orderByDesc(SupplierAccountEntity::getIsDefault).list();
+        if (CollUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<String> bankIds = list.stream().map(SupplierAccountEntity::getBankId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(bankIds)){
+            return list;
+        }
+        List<BaseIdDTO> bankList = sysUserFeign.getBankList(bankIds);
+        for (SupplierAccountEntity item : list) {
+            String bankName = bankList.stream().filter(b -> b.getId().equals(item.getBankId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setBankName(bankName);
+        }
+        return list;
     }
 
     @Override
