@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
@@ -76,7 +75,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
@@ -121,9 +119,6 @@ import com.erp.server.oms.listener.B2CSoImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
-import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
-import com.sdk.oms.tiktok.service.TikTokFullService;
-import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
@@ -151,12 +146,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.SocketTimeoutException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -9945,42 +9934,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Override
     public void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus) {
         lambdaUpdate().eq(SoB2cEntity::getId,soId).set(SoB2cEntity::getNfeInvoiceStatus,nfeInvoiceStatus).update();
-    }
-
-    @Override
-    public void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto) {
-        String id = dto.getId();
-        SoB2cEntity entity = this.getById(id);
-        if (Objects.isNull(entity)){
-            return;
-        }
-        if (CharSequenceUtil.isNotBlank(dto.getLogisticsDTO().getLogisticsChannelId()) && !entity.getIsMatchLogisticsRule()){
-            this.lambdaUpdate().set(SoB2cEntity::getIsMatchLogisticsRule,Boolean.TRUE).eq(SoB2cEntity::getId,id).update();
-        }
-    }
-
-    @Override
-    public String getPartitionId(String soId, String platform) {
-        if (soB2cService.isFullyManagedOrder(platform)){
-            SoB2cExtendEntity extendEntity = soB2cExtendService.getByMainId(soId);
-            return Objects.nonNull(extendEntity)? extendEntity.getPartitionId():"";
-        }else {
-            SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soId);
-            return Objects.nonNull(receiverEntity)? receiverEntity.getPartitionId():"";
-        }
-    }
-
-    @Override
-    public List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList) {
-        if (CollUtil.isEmpty(platformList)){
-            return Collections.emptyList();
-        }
-        return baseMapper.listDeliveryOrderByParam(billStatusList, platformStatusList, platformList,codeList);
-    }
-
-    @Override
-    public void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO) {
-        baseMapper.updateExtendData(id, JSONUtil.toJsonStr(extendDataDTO));
     }
 
     @Override

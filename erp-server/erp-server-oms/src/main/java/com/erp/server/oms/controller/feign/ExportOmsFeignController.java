@@ -62,13 +62,6 @@ public class ExportOmsFeignController {
 
     @Resource
     private CfgInvoiceInvalidService cfgInvoiceInvalidService;
-    @Resource
-    private FullyManagedOrderService fullyManagedOrderService;
-
-    @Resource
-    private SoPriceService soPriceService;
-    @Resource
-    private SoPriceChangeService soPriceChangeService;
 
 
     @PostMapping("/customerB2BSellerChange")
@@ -266,33 +259,4 @@ public class ExportOmsFeignController {
         return cfgInvoiceInvalidService.paging(dto);
     }
 
-    /**
-     * 销售价目表导出
-     * @param dto
-     * @return PurchasePriceExportExcelDTO
-     */
-    @PostMapping("/soPrice")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
-            menuCode = "oms:so:price:paging",
-            tableAlias = "sp")
-    @WebAdvanceQuery(handler = SoPriceQueryHandler.class)
-    public PagingVO<SoPriceExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto) {
-        return soPriceService.exportSoPrice(dto);
-    }
-
-    /**
-     * 销售调价表导出
-     * @param dto
-     * @return PurchasePriceExportExcelDTO
-     */
-    @PostMapping("/soPriceChange")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "pricing_user_id",
-            menuCode = "oms:soPriceChange:paging",
-            tableAlias = "sp")
-    @WebAdvanceQuery(handler = SoPriceChangeQueryHandler.class)
-    public PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
-        return soPriceChangeService.exportSoPriceChange(dto);
-    }
 }
