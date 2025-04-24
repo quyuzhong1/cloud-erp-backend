@@ -58,8 +58,8 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     ShopInfoService shopInfoService;
 
     @Override
-    public List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
-        List<CfgInvoiceSettingDetailDTO.ViewDTO> viewDTOS = baseMapper.selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(
+    public CfgInvoiceSettingDetailDTO.ViewDTO view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
+        CfgInvoiceSettingDetailDTO.ViewDTO viewDTOS = baseMapper.selectDetailsByMainIdGroupByPlatformWithRatioAdjusted(
                 dto.getId(),
                 dto.getKey(),
                 dto.getNames()

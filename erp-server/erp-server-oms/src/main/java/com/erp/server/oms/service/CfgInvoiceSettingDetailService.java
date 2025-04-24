@@ -17,7 +17,7 @@ import java.util.List;
  */
 public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceSettingDetailEntity> {
 
-    List<CfgInvoiceSettingDetailDTO.ViewDTO> view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
+    CfgInvoiceSettingDetailDTO.ViewDTO view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto);
 
     BaseResultDTO.AddDTO addOrUpdate(CfgInvoiceSettingDetailDTO.AddOrUpdateDTO dto);
 
