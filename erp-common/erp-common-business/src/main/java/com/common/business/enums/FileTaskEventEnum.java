@@ -84,8 +84,6 @@ public enum FileTaskEventEnum implements EnumMessage {
 
 
     EXPORT_INVOICE_INVALID("EXPORT_INVOICE_INVALID","作废发票号"),
-    EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据"),
-    EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据"),
 
 
     //scm
