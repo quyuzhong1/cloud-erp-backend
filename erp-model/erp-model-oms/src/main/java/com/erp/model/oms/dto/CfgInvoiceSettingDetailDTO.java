@@ -58,7 +58,7 @@ public class CfgInvoiceSettingDetailDTO implements Serializable {
         /**
          *
          */
-        List<DetailListDTO> detailListDTOList;
+        List<DetailListDTO> detailDTOList;
     }
 
     /**

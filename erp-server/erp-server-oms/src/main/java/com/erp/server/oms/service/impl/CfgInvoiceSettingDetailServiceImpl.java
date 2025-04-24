@@ -83,13 +83,13 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
             throw new ServiceException("发票设置不存在！");
         }
         //处理清空逻辑
-        if (CollUtil.isEmpty(dto.getDetailListDTOList())){
+        if (CollUtil.isEmpty(dto.getDetailDTOList())){
             this.lambdaUpdate().in(CfgInvoiceSettingDetailEntity::getMainId, mainId).remove();
             //清空成功
             return new BaseResultDTO.AddDTO(mainId, mainId);
         }
         // 处理更新中的删除逻辑
-        List<CfgInvoiceSettingDetailEntity> relatedToAddAndUpdateList= handleInvoiceSettingDetails(dto.getDetailListDTOList(), mainId);
+        List<CfgInvoiceSettingDetailEntity> relatedToAddAndUpdateList= handleInvoiceSettingDetails(dto.getDetailDTOList(), mainId);
         // 操作日志
         if (ObjectUtil.isNotEmpty(relatedToAddAndUpdateList)) {
             List<Pair<String, String>> pairList = relatedToAddAndUpdateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
@@ -238,7 +238,6 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
                 // 处理比率
                 BigDecimal ratio = entity.getRatio();
                 entity.setRatio((ratio == null ? BigDecimal.ZERO : ratio).divide(new BigDecimal("100")));
-
                 entity.setDictPlatform(platformValue);
                 entity.setMainId(mainId); // 确保设置了mainId
 
