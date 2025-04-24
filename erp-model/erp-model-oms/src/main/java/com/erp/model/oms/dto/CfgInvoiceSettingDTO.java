@@ -174,7 +174,6 @@ public class CfgInvoiceSettingDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CfgInvoiceSettingDTO.CommonDTO {
 
-
     }
 
     /**

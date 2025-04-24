@@ -89,8 +89,6 @@
         cis.start_code,
         cis.certificate_url,
         cis.certificate_password,
-        cisd.shop_id as shopId,
-        si.id AS shop_id,
         si.name AS shop_name,
         si.dict_platform,
         db.name AS dict_platform_name

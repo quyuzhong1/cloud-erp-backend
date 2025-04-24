@@ -46,21 +46,24 @@
 
     <!-- 结果映射 -->
     <resultMap id="DetailGroupResultMap" type="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$ViewDTO">
-        <id column="dict_platform" property="platformValue"/>
-        <result column="platform_name" property="platformName"/>
-        <collection property="detailDTOList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$DetailDTO">
-            <id column="id" property="id"/>
-            <result column="main_id" property="mainId"/>
-            <result column="dict_platform" property="dictPlatform"/>
-            <result column="shop_id" property="shopId"/>
-            <result column="dict_invoice_rule" property="dictInvoiceRule"/>
-            <result column="ratio" property="ratio"/>
-            <result column="is_contain_ship_fee" property="isContainShipFee"/>
-            <result column="tax_type" property="taxType"/>
-            <result column="invoice_node" property="invoiceNode"/>
-            <result column="is_auto_upload" property="isAutoUpload"/>
+        <id column="main_id" property="mainId"/>
+        <collection property="detailDTOList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$DetailListDTO">
+            <result column="platform_name" property="platformName"/>
+            <result column="dict_platform" property="platformValue"/>
+            <collection property="detailDTOList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$CommonDTO">
+                <id column="id" property="id"/>
+                <result column="dict_platform" property="dictPlatform"/>
+                <result column="shop_id" property="shopId"/>
+                <result column="dict_invoice_rule" property="dictInvoiceRule"/>
+                <result column="ratio" property="ratio"/>
+                <result column="is_contain_ship_fee" property="isContainShipFee"/>
+                <result column="tax_type" property="taxType"/>
+                <result column="invoice_node" property="invoiceNode"/>
+                <result column="is_auto_upload" property="isAutoUpload"/>
+            </collection>
         </collection>
     </resultMap>
+
 
     <!-- 根据店铺id集合查询 -->
     <select id="listByShopIdList" resultType="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
