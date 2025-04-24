@@ -336,8 +336,13 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             SupplierAccountEntity supplierAccountEntity = supplierAccountService.getById(dto.getSupplierAccountId());
             if (ObjectUtils.isNotEmpty(supplierAccountEntity)){
                 dto.setPayee(supplierAccountEntity.getPayee());
-                dto.setBankName(supplierAccountEntity.getBankName());
                 dto.setBankAccount(supplierAccountEntity.getBankAccount());
+                if(CharSequenceUtil.isNotBlank(supplierAccountEntity.getBankName())){
+                    dto.setBankName(supplierAccountEntity.getBankName());
+                }else if (CharSequenceUtil.isNotBlank(supplierAccountEntity.getBankId())){
+                    List<BaseIdDTO> bankList = sysUserFeign.getBankList(Collections.singletonList(supplierAccountEntity.getBankId()));
+                    dto.setBankName(CollUtil.isNotEmpty(bankList) ?bankList.get(0).getName() : "");
+                }
             }
         }
         // 采购员名称
@@ -3167,6 +3172,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             String skuNos = detailList.stream().filter(obj -> entity.getId().equals(obj.getPurchaseOrderId()) && ObjectUtils.isEmpty(obj.getPlanDeliveryDate())).map(PurchaseOrderDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
             if (StringUtils.isNotBlank(skuNos)) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_DETAIL_DATE,entity.getCode(),skuNos);
+            }
+            if (CharSequenceUtil.isBlank(entity.getSupplierAccountId())){
+                throw new ServiceException(ApiError.ERROR_PURCHASE_SUPPLIER_ACCOUNT,entity.getCode());
             }
         }
     }
