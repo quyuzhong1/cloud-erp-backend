@@ -80,6 +80,7 @@ public enum SourceTypeEnum {
     PICKING_LISTS_ADD("pickingListsAdd", "拣货单新增","picking_lists_add"),
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
     PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
+    QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
