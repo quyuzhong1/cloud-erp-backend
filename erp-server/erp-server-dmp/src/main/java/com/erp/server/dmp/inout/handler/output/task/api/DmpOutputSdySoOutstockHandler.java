@@ -24,8 +24,6 @@ import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
@@ -36,8 +34,6 @@ import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
-import com.erp.server.dmp.service.DmpSoOutstockDetailService;
-import com.erp.server.dmp.service.DmpSoOutstockService;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -54,12 +50,6 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	@Autowired
 	private SysUserFeign sysUserFeign;
 	
-	@Autowired
-	private DmpSoOutstockService dmpSoOutstockService;
-	
-	@Autowired
-	private DmpSoOutstockDetailService dmpSoOutstockDetailService;
-
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
@@ -67,7 +57,6 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         Map<String, List<DmpSoOutstockDetailEntity>> dmpSoOutstockDetailEntityMap = new HashMap<>();
         List<DmpSoOutstockEntity> changeDmpSoOutstockEntity = new ArrayList<>();
         List<DmpSoOutstockDetailEntity> changeDmpSoOutstockDetailEntity = new ArrayList<>();
-        Set<String> deleteIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
             List<BaseEntity> value = convertInputDmpBaseEntityListMap.getValue();
             if (CollUtil.isNotEmpty(value)) {
@@ -82,9 +71,6 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                     for (BaseEntity v : value) {
                         DmpSoOutstockDetailEntity dmpSoOriginalDetailEntity = (DmpSoOutstockDetailEntity) v;
                         String mainId = dmpSoOriginalDetailEntity.getMainId();
-                        if("已删除".equals(dmpSoOriginalDetailEntity.getDataStatus())) {
-                        	deleteIds.add(mainId);
-                        }
                         List<DmpSoOutstockDetailEntity> list = dmpSoOutstockDetailEntityMap.get(mainId);
                         if (CollUtil.isEmpty(list)) {
                             list = new ArrayList<>();
@@ -97,18 +83,6 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
             }
         }
 
-        if(CollUtil.isNotEmpty(deleteIds)) {
-        	List<DmpSoOutstockEntity> dbEntityList = dmpSoOutstockService.listByIds(deleteIds);
-        	for(DmpSoOutstockEntity dbEntity : dbEntityList) {
-        		dmpSoOutstockEntityMap.put(dbEntity.getId(), dbEntity);
-        	}
-        	List<DmpSoOutstockDetailEntity> dbDetailEntityList = dmpSoOutstockDetailService.lambdaQuery().in(DmpSoOutstockDetailEntity::getMainId, deleteIds).list();
-        	Map<String, List<DmpSoOutstockDetailEntity>> mainDbEntityMaps = dbDetailEntityList.stream().collect(Collectors.groupingBy(DmpSoOutstockDetailEntity::getMainId));
-        	for(Map.Entry<String, List<DmpSoOutstockDetailEntity>> mainDbEntityMap : mainDbEntityMaps.entrySet()) {
-        		dmpSoOutstockDetailEntityMap.put(mainDbEntityMap.getKey(), mainDbEntityMap.getValue());
-        	}
-        }
-        
         Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
         Set<String> changeIds = new HashSet<>();
         for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
