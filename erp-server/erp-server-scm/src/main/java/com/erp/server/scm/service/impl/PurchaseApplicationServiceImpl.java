@@ -138,6 +138,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private PilotApplicationFeign pilotApplicationFeign;
+    @Resource
+    private SupplierAccountService supplierAccountService;
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -433,6 +435,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //供应商默认联系人
         List<String> supplierIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSupplierId).collect(Collectors.toList());
         List<SupplierContactEntity> defaultSupplierContactList = supplierContactService.getDefaultBySupplierIdList(supplierIds);
+        List<SupplierAccountEntity> defaultSupplierAccountList = supplierAccountService.getDefaultBySupplierIdList(supplierIds);
 
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
@@ -473,6 +476,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 if (!org.springframework.util.ObjectUtils.isEmpty(supplierContactEntity)) {
                     supplierDTO.setSupplierContactId(supplierContactEntity.getId());
                     supplierDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
+                }
+            }
+            //供应商默认账户
+            if (CollectionUtils.isNotEmpty(defaultSupplierAccountList)) {
+                SupplierAccountEntity supplierAccountEntity = defaultSupplierAccountList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
+                if (Objects.nonNull(supplierAccountEntity)) {
+                    addDTO.setSupplierAccountId(supplierAccountEntity.getId());
                 }
             }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);

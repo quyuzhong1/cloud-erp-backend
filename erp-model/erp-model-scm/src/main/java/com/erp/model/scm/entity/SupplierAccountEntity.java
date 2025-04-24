@@ -76,6 +76,11 @@ public class SupplierAccountEntity extends BaseEntity<SupplierAccountEntity> {
     private String payMethodId;
 
 
+    /**
+     * 是否默认
+     */
+    @TableField("is_default")
+    private Boolean isDefault;
 
     @Override
     public Serializable pkVal() {
