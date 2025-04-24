@@ -805,7 +805,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                     }
                 }
             } else if ("B2C".equalsIgnoreCase(entity.getType())){
-                SoB2cReceiverEntity receiverEntity = receiverEntityList.stream().filter(e -> e.getId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
+                SoB2cReceiverEntity receiverEntity = receiverEntityList.stream().filter(e -> e.getMainId().equalsIgnoreCase(entity.getSoId())).findFirst().orElse(null);
                 if (null != receiverEntity){
                     country = receiverEntity.getCountry();
                     partitionId = receiverEntity.getPartitionId();

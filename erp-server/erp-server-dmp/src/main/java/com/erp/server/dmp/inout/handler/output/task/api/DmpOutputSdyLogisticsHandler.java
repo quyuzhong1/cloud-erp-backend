@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.Tools;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoLogisticsDetailEntity;
 import com.erp.model.dmp.entity.DmpSoLogisticsEntity;
@@ -101,6 +102,7 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     		if(validateDataBlack(dmpSoLogisticsEntity, cfgOutputId)) {
     			return result;
     		}
+    		Tools.stringNullToBlank(dmpSoLogisticsEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String bizNo = dmpSoLogisticsEntity.getThirdLogisticsCode();
     		LocalDateTime deliveryTime = dmpSoLogisticsEntity.getDeliveryTime();
@@ -117,6 +119,7 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     			if(validateDataBlack(dmpSoLogisticsDetailEntity, cfgOutputId)) {
     				continue;
     			}
+    			Tools.stringNullToBlank(dmpSoLogisticsDetailEntity);
     			String detailId = dmpSoLogisticsDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			

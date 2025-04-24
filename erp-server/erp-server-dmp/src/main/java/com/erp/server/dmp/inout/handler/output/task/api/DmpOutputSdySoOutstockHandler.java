@@ -21,6 +21,7 @@ import com.common.business.dto.ShudiyunB2cOrderDTO;
 import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
+import com.common.core.utils.Tools;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
 import com.erp.model.dmp.entity.DmpSoOutstockEntity;
@@ -176,6 +177,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     		if(validateDataBlack(dmpSoOutstockEntity, cfgOutputId)) {
     			return result;
     		}
+    		Tools.stringNullToBlank(dmpSoOutstockEntity);
     		DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     		String country = dmpSoOutstockEntity.getCountry();
     		String province = dmpSoOutstockEntity.getProvince();
@@ -203,6 +205,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     			if(validateDataBlack(dmpSoOutstockDetailEntity, cfgOutputId)) {
     				continue;
     			}
+    			Tools.stringNullToBlank(dmpSoOutstockDetailEntity);
     			String detailId = dmpSoOutstockDetailEntity.getId();
     			ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = new ShudiyunB2cOrderDTO();
     			
