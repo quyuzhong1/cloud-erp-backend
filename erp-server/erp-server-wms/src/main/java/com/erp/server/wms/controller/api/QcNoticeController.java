@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.validator.ValidList;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.ExcelUtil;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
@@ -388,8 +389,8 @@ public class QcNoticeController extends BaseController {
             menuCode = "wms:qcNotice:generateQcInfo",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> generateQcInfo(@RequestBody @Validated List<QcNoticeDTO.QcInfoView> dto) {
-        qcNoticeService.generateQcInfo(dto);
+    public ApiResult<List<BatchResultDTO>> generateQcInfo(@RequestBody @Valid ValidList<QcNoticeDTO.QcInfoView> dto) {
+        qcNoticeService.generateQcInfo(dto.getList());
         return success();
     }
 
