@@ -13,7 +13,7 @@ import java.time.LocalDate;
  * 消息通知记录表
  * @TableName notice_message_record
  */
-@TableName(value ="notice_message_log")
+@TableName(value ="notice_message_record")
 @Data
 @NoArgsConstructor
 public class NoticeMessageRecordEntity extends BaseEntity<NoticeMessageRecordEntity> implements Serializable {
