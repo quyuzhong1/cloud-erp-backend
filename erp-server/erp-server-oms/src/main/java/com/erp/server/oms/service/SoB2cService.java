@@ -1064,6 +1064,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 
     void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 根据nfe发票状态
+     * @author will
+     * @date 2025/4/11 16:35
+     * @param soId
+     * @param nfeInvoiceStatus
+     * @return void
+     */
+    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
 
     /**
      * 根据销售订单id和平台获取分区id

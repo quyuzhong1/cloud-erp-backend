@@ -1360,7 +1360,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
      * @author Will
      * @date: 2023/9/7 16:39
      */
-    private List<ShopInfoEntity> listByPlatformList(List<String> platformList) {
+    @Override
+    public List<ShopInfoEntity> listByPlatformList(List<String> platformList) {
         if (CollectionUtils.isEmpty(platformList)) {
             return Collections.EMPTY_LIST;
         }

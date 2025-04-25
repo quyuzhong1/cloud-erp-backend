@@ -332,6 +332,48 @@ public class SkuMappingDTO implements Serializable {
          * 同账号同平台SKU批量更新 默认 true  false 不更新
          */
         private Boolean batchUpdateSamePlatform;
+        /**
+         * 税务信息
+         */
+        private TaxCodeDTO taxCodeDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaxCodeDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * listingId
+         */
+        private String listingId;
+        /**
+         * 发票海关编码（ncm）
+         */
+        private String invoiceHsCode;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 跨州税务编码（跨州cfop）
+         */
+        private String diffStateTaxCode;
+        /**
+         * 同州税务编码（同州cfop）
+         */
+        private String sameStateTaxCode;
+        /**
+         * 原产地
+         */
+        private String dictOrigin;
+        /**
+         * 开票产品名称
+         */
+        private String invoiceProductName;
     }
 
     /**
@@ -590,7 +632,34 @@ public class SkuMappingDTO implements Serializable {
          * 仓库发货配置
          */
         private List<SkuMappingExtendDTO.ListDTO> extendList = Collections.emptyList();
-
+        /**
+         * 发票海关编码
+         */
+        private String invoiceHsCode;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 跨州税务编码
+         */
+        private String diffStateTaxCode;
+        /**
+         * 同州税务编码
+         */
+        private String sameStateTaxCode;
+        /**
+         * 原产地
+         */
+        private String dictOrigin;
+        /**
+         * 原产地名称
+         */
+        private String dictOriginName;
+        /**
+         * 开票产品名称
+         */
+        private String invoiceProductName;
     }
 
 

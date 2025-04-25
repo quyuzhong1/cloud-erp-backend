@@ -209,7 +209,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setInvalidType("");
         // 作废原因
         orderDTO.setInvalidRemark("");
-        
+		orderDTO.setNfeInvoiceStatus(dmpSoInfoEntity.getNfeInvoiceStatus());
         BigDecimal payAmount = dmpSoInfoEntity.getPayAmount();
 		orderDTO.setAmount(payAmount);
         String currencyCode = dmpSoInfoEntity.getCurrencyCode();
@@ -312,6 +312,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         if(CollUtil.isNotEmpty(dmpSoDetailEntityList)) {
         	for(DmpSoDetailEntity dmpSoDetailEntity : dmpSoDetailEntityList) {
         		PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
+				detailDTO.setVariantProperty(dmpSoDetailEntity.getVariantProperty());
                 // 图片URL
                 detailDTO.setImageUrl(dmpSoDetailEntity.getSkuUrl());
                 // skuId
