@@ -223,15 +223,25 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
             //添加新增权限
             List<AuthUserShopEntity> addList = new ArrayList<>();
             List<String> finalIds = ids;
-            shopIdList.forEach(shopId ->{
-                if (CollUtil.isEmpty(finalIds) || !finalIds.contains(shopId)){
-                    AuthUserShopEntity entity = new AuthUserShopEntity();
-                    entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
-                    entity.setUserId(uid);
-                    entity.setShopId(shopId);
-                    addList.add(entity);
-                }
-            });
+            if (CollUtil.isNotEmpty(shopIdList)){
+                shopIdList.forEach(shopId ->{
+                    if (CollUtil.isEmpty(finalIds) || !finalIds.contains(shopId)){
+                        AuthUserShopEntity entity = new AuthUserShopEntity();
+                        entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                        entity.setUserId(uid);
+                        entity.setShopId(shopId);
+                        addList.add(entity);
+                    }
+                });
+            }else {
+                AuthUserShopEntity entity = new AuthUserShopEntity();
+                entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                entity.setUserId(uid);
+                entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                entity.setShopId("-1");
+                addList.add(entity);
+            }
+
             if (CollUtil.isNotEmpty(addList)){
                 this.saveBatch(addList);
             }
