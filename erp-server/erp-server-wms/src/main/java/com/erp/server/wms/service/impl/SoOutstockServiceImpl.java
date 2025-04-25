@@ -1838,6 +1838,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 ruleDTO.setReceiveCountry(customerDTO.getCountryId());
                 ruleDTO.setFromWarehouse(generateInfo.getWarehouseId());
                 ruleDTO.setSalesOrgId(soInfo.getSalesOrgId());
+                ruleDTO.setDictPlatform("");
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);
                 String warehouseId;
                 String batchNo = "";

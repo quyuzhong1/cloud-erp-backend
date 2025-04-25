@@ -272,6 +272,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.setReceiveCountry(receiverList.get(0).getCountry());
         dto.setFromWarehouse(soB2cDeliveryDetailList.get(0).getWarehouseId());
         dto.setSalesOrgId(soB2cEntity.getOrgId());
+        dto.setDictPlatform(soB2cEntity.getDictPlatform());
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
             if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){

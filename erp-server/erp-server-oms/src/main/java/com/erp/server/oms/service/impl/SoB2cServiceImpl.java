@@ -6498,6 +6498,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 String deliveryWarehouseId = StrUtil.isBlank(warehouseId) ? detailList.get(0).getWarehouseId() : warehouseId;
                 ruleDTO.setFromWarehouse(deliveryWarehouseId);
                 ruleDTO.setSalesOrgId(entity.getOrgId());
+                ruleDTO.setDictPlatform(entity.getDictPlatform());
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutFeign.matchTransferRule(ruleDTO);
                 isTransit = resultDTO.getIsTransit();
                 transferWarehouseIdList = resultDTO.getTransferWarehouseIdList();

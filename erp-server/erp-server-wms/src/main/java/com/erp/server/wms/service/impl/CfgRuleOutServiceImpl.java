@@ -8,6 +8,7 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
@@ -430,6 +431,10 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
 
     @Override
     public CfgRuleOutDTO.MatchTransferResultDTO matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto) {
+        //全托管类型订单不走中转规则
+        if(CharSequenceUtil.isNotBlank(dto.getDictPlatform()) && PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(dto.getDictPlatform())){
+            return new CfgRuleOutDTO.MatchTransferResultDTO(Boolean.FALSE,Collections.emptyList());
+        }
         Map<String, Object> detailMap = new HashMap<>();
         detailMap.put("type", dto.getType());
         detailMap.put("receiveCountry", dto.getReceiveCountry());
