@@ -416,6 +416,80 @@ public class FileUtil {
     }
 
     /**
+     * 传文件名
+     * @author will
+     * @date 2025/4/25 15:42
+     * @param filePath
+     * @param fileName
+     * @return MultipartFile
+     */
+    public static MultipartFile toMultipartFile(String filePath, String fileName, String defaultSuffix) {
+        try {
+            // 处理文件名：无后缀时添加默认后缀
+            String processedFileName = processFileName(fileName, defaultSuffix);
+
+            // 处理文件路径（替换空格和反斜杠）
+            String fileUrl = filePath.replace(" ", "%20").replace("\\", "/");
+
+            // 打开 URL 连接
+            URL url = new URL(fileUrl);
+            URLConnection conn = url.openConnection();
+
+            // 读取文件内容到字节数组
+            try (BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
+                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                byte[] bytes = outputStream.toByteArray();
+
+                // 创建 MultipartFile（动态设置 MIME 类型）
+                return new MockMultipartFile(
+                        "file",
+                        processedFileName,
+                        getMimeType(processedFileName),
+                        new ByteArrayInputStream(bytes)
+                );
+            }
+        } catch (IOException e) {
+            throw new ServiceException("文件处理失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 处理文件名：无后缀时添加默认后缀
+     */
+    private static String processFileName(String fileName, String defaultSuffix) {
+        if (fileName == null || fileName.isEmpty()) {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+
+        int lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex == -1 || lastDotIndex == 0) {
+            // 无后缀 或 后缀在开头（如 .gitignore）
+            return fileName + "." + defaultSuffix;
+        } else {
+            // 已有合法后缀，保留原名称
+            return fileName;
+        }
+    }
+
+    /**
+     * 根据后缀推断 MIME 类型
+     */
+    private static String getMimeType(String fileName) {
+        String extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+        switch (extension) {
+            case "pdf": return "application/pdf";
+            case "xml": return "text/xml";
+            default: return "application/octet-stream";
+        }
+    }
+
+    /**
      * 去除文件后缀名
      * @param fileName
      * @return
