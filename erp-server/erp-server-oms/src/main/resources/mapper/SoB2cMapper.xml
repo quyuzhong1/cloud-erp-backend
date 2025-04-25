@@ -35,7 +35,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        distinct sb2c.id,
+        sb2c.id,
         sb2c.code,
         sb2c.dict_platform as dictPlatform,
         sb2c.platform_code AS platformCode,
@@ -373,7 +373,7 @@
         left join foreign_dict_partition fdp on fdp.id = sb2cr.partition_id and fdp.is_deleted = false
         where
         ${params.sqlMap.default}
-        and sb2c.is_deleted = false
+        and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -395,7 +395,7 @@
         inner join shop_info si on sb2c.shop_id = si.id and si.is_deleted = false
         <where>
             ${params.sqlMap.default}
-            and sb2c.is_deleted = false
+            and sb2c.is_deleted = false and sb2c.dict_platform != 'TikTokFully'
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}

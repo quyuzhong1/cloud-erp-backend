@@ -406,7 +406,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return CharSequenceUtil.format(" {}  {}", shopPermissionSql, warehousePermissionSql);
     }
 
-    private PagingVO filterIsVirtualOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, Boolean isVirtualOutStock) {
+    private PagingVO filterIsVirtualOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, Boolean isVirtualOutStock, boolean isFullyManaged) {
         List<AdvanceQueryDTO> advanceQueryDTOList = pagingParamDTO.getParams().getAdvanceQueryDTOList();
         //必须选仓库而且只能选一个
         List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.virtual_warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
@@ -415,8 +415,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //查询全部数据，过滤出有缺货
         Page query = new Page(1, Integer.MAX_VALUE, false);
-        IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), Boolean.TRUE);
-        if (CollUtil.isEmpty(pageData.getRecords())) {
+        IPage<SoB2cDTO.ListDTO> pageData = null;
+        if(isFullyManaged){
+            pageData = this.baseMapper.fullyManagedPaging(query, pagingParamDTO.getParams(), Boolean.TRUE);
+        }else {
+            pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), Boolean.TRUE);
+        }        if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO<>(pageData.getRecords(), 0, pagingParamDTO.getPageSize(), pagingParamDTO.getCurrPage());
         }
         List<SoB2cDTO.ListDTO> list = pageData.getRecords();
@@ -442,7 +446,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         return new PagingVO(result);
     }
 
-    private PagingVO filterIsOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, Boolean isOutStock) {
+    private PagingVO filterIsOutStockList(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO, Boolean isOutStock, boolean isFullyManaged) {
         List<AdvanceQueryDTO> advanceQueryDTOList = pagingParamDTO.getParams().getAdvanceQueryDTOList();
         //必须选仓库而且只能选一个
         List<String> warehouseIdList = com.common.business.utils.CollectionUtils.convertStrClzToList(advanceQueryDTOList.stream().filter(v -> v.getField().equals("sb2cd.warehouse_id") && (v.getCompare().equals(QueryConditionEnum.EQ.getCompareCode()) || v.getCompare().equals(QueryConditionEnum.IN_LIST.getCompareCode()))).findFirst().orElse(new AdvanceQueryDTO()).getValue());
@@ -451,8 +455,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         //查询全部数据，过滤出有缺货
         Page query = new Page(1, Integer.MAX_VALUE, false);
-        IPage<SoB2cDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), Boolean.TRUE);
-        if (CollUtil.isEmpty(pageData.getRecords())) {
+        IPage<SoB2cDTO.ListDTO> pageData = null;
+        if (isFullyManaged){
+            pageData = this.baseMapper.fullyManagedPaging(query, pagingParamDTO.getParams(), Boolean.TRUE);
+        }else {
+            pageData = this.baseMapper.paging(query, pagingParamDTO.getParams(), Boolean.TRUE);
+        }        if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData.getRecords(), 0, pagingParamDTO.getPageSize(), pagingParamDTO.getCurrPage());
         }
         List<SoB2cDTO.ListDTO> list = pageData.getRecords();
