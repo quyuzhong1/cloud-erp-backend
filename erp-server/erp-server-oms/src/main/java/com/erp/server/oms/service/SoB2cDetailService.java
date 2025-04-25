@@ -212,4 +212,11 @@ public interface SoB2cDetailService extends SuperService<SoB2cDetailEntity> {
      * @return
      */
     BatchResultDTO changeDeliverySku(String targetId, SoB2cEntity entity, SoB2cDetailEntity detail, SkuVO skuVO);
+
+    /**
+     *  更新明细的扩展数据
+     * @param id
+     * @param extendDataDTO
+     */
+    void updateExtendData(String id,SoB2cDTO.ExtendDataDTO extendDataDTO);
 }

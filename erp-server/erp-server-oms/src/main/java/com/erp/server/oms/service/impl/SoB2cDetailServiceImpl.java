@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.BaseIdDTO;
@@ -19,10 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -113,8 +111,6 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private ShopInfoService shopInfoService;
-    @Resource
-    private SoB2cReceiverService soB2cReceiverService;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -276,14 +272,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
         listSkuParamList.setList(listParamList);
         List<SkuMappingDTO.ListSkuDTO> SkuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
-
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(entity.getId());
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(entity.getDictPlatform());
         platformDTO.setRelationId(entity.getShopId());
         platformDTO.setWarehouseIdList(warehouseIdList);
-        platformDTO.setPartitionId(receiverEntity.getPartitionId());
+        platformDTO.setPartitionId(soB2cService.getPartitionId(entity.getId(), entity.getDictPlatform()));
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList = new ArrayList<>();
         for (SoB2cDetailEntity detailEntity :detailList) {
@@ -814,6 +808,11 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         return BatchResultDTO.success(entity.getId(),entity.getCode(),CharSequenceUtil.format("操作成功由【{}】改为【{}】",detail.getSkuNo(), skuVO.getSkuNo()));
     }
 
+    @Override
+    public void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO) {
+        baseMapper.updateExtendData(id, JSONUtil.toJsonStr(extendDataDTO));
+    }
+
     /**
      * 检查是否其他明细包含更改sku
      * @param isChangeSku
@@ -856,14 +855,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
         ValidList<SkuMappingDTO.ListSkuParamDTO> listSkuParamList = new ValidList<>();
         listSkuParamList.setList(skuParamList);
         List<SkuMappingDTO.ListSkuDTO> skuMappingList = skuMappingService.listBySkuNoList(listSkuParamList);
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(entity.getId());
-
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(entity.getDictPlatform());
         platformDTO.setRelationId(entity.getShopId());
         platformDTO.setWarehouseIdList(warehouseIdList);
-        platformDTO.setPartitionId(receiverEntity.getPartitionId());
+        platformDTO.setPartitionId(soB2cService.getPartitionId(entity.getId(), entity.getDictPlatform()));
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
 
         for (Pair<SoB2cDetailEntity,String> pair : updateWarehouseList) {
@@ -977,14 +974,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             log.error("未找到核算公司，orgIdList = {}",orgIdList);
             throw new ServiceException(ApiError.ERROR_9014);
         }
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
-
         //虚拟仓库查询
         VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
         platformDTO.setDictPlatform(soB2cEntity.getDictPlatform());
         platformDTO.setRelationId(soB2cEntity.getShopId());
         platformDTO.setWarehouseIdList(warehouseIdList);
-        platformDTO.setPartitionId(receiverEntity.getPartitionId());
+        platformDTO.setPartitionId(soB2cService.getPartitionId(soB2cEntity.getId(), soB2cEntity.getDictPlatform()));
         List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
         for (SoB2cDetailEntity detailEntity :list) {
 
@@ -1007,6 +1002,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if(StringUtils.isBlank(detailEntity.getSplitDetailId())){
                 //建议售价
                 detailEntity.setAdvicePrice(skuVO.getRetailPrice());
+            }
+            if(Objects.isNull(detailEntity.getAmount())){
                 detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
             }
             //虚拟仓信息

@@ -11,6 +11,7 @@ import com.erp.model.wms.dto.SoB2cDeliveryDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.server.dmp.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -27,7 +28,7 @@ import java.util.Optional;
  * @date 2023年10月12日
  * @version: 1.0
  */
-@Mapper
+@Mapper(uses = TypeConversionWorker.class)
 @Component
 public interface DmpOrderConverter {
     DmpOrderConverter INSTANCE = Mappers.getMapper(DmpOrderConverter.class);
@@ -217,7 +218,8 @@ public interface DmpOrderConverter {
             @Mapping(target = "currencyRate", source = "detailViewDTO.exchangeRate"),
             @Mapping(target = "cnySettleRate", source = "detailViewDTO.exchangeRate"),
             @Mapping(target = "sourceItemId", source = "id"),
-            @Mapping(target = "amountAfter", source = "detailViewDTO.amount")
+            @Mapping(target = "amountAfter", source = "detailViewDTO.amount"),
+            @Mapping(target = "isGift", source = "isGift", qualifiedByName = "getIsGift")
     })
     BiOrderItemSplitEntity soB2cToDmpOrderItem(SoB2cDetailDTO.ViewDTO detailViewDTO);
     List<BiOrderItemSplitEntity> soB2cToDmpOrderItem(List<SoB2cDetailDTO.ViewDTO> viewDTO);

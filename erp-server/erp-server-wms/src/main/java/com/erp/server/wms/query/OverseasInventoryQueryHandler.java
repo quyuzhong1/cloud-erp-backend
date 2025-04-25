@@ -67,28 +67,28 @@ public class OverseasInventoryQueryHandler extends AbstractQueryHandler {
 
             if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
                 if (CollectionUtils.isNotEmpty(codeList) && CollectionUtils.isEmpty(warehouseNameList)){
-                    buildSplicingSQLDTO("oi.warehouse_code", QueryConditionEnum.NOT_IN_LIST, codeList, QueryDataTypeEnum.STRING);
+                    buildSplicingSQLDTO("opw.warehouse_id", QueryConditionEnum.NOT_IN_LIST, warehouseIds, QueryDataTypeEnum.STRING);
                     return null;
                 }
                 if (CollectionUtils.isEmpty(codeList) && CollectionUtils.isNotEmpty(warehouseNameList)){
                     buildSplicingSQLDTO("w.warehouseName", QueryConditionEnum.NOT_IN_LIST, warehouseNameList, QueryDataTypeEnum.STRING);
                     return null;
                 }
-                String codeListValueStr = QueryUtils.listToStringValue(codeList, QueryDataTypeEnum.STRING);
+                String codeListValueStr = QueryUtils.listToStringValue(warehouseIds, QueryDataTypeEnum.STRING);
                 String warehouseNameListValueStr = QueryUtils.listToStringValue(warehouseNameList, QueryDataTypeEnum.STRING);
-                return "( oi.warehouse_code not in " + codeListValueStr + " or w.warehouseName not in " + warehouseNameListValueStr + ")";
+                return "( opw.warehouse_id not in " + codeListValueStr + " or w.warehouseName not in " + warehouseNameListValueStr + ")";
             } else {
                 if (CollectionUtils.isNotEmpty(codeList) && CollectionUtils.isEmpty(warehouseNameList)){
-                    buildSplicingSQLDTO("oi.warehouse_code", QueryConditionEnum.IN_LIST, codeList, QueryDataTypeEnum.STRING);
+                    buildSplicingSQLDTO("opw.warehouse_id", QueryConditionEnum.IN_LIST, warehouseIds, QueryDataTypeEnum.STRING);
                     return null;
                 }
                 if (CollectionUtils.isEmpty(codeList) && CollectionUtils.isNotEmpty(warehouseNameList)){
                     buildSplicingSQLDTO("w.warehouseName", QueryConditionEnum.IN_LIST, warehouseNameList, QueryDataTypeEnum.STRING);
                     return null;
                 }
-                String codeListValueStr = QueryUtils.listToStringValue(codeList, QueryDataTypeEnum.STRING);
+                String codeListValueStr = QueryUtils.listToStringValue(warehouseIds, QueryDataTypeEnum.STRING);
                 String warehouseNameListValueStr = QueryUtils.listToStringValue(warehouseNameList, QueryDataTypeEnum.STRING);
-                return "( oi.warehouse_code in " + codeListValueStr + " or w.warehouseName in " + warehouseNameListValueStr + ")";
+                return "( opw.warehouse_id in " + codeListValueStr + " or w.warehouseName in " + warehouseNameListValueStr + ")";
             }
         }
         return null;

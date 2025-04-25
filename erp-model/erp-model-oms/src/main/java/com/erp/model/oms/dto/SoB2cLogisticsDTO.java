@@ -32,6 +32,15 @@ public class SoB2cLogisticsDTO implements Serializable {
          * 主键id
          */
         private String id;
+        /**
+         * 物流运单号
+         */
+        private String code;
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
+
 
         /**
          * 物流渠道名
@@ -125,6 +134,10 @@ public class SoB2cLogisticsDTO implements Serializable {
 
         @Size(max = 32, message = "物流单号最大长度不能超过32位")
         private String code;
+        /**
+         * 物流跟踪号
+         */
+        private String trackNo;
 
         /**
          * 买家自选物流名称

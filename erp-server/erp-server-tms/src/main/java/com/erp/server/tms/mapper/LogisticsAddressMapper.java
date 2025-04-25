@@ -33,13 +33,6 @@ public interface LogisticsAddressMapper extends BaseMapper<LogisticsAddressEntit
     List<LogisticsAddressDTO.PagingViewDTO> listExport(@Param("params")LogisticsAddressDTO.ExportDTO dto);
     Page<LogisticsAddressDTO.PagingViewDTO> listExport(@Param("page") Page<LogisticsAddressDTO.PagingViewDTO> page, @Param("params")LogisticsAddressDTO.ExportDTO dto);
 
-    /**
-     * 查询地址信息
-     * @param type
-     * @param channelId
-     * @return
-     */
-    List<LogisticsAddressEntity> listByTypeAndChannelId(@Param("type") String type,@Param("channelId") String channelId);
 
     List<LogisticsAddressEntity> listByChannelId(@Param("channelId") String channelId);
 }

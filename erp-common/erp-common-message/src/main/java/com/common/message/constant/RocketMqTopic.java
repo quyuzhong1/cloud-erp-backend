@@ -141,4 +141,9 @@ public class RocketMqTopic {
      */
     public static final String TMS_123_LOGISTICS_TRACK = "${spring.cloud.nacos.discovery.namespace}-tms_track123_logistics_track_msg_topic";
 
+    /**
+     *  DMP 微信订阅消息 消费者 Subscribe
+     */
+    public static final String DMP_WECHAT_SUBSCRIBE_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wechat_subscribe_msg_topic";
+
 }

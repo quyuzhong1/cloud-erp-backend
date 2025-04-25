@@ -37,6 +37,12 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private CustomerB2bSellerChangeService customerB2bSellerChangeService;
 
+    @Resource
+    private SoPriceService soPriceService;
+
+    @Resource
+    private SoPriceChangeService soPriceChangeService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -60,6 +66,14 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case CUSTOMER_B2B_CHANGE_SELLER:
                 //客户信息销售员变更
                 customerB2bChangeSellerApproveEnd(dto);
+                break;
+            case SO_PRICE:
+                //销售价目
+                soPriceApproveEnd(dto);
+                break;
+            case SO_PRICE_CHANGE:
+                //销售价目
+                soPriceApproveChangeEnd(dto);
                 break;
             default:
                 break;
@@ -140,5 +154,35 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         approveOneDTO.setId(dto.getBusinessId());
         return soB2cService.approveEnd(approveOneDTO,entity,null);
+    }
+
+    /**
+     * 销售价目结束审核
+     * @author will
+     * @date 2025/3/26 10:46
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    private Boolean soPriceApproveEnd(EndProcessDTO dto) {
+        SoPriceEntity entity = soPriceService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        approveOneDTO.setId(dto.getBusinessId());
+        return soPriceService.approveEnd(approveOneDTO,entity);
+    }
+
+    /**
+     * 销售调价结束审核
+     * @author will
+     * @date 2025/3/26 10:46
+     * @param dto
+     * @return java.lang.Boolean
+     */
+    private Boolean soPriceApproveChangeEnd(EndProcessDTO dto) {
+        SoPriceChangeEntity entity = soPriceChangeService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        approveOneDTO.setId(dto.getBusinessId());
+        return soPriceChangeService.approveEnd(approveOneDTO,entity);
     }
 }

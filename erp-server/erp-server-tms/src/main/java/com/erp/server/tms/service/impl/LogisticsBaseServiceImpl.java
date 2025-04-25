@@ -10,6 +10,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.TrackQueryTypeEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.ShopAuthEntity;
@@ -36,6 +37,8 @@ import com.erp.tms.aliexpress.model.order.request.Address;
 import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
 import com.google.common.collect.Lists;
+import com.sdk.oms.tiktok.dto.tiktok.fully.TikTokFullyAddressResp;
+import com.sdk.oms.tiktok.service.TikTokFullService;
 import com.xxl.job.core.context.XxlJobHelper;
 import io.seata.common.util.CollectionUtils;
 import io.seata.common.util.StringUtils;
@@ -69,6 +72,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     private AliExpressShipperService aliExpressShipperService;
     @Resource
     private LogisticsAddressService logisticsAddressService;
+
+    @Resource
+    private TikTokFullService tikTokFullService;
 
     @Override
     public List<BatchResultDTO> syncLogisticsChannel(String platform) {
@@ -618,6 +624,46 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(list)) {
             logisticsAddressService.batchSaveOrUpdateLogisticsAddress(list);
         }
+    }
+
+    @Override
+    public void syncTikTokLogisticsAddress(String shopId) {
+        List<LogisticsAddressEntity> dbList = logisticsAddressService.listByTypeAndShopId(LogisticsAddressTypeEnum.COLLECT, shopId);
+        List<TikTokFullyAddressResp.DataDTO.AddressesDTO> tiktokFullyAddressList = tikTokFullService.listAddress(shopId);
+        List<LogisticsAddressEntity> saveOrUpdateList = new ArrayList<>();
+        List<String> tiktokFullyAddressesIds = tiktokFullyAddressList.stream().map(TikTokFullyAddressResp.DataDTO.AddressesDTO::getId).collect(Collectors.toList());
+        List<String> deleteIdList = dbList.stream()
+                .filter(dbAddress -> !tiktokFullyAddressesIds.contains(dbAddress.getAddressId()))
+                .map(BaseEntity::getId)
+                .collect(Collectors.toList());
+        for (TikTokFullyAddressResp.DataDTO.AddressesDTO addressesDTO : tiktokFullyAddressList) {
+            LogisticsAddressEntity logisticsAddressEntity = dbList.stream()
+                    .filter(dbAddress -> dbAddress.getAddressId().equals(addressesDTO.getId()))
+                    .findFirst()
+                    .orElse(new LogisticsAddressEntity());
+            logisticsAddressEntity.setShopId(shopId);
+            logisticsAddressEntity.setName(addressesDTO.getContactName());
+            logisticsAddressEntity.setType(LogisticsAddressTypeEnum.COLLECT);
+            logisticsAddressEntity.setContact(addressesDTO.getContactName());
+            logisticsAddressEntity.setAddressFirst(addressesDTO.getFullAddress());
+            logisticsAddressEntity.setTelNumber(addressesDTO.getPhoneNumber());
+            logisticsAddressEntity.setAddressId(addressesDTO.getId());
+            logisticsAddressEntity.setCountryName(addressesDTO.getDetail().getCountryName());
+            logisticsAddressEntity.setProvinceName(addressesDTO.getDetail().getProvinceName());
+            logisticsAddressEntity.setCityName(addressesDTO.getDetail().getCityName());
+            logisticsAddressEntity.setDistrictName(addressesDTO.getDetail().getDistrictName());
+            logisticsAddressEntity.setStreet(addressesDTO.getDetail().getTownName());
+            logisticsAddressEntity.setAddressSecond(addressesDTO.getDetail().getBuilding());
+            logisticsAddressEntity.setIsBySync(true);
+            saveOrUpdateList.add(logisticsAddressEntity);
+        }
+        if(CollectionUtils.isNotEmpty(deleteIdList)){
+            logisticsAddressService.removeByIds(deleteIdList);
+        }
+        if (CollectionUtils.isNotEmpty(saveOrUpdateList)){
+            logisticsAddressService.saveOrUpdateBatch(saveOrUpdateList);
+        }
+
     }
 
     public List<BatchResultDTO> syncTikTokChannel(String platform) {

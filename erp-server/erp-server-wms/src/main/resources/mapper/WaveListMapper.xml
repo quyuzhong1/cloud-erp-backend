@@ -48,7 +48,7 @@
         </if>
     </select>
     <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
-        select wl.id,
+        select  wl.id,
                 wl.create_time,
                 wl.update_time,
                 wl.create_user_name,
@@ -66,14 +66,17 @@
                 wl.picking_time,
                 wl.print_time,
                 wl.is_out_stock,
+                wl.is_fully_managed,
                 wl.picking_print_status,
-                wl.picking_print_time
+                wl.sku_barcode_print_status,
+                wl.picking_print_time,
+                wl.sku_barcode_print_time
         from wave_list wl
-        where is_deleted = false
+        where wl.is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
-        order by create_time desc
+        order by wl.create_time desc
     </select>
     <select id="listTab" resultType="com.erp.model.wms.dto.WaveListDTO$TabDTO">
         select status as tabFlag, count(1) as count from wave_list where is_deleted = false and status is not null group by status
