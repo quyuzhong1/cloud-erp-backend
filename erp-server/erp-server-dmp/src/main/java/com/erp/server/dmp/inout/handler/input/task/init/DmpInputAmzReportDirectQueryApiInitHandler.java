@@ -13,6 +13,7 @@ import com.erp.model.dmp.entity.DmpAmzReportInfoEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.dto.AmazonLimitInfoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceIdsTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
@@ -49,14 +50,10 @@ import java.util.List;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputAmzReportCommonApiInitHandler {
 
     @Resource
-    private RedisUtil redisUtil;
-    @Resource
     private CfgAppClientService cfgAppClientService;
-    @Resource
-    private DmpAmzReportInfoService dmpAmzReportInfoService;
 
     /**
      * 直接查询亚马逊最新Listing报告
@@ -95,26 +92,24 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
         // 市场信息
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
 
-        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS_QUERY;
         // 默认请求速率配置
-        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX_LAST, shopInfoDTO.getPlatformShopCode(), requestTypeRateLimiterEnum.getBusinessTypeName());
-        // 校验速率
-        Object limitObj = redisUtil.get(limitKey);
-        if (null != limitObj) {
+        AmazonLimitInfoDTO amazonLimitInfoDTO = checkAndLimitInfo(AmazonRequestTypeRateLimiterEnum.REPORTS_QUERY, shopInfoDTO.getPlatformShopCode());
+        if (amazonLimitInfoDTO.isLimitFlag()) {
             log.warn("【亚马逊报告查询】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             // 触发限流不执行当前
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
             initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
-        String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
+        String rateLimitStr = amazonLimitInfoDTO.getRateLimitStr();
+        String limitKey = amazonLimitInfoDTO.getLimitKey();
 
         // 请求亚马逊接口
         ReportsApi reportsApi = AmazonSpApiInitUtils.create(ReportsApi.class, shopInfoDTO, false);
 
         if (StringUtils.isNotBlank(reportId)) {
             // 查询指定报告
-            return querySpecReportIds((DmpInputInitResponse) dmpResponse, reportType, reportId, marketplaceEnum, reportsApi, rateLimitStr, limitKey, shopInfoDTO, checkNewDateEndTime);
+            return querySpecReportIds((DmpInputInitResponse) dmpResponse, reportType, reportId, reportsApi, rateLimitStr, limitKey, shopInfoDTO, checkNewDateEndTime);
         } else {
             // 查询最新报告
             return queryNewReport((DmpInputInitResponse) dmpResponse, reportType, marketplaceEnum, reportsApi, rateLimitStr, limitKey, shopInfoDTO, checkNewDateEndTime, marketplaceIdsType);
@@ -122,133 +117,7 @@ public class DmpInputAmzReportDirectQueryApiInitHandler extends DmpInputInitHand
 
     }
 
-    /**
-     * 查询最新报告IDS
-     */
-    private List<DmpInputTaskInitDTO> querySpecReportIds(DmpInputInitResponse dmpResponse, String reportType, String reportId, AmazonMarketplaceEnum marketplaceEnum, ReportsApi reportsApi, String rateLimitStr, String limitKey, AmazonShopInfoDTO shopInfoDTO, Boolean checkNewDateEndTime) {
-        Report report = null;
-        try {
-            report = reportsApi.getReport(reportId);
-            if (null == report) {
-                log.warn("[Amazon SP-APi] 查询指定报告类型【{}】，报告ID【{}】报告为空:{}", reportType, reportId, JSONUtil.toJsonStr(report));
-                return Collections.emptyList();
-            }
-        } catch (ApiException e) {
-            if (429 == e.getCode()) {
-                // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
-                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
-                log.warn("【亚马逊报告查询】 查询指定报告类型【{}】，报告ID【{}】,platformShopCode={},当前触发429限流:放弃当前请求任务",
-                        reportType,
-                        reportId,
-                        shopInfoDTO.getPlatformShopCode()
-                );
-                // 触发限流不执行当前
-                dmpResponse.setDoNextStatus(false);
-                return Collections.emptyList();
-            }
-            throw new ServiceException("[Amazon SP-APi] 查询指定报告 "+ reportType + "失败:body=" + JSONUtil.toJsonStr(e));
-        }
-
-        // 是否校验数据结束时间最新
-        return checkAndConvert(reportType, shopInfoDTO, checkNewDateEndTime, report);
-
-    }
 
 
-    /**
-     * 查询最新报告
-     */
-    private List<DmpInputTaskInitDTO> queryNewReport(DmpInputInitResponse dmpResponse, String reportType, AmazonMarketplaceEnum marketplaceEnum, ReportsApi reportsApi, String rateLimitStr, String limitKey, AmazonShopInfoDTO shopInfoDTO, Boolean checkNewDateEndTime, String marketplaceIdsType) {
-        ApiResponse<GetReportsResponse> reportsWithHttpInfo;
-        Report report;
-        try {
-            List<String> reportTypes = Collections.singletonList(reportType);
-            List<String> processingStatuses = Collections.singletonList(Report.ProcessingStatusEnum.DONE.getValue());
-            Integer pageSize = 1;
-            String createdSince = null;
-            String createdUntil = null;
-            String nextToken = null;
-            // 按配置解析当前请求站点IDS
-            List<String> marketplaceIds = checkAndGetMarketplaceIdsByCfgType(marketplaceIdsType, marketplaceEnum, shopInfoDTO);
-            reportsWithHttpInfo = reportsApi.getReportsWithHttpInfo(reportTypes, processingStatuses, marketplaceIds, pageSize, createdSince, createdUntil, nextToken);
-            ReportList reportList = reportsWithHttpInfo.getData().getReports();
-            report = reportList.stream().findFirst().orElse(null);
-            if (null == report) {
-                log.warn("[Amazon SP-APi] 查询最新【{}】报告为空:{}", reportType, JSONUtil.toJsonStr(reportList));
-                return Collections.emptyList();
-            }
-        } catch (ApiException e) {
-            if (429 == e.getCode()) {
-                // 设置动态速率，失效时间=1/limit
-                BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
-                redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
-                log.warn("【亚马逊报告查询】 platformShopCode={},当前触发429限流:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
-                // 触发限流不执行当前
-                dmpResponse.setDoNextStatus(false);
-                return Collections.emptyList();
-            }
-            throw new ServiceException("[Amazon SP-APi] 查询最新报告失败:body=" + JSONUtil.toJsonStr(e));
-        }
-
-        // 校验中台是否已存在
-        DmpAmzReportInfoEntity reportInfo = dmpAmzReportInfoService.getByReportId(report.getReportId(), Report.ProcessingStatusEnum.DONE.getValue());
-        if (null != reportInfo) {
-            log.warn("[Amazon SP-APi] 查询最新报告{},已存在跳过:{}", report.getReportType(), report.getReportId());
-            return Collections.emptyList();
-        }
-        // 是否校验数据结束时间最新
-        return checkAndConvert(reportType, shopInfoDTO, checkNewDateEndTime, report);
-    }
-
-    /**
-     * 通过配置marketplaceIdsType获取当前请求站点IDS
-     */
-    private List<String> checkAndGetMarketplaceIdsByCfgType(String marketplaceIdsType, AmazonMarketplaceEnum marketplaceEnum, AmazonShopInfoDTO shopInfoDTO) {
-        // 无指定站点
-        if (AmazonMarketplaceIdsTypeEnum.NONE.getCode().equalsIgnoreCase(marketplaceIdsType)){
-            return null;
-        }
-        // 所有授权站点
-        if (AmazonMarketplaceIdsTypeEnum.ALL_AUTH.getCode().equalsIgnoreCase(marketplaceIdsType)){
-            return new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet());
-        }
-        // 默认当前站点
-        return Collections.singletonList(marketplaceEnum.getMarketplaceId());
-    }
-
-    /**
-     * 检查和转换
-     */
-    private List<DmpInputTaskInitDTO> checkAndConvert(String reportType, AmazonShopInfoDTO shopInfoDTO, Boolean checkNewDateEndTime, Report report) {
-        if (checkNewDateEndTime) {
-            DmpAmzReportInfoEntity newReport = dmpAmzReportInfoService.getOneByNewEndDate(reportType, shopInfoDTO.getPlatformShopCode(), String.join(",", report.getMarketplaceIds()));
-            if (null != newReport) {
-                // 当前数据最新时间
-                OffsetDateTime offsetDateEndDateTime = DateUtil.parseOffsetDateTime(newReport.getDataEndTime());
-
-                // 来源报告最新时间
-                OffsetDateTime curEndDateDateTime = report.getDataEndTime();
-
-                // 校验时间
-                if (curEndDateDateTime.isBefore(offsetDateEndDateTime)) {
-                    log.warn("[Amazon SP-APi] 查询最新报告【{}】对比历史报告数据结束时间晚, 跳过:ReportId={}", reportType, report.getReportId());
-                    return Collections.emptyList();
-                }
-            }
-        }
-
-        JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
-        // 补充其他信息
-        jsonObject.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
-        jsonObject.put("createdMethod", "query");
-        jsonObject.put("shopId", shopInfoDTO.getId());
-
-        jsonObject.put("marketplaceIds", String.join(",", report.getMarketplaceIds()));
-        String resultJson = JSONUtil.toJsonStr(jsonObject);
-        // 设置到缓存(已完成或结束删除)
-//      redisUtil.set(key, resultJson, 600);
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(resultJson));
-    }
 
 }
