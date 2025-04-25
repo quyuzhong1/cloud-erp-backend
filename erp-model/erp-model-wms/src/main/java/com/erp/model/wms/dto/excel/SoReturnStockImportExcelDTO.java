@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto.excel;
 
-import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
@@ -19,108 +18,89 @@ import java.io.Serializable;
 public class SoReturnStockImportExcelDTO implements Serializable {
 
     /**
-     * 明细id
+     * 退货客户
      */
-    @ExcelIgnore
-    private String detailId;
-
-    /**
-     * 业务类型
-     */
-    @ExcelProperty(value = "*业务类型", index = 0)
-    @FieldValid(fieldName = "业务类型", isNotBlank = true, maxLength = 50)
+    @ExcelProperty(value = "*退货客户", index = 0)
+    @FieldValid(fieldName = "退货客户", isNotBlank = true, maxLength = 50)
     private String type;
 
     /**
-     * 出库日期[不填默认今天]
+     * 退货仓库
      */
-    @ExcelProperty(value = "*出库日期[不填默认今天]", index = 1)
-    @FieldValid(fieldName = "出库日期[不填默认今天]", formatPattern = FieldFormatPatternTypeEnum.DATE)
-    private String billDateStr;
+    @ExcelProperty(value = "*退货仓库", index = 1)
+    @FieldValid(fieldName = "退货仓库", isNotBlank = true, maxLength = 50)
+    private String ware;
 
     /**
-     * 发货仓库
+     * 入库日期
      */
-    @ExcelProperty(value = "*发货仓库", index = 2)
-    @FieldValid(fieldName = "发货仓库", isNotBlank = true, maxLength = 50)
-    private String warehouseName;
+    @ExcelProperty(value = "入库日期", index = 2)
+    @FieldValid(fieldName = "入库日期")
+    private String billDateStr;
 
     /**
      * 库存方向
      */
-    @ExcelProperty(value = "*库存方向", index = 3)
-    @FieldValid(fieldName = "库存方向", isNotBlank = true, enumClass = InventoryDirectionEnum.class)
+    @ExcelProperty(value = "单据类型", index = 3)
+    @FieldValid(fieldName = "单据类型", enumClass = InventoryDirectionEnum.class)
     private String inventoryDirection;
 
     /**
-     * 领料人
+     * SKU
      */
-    @ExcelProperty(value = "领料人", index = 4)
-    @FieldValid(fieldName = "领料人", maxLength = 32)
+    @ExcelProperty(value = "*SKU", index = 4)
+    @FieldValid(fieldName = "SKU", maxLength = 32)
     private String receiverName;
 
     /**
-     * 领料组织
+     * 上架数量
      */
-    @ExcelProperty(value = "*领料组织", index = 5)
-    @FieldValid(fieldName = "领料组织", isNotBlank = true, maxLength = 50)
+    @ExcelProperty(value = "*上架数量", index = 5)
+    @FieldValid(fieldName = "上架数量", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
     private String receiveOrgName;
 
     /**
      * 领料部门
      */
-    @ExcelProperty(value = "*领料部门", index = 6)
-    @FieldValid(fieldName = "领料部门", isNotBlank = true, maxLength = 50)
+    @ExcelProperty(value = "仓位", index = 6)
+    @FieldValid(fieldName = "仓位", maxLength = 50)
     private String deptName;
 
     /**
-     * 流程申请单号
+     * 退货金额
      */
-    @ExcelProperty(value = "*流程申请单号", index = 7)
-    @FieldValid(fieldName = "流程申请单号", isNotBlank = true, maxLength = 50)
+    @ExcelProperty(value = "退货金额", index = 7)
+    @FieldValid(fieldName = "退货金额")
     private String processApplyCode;
 
     /**
-     * 客户名称
+     * 含税退货金额
      */
-    @ExcelProperty(value = "客户名称", index = 8)
-    @FieldValid(fieldName = "客户名称", maxLength = 32)
+    @ExcelProperty(value = "含税退货金额", index = 8)
+    @FieldValid(fieldName = "含税退货金额")
     private String customerName;
 
     /**
-     * SKU
+     * 币种
      */
-    @ExcelProperty(value = "*SKU", index = 9)
-    @FieldValid(fieldName = "SKU", isNotBlank = true, maxLength = 50)
+    @ExcelProperty(value = "币种", index = 9)
+    @FieldValid(fieldName = "币种", maxLength = 50)
     private String skuNo;
 
     /**
-     * 实发数量
+     * 退货原因
      */
-    @ExcelProperty(value = "*实发数量", index = 10)
-    @FieldValid(fieldName = "实发数量",  isNotBlank = true ,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
+    @ExcelProperty(value = "*退货原因", index = 10)
+    @FieldValid(fieldName = "退货原因",maxLength = 200)
     private String actualQtyStr;
 
     /**
-     * 仓位
+     * 备注
      */
-    @ExcelProperty(value = "仓位", index = 11)
-    @FieldValid(fieldName = "仓位", maxLength = 200)
-    private String warehouseLocation;
-
-    /**
-     * 出库备注
-     */
-    @ExcelProperty(value = "*出库备注", index = 12)
-    @FieldValid(fieldName = "出库备注", maxLength = 200)
+    @ExcelProperty(value = "备注", index = 12)
+    @FieldValid(fieldName = "备注", maxLength = 200)
     private String remark;
 
-    /**
-     * 出库类型
-     */
-    @ExcelProperty(value = "*出库类型", index = 13)
-    @FieldValid(fieldName = "出库类型", isNotBlank = true, maxLength = 50)
-    private String outType;
 
     /**
      * 错误数据
