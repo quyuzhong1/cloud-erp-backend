@@ -1495,7 +1495,6 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_CUSTOMER_OVERLAP(98047,"该客户SKU区间存在重叠，不可提交"),
     ERROR_INTERVAL_CUSTOMER_CHANGE_OVERLAP(98048,"与该客户SKU变更区间存在重叠，不可提交"),
     ERROR_SO_PRICE_INTERVAL_SIZE(98050,"SKU【{}】区间从值不能大于等于区间到值"),
-    ERROR_92175(92175,"存在下游单据不允许作废"),
 
 
     /**
