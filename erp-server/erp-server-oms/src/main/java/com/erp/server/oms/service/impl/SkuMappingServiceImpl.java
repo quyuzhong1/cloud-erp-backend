@@ -1739,6 +1739,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             // 亚马逊指定正常任务类型兼容限流重试
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())){
                 dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+                // 手动指定创建报告
+                Map<String, Boolean> map = Collections.singletonMap("hasCreateReport",true);
+                dto.setDetailExtendJson(JSON.toJSONString(map));
             }
             createDTOList.add(dto);
         }
