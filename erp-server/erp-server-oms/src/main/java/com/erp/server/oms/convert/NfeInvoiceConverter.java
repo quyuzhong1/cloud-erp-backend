@@ -24,7 +24,7 @@ public interface NfeInvoiceConverter {
             @Mapping(target = "email", source = "buyerEmail"),
             @Mapping(target = "mobile", source = "buyerPhoneNumber"),
             @Mapping(target = "name", source = "buyerName"),
-            @Mapping(target = "numero", constant = ""),
+            @Mapping(target = "numero", constant = "1"),
             @Mapping(target = "rua", source = "address1"),
             @Mapping(target = "state", source = "state"),
             @Mapping(target = "ieRg", source = "registrationNo"),
