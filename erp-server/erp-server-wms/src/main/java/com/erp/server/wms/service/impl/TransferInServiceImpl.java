@@ -34,7 +34,6 @@ import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.PutawayStatusEnum;
-import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -47,7 +46,6 @@ import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInService;
 import com.erp.server.wms.mapper.TransferInMapper;
 import com.erp.server.wms.service.*;
-import jodd.util.StringUtil;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -409,7 +407,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (dto.getType().equals(ApproveType.PASS)) {
             handleData(entity);
             //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
-            this.updateQcNoticePutaway(transferInEntity,Boolean.TRUE);
+            this.updateQcNoticePutaway(entity,Boolean.TRUE);
         }
         return Boolean.TRUE;
     }
