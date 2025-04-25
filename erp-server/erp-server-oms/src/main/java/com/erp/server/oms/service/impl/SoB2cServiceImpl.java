@@ -116,6 +116,7 @@ import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.convert.B2cOrderConverter;
 import com.erp.server.oms.convert.CustomerInfoConverter;
 import com.erp.server.oms.convert.WalmartShipOrderConverter;
+import com.erp.server.oms.kingdee.SyncSoB2cService;
 import com.erp.server.oms.listener.B2CSoImportExcelListener;
 import com.erp.server.oms.mapper.SoB2cMapper;
 import com.erp.server.oms.query.SoB2cQueryHandler;
@@ -375,9 +376,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private SoB2cExtendService soB2cExtendService;
     @Resource
+    private SyncSoB2cService syncSoB2cService;
+    @Resource
     private TikTokFullService tikTokFullService;
     @Resource
     private AuthDataFeign authDataFeign;
+
+    @Resource
+    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
+
+    @Lazy
+    @Resource
+    private InvoiceInfoService invoiceInfoService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
