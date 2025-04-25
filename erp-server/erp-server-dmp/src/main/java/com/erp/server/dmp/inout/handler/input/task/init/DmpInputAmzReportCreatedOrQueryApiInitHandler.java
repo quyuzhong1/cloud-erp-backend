@@ -1,6 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
@@ -11,6 +11,7 @@ import com.erp.model.dmp.dto.AmazonShopInfoDTO;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
+import com.erp.sdk.oms.amz.spapi.dto.AmazonLimitInfoDTO;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportResponse;
@@ -40,11 +41,10 @@ import java.util.List;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputAmzReportCommonApiInitHandler {
-
+public class DmpInputAmzReportCreatedOrQueryApiInitHandler extends DmpInputAmzReportCommonApiInitHandler {
+    
     @Resource
     private CfgAppClientService cfgAppClientService;
-
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -54,51 +54,78 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputAmzReportCom
             ServiceException.runError("extendJson参数为空");
         }
         String reportType = extendObj.getString("reportType");
-
-        // 获取店铺信息
-        String shopId = dmpInputTaskEntity.getNextLevelId();
-        // 获取店铺授权信息
-        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
-        if (null == shopInfoDTO) {
-            ServiceException.runError("未找到店铺授权:" + shopId);
+        if (StringUtils.isBlank(reportType)){
+            ServiceException.runError("报告类型为空");
         }
+        // 配置信息
+        boolean checkNewDateEndTime = extendObj.getBooleanValue("checkNewDateEndTime");
+        String marketplaceIdsType = extendObj.getOrDefault("marketplaceIdsType", "").toString();
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(dmpInputTaskEntity.getNextLevelId());
 
-        // 允许指定报告ID
-        String detailExtendJson = dmpInputTaskEntity.getExtendJson();
-        if (StringUtils.isNotBlank(detailExtendJson)) {
-            JSONObject detailExtendObj = JSONObject.parseObject(detailExtendJson);
-            String reportId = detailExtendObj.getString("reportId");
-            if (StringUtils.isNotBlank(reportId)){
-                return convertDmpInputTaskInitDTOS(reportId, reportType, shopInfoDTO);
+        // 请求亚马逊接口
+        ReportsApi reportsApi = AmazonSpApiInitUtils.create(ReportsApi.class, shopInfoDTO, false);
+        // 市场信息
+        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
+
+        // 是否创建报告
+        boolean hasCreateReport = false;
+        String taskExtendJson = dmpInputTaskEntity.getExtendJson();
+        if (StringUtils.isNotBlank(taskExtendJson)) {
+            JSONObject taskExtendObj = JSONObject.parseObject(taskExtendJson);
+            Boolean createReport = taskExtendObj.getBoolean("hasCreateReport");
+            if (null != createReport) {
+                hasCreateReport = createReport;
             }
         }
 
-        List<String> marketplaceIds = checkReportIsMergeMarketplace(reportType, shopInfoDTO);
-
-        String marketplaceId = marketplaceIds.stream().findFirst().orElse(null);
-        AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceId);
-        if (null == marketplaceEnum) {
-            String msg = StrUtil.format("未找到Marketplace枚举类型,cfgInputId={}, marketplaceId={}", dmpCfgInputEntity.getId(), marketplaceIds);
-            ServiceException.runError(msg);
-        }
-
-
-        // 从缓存获取
-        AmazonRequestTypeRateLimiterEnum requestTypeRateLimiterEnum = AmazonRequestTypeRateLimiterEnum.REPORTS_CREATE;
-        // 默认请求速率配置
-        String limitKey = StrUtil.format(RedisCacheConstants.PLATFORM_RATE_LIMIT_PREFIX_LAST, shopInfoDTO.getPlatformShopCode(), requestTypeRateLimiterEnum.getBusinessTypeName());
-        Object limitObj = redisUtil.get(limitKey);
-        if (null != limitObj){
-            String msg = StrUtil.format("【亚马逊创建报告】 platformShopCode={}, 报告类型={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode(), reportType);
-            log.warn(msg);
+        // 校验速率
+        AmazonLimitInfoDTO amazonLimitInfoDTO = checkAndLimitInfo(AmazonRequestTypeRateLimiterEnum.REPORTS_QUERY, shopInfoDTO.getPlatformShopCode());
+        if (amazonLimitInfoDTO.isLimitFlag()) {
+            log.warn("【亚马逊创建报告后查询】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
             // 触发限流不执行当前
             DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
             initDmpResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
-        String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
+        if (!hasCreateReport) {
+            // 不执行创建报告
+            // 查询最新报告
+            return queryNewReport((DmpInputInitResponse) dmpResponse, reportType, marketplaceEnum, reportsApi, amazonLimitInfoDTO.getRateLimitStr(), amazonLimitInfoDTO.getLimitKey(), shopInfoDTO, checkNewDateEndTime, marketplaceIdsType);
+        } else {
+            JSONObject reportIdObj = null;
+            String redisKey = CharSequenceUtil.format(RedisCacheConstants.AMZ_SP_API_RESULT_PREFIX, reportType, dmpInputTaskEntity.getId());
+            Object reportInfoObj = redisUtil.get(redisKey);
+            if (null == reportInfoObj) {
+                // 执行创建报告
+                List<DmpInputTaskInitDTO> inputTaskInitDTOS = creatReport(dmpRequest, dmpResponse, reportType, shopInfoDTO, marketplaceEnum, reportsApi);
+                DmpInputTaskInitDTO dmpInputTaskInitDTO = inputTaskInitDTOS.get(0);
+                String msg = dmpInputTaskInitDTO.getMsg();
+                redisUtil.set(redisKey, msg, 7200);
+                reportIdObj = JSONObject.parseObject(msg);
+            } else {
+                reportIdObj = JSONObject.parseObject(reportInfoObj.toString());
+            }
+            String reportId = reportIdObj.getString("reportId");
+            // 直接查询报告
+            return querySpecReportIds((DmpInputInitResponse) dmpResponse, reportType, reportId, reportsApi, amazonLimitInfoDTO.getRateLimitStr(), amazonLimitInfoDTO.getLimitKey(), shopInfoDTO, checkNewDateEndTime);
+        }
+    }
 
-        ReportsApi reportsApi = AmazonSpApiInitUtils.create(ReportsApi.class, shopInfoDTO, false);
+    private List<DmpInputTaskInitDTO> creatReport(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse, String reportType, AmazonShopInfoDTO shopInfoDTO, AmazonMarketplaceEnum marketplaceEnum, ReportsApi reportsApi) {
+        List<String> marketplaceIds = checkReportIsMergeMarketplace(reportType, shopInfoDTO);
+        
+        // 默认请求速率配置
+        AmazonLimitInfoDTO amazonLimitInfoDTO = checkAndLimitInfo(AmazonRequestTypeRateLimiterEnum.REPORTS_CREATE, shopInfoDTO.getPlatformShopCode());
+        if (amazonLimitInfoDTO.isLimitFlag()) {
+            log.warn("【亚马逊创建报告】 platformShopCode={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode());
+            // 触发限流不执行当前
+            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+            initDmpResponse.setDoNextStatus(false);
+            return Collections.emptyList();
+        }
+        
+        String rateLimitStr = amazonLimitInfoDTO.getRateLimitStr();
+        String limitKey = amazonLimitInfoDTO.getLimitKey();
 
         // 获取同组报告类型配置
         // 请求创建中报告预计时间
@@ -140,11 +167,10 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputAmzReportCom
         if (null == reportId) {
             ServiceException.runError("请求亚马逊创建报告失败：body=" + JSONUtil.toJsonStr(reportResponse));
         }
-        // 设置到缓存(已完成或结束删除)
-//      redisUtil.set(key, reportId);
         // 组合响应
         return convertDmpInputTaskInitDTOS(reportId, reportType, shopInfoDTO);
     }
+
 
 
 
