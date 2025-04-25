@@ -335,7 +335,7 @@ public class NfeInvoiceService {
             //产品金额
             nfeItensDTO.setUnitPrice(getUnitPrice(detailEntity,invoiceSettingDetail));
             itens.add(nfeItensDTO);
-            valorTotal = MathUtil.add(valorTotal,MathUtil.multiply(nfeItensDTO.getUnitPrice(),nfeItensDTO.getQuantity()));
+            valorTotal = MathUtil.add(valorTotal,MathUtil.multiplyWithTwo(nfeItensDTO.getUnitPrice(),nfeItensDTO.getQuantity()));
         }
         createDTO.setItens(itens);
         createDTO.setValorTotal(valorTotal);
@@ -361,7 +361,7 @@ public class NfeInvoiceService {
             return detailEntity.getPrice();
         }
         if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.CUSTOM.getCode())) {
-            return MathUtil.multiply(detailEntity.getPrice(),invoiceSettingDetail.getRatio()) ;
+            return MathUtil.multiplyWithTwo(detailEntity.getPrice(),invoiceSettingDetail.getRatio()) ;
         }
         if (CharSequenceUtil.equals(invoiceSettingDetail.getDictInvoiceRule(), InvoiceRuleEnum.DEDUCT.getCode())) {
             return MathUtil.subtract(detailEntity.getPrice(),detailEntity.getSaleFee()) ;
