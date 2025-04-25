@@ -1923,6 +1923,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
      * @return void
      */
     private void handleImportSoReturnstockFile ( List<SoReturnStockImportExcelDTO> successList,List<SoReturnStockImportExcelDTO> errorList) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        for (SoReturnStockImportExcelDTO excelDTO : successList) {
+            List<String> errorMsgList = new ArrayList<>();
+        }
+
+
 
     }
 

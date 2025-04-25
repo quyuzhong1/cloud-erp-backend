@@ -1,9 +1,10 @@
 package com.erp.model.wms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelProperty;
+import com.common.business.enums.OrderTypeEnum;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.erp.model.wms.enums.InventoryDirectionEnum;
+import com.erp.model.wms.enums.ReturnReasonEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -22,77 +23,77 @@ public class SoReturnStockImportExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "*退货客户", index = 0)
     @FieldValid(fieldName = "退货客户", isNotBlank = true, maxLength = 50)
-    private String type;
+    private String customerName;
 
     /**
      * 退货仓库
      */
     @ExcelProperty(value = "*退货仓库", index = 1)
     @FieldValid(fieldName = "退货仓库", isNotBlank = true, maxLength = 50)
-    private String ware;
+    private String warehouseName;
 
     /**
      * 入库日期
      */
     @ExcelProperty(value = "入库日期", index = 2)
-    @FieldValid(fieldName = "入库日期")
+    @FieldValid(fieldName = "入库日期",formatPattern = FieldFormatPatternTypeEnum.DATE_)
     private String billDateStr;
 
     /**
      * 库存方向
      */
     @ExcelProperty(value = "单据类型", index = 3)
-    @FieldValid(fieldName = "单据类型", enumClass = InventoryDirectionEnum.class)
-    private String inventoryDirection;
+    @FieldValid(fieldName = "单据类型", enumClass = OrderTypeEnum.class)
+    private String typeName;
 
     /**
      * SKU
      */
     @ExcelProperty(value = "*SKU", index = 4)
-    @FieldValid(fieldName = "SKU", maxLength = 32)
-    private String receiverName;
+    @FieldValid(fieldName = "SKU", isNotBlank = true, maxLength = 32)
+    private String skuNo;
 
     /**
      * 上架数量
      */
     @ExcelProperty(value = "*上架数量", index = 5)
     @FieldValid(fieldName = "上架数量", isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.INTEGER)
-    private String receiveOrgName;
+    private String realQtyStr;
 
     /**
-     * 领料部门
+     * 仓位
      */
     @ExcelProperty(value = "仓位", index = 6)
     @FieldValid(fieldName = "仓位", maxLength = 50)
-    private String deptName;
+    private String warehouseLocationName;
 
     /**
      * 退货金额
      */
     @ExcelProperty(value = "退货金额", index = 7)
-    @FieldValid(fieldName = "退货金额")
-    private String processApplyCode;
+    @FieldValid(fieldName = "退货金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    private String returnAmountStr;
 
     /**
      * 含税退货金额
      */
     @ExcelProperty(value = "含税退货金额", index = 8)
-    @FieldValid(fieldName = "含税退货金额")
-    private String customerName;
+    @FieldValid(fieldName = "含税退货金额",formatPattern = FieldFormatPatternTypeEnum.AMOUNT)
+    private String taxReturnAmountStr;
 
     /**
      * 币种
      */
     @ExcelProperty(value = "币种", index = 9)
     @FieldValid(fieldName = "币种", maxLength = 50)
-    private String skuNo;
+    private String currencyStr;
 
     /**
      * 退货原因
      */
     @ExcelProperty(value = "*退货原因", index = 10)
-    @FieldValid(fieldName = "退货原因",maxLength = 200)
-    private String actualQtyStr;
+    @FieldValid(fieldName = "退货原因",maxLength = 200 , enumClass = ReturnReasonEnum.class )
+    private String returnReasonDictStr;
 
     /**
      * 备注

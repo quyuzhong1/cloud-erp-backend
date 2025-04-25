@@ -7,10 +7,7 @@ import com.erp.model.oms.dto.SoB2cCoreDTO;
 import com.erp.server.oms.service.SoB2cCoreService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.io.IOException;
@@ -38,7 +35,7 @@ public class SoB2cCoreController extends BaseController {
      * @return ApiResult<List<ListRetryOutstockDTO>>
      */
     @PostMapping("/listRetryOutstock")
-    public ApiResult<List<SoB2cCoreDTO.ListRetryOutstockDTO>> listRetryOutstock(@ModelAttribute @Validated BaseIdsDTO.IdsDTO dto) throws IOException {
+    public ApiResult<List<SoB2cCoreDTO.ListRetryOutstockDTO>> listRetryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) throws IOException {
         return success(soB2cCoreService.listRetryOutstock(dto));
     }
 
