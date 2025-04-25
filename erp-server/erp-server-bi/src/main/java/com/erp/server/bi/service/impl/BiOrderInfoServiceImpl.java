@@ -1175,7 +1175,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
                 info.setDeliveryTime(LocalDateUtil.stringToLocalDateTime(deliveryTimeStr));
             }
             BigDecimal orderFee = mainEntity.getOrderFee();
-            mainEntity.setOrderFee(MathUtil.multiply(orderFee, ObjectUtils.isEmpty(mainEntity.getCurrencyRate()) ? MathUtil.BigDecimal_1 : mainEntity.getCurrencyRate()));
+            mainEntity.setOrderFee(MathUtil.multiplyWithTwo(orderFee, ObjectUtils.isEmpty(mainEntity.getCurrencyRate()) ? MathUtil.BigDecimal_1 : mainEntity.getCurrencyRate()));
 
             info.setId(IdWorker.getIdStr());
             infoList.add(info);
@@ -1369,7 +1369,7 @@ public class BiOrderInfoServiceImpl extends ServiceImpl<BiOrderInfoMapper, BiOrd
             List<BiOrderItemSplitEntity> itemList = dmpOrderItemList.stream().filter(e -> obj.getId().equals(e.getOrderId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(itemList)) {
                 List<DmpOrderItemDTO> itemResultList = BeanMapperUtils.copyList(DmpOrderItemDTO.class, itemList);
-                itemResultList.stream().forEach(e -> e.setSellAmountOrigin(MathUtil.multiply(e.getSellPriceOrigin(), e.getQuantity())));
+                itemResultList.stream().forEach(e -> e.setSellAmountOrigin(MathUtil.multiplyWithTwo(e.getSellPriceOrigin(), e.getQuantity())));
                 obj.setChildren(itemResultList);
             }
             obj.setOrderStateName(OrderStateEnum.getName(obj.getOrderState()));

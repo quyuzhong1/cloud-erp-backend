@@ -1359,29 +1359,14 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     /**
      * @param platformList
-     * @return List<ShopInfoEntity>
-     * @description: 根据平台集合查询
-     * @author Will
-     * @date: 2023/9/7 16:39
-     */
-    @Override
-    public List<ShopInfoEntity> listByPlatformList(List<String> platformList) {
-        if (CollectionUtils.isEmpty(platformList)) {
-            return Collections.EMPTY_LIST;
-        }
-        List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, platformList).list();
-        return list;
-    }
-
-    /**
-     * @param platformList
      * @param permissionSql
      * @return List<ShopInfoEntity>
      * @description: 根据平台集合查询
      * @author Will
      * @date: 2023/9/7 16:39
      */
-    private List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql) {
+    @Override
+    public List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql) {
         if (CollectionUtils.isEmpty(platformList)) {
             return Collections.emptyList();
         }

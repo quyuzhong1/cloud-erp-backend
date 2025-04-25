@@ -539,11 +539,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //入库数量 就是实收数量
                 Integer stockInQty = obj.getStockInQty();
                 //金额=未税价格*实收数量
-                BigDecimal amount = MathUtil.multiply(price, stockInQty);
+                BigDecimal amount = MathUtil.multiplyWithTwo(price, stockInQty);
                 obj.setAmount(amount);
                 //价税合计=含税单价*实收数量
-                BigDecimal taxAmount = MathUtil.multiply(taxPrice, stockInQty);
-                taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
+                BigDecimal taxAmount = MathUtil.multiplyWithTwo(taxPrice, stockInQty);
+                taxRate = MathUtil.multiplyWithTwo(taxRate, MathUtil.BigDecimal_100);
                 obj.setTaxPrice(taxPrice);
                 String taxRateStr = taxRate.toString().concat("%");
                 obj.setTaxRate(taxRate);
@@ -1436,12 +1436,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             Integer stockInQty = obj.getStockInQty();
             //金额=未税价格*实收数量
             BigDecimal qty = new BigDecimal(stockInQty);
-            BigDecimal amount = MathUtil.multiply(price, qty, 4);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, qty, 4);
             obj.setAmount(amount);
             //价税合计=含税单价*实收数量
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty, 4);
+            BigDecimal taxAmount = MathUtil.multiplyWithTwo(taxPrice, qty, 4);
             obj.setTaxAmount(taxAmount);
-            taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
+            taxRate = MathUtil.multiplyWithTwo(taxRate, MathUtil.BigDecimal_100);
             String taxRateStr = taxRate.toString().concat("%");
             obj.setTaxRateStr(taxRateStr);
             //仓位名称

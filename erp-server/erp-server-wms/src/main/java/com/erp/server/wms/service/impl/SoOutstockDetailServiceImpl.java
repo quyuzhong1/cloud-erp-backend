@@ -859,7 +859,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setPrice(soDetailEntity.getPrice());
             detailEntity.setTaxRate(soDetailEntity.getTaxRate());
             detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
-            detailEntity.setAmount(MathUtil.multiply(soDetailEntity.getPrice(), detailEntity.getActualQty()));
+            detailEntity.setAmount(MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), detailEntity.getActualQty()));
             detailEntity.setCurrency(soDetailEntity.getCurrency());
             detailEntity.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             //销售订单明细已下推的销售出库单
@@ -868,7 +868,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
              *  最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
              */
             List<SoOutstockDetailEntity> soOutStockDetailList = soOutstockDetailList.stream().filter(obj -> obj.getSoDetailId().equals(soDetailEntity.getId())).collect(Collectors.toList());
-            BigDecimal allAmountLocalCurrency = MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), MathUtil.divide(new BigDecimal(detailEntity.getActualQty()), new BigDecimal(soDetailEntity.getQty())));
+            BigDecimal allAmountLocalCurrency = MathUtil.multiplyWithTwo(soDetailEntity.getAllAmountLocalCurrency(), MathUtil.divide(new BigDecimal(detailEntity.getActualQty()), new BigDecimal(soDetailEntity.getQty())));
             if (CollectionUtils.isNotEmpty(soOutStockDetailList)) {
                 Integer totalActualQty = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (MathUtil.compareTo(totalActualQty + detailEntity.getActualQty(), soDetailEntity.getAllAmountLocalCurrency()) == MathUtil.ZERO) {
@@ -908,7 +908,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setPrice(price);
             BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
             detailEntity.setExchangeRate(exchangeRate);
-            BigDecimal amount=MathUtil.multiply(price, detailEntity.getActualQty());
+            BigDecimal amount=MathUtil.multiplyWithTwo(price, detailEntity.getActualQty());
             detailEntity.setAmount(amount);
             String currency = soDetailEntity.getCurrency();
             detailEntity.setCurrency(currency);
@@ -916,7 +916,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setCurrencySymbol(symbol);
             BigDecimal amountLocalCurrency=amount;
             if(BigDecimal.ZERO.compareTo(exchangeRate)!=0){
-                amountLocalCurrency=MathUtil.multiply(amount,exchangeRate,4);
+                amountLocalCurrency=MathUtil.multiplyWithTwo(amount,exchangeRate,4);
             }
             detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
         }
@@ -981,11 +981,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //单价信息
             detailEntity.setPrice(price);
             BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
-            BigDecimal amount=MathUtil.multiply(price, detailEntity.getActualQty());
+            BigDecimal amount=MathUtil.multiplyWithTwo(price, detailEntity.getActualQty());
             detailEntity.setAmount(amount);
             BigDecimal amountLocalCurrency=amount;
             if(Objects.nonNull(exchangeRate) && BigDecimal.ZERO.compareTo(exchangeRate)!=0){
-                amountLocalCurrency=MathUtil.multiply(amount,exchangeRate,4);
+                amountLocalCurrency=MathUtil.multiplyWithTwo(amount,exchangeRate,4);
             }
             detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
             updateList.add(detailEntity);

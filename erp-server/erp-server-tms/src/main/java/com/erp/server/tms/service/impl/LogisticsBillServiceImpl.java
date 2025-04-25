@@ -8,10 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.alibaba.excel.write.metadata.WriteSheet;
-import com.alibaba.excel.write.metadata.WriteTable;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -48,8 +45,6 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCountryOrgEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.dto.excel.FmLogisticsBillCostExcelDTO;
-import com.erp.model.tms.dto.excel.FmLogisticsBillExcelDTO;
 import com.erp.model.tms.dto.excel.LogisticsTrackExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
@@ -496,7 +491,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
 
         //申报总价
         BigDecimal totalPrice = productVOS.stream().filter(s -> Objects.nonNull(s.getDestDeclarePrice()) && Objects.nonNull(s.getQuantity()))
-                .map(e -> MathUtil.multiply(e.getDestDeclarePrice(), e.getQuantity())).reduce(BigDecimal.ZERO, BigDecimal::add);
+                .map(e -> MathUtil.multiplyWithTwo(e.getDestDeclarePrice(), e.getQuantity())).reduce(BigDecimal.ZERO, BigDecimal::add);
         parceInfo.setTotalPrice(totalPrice);
         //根据销售平台和渠道code 获取到原生的渠道
         LogisticsSaleChannelEntity saleChannel = logisticsSaleChannelService.getByPlatform(logisticsPlatform, logisticsChannel.getCode());
@@ -821,7 +816,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 BigDecimal volume = height
                         .multiply(width)
                         .multiply(length);
-                BigDecimal volumeWeight = MathUtil.multiply(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())), volumeRatio, 4);
+                BigDecimal volumeWeight = MathUtil.multiplyWithTwo(MathUtil.divide(volume, new BigDecimal(shippingTemplateEntity.getVolumeSetting())), volumeRatio, 4);
                 addDTO.setVolumeWeight(volumeWeight);
             }
         }
@@ -840,7 +835,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
             //重量转成模板单位传入计算运费
             if (UnitEnum.WeightUnitEnum.G.getCode().equals(shippingTemplateEntity.getWeightUnit())) {
                 //kg
-                weight = MathUtil.multiply(weight, new BigDecimal(1000));
+                weight = MathUtil.multiplyWithTwo(weight, new BigDecimal(1000));
             }
             //预估运费
             ShippingTemplateRuleDTO.ViewParamDTO viewParamDTO = new ShippingTemplateRuleDTO.ViewParamDTO();

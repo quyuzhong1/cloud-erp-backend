@@ -1075,8 +1075,9 @@
         <where>
             ${params.sqlMap.default}
             and sb2c.is_deleted = false
-            <if test="shopAuthResultDTO.authType != null and shopAuthResultDTO.authType == 'part'">
-                and sb2c.shop_id in  (select shop_id from shop_sys_user_auth where is_deleted = false and user_id = #{shopAuthResultDTO.userId} )
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
             </if>
             <if test="isOutStock != null and isOutStock == true">
                 and sb2c.bill_status in( 'waitDistribution','inDistribution','waitShipped','frozen','partialShipped')

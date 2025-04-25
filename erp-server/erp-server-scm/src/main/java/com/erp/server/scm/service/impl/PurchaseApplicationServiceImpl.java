@@ -397,7 +397,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 dto.setTaxRate(viewDTO.getTaxRate());
                 dto.setCurrency(viewDTO.getCurrency());
                 dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                dto.setTaxAmount(MathUtil.multiply(viewDTO.getTaxPrice(),qty).setScale(4, RoundingMode.DOWN));
+                dto.setTaxAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),qty).setScale(4, RoundingMode.DOWN));
             }
             resultList.add(dto);
         }
@@ -510,7 +510,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 //采购数量
                 addDetailDTO.setPurchaseQty(generatePurchaseOrderDTO.getPurchaseQty());
                 //采购金额
-                addDetailDTO.setPurchaseAmount(MathUtil.multiply(addDetailDTO.getTaxPrice(), addDetailDTO.getPurchaseQty()));
+                addDetailDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(addDetailDTO.getTaxPrice(), addDetailDTO.getPurchaseQty()));
                 //是否加急
                 addDetailDTO.setIsGift(generatePurchaseOrderDTO.getIsGift());
                 addDetailDTO.setPurchaseApplicationId(generatePurchaseOrderDTO.getId());
@@ -811,7 +811,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewDTO.setTaxRate(priceDTO.getTaxRate());
                 viewDTO.setCurrency(priceDTO.getCurrency());
                 viewDTO.setCurrencySymbol(priceDTO.getCurrencySymbol());
-                viewDTO.setAmount(MathUtil.multiply(viewDTO.getPrice(),viewDTO.getQty()));
+                viewDTO.setAmount(MathUtil.multiplyWithTwo(viewDTO.getPrice(),viewDTO.getQty()));
             }
             viewDTO.setIndex(index);
             index++;
@@ -882,7 +882,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                         viewGenerateDTO.setTaxRate(priceDTO2.getTaxRate());
                         viewGenerateDTO.setCurrency(priceDTO2.getCurrency());
                         viewGenerateDTO.setCurrencySymbol(priceDTO2.getCurrencySymbol());
-                        viewGenerateDTO.setAmount(MathUtil.multiply(viewGenerateDTO.getPrice(),viewGenerateDTO.getQty()));
+                        viewGenerateDTO.setAmount(MathUtil.multiplyWithTwo(viewGenerateDTO.getPrice(),viewGenerateDTO.getQty()));
                     }
                 }
             }
@@ -1062,7 +1062,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     //sku是组合品时，不计算采购单价
                     BigDecimal price = Objects.nonNull(updateDTO.getPrice()) ? updateDTO.getPrice():BigDecimal.ZERO;
                     Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
-                    updateDTO.setAmount(MathUtil.multiply(price,qty));
+                    updateDTO.setAmount(MathUtil.multiplyWithTwo(price,qty));
                     continue;
                 }
                 //获取sku汇总数量
@@ -1074,7 +1074,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                         .findFirst().orElse(null);
                 if (Objects.nonNull(viewDTO)){
                     updateDTO.setPrice(viewDTO.getTaxPrice());
-                    updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(),updateDTO.getQty()));
+                    updateDTO.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),updateDTO.getQty()));
                 }else {
                     SkuVO skuVO = skuVOList.stream().filter(f -> f.getSkuId().equals(updateDTO.getSkuId())).findFirst().orElse(null);
                     if (Objects.isNull(skuVO)){

@@ -656,7 +656,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //含税单价
             BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(soDetailEntity.getPrice(), multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), multiplyTax);
             //含税单价
             map.put("taxPrice", taxPrice);
             map.put("amount", soDetailEntity.getAmount());
@@ -858,7 +858,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //含税单价
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(detailEntity.getPrice(), multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(detailEntity.getPrice(), multiplyTax);
             //含税单价
             map.put("taxPrice", taxPrice);
             map.put("amount", detailEntity.getAmount());
@@ -1062,7 +1062,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             //含税单价
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(detailEntity.getPrice(), multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(detailEntity.getPrice(), multiplyTax);
             //含税单价
             map.put("taxPrice", taxPrice);
             map.put("amount", detailEntity.getAmount());

@@ -11,8 +11,6 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
@@ -22,7 +20,6 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -40,7 +37,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -324,7 +320,7 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputSdyBaseTaskHan
             shudiyunB2cOrderDTO.setUnit("PCS");
 
             shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getPrice());
-            shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(dmpSoDetailEntity.getPrice(), dmpSoDetailEntity.getNum()));
+            shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiplyWithTwo(dmpSoDetailEntity.getPrice(), dmpSoDetailEntity.getNum()));
 
             shudiyunB2cOrderDTO.setPost_amount(BigDecimal.ZERO);
             if (CharSequenceUtil.isBlank(dmpSoDetailEntity.getGoodsNo())) {

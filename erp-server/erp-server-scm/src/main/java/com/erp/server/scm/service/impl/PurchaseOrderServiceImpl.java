@@ -395,7 +395,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<PurchaseOrderDetailDTO.UpdateDTO> details = BeanMapperUtils.copyList(PurchaseOrderDetailDTO.UpdateDTO.class, entityDetails);
         details.forEach(obj -> {
             obj.setFirstMassProductName(FirstMassProductTypeEnum.getName(obj.getFirstMassProduct()));
-            obj.setTaxRate(MathUtil.multiply(obj.getTaxRate(), MathUtil.BigDecimal_100));
+            obj.setTaxRate(MathUtil.multiplyWithTwo(obj.getTaxRate(), MathUtil.BigDecimal_100));
             obj.setExecutionStatusName(ExecutionStatusEnum.getNameByCode(obj.getExecutionStatus()));
         });
         dto.setDetails(details);
@@ -818,12 +818,12 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //含税金额 增加千分位分割
             detailDTO.setTaxPriceStr(df4.format(detailDTO.getTaxPrice()));
             //不含税金额
-            detailDTO.setNotTaxPurchaseAmount(MathUtil.multiply(detailDTO.getPrice(),detailDTO.getPurchaseQty()).setScale(2, RoundingMode.HALF_UP));
+            detailDTO.setNotTaxPurchaseAmount(MathUtil.multiplyWithTwo(detailDTO.getPrice(),detailDTO.getPurchaseQty()).setScale(2, RoundingMode.HALF_UP));
             //不含税金额 增加千分位分割
             detailDTO.setNotTaxPurchaseAmountStr(df2.format(detailDTO.getNotTaxPurchaseAmount()));
             //含税金额 增加千分位分割
             detailDTO.setPurchaseAmountStr(df2.format(detailDTO.getPurchaseAmount()));
-            detailDTO.setTaxRate(MathUtil.multiply(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
+            detailDTO.setTaxRate(MathUtil.multiplyWithTwo(detailDTO.getTaxRate(), MathUtil.BigDecimal_100));
             details.add(detailDTO);
         }
         //含税金额合计
@@ -1606,7 +1606,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setStockReturnQty(stockReturnQty);
 
             obj.setStockInQty(stockInQty);
-            obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
+            obj.setTaxRateStr(MathUtil.multiplyWithTwo(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
@@ -2145,7 +2145,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             BigDecimal taxRate = detailEntity.getTaxRate();
             BigDecimal flagTaxRate = BigDecimal.ZERO;
             if (Objects.nonNull(taxRate)){
-                flagTaxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100).setScale(2);
+                flagTaxRate = MathUtil.multiplyWithTwo(taxRate, MathUtil.BigDecimal_100).setScale(2);
             }
             detailDTO.setTaxRate(flagTaxRate + "%");
             BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
@@ -2156,7 +2156,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             }
             detailDTO.setPrice(price);
             //未税金额
-            detailDTO.setAmount(MathUtil.multiply(price, qty));
+            detailDTO.setAmount(MathUtil.multiplyWithTwo(price, qty));
             //单位
             detailDTO.setUnit(skuVO.getUnitName());
             //含税金额
@@ -2326,7 +2326,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         for (PurchaseOrderDetailDTO.PdaViewDTO detail : details) {
             SkuVO skuVO = skuNoList.stream().filter(req -> req.getSkuId().equals(detail.getSkuId())).findFirst().orElse(new SkuVO());
             detail.setUnitName(skuVO.getUnitName());
-            detail.setTaxRate(MathUtil.multiply(detail.getTaxRate(), MathUtil.BigDecimal_100));
+            detail.setTaxRate(MathUtil.multiplyWithTwo(detail.getTaxRate(), MathUtil.BigDecimal_100));
             Integer receiveQty = receiveDetailEntities.stream().filter(req -> req.getPurchaseOrderDetailId().equals(detail.getId())).map(WarehouseReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
             detail.setReceiveQty(receiveQty);
             Integer returnQty = returnDetailEntityList.stream().filter(obj -> obj.getPurchaseOrderDetailId().equals(detail.getId()) && obj.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && obj.getReturnMode().equals(ReturnModeEnum.REPLENISHMENT.getCode())).map(PoReturnDetailEntity::getReturnQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -3007,7 +3007,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setDeliveredQty(deliveredQty);
             //剩余送货量/可下推量=采购订单-送货单数量-无送货单收货数量-无收货单的入库数量+[收发差异]+退货补货数量[库存退货/质检退货]
             obj.setWaitDeliveryQty(obj.getPurchaseQty() - deliveredQty - unDeliveryReceiveQty - unReceiveInstockQty + diffSendAndReceive + returnQty);
-            obj.setTaxRateStr(MathUtil.multiply(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
+            obj.setTaxRateStr(MathUtil.multiplyWithTwo(obj.getTaxRate(),MathUtil.BigDecimal_100).toString().concat("%"));
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {

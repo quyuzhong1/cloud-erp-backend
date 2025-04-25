@@ -76,8 +76,8 @@ public class SoUtils {
         SkuCostProfitDTO.SkuCostProfitParam costParam = new SkuCostProfitDTO.SkuCostProfitParam();
         costParam.setSkuId(item.getSkuId());
         //该值应该为数量*单价*汇率
-        BigDecimal amount = MathUtil.multiply(item.getPrice(), item.getQty());
-        BigDecimal saleAmount = MathUtil.multiply(amount, item.getExchangeRate());
+        BigDecimal amount = MathUtil.multiplyWithTwo(item.getPrice(), item.getQty());
+        BigDecimal saleAmount = MathUtil.multiplyWithTwo(amount, item.getExchangeRate());
         //销售毛利=销售金额(折后)*汇率-总成本
         //销售金额(折后)*汇率
         BigDecimal amountLocalCurrency = item.getAmountLocalCurrency();

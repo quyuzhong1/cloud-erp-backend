@@ -588,7 +588,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             entity.setPrice(BigDecimal.ZERO);
-            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+            entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
             return;
         }
         //子件SKU默认取供应商报价
@@ -605,7 +605,7 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
             entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
             entity.setPrice(viewDTO.getTaxPrice());
             entity.setTaxRate(viewDTO.getTaxRate());
-            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+            entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
         }else {
             //供应商报价信息
             PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO searchDTO = new PurchasePriceDetailDTO.PurchaseTaxPriceSearchDTO(entity.getQty(),entity.getSkuId(),entity.getSkuNo(),entity.getSupplierId(),purchaseOrgId);
@@ -617,13 +617,13 @@ public class SubcontractOrderDetailServiceImpl extends SuperServiceImpl<Subcontr
                 entity.setCurrency(viewDTO.getCurrency());
                 entity.setCurrencySymbol(viewDTO.getCurrencySymbol());
                 entity.setTaxRate(viewDTO.getTaxRate());
-                entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+                entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
                 return;
             }
             entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             entity.setTaxRate(BigDecimal.ZERO);
-            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+            entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
         }
 
     }

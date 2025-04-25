@@ -323,7 +323,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //含税单价
             jsonObject.set("taxPrice", purchaseOrderDetailEntity.getTaxPrice());
             //税率
-            jsonObject.set("taxRate", MathUtil.multiply(purchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("taxRate", MathUtil.multiplyWithTwo(purchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             //采购编号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
             //明细id

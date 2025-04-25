@@ -279,7 +279,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
             groupSkuDTO.setSkuNo(skuVO.getSkuNo());
             groupSkuDTO.setSingleGrossWeight(skuVO.getGrossWeight());
             groupSkuDTO.setSingleWeightUnit(UnitEnum.WeightUnitEnum.G.code);
-            BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(skuVO.getGrossWeight(), packQty), MathUtil.BigDecimal_1000);
+            BigDecimal grossWeight = MathUtil.divide(MathUtil.multiplyWithTwo(skuVO.getGrossWeight(), packQty), MathUtil.BigDecimal_1000);
             groupSkuDTO.setGrossWeight(grossWeight);
             groupSkuDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
         }
@@ -1058,7 +1058,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setSingleGrossWeight(groupSkuDTO.getSingleGrossWeight());
                 cartonDetailDTO.setSingleWeightUnit(groupSkuDTO.getSingleWeightUnit());
                 //已装箱重量
-                BigDecimal grossWeight1 = MathUtil.divide(MathUtil.multiply(groupSkuDTO.getSingleGrossWeight(), packQty1), MathUtil.BigDecimal_1000);
+                BigDecimal grossWeight1 = MathUtil.divide(MathUtil.multiplyWithTwo(groupSkuDTO.getSingleGrossWeight(), packQty1), MathUtil.BigDecimal_1000);
                 cartonDetailDTO.setGrossWeight(grossWeight1);
                 cartonDetailDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
                 cartonDetailList.add(cartonDetailDTO);
@@ -1156,7 +1156,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setSingleGrossWeight(groupSkuDTO.getSingleGrossWeight());
                 cartonDetailDTO.setSingleWeightUnit(groupSkuDTO.getSingleWeightUnit());
                 //已装箱重量
-                BigDecimal grossWeight1 = MathUtil.divide(MathUtil.multiply(groupSkuDTO.getSingleGrossWeight(), packQty1), MathUtil.BigDecimal_1000);
+                BigDecimal grossWeight1 = MathUtil.divide(MathUtil.multiplyWithTwo(groupSkuDTO.getSingleGrossWeight(), packQty1), MathUtil.BigDecimal_1000);
                 cartonDetailDTO.setGrossWeight(grossWeight1);
                 cartonDetailDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
                 cartonDetailList.add(cartonDetailDTO);
@@ -1247,7 +1247,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 cartonDetailDTO.setSingleWeightUnit(UnitEnum.WeightUnitEnum.G.code);
                 //已装箱重量
                 if (BigDecimal.ZERO.compareTo(wmsCartonDetailEntity.getGrossWeight()) == 0){
-                    BigDecimal grossWeight1 = MathUtil.divide(MathUtil.multiply(skuVO.getGrossWeight(), packQty2), MathUtil.BigDecimal_1000);
+                    BigDecimal grossWeight1 = MathUtil.divide(MathUtil.multiplyWithTwo(skuVO.getGrossWeight(), packQty2), MathUtil.BigDecimal_1000);
                     cartonDetailDTO.setGrossWeight(grossWeight1);
                 }
                 cartonDetailDTO.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);

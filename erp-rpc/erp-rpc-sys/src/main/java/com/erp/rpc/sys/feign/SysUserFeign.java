@@ -588,4 +588,17 @@ public interface SysUserFeign {
      */
     @GetMapping("feign/dept/getDeptEntityList")
     List<SysDepartmentEntity> getDeptEntityList();
+
+    /**
+     * 获取用户店铺权限
+     * @return
+     */
+    @PostMapping("feign/user/getShopPermissionSql")
+    String getShopPermissionSql(@RequestBody String shopTableField);
+    /**
+     * 获取用户仓库权限
+     * @return
+     */
+    @PostMapping("feign/user/getWarehousePermissionSql")
+    String getWarehousePermissionSql(@RequestBody String warehouseTableField);
 }

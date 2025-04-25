@@ -1068,7 +1068,7 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
             priceDTO.setTaxRate(viewDTO.getTaxRate());
             priceDTO.setCurrency(viewDTO.getCurrency());
             priceDTO.setCurrencySymbol(CurrencyEnum.getSymbolByCode(viewDTO.getCurrency()));
-            priceDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), priceParamDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
+            priceDTO.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(), priceParamDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
             result.add(priceDTO);
         }
         return result;

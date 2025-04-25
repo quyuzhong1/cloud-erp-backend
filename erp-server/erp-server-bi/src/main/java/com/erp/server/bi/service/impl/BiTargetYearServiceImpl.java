@@ -204,7 +204,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     //差值
                     BigDecimal grossProfit = mainBusinessIncome.subtract(costTotalCost);
                     BigDecimal yearGrossProfitRate = MathUtil.divide(grossProfit, mainBusinessIncome, 2);
-                    yearGrossProfitRate = MathUtil.multiply(yearGrossProfitRate, multiplyFlag, 2);
+                    yearGrossProfitRate = MathUtil.multiplyWithTwo(yearGrossProfitRate, multiplyFlag, 2);
 
                     return yearGrossProfitRate;
 
@@ -215,7 +215,7 @@ public class BiTargetYearServiceImpl extends SuperServiceImpl<BiTargetYearMapper
                     //差值
                     BigDecimal monthGrossProfit = monthMainBusinessIncome.subtract(monthCostTotalCost);
                     BigDecimal monthGrossProfitRate = MathUtil.divide(monthGrossProfit, monthMainBusinessIncome, 2);
-                    monthGrossProfitRate = MathUtil.multiply(monthGrossProfitRate, multiplyFlag, 2);
+                    monthGrossProfitRate = MathUtil.multiplyWithTwo(monthGrossProfitRate, multiplyFlag, 2);
                     return monthGrossProfitRate;
                 }
 

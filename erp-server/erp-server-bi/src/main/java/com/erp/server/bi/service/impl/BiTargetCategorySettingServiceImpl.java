@@ -16,9 +16,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.bi.dto.*;
 import com.erp.model.bi.dto.excel.TargetCategorySettingImportExcelDTO;
-import com.erp.model.bi.dto.excel.TargetSkuSettingImportExcelDTO;
 import com.erp.model.bi.entity.BiTargetCategorySettingEntity;
-import com.erp.model.bi.entity.BiTargetStaffSettingEntity;
 import com.erp.model.bi.entity.BiTargetYearEntity;
 import com.erp.model.bi.enums.MetricsEnum;
 import com.erp.model.bi.enums.MonthEnum;
@@ -28,7 +26,6 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.bi.listener.BiTargetCategorySettingExcelListener;
-import com.erp.server.bi.listener.BiTargetSkuSettingExcelListener;
 import com.erp.server.bi.mapper.BiTargetCategorySettingMapper;
 import com.erp.server.bi.service.BiTargetCategorySettingService;
 import com.erp.server.bi.service.BiTargetYearService;
@@ -496,7 +493,7 @@ public class BiTargetCategorySettingServiceImpl extends SuperServiceImpl<BiTarge
         BigDecimal value = dbList.stream().filter(d -> d.getMonth().equals(month)).findFirst().
                 map(BiTargetCategorySettingEntity::getValue).orElse(null);
         if (value != null && MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
-            value = MathUtil.multiply(value, MathUtil.NUMBER_100);
+            value = MathUtil.multiplyWithTwo(value, MathUtil.NUMBER_100);
         }
         return value;
     }

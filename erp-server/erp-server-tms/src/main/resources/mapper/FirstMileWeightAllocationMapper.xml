@@ -288,8 +288,8 @@
             #{item}
         </foreach>
         <!--权限-->
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${params.permissionSql}
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
         </if>
     </select>
 

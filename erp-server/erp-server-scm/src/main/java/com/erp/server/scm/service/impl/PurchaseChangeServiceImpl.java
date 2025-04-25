@@ -494,7 +494,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 BigDecimal returnPrice = Objects.nonNull(poReturnDetailEntity.getReturnPrice()) ? poReturnDetailEntity.getReturnPrice() : BigDecimal.ZERO;
                 updateDTO.setPrice(returnPrice);
                 Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
-                updateDTO.setAmount(MathUtil.multiply(returnPrice,qty));
+                updateDTO.setAmount(MathUtil.multiplyWithTwo(returnPrice,qty));
             }
         }
         purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);
