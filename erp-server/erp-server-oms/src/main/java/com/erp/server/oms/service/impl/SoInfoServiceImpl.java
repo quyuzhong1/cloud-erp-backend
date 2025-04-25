@@ -240,15 +240,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     private LogisticsFeign logisticsFeign;
 
     @Resource
-    private OmsPushMsgService omsPushMsgService;
+    private SysPartitionFeign sysPartitionFeign;
 
     @Resource
     private CfgSettingFeign fgSettingFeign;
     @Resource
     private SaleDemandFeign saleDemandFeign;
 
-    @Resource
-    private SysPartitionFeign sysPartitionFeign;
     /**
      * 添加销售订单
      *

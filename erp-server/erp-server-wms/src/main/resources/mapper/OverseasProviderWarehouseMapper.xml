@@ -14,6 +14,7 @@
         <result column="is_deleted" property="isDeleted" />
         <result column="main_id" property="mainId" />
         <result column="platform_warehouse_code" property="platformWarehouseCode" />
+        <result column="platform_warehouse_type" property="platformWarehouseType" />
         <result column="platform_warehouse_name" property="platformWarehouseName" />
         <result column="platform_warehouse_status" property="platformWarehouseStatus" />
         <result column="country" property="country" />
@@ -35,11 +36,12 @@
         update_user_id,
         version,
         is_deleted,
-        main_id, platform_warehouse_code, platform_warehouse_name, platform_warehouse_status, country, country_name, warehouse_id, warehouse_name, warehouse_code, disabled
+        main_id, platform_warehouse_type,platform_warehouse_code, platform_warehouse_name, platform_warehouse_status, country, country_name, warehouse_id, warehouse_name, warehouse_code, disabled
     </sql>
     <select id="listByWarehouseIdList" resultType="com.erp.model.wms.dto.OverseasProviderWarehouseDTO$ViewDTO">
         SELECT
             opw.main_id,
+            opw.platform_warehouse_type,
             opw.platform_warehouse_code,
             opw.platform_warehouse_name,
             opw.platform_warehouse_status,

@@ -41,6 +41,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -461,7 +462,8 @@ public class NfeInvoiceService {
         //上传xml
         if (CharSequenceUtil.isNotBlank(invoiceXmlUrl)) {
             try {
-                MultipartFile xmlFile = FileUtil.toMultipartFile(invoiceXmlUrl);
+
+                MultipartFile xmlFile = readFileUrl(invoiceXmlUrl,AttachmentTypeEnum.INVOICE_INFO_XML.getCode());
                 String xmlUrl = FastDFSClientUtil.uploadFile(xmlFile);
                 addOrUpdateList.add(new OmsAttachmentDTO.UpdateDTO(AttachmentTypeEnum.INVOICE_INFO_XML.getCode(),xmlUrl,xmlFile.getOriginalFilename(),invoiceId));
             } catch (Exception e) {
@@ -471,7 +473,7 @@ public class NfeInvoiceService {
         //上传pdf
        if (CharSequenceUtil.isNotBlank(invoicePdfUrl)) {
            try {
-               MultipartFile pdfFile = FileUtil.toMultipartFile(invoicePdfUrl);
+               MultipartFile pdfFile = readFileUrl(invoicePdfUrl,AttachmentTypeEnum.INVOICE_INFO_PDF.getCode());
                String pdfUrl = FastDFSClientUtil.uploadFile(pdfFile);
                addOrUpdateList.add(new OmsAttachmentDTO.UpdateDTO( AttachmentTypeEnum.INVOICE_INFO_PDF.getCode(),pdfUrl,pdfFile.getOriginalFilename(),invoiceId));
            } catch (Exception e) {
@@ -480,6 +482,18 @@ public class NfeInvoiceService {
        }
       omsAttachmentService.batchAddOrUpdate(addOrUpdateList);
     }
-
+    /**
+     * 读取文件
+     * @author will
+     * @date 2025/4/25 15:01
+     * @param invoiceUrl
+     * @return MultipartFile
+     */
+    private MultipartFile readFileUrl (String invoiceUrl,String type) {
+        // 原始文件路径（可能无后缀）
+        File sourceFile = new File(invoiceUrl);
+        String defaultSuffix = AttachmentTypeEnum.INVOICE_INFO_XML.getCode().equals(type) ? "xml" : "pdf";
+        return FileUtil.toMultipartFile(invoiceUrl,sourceFile.getName(),defaultSuffix);
+    }
 }
 

@@ -1123,11 +1123,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             pagingViewDTO.setStatusName(InvoiceInfoStatusEnum.getName(pagingViewDTO.getStatus()));
             pagingViewDTO.setUploadStatusName(InvoiceInfoUploadStatusEnum.getName(pagingViewDTO.getUploadStatus()));
             if(isExport && StringUtils.isNotBlank(pagingViewDTO.getFileUrl())){
-                if (InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(pagingViewDTO.getInvoiceType())) {
-                    pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl() + ".pdf");
-                } else {
-                    pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
-                }
+                pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
             }
             pagingViewDTO.setInvoiceNatureName(InvoiceNatureEnum.getName(pagingViewDTO.getInvoiceNature()));
         });
@@ -1160,9 +1156,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                             String fileName = split[split.length - 1];
                             try {
                                 byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
-                                if (AttachmentTypeEnum.INVOICE_INFO_PDF.getCode().equals(attachDTO.getType())) {
-                                    fileName = fileName.concat(".pdf");
-                                }
                                 return Pair.of(fileName, content); // 使用合适的Pair或自定义对象
                             } catch (Exception e) {
                                 throw new ServiceException("文件处理失败: " + attachDTO.getAttachName(), e);

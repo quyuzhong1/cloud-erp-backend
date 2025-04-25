@@ -308,14 +308,6 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @return
      */
     List<SkuMappingDTO.SkuMappingViewDTO> listSkuMappingByParams(ListingInfoDTO.QueryDTO queryDTO);
-
-    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
-
-    String addCustomer(SkuMappingDTO.AddCustomerRequest dto);
-
-    String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
-
-    Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
     /**
      * 根据参数获取数据列表
      * @param params
@@ -323,10 +315,15 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      */
     List<SkuMappingDTO.PagingViewDTO> listByAccountAndDictPlatform(ListingInfoDTO.QueryPlatformDTO params);
 
+    PagingVO<SkuMappingDTO.CustomerPagingViewDTO> customerPaging(PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto);
+
+    String addCustomer(SkuMappingDTO.AddCustomerRequest dto);
     List<SkuMappingDTO.ProductSkuInfoDTO> listSkuBySkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
 
+    String updateCustomer(SkuMappingDTO.AddCustomerRequest dto);
+
+    Boolean exportCustomerSku(SkuMappingDTO.CustomerPagingParamDTO dto);
     List<SkuMappingDTO.CustomerInventorySkuInfoDTO> getErpSkuByCustomerSku(SkuMappingDTO.CustomerInventorySkuParamDTO skuParamDTO);
 
 //    List<BomChildrenSkuDTO> checkBomByPlatformSkuNos(SkuMappingDTO.SkuParamDTO skuParamDTO);
-
 }

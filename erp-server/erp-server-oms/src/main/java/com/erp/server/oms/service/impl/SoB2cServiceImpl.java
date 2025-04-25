@@ -127,6 +127,7 @@ import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.oms.tiktok.dto.tiktok.order.FullyOrderDTO;
 import com.sdk.oms.tiktok.service.TikTokFullService;
+import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.third.lingxing.dto.UpdateOrderDTO;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -572,7 +573,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (isFullyManagedOrder(dictPlatform)){
                 businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSBH);
             }else {
-                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             }
             soB2cEntity.setCode(businessNo);
         }
@@ -1316,8 +1317,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .update();
 
         //同步数帝云
-//        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
-//        syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
+        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(id);
+        syncSoB2cService.syncDataToSdy(entity, soB2cDetailEntityList, SyncOperateEnum.OPERATE_DELETE.getCode());
 
         log.info("作废 开始记录操作日志，id：【{}】", id);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据作废操作 作废原因：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "B2C销售订单表", remark);
@@ -6068,7 +6069,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (isFullyManagedOrder(dto.getDictPlatform())){
                 businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSBH);
             }else {
-                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
+                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
             }
             entity.setCode(businessNo);
             boolean save = false;

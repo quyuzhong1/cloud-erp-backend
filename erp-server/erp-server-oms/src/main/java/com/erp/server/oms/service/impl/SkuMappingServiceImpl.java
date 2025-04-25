@@ -159,6 +159,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private InvoiceTaxService invoiceTaxService;
+    @Resource
+    private AuthDataFeign authDataFeign;
+
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
