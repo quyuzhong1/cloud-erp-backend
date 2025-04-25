@@ -1926,8 +1926,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollUtil.isEmpty(successList)) {
             return;
         }
+
+        Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName())));
+
         for (SoReturnStockImportExcelDTO excelDTO : successList) {
             List<String> errorMsgList = new ArrayList<>();
+
+
         }
 
 

@@ -7,7 +7,6 @@ import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.erp.model.bi.entity.BiProductDetailEntity;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
@@ -19,6 +18,7 @@ import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.entity.SoOutstockEntity;
@@ -96,8 +96,8 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
         //sku
         List<String> skuIdList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
-        List<BiProductDetailEntity> skuList = FeignQuery.getByIds(BiProductDetailEntity.class, skuIdList);
-        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(BiProductDetailEntity::getId, BiProductDetailEntity::getName));
+        List<ProductDetailEntity> skuList = FeignQuery.getByIds(ProductDetailEntity.class, skuIdList);
+        Map<String, String> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
 
 
         List<SoB2cCoreDTO.ListRetryOutstockDTO> list = new ArrayList<>();
