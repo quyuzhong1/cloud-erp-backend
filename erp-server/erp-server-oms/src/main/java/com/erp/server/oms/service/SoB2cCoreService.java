@@ -23,8 +23,8 @@ public interface SoB2cCoreService {
      * 重新出库
      * @author will
      * @date 2025/4/24 20:28
-     * @param dto
+     * @param list
      * @return Boolean
      */
-    Boolean retryOutstock(SoB2cCoreDTO.RetryOutstockDTO dto);
+    Boolean retryOutstock(List<SoB2cCoreDTO.RetryOutstockDTO> list);
 }

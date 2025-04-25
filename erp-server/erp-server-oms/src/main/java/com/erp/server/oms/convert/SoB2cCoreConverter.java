@@ -38,7 +38,7 @@ public interface SoB2cCoreConverter {
             @Mapping(target = "warehouseLocation", source = "soB2cDetailEntity.warehouseLocation"),
 
     })
-    SoB2cCoreDTO.ListRetryOutstockDTO toCustomerB2bSellerChangeConvert(SoB2cEntity soB2cEntity, SoB2cDetailEntity soB2cDetailEntity);
+    SoB2cCoreDTO.ListRetryOutstockDTO convertSoB2cToRetryOutstock(SoB2cEntity soB2cEntity, SoB2cDetailEntity soB2cDetailEntity);
 
 
 }

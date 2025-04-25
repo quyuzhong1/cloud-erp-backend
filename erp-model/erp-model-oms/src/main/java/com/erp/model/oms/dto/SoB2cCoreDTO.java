@@ -55,6 +55,10 @@ public class SoB2cCoreDTO {
          */
         private String country;
         /**
+         * 国家名称
+         */
+        private String countryName;
+        /**
          * 出库时间
          */
         private LocalDateTime outstockTime;
@@ -75,9 +79,17 @@ public class SoB2cCoreDTO {
          */
         private String warehouseId;
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
          * 仓位
          */
         private String warehouseLocation;
+        /**
+         * 仓位名称
+         */
+        private String warehouseLocationName;
     }
 
     /**

@@ -46,11 +46,11 @@ public class SoB2cCoreController extends BaseController {
      * 重新出库保存
      * @author will
      * @date 2025/4/24 20:27
-     * @param dto
+     * @param list
      * @return ApiResult<Boolean>
      */
     @PostMapping("/retryOutstock")
-    public ApiResult<Boolean> retryOutstock(@ModelAttribute @Validated SoB2cCoreDTO.RetryOutstockDTO dto) throws IOException {
-        return success(soB2cCoreService.retryOutstock(dto));
+    public ApiResult<Boolean> retryOutstock(@ModelAttribute @Validated List<SoB2cCoreDTO.RetryOutstockDTO> list) throws IOException {
+        return success(soB2cCoreService.retryOutstock(list));
     }
 }
