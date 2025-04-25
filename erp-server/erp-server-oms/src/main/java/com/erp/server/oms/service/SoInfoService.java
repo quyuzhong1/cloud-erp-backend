@@ -482,8 +482,6 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     void sdyFieldOrderHandler(String soId, String operateEnum);
 
     List<SoInfoEntity> queryToSdy(LocalDate startDate, LocalDate endStart, Integer pageSize, int offset);
-
-    IPage<SoInfoEntity> pagePartitionIsNull(Page query);
     /**
      * 下推销售退货订单-列表查询-计算退货金额
      * @param dto dto
@@ -492,6 +490,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @Date 2024-11-25
      **/
     List<SoInfoDTO.GenerateSoReturnView> calReturnAmountByQty(List<SoInfoDTO.CalDTO> dto);
+
+    IPage<SoInfoEntity> pagePartitionIsNull(Page query);
 
 
     /**

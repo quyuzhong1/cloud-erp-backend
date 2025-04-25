@@ -65,14 +65,18 @@ import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.model.tms.enums.ShipmentTypeEnum;
 import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.*;
-import com.erp.model.wms.dto.inventory.*;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
-import com.erp.model.wms.enums.inventory.*;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
@@ -80,6 +84,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -91,8 +96,6 @@ import com.erp.server.wms.convert.SoOutstockConverter;
 import com.erp.server.wms.kingdee.SyncKingdeeSoOutstockService;
 import com.erp.server.wms.mapper.SoOutstockMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
-import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
@@ -159,12 +162,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
-    @Resource
-    private SyncWdtOtherInStockService syncWdtOtherInStockService;
-
-    @Resource
-    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
     @Lazy
     @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
@@ -191,9 +188,6 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Resource
     private LogisticsBillFeign logisticsBillFeign;
-
-    @Resource
-    private DmpPushWdtFeign dmpPushWdtFeign;
 
     @Resource
     private SysDictFeign sysDictFeign;
@@ -246,22 +240,19 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     private TransferInfoService transferInfoService;
 
     @Resource
-    private CfgSettingService cfgSettingService;
-
-    @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-    @Resource
-    private WmsPushMsgService wmsPushMsgService;
 
     @Resource
     private VirtualWarehouseChannelService virtualWarehouseChannelService;
 
     @Resource
     private VirtualTransFlowService virtualTransFlowService;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
@@ -687,6 +678,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             }
         }
+
         // 调用流程审核
         approveProcess(entity, dto);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "销售出库单", approveType.getName(), dto.getComment());
@@ -1383,6 +1375,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         //获取导出数据
 		Page<SoOutstockDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
@@ -1456,7 +1449,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public List<SoOutstockDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<SoOutstockDTO.TabListDTO> resultList = new ArrayList<>(4);
-        List<SoOutstockDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(dto.getPermissionSql());
+        List<SoOutstockDTO.ApproveCountDTO> approveCountList = baseMapper.listApproveCount(getPermissionSql(dto.getPermissionSql()));
         int allCount = approveCountList.stream().mapToInt(SoOutstockDTO.ApproveCountDTO::getCount).sum();
         SoOutstockDTO.TabListDTO all = new SoOutstockDTO.TabListDTO();
         all.setCount(allCount);
@@ -1513,7 +1506,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     @Override
     public PagingVO<SoOutstockDTO.PagingViewDTO> paging(PagingDTO<SoOutstockDTO.PagingParamDTO> dto) {
         SoOutstockDTO.PagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
+        params.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         Page query = new Page(dto.getCurrPage(), dto.getPageSize() , dto.getIsSearchCount());
         IPage pageData = baseMapper.paging(query, params);
         List<SoOutstockDTO.PagingViewDTO> list = pageData.getRecords();
@@ -1523,6 +1516,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //处理分页数据
         fillPaging(list,false);
         return new PagingVO<>(pageData);
+    }
+
+    private String getPermissionSql(String permissionSql) {
+        //构造店铺权限
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+        if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
+            permissionSql = permissionSql + " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B'))";
+        }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
+            permissionSql = " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B'))";
+        }
+        return permissionSql;
     }
 
     /**
@@ -1835,6 +1839,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 ruleDTO.setReceiveCountry(customerDTO.getCountryId());
                 ruleDTO.setFromWarehouse(generateInfo.getWarehouseId());
                 ruleDTO.setSalesOrgId(soInfo.getSalesOrgId());
+                ruleDTO.setDictPlatform("");
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);
                 String warehouseId;
                 String batchNo = "";
@@ -2770,6 +2775,17 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 soOutstockService.submitAndApprove(id);
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
+                //记录异常订单
+                String soB2cId = dto.getSoId();
+                String type = SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode();
+                String paramJson = JSONUtil.toJsonStr(dto);
+                String message = e.getMessage();
+                SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                addError.setType(type);
+                addError.setMainId(soB2cId);
+                addError.setMessage("销售出库单提交或审核失败"+message);
+                addError.setParamJson(paramJson);
+                soB2cFeign.addSoB2cError(addError);
                 // 记录明细(事务分开)
                 soOutstockDetailService.updateDetailRemark(id, e.getMessage(),false);
             }

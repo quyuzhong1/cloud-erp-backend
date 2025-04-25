@@ -50,7 +50,7 @@ public class UserManageDTO implements Serializable {
      * 用户删除状态 1:正常 0：已删除
      */
 
-    private Integer deleteState;
+    private Boolean deleteState;
     /**
      * 最后登录的ip
      */
@@ -87,4 +87,16 @@ public class UserManageDTO implements Serializable {
     private String mail;
 
     private List<String> roleIdList;
+    //店铺id集合
+    private List<String> shopIdList;
+    /**
+     * 店铺授权类型（all全部授权，part指定授权）
+     */
+    private String shopAuthType;
+    //仓库id集合
+    private List<String> warehouseIdList;
+    /**
+     * 仓库授权类型（all全部授权，part指定授权）
+     */
+    private String warehouseAuthType;
 }

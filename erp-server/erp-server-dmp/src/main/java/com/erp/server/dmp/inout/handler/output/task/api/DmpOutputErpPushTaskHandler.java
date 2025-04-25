@@ -414,7 +414,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 			return "";
 		}
 	}
-	
+
 	public boolean validateSourceId(DmpCfgOutputEntity dmpCfgOutputEntity,
 			DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity , boolean isMerge) {
 		String dataId = dmpOutputTaskRecordEntity.getDataId();
@@ -443,7 +443,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.update();
 					return true;
 				}
-				
+
 				if(isMerge) {
 					DmpOutputTaskRecordMergeServiceImpl dmpOutputTaskRecordMergeServiceImpl = ApplicationContextUtils.getBean(DmpOutputTaskRecordMergeServiceImpl.class);
 					return dmpOutputTaskRecordMergeServiceImpl.validateMerge(leDataIdList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList()), dmpOutputTaskRecordEntity);

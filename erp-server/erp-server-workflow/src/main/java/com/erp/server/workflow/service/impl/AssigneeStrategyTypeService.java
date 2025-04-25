@@ -36,7 +36,7 @@ public class AssigneeStrategyTypeService {
      */
     public List<String> roleAssignee(CamundaDTO.StrategyParamDTO dto) {
         // 根据角色查询用户
-        String assignee = dto.getAssignee();
+        String assignee = dto.getPropertiesDTO().getAssignee();
         // 发起人
         String startUserId = dto.getStartUserId();
         if(CharSequenceUtil.isBlank(assignee)){
@@ -61,7 +61,7 @@ public class AssigneeStrategyTypeService {
         if(CollectionUtils.isEmpty(superList)){
             return Collections.emptyList();
         }
-        ChargeSuperiorEnum chargeSuperior = ChargeSuperiorEnum.getByDictValue(dto.getAssignee());
+        ChargeSuperiorEnum chargeSuperior = ChargeSuperiorEnum.getByDictValue(dto.getPropertiesDTO().getAssignee());
         // 默认直接上级
         chargeSuperior = null == chargeSuperior ? ChargeSuperiorEnum.DIRECT_SUPERIOR : chargeSuperior;
         // 如果所选上级不存在, 则继续向上查找
@@ -92,12 +92,23 @@ public class AssigneeStrategyTypeService {
     }
 
     /**
-     * 指定人审批人
+     * 指定人审批
      * @param dto
      * @return
      */
     public List<String> somebodyAssignee(CamundaDTO.StrategyParamDTO dto) {
-        String assignee = dto.getAssignee();
+        String assignee = dto.getPropertiesDTO().getAssignee();
         return  CharSequenceUtil.isNotBlank(assignee) ? Arrays.asList(assignee.split(",")) : Collections.emptyList();
+    }
+
+    /**
+     * 指定人-表达式审批
+     * @param dto 参数
+     * @return 审批人
+     */
+    public List<String> somebodyExpAssignee(CamundaDTO.StrategyParamDTO dto) {
+        String assignee = dto.getPropertiesDTO().getSomebody_exp();
+        List<String> expStrList = CharSequenceUtil.isNotBlank(assignee) ? Arrays.asList(assignee.split(",")) : Collections.emptyList();
+        return ProcessManagementServiceImpl.replaceApproveVariables(expStrList, dto.getVariablesMap());
     }
 }

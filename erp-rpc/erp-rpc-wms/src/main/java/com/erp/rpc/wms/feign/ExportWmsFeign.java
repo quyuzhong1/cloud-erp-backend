@@ -267,6 +267,8 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/framePaging")
     PagingVO<VirtualInventoryAgeDTO.HisInventoryAgeDetailDTO> framePaging(PagingDTO<VirtualInventoryAgeDTO.FrameParamDTO> dto);
+
+
     /**
      * 导出b2b销售订单虚拟仓订单跟踪
      */
@@ -293,4 +295,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportVirtualWarehouse")
     PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto);
+    /**
+     * 导出质检通知单
+     */
+    @PostMapping("/feign/export/exportQcNotice")
+    PagingVO<QcNoticeDTO.ListDTO> exportQcNotice(PagingDTO<QcNoticeDTO.ExportDTO> dto);
 }

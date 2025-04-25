@@ -119,6 +119,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sdn.warehouse_id",
             menuCode = "wms:soDeliveryNoticeChange:paging",
             tableAlias = "sdnc"
     )
@@ -136,6 +137,7 @@ public class SoDeliveryNoticeChangeController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sdn.warehouse_id",
             menuCode = "wms:soDeliveryNoticeChange:paging",
             tableAlias = "sdnc"
     )

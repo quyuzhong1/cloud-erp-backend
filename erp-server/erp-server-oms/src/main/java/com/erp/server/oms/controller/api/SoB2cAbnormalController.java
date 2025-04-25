@@ -2,10 +2,12 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -52,6 +54,11 @@ public class SoB2cAbnormalController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2cAbnormal:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
     public ApiResult<PagingVO<SoB2cAbnormalDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
         return success(soB2cAbnormalService.abnormalPaging(dto));

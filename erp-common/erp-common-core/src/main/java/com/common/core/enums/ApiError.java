@@ -117,6 +117,7 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
+    ERROR_CREATE_UPDATE_WRAPPER_ERROR(1065,"创建UpdateWrapper异常"),
     /**
      * 警告信息 从800 开始
      */
@@ -741,6 +742,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
     ERROR_PURCHASE_ORG_REQUIRED(98105,"采购订单【{}】收料组织不能为空"),
     ERROR_PURCHASE_DETAIL_DATE(98105,"采购订单【{}】SKU【{}】预计交货日期不能为空"),
+    ERROR_PURCHASE_SUPPLIER_ACCOUNT(98105,"采购订单【{}】供应商账户信息不能为空"),
     ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购单中未找到"),
     ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购收货单中未找到"),
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
@@ -1213,6 +1215,12 @@ public enum ApiError implements Serializable {
     WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
     WAREHOUSE_AREA_USED(92253, "库区被使用后，库存类型禁止修改"),
     WAREHOUSE_NOT_EDIT(92253, "所属仓库禁止修改"),
+    ERROR_92268(92268, "【{}】库存不足,质检通知数量{}，可用库存{}"),
+    ERROR_92269(92269, "【{}】已质检完成，不允许操作反审核"),
+    ERROR_92270(92270, "请先审核通过质检通知单"),
+    ERROR_92271(92271, "请至少选择一条明细"),
+    ERROR_92272(92272, "【{}】包装信息不存在"),
+    ERROR_92273(92273, "SKU库存不足,质检通知数量{}，可用库存{}，请确认是否继续创建"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1456,6 +1464,7 @@ public enum ApiError implements Serializable {
     ERROR_92172(92172,"退货通知单明细不能为空"),
     ERROR_92173(92173,"退货签收单明细不能为空"),
     ERROR_92174(92174,"退货入库单明细不能为空"),
+    ERROR_92175(92175,"存在下游单据不允许作废"),
     ERROR_SO_PRICE_DATE(92175,"销售价目表SKU【{}】失效时间不可小于生效时间"),
     ERROR_SO_PRICE_DATE_OVERLAP(92176,"销售价目表SKU【{}】时间区间重叠"),
     ERROR_SO_PRICE_CHANGE_DATE(92177,"销售调价表SKU【{}】失效时间不可小于生效时间"),
@@ -1466,7 +1475,6 @@ public enum ApiError implements Serializable {
     ERROR_INTERVAL_CUSTOMER_OVERLAP(98047,"该客户SKU区间存在重叠，不可提交"),
     ERROR_INTERVAL_CUSTOMER_CHANGE_OVERLAP(98048,"与该客户SKU变更区间存在重叠，不可提交"),
     ERROR_SO_PRICE_INTERVAL_SIZE(98050,"SKU【{}】区间从值不能大于区间到值"),
-    ERROR_92175(92175,"存在下游单据不允许作废"),
     ERROR_INVOICE_NOT_EXIST(92175,"发票信息不存在"),
     ERROR_INVOICE_DETAIL_NOT_EXIST(92176,"发票明细不存在"),
     ERROR_INVOICE_TAX_NOT_EXIST(92177,"税务信息不存在"),

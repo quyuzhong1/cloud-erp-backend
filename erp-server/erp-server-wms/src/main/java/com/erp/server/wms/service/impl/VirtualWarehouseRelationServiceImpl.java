@@ -2,9 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -23,10 +21,10 @@ import com.erp.model.wms.dto.VirtualWarehouseRelationDTO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.server.wms.mapper.VirtualWarehouseRelationMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.VirtualWarehouseRelationService;
-import com.erp.server.wms.service.VirtualWarehouseService;
 import com.erp.server.wms.service.WarehouseService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +52,7 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     @Resource
     private WarehouseService warehouseService;
     @Resource
-    private VirtualWarehouseService virtualWarehouseService;
+    private AuthDataFeign authDataFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -210,6 +208,9 @@ public class VirtualWarehouseRelationServiceImpl extends SuperServiceImpl<Virtua
     @Override
     public PagingVO<VirtualWarehouseRelationDTO.SelectResultDTO> warehousePagingSelect(PagingDTO<VirtualWarehouseRelationDTO.SelectDTO> dto) {
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        if (Objects.nonNull(dto.getParams()) && Objects.nonNull(dto.getParams().getShowByAuth()) && dto.getParams().getShowByAuth()){
+            dto.getParams().setPermissionSql(authDataFeign.getWarehousePermissionSql("w.id"));
+        }
         IPage<VirtualWarehouseRelationDTO.SelectResultDTO> pagResult = baseMapper.warehousePagingSelect(query, dto.getParams());
         List<VirtualWarehouseRelationDTO.SelectResultDTO> records = pagResult.getRecords();
         //排序

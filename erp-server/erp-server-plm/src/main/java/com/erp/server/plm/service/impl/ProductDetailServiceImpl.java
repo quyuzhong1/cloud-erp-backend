@@ -2226,6 +2226,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductCostDTO(), byId);
                 BeanUtil.copyProperties(byId,productCostDTO);
             }
+            //操作日志
+            addProductCostLog(productCostDTO, id);
             productCostService.saveOrUpdate(productCostDTO);
         }
 
@@ -2260,6 +2262,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productNoSpecDTO.getProductSaleDTO(), byId);
                 BeanUtil.copyProperties(byId,productSaleDTO);
             }
+            //操作日志
+            addProductSaleLog(productSaleDTO, id);
             productSaleService.saveOrUpdate(productSaleDTO);
         }
         //6.修改/新增 物流信息
@@ -2272,6 +2276,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                 BeanMapper.copyNonNull(productLogisticsDTO, byId);
                 BeanUtil.copyProperties(byId,productLogisticsDTO);
             }
+            //操作日志
+            addProductLogisticsLog(productLogisticsDTO, id);
             productLogisticsService.saveOrUpdate(productLogisticsDTO);
         }
 
@@ -4714,6 +4720,15 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             return entity.getValue();
         }
 
+        if(InsurancePropertyEnum.NOT.getName().equals(insurancePropertyName)){
+            BasicDictEntity entity = mapById.get(insurancePropertyName);
+            if (Objects.isNull(entity)) {
+                errorMsgList.add("保险属性【" + insurancePropertyName + "】在系统中未找到");
+                return "";
+            }
+            return entity.getValue();
+        }
+
         // 处理空字符串和仅包含逗号的情况
         insurancePropertyName = insurancePropertyName.trim();
         if (insurancePropertyName.isEmpty() || insurancePropertyName.equals(",")) {
@@ -4830,7 +4845,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
      */
     private List<String> handleUpdateSuccessList(Integer importType, List<ProductDetailImprotUpdateExcelDTO> successList, List<ProductDetailImprotUpdateExcelDTO> errorList) {
         List<String> productIdList = new ArrayList<>();
-        
+
         List<FindUserDTO> userList = sysUserFeign.getUserList();
         List<BasicDictEntity> basicDictList = basicDictService.list();
         List<ProductDetailEntity> productDetailEntityList = this.list();

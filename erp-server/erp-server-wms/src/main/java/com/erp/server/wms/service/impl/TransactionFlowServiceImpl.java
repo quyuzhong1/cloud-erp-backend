@@ -360,6 +360,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
     @Override
     public PagingVO<InventoryDTO.InOutStockTransFlowPagingViewDTO> exportInventoryInOutStock(PagingDTO<InventoryDTO.ExportInOutStockTransFlowSearchParamDTO> dto) {
         // 出入库流水，只展示跟出入库交易相关的业务，且无需做状态映射
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<InventoryDTO.InOutStockTransFlowPagingViewDTO> page = this.baseMapper.exportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         fillTransactionFlowPageData(page.getRecords());
         return new PagingVO<>(page);
@@ -387,6 +388,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public PagingVO<InventoryDTO.TransFlowPagingViewDTO> exportInventoryTransFlow(PagingDTO<InventoryDTO.ExportInvFlowSearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<InventoryDTO.TransFlowPagingViewDTO> page = this.baseMapper.exportTransFlow(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         // 填充名称
         fillInventoryTransactionFlowPageData(page.getRecords());
@@ -395,7 +397,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
 
     @Override
     public PagingVO<InventoryReportDTO.TransportPagingDTO> exportInventoryTransport(PagingDTO<InventoryReportDTO.ExportTransportSearchParamDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         // 如果是否选导出处理
         if (CollUtil.isNotEmpty(dto.getParams().getItems())) {
             List<InventoryReportDTO.ExportTransportItem> checkData = dto.getParams().getItems();

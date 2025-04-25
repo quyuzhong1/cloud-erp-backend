@@ -54,10 +54,10 @@
         sod.amount_local_currency AS amountLocalCurrency,
         sod.all_amount_local_currency AS allAmountLocalCurrency,
         sod.frozen_qty as frozenQty,
-        sod.is_close,
         fdp.id as partitionId,
         fdp.code as partitionCode,
-        fdp.name as partitionName
+        fdp.name as partitionName,
+        sod.is_close
         FROM so_info si
         LEFT JOIN so_detail sod
         ON sod.main_id =si.id AND si.is_deleted=false
@@ -219,6 +219,7 @@
             sod.is_close AS isClose,
             sod.platform_sku_no AS platformSkuNo,
             sod.frozen_qty as frozenQty,
+            sod.customer_po,
         fdp.id as partitionId,
         fdp.code as partitionCode,
         fdp.name as partitionName,

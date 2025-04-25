@@ -942,6 +942,11 @@ public class SoB2cDTO implements Serializable {
          * 是否可送
          */
         private Boolean isDeliver;
+
+        /**
+         * 发票状态，SoB2cNfeStatusEnum枚举
+         */
+        private String invoiceStatus;
     }
 
 

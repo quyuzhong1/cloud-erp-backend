@@ -4,14 +4,12 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.PlatformDictEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -890,6 +888,11 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/18 18:31
      */
     @PostMapping("/mergePaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:mergePaging"
+    )
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDTO.MergeListDTO>> mergePaging(@RequestBody @Validated PagingDTO<SoB2cDTO.MergePagingParamDTO> dto) {
         return success(soB2cService.mergePaging(dto));
@@ -904,6 +907,11 @@ public class SoB2cController extends BaseController {
      * @date: 2023/8/24 16:18
      */
     @PostMapping("/mergePagingCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:mergePaging"
+    )
     public ApiResult<Integer> mergePagingCount(@RequestBody @Validated SoB2cDTO.MergePagingParamDTO dto) {
         return success(soB2cService.mergePagingCount(dto));
     }

@@ -38,7 +38,5 @@ public interface AliexpressDeliveryMapper extends BaseMapper<AliexpressDeliveryE
      * @param dto
      * @return java.util.List<com.erp.model.wms.dto.AliexpressDeliveryDTO.ListDTO>
      **/
-    List<AliexpressDeliveryDTO.ListDTO> listExportExcel(@Param("params") AliexpressDeliveryDTO.SearchParamDTO dto);
-
     Page<AliexpressDeliveryDTO.ListDTO> listExportExcel(@Param("page") Page<AliexpressDeliveryDTO.ListDTO> page, @Param("params") AliexpressDeliveryDTO.SearchParamDTO dto);
 }

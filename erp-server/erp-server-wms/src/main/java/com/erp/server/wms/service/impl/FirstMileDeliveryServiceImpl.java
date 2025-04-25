@@ -237,6 +237,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
         matchRuleDTO.setFromWarehouse(entity.getDeliveryWarehouseId());
         matchRuleDTO.setSalesOrgId(entity.getInventoryOrgId());
+        matchRuleDTO.setDictPlatform("");
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(matchRuleDTO);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
             if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){
@@ -2047,6 +2048,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public PagingVO<FirstMileDeliveryDTO.ListDTO> exportFbaDelivery(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<FirstMileDeliveryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理

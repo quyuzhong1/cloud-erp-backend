@@ -8,6 +8,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
+import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 
@@ -66,10 +67,10 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * 执行流程开始监听服务处理
      *
      * @param act
-     * @param processInstanceId
+     * @param executionDelegate
      * @param startUserId
      */
-    List<String> getCandidateByAct(PvmActivity act, String processInstanceId, String startUserId);
+    List<String> getCandidateByAct(PvmActivity act, DelegateExecution executionDelegate, String startUserId);
 
     /**
      * 退回流程

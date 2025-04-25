@@ -37,6 +37,8 @@
             sdn.approve_status AS approveStatus,
             sdn.invalid_status AS invalidStatus,
             sdn.delivery_status AS deliveryStatus,
+            sdn.warehouse_id AS warehouseId,
+            sdn.warehouse_name AS warehouseName,
             sdn.warehouse_org_id AS warehouseOrgId,
             sdn.warehouse_org_name AS warehouseOrgName,
             sdnd.sku_id AS skuId,

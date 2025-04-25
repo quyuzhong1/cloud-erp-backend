@@ -37,7 +37,7 @@ import java.util.Objects;
  * @since 2023-05-10
  */
 @RestController
-@LogSystemModule("销售退货订单")
+@LogSystemModule("销售退货定单")
 @RequestMapping("/soReturn")
 @Slf4j
 public class SoReturnController extends BaseController {
@@ -57,6 +57,7 @@ public class SoReturnController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )
@@ -76,6 +77,7 @@ public class SoReturnController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )

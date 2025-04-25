@@ -131,6 +131,10 @@
         <where>
             ${params.sqlMap.default}
             and wa.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -275,6 +279,18 @@
                  LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
                  LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
         where a.is_deleted = false and a.logistics_bill_id = #{logisticsBillId}
+    </select>
+    <select id="countTabNum" resultType="java.lang.Integer">
+        select count(1) from first_mile_weight_allocation wa
+        where wa.is_deleted = false
+        and wa.cost_allocation_status in
+        <foreach collection="statusList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
     </select>
 
 

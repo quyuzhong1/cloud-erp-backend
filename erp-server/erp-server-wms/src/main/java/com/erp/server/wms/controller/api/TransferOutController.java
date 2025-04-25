@@ -49,6 +49,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "tfo.out_warehouse_id",
             menuCode = "wms:transfer:out:paging",
             tableAlias = "tfo"
     )
@@ -65,6 +66,7 @@ public class TransferOutController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "tfo.out_warehouse_id",
             menuCode = "wms:transfer:out:paging",
             tableAlias = "tfo"
     )
@@ -306,6 +308,15 @@ public class TransferOutController extends BaseController {
     @PostMapping("/listTransferOut")
     public ApiResult<List<TransferOutDTO.ChooseListDTO>> listTransferOut(@RequestBody @Valid TransferOutDTO.SearchParamDTO param) {
         return success(transferOutService.listTransferOut(param));
+    }
+
+    /**
+     *上架详情弹窗
+     * @return
+     */
+    @GetMapping("/listPutawayDetail")
+    public ApiResult<List<TransferOutDTO.PutawayDetailDTO>> listPutawayDetail(@RequestParam("id") String id) {
+        return success(transferOutService.listPutawayDetail(id));
     }
 
 }

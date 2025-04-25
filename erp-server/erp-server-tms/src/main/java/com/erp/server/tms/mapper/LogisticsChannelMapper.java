@@ -81,6 +81,8 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      */
     List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@Param("query") LogisticsBillDetailQueryDTO query);
 
+    IPage<LogisticsChannelDTO.PagingViewDTO> paging(Page<LogisticsChannelDTO.PagingViewDTO> query, @Param("params") LogisticsChannelDTO.PagingParamDTO params);
+
     /**
      * 获取物流类型/仓库类型下 渠道列表
      * @param platform
@@ -92,6 +94,4 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(@Param("platform") String platform, @Param("authStatus") String authStatus, @Param("warehousePlatformType") String warehousePlatformType, @Param("disabled") Boolean disabled);
 
     Boolean estimateIsOutOfRangeDelivery(@Param("logisticsChannelId")String logisticsChannelId, @Param("country")String country, @Param("postCode")String postCode);
-
-    IPage<LogisticsChannelDTO.PagingViewDTO> paging(Page<LogisticsChannelDTO.PagingViewDTO> query, @Param("params") LogisticsChannelDTO.PagingParamDTO params);
 }

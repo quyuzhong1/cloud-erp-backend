@@ -18,13 +18,16 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.ShopDTO.ShopBatchUpdateDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.server.oms.query.ShopQueryHandler;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -59,6 +63,8 @@ public class ShopInfoController extends BaseController {
 
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
     /**
      * 店铺 分页
      *
@@ -67,11 +73,37 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "si.id",
             menuCode = "oms:shop:paging",
             tableAlias = "si"
     )
     @WebAdvanceQuery(handler = ShopQueryHandler.class)
     public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 店铺自定义分页查询
+     *
+     * @return
+     */
+    @PostMapping("/pagingCustom")
+    @WebAdvanceQuery(handler = ShopQueryHandler.class)
+    public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())){
+            List<SysUserDTO.ShopDTO> shopUserList = authDataFeign.getShopUserList(dto.getParams().getUserId());
+            //如果用户没有店铺权限，就返回空
+            if (CollectionUtils.isEmpty(shopUserList)){
+                return success(new PagingVO<>());
+            }
+            StringBuilder sqlString = new StringBuilder();
+            String authType = shopUserList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
+            if ("part".equals(authType)){
+                sqlString.append(" AND string_to_array(").append("si.id").append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
+                dto.getParams().setPermissionSql(sqlString.toString());
+            }
+        }
         PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
         return success(pagingVO);
     }
@@ -192,8 +224,11 @@ public class ShopInfoController extends BaseController {
      * 获取店铺列表(树状级联)
      */
     @GetMapping("/listTree")
-    public ApiResult<List<ShopDTO.ListTreeDTO>> listTree() {
-        List<ShopDTO.ListTreeDTO> list = shopInfoService.listTree();
+    public ApiResult<List<ShopDTO.ListTreeDTO>> listTree(@RequestParam(required = false) Boolean showByAuth) {
+        if (Objects.isNull(showByAuth)){
+            showByAuth = Boolean.TRUE;
+        }
+        List<ShopDTO.ListTreeDTO> list = shopInfoService.listTree(showByAuth);
         return success(list);
     }
 
@@ -521,6 +556,9 @@ public class ShopInfoController extends BaseController {
      */
     @PostMapping("/listSelect")
     public ApiResult<List<ShopDTO.ListDTO>> listSelect(@RequestBody ShopDTO.SelectDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
+        }
         List<ShopDTO.ListDTO> list = shopInfoService.listSelect(dto);
         return success(list);
     }
@@ -546,5 +584,19 @@ public class ShopInfoController extends BaseController {
     public ApiResult<List<ShopInfoEntity>> listAuthPlatform(@RequestBody List<String> platformDTO) {
         List<ShopInfoEntity> list = shopInfoService.listAuthPlatform(platformDTO);
         return success(list);
+    }
+
+    /**
+     * 店铺分页查询-高级搜索
+     *
+     * @return ApiResult<PagingVO <ShopDTO.ListDTO>>
+     * @author zdy
+     */
+    @PostMapping("/pagingSelect")
+    public PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
+        if (Objects.isNull(dto.getParams().getShowByAuth())){
+            dto.getParams().setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
+        }
+        return shopInfoService.pagingSelect(dto);
     }
 }

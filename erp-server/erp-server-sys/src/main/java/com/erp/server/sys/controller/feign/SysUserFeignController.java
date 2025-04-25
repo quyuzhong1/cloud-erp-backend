@@ -18,7 +18,6 @@ import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
-import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
@@ -62,9 +61,6 @@ public class SysUserFeignController extends BaseController {
 
     @Autowired
     private SysRoleMenuService sysRoleMenuService;
-
-    @Autowired
-    private KingdeeUserRefPostService kingdeeUserRefPostService;
 
     @Resource
     private SysUserWechatService wechatService;
@@ -188,9 +184,8 @@ public class SysUserFeignController extends BaseController {
     public String getUserIdByThird(@RequestBody FindUserByThirdDTO thirdDTO) {
         SysUserInfoEntity userEntity = sysUserThirdService.getUserIdByThird(thirdDTO);
         if (!Objects.isNull(userEntity)) {
-            Integer deleteState = userEntity.getDeleteState();
             Integer userState = userEntity.getUserState();
-            if (SysConstant.YES_STATE.equals(deleteState) && SysConstant.YES_STATE.equals(userState)) {
+            if (SysConstant.YES_STATE.equals(userState)) {
                 return userEntity.getUid();
             }
         }

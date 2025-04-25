@@ -674,7 +674,6 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         purchaseApplicationDTO.setApplyDate(dto.getApplyDate());
         purchaseApplicationDTO.setApplyDeptId(dto.getApplyDeptId());
         purchaseApplicationDTO.setApplyUserId(dto.getApplyUserId());
-//        purchaseApplicationDTO.setIsFirstMassProduct(dto.getIsFirstMassProduct());
         purchaseApplicationDTO.setSourceType(SourceTypeEnum.PURCHASE_SUGGESTION_MERGE.getCode());
 
         List<PurchaseApplicationDetailDTO.AddDTO> detailList = new ArrayList<>();
@@ -705,6 +704,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             map.put("default",tabSql);
             pagingParamDTO.setSqlMap(map);
             pagingParamDTO.setIsMerge(dto.getIsMerge());
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             Integer count = this.baseMapper.tabList(pagingParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());

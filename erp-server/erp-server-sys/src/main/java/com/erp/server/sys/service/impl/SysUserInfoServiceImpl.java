@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -40,6 +41,7 @@ import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.password.PassEntity;
 import com.erp.model.sys.entity.password.PassHandler;
+import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SupplierUserVO;
@@ -48,6 +50,7 @@ import com.erp.rpc.auth.feign.AuthFeign;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.convert.SysUserConvert;
@@ -119,9 +122,15 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
 
     @Resource
     private ShopSysUserAuthFeign shopSysUserAuthFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Resource
     private DmpMqFeign dmpMqFeign;
+    @Resource
+    private AuthUserShopService authUserShopService;
+    @Resource
+    private AuthUserWarehouseService authUserWarehouseService;
 
     //123456
     private static final String DEFAULT_PASS = "e10adc3949ba59abbe56e057f20f883e";
@@ -179,6 +188,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (CollectionUtils.isNotEmpty(roleIds)) {
                 sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, true);
             }
+            //店铺授权
+            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType());
+            //仓库权限
+            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType());
             //同步金蝶员工数据
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
@@ -268,6 +281,10 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         boolean updateResult = this.updateById(entity);
         if (updateResult) {
             sysRoleUserService.batchInsertRef(entity.getUid(), roleIds, false);
+            //店铺授权
+            authUserShopService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getShopIdList(),sysUserInfoDTO.getShopAuthType());
+            //仓库权限
+            authUserWarehouseService.batchSaveOrUpdate(entity.getUid(),sysUserInfoDTO.getWarehouseIdList(),sysUserInfoDTO.getWarehouseAuthType());
             //同步金蝶员工数据
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSysUserInfoService.syncDataToKingdee(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //推送金蝶
@@ -437,13 +454,36 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         IPage<UserManageDTO> pageData = baseMapper.paging(query, params, params.getRoleIds());
         List<UserManageDTO> list = pageData.getRecords();
         List<String> userIds = list.stream().map(UserManageDTO::getUid).collect(Collectors.toList());
+        //角色
         List<SysRoleUserEntity> roleUserList = sysRoleUserService.findRoleIdsByUidList(userIds);
-        for (UserManageDTO vo : list) {
-            List<String> roleIdList = roleUserList.stream().filter(r -> r.getUserId().equals(vo.getUid()))
-                    .map(SysRoleUserEntity::getRoleId).collect(Collectors.toList());
-            vo.setRoleIdList(roleIdList);
+        Map<String, List<String>> roleMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(roleUserList)){
+            roleMap = roleUserList.stream().collect(Collectors.groupingBy(SysRoleUserEntity::getUserId, Collectors.mapping(SysRoleUserEntity::getRoleId, Collectors.toList())));
         }
-        return new PagingVO<UserManageDTO>(pageData);
+        //店铺
+        List<SysUserDTO.ShopDTO> shopDTOList = authUserShopService.listShopIdByUserIds(userIds);
+        Map<String, List<String>> shopMap = new HashMap<>();
+        Map<String, String> shopAuthTypeMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(shopDTOList)){
+            shopMap = shopDTOList.stream().collect(Collectors.groupingBy(SysUserDTO.ShopDTO::getUserId, Collectors.mapping(SysUserDTO.ShopDTO::getShopId, Collectors.toList())));
+            shopAuthTypeMap = shopDTOList.stream().collect(Collectors.toMap(SysUserDTO.ShopDTO::getUserId, SysUserDTO.ShopDTO::getAuthType,(existing,replacement) -> existing));
+        }
+        //仓库
+        List<SysUserDTO.WarehouseDTO> warehouseDTOList = authUserWarehouseService.listWarehouseIdByUserIds(userIds);
+        Map<String, List<String>> warehouseMap = new HashMap<>();
+        Map<String, String> warehouseAuthTypeMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(warehouseDTOList)){
+            warehouseMap = warehouseDTOList.stream().collect(Collectors.groupingBy(SysUserDTO.WarehouseDTO::getUserId, Collectors.mapping(SysUserDTO.WarehouseDTO::getWarehouseId, Collectors.toList())));
+            warehouseAuthTypeMap = warehouseDTOList.stream().collect(Collectors.toMap(SysUserDTO.WarehouseDTO::getUserId, SysUserDTO.WarehouseDTO::getAuthType,(existing,replacement) -> existing));
+        }
+        for (UserManageDTO vo : list) {
+            vo.setRoleIdList(roleMap.getOrDefault(vo.getUid(), Collections.emptyList()));
+            vo.setShopAuthType(shopAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
+            vo.setShopIdList(shopMap.getOrDefault(vo.getUid(),Collections.emptyList()));
+            vo.setWarehouseAuthType(warehouseAuthTypeMap.getOrDefault(vo.getUid(), AuthDataTypeEnum.ENUM_ALL.getCode()));
+            vo.setWarehouseIdList(warehouseMap.getOrDefault(vo.getUid(),Collections.emptyList()));
+        }
+        return new PagingVO<>(pageData);
     }
 
 
@@ -836,7 +876,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName,SysUserInfoEntity::getUserState);
-        queryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         queryWrapper.eq(SysUserInfoEntity::getUserType, UserTypeEnum.ERP.getCode());
         if (flag) {
             queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
@@ -928,8 +967,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUserAccount, account)
-                .eq(StringUtils.isNotBlank(userType), SysUserInfoEntity::getUserType, userType)
-                .eq(SysUserInfoEntity::getDeleteState, 1);
+                .eq(StringUtils.isNotBlank(userType), SysUserInfoEntity::getUserType, userType);
         queryWrapper.last("LIMIT 1");
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         return entity;
@@ -947,7 +985,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证手机号是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> mobileQueryWrapper = new LambdaQueryWrapper<>();
         mobileQueryWrapper.eq(SysUserInfoEntity::getUserAccount, sysUserInfoDTO.getMobile());
-        mobileQueryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             mobileQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
@@ -961,7 +998,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         //验证用户名是否已存在
         LambdaQueryWrapper<SysUserInfoEntity> userNameQueryWrapper = new LambdaQueryWrapper<>();
         userNameQueryWrapper.eq(SysUserInfoEntity::getUserName, sysUserInfoDTO.getUserName());
-        userNameQueryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (StringUtils.isNotBlank(sysUserInfoDTO.getUid())) {
             userNameQueryWrapper.ne(SysUserInfoEntity::getUid, sysUserInfoDTO.getUid());
         }
@@ -1043,11 +1079,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<FindUserDTO> resultList = new LinkedList<>();
         List<SysUserInfoEntity> list = this.list(queryWrapper);
         for (SysUserInfoEntity item : list) {
+            // 当前用户所属部门
+            SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(item.getUid());
+
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
             userDTO.setCode(item.getCode());
             userDTO.setIsMyState(0);
+            userDTO.setDepartmentId(sysDepartmentUserNumberDTO.getDepartmentId());
+            userDTO.setDepartmentName(sysDepartmentUserNumberDTO.getDepartmentName());
             resultList.add(userDTO);
         }
         return resultList;
@@ -1060,7 +1101,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         }
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(SysUserInfoEntity::getUid, userId);
-        queryWrapper.eq(SysUserInfoEntity::getDeleteState, IsConstant.YES);
         SysUserInfoEntity entity = this.getOne(queryWrapper);
         if (!Objects.isNull(entity)) {
             SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(userId);
@@ -1346,7 +1386,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         SysUserInfoEntity sysUserInfoEntity = lambdaQuery()
                 .eq(SysUserInfoEntity::getUserAccount, forgotPasswordDTO.getUserAccount())
                 .eq(SysUserInfoEntity::getUserType,forgotPasswordDTO.getUserType())
-                .eq(SysUserInfoEntity::getDeleteState,1)
                 .one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
@@ -1386,8 +1425,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
      **/
     @Override
     public Map<String, Object> forgotPasswordGetCode(String userAccount,String userType) {
-        SysUserInfoEntity sysUserInfoEntity = lambdaQuery().eq(SysUserInfoEntity::getUserAccount, userAccount).eq(SysUserInfoEntity::getUserType,userType)
-                .eq(SysUserInfoEntity::getDeleteState,1)
+        SysUserInfoEntity sysUserInfoEntity = lambdaQuery()
+                .eq(SysUserInfoEntity::getUserAccount, userAccount)
+                .eq(SysUserInfoEntity::getUserType,userType)
                 .one();
         if (ObjectUtil.isEmpty(sysUserInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_9043);
@@ -1463,7 +1503,6 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         LambdaQueryWrapper<SysUserInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.select(SysUserInfoEntity::getUid, SysUserInfoEntity::getUserName);
         queryWrapper.eq(SysUserInfoEntity::getUserState, SysConstant.YES_STATE);
-        queryWrapper.eq(SysUserInfoEntity::getDeleteState, SysConstant.YES_STATE);
         if (flag) {
             queryWrapper.ne(SysUserInfoEntity::getUid, loginUser.getUid());
         }
@@ -1602,7 +1641,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         SysUserInfoDTO.ShopAuthPagingSearchDTO params = dto.getParams();
         List<String> userIdList = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(params.getShopIdList())) {
-             userIdList = shopSysUserAuthFeign.listUserIdByShopIdList(params.getShopIdList());
+             userIdList = authDataFeign.listUserIdByShopIdList(params.getShopIdList());
              if (CollectionUtils.isEmpty(userIdList)) {
                  return new PagingVO<>(new Page<>());
              }

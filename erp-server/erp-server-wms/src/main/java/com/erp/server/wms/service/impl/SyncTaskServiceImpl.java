@@ -1358,29 +1358,53 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 }
             }
 
-
-            resultList.put(syncParamDetailDTO.getDataId(), syncSoReturnInstockService.syncDataToSdyFieldHandler(entity,
-                    detailEntity,
-                    syncParamDetailDTO.getSyncOperate(),
-                    skuVOList,
-                    bomChildrenSkuDTOS,
-                    currencyList,
-                    parentSkuList,
-                    customerInfoList,
-                    companyEntities,
-                    soReturnEntityList,
-                    soReturnReceiveEntityList,
-                    receiveReturnList,
-                    country,
-                    partitionId,
-                    dictPlatform,
-                    omsAllDictList,
-                    partitionEntityList,
-                    countryEntityList,
-                    dictGlobalEntityList,
-                    deptList,
-                    countryPartitionEntityList
-            ));
+            if(syncParamDetailDTO.isNewQuerySync()) {
+            	resultList.put(syncParamDetailDTO.getDataId(), syncSoReturnInstockService.syncNewDataToSdyFieldHandler(entity,
+                        detailEntity,
+                        syncParamDetailDTO.getSyncOperate(),
+                        skuVOList,
+                        bomChildrenSkuDTOS,
+                        currencyList,
+                        parentSkuList,
+                        customerInfoList,
+                        companyEntities,
+                        soReturnEntityList,
+                        soReturnReceiveEntityList,
+                        receiveReturnList,
+                        country,
+                        partitionId,
+                        dictPlatform,
+                        omsAllDictList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList,
+                        countryPartitionEntityList
+                ));
+            }else {
+            	resultList.put(syncParamDetailDTO.getDataId(), syncSoReturnInstockService.syncDataToSdyFieldHandler(entity,
+                        detailEntity,
+                        syncParamDetailDTO.getSyncOperate(),
+                        skuVOList,
+                        bomChildrenSkuDTOS,
+                        currencyList,
+                        parentSkuList,
+                        customerInfoList,
+                        companyEntities,
+                        soReturnEntityList,
+                        soReturnReceiveEntityList,
+                        receiveReturnList,
+                        country,
+                        partitionId,
+                        dictPlatform,
+                        omsAllDictList,
+                        partitionEntityList,
+                        countryEntityList,
+                        dictGlobalEntityList,
+                        deptList,
+                        countryPartitionEntityList
+                ));
+            }
         }
         return resultList;
     }

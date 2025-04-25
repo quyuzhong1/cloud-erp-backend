@@ -1,9 +1,11 @@
 package com.erp.server.mrp.controller.feign;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.mrp.dto.*;
 import com.erp.server.mrp.handler.DeliverySuggestionQueryHandler;
@@ -120,6 +122,10 @@ public class ExportMrpFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/pagingPurchaseSuggestionMerge")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "psm.shop_id",
+            menuCode = "oms:purchaseSuggestMerge:paging"
+    )
     @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingPurchaseSuggestionMerge(@RequestBody PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
         return purchaseSuggestMergeService.paging(dto);
@@ -133,6 +139,10 @@ public class ExportMrpFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/pagingDeliverySuggestion")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "ds.shop_id",
+            menuCode = "oms:deliverySuggest:paging"
+    )
     @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
     public PagingVO<DeliverySuggestDTO.ListDTO> pagingDeliverySuggestion(@RequestBody PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
         return deliverySuggestService.paging(dto);
@@ -200,6 +210,10 @@ public class ExportMrpFeignController {
      * @param dto 参数
      */
     @PostMapping("/exportMrpSalesCalcList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "csic.shop_id",
+            menuCode = "oms:calcSalesInfoDim:pagingDetail"
+    )
     @WebAdvanceQuery
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
         return calcSalesInfoDimService.exportMrpSalesCalcList(dto);

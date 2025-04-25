@@ -22,7 +22,8 @@
             tfo.approve_user_name AS approveUserName,
             tfo.create_user_name AS createUserName,
             tfo.create_time AS createTime,
-            tod.out_warehouse_location AS outWarehouseLocation
+            tod.out_warehouse_location AS outWarehouseLocation,
+            tfo.source_code AS sourceCode
         from transfer_out tfo
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
@@ -58,7 +59,8 @@
         tfo.approve_user_name AS approveUserName,
         tfo.create_user_name AS createUserName,
         tfo.create_time AS createTime,
-        tod.out_warehouse_location AS outWarehouseLocation
+        tod.out_warehouse_location AS outWarehouseLocation,
+        tfo.source_code AS sourceCode
         from transfer_out tfo
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
@@ -105,12 +107,11 @@
         tfo.bill_date as bill_date,
         tfo.out_warehouse_id as out_warehouse_id,
         tfo.out_warehouse_name as out_warehouse_name,
-        ta.in_warehouse_id as in_warehouse_id,
-        ta.in_warehouse_name as in_warehouse_name,
+        tfo.in_warehouse_id as in_warehouse_id,
+        tfo.in_warehouse_name as in_warehouse_name,
         tod.out_warehouse_location as out_warehouse_location,
         tod.remark
         from transfer_out tfo
-        inner join transfer_application ta on tfo.source_id = ta.id
         inner join transfer_out_detail tod on tfo.id = tod.main_id and tod.is_deleted = false
         <where>
             tfo.is_deleted = false and tfo.id in
@@ -118,6 +119,32 @@
                 #{item}
             </foreach>
         </where>
+    </select>
+    <select id="listPutawayDetail" resultType="com.erp.model.wms.dto.TransferOutDTO$PutawayDetailDTO">
+        select
+            t.code as outCode,
+            t.approve_time as outApproveTime,
+            tod.qty as outQty,
+            t.out_warehouse_id as outWarehouseId,
+            t.out_warehouse_name as outWarehouseName,
+            ti.id as inId,
+            ti.code as inCode,
+            tid.qty as inQty,
+            ti.in_warehouse_id as inWarehouseId,
+            ti.in_warehouse_name as inWarehouseName
+        from
+            transfer_out t
+                left join (select main_id, sum(qty) as qty from transfer_out_detail where is_deleted = false GROUP BY main_id ) as tod on t.id = tod.main_id
+                left join transfer_in as ti on t.id = ti.source_id
+                left join (select main_id, sum(qty) as qty from transfer_in_detail where is_deleted = false GROUP BY main_id )  as tid on ti.id = tid.main_id
+        where t.is_deleted = FALSE
+          and t.approve_status = 'approve'
+          and t.invalid_status = false
+          and ti.is_deleted = FALSE
+          and ti.approve_status = 'approve'
+          and ti.invalid_status = false
+          and t.source_id =#{id}
+
     </select>
 
 </mapper>

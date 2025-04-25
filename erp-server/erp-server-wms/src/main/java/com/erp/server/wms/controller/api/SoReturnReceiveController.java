@@ -55,6 +55,7 @@ public class SoReturnReceiveController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srr.warehouse_id",
             menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
     )
@@ -74,6 +75,7 @@ public class SoReturnReceiveController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srr.warehouse_id",
             menuCode = "wms:soReturnReceive:paging",
             tableAlias = "srr"
     )

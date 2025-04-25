@@ -19,7 +19,6 @@ import javax.validation.constraints.NotEmpty;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author liuruipeng
@@ -44,10 +43,10 @@ public class AntuService {
     public AntuResponse<List<AntuWarehouseResp>> getWarehouse(AntuBaseRequest antuBaseRequest,OmsPlatformEnum platformEnum){
         String apiResponse = AntuUtils.callService(platformEnum,AntuConstants.METHOD_GET_WAREHOUSE,antuBaseRequest);
         AntuResponse<List<AntuWarehouseResp>> response = JSON.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
-        if(CollectionUtils.isNotEmpty(response.getData())){
-            //只要标准的仓库
-            response.setData(response.getData().stream().filter(v->"0".equals(v.getWarehouseType())).collect(Collectors.toList()));
-        }
+//        if(CollectionUtils.isNotEmpty(response.getData())){
+//            //只要标准的仓库
+//            response.setData(response.getData().stream().filter(v->"0".equals(v.getWarehouseType())).collect(Collectors.toList()));
+//        }
         return response;
     }
     /**
@@ -56,9 +55,9 @@ public class AntuService {
     public AntuResponse<List<AntuWarehouseResp>> getTransferWarehouse(AntuBaseRequest antuBaseRequest,OmsPlatformEnum platformEnum){
         String apiResponse = AntuUtils.callService(platformEnum,AntuConstants.METHOD_GET_WAREHOUSE,antuBaseRequest);
         AntuResponse<List<AntuWarehouseResp>> response = JSON.parseObject(apiResponse,new TypeReference<AntuResponse<List<AntuWarehouseResp>>>() {}.getType());
-        if(CollectionUtils.isNotEmpty(response.getData())){
-            response.setData(response.getData().stream().filter(v->"1".equals(v.getWarehouseType())).collect(Collectors.toList()));
-        }
+//        if(CollectionUtils.isNotEmpty(response.getData())){
+//            response.setData(response.getData().stream().filter(v->"1".equals(v.getWarehouseType())).collect(Collectors.toList()));
+//        }
         return response;
     }
 

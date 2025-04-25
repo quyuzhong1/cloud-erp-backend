@@ -774,19 +774,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     }
 
     @Override
-    public List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(String platform, String authStatus, String warehousePlatformType, Boolean disabled) {
-        return baseMapper.listChannelWarehouse(platform,authStatus,warehousePlatformType,disabled);
-    }
-
-    @Override
-    public Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode) {
-        if(StringUtils.isBlank(logisticsChannelId) || StringUtils.isBlank(country) || StringUtils.isBlank(postCode)){
-            return false;
-        }
-        return baseMapper.estimateIsOutOfRangeDelivery(logisticsChannelId,country,postCode);
-    }
-
-    @Override
     public PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto) {
         LogisticsChannelDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
@@ -797,6 +784,19 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             pagingViewDTO.setTypeName(pagingViewDTO.getType().getName());
         }
         return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(String platform, String authStatus, String warehousePlatformType, Boolean disabled) {
+        return baseMapper.listChannelWarehouse(platform,authStatus,warehousePlatformType,disabled);
+    }
+
+    @Override
+    public Boolean estimateIsOutOfRangeDelivery(String logisticsChannelId, String country, String postCode) {
+        if(StringUtils.isBlank(logisticsChannelId) || StringUtils.isBlank(country) || StringUtils.isBlank(postCode)){
+            return false;
+        }
+        return baseMapper.estimateIsOutOfRangeDelivery(logisticsChannelId,country,postCode);
     }
 
     @Override

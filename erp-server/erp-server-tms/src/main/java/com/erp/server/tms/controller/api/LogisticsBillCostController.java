@@ -62,6 +62,7 @@ public class LogisticsBillCostController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsBillCost:paging",
             tableAlias = "lbc"
     )
@@ -80,6 +81,7 @@ public class LogisticsBillCostController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsBillCost:paging",
             tableAlias = "lbc"
     )

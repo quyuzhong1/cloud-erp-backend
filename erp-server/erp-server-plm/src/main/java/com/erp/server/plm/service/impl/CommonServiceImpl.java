@@ -11,7 +11,6 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
-import com.common.core.utils.FileUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.enums.SettingEnum;
@@ -26,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -163,10 +161,8 @@ public class CommonServiceImpl implements CommonService {
         if (MathUtil.compareTo(size,MathUtil.ZERO) == MathUtil.ZERO) {
             return multipartFile;
         }
-        //类型转换
-        File file = FileUtil.multiToFile(multipartFile);
         try {
-            multipartFile = ImageUtil.compressImageMultipartFile(file, size * 1024);
+            multipartFile = ImageUtil.compressImageMultipartFile(multipartFile, size );
         } catch (IOException e) {
             throw new ServiceException("图片压缩失败");
         }

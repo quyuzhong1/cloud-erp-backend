@@ -30,10 +30,8 @@ import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.TransferInEntity;
-import com.erp.model.wms.entity.TransferOutDetailEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PutawayStatusEnum;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
@@ -42,6 +40,7 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.mapper.TransferInMapper;
 import com.erp.server.wms.service.*;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -51,6 +50,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -97,6 +97,15 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private TransferOutService transferOutService;
+
+    @Resource
+    private QcNoticeService qcNoticeService;
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
+
     @Override
     public List<TransferInDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<TransferInDTO.TabListDTO> resultList = new ArrayList<>(4);
@@ -327,6 +336,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             handleData(ids);
             //审核通
             content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+            //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
+            this.updateQcNoticePutaway(transferInEntity,Boolean.TRUE);
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
@@ -340,6 +351,64 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
         }
         return BatchResultDTO.success(transferInEntity.getId(),transferInEntity.getCode(),"审核成功");
+    }
+
+    //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
+    private void updateQcNoticePutaway(TransferInEntity transferInEntity, Boolean approve) {
+        LocalDateTime nowTime = LocalDateTime.now();
+        //调出单
+        TransferOutEntity transferOutEntity = transferOutService.getById(transferInEntity.getSourceId());
+        //调出单来源是质检通知单
+        if(Objects.equals(transferOutEntity.getSourceType(),SourceTypeEnum.QC_NOTICE.getCode())){
+            //调入单明细
+            List<TransferInDetailEntity> transferInDetailList = transferInDetailService.lambdaQuery().in(TransferInDetailEntity::getMainId, transferInEntity.getId()).list();
+            //调出单明细
+            List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listByMainId(transferOutEntity.getId());
+            Map<String, TransferOutDetailEntity> transferOutDetailMap = transferOutDetailList.stream().collect(Collectors.toMap(TransferOutDetailEntity::getId, t -> t,(o1,o2)->o1));
+            //质检通知单
+            QcNoticeEntity qcNotice = qcNoticeService.getById(transferOutEntity.getSourceId());
+            //质检通知单明细
+            List<QcNoticeDetailEntity> qcNoticeDetailList = qcNoticeDetailService.listByMainIds(Collections.singletonList(qcNotice.getId()));
+            Map<String, QcNoticeDetailEntity> qcNoticeDetailMap = qcNoticeDetailList.stream().collect(Collectors.toMap(QcNoticeDetailEntity::getId, t -> t, (o1, o2) -> o1));
+
+            for (TransferInDetailEntity transferInDetailEntity : transferInDetailList) {
+                String sourceDetailId = transferInDetailEntity.getSourceDetailId();
+                //本次上架数量
+                Integer qty = transferInDetailEntity.getQty();
+                if(transferOutDetailMap.containsKey(sourceDetailId)){
+                    TransferOutDetailEntity transferOutDetailEntity = transferOutDetailMap.get(sourceDetailId);
+                    //质检通知单明细id
+                    String sourceDetailId1 = transferOutDetailEntity.getSourceDetailId();
+                    if(qcNoticeDetailMap.containsKey(sourceDetailId1)){
+                        QcNoticeDetailEntity qcNoticeDetailEntity = qcNoticeDetailMap.get(sourceDetailId1);
+                        Integer putawayQty = qcNoticeDetailEntity.getPutawayQty();
+
+                        if(approve){
+                            //上架数量
+                            qcNoticeDetailEntity.setPutawayQty(putawayQty+qty);
+                            //上架时间
+                            qcNoticeDetailEntity.setPutawayDate(nowTime);
+                            //上架状态
+                            if(qcNoticeDetailEntity.getPutawayQty().equals(qcNoticeDetailEntity.getQcQty()) ){
+                                qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.FINISH.getCode());
+                            }else {
+                                qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.PART.getCode());
+                            }
+                        }else {
+                            //上架数量
+                            qcNoticeDetailEntity.setPutawayQty(putawayQty-qty);
+                            //上架状态
+                            if(qcNoticeDetailEntity.getPutawayQty().equals(0) ){
+                                qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.WAIT.getCode());
+                            }else {
+                                qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.PART.getCode());
+                            }
+                        }
+                        qcNoticeDetailService.updateById(qcNoticeDetailEntity);
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -433,7 +502,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     /**
      * 反审核
      *
-     * @param dto
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-29 9:47
@@ -467,6 +536,9 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), rejectPairList, "状态变更");
+            //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
+            this.updateQcNoticePutaway(entity,Boolean.FALSE);
+
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -672,6 +744,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
 
     @Override
     public PagingVO<TransferInDTO.PagingViewDTO> exportTransferIn(PagingDTO<TransferInDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //获取导出数据
         Page<TransferInDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {

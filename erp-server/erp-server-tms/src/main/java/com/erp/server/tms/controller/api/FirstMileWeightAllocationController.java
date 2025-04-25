@@ -51,6 +51,8 @@ public class FirstMileWeightAllocationController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "wa.shop_id",
+            warehouseTableField = "wa.from_warehouse_id",
             menuCode = "tms:firstMileWeightAllocation:paging",
             tableAlias = "a"
     )
@@ -64,7 +66,6 @@ public class FirstMileWeightAllocationController extends BaseController {
      * 导出Excel
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
     public ApiResult<Object> exportExcel(@RequestBody FirstMileWeightAllocationDTO.ExportParamDTO dto){
         firstMileWeightAllocationService.exportExcel(dto);
         return ApiResult.success();
@@ -73,9 +74,16 @@ public class FirstMileWeightAllocationController extends BaseController {
     /**
      * 统计tab数量
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<FirstMileWeightAllocationDTO.TabDTO>> tabList(){
-        List<FirstMileWeightAllocationDTO.TabDTO> list = firstMileWeightAllocationService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "wa.shop_id",
+            warehouseTableField = "wa.from_warehouse_id",
+            menuCode = "tms:firstMileWeightAllocation:paging",
+            tableAlias = "a"
+    )
+    public ApiResult<List<FirstMileWeightAllocationDTO.TabDTO>> tabList(@RequestBody FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO){
+        List<FirstMileWeightAllocationDTO.TabDTO> list = firstMileWeightAllocationService.tabList(pagingParamDTO);
         return ApiResult.success(list);
     }
 

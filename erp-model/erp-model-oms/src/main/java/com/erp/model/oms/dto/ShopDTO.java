@@ -8,6 +8,7 @@ import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.oms.enums.ShopTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
@@ -206,64 +207,9 @@ public class ShopDTO implements Serializable {
     public static class PagingParamDTO  extends SortDTO {
 
         /**
-         * 店铺名称
-         */
-        private String name;
-
-        /**
          * 平台
          */
         private String dictPlatform;
-
-        /**
-         * 账号
-         */
-        private String account;
-
-        /**
-         * 国家
-         */
-        private String dictCountryCode;
-
-        /**
-         * 禁用状态集合
-         */
-        private List<Boolean> disabledList;
-
-        /**
-         * 授权状态集合
-         */
-        private List<String> authStatusList;
-
-        /**
-         * 创建人id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间集合
-         */
-        private List<LocalDateTime> createTimeList;
-
-
-        /**
-         * 授权时间
-         */
-        private List<LocalDateTime> authTimeList;
-
-        /**
-         * 修改人id 集合
-         */
-        private List<String> updateUserIdList;
-
-        /**
-         * 修改时间
-         */
-        private List<LocalDateTime> updateTimeList;
-        /**
-         * 销售组织id
-         */
-        private List<String> salesOrgIdList;
         /**
          * 页面高级查询
          */
@@ -272,6 +218,10 @@ public class ShopDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+        /**
+         * 展示对应用的的权限集合
+         */
+        private String userId;
 
     }
 
@@ -989,9 +939,10 @@ public class ShopDTO implements Serializable {
         private List<String> ids;
     }
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    public static class SelectDTO {
+    public static class SelectDTO extends SortDTO{
 
         /**
          * 关键词
@@ -1010,9 +961,9 @@ public class ShopDTO implements Serializable {
          */
         private String dictAreaCode;
         /**
-         * 是否已授权
+         * 是否过滤权限
          */
-        private Boolean showByAuth = false;
+        private Boolean showByAuth;
         /**
          * 平台
          */
@@ -1034,6 +985,14 @@ public class ShopDTO implements Serializable {
          * 账号
          */
         private String account;
+        /***
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
         /**
          * 禁用状态
          */
