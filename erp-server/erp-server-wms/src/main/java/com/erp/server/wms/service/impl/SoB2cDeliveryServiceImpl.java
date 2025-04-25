@@ -215,8 +215,6 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     private AuthDataFeign authDataFeign;
     @Resource
     private TikTokFullService tikTokFullService;
-    @Resource
-    private AuthDataFeign authDataFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

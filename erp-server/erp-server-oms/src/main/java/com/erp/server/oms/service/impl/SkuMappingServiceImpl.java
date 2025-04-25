@@ -159,8 +159,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Resource
     private InvoiceTaxService invoiceTaxService;
-    @Resource
-    private AuthDataFeign authDataFeign;
 
 
     @Override
