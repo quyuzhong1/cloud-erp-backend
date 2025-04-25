@@ -107,6 +107,6 @@
             ${params.permissionSql}
         </if>
         ORDER BY
-        cis.create_time DESC
+        cis.update_time DESC
     </select>
 </mapper>
