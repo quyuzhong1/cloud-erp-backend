@@ -40,7 +40,7 @@ public class SoReturnStockImportExcelDTO implements Serializable {
     private String billDateStr;
 
     /**
-     * 库存方向
+     * 单据类型
      */
     @ExcelProperty(value = "单据类型", index = 3)
     @FieldValid(fieldName = "单据类型", enumClass = OrderTypeEnum.class)

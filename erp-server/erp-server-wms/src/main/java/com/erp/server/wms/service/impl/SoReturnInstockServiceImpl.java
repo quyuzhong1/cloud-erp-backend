@@ -33,6 +33,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
@@ -43,9 +44,11 @@ import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
@@ -100,6 +103,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1928,6 +1932,24 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             return;
         }
         Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName()).concat(obj.getBillDateStr()).concat(obj.getTypeName())));
+        //客户
+        List<CustomerInfoEntity> customerInfoList = customerFeign.listCustomer();
+        Map<String, CustomerInfoEntity> customerMap = customerInfoList.stream().collect(Collectors.toMap(CustomerInfoEntity::getName, Function.identity()));
+
+        //币种
+        List<String> currencyList = successList.stream().map(SoReturnStockImportExcelDTO::getCurrencyStr).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
+        Map<String, CurrencyDTO.ViewDTO> currencyMap = viewList.stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getName, Function.identity()));
+
+        //sku
+        List<String> skuNoList = successList.stream().map(SoReturnStockImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
+        Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
+
+        //仓库
+        List<String> warehosueNameList = successList.stream().map(SoReturnStockImportExcelDTO::getWarehouseName).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByWarehouseNameList(warehosueNameList);
+        Map<String, WarehouseEntity> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
 
         for (Map.Entry<String, List<SoReturnStockImportExcelDTO>> entry : map.entrySet()) {
             List<SoReturnStockImportExcelDTO> value = entry.getValue();
@@ -1935,14 +1957,43 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<String> errorMsgList = new ArrayList<>();
             SoReturnInstockDTO.Add add = new SoReturnInstockDTO.Add();
 
+            CustomerInfoEntity customerInfoEntity = customerMap.get(excelDTO.getCustomerName());
+            if (ObjectUtil.isEmpty(customerInfoEntity) || !ApproveStatusEnum.APPROVE.getCode().equals(customerInfoEntity.getApproveStatus())) {
+                errorMsgList.add("未找到有效客户" + excelDTO.getCustomerName());
+            } else {
+                add.setCustomerId(customerInfoEntity.getId());
+            }
+            //币别
+            CurrencyDTO.ViewDTO viewDTO = currencyMap.get(excelDTO.getCurrencyStr());
+            if (ObjectUtil.isEmpty(viewDTO) ) {
+                errorMsgList.add("未找到币别" + excelDTO.getCurrencyStr());
+            } else {
+                add.setCurrencySymbol(viewDTO.getSymbol());
+                add.setCurrency(viewDTO.getId());
+            }
+            add.setBillDate(LocalDateUtil.parseStrToLocalDate(excelDTO.getBillDateStr()));
+
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnStockImportExcelDTO soReturnStockImportExcelDTO : value) {
                 SoReturnInstockDetailDTO.Add addDetail = new SoReturnInstockDetailDTO.Add();
-
+                //sku赋值
+                SkuVO skuVO = skuMap.get(soReturnStockImportExcelDTO.getSkuNo());
+                if (ObjectUtil.isEmpty(skuVO) || !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(skuVO.getStatus()) ) {
+                    errorMsgList.add("未找到有效SKU" + soReturnStockImportExcelDTO.getSkuNo());
+                } else {
+                    addDetail.setSkuId(skuVO.getSkuId());
+                    addDetail.setSkuNo(soReturnStockImportExcelDTO.getSkuNo());
+                }
+                WarehouseEntity warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
+                if (ObjectUtil.isEmpty(warehouseEntity) || warehouseEntity.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouseEntity.getApproveStatus())) {
+                    errorMsgList.add("未找到有效仓库：" + soReturnStockImportExcelDTO.getWarehouseName());
+                } else {
+                    addDetail.setWarehouseId(warehouseEntity.getId());
+                }
+                addDetail.setRemark(soReturnStockImportExcelDTO.getRemark());
 
             }
             try {
-
             ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class).add(add);
             } catch (Exception e) {
                 value.forEach(obj -> obj.setErrorMsg("1、" + e.getMessage()));
