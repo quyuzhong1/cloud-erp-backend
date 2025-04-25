@@ -120,7 +120,7 @@ public class NfeInvoiceService {
             //token
             createDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
             //付款信息
-            getPayMentDTO(soB2cEntity,createDTO);
+            getPayMentDTO(createDTO);
             log.warn("付款信息已查询完成！");
              obj = tfFiscalService.createInvoice(createDTO);
             log.info("创建发票接口调用成功！");
@@ -145,7 +145,7 @@ public class NfeInvoiceService {
         //更新开票状态
         InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
         invoiceInfoEntity.setStatus(invoiceStatus);
-        invoiceInfoEntity.setUploadStatus(uploadStatus);
+        invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
         invoiceInfoEntity.setRemark(remark);
         invoiceInfoEntity.setQueryId(resultDTO.getId());
         invoiceInfoEntity.setPlatformInvoiceNo(resultDTO.getRecibo());
@@ -164,13 +164,12 @@ public class NfeInvoiceService {
      * 付款信息
      * @author will
      * @date 2025/4/18 15:37
-     * @param soB2cEntity
      * @param createDTO
      * @return void
      */
-    private void getPayMentDTO(SoB2cEntity soB2cEntity,NfeInvoiceDTO.NfeCreateDTO createDTO) {
+    private void getPayMentDTO(NfeInvoiceDTO.NfeCreateDTO createDTO) {
         NfeInvoiceDTO.NfePayMentDTO nfePayMentDTO = new NfeInvoiceDTO.NfePayMentDTO();
-        nfePayMentDTO.setAmount(soB2cEntity.getPayAmount());
+        nfePayMentDTO.setAmount(createDTO.getFinalTotal());
         //默认现金
         nfePayMentDTO.setMethod("cash");
         nfePayMentDTO.setCardType(nfePayMentDTO.getMethod());

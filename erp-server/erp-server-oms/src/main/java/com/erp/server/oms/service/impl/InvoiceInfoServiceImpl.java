@@ -41,7 +41,6 @@ import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
-import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -545,6 +544,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         InvoiceInfoEntity invoiceInfoEntity = this.getById(invoiceId);
         if (ObjUtil.isEmpty(invoiceInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NOT_EXIST);
+        }
+        if (InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode().equals(invoiceInfoEntity.getUploadStatus())) {
+            throw new ServiceException("发票无需上传");
         }
         //上传nfe
         String uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
@@ -1121,7 +1123,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             pagingViewDTO.setStatusName(InvoiceInfoStatusEnum.getName(pagingViewDTO.getStatus()));
             pagingViewDTO.setUploadStatusName(InvoiceInfoUploadStatusEnum.getName(pagingViewDTO.getUploadStatus()));
             if(isExport && StringUtils.isNotBlank(pagingViewDTO.getFileUrl())){
-                pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
+                if (InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(pagingViewDTO.getInvoiceType())) {
+                    pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl() + ".pdf");
+                } else {
+                    pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
+                }
             }
             pagingViewDTO.setInvoiceNatureName(InvoiceNatureEnum.getName(pagingViewDTO.getInvoiceNature()));
         });
