@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -226,6 +227,12 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
      @TableField("business_model")
      private String businessModel;
+
+    /**
+     * 授权过期时间
+     */
+    @TableField("auth_expire_date")
+    private LocalDate authExpireDate;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

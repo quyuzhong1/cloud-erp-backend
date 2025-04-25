@@ -1,22 +1,24 @@
 package com.sdk.oms.temu.service;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
-import com.sdk.oms.temu.dto.TemuEntity;
+import com.sdk.oms.temu.dto.TemuResp;
+import com.sdk.oms.temu.dto.TemuShopInfoDTO;
+import com.sdk.oms.temu.dto.TemuWarehouseDTO;
+import com.sdk.oms.temu.enums.TemuEnum;
 import com.sdk.oms.temu.util.EncryptionUtils;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.netty.http.client.HttpClient;
 
-import javax.annotation.Resource;
-import java.nio.charset.StandardCharsets;
-import java.security.MessageDigest;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 @Slf4j
 @Component
@@ -47,141 +49,64 @@ public class TemuClient {
 
     private WebClient webClient;
 
-    @Resource
-    private HttpClient httpClient;
-
 
     public static void main(String[] args) {
         String url = "http://40.118.250.12:7000/openapi/router";
         String clientSecret = "a05e0902cf9c1b3c372680e084f1d424332284fb";
         String clientId = "ab3a401ed6c265793776aa3d4c48bd6f";
-
         String token = "upskffqpqmkoltggbfegqtbs7ghjaenvzwo9kbr1bt1ee5ypb0drvfh20ih";
-        long timestamp = System.currentTimeMillis()/1000;
-        // 定义查询参数
-        Map<String, Object> params = new HashMap<>();
-        params.put("type", "bg.logistics.warehouse.list.get");
-        params.put("timestamp", timestamp);
-        params.put("app_key", clientId);
-        params.put("access_token", token);
+        TemuClient temuClient = new TemuClient();
+        TemuResp<TemuWarehouseDTO> resp = temuClient.getWarehouseList(new TemuShopInfoDTO("US",clientId, clientSecret, token));
+        System.out.println(resp);
+    }
 
+    public TemuResp<TemuWarehouseDTO> getWarehouseList(TemuShopInfoDTO temuShopInfoDTO){
+        TemuEnum temuEnum = TemuEnum.getByCode(temuShopInfoDTO.getAreaCode());
+        this.checkShopInfo(temuShopInfoDTO);
+        String api = "bg.logistics.warehouse.list.get";
+        Map<String, Object> params = this.buildDefaultParams(temuShopInfoDTO, api);
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSignature(params, temuShopInfoDTO.getAppSecret());
+        //加入sign签名入参
+        params.put("sign", sign);
 
         //设置请求头
         Map<String, String> headerMap = new HashMap<>(2);
         headerMap.put("content-type", "application/json");
-
-        // 追加请求路径获取签名
-        String sign = EncryptionUtils.generateSignature(params, clientSecret);
-
-        //加入sign签名入参
-        params.put("sign", sign);
-
-        //拉取数据
-        ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(url , JSONUtil.toJsonStr(params),new HashMap<>(), headerMap, RequestMethod.POST);
+        String url = temuEnum.getUrl();
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(url , JSONUtil.toJsonStr(params),new HashMap<>(), headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("调用url={},入参params={}, TikTok查询发货选项失败，返回值 responseMap={}", url , params.toString(), JSONUtil.toJsonStr(apiResult));
+            log.error("入参params={}, temu半托管查询仓库失败，返回值 responseMap={}",  params, JSONUtil.toJsonStr(apiResult));
+            throw new ServiceException("temu半托管查询仓库失败，返回值 responseMap={}",JSONUtil.toJsonStr(apiResult));
         }
-        System.out.println(apiResult);
-//        TemuEntity entity = new TemuEntity();
-//        TemuClient temuClient = new TemuClient();
-//        //非美区可以
-////        temuClient.getGoodList(entity);
-//
-//        //美区可以
-//        temuClient.getOrderList(entity);
+        return JSON.parseObject(apiResult.getData(),new TypeReference<TemuResp<TemuWarehouseDTO>>() {}.getType());
     }
 
-    public void getGoodList(TemuEntity entity ){
-        entity.setData_type("JSON");
-        entity.setAccess_token(ACCESS_TOKEN);
-        entity.setApp_key(APP_KEY);
-        entity.setTimestamp((int) (System.currentTimeMillis()/1000));
-        entity.setType(GOODS_LIST);
-
-        String jsonParameters = JSONObject.toJSONString(entity);
-        JSONObject jsonObject = JSONObject.parseObject(jsonParameters);
-        List<String> sortedParams = new ArrayList<>();
-        addParameters(jsonObject, sortedParams);
-        Collections.sort(sortedParams);
-        String sign = this.generateSignature(sortedParams);
-        entity.setSign(sign);
-
-        jsonParameters = JSONObject.toJSONString(entity);
-        Map<String, String> headerMap = new HashMap<>(2);
-        headerMap.put("Content-Type", "application/json");
-        JSONObject result = HttpCommonUtil.sendOkhttp(TEMU_GOOD_US_URL, jsonParameters, null, headerMap, RequestMethod.POST);
-        System.out.println("===="+result);
-        System.out.println("curl -X POST -H 'content-type: application/json' -d '"+jsonParameters+"' "+TEMU_GOOD_US_URL);
-    }
-
-    public void getOrderList(TemuEntity entity ){
-        entity.setData_type("JSON");
-        entity.setAccess_token(ACCESS_TOKEN);
-        entity.setApp_key(APP_KEY);
-        entity.setTimestamp((int) (System.currentTimeMillis()/1000));
-        entity.setType(ORDER_LIST);
-
-        String jsonParameters = JSONObject.toJSONString(entity);
-        JSONObject jsonObject = JSONObject.parseObject(jsonParameters);
-        List<String> sortedParams = new ArrayList<>();
-        addParameters(jsonObject, sortedParams);
-        Collections.sort(sortedParams);
-        String sign = this.generateSignature(sortedParams);
-        entity.setSign(sign);
-
-        jsonParameters = JSONObject.toJSONString(entity);
-
-        System.out.println(jsonParameters);
-        Map<String, String> headerMap = new HashMap<>(2);
-        headerMap.put("Content-Type", "application/json");
-        JSONObject result = HttpCommonUtil.sendOkhttp(TEMU_US_URL, jsonParameters, null, headerMap, RequestMethod.POST);
-//        String result = webClient.post().header(CONTENT_TYPE_HEADER_NAME, MediaType.APPLICATION_JSON_VALUE).bodyValue(entity).retrieve().bodyToMono(String.class).block();
-        System.out.println("===="+result);
-        System.out.println("curl -X POST -H 'content-type: application/json' -d '"+jsonParameters+"' "+TEMU_US_URL);
-
-    }
-
-    // 生成签名的方法
-    public String generateSignature(List<String> sortedParams) {
-        StringBuilder sb = new StringBuilder();
-        for (String param : sortedParams) {
-            sb.append(param);
+    private void checkShopInfo(TemuShopInfoDTO temuShopInfoDTO){
+        if (temuShopInfoDTO == null) {
+            throw new RuntimeException("店铺信息不能为空");
         }
-        String toBeSigned = APP_SECRET + sb.toString() + APP_SECRET;
-        try {
-            MessageDigest md = MessageDigest.getInstance("MD5");
-            byte[] digest = md.digest(toBeSigned.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder();
-            for (byte b : digest) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex.toUpperCase());
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
+        if (temuShopInfoDTO.getAreaCode() == null) {
+            throw new RuntimeException("区域不能为空");
+        }
+        if (temuShopInfoDTO.getAppKey() == null) {
+            throw new RuntimeException("appkey不能为空");
+        }
+        if (temuShopInfoDTO.getAppSecret() == null) {
+            throw new RuntimeException("appSecret不能为空");
+        }
+        if (temuShopInfoDTO.getToken() == null) {
+            throw new RuntimeException("token不能为空");
         }
     }
 
-    private void addParameters(JSONObject obj, List<String> sortedParams) {
-        for (Map.Entry<String, Object> entry : obj.entrySet()) {
-            if (entry.getValue() instanceof JSONObject) {
-                addParameters((JSONObject) entry.getValue(), sortedParams);
-            } else if (entry.getValue() instanceof List) {
-                List list = (List) entry.getValue();
-                for (Object item : list) {
-                    if (item instanceof JSONObject) {
-                        addParameters((JSONObject) item, sortedParams);
-                    }
-                }
-            } else {
-                sortedParams.add(entry.getKey() + entry.getValue());
-            }
-        }
+    private Map<String, Object> buildDefaultParams(TemuShopInfoDTO temuShopInfoDTO,String apiType) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("type", apiType);
+        params.put("timestamp", System.currentTimeMillis() / 1000);
+        params.put("app_key", temuShopInfoDTO.getAppKey());
+        params.put("access_token", temuShopInfoDTO.getToken());
+        return params;
     }
-
 
 }
