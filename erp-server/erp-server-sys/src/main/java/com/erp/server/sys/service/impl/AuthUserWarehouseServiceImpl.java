@@ -172,15 +172,23 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
             //添加新增权限
             List<AuthUserWarehouseEntity> addList = new ArrayList<>();
             List<String> finalIds = ids;
-            warehouseIdList.forEach(warehouseId ->{
-                if (CollUtil.isEmpty(finalIds) || !finalIds.contains(warehouseId)){
-                    AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
-                    entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
-                    entity.setUserId(uid);
-                    entity.setWarehouseId(warehouseId);
-                    addList.add(entity);
-                }
-            });
+            if (CollUtil.isEmpty(warehouseIdList)){
+                AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
+                entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                entity.setUserId(uid);
+                entity.setWarehouseId("-1");
+                addList.add(entity);
+            }else {
+                warehouseIdList.forEach(warehouseId ->{
+                    if (CollUtil.isEmpty(finalIds) || !finalIds.contains(warehouseId)){
+                        AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
+                        entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+                        entity.setUserId(uid);
+                        entity.setWarehouseId(warehouseId);
+                        addList.add(entity);
+                    }
+                });
+            }
             if (CollUtil.isNotEmpty(addList)){
                 this.saveBatch(addList);
             }
