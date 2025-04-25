@@ -21,6 +21,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -1926,13 +1927,27 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollUtil.isEmpty(successList)) {
             return;
         }
+        Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName()).concat(obj.getBillDateStr()).concat(obj.getTypeName())));
 
-        Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName())));
-
-        for (SoReturnStockImportExcelDTO excelDTO : successList) {
+        for (Map.Entry<String, List<SoReturnStockImportExcelDTO>> entry : map.entrySet()) {
+            List<SoReturnStockImportExcelDTO> value = entry.getValue();
+            SoReturnStockImportExcelDTO excelDTO = value.get(0);
             List<String> errorMsgList = new ArrayList<>();
+            SoReturnInstockDTO.Add add = new SoReturnInstockDTO.Add();
+
+            List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
+            for (SoReturnStockImportExcelDTO soReturnStockImportExcelDTO : value) {
+                SoReturnInstockDetailDTO.Add addDetail = new SoReturnInstockDetailDTO.Add();
 
 
+            }
+            try {
+
+            ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class).add(add);
+            } catch (Exception e) {
+                value.forEach(obj -> obj.setErrorMsg("1、" + e.getMessage()));
+                errorList.addAll(value);
+            }
         }
 
 

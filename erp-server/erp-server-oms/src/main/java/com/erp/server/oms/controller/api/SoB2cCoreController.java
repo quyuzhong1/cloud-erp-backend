@@ -47,7 +47,7 @@ public class SoB2cCoreController extends BaseController {
      * @return ApiResult<Boolean>
      */
     @PostMapping("/retryOutstock")
-    public ApiResult<Boolean> retryOutstock(@ModelAttribute @Validated List<SoB2cCoreDTO.RetryOutstockDTO> list) throws IOException {
+    public ApiResult<Boolean> retryOutstock(@RequestBody @Validated List<SoB2cCoreDTO.RetryOutstockDTO> list) throws IOException {
         return success(soB2cCoreService.retryOutstock(list));
     }
 }
