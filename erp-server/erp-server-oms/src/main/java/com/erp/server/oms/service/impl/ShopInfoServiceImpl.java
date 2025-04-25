@@ -1375,20 +1375,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return baseMapper.listByParam(platformList,permissionSql);
     }
 
-    /**
-     * @param platformList
-     * @param permissionSql
-     * @return List<ShopInfoEntity>
-     * @description: 根据平台集合查询
-     * @author Will
-     * @date: 2023/9/7 16:39
-     */
-    private List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql) {
-        if (CollectionUtils.isEmpty(platformList)) {
-            return Collections.emptyList();
-        }
-        return baseMapper.listByParam(platformList,permissionSql);
-    }
 
     @Override
     public List<ShopInfoEntity> listShopByAmazon() {
