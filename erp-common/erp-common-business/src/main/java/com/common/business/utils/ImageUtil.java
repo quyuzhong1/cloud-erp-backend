@@ -385,7 +385,7 @@ public class ImageUtil {
                     // 逐步调整压缩参数
                     // 1. 缩小图像尺寸，每次减少 10
                     // 不低于 150
-                    targetWidth = Math.max(150, targetWidth - Integer.parseInt(MathUtil.multiply(ratio,new BigDecimal(100),0).toString()));
+                    targetWidth = Math.max(150, targetWidth - Integer.parseInt(MathUtil.multiplyWithTwo(ratio,new BigDecimal(100),0).toString()));
                     // 不低于 150
                     targetHeight = Math.max(150, targetHeight - 100);
 
