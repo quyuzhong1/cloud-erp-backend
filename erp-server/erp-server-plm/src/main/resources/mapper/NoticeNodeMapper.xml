@@ -10,7 +10,7 @@
             notice_node
         WHERE
             is_deleted = FALSE
-            AND (ID NOT IN ( SELECT node_id FROM notice_message where is_deleted = false)
+            AND (ID NOT IN ( SELECT node_id FROM cfg_notice_rule where is_deleted = false)
            OR node_flag = 'productDetailChange')
     </select>
 </mapper>
