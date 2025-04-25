@@ -41,7 +41,6 @@ import com.erp.server.oms.mapper.InvoiceInfoMapper;
 import com.erp.server.oms.sdk.invoice.AmazonUploadInvoiceService;
 import com.erp.server.oms.sdk.invoice.NfeInvoiceService;
 import com.erp.server.oms.service.*;
-import com.sdk.oms.mercadolocal.service.MercadoLocalSdkClientService;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -128,9 +127,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     @Resource
     @Lazy
     private NfeInvoiceService nfeInvoiceService;
-
-    @Resource
-    private MercadoLocalSdkClientService mercadoLocalSdkClientService;
 
 
     @Resource
@@ -549,6 +545,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (ObjUtil.isEmpty(invoiceInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NOT_EXIST);
         }
+        if (InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode().equals(invoiceInfoEntity.getUploadStatus())) {
+            throw new ServiceException("发票无需上传");
+        }
         //上传nfe
         String uploadStatus = InvoiceInfoUploadStatusEnum.UPLOAD_SUCCESS.getCode();
         try  {
@@ -964,6 +963,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         if (CollUtil.isEmpty(platformSkuNoList)) {
             throw new ServiceException("选择订单无平台SKU不支持开票");
         }
+        //查询nfe发票配置信息
+        List<CfgInvoiceSettingDetailEntity> cfgInvoiceSettingDetailList = cfgInvoiceSettingDetailService.listByShopIdList(shopIdList);
+        Map<String, CfgInvoiceSettingDetailEntity> cfgInvoiceSettingDetailMap = cfgInvoiceSettingDetailList.stream().collect(Collectors.toMap(CfgInvoiceSettingDetailEntity::getShopId, Function.identity()));
+        
+        //店铺信息
+        List<ShopInfoEntity> shopInfoList = shopInfoService.listByIds(shopIdList);
+        Map<String, String> shopMap = shopInfoList.stream().collect(Collectors.toMap(ShopInfoEntity::getId,ShopInfoEntity::getName));
+
         // 查询该店铺所有平台sku
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
         paramDTO.setShopIdList(shopIdList);
@@ -988,6 +995,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             if (ObjUtil.isEmpty(soB2cEntity)) {
                 continue;
             }
+            CfgInvoiceSettingDetailEntity cfgInvoiceSettingDetailEntity = cfgInvoiceSettingDetailMap.get(soB2cEntity.getShopId());
+            if (ObjUtil.isEmpty(cfgInvoiceSettingDetailEntity)) {
+                continue;
+            }
+
             if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
                 continue;
             }
@@ -1005,6 +1017,26 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             viewDTO.setPlatformSkuName(CollUtil.isEmpty(listingInfoWithSkuMappingList) ? "" : listingInfoWithSkuMappingList.get(0).getPlatformSkuName());
             viewDTO.setPlatform(soB2cEntity.getDictPlatform());
             viewDTO.setShopId(soB2cEntity.getShopId());
+            viewDTO.setShopName(shopMap.get(soB2cEntity.getShopId()));
+            viewDTO.setUnit(CharSequenceUtil.isBlank(viewDTO.getUnit()) ? "UN" : viewDTO.getUnit());
+            //同州cfop
+            if (CharSequenceUtil.isBlank(viewDTO.getSameStateTaxCode())) {
+                //给默认值
+                if (TaxTypeEnum.PURCHASE_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
+                    viewDTO.setSameStateTaxCode(NfeCfopEnum.PURCHASE_SALE_SAME_CFOP.getCode());
+                } else if (TaxTypeEnum.SELF_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
+                    viewDTO.setSameStateTaxCode(NfeCfopEnum.SELF_SALE_SAME_CFOP.getCode());
+                }
+            }
+            //跨州cfop
+            if (CharSequenceUtil.isBlank(viewDTO.getDiffStateTaxCode())) {
+                //给默认值
+                if (TaxTypeEnum.PURCHASE_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
+                    viewDTO.setDiffStateTaxCode(NfeCfopEnum.PURCHASE_SALE_DIFF_CFOP.getCode());
+                } else if (TaxTypeEnum.SELF_SALE.getCode().equals(cfgInvoiceSettingDetailEntity.getTaxType())) {
+                    viewDTO.setDiffStateTaxCode(NfeCfopEnum.SELF_SALE_DIFF_CFOP.getCode());
+                }
+            }
             resultList.add(viewDTO);
         }
         return resultList.stream().distinct().collect(Collectors.toList());
@@ -1091,7 +1123,11 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
             pagingViewDTO.setStatusName(InvoiceInfoStatusEnum.getName(pagingViewDTO.getStatus()));
             pagingViewDTO.setUploadStatusName(InvoiceInfoUploadStatusEnum.getName(pagingViewDTO.getUploadStatus()));
             if(isExport && StringUtils.isNotBlank(pagingViewDTO.getFileUrl())){
-                pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
+                if (InvoiceInfoInvoiceTypeEnum.NFE.getCode().equals(pagingViewDTO.getInvoiceType())) {
+                    pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl() + ".pdf");
+                } else {
+                    pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
+                }
             }
             pagingViewDTO.setInvoiceNatureName(InvoiceNatureEnum.getName(pagingViewDTO.getInvoiceNature()));
         });
@@ -1126,8 +1162,6 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                                 byte[] content = FastDFSClientUtil.getFileByte(attachDTO.getAttachUrl());
                                 if (AttachmentTypeEnum.INVOICE_INFO_PDF.getCode().equals(attachDTO.getType())) {
                                     fileName = fileName.concat(".pdf");
-                                } else if (AttachmentTypeEnum.INVOICE_INFO_XML.getCode().equals(attachDTO.getType())) {
-                                    fileName = fileName.concat(".xml");
                                 }
                                 return Pair.of(fileName, content); // 使用合适的Pair或自定义对象
                             } catch (Exception e) {

@@ -107,7 +107,7 @@
             att.attach_name
         from invoice_info i
         inner join attachment att on i.id = att.business_id and att.is_deleted = false and att.type = #{attachmentType}
-        where i.is_deleted = false and i.invoice_type  = #{invoiceType} and i.status = 'invoiceSuccess'
+        where i.is_deleted = false and att.attach_url != '' and i.so_id = #{soId} and i.invoice_type  = #{invoiceType} and i.status = 'invoiceSuccess'
         order by i.id desc,att.id desc limit 1
     </select>
 
