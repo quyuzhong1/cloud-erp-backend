@@ -2784,7 +2784,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiplyWithTwo(item.getPrice(), multiplyTax,4);
+            BigDecimal taxPrice = item.getTaxPrice();
+            if (Objects.isNull(taxPrice)) {
+                taxPrice = MathUtil.multiplyWithTwo(item.getPrice(), multiplyTax,4);
+            }
             item.setTaxPrice(taxPrice);
 
             // 计算毛利成本
