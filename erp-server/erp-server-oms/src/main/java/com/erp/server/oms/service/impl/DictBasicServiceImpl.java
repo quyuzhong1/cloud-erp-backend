@@ -166,7 +166,6 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
 
     @Override
     public List<BaseDropDownDTO.CommonDTO> listInternalSalesPlatform(String key) {
-//        List<DictBasicEntity> list =  listByType(key,DictBasicTypeEnum.SALES_PLATFORM_INTERNAL.getType());
         List<DictBasicEntity> list = lambdaQuery()
                 .eq(DictBasicEntity::getType, key)
                 .eq(DictBasicEntity::getStatus, Boolean.TRUE)
@@ -176,10 +175,12 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
                 .list();
 
         List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class).stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
-
+        resultList.sort(Comparator.comparing(DictBasicDTO.ViewDTO::getRemark));
         List<BaseDropDownDTO.CommonDTO> result = resultList.stream()
                 .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
                 .collect(Collectors.toList());
+
+
         return result;
     }
 }
