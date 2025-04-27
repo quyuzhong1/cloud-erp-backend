@@ -247,8 +247,14 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         }
 
         FirstMileWeightAllocationDTO.LogisticsBillInfoDTO logisticsBillInfo = baseMapper.getLogisticsBillInfo(logisticsBillId);
+        if (Objects.isNull(logisticsBillInfo)) {
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillId, "物流单信息不存在");
+        }
         //物流渠道
         LogisticsChannelEntity logisticsChannelEntity = logisticsChannelService.getById(logisticsBillInfo.getChannelId());
+        if (Objects.isNull(logisticsChannelEntity)) {
+            return BatchResultDTO.fail(logisticsBillId, logisticsBillId, "物流渠道信息不存在");
+        }
         //物流单
         LogisticsBillEntity logisticsBillEntity = logisticsBillService.getById(logisticsBillId);
         //发货单
