@@ -629,15 +629,17 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 List<TransferOutDetailDTO.AddDTO> detailList = new ArrayList<>();
                 List<QcNoticeDetailEntity> qcNoticeDetailList = detailMapByMainId.get(qcNoticeEntity.getId());
                 for (QcNoticeDetailEntity detailEntity : qcNoticeDetailList) {
-                    TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
-                    transferOutDetail.setSkuId(detailEntity.getSkuId());
-                    transferOutDetail.setQty(detailEntity.getQcGoodQty());
-                    String code = qcInfoMap.get(detailEntity.getId()).getCode();
-                    transferOutDetail.setRemark(StrUtil.format(remark,code));
-                    transferOutDetail.setSourceDetailId(detailEntity.getId());
+                    if(detailEntity.getQcGoodQty().intValue() > 0){
+                        TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
+                        transferOutDetail.setSkuId(detailEntity.getSkuId());
+                        transferOutDetail.setQty(detailEntity.getQcGoodQty());
+                        String code = qcInfoMap.get(detailEntity.getId()).getCode();
+                        transferOutDetail.setRemark(StrUtil.format(remark,code));
+                        transferOutDetail.setSourceDetailId(detailEntity.getId());
 //                    transferOutDetail.setOutWarehouseLocation("");
-                    transferOutDetail.setUnit("Pcs");
-                    detailList.add(transferOutDetail);
+                        transferOutDetail.setUnit("Pcs");
+                        detailList.add(transferOutDetail);
+                    }
                 }
                 addOutDTO.setDetailList(detailList);
                 transferOutService.add(addOutDTO);
@@ -840,8 +842,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             for (QcNoticeDetailImportExcelDTO excelDTO : successList) {
                 if(!skuMap.containsKey(excelDTO.getSkuNo())){
-                    excelDTO.setErrorMsg("SKU不存在");
+                    excelDTO.setErrorMsg("1、SKU不存在；");
                     errorList.add(excelDTO);
+                    continue;
                 }
                 SkuVO skuVO = skuMap.get(excelDTO.getSkuNo());
                 QcNoticeDetailDTO.AddDTO addDTO = new QcNoticeDetailDTO.AddDTO();

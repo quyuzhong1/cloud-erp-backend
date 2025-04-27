@@ -219,9 +219,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
         if (ObjectUtils.isNotEmpty(qcProduct)) {
-           compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-           compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-           compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            String skuNo = qcProduct.getSkuNo();
+            compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(),  ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT   );
+            compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
         }
         QcInfoEntity qc = null ;
         if (CharSequenceUtil.isBlank(billId)) {
@@ -2643,75 +2644,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (larger.compareTo(smaller) < 0) {
                 throw new ServiceException(apiError);
             }
-        }
-    }
-
-
-    @Override
-    public QcInfoEntity generateQcInfo(QcInfoDTO.SaveOrUpdateDTO dto){
-        //质检单
-        QcInfoEntity bill = new QcInfoEntity();
-        String code = "";
-        String billId = dto.getId();
-        //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
-        QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
-        if (ObjectUtils.isNotEmpty(qcProduct)) {
-            compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
-        }
-        QcInfoEntity qc = null ;
-        if (CharSequenceUtil.isBlank(billId)) {
-            billId = IdWorker.getIdStr();
-        } else {
-            qc = this.getById(billId);
-            if (Objects.isNull(qc)) {
-                throw new ServiceException(ApiError.ERROR_99015);
-            }
-            code = qc.getCode();
-        }
-        BeanMapper.copy(dto, bill);
-        bill.setId(billId);
-        //处理相关数据
-        HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
-
-        //采购订单明细
-        String skuId = dto.getQcProduct().getSkuId();
-        if (CharSequenceUtil.isBlank(skuId)) {
-            throw new ServiceException(ApiError.ERROR_95107);
-        }
-        //检查质检数量
-//        checkQcQty(dto.getQcInfo(), dto.getId(), dto.getPurchaseOrderId(), skuId);
-
-        QcBillStatusEnum waitQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.WAIT_QC.getCode());
-        bill.setQcStatus(waitQc);
-        if (CharSequenceUtil.isBlank(code)) {
-            code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QC);
-        }
-        bill.setCode(code);
-
-        String sourceDetailId = dto.getSourceDetailId();
-        bill.setSourceDetailId(sourceDetailId);
-
-        Boolean result = this.saveOrUpdate(bill);
-        if (result) {
-            //质检产品 暂存
-            qcProductService.add(billId, dto.getQcProduct(), skuId);
-            //质检信息 暂存
-            qcResultService.add(billId, dto.getQcInfo());
-            //质检报告 暂存
-            qcReportDetailService.add(billId, dto.getReportDetailList());
-            //质检备注暂存
-            qcRemarkService.add(billId, dto.getRemarkList());
-            //操作日志
-            if (Objects.isNull(qc)) {
-                operateLogService.addModuleOperateLog(String.format("新增了质检单【%s】", code), ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
-            }else {
-                addQcLog(qc, bill, billId);
-            }
-            return bill;
-        } else {
-            return null;
         }
     }
 }
