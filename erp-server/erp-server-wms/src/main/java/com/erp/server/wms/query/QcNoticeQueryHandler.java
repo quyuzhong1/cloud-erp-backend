@@ -34,7 +34,7 @@ public class QcNoticeQueryHandler extends AbstractQueryHandler {
         if (QcNoticeStatusEnum.WAIT.getCode().equals(value)
                 ||QcNoticeStatusEnum.PART.getCode().equals(value)
                 ||QcNoticeStatusEnum.FINISH.getCode().equals(value) ) {
-            super.buildDefaultDTO("qn.qc_status", value);
+            super.buildDefaultDTO(" qn.approve_status ='approve' and qn.qc_status", value);
         }
         return super.getSplicingSQL();
     }
