@@ -15,6 +15,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 /**
@@ -127,10 +128,16 @@ public class SoUtils {
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
+            BigDecimal taxPrice = item.getTaxPrice();
+            if (Objects.nonNull(isGift) && isGift){
+                taxPrice = BigDecimal.ZERO;
+            }
+            if (Objects.isNull(taxPrice)){
+                taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
+            }
             //价税合计（折前）
             BigDecimal taxAmount = MathUtil.multiplyWithTwo(taxPrice, new BigDecimal(qty),4);
-            totalTaxAmountBefore = totalTaxAmountBefore.add(taxAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
+            totalTaxAmountBefore = totalTaxAmountBefore.add(taxAmount).setScale(4, RoundingMode.HALF_UP);
         }
 
         // 此处需要注意，所有的明细折扣额汇总起来需等于总的折扣额
@@ -169,7 +176,13 @@ public class SoUtils {
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
+            BigDecimal taxPrice = item.getTaxPrice();
+            if (Objects.nonNull(isGift) && isGift) {
+                taxPrice = BigDecimal.ZERO;
+            }
+            if (Objects.isNull(taxPrice)){
+                taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
+            }
             item.setTaxPrice(taxPrice);
             //金额
             BigDecimal amount = MathUtil.multiplyWithTwo(price, new BigDecimal(qty),4);
