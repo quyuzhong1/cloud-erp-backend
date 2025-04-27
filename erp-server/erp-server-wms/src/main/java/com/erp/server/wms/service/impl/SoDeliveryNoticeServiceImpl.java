@@ -1850,7 +1850,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         for (SoDeliveryNoticeEntity soDeliveryNoticeEntity : soDeliveryNoticeEntityList) {
             MachineInfoDTO.AddDTO addDTO = new MachineInfoDTO.AddDTO();
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
-            addDTO.setBillDate(LocalDate.now());
+            addDTO.setBillDate(soDeliveryNoticeEntity.getApproveTime().toLocalDate());
 
             addDTO.setReceiverId(userInfo.getUid());
             addDTO.setWarehouseKeeperId(userInfo.getUid());
