@@ -85,6 +85,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -223,7 +224,25 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shop.setWarehouseName(updateDTO.getName());
             shop.setWarehouseId(dto.getWarehouseId());
         }
+        //处理扩展字段
+        if(StringUtils.isNotBlank(dto.getClientId()) || StringUtils.isNotBlank(dto.getClientSecret())) {
+            Map<String, Object> extendData = new HashMap<>();
+            extendData.put("clientId", dto.getClientId());
+            extendData.put("clientSecret", dto.getClientSecret());
+            shop.setExtendData(extendData);
+        }
+        if(Objects.nonNull(dto.getAuthExpireDate()) && dto.getAuthExpireDate().isBefore(LocalDate.now())) {
+            throw new ServiceException("授权过期时间不能小于当前时间");
+        }
         Boolean result = this.save(shop);
+        //如果token不为空，新增授权表
+        if(StringUtils.isNotBlank(dto.getToken())) {
+            ShopAuthEntity shopAuthEntity = new ShopAuthEntity();
+            shopAuthEntity.setShopId(shop.getId());
+            shopAuthEntity.setToken(dto.getToken());
+            shopAuthEntity.setAccessToken(dto.getToken());
+            shopAuthService.saveOrUpdate(shopAuthEntity);
+        }
         shopChannelRefService.batchUpdate(shop,dto.getChannelIdList());
         return Collections.singletonList(shop);
 
@@ -471,8 +490,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         ShopAuthorizeUrlDTO authorizeUrlDTO = new ShopAuthorizeUrlDTO();
         authorizeUrlDTO.setShopId(entity.getId());
         authorizeUrlDTO.setPlatformCode(entity.getDictPlatform());
-
-        String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        String shopAuthorizeUrl = "";
+        //temu全托管通过用户输入的信息检验授权
+        if(entity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+            ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
+            shopAuthorizeDTO.setShopId(entity.getId());
+            shopAuthorizeDTO.setPlatformCode(entity.getDictPlatform());
+            this.shopAuthorize(shopAuthorizeDTO,null);
+        }else{
+            shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        }
         return new ShopDTO.RedirectDTO(entity.getId(), shopAuthorizeUrl);
     }
 
@@ -602,6 +629,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         }
         //设置用户信息
         setCustom(dto.getCustomerId(), shopInfo);
+        //修改授权信息进行校验
+        checkAuthInfo(dto,shopInfo);
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
@@ -615,6 +644,48 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopChannelRefService.batchUpdate(shopInfo,dto.getChannelIdList());
         return shopInfo;
     }
+
+    private void checkAuthInfo(ShopDTO.UpdateDTO dto, ShopInfoEntity shopInfo) {
+        if(!PlatformDictEnum.TE_MU.getCode().equals(shopInfo.getDictPlatform())){
+            return;
+        }
+        if(Objects.nonNull(dto.getAuthExpireDate()) && dto.getAuthExpireDate().isBefore(LocalDate.now())) {
+            throw new ServiceException("授权过期时间不能小于当前时间");
+        }
+        ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(shopInfo.getId());
+        if(StringUtils.isBlank(dto.getToken())){
+            if(Objects.nonNull(shopAuthEntity) && StringUtils.isNotBlank(shopAuthEntity.getAccessToken())){
+                if(shopInfo.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
+                    throw new ServiceException("已授权不能修改授权信息");
+                }
+                shopAuthEntity.setAccessToken("");
+                shopAuthEntity.setToken("");
+            }
+        }else{
+            if(Objects.nonNull(shopAuthEntity) && !shopAuthEntity.getAccessToken().equals(dto.getToken()) && shopInfo.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
+                throw new ServiceException("已授权不能修改授权信息");
+            }
+            if(Objects.isNull(shopAuthEntity)){
+                shopAuthEntity = new ShopAuthEntity();
+            }
+            shopAuthEntity.setToken(dto.getToken());
+            shopAuthEntity.setAccessToken(dto.getToken());
+            shopAuthService.saveOrUpdate(shopAuthEntity);
+        }
+
+        Map<String,Object> extendMap = Objects.isNull(shopInfo.getExtendData())?new HashMap<>():shopInfo.getExtendData();
+        String clientId = (String) extendMap.getOrDefault("clientId","");
+        String clientSecret = (String) extendMap.getOrDefault("clientSecret","");
+        if(!clientId.equals(dto.getClientId()) || !clientSecret.equals(dto.getClientSecret())) {
+            if(shopInfo.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
+                throw new ServiceException("已授权不能修改授权信息");
+            }
+            extendMap.put("clientId",dto.getClientId());
+            extendMap.put("clientSecret",dto.getClientSecret());
+            shopInfo.setExtendData(extendMap);
+        }
+    }
+
     /**
      * 修改店铺
      *
@@ -898,6 +969,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             DictBasicEntity mercadolibreBusinessModel = dictBasicService.getByTypeAndValue("mercadolibreBusinessModel", shop.getBusinessModel());
             if (ObjectUtil.isNotEmpty(mercadolibreBusinessModel)) {
                 view.setBusinessModelName(mercadolibreBusinessModel.getName());
+            }
+        }
+        if(PlatformDictEnum.TE_MU.getCode().equals(dictPlatform)){
+            Map<String,Object> extendMap = Objects.isNull(shop.getExtendData())?new HashMap<>():shop.getExtendData();
+            String clientId = (String) extendMap.getOrDefault("clientId","");
+            String clientSecret = (String) extendMap.getOrDefault("clientSecret","");
+            view.setClientId(clientId);
+            view.setClientSecret(clientSecret);
+            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shop.getId());
+            if(Objects.nonNull(shopAuth)){
+                view.setToken(shopAuth.getAccessToken());
             }
         }
         //客户名称
@@ -1432,7 +1514,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         authorizeUrlDTO.setPlatformCode(infoEntity.getDictPlatform());
         authorizeUrlDTO.setShopInfoEntityList(list);
 
-        String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        String shopAuthorizeUrl = "";
+        //temu全托管通过用户输入的信息检验授权
+        if(infoEntity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+            ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
+            shopAuthorizeDTO.setShopId(infoEntity.getId());
+            shopAuthorizeDTO.setPlatformCode(infoEntity.getDictPlatform());
+            this.shopAuthorize(shopAuthorizeDTO,null);
+        }else{
+            shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        }
         for (ShopInfoEntity shop : list) {
             this.saveCustom(shop);
         }
