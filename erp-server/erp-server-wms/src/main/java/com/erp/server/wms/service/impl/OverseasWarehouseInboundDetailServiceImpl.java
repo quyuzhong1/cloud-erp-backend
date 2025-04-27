@@ -168,7 +168,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         // 主表ID， 主实体
         Map<String, OverseasWarehouseInboundEntity> mainResultMap = new HashMap<>();
         Map<String, Integer> receiverdMap = new HashMap<>();
-        List<OverseasWarehouseInboundDetailEntity> detailEntityList = this.getByMainIds(dtoList.stream().map(OverseasWarehouseInboundDTO.ReceivedDTO::getDetailId).collect(Collectors.toList()));
+        List<OverseasWarehouseInboundDetailEntity> detailEntityList = this.getByIds(dtoList.stream().map(OverseasWarehouseInboundDTO.ReceivedDTO::getDetailId).collect(Collectors.toList()));
         List<OverseasWarehouseInboundReceivedEntity> addReceivedList = new ArrayList<>();
         for (OverseasWarehouseInboundDTO.ReceivedDTO dto : dtoList) {
             // 查询详情

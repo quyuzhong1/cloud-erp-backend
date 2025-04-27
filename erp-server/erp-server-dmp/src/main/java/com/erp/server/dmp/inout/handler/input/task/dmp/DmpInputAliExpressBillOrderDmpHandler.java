@@ -57,7 +57,7 @@ public class DmpInputAliExpressBillOrderDmpHandler extends DmpInputDoNextDmpHand
 					Map<String, Object> orderDetails = orderIdDetailMap.getValue();
 					Object receipt_address_obj = orderDetails.get("receipt_address");
 					Map<String, Object> orderAddressMap = orderAddressMaps.get(ordreId);
-					if(receipt_address_obj != null && Objects.nonNull(dmpSoInfoEntity)) {
+					if(receipt_address_obj != null && Objects.nonNull(dmpSoInfoEntity) && orderAddressMap != null) {
 						Map<String , Object> receipt_address = (Map)receipt_address_obj;
 						TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
 						dmpInputDmpBaseEntity.put("nextLevelId", nextLevelId);
