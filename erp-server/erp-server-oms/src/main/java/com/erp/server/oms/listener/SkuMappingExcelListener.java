@@ -219,7 +219,7 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
         paramDTO.setShopIdList(Collections.singletonList(shop.getId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(Collections.singletonList(skuMappingImportExcelDTO.getPlatformSkuNo()));
-        paramDTO.setPlatformSkuIdList(CharSequenceUtil.isNotBlank(skuMappingImportExcelDTO.getPlatformProductId()) ? Collections.singletonList(skuMappingImportExcelDTO.getPlatformProductId()) : null);
+        paramDTO.setPlatformSpuNoList(CharSequenceUtil.isNotBlank(skuMappingImportExcelDTO.getPlatformProductId()) ? Collections.singletonList(skuMappingImportExcelDTO.getPlatformProductId()) : null);
 //        paramDTO.setIsExpire(false);
         // 所有包含历史映射关系
         List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(paramDTO);
