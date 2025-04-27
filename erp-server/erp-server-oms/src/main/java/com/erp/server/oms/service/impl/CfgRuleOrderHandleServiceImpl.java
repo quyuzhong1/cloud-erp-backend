@@ -268,8 +268,27 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             this.handleZipCodeRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
             //处理收货人
             this.handleReceiveRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
+            //处理号订单
+            logisticsOrderVO.setDeliveryNo(this.handleOrderCodeRule(logisticsOrderVO.getDeliveryNo(),ruleMatchDTO.getRuleContent()));
         }
         return logisticsOrderVO;
+    }
+
+    /***
+     * 订单号处理
+     * @param orderCode
+     * @param ruleContent
+     */
+    private String handleOrderCodeRule(String orderCode, CfgRuleOrderHandleDTO.RuleContent ruleContent) {
+        CfgRuleOrderHandleDTO.OrderCodeHandleContent orderHandleContent = ruleContent.getOrderCodeHandleContent();
+        if(Objects.isNull(orderHandleContent)){
+            return orderCode;
+        }
+        //订单号替换开关
+        if (orderHandleContent.isOrderCodeSwitch()){
+            return orderCode.replace(orderHandleContent.getOrderCodeWaitReplaceText(), orderHandleContent.getOrderCodeReplaceText());
+        }
+        return orderCode;
     }
 
     @Override
@@ -284,6 +303,8 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             this.handleZipCodeRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
             //处理收货人
             this.handleReceiveRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
+            //处理号订单
+            createOutboundReq.setReferenceNo(this.handleOrderCodeRule(createOutboundReq.getReferenceNo(),ruleMatchDTO.getRuleContent()));
         }
         return createOutboundReq;
     }
