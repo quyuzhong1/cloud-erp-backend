@@ -33,11 +33,17 @@ public class DmpInputAliExpressBillOrderDmpHandler extends DmpInputDoNextDmpHand
 		Map<List<Map<String , Object>>, List<TreeMap<String , Object>>> dmpInputDataDmpRelationMaps = new HashMap<>();
 		if(CollUtil.isNotEmpty(dmpInputMongoEntityList)) {
 			List<ParamData> paramDataList = new ArrayList<>();
+			Map<String, Map<String, Object>> orderAddressMaps = new HashMap<>();
 			List<String> orderIdList = dmpInputMongoEntityList.stream().map(d -> d.get("order_id").toString()).collect(Collectors.toList());
 
 			paramDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIdList));
 			paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, PannoEnum.EQ, nextLevelId));
 			List<Map<String, Object>> findMongoData = mongoService.findMongoData(paramDataList, "aliexpress_orderDetail_data");
+			List<Map<String, Object>> orderAddressData = mongoService.findMongoData(paramDataList, "aliexpress_orderAddress_data");
+
+			if(CollUtil.isNotEmpty(orderAddressData)) {
+				orderAddressMaps = orderAddressData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
+			}
 			if(CollUtil.isNotEmpty(findMongoData)) {
 				Map<String, Map<String, Object>> orderIdDetailMaps = findMongoData.stream().collect(Collectors.toMap(f -> f.get("order_id").toString(), f -> f));
 				Map<String, DmpSoInfoEntity> maidIdThirdCodeMaps = dmpSoInfoService.lambdaQuery()
@@ -50,7 +56,8 @@ public class DmpInputAliExpressBillOrderDmpHandler extends DmpInputDoNextDmpHand
 					DmpSoInfoEntity dmpSoInfoEntity = maidIdThirdCodeMaps.get(ordreId);
 					Map<String, Object> orderDetails = orderIdDetailMap.getValue();
 					Object receipt_address_obj = orderDetails.get("receipt_address");
-					if(receipt_address_obj != null && Objects.nonNull(dmpSoInfoEntity)) {
+					Map<String, Object> orderAddressMap = orderAddressMaps.get(ordreId);
+					if(receipt_address_obj != null && Objects.nonNull(dmpSoInfoEntity) && orderAddressMap != null) {
 						Map<String , Object> receipt_address = (Map)receipt_address_obj;
 						TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
 						dmpInputDmpBaseEntity.put("nextLevelId", nextLevelId);
@@ -65,10 +72,10 @@ public class DmpInputAliExpressBillOrderDmpHandler extends DmpInputDoNextDmpHand
 						dmpInputDmpBaseEntity.put("city", receipt_address.get("city"));
 						dmpInputDmpBaseEntity.put("country", receipt_address.get("country"));
 						dmpInputDmpBaseEntity.put("taxNo", receipt_address.get("cpf_no"));
-						dmpInputDmpBaseEntity.put("buyerEmail", receipt_address.get("contact_email"));
-						dmpInputDmpBaseEntity.put("buyerPhoneNumber", receipt_address.get("phone_number"));
-						dmpInputDmpBaseEntity.put("buyerName", receipt_address.get("contact_person"));
-						dmpInputDmpBaseEntity.put("address1", receipt_address.get("detail_address"));
+						dmpInputDmpBaseEntity.put("buyerEmail", orderAddressMap.get("contact_email"));
+						dmpInputDmpBaseEntity.put("buyerPhoneNumber", orderAddressMap.get("mobile_no"));
+						dmpInputDmpBaseEntity.put("buyerName", orderAddressMap.get("buyer_signer_fullname"));
+						dmpInputDmpBaseEntity.put("address1", orderAddressMap.get("detail_address"));
 						dmpInputDmpBaseEntity.put("state", receipt_address.get("province"));
 						dmpInputDataDmpRelationMaps.put(Collections.singletonList(orderDetails), Collections.singletonList(dmpInputDmpBaseEntity));
 					}
