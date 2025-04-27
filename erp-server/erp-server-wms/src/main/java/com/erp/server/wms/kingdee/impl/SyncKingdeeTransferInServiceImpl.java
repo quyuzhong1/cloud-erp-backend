@@ -3,6 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -10,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -25,15 +27,14 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.wms.entity.TransferInDetailEntity;
-import com.erp.model.wms.entity.TransferInEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WmsPushMsgEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeTransferInService;
+import com.erp.server.wms.service.TransferOutDetailService;
+import com.erp.server.wms.service.TransferOutService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -71,6 +72,12 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private TransferOutService transferOutService;
+
+    @Resource
+    private TransferOutDetailService transferOutDetailService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -142,6 +149,11 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
         if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
             return resultMap;
         }
+        //查询分步式调出
+        TransferOutEntity transferOutEntity = transferOutService.getById(entity.getSourceId());
+        if (ObjUtil.isEmpty(transferOutEntity)) {
+            throw new ServiceException("分步式调出未找到");
+        }
 
         //调拨类型
         resultMap.put("type", entity.getTransferType().getKingdeeCode());
@@ -160,6 +172,21 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
                 resultMap.put("warehouseKeeperCode",findUserDTO.getCode());
             }
         }
+        //组织机构编码
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(transferOutEntity.getInOrgId(), transferOutEntity.getOutOrgId()));
+        if (CollectionUtils.isEmpty(accountingCompanyList)) {
+            throw new ServiceException(ApiError.ERROR_9014);
+        }
+
+        //调入组织机构编码
+        String inOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(transferOutEntity.getInOrgId()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+        resultMap.put("inOrgCode", inOrgCode);
+
+        //调出组织机构编码
+        String outOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(transferOutEntity.getOutOrgId()))
+                .findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse(null);
+        resultMap.put("outOrgCode", outOrgCode);
 
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
