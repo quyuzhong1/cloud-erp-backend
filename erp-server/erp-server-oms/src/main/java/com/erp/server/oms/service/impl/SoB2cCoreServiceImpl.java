@@ -2,7 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.BaseIdsDTO;
@@ -84,6 +84,10 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         }
         Map<String, List<SoB2cDetailEntity>> detailMap = soB2cDetailList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
 
+        //买家信息
+        List<SoB2cReceiverEntity> soB2cReceiverList = soB2cReceiverService.listByMainIds(dto.getIds());
+        Map<String, SoB2cReceiverEntity> soB2cReceiverMap = soB2cReceiverList.stream().collect(Collectors.toMap(SoB2cReceiverEntity::getMainId, Function.identity()));
+
         //平台
         List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         Map<String, String> platformMap = dictBasicList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
@@ -96,11 +100,6 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         List<String> warehouseLocationIdList = soB2cDetailList.stream().map(SoB2cDetailEntity::getWarehouseLocation).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = FeignQuery.getByIds(WarehouseLocationEntity.class, warehouseLocationIdList);
         Map<String, String> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.toMap(WarehouseLocationEntity::getId, WarehouseLocationEntity::getName));
-
-        //店铺
-        List<String> shopIdList = soB2cList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopList = shopInfoService.listByIds(shopIdList);
-        Map<String, ShopInfoEntity> shopMap = shopList.stream().collect(Collectors.toMap(ShopInfoEntity::getId, Function.identity()));
 
         //sku
         List<String> skuIdList = soB2cDetailList.stream().map(SoB2cDetailEntity::getSkuId).distinct().collect(Collectors.toList());
@@ -115,11 +114,12 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 log.error("未找到销售订单明细，订单号：{}", soB2cEntity.getCode());
                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}明细信息",soB2cEntity.getCode()));
             }
-            //店铺信息
-            ShopInfoEntity shopInfoEntity = shopMap.get(soB2cEntity.getShopId());
-            if (ObjUtil.isEmpty(shopInfoEntity)) {
-                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND, CharSequenceUtil.format("订单{}店铺信息",soB2cEntity.getCode()));
+            SoB2cReceiverEntity receiverEntity = soB2cReceiverMap.get(soB2cEntity.getId());
+            if (ObjectUtil.isEmpty(receiverEntity)) {
+                log.error("未找到销售订单买家信息，订单号：{}", soB2cEntity.getCode());
+                throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,CharSequenceUtil.format("订单{}买家信息",soB2cEntity.getCode()));
             }
+
             for (SoB2cDetailEntity soB2cDetailEntity : thisDetailList) {
                 SoB2cCoreDTO.ListRetryOutstockDTO listRetryOutstockDTO =  SoB2cCoreConverter.INSTANCE.convertSoB2cToRetryOutstock(soB2cEntity,soB2cDetailEntity);
                 //平台名称
@@ -131,8 +131,8 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 String warehouseLocationName = warehouseLocationMap.get(soB2cDetailEntity.getWarehouseLocation());
                 listRetryOutstockDTO.setWarehouseLocationName(warehouseLocationName);
                 //国家信息
-                listRetryOutstockDTO.setCountry(shopInfoEntity.getDictCountryCode());
-                listRetryOutstockDTO.setCountryName(shopInfoEntity.getCountryName());
+                listRetryOutstockDTO.setCountry(receiverEntity.getCountry());
+                listRetryOutstockDTO.setCountryName(receiverEntity.getCountryName());
                 //产品名称
                 listRetryOutstockDTO.setProductName(skuMap.get(soB2cDetailEntity.getSkuId()));
                 list.add(listRetryOutstockDTO);
