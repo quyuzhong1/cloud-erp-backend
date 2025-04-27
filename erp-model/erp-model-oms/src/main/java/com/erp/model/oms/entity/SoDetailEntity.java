@@ -80,6 +80,11 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
      */
     @TableField("tax_rate")
     private BigDecimal taxRate;
+    /**
+     * 含税单价
+     */
+    @TableField("tax_price")
+    private BigDecimal taxPrice;
 
     /**
      * 销售金额 （折后）
@@ -237,9 +242,6 @@ public class SoDetailEntity extends BaseEntity<SoDetailEntity> {
 
     @TableField(exist = false)
     private Integer index;
-
-    @TableField(exist = false)
-    private BigDecimal taxPrice;
 
     public static final String MAIN_ID = "main_id";
 
