@@ -234,7 +234,8 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
                 //调出仓位
                 jsonObject.set("outWarehouseLocation", detail.getOutWarehouseLocation());
             }
-
+            //明细id
+            jsonObject.set("detailId", detail.getId());
             //备注
             jsonObject.set("remark", detail.getRemark());
 

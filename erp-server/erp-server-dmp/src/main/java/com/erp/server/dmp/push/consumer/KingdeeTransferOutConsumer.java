@@ -42,7 +42,7 @@ public class KingdeeTransferOutConsumer<T extends DmpSyncTaskIdDTO> extends Abst
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", "FBDC209463"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FBizType,FBillTypeID.FNUMBER";
+        String fieldKeys = "FID,FSTKTRSOUTENTRY_FEntryID,FBillTypeID.FNUMBER";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 

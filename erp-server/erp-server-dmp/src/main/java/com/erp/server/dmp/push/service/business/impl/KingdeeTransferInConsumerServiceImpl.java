@@ -144,7 +144,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
             model = kingdeeCommonService.view(apiUtils,platformEntity.getId(),map);
         } catch (Exception e) {
             //新增数据
-             kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils , json, param,type);
+            saveOrUpdate( apiUtils, platformEntity, map,json, param);
             return;
         }
         //查找到数据后，判断其审核状态
@@ -166,7 +166,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
             ArrayList<String> apiFieldList = (ArrayList) Arrays.stream(allKey.toString().split(",")).collect(Collectors.toList());
             param.setNeedUpDateFields(apiFieldList);
             //更新数据
-            kingdeeCommonService.saveOrUpdate(platformEntity, map, apiUtils, json, param, ApiModuleTypeEnum.TRANSFER_IN.getCode());
+            saveOrUpdate( apiUtils, platformEntity, map,json, param);
         }
     }
 
@@ -184,9 +184,9 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
     /**
      * 新增
      */
-    public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,Integer type,JSONObject json,KingdeeParamDTO.SaveParamDTO param) {
+    public Boolean saveOrUpdate (KingdeeApiUtils apiUtils,PlatformEntity platformEntity,Map<String, Object> map,JSONObject json,KingdeeParamDTO.SaveParamDTO param) {
 
-        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,type);
+        Boolean isAdd = kingdeeCommonService.saveOrUpdate(platformEntity,map,apiUtils,json,param,ApiModuleTypeEnum.TRANSFER_IN.getCode());
         if (isAdd) {
             //给明细id赋值
             JSONArray jsonArray = setDetailIdForJSONObject(apiUtils, map);
@@ -213,7 +213,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
         queryFilters.add(String.format("FId = '%s'", id));
         String filterStr = String.join(" and ", queryFilters);
         //查询子单据id
-        String fieldKeys = "FSTKTRSOUTENTRY_FEntryID";
+        String fieldKeys = "FSTKTRSINENTRY_FEntryID";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 1000, 1, 0);
         if (CollectionUtils.isEmpty(queryList)) {
             //错误日志
@@ -227,7 +227,7 @@ public class KingdeeTransferInConsumerServiceImpl implements KingdeeTransferInCo
             JSONObject newJson = new JSONObject(new LinkedHashMap<>());
             if (list.size() >= queryList.size()) {
                 //金蝶明细id赋值
-                newJson.set("kingdeeDetailId",queryList.get(i).get("FSTKTRSOUTENTRY_FEntryID"));
+                newJson.set("kingdeeDetailId",queryList.get(i).get("FSTKTRSINENTRY_FEntryID"));
             }
             newJson.putAll(jsonObject);
             removeObj.set(obj);
