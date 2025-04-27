@@ -235,7 +235,8 @@ public class SyncKingdeeTransferOutServiceImpl implements SyncKingdeeTransferOut
 
             //备注
             jsonObject.set("remark", detail.getRemark());
-
+            //明细id
+            jsonObject.set("detailId", detail.getId());
             list.add(jsonObject);
         }
         resultMap.put("list", list);
