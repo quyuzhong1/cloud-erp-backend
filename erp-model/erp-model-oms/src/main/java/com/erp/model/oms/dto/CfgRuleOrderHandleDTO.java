@@ -295,6 +295,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 收货人处理
          */
         private ReceiveHandleContent receiveHandleContent;
+        /**
+         * 订单号处理
+         */
+        private OrderCodeHandleContent OrderCodeHandleContent;
     }
 
     /**
@@ -502,6 +506,32 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * oms/common/enumDropDown?type=ReceiveFilter
          */
         private List<String> filterReceiveTextNameList;
+    }
+    /**
+     * 订单处理
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OrderCodeHandleContent{
+        /**
+         * 订单号开关
+         */
+        private boolean orderCodeSwitch;
+        /**
+         * 处理订单号的规则 {@link RuleOrderHandleEnum.OrderCodeRuleContentEnum}
+         * oms/common/enumDropDown?type=OrderCodeRuleContent
+         */
+        private String handleOrderCodeRule;
+
+        /**
+         * 省/州待替换文本
+         */
+        private String orderCodeWaitReplaceText;
+
+        /**
+         * 省/州替换为。。。
+         */
+        private String orderCodeReplaceText;
     }
 
     /**
