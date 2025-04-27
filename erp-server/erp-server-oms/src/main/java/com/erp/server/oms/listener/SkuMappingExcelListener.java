@@ -297,8 +297,8 @@ public class SkuMappingExcelListener extends AnalysisEventListener<SkuMappingImp
 
         //已对应的平台sku
         String finalListingId = listingId;
-        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> s.getListingId().equals(finalListingId)
-                && dictPlatform.equals(s.getDictPlatform())
+        List<SkuMappingEntity> excelList = skuMappingList.stream().filter(s -> CharSequenceUtil.equals(s.getListingId(),finalListingId)
+                && CharSequenceUtil.equals(dictPlatform,s.getDictPlatform())
                 && platformType.equals(s.getType())
         ).collect(Collectors.toList());
 
