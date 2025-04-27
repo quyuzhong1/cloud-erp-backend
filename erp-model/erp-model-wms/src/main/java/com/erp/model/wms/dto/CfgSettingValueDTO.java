@@ -223,6 +223,23 @@ public class CfgSettingValueDTO implements Serializable {
         private List<String> userIdList;
     }
     /**
+     * 飞书要货申请完成通知DTO
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ShopAuthExpireNoticeDTO{
+
+        /**
+         * 可以选择（创建人、负责人）
+         */
+        private List<String> roleIdList;
+
+        /**
+         * 发送时间
+         */
+        private LocalTime sendTime;
+    }
+    /**
      * 委外入库
      */
     @Data
