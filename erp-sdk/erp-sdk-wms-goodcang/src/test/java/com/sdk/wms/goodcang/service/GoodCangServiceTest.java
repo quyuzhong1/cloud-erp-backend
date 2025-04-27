@@ -289,4 +289,20 @@ public class GoodCangServiceTest {
         System.out.println(response);
         System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
+
+    @Test
+    public void getInventoryLog() {
+        Map<String, Object> hashMap = new HashMap<>();
+        hashMap.put("create_date_from", "2025-04-01 16:06:01");
+        hashMap.put("create_date_end", "2025-04-25 12:00:00");
+        List<String> referenceNoList = new ArrayList<>();
+        referenceNoList.add("RG2199-250401-0003");
+        hashMap.put("reference_no_list", referenceNoList);
+        hashMap.put("pageSize", 200);
+        hashMap.put("page", 1);
+        String json = JSON.toJSONString(hashMap);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.GET_INVENTORY_LOG,json);
+        System.out.println("结果 :"+ response);
+    }
+
 }
