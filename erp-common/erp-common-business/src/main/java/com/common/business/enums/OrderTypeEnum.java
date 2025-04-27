@@ -48,4 +48,14 @@ public enum OrderTypeEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static String getCodeByName(String name) {
+        OrderTypeEnum[] orderTypeEnums = values();
+        for (OrderTypeEnum orderTypeEnum : orderTypeEnums) {
+            if (orderTypeEnum.getName().equals(name)) {
+                return orderTypeEnum.getCode();
+            }
+        }
+        return null;
+    }
 }

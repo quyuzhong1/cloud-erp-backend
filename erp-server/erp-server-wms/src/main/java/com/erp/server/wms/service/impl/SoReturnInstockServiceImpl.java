@@ -3,7 +3,10 @@ package com.erp.server.wms.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -18,27 +21,31 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -47,6 +54,7 @@ import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
@@ -68,29 +76,40 @@ import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.kingdee.SyncSoReturnInstockService;
+import com.erp.server.wms.listener.SoReturnStockExcelListener;
 import com.erp.server.wms.mapper.SoReturnInstockMapper;
 import com.erp.server.wms.service.*;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_SO_RETURN_IN_STOCK;
-import static com.common.core.constant.EnumMessage.codeEnumMessageMaps;
 
 /**
  * 退货入库单
@@ -98,6 +117,7 @@ import static com.common.core.constant.EnumMessage.codeEnumMessageMaps;
  * @author Luo_WG
  * @since 2023-05-10
  */
+@Slf4j
 @Service
 public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstockMapper, SoReturnInstockEntity> implements SoReturnInstockService {
     @Resource
@@ -1847,6 +1867,179 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     @Override
     public List<SoReturnInstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset) {
         return baseMapper.queryToSdy(startDate, endDate, pageSize, offset);
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/soReturnInstockTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            log.error(" downloadTemplate 下载失败 e={}", e.getMessage());
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    @Override
+    public Boolean importFile(MultipartFile excelFile, HttpServletResponse response) {
+        SoReturnStockExcelListener excelListenerUtil = new SoReturnStockExcelListener();
+
+        try {
+            EasyExcel.read(excelFile.getInputStream(), SoReturnStockImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+        } catch (IOException e) {
+            log.error("导入错误！", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入格式错误！", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+        //验证导入数据是否为空
+        List<SoReturnStockImportExcelDTO> excelDateList = excelListenerUtil.getAllList();
+        if (CollectionUtils.isEmpty(excelDateList)) {
+            throw new ServiceException(ApiError.ERROR_95123);
+        }
+        //导入数据处理
+        List<SoReturnStockImportExcelDTO> successList = excelListenerUtil.getSuccessList();
+        //导出错误数据
+        List<SoReturnStockImportExcelDTO> errorList = excelListenerUtil.getErrorList();
+        //处理校验导入成功数据
+        handleImportSoReturnstockFile(successList, errorList);
+
+        if (errorList.isEmpty()) {
+            return Boolean.TRUE;
+        }
+        String excelPath = "excel/soReturnInstockError.xlsx";
+        String name = "soReturnInstockError";
+        try {
+            new ExcelPrintUtils().patchExport(errorList,
+                    response,
+                    StrUtil.builder().append(DateUtil.nowExcelFileFormat()).append(name).toString(),
+                    excelPath);
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        }
+        return Boolean.FALSE;
+    }
+
+    /**
+     * 导出数据处理
+     * @author will
+     * @date 2025/4/24 19:53
+     * @param successList
+     * @param errorList
+     * @return void
+     */
+    private void handleImportSoReturnstockFile ( List<SoReturnStockImportExcelDTO> successList,List<SoReturnStockImportExcelDTO> errorList) {
+        if (CollUtil.isEmpty(successList)) {
+            return;
+        }
+        Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName()).concat(obj.getBillDateStr()).concat(obj.getTypeName())));
+        //客户
+        List<CustomerInfoEntity> customerInfoList = customerFeign.listCustomer();
+        Map<String, CustomerInfoEntity> customerMap = customerInfoList.stream().collect(Collectors.toMap(CustomerInfoEntity::getName, Function.identity()));
+
+        //币种
+        List<String> currencyList = successList.stream().map(SoReturnStockImportExcelDTO::getCurrencyStr).distinct().collect(Collectors.toList());
+        List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
+        Map<String, CurrencyDTO.ViewDTO> currencyMap = viewList.stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getName, Function.identity()));
+
+        //sku
+        List<String> skuNoList = successList.stream().map(SoReturnStockImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<SkuVO> skuVOS = plmTaskFeign.listBySkuNoList(skuNoList);
+        Map<String, SkuVO> skuMap = skuVOS.stream().collect(Collectors.toMap(SkuVO::getSkuNo, Function.identity()));
+
+        //仓库
+        List<String> warehosueNameList = successList.stream().map(SoReturnStockImportExcelDTO::getWarehouseName).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseList = warehouseService.listByWarehouseNameList(warehosueNameList);
+        Map<String, WarehouseEntity> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
+
+        //仓位
+        List<String> warehousIdList = warehouseList.stream().map(WarehouseEntity::getId).distinct().collect(Collectors.toList());
+        List<String> warehouseLocationNameList = successList.stream().map(SoReturnStockImportExcelDTO::getWarehouseLocationName).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndNameList(warehousIdList, warehouseLocationNameList);
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getWarehouseId(),obj.getName()) , Function.identity()));
+
+        for (Map.Entry<String, List<SoReturnStockImportExcelDTO>> entry : map.entrySet()) {
+            List<SoReturnStockImportExcelDTO> value = entry.getValue();
+            SoReturnStockImportExcelDTO excelDTO = value.get(0);
+            List<String> errorMsgList = new ArrayList<>();
+            SoReturnInstockDTO.Add add = new SoReturnInstockDTO.Add();
+
+            CustomerInfoEntity customerInfoEntity = customerMap.get(excelDTO.getCustomerName());
+            if (ObjectUtil.isEmpty(customerInfoEntity) || !ApproveStatusEnum.APPROVE.getCode().equals(customerInfoEntity.getApproveStatus())) {
+                errorMsgList.add("未找到有效客户" + excelDTO.getCustomerName());
+            } else {
+                add.setCustomerId(customerInfoEntity.getId());
+            }
+            //币别
+            CurrencyDTO.ViewDTO viewDTO = currencyMap.get(excelDTO.getCurrencyStr());
+            if (ObjectUtil.isEmpty(viewDTO) ) {
+                errorMsgList.add("未找到币别" + excelDTO.getCurrencyStr());
+            } else {
+                add.setCurrencySymbol(viewDTO.getSymbol());
+                add.setCurrency(viewDTO.getId());
+            }
+            add.setBillDate(LocalDateUtil.parseStrToLocalDate(excelDTO.getBillDateStr()));
+            add.setType(OrderTypeEnum.getCodeByName(excelDTO.getTypeName()));
+
+            List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
+            for (SoReturnStockImportExcelDTO soReturnStockImportExcelDTO : value) {
+                SoReturnInstockDetailDTO.Add addDetail = new SoReturnInstockDetailDTO.Add();
+                //sku赋值
+                SkuVO skuVO = skuMap.get(soReturnStockImportExcelDTO.getSkuNo());
+                if (ObjectUtil.isEmpty(skuVO) || !ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(skuVO.getStatus()) ) {
+                    errorMsgList.add("未找到有效SKU" + soReturnStockImportExcelDTO.getSkuNo());
+                } else {
+                    addDetail.setSkuId(skuVO.getSkuId());
+                    addDetail.setSkuNo(soReturnStockImportExcelDTO.getSkuNo());
+                }
+                WarehouseEntity warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
+                if (ObjectUtil.isEmpty(warehouseEntity) || warehouseEntity.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouseEntity.getApproveStatus())) {
+                    errorMsgList.add("未找到有效仓库：" + soReturnStockImportExcelDTO.getWarehouseName());
+                } else {
+                    addDetail.setWarehouseId(warehouseEntity.getId());
+                }
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(CharSequenceUtil.format("{}-{}", warehouseEntity.getId(), soReturnStockImportExcelDTO.getWarehouseLocationName()));
+                if (ObjectUtil.isEmpty(warehouseLocationEntity)) {
+                    errorMsgList.add("仓库:"+soReturnStockImportExcelDTO.getWarehouseName()+"未找到有效仓位：" + soReturnStockImportExcelDTO.getWarehouseLocationName());
+                } else {
+                    addDetail.setWarehouseLocation(warehouseLocationEntity.getCode());
+                }
+                if(CollUtil.isNotEmpty(errorMsgList)) {
+                    soReturnStockImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(soReturnStockImportExcelDTO);
+                    continue;
+                }
+                addDetail.setRemark(soReturnStockImportExcelDTO.getRemark());
+                addDetail.setRealQty(Integer.valueOf(soReturnStockImportExcelDTO.getRealQtyStr()));
+                addDetail.setReturnAmount(MathUtil.valueOf(soReturnStockImportExcelDTO.getReturnAmountStr()));
+                addDetail.setTaxReturnAmount(MathUtil.valueOf(soReturnStockImportExcelDTO.getTaxReturnAmountStr()));
+                addDetail.setReturnReasonDict(ReturnReasonEnum.getCodeByName(soReturnStockImportExcelDTO.getReturnReasonDictStr()));
+                detailList.add(addDetail);
+            }
+            if (CollUtil.isEmpty(detailList)) {
+                continue;
+            }
+            add.setDetailList(detailList);
+            try {
+            ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class).add(add);
+            } catch (Exception e) {
+                value.forEach(obj -> obj.setErrorMsg("1、" + e.getMessage()));
+                errorList.addAll(value);
+            }
+        }
     }
 
     public void syncToSdyHandler(List<SoReturnInstockEntity> list, String operate) {
