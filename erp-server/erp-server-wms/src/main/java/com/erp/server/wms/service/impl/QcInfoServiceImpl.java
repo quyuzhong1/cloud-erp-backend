@@ -983,6 +983,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         if (!CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.DRAFT.getCode()) && !CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.WAIT_QC.getCode())) {
             throw new ServiceException(ApiError.ERROR_99020);
         }
+        if(bill.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+            throw new ServiceException("数据来源质检通知单不可在此操作");
+        }
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
         //采购订单id
@@ -2502,6 +2505,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             QcInfoEntity qcInfoEntity = super.getById(id);
             if (Objects.isNull(qcInfoEntity)){
                 throw new ServiceException(ApiError.NOT_EXIST_BILL,"质检单信息");
+            }
+            if(qcInfoEntity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+                throw new ServiceException("数据来源质检通知单不可在此操作");
             }
 
             // 只有已质检才允许操作

@@ -131,6 +131,7 @@
         count(*)  AS count
         FROM  qc_notice as qn
         WHERE qn.is_deleted=FALSE
+            and qn.approve_status = 'approve'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
