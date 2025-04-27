@@ -524,6 +524,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
         //质检通知单审核通过自动生成质检单
         for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
+            if(qcInfoView.getQcGoodQty().equals(0) && qcInfoView.getQcBadQty().equals(0)){
+                throw new ServiceException( ApiError.ERROR_92274, qcInfoView.getSkuNo());
+            }
             QcInfoDTO.SaveOrUpdateDTO addDto = new QcInfoDTO.SaveOrUpdateDTO();
             //来源
             addDto.setSourceCode(qcInfoView.getCode());
@@ -629,7 +632,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 List<TransferOutDetailDTO.AddDTO> detailList = new ArrayList<>();
                 List<QcNoticeDetailEntity> qcNoticeDetailList = detailMapByMainId.get(qcNoticeEntity.getId());
                 for (QcNoticeDetailEntity detailEntity : qcNoticeDetailList) {
-                    if(detailEntity.getQcGoodQty().intValue() > 0){
+                    if(detailEntity.getQcGoodQty().intValue() > 0 || detailEntity.getQcBadQty().intValue() >0){
                         TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
                         transferOutDetail.setSkuId(detailEntity.getSkuId());
                         transferOutDetail.setQty(detailEntity.getQcGoodQty());
@@ -723,8 +726,15 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
 
             if(!transferOutMap.containsKey(qcNoticeId)){
                 QcNoticeEntity qcNoticeEntity = noticeMap.get(qcNoticeId);
-                BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(errorMessage, qcNoticeEntity.getCode()));
-                results.add(fail);
+                List<QcNoticeDetailEntity> qcNoticeDetailList = qcNoticeDetailMap.get(qcNoticeId);
+                if(CollUtil.isNotEmpty(qcNoticeDetailList)){
+                    List<String> qcNoticeDetailIdList = qcNoticeDetailList.stream().map(QcNoticeDetailEntity::getId).collect(Collectors.toList());
+                    //撤销质检通知单状态
+                    cancelQcNotice(qcNoticeId,qcNoticeDetailIdList);
+                }else {
+                    BatchResultDTO fail = BatchResultDTO.fail(qcNoticeEntity.getId(), qcNoticeEntity.getCode(), StrUtil.format(errorMessage, qcNoticeEntity.getCode()));
+                    results.add(fail);
+                }
             }else {
                 for (TransferOutEntity transferOutEntity : transferOutMap.get(qcNoticeId)) {
                     if(transferOutEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING)
