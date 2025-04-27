@@ -104,6 +104,7 @@ public class ExportScmFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
             warehouseTableField = "sdd.dest_warehouse_id",
+            shopTableField = "sd.shop_id",
             menuCode = "scm:salesDemand:paging",
             tableAlias = "sd")
     @WebAdvanceQuery

@@ -66,6 +66,7 @@ public class SalesDemandController extends BaseController {
    @DataPermission(operationType = DataAttributeEnum.LIST,
            tableField = "apply_user_id",
            warehouseTableField = "sdd.dest_warehouse_id",
+           shopTableField = "sd.shop_id",
            menuCode = "scm:salesDemand:paging",
            tableAlias = "sd")
    @WebAdvanceQuery
@@ -84,6 +85,7 @@ public class SalesDemandController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
             warehouseTableField = "sdd.dest_warehouse_id",
+            shopTableField = "sd.shop_id",
             menuCode = "scm:salesDemand:paging",
             tableAlias = "sd")
     public ApiResult<List<ListStatusCountDTO.SalesDemandCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
