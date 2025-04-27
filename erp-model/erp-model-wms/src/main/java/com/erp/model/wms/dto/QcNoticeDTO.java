@@ -7,6 +7,7 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import lombok.Data;
@@ -288,7 +289,7 @@ public class QcNoticeDTO implements Serializable {
         /**
         * 单据状态
         */
-        private String approveStatus;
+        private ApproveStatusEnum approveStatus;
 
         private String approveStatusName;
 
