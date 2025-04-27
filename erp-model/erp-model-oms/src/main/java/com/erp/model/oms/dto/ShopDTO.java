@@ -204,6 +204,11 @@ public class ShopDTO implements Serializable {
          */
          private String returnWarehouse;
          private String returnWarehouseName;
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
     }
 
 

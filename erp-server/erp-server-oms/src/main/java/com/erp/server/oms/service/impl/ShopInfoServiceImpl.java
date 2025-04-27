@@ -491,8 +491,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         ShopAuthorizeUrlDTO authorizeUrlDTO = new ShopAuthorizeUrlDTO();
         authorizeUrlDTO.setShopId(entity.getId());
         authorizeUrlDTO.setPlatformCode(entity.getDictPlatform());
-
-        String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        String shopAuthorizeUrl = "";
+        //temu全托管通过用户输入的信息检验授权
+        if(entity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+            ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
+            shopAuthorizeDTO.setShopId(entity.getId());
+            shopAuthorizeDTO.setPlatformCode(entity.getDictPlatform());
+            this.shopAuthorize(shopAuthorizeDTO,null);
+        }else{
+            shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        }
         return new ShopDTO.RedirectDTO(entity.getId(), shopAuthorizeUrl);
     }
 
