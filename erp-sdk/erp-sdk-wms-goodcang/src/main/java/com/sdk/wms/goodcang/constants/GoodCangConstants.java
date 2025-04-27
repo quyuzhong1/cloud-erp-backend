@@ -26,4 +26,5 @@ public class GoodCangConstants {
     public static final String METHOD_POST_UPLOAD_ORDER_LABEL = "/public_open/order/upload_order_label";
 
     public static final String INVENTORY_AGE_LIST = "/public_open/inventory/inventory_age_list";
+    public static final String GET_INVENTORY_LOG = "/public_open/inventory/get_inventory_log";
 }
