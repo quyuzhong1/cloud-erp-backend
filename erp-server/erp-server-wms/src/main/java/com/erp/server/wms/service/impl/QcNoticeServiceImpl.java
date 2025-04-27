@@ -642,7 +642,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                     }
                 }
                 addOutDTO.setDetailList(detailList);
-                transferOutService.add(addOutDTO);
+                if(CollUtil.isNotEmpty(detailList)){
+                    transferOutService.add(addOutDTO);
+                }
             }
         }
 
@@ -936,7 +938,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         data.setQcTypeName(QcTypeEnum.getByCode(data.getQcType()));
 
         //单据状态
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatusName(data.getApproveStatus().getName());
 
         if(CollUtil.isNotEmpty(data.getDetailList())){
             List<QcNoticeDetailDTO.ViewDTO> detailList = data.getDetailList();
