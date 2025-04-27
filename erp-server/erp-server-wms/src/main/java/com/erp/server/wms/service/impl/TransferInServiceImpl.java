@@ -924,6 +924,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             inGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
             inGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
             inGoods.setWarehouseId(entity.getInWarehouseId());
+            inGoods.setRemark(detailEntity.getRemark());
             inGoodsList.add(inGoods);
         }
         abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), inGoodsList, SourceTypeEnum.OTHER_INSTOCK);
@@ -956,6 +957,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             outGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
             outGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
             outGoods.setWarehouseId(entity.getInWarehouseId());
+            outGoods.setRemark(detailEntity.getRemark());
             outGoodsList.add(outGoods);
         }
         abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), outGoodsList, SourceTypeEnum.OTHER_OUTSTOCK);

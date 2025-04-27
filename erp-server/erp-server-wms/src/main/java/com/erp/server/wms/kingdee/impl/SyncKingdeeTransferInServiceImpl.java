@@ -3,7 +3,7 @@ package com.erp.server.wms.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -151,10 +151,14 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
         }
         //查询分步式调出
         TransferOutEntity transferOutEntity = transferOutService.getById(entity.getSourceId());
-        if (ObjUtil.isEmpty(transferOutEntity)) {
+        if (ObjectUtil.isEmpty(transferOutEntity)) {
             throw new ServiceException("分步式调出未找到");
         }
-
+        //分步式调出明细
+        List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listByMainId(transferOutEntity.getId());
+        if (ObjectUtil.isEmpty(transferOutDetailList)) {
+            throw new ServiceException("分步式调出明细未找到");
+        }
         //调拨类型
         resultMap.put("type", entity.getTransferType().getKingdeeCode());
         //调拨日期
@@ -226,7 +230,8 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
             jsonObject.set("inWarehouseCode", inWarehouseCode);
             //调出仓库
             jsonObject.set("outWarehouseCode", outWarehouseCode);
-
+            jsonObject.put("inOrgCode", inOrgCode);
+            jsonObject.put("outOrgCode", outOrgCode);
             //是否下推调出仓位
             Boolean isPushOut = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getInWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
@@ -239,6 +244,19 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
             //备注
             jsonObject.set("remark", detail.getRemark());
 
+            List<Map<String,Object>> refList = new ArrayList<>();
+            JSONObject refJsonObject = new JSONObject();
+            if (ObjectUtils.isNotEmpty(transferOutEntity)) {
+                refJsonObject.set("refKingdeeId",transferOutEntity.getSyncKingdeeId());
+                if (CollectionUtils.isNotEmpty(transferOutDetailList)) {
+                    String subDetailKingdeeId = transferOutDetailList.stream()
+                            .filter(obj -> obj.getId().equals(detail.getSourceDetailId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getKingdeeDetailId()))
+                            .orElse("");
+                    refJsonObject.set("refDetailKingdeeId",subDetailKingdeeId);
+                }
+                refList.add(refJsonObject);
+                jsonObject.set("refList",refList);
+            }
             list.add(jsonObject);
         }
         resultMap.put("list", list);
