@@ -117,4 +117,8 @@ public class NoticeMsgConstant {
     public final static String PRUCHASE_PRICE_CHANGE_REJECT_CONTENT = "采购调价表【%s】已在数大臣审核不通过，请知悉\n供应商：%s \n创建人：%s \n创建时间：%s \n审核人：%s \n审核时间：%s \n审核结果：审核不通过 \n审核说明：%s ";
     public final static String PRUCHASE_PRICE_CHANGE_APPROVE_CONTENT = "采购调价表【%s】已在数大臣审核通过，请知悉\n供应商：%s \n创建人：%s \n创建时间：%s \n审核人：%s \n审核时间：%s \n审核结果：审核通过 \n审核说明：%s ";
 
+    /**
+     * 质检通知消息头
+     */
+    public final static String SHOP_EXPIRE_NOTICE="店铺{}将于{}授权到期，请及时处理";
 }

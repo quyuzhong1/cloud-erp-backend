@@ -235,6 +235,11 @@ public class CfgSettingValueDTO implements Serializable {
         private List<String> roleIdList;
 
         /**
+         * 抄送人员id集合,post请求,/api/plm/common/findUserList
+         */
+        private List<String> userIdList;
+
+        /**
          * 发送时间
          */
         private LocalTime sendTime;
