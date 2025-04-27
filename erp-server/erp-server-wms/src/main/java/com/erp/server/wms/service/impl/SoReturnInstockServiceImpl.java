@@ -31,6 +31,7 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
 import com.common.core.utils.date.LocalDateUtil;
@@ -1857,7 +1858,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/soReturnstockTemplate.xlsx";
+        String path = "classpath:excel/soReturnInstockTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -1906,8 +1907,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (errorList.isEmpty()) {
             return Boolean.TRUE;
         }
-        String excelPath = "excel/soReturnstockError.xlsx";
-        String name = "soReturnstockError";
+        String excelPath = "excel/soReturnInstockError.xlsx";
+        String name = "soReturnInstockError";
         try {
             new ExcelPrintUtils().patchExport(errorList,
                     response,
@@ -1951,6 +1952,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         List<WarehouseEntity> warehouseList = warehouseService.listByWarehouseNameList(warehosueNameList);
         Map<String, WarehouseEntity> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
 
+        //仓位
+        List<String> warehousIdList = warehouseList.stream().map(WarehouseEntity::getId).distinct().collect(Collectors.toList());
+        List<String> warehouseLocationNameList = successList.stream().map(SoReturnStockImportExcelDTO::getWarehouseLocationName).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndNameList(warehousIdList, warehouseLocationNameList);
+        Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getWarehouseId(),obj.getName()) , Function.identity()));
+
         for (Map.Entry<String, List<SoReturnStockImportExcelDTO>> entry : map.entrySet()) {
             List<SoReturnStockImportExcelDTO> value = entry.getValue();
             SoReturnStockImportExcelDTO excelDTO = value.get(0);
@@ -1972,6 +1979,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 add.setCurrency(viewDTO.getId());
             }
             add.setBillDate(LocalDateUtil.parseStrToLocalDate(excelDTO.getBillDateStr()));
+            add.setType(OrderTypeEnum.getCodeByName(excelDTO.getTypeName()));
 
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnStockImportExcelDTO soReturnStockImportExcelDTO : value) {
@@ -1990,9 +1998,28 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 } else {
                     addDetail.setWarehouseId(warehouseEntity.getId());
                 }
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(CharSequenceUtil.format("{}-{}", warehouseEntity.getId(), soReturnStockImportExcelDTO.getWarehouseLocationName()));
+                if (ObjectUtil.isEmpty(warehouseLocationEntity)) {
+                    errorMsgList.add("仓库:"+soReturnStockImportExcelDTO.getWarehouseName()+"未找到有效仓位：" + soReturnStockImportExcelDTO.getWarehouseLocationName());
+                } else {
+                    addDetail.setWarehouseLocation(warehouseLocationEntity.getCode());
+                }
+                if(CollUtil.isNotEmpty(errorMsgList)) {
+                    soReturnStockImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                    errorList.add(soReturnStockImportExcelDTO);
+                    continue;
+                }
                 addDetail.setRemark(soReturnStockImportExcelDTO.getRemark());
-
+                addDetail.setRealQty(Integer.valueOf(soReturnStockImportExcelDTO.getRealQtyStr()));
+                addDetail.setReturnAmount(MathUtil.valueOf(soReturnStockImportExcelDTO.getReturnAmountStr()));
+                addDetail.setTaxReturnAmount(MathUtil.valueOf(soReturnStockImportExcelDTO.getTaxReturnAmountStr()));
+                addDetail.setReturnReasonDict(ReturnReasonEnum.getCodeByName(soReturnStockImportExcelDTO.getReturnReasonDictStr()));
+                detailList.add(addDetail);
             }
+            if (CollUtil.isEmpty(detailList)) {
+                continue;
+            }
+            add.setDetailList(detailList);
             try {
             ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class).add(add);
             } catch (Exception e) {
@@ -2000,9 +2027,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 errorList.addAll(value);
             }
         }
-
-
-
     }
 
     public void syncToSdyHandler(List<SoReturnInstockEntity> list, String operate) {

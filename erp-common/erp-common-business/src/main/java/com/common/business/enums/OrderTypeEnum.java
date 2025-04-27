@@ -49,11 +49,11 @@ public enum OrderTypeEnum implements EnumMessage {
         return "";
     }
 
-    public static String getNameByCode(Integer code) {
+    public static String getCodeByName(String name) {
         OrderTypeEnum[] orderTypeEnums = values();
         for (OrderTypeEnum orderTypeEnum : orderTypeEnums) {
-            if (orderTypeEnum.getCode().equals(code)) {
-                return orderTypeEnum.getName();
+            if (orderTypeEnum.getName().equals(name)) {
+                return orderTypeEnum.getCode();
             }
         }
         return null;
