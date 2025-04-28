@@ -100,9 +100,8 @@ public class NfeInvoiceService {
 
 
     @Transactional(rollbackFor = Exception.class)
-    public void createInvoice(SoB2cEntity soB2cEntity) {
+    public void createInvoice(SoB2cEntity soB2cEntity,Boolean isAsync) {
         String invoiceStatus = InvoiceInfoStatusEnum.INVOICE_SUCCESS.getCode();
-        String remark = "";
         Object obj = null;
         String uploadStatus = InvoiceInfoUploadStatusEnum.WAIT_UPLOAD.getCode();
         //配置信息
@@ -128,8 +127,17 @@ public class NfeInvoiceService {
         }catch (Exception e){
             log.error("创建发票失败,返回信息:{}", e.getMessage());
             log.error("请求参数-body:{}", JSONUtil.toJsonStr(createDTO));
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,e.getMessage());
+            if (!isAsync) {
+                throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,e.getMessage());
+            }
+            //开票失败更新开票状态
+            InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
+            invoiceInfoEntity.setStatus(InvoiceInfoStatusEnum.INVOICE_FAILED.getCode());
+            invoiceInfoEntity.setRemark(e.getMessage());
+            invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
+            return;
         }
+        //开票成功
         NfeInvoiceDTO.NfeSuccessResultDTO resultDTO = null;
         try {
             //解析obj
@@ -147,7 +155,6 @@ public class NfeInvoiceService {
         InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
         invoiceInfoEntity.setStatus(invoiceStatus);
         invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
-        invoiceInfoEntity.setRemark(remark);
         invoiceInfoEntity.setQueryId(resultDTO.getId());
         invoiceInfoEntity.setPlatformInvoiceNo(resultDTO.getRecibo());
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);

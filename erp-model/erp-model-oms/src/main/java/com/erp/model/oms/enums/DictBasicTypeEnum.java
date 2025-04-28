@@ -32,6 +32,7 @@ public enum DictBasicTypeEnum {
 
     CFG_SETTING("cfgSetting", "系统配置"),
     ORDER_SOURCE_TYPE("orderSourceType", "订单来源类型"),
+    MINI_PROGRAM_SALES_PLATFORM_INTERNAL("miniProgramSalesPlatform" , "微信小程序国内销售平台"),
 
     // 数帝云
     SDY_SUB_PLATFORM("sdySubPlatform" , "数帝子平台映射"),
