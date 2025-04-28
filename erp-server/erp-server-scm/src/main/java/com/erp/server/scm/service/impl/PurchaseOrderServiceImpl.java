@@ -3215,6 +3215,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     public PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<PurchaseOrderDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理

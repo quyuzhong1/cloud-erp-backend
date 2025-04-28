@@ -529,7 +529,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     public PagingVO<TransferOutDTO.PagingViewDTO> exportTransferOut(PagingDTO<TransferOutDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<TransferOutDTO.PagingViewDTO> page = this.baseMapper.exportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             filling(page.getRecords());

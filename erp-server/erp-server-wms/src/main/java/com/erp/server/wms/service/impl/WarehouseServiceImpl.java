@@ -481,7 +481,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
     @Override
     public PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //获取导出数据
         Page<WarehouseDTO.PagingViewDTO> page = baseMapper.getExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         List<WarehouseExportExcelDTO> resultList = new ArrayList<>();

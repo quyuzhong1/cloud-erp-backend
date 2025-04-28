@@ -540,6 +540,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WarehouseLocationExportVo> page = baseMapper.listAllByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()) ,dto.getParams());
         return new PagingVO<>(page);
     }
