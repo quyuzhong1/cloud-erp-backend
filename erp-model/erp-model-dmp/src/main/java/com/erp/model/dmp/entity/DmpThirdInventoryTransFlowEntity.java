@@ -95,7 +95,7 @@ public class DmpThirdInventoryTransFlowEntity extends BaseEntity<DmpThirdInvento
      * 库存变更类型
      */
     @TableField("inventory_change_type")
-    private Integer inventoryChangeType;
+    private String inventoryChangeType;
     /**
      * 库存变更类型描述
      */
@@ -105,7 +105,7 @@ public class DmpThirdInventoryTransFlowEntity extends BaseEntity<DmpThirdInvento
      * 商品品质:0=全部,1=良品,2=不良品  枚举：DmpThirdInventoryTransFlowProductTypeEnum
      */
     @TableField("product_type")
-    private Integer productType;
+    private String productType;
     /**
      * 库存变更数量
      */
