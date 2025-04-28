@@ -47,4 +47,20 @@ public interface InvoiceDetailService extends SuperService<InvoiceDetailEntity> 
      * @param detailList
      */
     void batchUpdate(String id, List<InvoiceDetailDTO.UpdateDTO> detailList);
+    /**
+     * 根据主表ids查询
+     * @author will
+     * @date 2025/4/9 11:23
+     * @param mainIdList
+     * @return List<InvoiceDetailEntity>
+     */
+    List<InvoiceDetailEntity> listByMainIdList(List<String> mainIdList);
+    /**
+     * 根据主表id进行删除
+     * @author will
+     * @date 2025/4/9 15:44
+     * @param mainId
+     * @return void
+     */
+    void removeByMainId(String mainId);
 }

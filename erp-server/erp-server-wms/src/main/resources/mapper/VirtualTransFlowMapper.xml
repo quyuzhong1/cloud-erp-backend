@@ -144,7 +144,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        vtf.id desc
+        vtf.trade_time desc
     </select>
 
     <!-- 查询指定天数最后一条流水 -->

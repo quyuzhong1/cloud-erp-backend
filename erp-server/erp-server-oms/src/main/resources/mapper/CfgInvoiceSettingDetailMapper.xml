@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.CfgInvoiceSettingDetailMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="main_id" property="mainId" />
+       <result column="dict_platform" property="dictPlatform" />
+       <result column="shop_id" property="shopId" />
+       <result column="dict_invoice_rule" property="dictInvoiceRule" />
+       <result column="ratio" property="ratio" />
+       <result column="is_contain_ship_fee" property="isContainShipFee" />
+       <result column="tax_type" property="taxType" />
+       <result column="invoice_node" property="invoiceNode" />
+       <result column="is_auto_upload" property="isAutoUpload" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        cisd.id,
+        cisd.create_user_id,
+        cisd.create_user_name,
+        cisd.create_time,
+        cisd.update_user_id,
+        cisd.update_user_name,
+        cisd.update_time,
+        cisd.version,
+        cisd.is_deleted,
+        cisd.main_id,
+        cisd.dict_platform,
+        cisd.shop_id,
+        cisd.dict_invoice_rule,
+        cisd.ratio,
+        cisd.is_contain_ship_fee,
+        cisd.tax_type,
+        cisd.invoice_node,
+        cisd.is_auto_upload
+    </sql>
+
+    <!-- 结果映射 -->
+    <resultMap id="DetailGroupResultMap" type="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$ViewDTO">
+        <id column="main_id" property="mainId"/>
+        <collection property="detailDTOList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$DetailListDTO">
+            <result column="platform_name" property="platformName"/>
+            <result column="dict_platform" property="platformValue"/>
+            <collection property="detailDTOList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO$CommonDTO">
+                <id column="id" property="id"/>
+                <result column="dict_platform" property="dictPlatform"/>
+                <result column="shop_id" property="shopId"/>
+                <result column="dict_invoice_rule" property="dictInvoiceRule"/>
+                <result column="ratio" property="ratio"/>
+                <result column="is_contain_ship_fee" property="isContainShipFee"/>
+                <result column="tax_type" property="taxType"/>
+                <result column="invoice_node" property="invoiceNode"/>
+                <result column="is_auto_upload" property="isAutoUpload"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+
+    <!-- 根据店铺id集合查询 -->
+    <select id="listByShopIdList" resultType="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
+        select
+            <include refid="Base_Column_List" />
+        from cfg_invoice_setting cis
+        inner join cfg_invoice_setting_detail cisd on cis.id = cisd.main_id and cisd.is_deleted = false
+        where cis.is_deleted = false and cis.disabled = false
+        and cisd.shop_id in
+        <foreach collection="shopIdList" separator="," open="(" close=")" item="item">
+            #{item}
+        </foreach>
+    </select>
+
+    <!-- 查询启用数据 -->
+    <select id="getInvoiceSettingDetail" resultType="com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity">
+        select
+            cis.token,
+        <include refid="Base_Column_List" />
+        from cfg_invoice_setting cis
+        inner join cfg_invoice_setting_detail cisd on cis.id = cisd.main_id and cisd.is_deleted = false
+        where cis.is_deleted = false and cis.disabled = false
+        and cisd.dict_platform  = #{dictPlatform} and cisd.shop_id = #{shopId}
+        limit 1
+    </select>
+    <!-- 可选：如果不想在Java代码中处理ratio乘以100的逻辑，可以在SQL中处理 -->
+    <select id="selectDetailsByMainIdGroupByPlatformWithRatioAdjusted" resultMap="DetailGroupResultMap">
+        SELECT
+        d.id,
+        d.main_id,
+        d.dict_platform,
+        d.shop_id,
+        d.dict_invoice_rule,
+        d.ratio * 100 as ratio, <!-- 在SQL中直接乘以100 -->
+        d.is_contain_ship_fee,
+        d.tax_type,
+        d.invoice_node,
+        d.is_auto_upload,
+        d.create_time,
+        d.update_time,
+        COALESCE(dict.name, d.dict_platform) as platform_name
+        FROM
+        cfg_invoice_setting_detail d
+        LEFT JOIN
+        dict_basic dict ON d.dict_platform = dict.value AND dict.type = #{dictKey}
+        WHERE
+        d.main_id = #{mainId}
+        AND d.is_deleted = false
+        <if test="platformValues != null and platformValues.size() > 0">
+            AND d.dict_platform IN
+            <foreach collection="platformValues" item="value" open="(" separator="," close=")">
+                #{value}
+            </foreach>
+        </if>
+        ORDER BY
+        dict.name DESC
+    </select>
+
+</mapper>

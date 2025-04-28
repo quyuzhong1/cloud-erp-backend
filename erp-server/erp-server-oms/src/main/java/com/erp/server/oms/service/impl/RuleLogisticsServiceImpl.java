@@ -203,7 +203,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "启用" : "停用", Boolean.TRUE.equals(disabled) ? "停用" : "启用");
+        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "停用");
         ruleLogistics.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), dto.getId(), "状态变更");
         return this.updateById(ruleLogistics);

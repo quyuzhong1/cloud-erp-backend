@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
@@ -140,6 +141,15 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         return lambdaQuery().eq(ListingInfoEntity::getType, type).
                 eq(platform != null ,ListingInfoEntity::getPlatform, platform).
                 in(ListingInfoEntity::getPlatformSkuNo, skuNoList)
+                .list();
+    }
+
+
+    @Override
+    public List<ListingInfoEntity> listByParams(String type, List<String> platformList, List<String> platformSkuNoList) {
+        return lambdaQuery().eq(ListingInfoEntity::getType, type).
+                in(CollUtil.isNotEmpty(platformList),ListingInfoEntity::getPlatform, platformList).
+                in(ListingInfoEntity::getPlatformSkuNo, platformSkuNoList)
                 .list();
     }
 

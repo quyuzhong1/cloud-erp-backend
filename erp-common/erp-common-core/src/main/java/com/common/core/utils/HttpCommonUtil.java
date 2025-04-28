@@ -139,7 +139,11 @@ public class HttpCommonUtil {
             }
 
             if (!ObjectUtils.isEmpty(parameters)) {
-                MediaType mediaType = MediaType.parse("application/json; charset=utf-8");
+                String contentType = "application/json; charset=utf-8"; // 默认JSON
+                if (header != null && header.containsKey("Content-Type")) {
+                    contentType = header.get("Content-Type");
+                }
+                MediaType mediaType = MediaType.parse(contentType);
                 requestBuilder.post(RequestBody.create(mediaType, parameters));
             }
 
