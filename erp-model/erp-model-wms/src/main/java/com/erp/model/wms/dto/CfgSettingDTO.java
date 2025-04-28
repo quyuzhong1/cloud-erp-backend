@@ -142,6 +142,10 @@ public class CfgSettingDTO implements Serializable {
          */
         private CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeApproveNoticeDTO;
 
+        /**
+         * 店铺授权有效期到期预警
+         */
+        private CfgSettingValueDTO.ShopAuthExpireNoticeDTO shopAuthExpireNoticeDTO;
     }
 
 
