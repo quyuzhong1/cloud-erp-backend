@@ -153,7 +153,6 @@ public class QcNoticeDetailDTO implements Serializable {
         /**
         * 主键id
         */
-        @NotBlank(message = "明细id不能为空")
         private String id;
 
     }
@@ -187,7 +186,7 @@ public class QcNoticeDetailDTO implements Serializable {
         * 质检通知数量
         */
         @NotNull(message = "质检通知数量不能为空")
-        @Min(value = 0,message = "质检通知数量不能小于0")
+        @Min(value = 1,message = "质检通知数量不能小于0")
         private Integer qcNoticeQty;
 
         /**
