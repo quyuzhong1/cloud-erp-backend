@@ -17,6 +17,7 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.oms.enums.MercadoOrderLogisticTypeEnum;
 import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cNfeStatusEnum;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpSoDetailService;
 import com.erp.server.dmp.service.DmpSoInfoService;
@@ -129,6 +130,12 @@ public class MercadoLocalOrderDmpHandler extends MercadoLocalDmpHandler {
                         //发货时间
                         OffsetDateTime offsetDateTime = OffsetDateTime.parse(String.valueOf(dateCreated), formatter);
                         dmpDataMap.put("deliveryTime", offsetDateTime.toLocalDateTime());
+                    }
+                    if(shipmentMap.containsKey("substatus") && shipmentMap.get("substatus")!=null){
+                        String subStatus = shipmentMap.get("substatus").toString();
+                        if("invoice_pending".equals(subStatus)){
+                            dmpDataMap.put("nfeInvoiceStatus", SoB2cNfeStatusEnum.PENDING.getCode());
+                        }
                     }
 
                     //物流状态

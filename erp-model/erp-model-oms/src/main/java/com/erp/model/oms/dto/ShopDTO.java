@@ -3,7 +3,6 @@ package com.erp.model.oms.dto;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.dto.base.UpdateStateDTO.BatchUpdateDTO;
 import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.oms.enums.ShopTypeEnum;
@@ -12,10 +11,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -1107,5 +1103,15 @@ public class ShopDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformParamDTO {
+        /**
+         * 平台集合
+         */
+        @NotEmpty(message = "平台集合不能为空")
+        private List<String> platformList;
     }
 }

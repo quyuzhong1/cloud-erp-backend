@@ -1,13 +1,14 @@
 package com.erp.server.oms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.InvoiceInfoDTO;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -22,4 +23,20 @@ import org.apache.ibatis.annotations.Param;
 public interface InvoiceInfoMapper extends BaseMapper<InvoiceInfoEntity> {
 
     IPage<InvoiceInfoDTO.PagingViewDTO> paging(@Param("query") Page<InvoiceInfoDTO.PagingViewDTO> query, @Param("params") InvoiceInfoDTO.PagingParamDTO params);
+    /**
+     * 查询需要导出的URL
+     * @author will
+     * @date 2025/4/9 16:24
+     * @param params
+     * @return ExportAttachDTO
+     */
+    List<InvoiceInfoDTO.ExportAttachDTO> listExportUrl(@Param("params") InvoiceInfoDTO.PagingParamDTO params, @Param("type")String type);
+    /**
+     * 根据销售订单查询最新发票PDF
+     * @author will
+     * @date 2025/4/14 18:01
+     * @param soId
+     * @return AttachDTO
+     */
+    InvoiceInfoDTO.AttachDTO getNewInvoicedAttachBySoId(@Param("soId")String soId,@Param("invoiceType")String invoiceType,@Param("attachmentType")String attachmentType);
 }

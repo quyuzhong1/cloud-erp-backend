@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.DictInvoiceHsMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.DictInvoiceHsEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="hs_code" property="hsCode" />
+       <result column="description" property="description" />
+       <result column="country" property="country" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        hs_code, description, country
+    </sql>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.oms.dto.DictInvoiceHsDTO$ListDTO">
+            select
+                <include refid="Base_Column_List"/>
+            from dict_invoice_hs dih
+            <where>
+                ${params.sqlMap.default}
+                and dih.is_deleted = false
+                <if test="params.permissionSql!=null and params.permissionSql!=''">
+                    ${params.permissionSql}
+                </if>
+                ORDER BY
+                <if test="params.sortList != null and params.sortList.size > 0">
+                    <foreach collection="params.sortList" item="item" separator="," close=",">
+                        ${item.field} ${item.sort}
+                    </foreach>
+                </if>
+                dih.id desc
+            </where>
+    </select>
+
+
+</mapper>

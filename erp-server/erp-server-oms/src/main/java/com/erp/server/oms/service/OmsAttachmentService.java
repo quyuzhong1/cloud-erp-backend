@@ -30,6 +30,14 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      * @return void
      */
     void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId);
+    /**
+     * 批量更新或修改
+     * @author will
+     * @date 2025/4/18 18:25
+     * @param addOrUpdateList
+     * @return void
+     */
+    void batchAddOrUpdate(List<OmsAttachmentDTO.UpdateDTO> addOrUpdateList);
 
 
     /**

@@ -216,7 +216,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "启用" : "停用", Boolean.TRUE.equals(disabled) ? "停用" : "启用");
+        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(dto.getState()) ? "停用" : "启用");
         ruleOrderHandle.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), dto.getId(), "状态更新");
         return this.updateById(ruleOrderHandle);
@@ -268,8 +268,27 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             this.handleZipCodeRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
             //处理收货人
             this.handleReceiveRule(logisticsOrderVO.getReceiverInfoVO(),ruleMatchDTO.getRuleContent());
+            //处理号订单
+            logisticsOrderVO.setDeliveryNo(this.handleOrderCodeRule(logisticsOrderVO.getDeliveryNo(),ruleMatchDTO.getRuleContent()));
         }
         return logisticsOrderVO;
+    }
+
+    /***
+     * 订单号处理
+     * @param orderCode
+     * @param ruleContent
+     */
+    private String handleOrderCodeRule(String orderCode, CfgRuleOrderHandleDTO.RuleContent ruleContent) {
+        CfgRuleOrderHandleDTO.OrderCodeHandleContent orderHandleContent = ruleContent.getOrderCodeHandleContent();
+        if(Objects.isNull(orderHandleContent)){
+            return orderCode;
+        }
+        //订单号替换开关
+        if (orderHandleContent.isOrderCodeSwitch()){
+            return orderCode.replace(orderHandleContent.getOrderCodeWaitReplaceText(), orderHandleContent.getOrderCodeReplaceText());
+        }
+        return orderCode;
     }
 
     @Override
@@ -284,6 +303,8 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
             this.handleZipCodeRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
             //处理收货人
             this.handleReceiveRule(createOutboundReq.getReceiverInfo(),ruleMatchDTO.getRuleContent());
+            //处理号订单
+            createOutboundReq.setReferenceNo(this.handleOrderCodeRule(createOutboundReq.getReferenceNo(),ruleMatchDTO.getRuleContent()));
         }
         return createOutboundReq;
     }
