@@ -94,6 +94,7 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
                     handlerGoods.setSpecNo(v.getSkuNo());
                     handlerGoods.setPositionNo(goods.getPositionNo());
                     handlerGoods.setNum(goods.getNum().multiply(new BigDecimal(v.getQuantity())));
+                    handlerGoods.setRemark(goods.getRemark());
                     handlerGoodsList.add(handlerGoods);
                 });
             }
