@@ -19,14 +19,14 @@ public class QcNoticeDetailImportExcelDTO {
      * sku
      */
     @ExcelProperty(value = "*SKU")
-    @FieldValid(fieldName = "SKU", isNotBlank = true)
+    @FieldValid(fieldName = "SKU", isNotBlank = true,maxLength = 64)
     private String skuNo;
 
     /**
      * 计划数量
      */
     @ExcelProperty(value = "*质检通知数量")
-    @FieldValid(fieldName = "质检通知数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 16)
+    @FieldValid(fieldName = "质检通知数量",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.POSITIVEINTEGER,maxLength = 32)
     private String qcNoticeQty;
     /**
      * 错误信息
