@@ -7,10 +7,12 @@ import com.erp.model.oms.dto.SoB2cCoreDTO;
 import com.erp.server.oms.service.SoB2cCoreService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.io.IOException;
 import java.util.List;
 /**
  * b2c扩展类
@@ -35,7 +37,7 @@ public class SoB2cCoreController extends BaseController {
      * @return ApiResult<List<ListRetryOutstockDTO>>
      */
     @PostMapping("/listRetryOutstock")
-    public ApiResult<List<SoB2cCoreDTO.ListRetryOutstockDTO>> listRetryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) throws IOException {
+    public ApiResult<List<SoB2cCoreDTO.ListRetryOutstockDTO>> listRetryOutstock(@RequestBody @Validated BaseIdsDTO.IdsDTO dto)  {
         return success(soB2cCoreService.listRetryOutstock(dto));
     }
 
@@ -47,7 +49,7 @@ public class SoB2cCoreController extends BaseController {
      * @return ApiResult<Boolean>
      */
     @PostMapping("/retryOutstock")
-    public ApiResult<Boolean> retryOutstock(@RequestBody @Validated List<SoB2cCoreDTO.RetryOutstockDTO> list) throws IOException {
+    public ApiResult<Boolean> retryOutstock(@RequestBody @Validated List<SoB2cCoreDTO.RetryOutstockDTO> list)  {
         return success(soB2cCoreService.retryOutstock(list));
     }
 }

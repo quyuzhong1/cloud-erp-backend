@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.PlatformOrderDTO;
@@ -15,11 +16,9 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cCoreDTO;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SoB2cDetailEntity;
-import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.entity.SoB2cReceiverEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.oms.enums.OrderLogisticTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -71,6 +70,9 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
     private OperateLogService operateLogService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
+
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
 
     @Override
     public List<SoB2cCoreDTO.ListRetryOutstockDTO> listRetryOutstock(BaseIdsDTO.IdsDTO dto) {
@@ -185,8 +187,16 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         List<ListingInfoWithSkuMappingDTO> listingInfoEntityList = skuMappingService.findListDto(paramDTO);
         Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = listingInfoEntityList.stream().distinct().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getPlatform(),obj.getPlatformSkuNo(),obj.getShopId())));
 
+        //物流信息
+        List<SoB2cLogisticsEntity> soB2cLogisticsList = soB2cLogisticsService.listByMainIds(soIdList);
+        Map<String, SoB2cLogisticsEntity> soB2cLogisticsMap = soB2cLogisticsList.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
+
         for (SoB2cEntity soB2cEntity : soB2cEntityList) {
-            if (!soB2cEntity.hasPlatformWarehouseOrder()) {
+            SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsMap.get(soB2cEntity.getId());
+            if (ObjUtil.isEmpty(soB2cLogisticsEntity)) {
+                throw new ServiceException(CharSequenceUtil.format("订单{}物流信息不存在", soB2cEntity.getCode()));
+            }
+            if (!OrderLogisticTypeEnum.PLATFORM_WAREHOUSE.getCode().equals(soB2cLogisticsEntity.getLogisticType())) {
                 throw new ServiceException(CharSequenceUtil.format("订单{}非平台仓订单不支持重新出库", soB2cEntity.getCode()));
             }
             if (!SoB2cBillStatusEnum.ENUM_SHIPPED.getCode().equals(soB2cEntity.getBillStatus())) {
@@ -265,21 +275,22 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             }
             soB2cDetailService.updateBatchById(thisDetailList);
             //出库
-            String outPutClass = "";
-            if (PlatformDictEnum.AMAZON.getCode().equals(soB2cEntity.getDictPlatform())) {
-                outPutClass = "DmpOutputAmzOrderRocketMQTaskHandler";
-            } else if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())) {
-                outPutClass = "DmpOutputAliExpressOrderRocketMQTaskHandler";
-            } else if (PlatformDictEnum.TIK_TOK.getCode().equals(soB2cEntity.getDictPlatform())) {
-                outPutClass = "TikTokOrderRocketMQTaskHandler";
-            } else if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())) {
+            String outPutClass =  "";
+            String sourceCode = "";
+            if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())) {
                 outPutClass = "MercadoOrderRocketMQTaskHandler";
+                sourceCode = soB2cEntity.getPlatformCode();
             }  else if (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
                 outPutClass = "MercadoLocalOrderRocketMQTaskHandler";
-            }else if (PlatformDictEnum.TE_MU.getCode().equals(soB2cEntity.getDictPlatform())) {
-                outPutClass = "";
+                sourceCode = soB2cEntity.getPlatformCode();
+            } else if (PlatformDictEnum.SHOPEE.getCode().equals(soB2cEntity.getDictPlatform())) {
+                outPutClass = "DmpOutputShopeeOrderRocketMQTaskHandler";
+                sourceCode = soB2cEntity.getPlatformCode();
+            }else if (PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())) {
+                outPutClass = "DmpOutputLxOrderRocketMQTaskHandler";
+                sourceCode = soB2cEntity.getThirdCode();
             }
-            DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpTaskFeign.getOutputTaskRecord(soB2cEntity.getPlatformCode(),outPutClass);
+            DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpTaskFeign.getOutputTaskRecord(sourceCode,outPutClass);
             if (Objects.isNull(dmpOutputTaskRecordEntity)) {
                 return Boolean.TRUE;
             }

@@ -68,6 +68,8 @@ public class TeMuSoB2cHandle extends AbstractSoB2cHandle  {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
+                //平台仓拆分
+
                 soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
             } catch (Exception e) {
                 log.error("[TeMu生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());

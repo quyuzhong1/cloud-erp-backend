@@ -233,11 +233,18 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
             jsonObject.put("inOrgCode", inOrgCode);
             jsonObject.put("outOrgCode", outOrgCode);
             //是否下推调出仓位
-            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getInWarehouseId()))
+            Boolean isPushOut = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getOutWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPushOut) {
                 //调出仓位
                 jsonObject.set("outWarehouseLocation", detail.getOutWarehouseLocation());
+            }
+            //是否下推调入仓位
+            Boolean isPushIn = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getInWarehouseId()))
+                    .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
+            if (isPushIn) {
+                //调入仓位
+                jsonObject.set("inWarehouseLocation", detail.getInWarehouseLocation());
             }
             //明细id
             jsonObject.set("detailId", detail.getId());
