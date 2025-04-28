@@ -567,7 +567,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         supplierDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
         if (CharSequenceUtil.isNotBlank(purchaseOrderSupplierEntity.getSupplierContactId())) {
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(purchaseOrderSupplierEntity.getSupplierContactId());
-            supplierDTO.setSupplierContactName(supplierContactById.getPerson());
+            if (ObjectUtil.isNotEmpty(supplierContactById)) {
+                supplierDTO.setSupplierContactName(supplierContactById.getPerson());
+            }
         }
 
         //查询供应商信息
