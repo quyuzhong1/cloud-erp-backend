@@ -40,9 +40,9 @@ public class KingdeeTransferOutConsumer<T extends DmpSyncTaskIdDTO> extends Abst
         //读取配置，初始化SDK
         KingdeeApiUtils apiUtils = new KingdeeApiUtils(KingdeePushModuleEnum.STK_TRANSFEROUT.getCode());
         LinkedList<String> queryFilters = new LinkedList<>();
-        queryFilters.add(String.format("FBillNo = '%s'", "FBDC209463"));
+        queryFilters.add(String.format("FBillNo = '%s'", "FBDC250427000004"));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FID,FSTKTRSOUTENTRY_FEntryID,FBillTypeID.FNUMBER";
+        String fieldKeys = "FID,FVESTONWAY";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1,0);
         System.out.println(queryList);
 
