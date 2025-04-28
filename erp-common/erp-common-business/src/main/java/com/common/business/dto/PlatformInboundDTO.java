@@ -89,6 +89,9 @@ public class PlatformInboundDTO extends UniqueDto {
         //签收时间
         private LocalDateTime receiveTime;
 
+        //签收水流明细ID
+        private String thirdId;
+
     }
 
 }

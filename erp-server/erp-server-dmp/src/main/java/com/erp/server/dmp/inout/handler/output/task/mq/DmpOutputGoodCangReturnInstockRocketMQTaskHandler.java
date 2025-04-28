@@ -102,7 +102,7 @@ public class DmpOutputGoodCangReturnInstockRocketMQTaskHandler extends DmpOutput
         PlatformReturnInstockDTO dto = BeanUtil.copyProperties(dmpMainEntity, PlatformReturnInstockDTO.class);
         String sourcePlatform = dmpFlowEntity.getSourcePlatform();
         dto.setPlatform(sourcePlatform);
-        dto.setPutawayTime(dmpFlowEntity.getPlatformCreateTime());
+        dto.setPutawayTime(dmpFlowEntity.getTradeTime());
         dto.setReturnType(erpStatus);
         dto.setUniqueId(dmpFlowEntity.getThirdId());
         // 流水都视为已完成
@@ -120,9 +120,9 @@ public class DmpOutputGoodCangReturnInstockRocketMQTaskHandler extends DmpOutput
     private PlatformReturnInstockDTO.Detail convertDetail(DmpThirdInventoryTransFlowEntity detailEntity) {
         PlatformReturnInstockDTO.Detail detail = new PlatformReturnInstockDTO.Detail();
         detail.setProductSku(detailEntity.getProductSku());
-        detail.setMustQty(detailEntity.getChangeQty());
-        detail.setRealQty(detailEntity.getChangeQty());
-        detail.setReceiveQty(detailEntity.getChangeQty());
+        detail.setMustQty(detailEntity.getQty());
+        detail.setRealQty(detailEntity.getQty());
+        detail.setReceiveQty(detailEntity.getQty());
         detail.setThirdId(detailEntity.getThirdId());
         return detail;
     }

@@ -109,18 +109,18 @@ public class DmpThirdInventoryTransFlowEntity extends BaseEntity<DmpThirdInvento
     /**
      * 库存变更数量
      */
-    @TableField("change_qty")
-    private Integer changeQty;
+    @TableField("qty")
+    private Integer qty;
     /**
      * 备注
      */
     @TableField("remark")
     private String remark;
     /**
-     * 库存变更时间
+     * 库存操作时间
      */
-    @TableField("platform_create_time")
-    private LocalDateTime platformCreateTime;
+    @TableField("trade_time")
+    private LocalDateTime tradeTime;
     /**
      * 来源ID
      */
