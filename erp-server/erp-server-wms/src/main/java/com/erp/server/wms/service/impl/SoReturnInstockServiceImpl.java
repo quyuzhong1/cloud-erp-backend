@@ -49,8 +49,8 @@ import com.erp.model.plm.enums.ProductDetailStatusEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.wms.dto.*;
@@ -1947,14 +1947,14 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             return;
         }
         Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName()).concat(obj.getBillDateStr()).concat(obj.getTypeName())));
-        //客户
-        List<CustomerInfoEntity> customerInfoList = customerFeign.listCustomer();
-        Map<String, CustomerInfoEntity> customerMap = customerInfoList.stream().collect(Collectors.toMap(CustomerInfoEntity::getName, Function.identity()));
+
+        List<String> customerNameList = successList.stream().map(SoReturnStockImportExcelDTO::getCustomerName).distinct().collect(Collectors.toList());
+        List<CustomerInfoEntity> customerInfoList = FeignQuery.create(CustomerInfoEntity.class).in(CustomerInfoEntity::getName, customerNameList).eq(CustomerInfoEntity::getDisabled,Boolean.FALSE).eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus()).list();
+        Map<String, List<CustomerInfoEntity>> customerMap = customerInfoList.stream().collect(Collectors.groupingBy(CustomerInfoEntity::getName));
 
         //币种
-        List<String> currencyList = successList.stream().map(SoReturnStockImportExcelDTO::getCurrencyStr).distinct().collect(Collectors.toList());
-        List<CurrencyDTO.ViewDTO> viewList = sysUserFeign.listByCurrency(currencyList);
-        Map<String, CurrencyDTO.ViewDTO> currencyMap = viewList.stream().collect(Collectors.toMap(CurrencyDTO.ViewDTO::getName, Function.identity()));
+        List<DictCurrencyEntity> viewList = sysUserFeign.currencyList();
+        Map<String, DictCurrencyEntity> currencyMap = viewList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
 
         //sku
         List<String> skuNoList = successList.stream().map(SoReturnStockImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -1968,7 +1968,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //仓位
         List<String> warehousIdList = warehouseList.stream().map(WarehouseEntity::getId).distinct().collect(Collectors.toList());
-        List<String> warehouseLocationNameList = successList.stream().map(SoReturnStockImportExcelDTO::getWarehouseLocationName).distinct().collect(Collectors.toList());
+        List<String> warehouseLocationNameList = successList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getWarehouseLocationName())).map(SoReturnStockImportExcelDTO::getWarehouseLocationName).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndNameList(warehousIdList, warehouseLocationNameList);
         Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getWarehouseId(),obj.getName()) , Function.identity()));
 
@@ -1978,19 +1978,19 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             List<String> errorMsgList = new ArrayList<>();
             SoReturnInstockDTO.Add add = new SoReturnInstockDTO.Add();
 
-            CustomerInfoEntity customerInfoEntity = customerMap.get(excelDTO.getCustomerName());
-            if (ObjectUtil.isEmpty(customerInfoEntity) || !ApproveStatusEnum.APPROVE.getCode().equals(customerInfoEntity.getApproveStatus())) {
+           List<CustomerInfoEntity> customerInfoEntityList = customerMap.get(excelDTO.getCustomerName());
+            if (CollUtil.isEmpty(customerInfoEntityList)) {
                 errorMsgList.add("未找到有效客户" + excelDTO.getCustomerName());
             } else {
-                add.setCustomerId(customerInfoEntity.getId());
+                add.setCustomerId(customerInfoEntityList.get(0).getId());
             }
             //币别
-            CurrencyDTO.ViewDTO viewDTO = currencyMap.get(excelDTO.getCurrencyStr());
-            if (ObjectUtil.isEmpty(viewDTO) ) {
+            DictCurrencyEntity dictCurrencyEntity = currencyMap.get(excelDTO.getCurrencyStr());
+            if (ObjectUtil.isEmpty(dictCurrencyEntity) ) {
                 errorMsgList.add("未找到币别" + excelDTO.getCurrencyStr());
             } else {
-                add.setCurrencySymbol(viewDTO.getSymbol());
-                add.setCurrency(viewDTO.getId());
+                add.setCurrencySymbol(dictCurrencyEntity.getSymbol());
+                add.setCurrency(dictCurrencyEntity.getId());
             }
             add.setBillDate(LocalDateUtil.parseStrToLocalDate(excelDTO.getBillDateStr()));
             add.setType(OrderTypeEnum.getCodeByName(excelDTO.getTypeName()));
@@ -2007,15 +2007,17 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     addDetail.setSkuNo(soReturnStockImportExcelDTO.getSkuNo());
                 }
                 WarehouseEntity warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
-                if (ObjectUtil.isEmpty(warehouseEntity) || warehouseEntity.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouseEntity.getApproveStatus())) {
+                if (ObjectUtil.isEmpty(warehouseEntity) || warehouseEntity.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouseEntity.getApproveStatus().getCode())) {
                     errorMsgList.add("未找到有效仓库：" + soReturnStockImportExcelDTO.getWarehouseName());
                 } else {
                     addDetail.setWarehouseId(warehouseEntity.getId());
                 }
+                //仓位信息
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(CharSequenceUtil.format("{}-{}", warehouseEntity.getId(), soReturnStockImportExcelDTO.getWarehouseLocationName()));
-                if (ObjectUtil.isEmpty(warehouseLocationEntity)) {
+                if (ObjectUtil.isEmpty(warehouseLocationEntity) && CharSequenceUtil.isNotBlank(soReturnStockImportExcelDTO.getWarehouseLocationName())) {
                     errorMsgList.add("仓库:"+soReturnStockImportExcelDTO.getWarehouseName()+"未找到有效仓位：" + soReturnStockImportExcelDTO.getWarehouseLocationName());
-                } else {
+                }
+                if (ObjectUtil.isNotEmpty(warehouseLocationEntity) &&  CharSequenceUtil.isNotBlank(soReturnStockImportExcelDTO.getWarehouseLocationName())) {
                     addDetail.setWarehouseLocation(warehouseLocationEntity.getCode());
                 }
                 if(CollUtil.isNotEmpty(errorMsgList)) {
