@@ -727,6 +727,7 @@ public class PurchaseOrderDTO implements Serializable {
          * 合同号
          */
         private String code;
+        private String codeStr;
 
         /**
          * 结算方式名称
