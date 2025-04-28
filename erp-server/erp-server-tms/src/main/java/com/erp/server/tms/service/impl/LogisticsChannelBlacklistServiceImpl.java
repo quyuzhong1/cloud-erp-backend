@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -110,6 +112,14 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
             });
             this.saveBatch(list);
         }
+    }
+
+    @Override
+    public List<LogisticsChannelBlacklistEntity> listChannelBlacklist(List<String> channelIdList) {
+        if (CollUtil.isEmpty(channelIdList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelIdList).list();
     }
 
     public List<LogisticsChannelBlacklistEntity> listDbByChannelId(String channelId) {

@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -156,4 +157,11 @@ public interface LogisticsFeign {
      */
     @GetMapping("/feign/logistics/listAll")
     List<BaseDropDownDTO.DisabledDTO> listAll();
+    /**
+     * 根据渠道查询黑名单
+     * @param channelIdList
+     * @return
+     */
+    @PostMapping("/feign/logistics/listChannelBlacklist")
+    List<LogisticsChannelBlacklistEntity> listChannelBlacklist(@RequestBody List<String> channelIdList);
 }
