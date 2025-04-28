@@ -216,7 +216,7 @@ public class CfgRuleOrderHandleServiceImpl extends SuperServiceImpl<CfgRuleOrder
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "启用" : "停用", Boolean.TRUE.equals(disabled) ? "停用" : "启用");
+        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(dto.getState()) ? "停用" : "启用");
         ruleOrderHandle.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CFG_RULE_ORDER_HANDLE.getCode(), dto.getId(), "状态更新");
         return this.updateById(ruleOrderHandle);
