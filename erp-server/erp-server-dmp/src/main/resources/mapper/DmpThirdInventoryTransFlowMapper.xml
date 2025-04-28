@@ -27,9 +27,9 @@
        <result column="inventory_change_type" property="inventoryChangeType" />
        <result column="inventory_change_type_desc" property="inventoryChangeTypeDesc" />
        <result column="product_type" property="productType" />
-       <result column="change_qty" property="changeQty" />
+       <result column="change_qty" property="qty" />
        <result column="remark" property="remark" />
-       <result column="platform_create_time" property="platformCreateTime" />
+       <result column="platform_create_time" property="tradeTime" />
        <result column="source_id" property="mainId" />
        <result column="auth_id" property="authId" />
     </resultMap>
