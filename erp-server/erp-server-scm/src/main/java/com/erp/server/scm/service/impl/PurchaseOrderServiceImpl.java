@@ -732,7 +732,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         //主数据处理
         exportPdfDTO.setCode(purchaseOrderEntity.getCode());
-        exportPdfDTO.setCode("合同号："+purchaseOrderEntity.getCode());
+        exportPdfDTO.setCodeStr("合同号："+purchaseOrderEntity.getCode());
         //采购组织
         exportPdfDTO.setPurchaseOrgName(purchaseOrderEntity.getPurchaseOrgName());
         //甲方签收日期
