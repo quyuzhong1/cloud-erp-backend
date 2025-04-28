@@ -25,7 +25,7 @@ import java.util.*;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputGoodCangInventoryTransFlowDmpHandler extends DmpInputDoChildDmpHandler {
+public class DmpInputGoodCangReturnInboundTransFlowDmpHandler extends DmpInputDoChildDmpHandler {
 
     @Override
     protected List<Map<String, Object>> getDmpInputMongoChildEntityList(List<Map<String, Object>> dmpInputMongoEntityList, String childMongoStorageName) {
@@ -34,12 +34,6 @@ public class DmpInputGoodCangInventoryTransFlowDmpHandler extends DmpInputDoChil
         paramDataList.add(new ParamData(DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, DmpInputMongoHandler.MONGO_BASE_INPUTTASKID, PannoEnum.EQ, list.get(0).getId()));
         return mongoService.findMongoData(paramDataList, childMongoStorageName);
     }
-
-    @Override
-    protected void afterConvertData(Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> dmpInputDataDmpRelationMaps) {
-        log.debug("DmpInputGoodCangInventoryTransFlowDmpHandler afterConvertData");
-    }
-
 
     @Override
     protected void putDmpId(List<Map<String, Object>> dmpInputMongoChildEntityList) {
