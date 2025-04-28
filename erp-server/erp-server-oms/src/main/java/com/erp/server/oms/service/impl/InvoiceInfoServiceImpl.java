@@ -212,7 +212,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO batchGenerateNfeInvoice(String id) {
+    public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if(ObjUtil.isEmpty(soB2cEntity)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单");
@@ -270,7 +270,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         soB2cService.updateById(soB2cEntity);
 
         //异步生成发票,调用第三方
-        nfeInvoiceService.createInvoice(soB2cEntity);
+        nfeInvoiceService.createInvoice(soB2cEntity,isAsync);
 
         //添加日志
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】生成NF-e发票",soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), invoiceInfoEntity.getId(), "生成NF-e发票操作");

@@ -59,7 +59,7 @@ public interface InvoiceInfoService extends SuperService<InvoiceInfoEntity> {
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO batchGenerateNfeInvoice(String id);
+    BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync);
 
     List<BatchResultDTO> batchGenerateVatInvoice(List<String> ids);
 
