@@ -632,7 +632,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
                 List<TransferOutDetailDTO.AddDTO> detailList = new ArrayList<>();
                 List<QcNoticeDetailEntity> qcNoticeDetailList = detailMapByMainId.get(qcNoticeEntity.getId());
                 for (QcNoticeDetailEntity detailEntity : qcNoticeDetailList) {
-                    if(detailEntity.getQcGoodQty().intValue() > 0 || detailEntity.getQcBadQty().intValue() >0){
+                    if(detailEntity.getQcGoodQty().intValue() > 0){
                         TransferOutDetailDTO.AddDTO transferOutDetail = new TransferOutDetailDTO.AddDTO();
                         transferOutDetail.setSkuId(detailEntity.getSkuId());
                         transferOutDetail.setQty(detailEntity.getQcGoodQty());
