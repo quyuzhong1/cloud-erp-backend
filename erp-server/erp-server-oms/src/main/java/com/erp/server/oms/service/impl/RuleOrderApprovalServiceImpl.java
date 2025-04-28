@@ -218,7 +218,7 @@ public class RuleOrderApprovalServiceImpl extends SuperServiceImpl<RuleOrderAppr
         if (disabled.equals(dto.getState())) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "启用" : "停用", disabled ? "停用" : "启用");
+        String content = String.format("启用状态[%s]变更为[%s]", disabled ? "停用" : "启用", disabled ? "启用" : "停用");
         ruleOrderApproval.setDisabled(dto.getState());
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode(), dto.getId(), "状态变更");
         return this.updateById(ruleOrderApproval);
