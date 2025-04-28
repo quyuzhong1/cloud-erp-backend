@@ -169,9 +169,6 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
         List<DictBasicEntity> list = lambdaQuery()
                 .eq(DictBasicEntity::getType, key)
                 .eq(DictBasicEntity::getStatus, Boolean.TRUE)
-                .in(DictBasicEntity::getSubType,
-                        DictBasicTypeEnum.SALES_PLATFORM_INTERNAL.getType(),
-                        DictBasicTypeEnum.SALES_PLATFORM_OTHER.getType())
                 .list();
 
         List<DictBasicDTO.ViewDTO> resultList = BeanMapper.copyList(list, DictBasicDTO.ViewDTO.class).stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
