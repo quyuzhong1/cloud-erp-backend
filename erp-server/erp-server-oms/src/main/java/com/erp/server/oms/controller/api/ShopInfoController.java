@@ -427,7 +427,7 @@ public class ShopInfoController extends BaseController {
      */
     @PostMapping("/listByPlatformList")
     public ApiResult<List<ShopInfoEntity>> listByPlatformList(@RequestBody @Validated ShopDTO.PlatformParamDTO dto) {
-        List<ShopInfoEntity> result = shopInfoService.listByPlatformList(dto.getPlatformList());
+        List<ShopInfoEntity> result = shopInfoService.listByPlatformList(dto.getPlatformList(),"");
         return success(result);
     }
 

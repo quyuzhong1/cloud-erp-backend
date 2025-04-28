@@ -185,7 +185,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param platformList
      * @return List<ShopInfoEntity>
      */
-    List<ShopInfoEntity> listByPlatformList(List<String> platformList);
+    List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql);
     /**
      * 查询亚马逊店铺信息
      * @Author Luo_WG
