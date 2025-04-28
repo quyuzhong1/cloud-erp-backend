@@ -298,7 +298,7 @@ public class CfgRuleOrderHandleDTO implements Serializable {
         /**
          * 订单号处理
          */
-        private OrderCodeHandleContent OrderCodeHandleContent;
+        private OrderCodeHandleContent orderCodeHandleContent;
     }
 
     /**
