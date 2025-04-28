@@ -1,14 +1,19 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.common.business.enums.OrderTypeEnum;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,6 +53,17 @@ public class SoReturnStockExcelListener extends AnalysisEventListener<SoReturnSt
         List<String> msgList = FieldValidUtil.fieldValid(importExcelDTO);
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
+        }
+        if (CharSequenceUtil.isBlank(importExcelDTO.getTypeName())) {
+            importExcelDTO.setTypeName(OrderTypeEnum.B2B.getName());
+        }
+        //币别
+        if (CharSequenceUtil.isBlank(importExcelDTO.getCurrencyStr())) {
+            importExcelDTO.setCurrencyStr(CurrencyEnum.CNY.getCurrencyName());
+        }
+        //时间
+        if (CharSequenceUtil.isBlank(importExcelDTO.getBillDateStr())) {
+            importExcelDTO.setBillDateStr(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
         }
 
         //存在错误数据则直接返回
