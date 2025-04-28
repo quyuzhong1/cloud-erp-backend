@@ -646,7 +646,7 @@ public class WarehouseLocationReplenishServiceImpl extends SuperServiceImpl<Ware
 
     @Override
     public PagingVO<WarehouseLocationReplenishDTO.ViewDTO> exportWarehouseLocationReplenish(PagingDTO<WarehouseLocationReplenishDTO.ExportParamDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         WarehouseLocationReplenishDTO.SearchParamDTO searchParamDto = new WarehouseLocationReplenishDTO.SearchParamDTO();
         BeanMapper.copy(dto.getParams(), searchParamDto);
         Page<WarehouseLocationReplenishEntity> entityList = this.baseMapper.listByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()),searchParamDto);
