@@ -23,6 +23,7 @@ import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.utils.GoodCangUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
@@ -42,7 +43,7 @@ import java.util.stream.IntStream;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputInitHandler {
+public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputGoodCangTransFlowInitHandler {
 
     public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     @Resource
@@ -65,11 +66,22 @@ public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputI
         // 父级任务
         DmpInputTaskEntity parentTaskEntity = dmpInputTaskService.getById(dmpInputTaskEntity.getParentTaskId());
 
+        // 开始时间=最早退货单号创建时间
+        LocalDateTime createDateFrom = null;
+        // 结束时间=当前
+        LocalDateTime createDateEnd = parentTaskEntity.getEndTime();
         // 退货单号列表
         List<String> returnOrderIdList = new LinkedList<>();
         for (Map<String, Object> parentDatum : parentData) {
+            String asroAddTime = parentDatum.getOrDefault("asro_add_time", "").toString();
+            if (StringUtils.isNotBlank(asroAddTime)) {
+                LocalDateTime addTime = LocalDateTime.parse(asroAddTime, DATE_FORMATTER);
+                if (createDateFrom == null || addTime.isBefore(createDateFrom)) {
+                    createDateFrom = addTime;
+                }
+            }
             String asroCode = parentDatum.getOrDefault("asro_code", "").toString();
-            if (StringUtils.isNotBlank(asroCode) && !returnOrderIdList.contains(asroCode)) {
+            if (StringUtils.isNotBlank(asroCode)) {
                 returnOrderIdList.add(asroCode);
             }
         }
@@ -77,18 +89,15 @@ public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputI
             // 来源数据异常找不到退货单号
             ServiceException.runError("来源数据异常找不到退货单号:" + dmpInputTaskEntity.getId());
         }
+        if (null == createDateFrom) {
+            // 来源数据异常找不到创建日期
+            ServiceException.runError("来源数据异常找不到创建日期:" + dmpInputTaskEntity.getId());
+        }
 
         String typeId = dmpCfgInputEntity.getTypeId();
         DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
         String apiType = dmpCfgApiEntity.getApiType();
 
-        int batchSize = 200;
-        GoodCangInventoryRequestDTO requestDTO = new GoodCangInventoryRequestDTO();
-        requestDTO.setCreate_date_from(parentTaskEntity.getStartTime().format(DATE_FORMATTER));
-        requestDTO.setCreate_date_end(parentTaskEntity.getEndTime().format(DATE_FORMATTER));
-        requestDTO.setApplication_code(6);
-        requestDTO.setPageSize(batchSize);
-        List<JSONObject> allResult = new ArrayList<>();
         List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
         if (CollUtil.isEmpty(overseasProviderEntityList)) {
             throw new ServiceException("谷仓授权信息不存在");
@@ -104,47 +113,23 @@ public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputI
         String authId = overseasProviderEntity.getId();
         ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
 
-        // 退货单号列表使用stream按200个分组
-        List<List<String>> partitionedList = IntStream.range(0, (returnOrderIdList.size() + batchSize - 1) / batchSize)
-                .mapToObj(i -> returnOrderIdList.subList(i * batchSize, Math.min((i + 1) * batchSize, returnOrderIdList.size())))
-                .collect(Collectors.toList());
+        // createDateFrom和createDateEnd按一个月期间分组
+        List<Pair<LocalDateTime, LocalDateTime>> pairsDateTimeList = splitDateRangeByMonth(createDateFrom, createDateEnd);
 
-        for (List<String> partReturnOrderIds : partitionedList) {
-            requestDTO.setReference_no_list(partReturnOrderIds);
-            requestDTO.setPage(1);
-            log.debug("请求谷仓库存流水请求:{}", JSON.toJSONString(requestDTO));
-            String response = GoodCangUtils.sendPost(apiType, JSON.toJSONString(requestDTO));
-            log.debug("请求谷仓库存流水响应:{}", response);
-            // 空数据处理
-            // {"ask":"Failure","message":"没有数据(ERROR ID 99-UVU8HX)","Error":{"errCode":"400","errMessage":"没有数据(ERROR ID 99-UVU8HX)"}}
-            JSONObject jsonObject = JSONObject.parseObject(response);
-            JSONObject errorObj = jsonObject.getJSONObject("Error");
-            if (null != errorObj) {
-                String errCode = errorObj.getString("errCode");
-                String errMessage = errorObj.getString("errMessage");
-                if ("400".equalsIgnoreCase(errCode) && errMessage.contains("没有数据")) {
-                    break;
-                }
-                ServiceException.runError("谷仓接口返回异常:" + response);
-            }
-
-            GoodCangResponse<List<JSONObject>> result = JSONObject.parseObject(response, new TypeReference<GoodCangResponse<List<Object>>>() {
-            }.getType());
-            List<?> data = result.getData();
-            int size = data.size();
-            if (size == 0) {
-                continue;
-            }
-            List<JSONObject> jsonObjList = data.stream().map(e -> {
-                JSONObject jsonItemObj = (JSONObject) JSON.toJSON(e);
-                jsonItemObj.put("authId", authId);
-                return jsonItemObj;}
-            ).collect(Collectors.toList());
-            allResult.addAll(jsonObjList);
+        List<JSONObject> allResultList = new ArrayList<>();
+        for (Pair<LocalDateTime, LocalDateTime> dateTimePair : pairsDateTimeList) {
+            int batchSize = 200;
+            GoodCangInventoryRequestDTO requestDTO = new GoodCangInventoryRequestDTO();
+            requestDTO.setCreate_date_from(dateTimePair.getKey().format(DATE_FORMATTER));
+            requestDTO.setCreate_date_end(dateTimePair.getValue().format(DATE_FORMATTER));
+            requestDTO.setApplication_code(6);
+            requestDTO.setPageSize(batchSize);
+            List<JSONObject> allResult = requestFLowByNoList(returnOrderIdList, batchSize, requestDTO, apiType, authId);
+            allResultList.addAll(allResult);
         }
 
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-        dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResult));
+        dmpInputTaskInitDTO.setMsg(JSONObject.toJSONString(allResultList));
         return Collections.singletonList(dmpInputTaskInitDTO);
     }
 }
