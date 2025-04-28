@@ -160,7 +160,6 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Resource
     private InvoiceTaxService invoiceTaxService;
 
-
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
         if (StringUtils.isBlank(type)) {
