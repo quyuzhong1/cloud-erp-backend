@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -24,6 +25,8 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
@@ -36,10 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -298,5 +298,28 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
         }
         return Boolean.TRUE;
+    }
+
+
+    @Override
+    public List<SoOutstockDTO.GenerateB2cDTO> splitB2cSoOutstock(SoB2cEntity mainEntity, SoOutstockDTO.GenerateB2cDTO generateB2cDTO) {
+        if (!PlatformDictEnum.MERCADOLIBRE.getCode().equals(mainEntity.getDictPlatform())
+                && !PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(mainEntity.getDictPlatform())
+                && !PlatformDictEnum.SHOPEE.getCode().equals(mainEntity.getDictPlatform())
+                && !PlatformDictEnum.LING_XING.getCode().equals(mainEntity.getThirdSystem())) {
+            return Collections.singletonList(generateB2cDTO);
+        }
+        LinkedList<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
+        //根据明细仓库id分组
+        Map<String, LinkedList<SoOutstockDetailDTO.AddDTO>> map = detailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.AddDTO::getWarehouseId,Collectors.toCollection(LinkedList::new)));
+        List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = new LinkedList<>();
+        for (Map.Entry<String, LinkedList<SoOutstockDetailDTO.AddDTO>> entry :map.entrySet()) {
+            SoOutstockDTO.GenerateB2cDTO generateB2c = new SoOutstockDTO.GenerateB2cDTO();
+            BeanUtil.copyProperties(generateB2cDTO,generateB2c);
+            generateB2c.setWarehouseId(entry.getKey());
+            generateB2c.setDetailList(entry.getValue());
+            generateB2cList.add(generateB2c);
+        }
+        return generateB2cList;
     }
 }
