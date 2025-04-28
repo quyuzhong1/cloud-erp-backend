@@ -123,7 +123,7 @@ public class NfeInvoiceService {
             getPayMentDTO(createDTO);
             log.warn("付款信息已查询完成！");
              obj = tfFiscalService.createInvoice(createDTO);
-            log.info("创建发票接口调用成功！");
+            log.warn("创建发票接口调用成功！请求参数-body:{}",JSONUtil.toJsonStr(createDTO));
         }catch (Exception e){
             log.error("创建发票失败,返回信息:{}", e.getMessage());
             log.error("请求参数-body:{}", JSONUtil.toJsonStr(createDTO));
