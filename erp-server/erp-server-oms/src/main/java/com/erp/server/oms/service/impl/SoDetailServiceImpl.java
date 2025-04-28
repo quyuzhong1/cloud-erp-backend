@@ -401,10 +401,6 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
             //虚拟缺货数量(显示正数)
             Integer virtualScarceQty =  MathUtil.compareTo(virtualUsableQty,qty) > MathUtil.ZERO ? MathUtil.ZERO : qty - virtualUsableQty;
             item.setVirtualScarceQty(virtualScarceQty);
-
-            //税率
-            BigDecimal taxRate = item.getTaxRate();
-            BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //单价
             BigDecimal price = item.getPrice();
             //汇率
@@ -413,15 +409,12 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
                 exchangeRate = MathUtil.BigDecimal_1;
             }
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate));
-
-            //含税单价=销售单价*（税率+1）
-            BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
+            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate,4));
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
+            BigDecimal taxPrice = item.getTaxPrice();
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate));
+            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
 
             //历史价格
             SoDetailDTO.SkuHistoryPriceDTO skuHistoryPrice = skuPriceHistoryList.stream().
