@@ -1738,8 +1738,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //校验列表中是否存在相同国家和省份城市数据，存在则抛出异常
         for (LogisticsChannelBlacklistEntity channelBlacklistEntity : channelBlackList) {
             String country = channelBlacklistEntity.getCountryName();
-            String province = channelBlacklistEntity.getProvince();
-            String city = channelBlacklistEntity.getCity();
+            String province = channelBlacklistEntity.getProvinceName();
+            String city = channelBlacklistEntity.getCityName();
             String district = channelBlacklistEntity.getDistrictName();
             if (Objects.equals(countryName,country) && Objects.equals(provinceName,province) && Objects.equals(cityName,city) && Objects.equals(districtName,district)) {
                 throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_BLACKLIST, logisticsChannel.getName(),country,province,city,district);
