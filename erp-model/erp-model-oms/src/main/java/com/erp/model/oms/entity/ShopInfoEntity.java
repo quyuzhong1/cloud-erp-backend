@@ -233,6 +233,11 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
     @TableField("auth_expire_date")
     private LocalDate authExpireDate;
+    /**
+     * token
+     */
+    @TableField(exist = false)
+    private String accessToken;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

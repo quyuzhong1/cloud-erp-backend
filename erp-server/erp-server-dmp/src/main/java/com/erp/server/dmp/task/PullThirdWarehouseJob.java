@@ -9,7 +9,7 @@ import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.service.ThirdWarehouseService;
 import com.sdk.oms.temu.dto.TemuResp;
-import com.sdk.oms.temu.dto.TemuShopInfoDTO;
+import com.sdk.oms.temu.dto.TemuCommonDTO;
 import com.sdk.oms.temu.dto.TemuWarehouseDTO;
 import com.sdk.oms.temu.service.TemuClient;
 import com.xxl.job.core.biz.model.ReturnT;
@@ -68,7 +68,7 @@ public class PullThirdWarehouseJob {
                 XxlJobHelper.log("拉取第三方仓库数据失败，clientId或clientSecret为空");
                 continue;
             }
-            TemuResp<TemuWarehouseDTO> temuResp =  temuClient.getWarehouseList(new TemuShopInfoDTO(shopAuthEntity.getAreaCode(), clientId, clientSecret, shopAuthEntity.getAccessToken()));
+            TemuResp<TemuWarehouseDTO> temuResp =  temuClient.getWarehouseList(new TemuCommonDTO(shopAuthEntity.getAreaCode(), clientId, clientSecret, shopAuthEntity.getAccessToken()));
             if (temuResp == null || !temuResp.getSuccess() ) {
                 XxlJobHelper.log("拉取第三方仓库数据失败");
                 continue;

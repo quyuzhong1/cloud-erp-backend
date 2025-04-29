@@ -14,7 +14,7 @@ import com.erp.server.oms.service.IShopAuthorizeService;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.temu.dto.TemuResp;
-import com.sdk.oms.temu.dto.TemuShopInfoDTO;
+import com.sdk.oms.temu.dto.TemuCommonDTO;
 import com.sdk.oms.temu.dto.TemuWarehouseDTO;
 import com.sdk.oms.temu.service.TemuClient;
 import io.seata.common.util.StringUtils;
@@ -28,7 +28,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -88,7 +87,7 @@ public class TeMuAuthorize implements IShopAuthorizeService<T> {
         String clientId = (String) extendMap.get("clientId");
         String clientSecret = (String) extendMap.get("clientSecret");
         String accessToken = shopAuthEntity.getAccessToken();
-        TemuResp<TemuWarehouseDTO> temuResp = temuClient.getWarehouseList(new TemuShopInfoDTO( shopInfoEntity.getDictAreaCode(), clientId, clientSecret, accessToken));
+        TemuResp<TemuWarehouseDTO> temuResp = temuClient.getWarehouseList(new TemuCommonDTO( shopInfoEntity.getDictAreaCode(), clientId, clientSecret, accessToken));
         if(!temuResp.getSuccess()){
             throw new ServiceException("授权失败,{}",temuResp.getErrorMsg());
         }
