@@ -94,7 +94,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         // 需要删除的id集合
         List<String> deleteIds = originIds.stream().filter(id->!nowIds.contains(id)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(deleteIds)) {
-            throw new ServiceException("仅支持修改明细数据，不支持删除");
+            throw new ServiceException("仅支持修改明细数据，不支持删除明细");
 //            // 记录删除日志
 //            List<TransferOutDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
 //            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
