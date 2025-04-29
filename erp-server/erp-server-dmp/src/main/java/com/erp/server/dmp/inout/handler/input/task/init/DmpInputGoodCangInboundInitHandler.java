@@ -56,7 +56,7 @@ public class DmpInputGoodCangInboundInitHandler extends DmpInputInitHandler{
         List<String> receiveCodeList = overseasWarehouseFeign.getReceiptNumbersForStatus(Arrays.asList(OverseasInstockStatusEnum.TO_BE_SIGNED.getCode()
                 ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
                 ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_GOOD_CANG.getCode());
-        List<GoodCangReceiptBatchResp> allResult = new ArrayList<>();
+        List<JSONObject> allResult = new ArrayList<>();
         
         if(CollUtil.isNotEmpty(receiveCodeList)) {
         	String typeId = dmpCfgInputEntity.getTypeId();
@@ -81,7 +81,7 @@ public class DmpInputGoodCangInboundInitHandler extends DmpInputInitHandler{
             	Map<String,Object> paramsMap = new HashMap<>();
                 paramsMap.put("receiving_code",receiveCode);
             	String response = GoodCangUtils.sendPost(apiType,paramsMap);
-            	GoodCangResponse<GoodCangReceiptBatchResp> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<GoodCangReceiptBatchResp>>() {}.getType());
+            	GoodCangResponse<JSONObject> respDto = JSONObject.parseObject(response,new TypeReference<GoodCangResponse<JSONObject>>() {}.getType());
             	String ask = respDto.getAsk();
             	if(ask.equals("Failure") && respDto.getMessage().contains("入库单号不存在")) {
             		continue;

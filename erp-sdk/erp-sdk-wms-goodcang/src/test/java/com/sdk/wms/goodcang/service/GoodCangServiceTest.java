@@ -3,6 +3,7 @@ package com.sdk.wms.goodcang.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.constants.GoodCangConstants;
@@ -73,8 +74,11 @@ public class GoodCangServiceTest {
 
     @Test
     public void getInboundDetailTest() {
-        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getInboundDetail("RVG2199-231222-0001");
-        System.out.println(response);
+        Map<String,Object> paramsMap = new HashMap<>();
+        paramsMap.put("receiving_code","RVG1149-240918-0002");
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_GRN_DETAIL,paramsMap);
+        GoodCangResponse<JSONObject> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<JSONObject>>() {}.getType());
+        System.out.println(JSONUtil.toJsonStr(respDto));
     }
 //    @Test
 //    public void getReceiptBatchTest() {

@@ -1098,10 +1098,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             }
         }
         if(CollectionUtils.isNotEmpty(updateList)){
-            boolean updateResult = overseasWarehouseInboundDetailService.updateBatchById(updateList);
-            if (!updateResult) {
-                throw new ServiceException("[OverseasWarehouseInboundReceivedEntity]批量更新失败");
-            }
+            overseasWarehouseInboundDetailService.updateBatchById(updateList);
         }
         List<String> detailIds = detailList.stream().map(OverseasWarehouseInboundDetailEntity::getId).collect(Collectors.toList());
         List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
@@ -1114,23 +1111,28 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 if (StringUtil.isBlank(detailId)) {
                     continue;
                 }
-                String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
-                if (receivedEntityMap.containsKey(key)) {
-                    continue;
+                if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())){
+                    // 按流水ID判断已存在
+                    if (receivedEntityList.stream().anyMatch(e -> e.getFlowId().equals(receiving.getThirdId()))){
+                        continue;
+                    }
+                } else {
+                    String key = detailId + receiving.getReceiveQty() + LocalDateTimeUtil.formatNormal(receiving.getReceiveTime());
+                    if (receivedEntityMap.containsKey(key)) {
+                        continue;
+                    }
                 }
                 changeFlag = true;
                 OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity();
                 receivedEntity.setDetailId(detailId);
                 receivedEntity.setReceiveQty(receiving.getReceiveQty());
                 receivedEntity.setReceiveTime(receiving.getReceiveTime());
+                receivedEntity.setFlowId(StringUtil.isBlank(receiving.getThirdId()) ? "" : receiving.getThirdId());
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
         if (CollectionUtils.isNotEmpty(insertReceiveEntityList)) {
-            boolean saveResult = overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
-            if (!saveResult) {
-                throw new ServiceException("[OverseasWarehouseInboundReceivedEntity]批量插入失败");
-            }
+            overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
         }
 
         if (changeFlag) {
@@ -1167,10 +1169,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 }
             }
             //更新主表
-            boolean mainResult = this.updateById(mainEntity);
-            if (!mainResult) {
-                throw new ServiceException("[OverseasWarehouseInboundEntity]更新失败");
-            }
+            this.updateById(mainEntity);
         }
         return ApiResult.success();
     }

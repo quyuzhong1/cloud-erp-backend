@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +28,8 @@ import java.util.stream.IntStream;
 @Service
 @Scope("prototype")
 public abstract class DmpInputGoodCangTransFlowInitHandler extends DmpInputInitHandler {
+
+    public static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     protected List<JSONObject> requestFLowByNoList(List<String> noList, int batchSize, GoodCangInventoryRequestDTO requestDTO, String apiType, String authId) {
         // 退货单号列表使用stream按200个分组

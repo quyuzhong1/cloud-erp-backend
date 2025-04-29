@@ -1,9 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.collection.CollUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
@@ -19,8 +17,6 @@ import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.sdk.wms.goodcang.dto.request.GoodCangInventoryRequestDTO;
-import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
-import com.sdk.wms.goodcang.utils.GoodCangUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -32,8 +28,6 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * dmp输入init任务基础处理器下的旺店通api获取数据方式
@@ -43,7 +37,7 @@ import java.util.stream.IntStream;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputGoodCangTransFlowInitHandler {
+public class DmpInputGoodCangInstockTransFlowInitHandler extends DmpInputGoodCangTransFlowInitHandler {
 
     @Resource
     private DmpHandlerCache dmpHandlerCache;
@@ -70,21 +64,21 @@ public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputG
         // 结束时间=任务指定结束时间
         LocalDateTime createDateEnd = parentTaskEntity.getEndTime();
         // 退货单号列表
-        List<String> returnOrderIdList = new LinkedList<>();
+        List<String> referenceNoList = new LinkedList<>();
         for (Map<String, Object> parentDatum : parentData) {
-            String asroAddTime = parentDatum.getOrDefault("asro_add_time", "").toString();
-            if (StringUtils.isNotBlank(asroAddTime)) {
-                LocalDateTime addTime = LocalDateTime.parse(asroAddTime, DATE_FORMATTER);
+            String createTime = parentDatum.getOrDefault("create_at", "").toString();
+            if (StringUtils.isNotBlank(createTime)) {
+                LocalDateTime addTime = LocalDateTime.parse(createTime, DATE_FORMATTER);
                 if (createDateFrom == null || addTime.isBefore(createDateFrom)) {
                     createDateFrom = addTime;
                 }
             }
-            String asroCode = parentDatum.getOrDefault("asro_code", "").toString();
-            if (StringUtils.isNotBlank(asroCode)) {
-                returnOrderIdList.add(asroCode);
+            String code = parentDatum.getOrDefault("receiving_code", "").toString();
+            if (StringUtils.isNotBlank(code)) {
+                referenceNoList.add(code);
             }
         }
-        if (CollUtil.isEmpty(returnOrderIdList)) {
+        if (CollUtil.isEmpty(referenceNoList)) {
             // 来源数据异常找不到退货单号
             ServiceException.runError("来源数据异常找不到退货单号:" + dmpInputTaskEntity.getId());
         }
@@ -103,7 +97,7 @@ public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputG
         }
         // 取对应授权ID授权
         OverseasProviderEntity overseasProviderEntity = overseasProviderEntityList.stream()
-                .filter(e -> e.getId().equalsIgnoreCase(parentData.get(0).getOrDefault("authId", "").toString()))
+                .filter(e -> e.getId().equalsIgnoreCase(parentData.get(0).getOrDefault("nextLevelId", "").toString()))
                 .findFirst()
                 .orElse(null);
         if(null == overseasProviderEntity) {
@@ -121,9 +115,9 @@ public class DmpInputGoodCangReturnInstockTransFlowInitHandler extends DmpInputG
             GoodCangInventoryRequestDTO requestDTO = new GoodCangInventoryRequestDTO();
             requestDTO.setCreate_date_from(dateTimePair.getKey().format(DATE_FORMATTER));
             requestDTO.setCreate_date_end(dateTimePair.getValue().format(DATE_FORMATTER));
-            requestDTO.setApplication_code(6);
+            requestDTO.setApplication_code(7);
             requestDTO.setPageSize(batchSize);
-            List<JSONObject> allResult = requestFLowByNoList(returnOrderIdList, batchSize, requestDTO, apiType, authId);
+            List<JSONObject> allResult = requestFLowByNoList(referenceNoList, batchSize, requestDTO, apiType, authId);
             allResultList.addAll(allResult);
         }
 

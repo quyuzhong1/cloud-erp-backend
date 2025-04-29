@@ -230,7 +230,9 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity(entity.getId(),
                     userInfo.getUserName(),
                     dto.getReceivedQty(),
-                    dto.getReceiveDate().atStartOfDay());
+                    dto.getReceiveDate().atStartOfDay(),
+                    ""
+            );
             addReceivedList.add(receivedEntity);
             // 添加主表
             mainResultMap.putIfAbsent(mainEntity.getId(), mainEntity);
