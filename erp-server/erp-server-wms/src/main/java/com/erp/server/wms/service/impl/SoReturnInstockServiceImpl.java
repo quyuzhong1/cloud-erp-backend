@@ -1941,7 +1941,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //币种
         List<DictCurrencyEntity> viewList = sysUserFeign.currencyList();
-        Map<String, DictCurrencyEntity> currencyMap = viewList.stream().collect(Collectors.toMap(DictCurrencyEntity::getName, Function.identity()));
 
         //sku
         List<String> skuNoList = successList.stream().map(SoReturnStockImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -1972,7 +1971,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 add.setCustomerId(customerInfoEntityList.get(0).getId());
             }
             //币别
-            DictCurrencyEntity dictCurrencyEntity = currencyMap.get(excelDTO.getCurrencyStr());
+            DictCurrencyEntity dictCurrencyEntity = viewList.stream().filter(obj -> obj.getName().equals(excelDTO.getCurrencyStr()) || obj.getId().equals(excelDTO.getCurrencyStr())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(dictCurrencyEntity) ) {
                 errorMsgList.add("未找到币别" + excelDTO.getCurrencyStr());
             } else {
@@ -2022,6 +2021,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (CollUtil.isEmpty(detailList)) {
                 continue;
             }
+            add.setSalesDeptId(customerInfoEntityList.get(0).getSalesDeptId());
+            add.setSalesOrgId(customerInfoEntityList.get(0).getInnerOrgId());
             add.setDetailList(detailList);
             try {
             ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class).add(add);
