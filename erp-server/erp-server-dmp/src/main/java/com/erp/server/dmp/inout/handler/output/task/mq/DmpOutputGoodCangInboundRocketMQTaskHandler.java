@@ -86,6 +86,8 @@ public class DmpOutputGoodCangInboundRocketMQTaskHandler extends DmpOutputRocket
     	}
     	PlatformInboundDTO platformInboundDTO = BeanUtil.copyProperties(dmpThirdInboundEntity, PlatformInboundDTO.class);
     	String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
+		platformInboundDTO.setAuthId(dmpFlowEntity.getAuthId());
+		platformInboundDTO.setHasReceivedData(true);
 		platformInboundDTO.setPlatform(sourcePlatform);
     	platformInboundDTO.setProvider(sourcePlatform);
     	platformInboundDTO.setDownloadTime(LocalDateTime.now());
