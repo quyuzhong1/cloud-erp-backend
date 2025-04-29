@@ -542,20 +542,22 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<TransferOutDTO.PutawayDetailDTO> putawayDetailDTOS = this.baseMapper.listPutawayDetail(id);
         if(CollUtil.isNotEmpty(putawayDetailDTOS)){
             List<String> outIds = putawayDetailDTOS.stream().map(TransferOutDTO.PutawayDetailDTO::getInId).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(outIds)){
+                List<OperateLogEntity> operateLogEntityList  = operateLogService.lambdaQuery()
+                        .eq(OperateLogEntity::getModuleType, ModuleTypeEnum.TRANSFER_IN.getCode())
+                        .in(OperateLogEntity::getBusinessId, outIds)
+//                        .like(OperateLogEntity::getContent, "审核通过")
+                        .list();
+                Map<String, List<OperateLogEntity>> map = operateLogEntityList.stream()
+                        .filter(e -> e.getContent().contains("审核通过") || e.getContent().contains("已审核"))
+                        .collect(Collectors.groupingBy(OperateLogEntity::getBusinessId));
 
-            List<OperateLogEntity> operateLogEntityList  = operateLogService.lambdaQuery()
-                    .eq(OperateLogEntity::getModuleType, ModuleTypeEnum.TRANSFER_IN.getCode())
-                    .in(OperateLogEntity::getBusinessId, outIds)
-                    .like(OperateLogEntity::getContent, ApproveStatusEnum.APPROVE.getName())
-                    .list();
-
-            Map<String, List<OperateLogEntity>> map = operateLogEntityList.stream().collect(Collectors.groupingBy(OperateLogEntity::getBusinessId));
-
-            for (TransferOutDTO.PutawayDetailDTO detailDTO : putawayDetailDTOS) {
-                if(map.containsKey(detailDTO.getInId())){
-                    List<OperateLogEntity> list = map.get(detailDTO.getInId());
-                    list.sort(Comparator.comparing(OperateLogEntity::getCreateTime).reversed());
-                    detailDTO.setInApproveTime(list.get(0).getCreateTime());
+                for (TransferOutDTO.PutawayDetailDTO detailDTO : putawayDetailDTOS) {
+                    if(map.containsKey(detailDTO.getInId())){
+                        List<OperateLogEntity> list = map.get(detailDTO.getInId());
+                        list.sort(Comparator.comparing(OperateLogEntity::getCreateTime).reversed());
+                        detailDTO.setInApproveTime(list.get(0).getCreateTime());
+                    }
                 }
             }
         }

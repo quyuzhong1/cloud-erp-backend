@@ -201,6 +201,14 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             list.add(new QcNoticeDTO.TabListDTO(ApproveStatusEnum.APPROVE_ING.getCode(),ApproveStatusEnum.APPROVE_ING.getName(), 0));
         }
 
+        if(tabMap.containsKey(ApproveStatusEnum.REJECT.getCode())){
+            QcNoticeDTO.TabListDTO tabListDTO = tabMap.get(ApproveStatusEnum.REJECT.getCode());
+            tabListDTO.setTabFlagName(ApproveStatusEnum.REJECT.getName());
+            list.add(tabListDTO);
+        }else{
+            list.add(new QcNoticeDTO.TabListDTO(ApproveStatusEnum.REJECT.getCode(),ApproveStatusEnum.REJECT.getName(), 0));
+        }
+
         List<QcNoticeDTO.TabListDTO> tabQcStatusList = baseMapper.tabQcStatusList(searchParam);
         Map<String, QcNoticeDTO.TabListDTO> tabQcStatusMap = tabQcStatusList.stream().collect(Collectors.toMap(QcNoticeDTO.TabListDTO::getTabFlag, t -> t));
         List<String> codeList = QcNoticeStatusEnum.getCodeList();

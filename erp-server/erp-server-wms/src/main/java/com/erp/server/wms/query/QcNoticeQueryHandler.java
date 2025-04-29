@@ -28,7 +28,7 @@ public class QcNoticeQueryHandler extends AbstractQueryHandler {
      * @return String
      */
     public String getTabSql (Object value) {
-        if (ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(value) || ApproveStatusEnum.APPROVE_ING.getStatus().equals(value)) {
+        if (ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(value) || ApproveStatusEnum.APPROVE_ING.getStatus().equals(value) || ApproveStatusEnum.REJECT.getStatus().equals(value)) {
             super.buildDefaultDTO("qn.approve_status", value);
         }
         if (QcNoticeStatusEnum.WAIT.getCode().equals(value)
