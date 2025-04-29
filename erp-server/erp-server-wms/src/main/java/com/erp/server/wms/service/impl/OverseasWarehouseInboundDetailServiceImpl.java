@@ -34,6 +34,8 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static cn.hutool.json.XMLTokener.entity;
+
 /**
  * <p>
  * 海外仓入库单详情 服务实现类
@@ -170,6 +172,8 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
         Map<String, Integer> receiverdMap = new HashMap<>();
         List<OverseasWarehouseInboundDetailEntity> detailEntityList = this.getByIds(dtoList.stream().map(OverseasWarehouseInboundDTO.ReceivedDTO::getDetailId).collect(Collectors.toList()));
         List<OverseasWarehouseInboundReceivedEntity> addReceivedList = new ArrayList<>();
+        List<String> mainIdList = detailEntityList.stream().map(OverseasWarehouseInboundDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntityList = overseasWarehouseInboundService.listByIds(mainIdList);
         for (OverseasWarehouseInboundDTO.ReceivedDTO dto : dtoList) {
             // 查询详情
             OverseasWarehouseInboundDetailEntity entity  = detailEntityList.stream()
@@ -181,7 +185,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             }
             // 校验
             // 查询提交的平台
-            OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundService.getById(entity.getMainId());
+            OverseasWarehouseInboundEntity mainEntity = overseasWarehouseInboundEntityList.stream().filter(v->v.getId().equals(entity.getMainId())).findFirst().orElse(null);
             if (Objects.isNull(mainEntity)){
                 throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST);
             }
@@ -212,20 +216,6 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             if (Objects.equals(entity.getReceiveQty(), entity.getPackQty())){
                 entity.setReceiveStatus("already");
             }
-
-            // 主订单状态
-            // 检查是否完全签收
-            Boolean allReceive = this.checkAllReceiveByMainId(entity.getMainId());
-            if (allReceive){
-                mainEntity.setInstockStatus(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode());
-            } else {
-                mainEntity.setInstockStatus(OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode());
-            }
-            // 保存主表
-            if (!overseasWarehouseInboundService.updateById(mainEntity)){
-                throw new ServiceException("更新入库状态失败");
-            }
-
             // 添加签收记录
             OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity(entity.getId(),
                     userInfo.getUserName(),
@@ -272,6 +262,20 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
             }
         }
+        List<OverseasWarehouseInboundDetailEntity> allDetailEntityList = this.getByMainIds(mainIdList);
+        // 主订单状态
+        // 检查是否完全签收
+        for (OverseasWarehouseInboundEntity overseasWarehouseInboundEntity : overseasWarehouseInboundEntityList) {
+            List<OverseasWarehouseInboundDetailEntity> currentDetailEntityList = allDetailEntityList.stream()
+                    .filter(e -> StringUtils.equals(e.getMainId(), overseasWarehouseInboundEntity.getId()))
+                    .collect(Collectors.toList());
+            if( currentDetailEntityList.stream().allMatch(e-> 0 == e.getDiffQty())){
+                overseasWarehouseInboundEntity.setInstockStatus(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode());
+            }else{
+                overseasWarehouseInboundEntity.setInstockStatus(OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode());
+            }
+        }
+        overseasWarehouseInboundService.updateBatchById(overseasWarehouseInboundEntityList);
         return resultDTOS;
 
     }
