@@ -363,7 +363,8 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     userInfo.getUserName(),
                     dto.getReceivedQty(),
                     dto.getReceiveDate().atStartOfDay(),
-                    SignSourceTypeEnum.CHANGE.getCode());
+                    SignSourceTypeEnum.CHANGE.getCode(),
+                    "");
             addReceivedList.add(receivedEntity);
             // 添加主表
             mainResultMap.putIfAbsent(entity.getId(), entity);
