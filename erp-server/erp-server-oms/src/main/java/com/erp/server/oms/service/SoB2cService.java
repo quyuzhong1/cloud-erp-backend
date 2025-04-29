@@ -177,6 +177,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
 
     /**
+     * 检查订单是否符合物流黑名单限制
+     * @param soId
+     * @param logisticsChannelId
+     * @param existChannelId
+     */
+    void checkLogisticsChannelBlacklist(String soId, String logisticsChannelId, String existChannelId);
+
+    /**
      * @description: 获取物流单号
      * @author Will
      * @date: 2023/8/18 16:47

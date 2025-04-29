@@ -1554,7 +1554,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             logisticsChannelId = channelIds.get(0);
         }
         //校验订单是否符合渠道黑名单限制
-        checkLogisticsChannelBlacklist(entity, logisticsChannelId, existChannelId);
+        checkLogisticsChannelBlacklist(entity.getId(), logisticsChannelId, existChannelId);
         //获取检查备案结果
         SettingForecastDTO.CheckRegistrationResultDTO resultDTO = getCheckRegistrationResult(id, logisticsChannelId);
         String packageStatus = resultDTO.getPackageStatus();
@@ -1704,11 +1704,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     /**
      * 检查订单是否符合物流黑名单限制
-     * @param entity
+     * @param soId
      * @param logisticsChannelId
      * @param existChannelId
      */
-    private void checkLogisticsChannelBlacklist(SoB2cEntity entity, String logisticsChannelId, String existChannelId) {
+    @Override
+    public void checkLogisticsChannelBlacklist(String soId, String logisticsChannelId, String existChannelId) {
         //渠道为空或相同则不校验
         if (CharSequenceUtil.isBlank(logisticsChannelId) || Objects.equals(logisticsChannelId,existChannelId)) {
             return;
@@ -1718,7 +1719,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             throw new ServiceException(ApiError.ERROR_LOGISTICS_CHANNEL_NOT_EXIST);
         }
         //买家信息
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(entity.getId());
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soId);
         if(Objects.isNull(receiverEntity)){
             return;
         }
@@ -1741,12 +1742,40 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String province = channelBlacklistEntity.getProvinceName();
             String city = channelBlacklistEntity.getCityName();
             String district = channelBlacklistEntity.getDistrictName();
-            if (Objects.equals(countryName,country) && Objects.equals(provinceName,province) && Objects.equals(cityName,city) && Objects.equals(districtName,district)) {
-                throw new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_BLACKLIST, logisticsChannel.getName(),country,province,city,district);
+            //根据国家省份城市区字段是否存在进行判断是否匹配，为空则不进行向下匹配
+            // 国家不匹配直接跳过
+            if (!CharSequenceUtil.equals(country, countryName)) {
+                continue;
+            }
+            // 层级校验：国家 -> 省份 -> 城市 -> 区县
+            if (CharSequenceUtil.isBlank(country) || !CharSequenceUtil.equals(country, countryName)) {
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(province)){
+                throw createBlacklistException(logisticsChannel, country, province, city, district);
+            }
+            if (!Objects.equals(province, provinceName)){
+                continue;
+            }
+            if(CharSequenceUtil.isBlank(city)){
+                throw createBlacklistException(logisticsChannel, country, province, city, district);
+            }
+            if (!Objects.equals(city, cityName)){
+                continue;
+            }
+            if (CharSequenceUtil.isBlank(district)){
+                throw createBlacklistException(logisticsChannel, country, province, city, district);
+            }
+            if (Objects.equals(district, districtName)){
+                throw createBlacklistException(logisticsChannel, country, province, city, district);
             }
         }
     }
-
+    private ServiceException createBlacklistException(LogisticsChannelEntity channel,
+                                                      String country, String province, String city, String district) {
+        return new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_BLACKLIST,
+                channel.getName(), country, province, city, district);
+    }
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO getLogisticsCodeInner(String id, Boolean isDelivery) {
@@ -5274,8 +5303,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     //已存在的的渠道
                     String dbLogisticsChannelId = b2cLogistics.getLogisticsChannelId();
                     if (StringUtils.isBlank(dbLogisticsChannelId)) {
-                        //校验渠道限制
-                        checkLogisticsChannelBlacklist(entity,logisticsChannelId,dbLogisticsChannelId);
                         b2cLogistics.setLogisticsChannelId(logisticsChannelId);
                         b2cLogistics.setLogisticsChannelName(logisticsChannelName);
                         soB2cLogisticsService.updateById(b2cLogistics);
