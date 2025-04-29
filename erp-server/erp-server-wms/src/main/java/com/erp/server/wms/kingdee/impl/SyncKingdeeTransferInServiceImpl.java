@@ -165,7 +165,7 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
         resultMap.put("billDate", LocalDateTimeUtil.format(entity.getBillDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
 
         //调拨方向
-        resultMap.put("transferDirection", entity.getTransferDirection());
+        resultMap.put("transferDirection", entity.getTransferDirection().getKingdeeCode());
         //备注
         resultMap.put("remark", entity.getRemark());
 
@@ -230,8 +230,11 @@ public class SyncKingdeeTransferInServiceImpl implements SyncKingdeeTransferInSe
             jsonObject.set("inWarehouseCode", inWarehouseCode);
             //调出仓库
             jsonObject.set("outWarehouseCode", outWarehouseCode);
-            jsonObject.put("inOrgCode", inOrgCode);
-            jsonObject.put("outOrgCode", outOrgCode);
+            jsonObject.set("inOrgCode", inOrgCode);
+            jsonObject.set("outOrgCode", outOrgCode);
+            //来源单号
+            jsonObject.set("sourceCode", transferOutEntity.getCode());
+
             //是否下推调出仓位
             Boolean isPushOut = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getOutWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
