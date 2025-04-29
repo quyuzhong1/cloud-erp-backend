@@ -245,7 +245,7 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 质检时间
          */
-        private LocalDate qcDate;
+        private LocalDateTime qcDate;
 
         /**
          * 上架状态 待上架:wait  部分上架：part  已上架：finish
@@ -256,7 +256,7 @@ public class QcNoticeDTO implements Serializable {
         /**
          * 上架时间
          */
-        private LocalDate putawayDate;
+        private LocalDateTime putawayDate;
 
 
 
