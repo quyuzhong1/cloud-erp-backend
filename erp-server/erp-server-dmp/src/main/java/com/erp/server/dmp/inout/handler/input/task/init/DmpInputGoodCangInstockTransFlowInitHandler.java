@@ -62,7 +62,7 @@ public class DmpInputGoodCangInstockTransFlowInitHandler extends DmpInputGoodCan
         // 开始时间=最早退货单号创建时间
         LocalDateTime createDateFrom = null;
         // 结束时间=任务指定结束时间
-        LocalDateTime createDateEnd = parentTaskEntity.getEndTime();
+        LocalDateTime createDateEnd = null;
         // 退货单号列表
         List<String> referenceNoList = new LinkedList<>();
         for (Map<String, Object> parentDatum : parentData) {
@@ -71,6 +71,13 @@ public class DmpInputGoodCangInstockTransFlowInitHandler extends DmpInputGoodCan
                 LocalDateTime addTime = LocalDateTime.parse(createTime, DATE_FORMATTER);
                 if (createDateFrom == null || addTime.isBefore(createDateFrom)) {
                     createDateFrom = addTime;
+                }
+            }
+            String updateTimeStr = parentDatum.getOrDefault("update_at", "").toString();
+            if (StringUtils.isNotBlank(updateTimeStr)) {
+                LocalDateTime curUpdateTime = LocalDateTime.parse(updateTimeStr, DATE_FORMATTER);
+                if (createDateEnd == null || curUpdateTime.isBefore(createDateEnd)) {
+                    createDateEnd = curUpdateTime;
                 }
             }
             String code = parentDatum.getOrDefault("receiving_code", "").toString();

@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import com.erp.model.dmp.entity.DmpSkuInfoEntity;
 import com.erp.model.dmp.entity.DmpThirdInventoryTransFlowEntity;
 import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +32,7 @@ public class DmpOutputGoodCangInboundRocketMQTaskHandler extends DmpOutputRocket
 	public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
 		Map<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMaps = dmpRequest.getConvertInputDmpBaseEntityListMaps();
 		Map<String , DmpThirdInboundEntity> dmpThirdInboundEntityMap = new HashMap<>();
-		Map<String, DmpThirdInventoryTransFlowEntity> dmpFlowEntityMap = new HashMap<>();
+		Map<String, List<DmpThirdInventoryTransFlowEntity>> dmpFlowEntityMap = new HashMap<>();
 
 
 		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> convertInputDmpBaseEntityListMap : convertInputDmpBaseEntityListMaps.entrySet()) {
@@ -43,36 +45,58 @@ public class DmpOutputGoodCangInboundRocketMQTaskHandler extends DmpOutputRocket
 						dmpThirdInboundEntityMap.put(dmpThirdInboundEntity.getId(), dmpThirdInboundEntity);
 					}
 				} else if ("dmp_third_inventory_trans_flow".equals(storageName)) {
-				    for (BaseEntity v : value) {
-				    	DmpThirdInventoryTransFlowEntity flowEntity = (DmpThirdInventoryTransFlowEntity) v;
-				    	dmpFlowEntityMap.put(flowEntity.getId(), flowEntity);
-				    }
+					for(BaseEntity v : value) {
+						DmpThirdInventoryTransFlowEntity flowEntity = (DmpThirdInventoryTransFlowEntity) v;
+						String mainId = flowEntity.getMainId();
+						List<DmpThirdInventoryTransFlowEntity> list = dmpFlowEntityMap.get(mainId);
+						if(CollUtil.isEmpty(list)) {
+							list = new ArrayList<>();
+						}
+						list.add(flowEntity);
+						dmpFlowEntityMap.put(mainId, list);
+					}
 			    }
 			}
 		}
-
-        Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
-        Set<String> changeIds = new HashSet<>();
-        for (Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
-            List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
-            if (CollUtil.isNotEmpty(value)) {
-                String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
-                if ("dmp_third_inventory_trans_flow".equals(storageName)) {
-                    for (BaseEntity v : value) {
-                        changeIds.add(v.getId());
-                    }
-                }
-            }
-        }
+		Map<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMaps = dmpRequest.getChangeConvertInputDmpBaseEntityListMaps();
+		Set<String> changeIds = new HashSet<>();
+		for(Map.Entry<DmpCfgInputConvertEntity, List<BaseEntity>> changeConvertInputDmpBaseEntityListMap : changeConvertInputDmpBaseEntityListMaps.entrySet()) {
+			List<BaseEntity> value = changeConvertInputDmpBaseEntityListMap.getValue();
+			if(CollUtil.isNotEmpty(value)) {
+				String storageName = changeConvertInputDmpBaseEntityListMap.getKey().getStorageName();
+				if("dmp_third_inbound".equals(storageName)) {
+					for(BaseEntity v : value) {
+						changeIds.add(v.getId());
+					}
+				} else if ("dmp_third_inventory_trans_flow".equals(storageName)) {
+					for (BaseEntity v : value) {
+						DmpThirdInventoryTransFlowEntity flowEntity = (DmpThirdInventoryTransFlowEntity) v;
+						changeIds.add(flowEntity.getMainId());
+					}
+				}
+			}
+		}
+		
 		Map<String, String> map = new HashMap<>();
 		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
 		for(String changId : changeIds) {
-            // 流水维度推送
-            DmpThirdInventoryTransFlowEntity dmpFlowEntity = dmpFlowEntityMap.get(changId);
-            PlatformInboundDTO dto = this.convert(dmpFlowEntity, dmpThirdInboundEntityMap.get(dmpFlowEntity.getMainId()), cfgOutputId);
-            if (null != dto) {
-                map.put(dmpFlowEntity.getId(), JSON.toJSONString(dto));
-            }
+			DmpThirdInboundEntity dmpThirdInboundEntity = dmpThirdInboundEntityMap.get(changId);
+			List<DmpThirdInventoryTransFlowEntity> flowList = dmpFlowEntityMap.get(changId);
+			if (CollectionUtils.isNotEmpty(flowList)) {
+				// 流水维度推送
+				for (DmpThirdInventoryTransFlowEntity dmpFlowEntity : flowList) {
+					PlatformInboundDTO dto = this.convert(dmpFlowEntity, dmpThirdInboundEntity , cfgOutputId);
+					if (null != dto) {
+						map.put(dmpFlowEntity.getId(), JSON.toJSONString(dto));
+					}
+				}
+			} else {
+				// 无流水
+				PlatformInboundDTO dto = this.convert(null, dmpThirdInboundEntity , cfgOutputId);
+				if (null != dto) {
+					map.put(dmpThirdInboundEntity.getId(), JSON.toJSONString(dto));
+				}
+			}
 		}
 		return map;
 	}
@@ -81,12 +105,17 @@ public class DmpOutputGoodCangInboundRocketMQTaskHandler extends DmpOutputRocket
      * 解析订单数据
      **/
     public PlatformInboundDTO convert(DmpThirdInventoryTransFlowEntity dmpFlowEntity, DmpThirdInboundEntity dmpThirdInboundEntity , String cfgOutputId) {
-    	if(this.validateDataBlack(dmpFlowEntity, cfgOutputId)) {
+    	if(null != dmpFlowEntity && this.validateDataBlack(dmpFlowEntity, cfgOutputId)) {
     		return null;
     	}
+		if( this.validateDataBlack(dmpThirdInboundEntity, cfgOutputId)) {
+			return null;
+		}
+
     	PlatformInboundDTO platformInboundDTO = BeanUtil.copyProperties(dmpThirdInboundEntity, PlatformInboundDTO.class);
     	String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
-		platformInboundDTO.setAuthId(dmpFlowEntity.getAuthId());
+		platformInboundDTO.setAuthId(dmpThirdInboundEntity.getNextLevelId());
+		platformInboundDTO.setUniqueId(dmpThirdInboundEntity.getReceivingCode());
 		platformInboundDTO.setHasReceivedData(true);
 		platformInboundDTO.setPlatform(sourcePlatform);
     	platformInboundDTO.setProvider(sourcePlatform);
@@ -107,13 +136,18 @@ public class DmpOutputGoodCangInboundRocketMQTaskHandler extends DmpOutputRocket
 		
 		this.groupBySku(platformInboundDTO);
 
-		// 重新按流水生成签收
-		Receiving receiving = new Receiving();
-		receiving.setProductSku(dmpFlowEntity.getProductSku());
-		receiving.setReceiveQty(dmpFlowEntity.getQty());
-		receiving.setReceiveTime(dmpFlowEntity.getTradeTime());
-		receiving.setThirdId(dmpFlowEntity.getThirdId());
-		platformInboundDTO.setReceivingDataList(Collections.singletonList(receiving));
+		if (null != dmpFlowEntity){
+			// 重新按流水生成签收
+			Receiving receiving = new Receiving();
+			receiving.setProductSku(dmpFlowEntity.getProductSku());
+			receiving.setReceiveQty(dmpFlowEntity.getQty());
+			receiving.setReceiveTime(dmpFlowEntity.getTradeTime());
+			receiving.setThirdId(dmpFlowEntity.getThirdId());
+			platformInboundDTO.setReceivingDataList(Collections.singletonList(receiving));
+		} else {
+			// 无流水
+			platformInboundDTO.setReceivingDataList(Collections.emptyList());
+		}
 
 		return platformInboundDTO;
     }
