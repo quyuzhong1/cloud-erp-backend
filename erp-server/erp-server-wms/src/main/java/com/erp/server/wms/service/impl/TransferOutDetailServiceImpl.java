@@ -94,17 +94,18 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         // 需要删除的id集合
         List<String> deleteIds = originIds.stream().filter(id->!nowIds.contains(id)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(deleteIds)) {
-            // 记录删除日志
-            List<TransferOutDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
-            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(),pairList,"编辑操作");
-            // 删除明细数据
-            super.removeByIds(deleteIds);
+            throw new ServiceException("仅支持修改明细数据，不支持删除");
+//            // 记录删除日志
+//            List<TransferOutDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
+//            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+//            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(),pairList,"编辑操作");
+//            // 删除明细数据
+//            super.removeByIds(deleteIds);
         }
         // 新增或修改的明细数据
         List<TransferOutDetailEntity> newList = BeanMapperUtils.copyList(TransferOutDetailEntity.class, detailList);
-        // 下推数量验证
-        checkTransferOutQty(newList, mainId);
+//        // 下推数量验证
+//        checkTransferOutQty(newList, mainId);
         // 记录新增或修改日志
         handleDetails(newList, mainId, Boolean.TRUE);
         //新增或修改明细
