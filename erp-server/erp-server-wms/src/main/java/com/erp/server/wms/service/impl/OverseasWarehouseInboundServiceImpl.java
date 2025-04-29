@@ -1105,7 +1105,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
         Map<String, OverseasWarehouseInboundReceivedEntity> receivedEntityMap = receivedEntityList.stream().collect(Collectors.toMap(v -> v.getDetailId() + v.getReceiveQty() + LocalDateTimeUtil.formatNormal(v.getReceiveTime()), Function.identity(), (v1, v2) -> v1));
         //有签收记录直接保存，没有签收记录判断签收数量与数据库是否一致，不一致的话用签收数量-数据库签收数量
-        if (dto.getHasReceivedData()) {
+        if (dto.getHasReceivedData() && CollectionUtils.isNotEmpty(dto.getReceivingDataList())) {
             //判断是否存在，通过明细id+数量+时间
             for (PlatformInboundDTO.Receiving receiving : dto.getReceivingDataList()) {
                 String detailId = detailEntityMap.get(receiving.getProductSku()).getId();
@@ -1114,7 +1114,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 }
                 if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())){
                     // 按流水ID判断已存在
-                    if (receivedEntityList.stream().anyMatch(e -> e.getFlowId().equals(receiving.getThirdId()))){
+                    if (receivedEntityList.stream().anyMatch(e -> e.getFlowId().equals(receiving.getThirdId()) && e.getCreateUserId().equals(dto.getAuthId()))){
                         continue;
                     }
                 } else {
@@ -1130,6 +1130,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 receivedEntity.setReceiveTime(receiving.getReceiveTime());
                 receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
                 receivedEntity.setFlowId(StringUtil.isBlank(receiving.getThirdId()) ? "" : receiving.getThirdId());
+                receivedEntity.setCreateUserId(dto.getAuthId());
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
