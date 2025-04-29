@@ -291,10 +291,10 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 sourceCode = soB2cEntity.getThirdCode();
             }
             DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = dmpTaskFeign.getOutputTaskRecord(sourceCode,outPutClass);
-            if (Objects.isNull(dmpOutputTaskRecordEntity)) {
-                return Boolean.TRUE;
+            PlatformOrderDTO dto = null;
+            if (Objects.nonNull(dmpOutputTaskRecordEntity)) {
+                dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
             }
-            PlatformOrderDTO dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
             SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
         }
         return Boolean.TRUE;
