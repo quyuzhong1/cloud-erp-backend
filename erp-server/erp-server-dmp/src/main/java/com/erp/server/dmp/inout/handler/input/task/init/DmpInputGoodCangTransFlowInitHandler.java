@@ -44,6 +44,11 @@ public abstract class DmpInputGoodCangTransFlowInitHandler extends DmpInputInitH
             log.debug("请求谷仓库存流水请求:{}", JSON.toJSONString(requestDTO));
             String response = GoodCangUtils.sendPost(apiType, JSON.toJSONString(requestDTO));
             log.debug("请求谷仓库存流水响应:{}", response);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
             // 空数据处理
             // {"ask":"Failure","message":"没有数据(ERROR ID 99-UVU8HX)","Error":{"errCode":"400","errMessage":"没有数据(ERROR ID 99-UVU8HX)"}}
             JSONObject jsonObject = JSONObject.parseObject(response);
@@ -52,7 +57,7 @@ public abstract class DmpInputGoodCangTransFlowInitHandler extends DmpInputInitH
                 String errCode = errorObj.getString("errCode");
                 String errMessage = errorObj.getString("errMessage");
                 if ("400" .equalsIgnoreCase(errCode) && errMessage.contains("没有数据")) {
-                    break;
+                    continue;
                 }
                 ServiceException.runError("谷仓接口返回异常:" + response);
             }

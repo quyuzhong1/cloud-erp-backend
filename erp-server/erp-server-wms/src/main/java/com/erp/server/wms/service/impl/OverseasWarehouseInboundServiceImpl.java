@@ -1066,7 +1066,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         Map<String, OverseasWarehouseInboundDetailEntity> detailEntityMap = detailList.stream().collect(Collectors.toMap(OverseasWarehouseInboundDetailEntity::getPlatformSkuNo, Function.identity()));
         Map<String, PlatformInboundDTO.Item> itemMap = dto.getItems().stream().collect(Collectors.toMap(PlatformInboundDTO.Item::getProductSku, Function.identity()));
         List<OverseasWarehouseInboundReceivedEntity> insertReceiveEntityList = new ArrayList<>();
-        List<OverseasWarehouseInboundDetailEntity> updateList = new ArrayList<>();
+        Map<String, OverseasWarehouseInboundDetailEntity> updateDetailEntityMap = new HashMap<>();
         Map<String, Integer> thisSignQtyMap = new HashMap<>();
         //更新明细表
         for (OverseasWarehouseInboundDetailEntity detailEntity : detailList) {
@@ -1087,7 +1087,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             detailEntity.setReceiveTime(dto.getDownloadTime());
             detailEntity.setReceiveStatus("already");
             detailEntity.setReceiveType("system");
-            updateList.add(detailEntity);
+            updateDetailEntityMap.put(detailEntity.getId(), detailEntity);
             //如果没有签收数据，在这里封装签收记录
             if (!dto.getHasReceivedData()) {
                 OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity();
@@ -1098,8 +1098,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
-        if(CollectionUtils.isNotEmpty(updateList)){
-            overseasWarehouseInboundDetailService.updateBatchById(updateList);
+        if(CollectionUtils.isNotEmpty(updateDetailEntityMap.values())){
+            overseasWarehouseInboundDetailService.updateBatchById(updateDetailEntityMap.values());
         }
         List<String> detailIds = detailList.stream().map(OverseasWarehouseInboundDetailEntity::getId).collect(Collectors.toList());
         List<OverseasWarehouseInboundReceivedEntity> receivedEntityList = overseasWarehouseInboundReceivedService.listByDetailIds(detailIds);
@@ -1108,7 +1108,8 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (dto.getHasReceivedData() && CollectionUtils.isNotEmpty(dto.getReceivingDataList())) {
             //判断是否存在，通过明细id+数量+时间
             for (PlatformInboundDTO.Receiving receiving : dto.getReceivingDataList()) {
-                String detailId = detailEntityMap.get(receiving.getProductSku()).getId();
+                OverseasWarehouseInboundDetailEntity detailEntity = detailEntityMap.get(receiving.getProductSku());
+                String detailId = detailEntity.getId();
                 if (StringUtil.isBlank(detailId)) {
                     continue;
                 }
@@ -1123,6 +1124,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                         continue;
                     }
                 }
+                updateDetailEntityMap.put(detailId, detailEntity);
                 changeFlag = true;
                 OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity();
                 receivedEntity.setDetailId(detailId);
@@ -1138,6 +1140,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             overseasWarehouseInboundReceivedService.saveBatch(insertReceiveEntityList);
         }
 
+        List<OverseasWarehouseInboundDetailEntity> updateList = new ArrayList<>(updateDetailEntityMap.values());
         if (changeFlag) {
             mainEntity.setReceiveTime(dto.getDownloadTime());
             if(OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode().equals(mainEntity.getInstockStatus())){
