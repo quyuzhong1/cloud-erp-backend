@@ -98,7 +98,7 @@ public class SoReturnStockImportExcelDTO implements Serializable {
     /**
      * 备注
      */
-    @ExcelProperty(value = "备注", index = 12)
+    @ExcelProperty(value = "备注", index = 11)
     @FieldValid(fieldName = "备注", maxLength = 200)
     private String remark;
 
