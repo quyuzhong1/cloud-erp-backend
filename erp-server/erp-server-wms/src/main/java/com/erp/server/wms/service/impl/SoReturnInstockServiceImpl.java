@@ -1991,7 +1991,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 add.setCurrencySymbol(dictCurrencyEntity.getSymbol());
                 add.setCurrency(dictCurrencyEntity.getId());
             }
-            add.setBillDate(LocalDateUtil.parseStrToLocalDate(excelDTO.getBillDateStr()));
+            add.setBillDate(LocalDateUtil.stringToLocalDate(excelDTO.getBillDateStr()));
             add.setType(OrderTypeEnum.getCodeByName(excelDTO.getTypeName()));
 
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
@@ -2012,7 +2012,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     addDetail.setWarehouseId(warehouseEntity.getId());
                 }
                 //仓位信息
-                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(CharSequenceUtil.format("{}-{}", warehouseEntity.getId(), soReturnStockImportExcelDTO.getWarehouseLocationName()));
+                WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(CharSequenceUtil.format("{}-{}",ObjectUtil.isEmpty(warehouseEntity) ? "" : warehouseEntity.getId(), soReturnStockImportExcelDTO.getWarehouseLocationName()));
                 if (ObjectUtil.isEmpty(warehouseLocationEntity) && CharSequenceUtil.isNotBlank(soReturnStockImportExcelDTO.getWarehouseLocationName())) {
                     errorMsgList.add("仓库:"+soReturnStockImportExcelDTO.getWarehouseName()+"未找到有效仓位：" + soReturnStockImportExcelDTO.getWarehouseLocationName());
                 }
@@ -2034,8 +2034,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             if (CollUtil.isEmpty(detailList)) {
                 continue;
             }
+            add.setSellerId(customerInfoEntityList.get(0).getSellerId());
             add.setSalesDeptId(customerInfoEntityList.get(0).getSalesDeptId());
-            add.setSalesOrgId(customerInfoEntityList.get(0).getInnerOrgId());
+            add.setSalesOrgId(customerInfoEntityList.get(0).getUseOrgId());
+            add.setWarehouseId(detailList.get(0).getWarehouseId());
             add.setDetailList(detailList);
             try {
             ApplicationContextUtils.getBean(SoReturnInstockServiceImpl.class).add(add);
