@@ -220,13 +220,16 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
         if (ObjectUtils.isNotEmpty(qcProduct)) {
             String skuNo = qcProduct.getSkuNo();
-            if(StringUtils.isBlank(skuNo)){
-                List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(qcProduct.getSkuId()));
-                skuNo = skuList.get(0).getSkuNo();
+            if(StringUtils.isNotBlank(skuNo)){
+                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
+                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
+                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            }else {
+                compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+                compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+                compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
             }
-            compareDimensions(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+
         }
         QcInfoEntity qc = null ;
         if (CharSequenceUtil.isBlank(billId)) {
@@ -243,10 +246,6 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
         String skuId = dto.getQcProduct().getSkuId();
-        if (CharSequenceUtil.isBlank(skuId)) {
-            throw new ServiceException(ApiError.ERROR_95107);
-        }
-
         if(SourceTypeEnum.QC_NOTICE.getCode().equals(dto.getSourceType())){
 
         }else {
@@ -262,6 +261,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
                 skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
                         .map(PurchaseOrderDetailEntity::getSkuId).findFirst().orElse("");
+            }
+            if (CharSequenceUtil.isBlank(skuId)) {
+                throw new ServiceException(ApiError.ERROR_95107);
             }
 
             //检查质检数量
@@ -909,9 +911,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
                 List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(qcProduct.getSkuId()));
                 skuNo = skuList.get(0).getSkuNo();
             }
-            compareDimensions(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
-            compareDimensions(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+            compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
         }
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
@@ -2653,11 +2655,20 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param smaller  小尺寸
      * @param apiError 报错信息
      */
-    private void compareDimensions(String skuNo,BigDecimal larger, BigDecimal smaller, ApiError apiError) {
+    private void compareDimensionsWithSkuNo(String skuNo,BigDecimal larger, BigDecimal smaller, ApiError apiError) {
         if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
                 && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0) {
             if (larger.compareTo(smaller) < 0) {
                 throw new ServiceException(apiError,skuNo);
+            }
+        }
+    }
+
+    private void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
+        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
+                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0) {
+            if (larger.compareTo(smaller) < 0) {
+                throw new ServiceException(apiError);
             }
         }
     }
