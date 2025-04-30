@@ -1318,6 +1318,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_CHILD_HAS_APPROVE(92084,"拆分后B2C销售订单【{}】已审核不支持取消拆分"),
     ERROR_SO_B2C_NOT_LOGISTICS_CODE(92085,"B2C销售订单【{}】只有配货中支持获取物流单号"),
     ERROR_SO_B2C_LOGISTICS_BLACKLIST(92085,"物流渠道【{}】不允许发【{}+{}{}{}】，请修改物流渠道"),
+    ERROR_SO_B2C_LOGISTICS_COUNTRY_BLACKLIST(92085,"物流渠道【{}】不允许发【{}】，请修改物流渠道"),
     ERROR_SO_B2C_NOT_SUBMIT_DELIVERY(92086,"B2C销售订单【{}】只有配货中支持提交发货"),
     ERROR_SO_B2C_NOT_MERGE(92087,"B2C销售订单【{}】只有待提交和审核不通过支持合并"),
     ERROR_SO_B2C_STATE_NOT_SPLIT(92088,"B2C销售订单【{}】只有待提交和审核不通过支持拆分"),

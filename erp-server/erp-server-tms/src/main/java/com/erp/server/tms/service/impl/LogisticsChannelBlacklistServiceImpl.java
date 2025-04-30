@@ -145,6 +145,13 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         for (LogisticsChannelBlacklistDTO.AddDTO item : list) {
             String country = item.getCountry();
             List<LogisticsChannelBlacklistDTO.CommonDTO> cityList = item.getCityList();
+            if(CollUtil.isEmpty(cityList)){
+                LogisticsChannelBlacklistEntity add = new LogisticsChannelBlacklistEntity();
+                add.setCountry(country);
+                add.setLogisticsChannelId(channelId);
+                addList.add(add);
+                continue;
+            }
             for (LogisticsChannelBlacklistDTO.CommonDTO common : cityList) {
                 LogisticsChannelBlacklistEntity add = new LogisticsChannelBlacklistEntity();
                 add.setCountry(country);
