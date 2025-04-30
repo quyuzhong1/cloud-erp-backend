@@ -33,11 +33,13 @@ import com.erp.server.oms.mapper.RuleLogisticsMapper;
 import com.erp.server.oms.service.OperateLogService;
 import com.erp.server.oms.service.RuleConditionService;
 import com.erp.server.oms.service.RuleLogisticsService;
+import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -66,6 +68,9 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
 
     @Resource
     private LogisticsFeign logisticsFeign;
+    @Lazy
+    @Resource
+    private SoB2cService soB2cService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -251,6 +256,13 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
                         .list();
                 if (CollectionUtils.isEmpty(list)) {
                     throw new ServiceException( CharSequenceUtil.format("渠道【{}】未设置仓库，请先设置仓库",item.getLogisticsChannelName()));
+                }
+                //校验渠道限制
+                try {
+                    soB2cService.checkLogisticsChannelBlacklist(map.get("id").toString(),item.getLogisticsChannelId(),"");
+                }catch (Exception e){
+                    log.error("渠道限制校验失败:{}",e.getMessage());
+                    continue;
                 }
                 //全部指定直接过，部分指定校验仓库是否一致
                 if (CharSequenceUtil.equals(list.get(0).getType(),LogisticsChannelWarehouseTypeEnum.ENUM_PART.getCode())) {

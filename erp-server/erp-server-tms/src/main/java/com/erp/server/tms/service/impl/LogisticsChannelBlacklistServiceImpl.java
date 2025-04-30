@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -112,6 +114,14 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         }
     }
 
+    @Override
+    public List<LogisticsChannelBlacklistEntity> listChannelBlacklist(List<String> channelIdList) {
+        if (CollUtil.isEmpty(channelIdList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelIdList).list();
+    }
+
     public List<LogisticsChannelBlacklistEntity> listDbByChannelId(String channelId) {
         return this.lambdaQuery().eq(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelId).list();
     }
@@ -135,6 +145,13 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         for (LogisticsChannelBlacklistDTO.AddDTO item : list) {
             String country = item.getCountry();
             List<LogisticsChannelBlacklistDTO.CommonDTO> cityList = item.getCityList();
+            if(CollUtil.isEmpty(cityList)){
+                LogisticsChannelBlacklistEntity add = new LogisticsChannelBlacklistEntity();
+                add.setCountry(country);
+                add.setLogisticsChannelId(channelId);
+                addList.add(add);
+                continue;
+            }
             for (LogisticsChannelBlacklistDTO.CommonDTO common : cityList) {
                 LogisticsChannelBlacklistEntity add = new LogisticsChannelBlacklistEntity();
                 add.setCountry(country);
