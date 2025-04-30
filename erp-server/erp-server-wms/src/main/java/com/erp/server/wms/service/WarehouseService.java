@@ -271,15 +271,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @author hyj
      * @date 2024/4/18 10:26
      */
-    List<WarehouseDTO.ListDTO> getByNames(List<String> nameList);
-    /**
-     * @description: 根据仓库名称集合查询
-     * @author Will
-     * @date: 2024/3/21 17:35
-     * @param warehouseNameList
-     * @return List<UpdateDTO>
-     */
-    List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(List<String> warehouseNameList);
+    List<WarehouseDTO.ListDTO> listByNames(List<String> nameList);
     /**
      * @description: 远程分页查询仓库信息
      * @author Will
@@ -303,11 +295,4 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param warehouseEntity
      */
     boolean checkOpenCloseTime(WarehouseEntity warehouseEntity);
-
-    /**
-     * 根据仓库名称获取仓库信息
-     * @param warehouseNameList
-     * @return
-     */
-    List<WarehouseEntity> listByWarehouseNameList(List<String> warehouseNameList);
 }

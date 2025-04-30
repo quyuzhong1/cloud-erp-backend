@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -59,4 +60,10 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
      * @return
      */
     List<ShopInfoEntity> listByParam(@Param("platformList") List<String> platformList, @Param("permissionSql") String permissionSql);
+    /**
+     * 根据店铺名称查询店铺信息
+     * @param shopNameList
+     * @return
+     * */
+    List<ShopInfoDTO.ListDTO> listShopByName(@Param("nameList") List<String> shopNameList, @Param("permissionSql") String permissionSql);
 }

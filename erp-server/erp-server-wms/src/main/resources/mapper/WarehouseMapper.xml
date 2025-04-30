@@ -255,10 +255,12 @@
     </select>
 
     <!--根据仓库id查询映射信息-->
-    <select id="getByNames" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
+    <select id="listByNames" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
         SELECT
         id,
         name,
+        org_id AS orgId,
+        approve_status AS approveStatus,
         disabled
         FROM warehouse  WHERE is_deleted=false and approve_status = 'approve'
         <if test="nameList != null and nameList.size > 0">
@@ -266,6 +268,10 @@
             <foreach collection="nameList" item="name" open="(" close=")" separator=",">
                 #{name}
             </foreach>
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
         </if>
     </select>
 

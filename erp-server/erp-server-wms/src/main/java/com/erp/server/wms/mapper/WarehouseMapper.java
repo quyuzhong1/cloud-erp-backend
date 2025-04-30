@@ -38,11 +38,13 @@ public interface WarehouseMapper extends BaseMapper<WarehouseEntity> {
 
     /**
      * 根据名称获取仓库id
+     *
+     * @param nameList
+     * @param permissionSql
      * @author hyj
      * @date 2024/4/18 10:26
-     * @param nameList
      */
-    List<WarehouseDTO.ListDTO> getByNames(@Param("nameList") List<String> nameList);
+    List<WarehouseDTO.ListDTO> listByNames(@Param("nameList") List<String> nameList, @Param("permissionSql") String permissionSql);
     /**
      * @description: 根据关键词查询
      * @author Will

@@ -343,7 +343,7 @@ public class SalesDemandServiceImpl extends SuperServiceImpl<SalesDemandMapper, 
         //查询所有审核通过并启用的仓库
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
 
-        SalesDemandExcelListener excelListenerUtil = new SalesDemandExcelListener(skuList, warehouseList, skuIds);
+        SalesDemandExcelListener excelListenerUtil = new SalesDemandExcelListener(skuList, wmsTaskFeign, skuIds);
         try {
             EasyExcel.read(excelFile.getInputStream(), SalesDemandImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
         } catch (IOException e) {

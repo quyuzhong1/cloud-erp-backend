@@ -149,4 +149,26 @@
             </foreach>
         </if>
     </select>
+    <select id="listShopByName" resultType="com.erp.model.oms.dto.ShopInfoDTO$ListDTO">
+        select
+            id,
+            name,
+            account,
+            auth_status as authStatus,
+            sales_org_id as salesOrgId,
+            sales_org_name as salesOrgName,
+            disabled
+        from shop_info
+        where is_deleted = false
+        <if test="nameList != null and nameList.size > 0">
+            and name in
+            <foreach collection="nameList" item="name" open="(" close=")" separator=",">
+                #{name}
+            </foreach>
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+    </select>
 </mapper>

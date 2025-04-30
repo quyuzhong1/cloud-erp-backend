@@ -195,13 +195,6 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     List<ShopInfoEntity> listShopByAmazon();
 
     List<ShopSysUserAuthDTO.ViewShopDTO> listShopByAmazonAuth();
-    /**
-     * 根据条件查询是否存在店铺
-     *
-     * @author Jim
-     * @since 2023-11-09
-     */
-    boolean checkExist(String dictCountryCode, String dictPlatform, String authStatus);
 
     /**
      * 根据仓库id查询店铺
@@ -380,5 +373,5 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param shopNameList
      * @return
      */
-    List<ShopInfoEntity> listShopByName(List<String> shopNameList);
+    List<ShopInfoDTO.ListDTO> listShopByName(List<String> shopNameList);
 }

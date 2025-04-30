@@ -3,7 +3,6 @@ package com.erp.server.oms.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.date.StopWatch;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
@@ -76,7 +75,6 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictCountryDTO;
-import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictPartitionEntity;
@@ -10051,8 +10049,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (String salesPlatformName : salesPlatformNames) {
             salesPlatformIds.add(salesPlatformMap.get(salesPlatformName));
         }
-        List<ShopInfoEntity> shopInfoAuthList = shopInfoService.listAuthPlatform(salesPlatformIds);
-        Map<String, ShopInfoEntity> shopInfoAuthMap = shopInfoAuthList.stream().collect(Collectors.toMap(ShopInfoEntity::getName, v -> v, (oldValue, newValue) -> oldValue));
+        List<String> shopNameList = successList.stream().map(B2CSoImportExcelDTO::getShopName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ShopInfoDTO.ListDTO> shopInfoAuthList = shopInfoService.listShopByName(shopNameList);
+        Map<String, ShopInfoDTO.ListDTO> shopInfoAuthMap = shopInfoAuthList.stream().collect(Collectors.toMap(ShopInfoDTO.ListDTO::getName, v -> v, (oldValue, newValue) -> oldValue));
         //币别
         List<DictCurrencyEntity> currencyList = sysUserFeign.currencyList();
         //订单分类
@@ -10066,8 +10065,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryNames);
         Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(DictCountryEntity::getNameCn, DictCountryEntity::getId, (oldValue, newValue) -> oldValue));
         //仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
-        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.UpdateDTO::getName, WarehouseDTO.UpdateDTO::getId, (oldValue, newValue) -> oldValue));
+        List<String> warehouseNameList = successList.stream().map(B2CSoImportExcelDTO::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
+        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, WarehouseDTO.ListDTO::getId, (oldValue, newValue) -> oldValue));
         //B2C客户
         List<String> customerNameList = successList.stream().map(B2CSoImportExcelDTO::getCustomerName).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<CustomerB2CDTO.DropListDTO> b2cCustomerList = customerB2cService.customerListByName(customerNameList);
@@ -10137,14 +10137,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 errorMsgList.add("平台未找到");
             }
             //店铺
-            ShopInfoEntity shopInfoEntity = shopInfoAuthMap.get(mainInfo.getShopName());
+            ShopInfoDTO.ListDTO shopInfoEntity = shopInfoAuthMap.get(mainInfo.getShopName());
             if(Objects.nonNull(shopInfoEntity)){
                 soB2cEntity.setShopId(shopInfoEntity.getId());
                 soB2cEntity.setShopName(shopInfoEntity.getName());
                 soB2cEntity.setOrgId(shopInfoEntity.getSalesOrgId());
                 soB2cEntity.setOrgName(shopInfoEntity.getSalesOrgName());
             }else {
-                errorMsgList.add("店铺未找到");
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
             }
             //订单金额
             if(mainInfo.getAmount().matches(regex)){
@@ -10304,7 +10304,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                             detailEntity.setWarehouseId(warehouseId);
                             detailEntity.setWarehouseName(detail.getWarehouseName());
                         }else {
-                            msgList.add("仓库未找到");
+                            msgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                         }
                     }
                     detailEntity.setMainId(soB2cEntity.getId());

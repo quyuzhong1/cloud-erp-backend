@@ -1392,17 +1392,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return lambdaQuery().select(ShopInfoEntity::getAccount).
                 groupBy(ShopInfoEntity::getAccount).list().stream().map(ShopInfoEntity::getAccount).collect(Collectors.toList());
     }
-
-    @Override
-    public boolean checkExist(String dictCountryCode, String dictPlatform, String authStatus) {
-        Integer count = lambdaQuery()
-                .eq(StringUtils.isNotBlank(dictCountryCode), ShopInfoEntity::getDictCountryCode, dictCountryCode)
-                .eq(StringUtils.isNotBlank(dictPlatform), ShopInfoEntity::getDictPlatform, dictPlatform)
-                .eq(StringUtils.isNotBlank(authStatus), ShopInfoEntity::getAuthStatus, authStatus)
-                .count();
-        return count > 0;
-    }
-
     @Override
     public List<ShopInfoEntity> listShopInfoByWarehouseIds(List<String> warehouseIds) {
         if (CollectionUtils.isEmpty(warehouseIds)) {
@@ -1866,11 +1855,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public List<ShopInfoEntity> listShopByName(List<String> shopNameList) {
+    public List<ShopInfoDTO.ListDTO> listShopByName(List<String> shopNameList) {
         if (CollUtil.isEmpty(shopNameList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(ShopInfoEntity::getName, shopNameList).list();
+        String permissionSql = authDataFeign.getShopPermissionSql("id");
+        return baseMapper.listShopByName(shopNameList,permissionSql);
     }
 
     @Override

@@ -1109,7 +1109,7 @@ public enum ApiError implements Serializable {
     ERROR_92264(92264,"目的国家不能为空"),
     ERROR_92265(92265,"重量不能为空"),
     ERROR_92267(92267,"邮编不能为空"),
-
+    WAREHOUSE_NOT_EXIST_NO_PERMISSION(92268,"仓库不存在或没有仓库权限"),
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
     ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED(92126,"委外发料单SKU【{}】数量不能大于【{}】"),
@@ -1278,6 +1278,7 @@ public enum ApiError implements Serializable {
     ERROR_92056(92056,"同步金蝶B2C销售退货单未找到对应的仓库【{}】"),
     ERROR_92057(92057,"同步金蝶B2C销售退货单未找到对应的sku【{}】"),
     ERROR_92058(92058,"店铺不存在"),
+    SHOP_NOT_EXIST_NO_PERMISSION(92058,"店铺不存在或没有店铺权限"),
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
     ERROR_SO_B2C_SPLIT_PRICE(92059, "未找到订单【{}】对应客户下SKU【{}】销售价格"),

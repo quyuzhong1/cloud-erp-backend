@@ -235,14 +235,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             List<ListingInfoEntity> list = listingInfoService.list();
             String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
             List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
-            List<ShopInfoEntity> shopInfoList = shopInfoService.list();
             //单位
             List<ProductUnitEntity> unitList = FeignQuery.create(ProductUnitEntity.class).list();
             //原产地
             String originKey = DictBasicTypeEnum.INVOICE_TAX_NFE_ORIGIN.getType();
             List<DictBasicDTO.ViewDTO> originList = dictBasicService.getByKey(originKey);
 
-            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this,unitList,originList, skuList, shopInfoList, skuMappingList, dictBasicList, list, listingInfoService,operateLogService,invoiceTaxService);
+            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this,unitList,originList, skuList, shopInfoService, skuMappingList, dictBasicList, list, listingInfoService,operateLogService,invoiceTaxService);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
@@ -268,7 +267,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if (CollectionUtils.isNotEmpty(overseasWarehouseList)) {
                 overseasWarehouseMap = overseasWarehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getId, Function.identity()));
             }
-            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener( warehouseList, overseasWarehouseMap);
+            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(overseasWarehouseMap);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingWarehouseImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
