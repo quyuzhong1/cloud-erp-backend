@@ -954,7 +954,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                 .collect(Collectors.toMap(InventoryDirectionEnum::getName, Function.identity()));
 
         // 发货仓库
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listApproveWarehouse(Boolean.FALSE);
+        List<String> warehouseNameList = successList.stream().map(OtherOutStockImportExcelDTO::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehouseNameList);
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList
                 .stream()
                 .collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));
@@ -1041,7 +1042,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             // 发货仓库
             WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(importExcelDTO.getWarehouseName());
             if (null == warehouseDTO){
-                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库不存在", importExcelDTO.getWarehouseName()));
+                importExcelDTO.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 errorList.add(importExcelDTO);
                 continue;
             }

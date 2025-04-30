@@ -648,12 +648,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         //通过必填校验的行
         List<WarehouseLocationExcelDto> verifyList = listener.getSuccessList();
         List<String> excelWarehouseNameList = verifyList.stream().map(WarehouseLocationExcelDto::getWarehouseName).collect(Collectors.toList());
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(excelWarehouseNameList);
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(excelWarehouseNameList);
         Map<String, String> warehouseName2IdMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, WarehouseDTO.ListDTO::getId));
         for (WarehouseLocationExcelDto row : verifyList) {
             String warehouseId = warehouseName2IdMap.get(row.getWarehouseName());
             if(warehouseId == null){
-                row.setErrorMsg("仓库不存在");
+                row.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 errorList.add(row);
                 continue;
             }

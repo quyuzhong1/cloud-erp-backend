@@ -174,4 +174,11 @@ public interface ShopInfoFeign {
      */
     @PostMapping("feign/shop/paging")
     PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody PagingDTO<ShopDTO.PagingParamDTO> advanceQueryDTO);
+    /**
+     * 根据店铺名称查询店铺信息
+     * @param shopNameList
+     * @return
+     */
+    @PostMapping("feign/shop/listShopByName")
+    List<ShopInfoDTO.ListDTO> listShopByName(@RequestBody List<String> shopNameList);
 }

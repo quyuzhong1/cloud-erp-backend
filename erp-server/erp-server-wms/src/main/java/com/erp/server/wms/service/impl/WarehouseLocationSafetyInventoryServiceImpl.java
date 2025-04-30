@@ -28,7 +28,6 @@ import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -103,11 +102,11 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             return exportErrorFile(errorList, response);
         }
 
-        List<String> warehouseNameList = successList.stream().map(item -> item.getWarehouseName()).distinct().collect(Collectors.toList());
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(warehouseNameList);
-        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(item1 -> item1.getName(), item2 -> item2.getId()));
+        List<String> warehouseNameList = successList.stream().map(WarehouseLocationSafetyInventoryDTO.importExcelDTO::getWarehouseName).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehouseNameList);
+        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, WarehouseDTO.ListDTO::getId));
 
-        List<String> warehouseAreaNameList = successList.stream().map(item -> item.getWarehouseAreaName()).distinct().collect(Collectors.toList());
+        List<String> warehouseAreaNameList = successList.stream().map(WarehouseLocationSafetyInventoryDTO.importExcelDTO::getWarehouseAreaName).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> areaList = warehouseLocationService.getBaseMapper().selectList(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("type", "area")
                 .eq("is_deleted", false)
@@ -121,7 +120,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             //填充仓库ID
             String warehouseId = warehouseMap.get(importExcelDto.getWarehouseName());
             if(CharSequenceUtil.isBlank(warehouseId)){
-                importExcelDto.setErrorInfo(importExcelDto.getErrorInfo() + ", 仓库不存在");
+                importExcelDto.setErrorInfo(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 errorList.add(importExcelDto);
                 continue;
             }

@@ -429,24 +429,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(List<String> warehouseNameList) {
-        if (CollectionUtils.isEmpty(warehouseNameList)) {
-            return new ArrayList<>();
-        }
-        List<WarehouseEntity> list = lambdaQuery().in(WarehouseEntity::getName,warehouseNameList).list();
-        if (CollectionUtils.isEmpty(list)) {
-            return new ArrayList<>();
-        }
-        List<WarehouseDTO.UpdateDTO> resultList = new ArrayList<>();
-        for (WarehouseEntity warehouseEntity : list) {
-            WarehouseDTO.UpdateDTO updateDTO = BeanMapperUtils.map(WarehouseDTO.UpdateDTO.class, warehouseEntity);
-            updateDTO.setApproveStatusEnum(warehouseEntity.getApproveStatus());
-            resultList.add(updateDTO);
-        }
-        return resultList;
-    }
-
-    @Override
     public PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         WarehouseDTO.SelectDTO params = searchDTO.getParams();
@@ -1431,8 +1413,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2024/4/18 10:26
      */
     @Override
-    public List<WarehouseDTO.ListDTO> getByNames(@Param("nameList") List<String> nameList) {
-        return baseMapper.getByNames(nameList);
+    public List<WarehouseDTO.ListDTO> listByNames(@Param("nameList") List<String> nameList) {
+        String permissionSql = authDataFeign.getWarehousePermissionSql("id");
+        return baseMapper.listByNames(nameList,permissionSql);
     }
 
     /**
@@ -1466,14 +1449,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         return Boolean.FALSE.equals(disabled) && warehouseEntity.getOpenTime() == null;
 	}
-
-    @Override
-    public List<WarehouseEntity> listByWarehouseNameList(List<String> warehouseNameList) {
-        if (CollUtil.isEmpty(warehouseNameList)){
-            return Collections.emptyList();
-        }
-        return this.lambdaQuery().in(WarehouseEntity::getName,warehouseNameList).list();
-    }
 
     private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
 		if(this.checkOpenCloseTime(warehouseEntity)) {
