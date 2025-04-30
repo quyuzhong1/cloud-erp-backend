@@ -243,11 +243,6 @@ public class VirtualWarehouseAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货单")
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocation:paging",
-            tableAlias = "vma"
-    )
     public ApiResult<Boolean> export(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
         virtualWarehouseAllocationService.export(dto);
         return success(true);
@@ -359,11 +354,6 @@ public class VirtualWarehouseAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出分货统计")
     @PostMapping("/exportStatistics")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocation:paging",
-            tableAlias = "vma"
-    )
     public ApiResult<Boolean> exportStatistics(@RequestBody VirtualWarehouseAllocationDTO.ExportDTO dto) {
         virtualWarehouseAllocationService.exportStatistics(dto);
         return success(true);

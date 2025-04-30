@@ -250,11 +250,12 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/virtualWarehouseAllocation")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "wms:virtualWarehouseAllocation:export",
-            serviceClass = VirtualWarehouseAllocationService.class,
-            keyIdName = "id")
+            warehouseTableField = "vmad.warehouse_id",
+            menuCode = "wms:virtualWarehouseAllocation:paging",
+            tableAlias = "vma"
+    )
     @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
     public PagingVO<VirtualWarehouseAllocationDTO.ListDTO> exportVirtualWarehouseAllocation(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
         return virtualWarehouseAllocationService.exportVirtualWarehouseAllocation(dto);
@@ -852,12 +853,12 @@ public class ExportWmsFeignController {
      * @return PagingVO<ExportStatisticsDTO>
      */
     @PostMapping("/exportVirtualStatistics")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             warehouseTableField = "vmad.warehouse_id",
-            menuCode = "wms:virtualWarehouseAllocation:export",
-            serviceClass = VirtualWarehouseAllocationService.class,
-            keyIdName = "id")
+            menuCode = "wms:virtualWarehouseAllocation:paging",
+            tableAlias = "vma"
+    )
     @WebAdvanceQuery(handler = VirtualWarehouseAllocationQueryHandler.class)
     public PagingVO<VirtualWarehouseAllocationDTO.ExportStatisticsDTO> exportVirtualStatistics(@RequestBody PagingDTO<VirtualWarehouseAllocationDTO.ExportDTO> dto) {
         return virtualWarehouseAllocationService.exportVirtualStatistics(dto);
