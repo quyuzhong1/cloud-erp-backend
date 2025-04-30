@@ -1760,7 +1760,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 continue;
             }
             if (CharSequenceUtil.isBlank(province)){
-                throw createBlacklistException(logisticsChannel, country, province, city, district);
+                throw createBlacklistCountryException(logisticsChannel, country);
             }
             if (!Objects.equals(province, provinceName)){
                 continue;
@@ -1783,6 +1783,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                                       String country, String province, String city, String district) {
         return new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_BLACKLIST,
                 channel.getName(), country, province, city, district);
+    }
+    private ServiceException createBlacklistCountryException(LogisticsChannelEntity channel,
+                                                      String country) {
+        return new ServiceException(ApiError.ERROR_SO_B2C_LOGISTICS_COUNTRY_BLACKLIST,
+                channel.getName(), country);
     }
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
