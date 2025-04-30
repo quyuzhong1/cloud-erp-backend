@@ -109,11 +109,13 @@ public class TemuOutStockJob {
                 TemuResp<TemuOrderDTO> temuResp = temuClient.getOrderList(temuOrderReq);
                 if(!temuResp.getSuccess()){
                     XxlJobHelper.log("查询temu订单数据响应失败,{}",temuResp.getErrorMsg());
+                    log.error("查询temu订单数据响应失败,{}",temuResp.getErrorMsg());
                     continue;
                 }
                 TemuOrderDTO temuOrderDTO = temuResp.getResult();
                 if(!temuOrderDTO.getSuccess()){
                     XxlJobHelper.log("查询temu订单数据失败,{}",temuOrderDTO.getErrorMsg());
+                    log.error("查询temu订单数据失败,{}",temuResp.getErrorMsg());
                     continue;
                 }
                 if(CollectionUtils.isEmpty(temuOrderDTO.getResult().getPageItems())){

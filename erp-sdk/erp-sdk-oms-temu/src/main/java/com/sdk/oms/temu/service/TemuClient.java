@@ -1,11 +1,14 @@
 package com.sdk.oms.temu.service;
 
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.HttpCommonUtil;
+import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.google.gson.Gson;
 import com.sdk.oms.temu.dto.*;
 import com.sdk.oms.temu.enums.TemuEnum;
@@ -17,11 +20,15 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import javax.annotation.Resource;
 import java.util.*;
 
 @Slf4j
 @Component
 public class TemuClient {
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     private static final String CONTENT_TYPE_HEADER_NAME = "Content-Type";
 
@@ -54,14 +61,14 @@ public class TemuClient {
         String clientSecret = "a05e0902cf9c1b3c372680e084f1d424332284fb";
         String clientId = "ab3a401ed6c265793776aa3d4c48bd6f";
         String token = "upskffqpqmkoltggbfegqtbs7ghjaenvzwo9kbr1bt1ee5ypb0drvfh20ih";
-        TemuOrderReq temuCommonDTO = new TemuOrderReq();
+        TemuShippingInfoReq temuCommonDTO = new TemuShippingInfoReq();
         temuCommonDTO.setToken(token);
         temuCommonDTO.setAppSecret(clientSecret);
         temuCommonDTO.setAppKey(clientId);
         temuCommonDTO.setAreaCode("US");
-        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-07027570166393313","PO-211-04493554872874081"));
+        temuCommonDTO.setParentOrderSn("PO-211-1820964856952199");
         TemuClient temuClient = new TemuClient();
-        TemuResp<TemuOrderDTO> resp = temuClient.getOrderList(temuCommonDTO);
+        TemuResp<TemuShippingDTO> resp = temuClient.getShippingInfo(temuCommonDTO);
         System.out.println(resp);
     }
 
@@ -110,6 +117,54 @@ public class TemuClient {
             throw new ServiceException("temu半托管查询订单失败，返回值 responseMap={}",JSONUtil.toJsonStr(apiResult));
         }
         return JSON.parseObject(apiResult.getData(),new TypeReference<TemuResp<TemuOrderDTO>>() {}.getType());
+    }
+
+    public TemuCommonDTO getAuthInfo(String shopId){
+        ApiResult<ShopAuthEntity> apiResult = shopInfoFeign.getShopAuthById(shopId);
+        ShopAuthEntity shopAuthEntity = apiResult.getData();
+        if(Objects.isNull(shopAuthEntity)){
+            return null;
+        }
+        String extendData = shopAuthEntity.getExtendData();
+        if(StringUtils.isBlank(extendData)){
+            return null;
+        }
+        JSONObject jsonObject = JSONUtil.parseObj(extendData);
+        String clientId = jsonObject.getStr("clientId");
+        String clientSecret = jsonObject.getStr("clientSecret");
+        if(StringUtils.isBlank(clientId) ||StringUtils.isBlank(clientSecret)|| StringUtils.isBlank(shopAuthEntity.getAreaCode()) || StringUtils.isBlank(shopAuthEntity.getAccessToken()) ) {
+            return null;
+        }
+        TemuCommonDTO temuCommonDTO = new TemuCommonDTO();
+        temuCommonDTO.setAppKey(clientId);
+        temuCommonDTO.setAppSecret(clientSecret);
+        temuCommonDTO.setToken(shopAuthEntity.getAccessToken());
+        temuCommonDTO.setAreaCode(shopAuthEntity.getAreaCode());
+        return temuCommonDTO;
+    }
+
+    public TemuResp<TemuShippingDTO> getShippingInfo(TemuShippingInfoReq temuShippingInfoReq){
+        TemuEnum temuEnum = TemuEnum.getByCode(temuShippingInfoReq.getAreaCode());
+        this.checkShopInfo(temuShippingInfoReq);
+        String api = "bg.order.decryptshippinginfo.get";
+        Map<String, Object> params = this.buildDefaultParams(temuShippingInfoReq, api);
+        params.put("parentOrderSn",temuShippingInfoReq.getParentOrderSn());
+//        params.put("parentOrderSn","PO-211-1820964856952199");
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSignature(params, temuShippingInfoReq.getAppSecret());
+        //加入sign签名入参
+        params.put("sign", sign);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("content-type", "application/json");
+        String url = temuEnum.getUrl();
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(url , JSONUtil.toJsonStr(params),new HashMap<>(), headerMap, RequestMethod.POST);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("入参params={}, temu半托管查询发货地址失败，返回值 responseMap={}",  params, JSONUtil.toJsonStr(apiResult));
+            return TemuResp.error("temu半托管查询发货地址失败");
+        }
+        return JSON.parseObject(apiResult.getData(),new TypeReference<TemuResp<TemuShippingDTO>>() {}.getType());
     }
 
     private void checkShopInfo(TemuCommonDTO temuCommonDTO){

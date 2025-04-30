@@ -564,6 +564,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
             return this.aliExpressNotPlatformOrderNotExistAddress(dto);
         }
+        if (PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return this.temuPlatformOrderNotExistAddress(dto);
+        }
         return false;
     }
 
@@ -585,5 +588,20 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         return false;
     }
 
+
+    /**
+     * 速卖通自发货订单未解密地址
+     */
+    private boolean temuPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+        if (StrUtil.isNotBlank(dto.getLabelJson())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            Boolean isTemuPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
+            if (isTemuPlatformWarehouseOrder){
+                return false;
+            }
+            return null != dto.getReceiver().getIsUpdateError() && dto.getReceiver().getIsUpdateError();
+        }
+        return false;
+    }
 
 }
