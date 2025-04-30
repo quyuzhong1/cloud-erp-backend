@@ -7,6 +7,7 @@ import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -16,6 +17,7 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -393,6 +395,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return 
      */
     Boolean generateB2cSoOutstock(String b2cSoId);
+    /**
+     * 生成B2C销售出库单
+     * 根据传入明细，时间生成
+     */
+    Boolean generateB2cSoOutstock(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList , LocalDateTime outTime);
 
     /**
      * 生成B2C销售出库单

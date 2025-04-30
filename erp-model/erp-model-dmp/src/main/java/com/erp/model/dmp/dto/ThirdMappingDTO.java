@@ -374,6 +374,10 @@ public class ThirdMappingDTO implements Serializable {
          * 第三方仓库编码
          */
         private String thirdWarehouseCode;
+        /**
+         * 第三方仓库id
+         */
+        private String thirdWarehouseId;
     }
     @Data
     public static class WarehouseListDto

@@ -1,5 +1,7 @@
 package com.sdk.oms.temu.util;
 
+import com.common.core.exception.ServiceException;
+
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -32,8 +34,7 @@ public class EncryptionUtils {
             }
             return sb.toString().toUpperCase();
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            return null;
+            throw new ServiceException("签名错误",e);
         }
     }
 
