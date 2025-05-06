@@ -171,7 +171,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         // 优化和抽取下面方法
         List<SoB2cEntity> soB2cList = new LinkedList<>();
         List<SoB2cLogisticsEntity> logisticsEntityList = new LinkedList<>();
-        if (StringUtils.isNotBlank(dto.getOrderNumber())) {
+        if (StringUtils.isNotBlank(dto.getTrackingNumber())) {
             Pair<List<SoB2cEntity>, List<SoB2cLogisticsEntity>> result = queryByTrackingNumber(dto);
             soB2cList = result.getLeft();
             logisticsEntityList = result.getRight();
@@ -217,14 +217,15 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
     ) {
         ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO logisticInfoDTO = new ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO();
         logisticInfoDTO.setOrderNumber(soB2c.getSellerOrderCode());
-        logisticInfoDTO.setPlatformCode(soB2c.getDictPlatform());
+        logisticInfoDTO.setPlatformCode(soB2c.getPlatformCode());
         logisticInfoDTO.setBillStatus(soB2c.getBillStatus());
+        logisticInfoDTO.setCode(soB2c.getCode());
 
         // 设置订单信息
         ShopifyServerSoB2cDTO.OrderInfo orderInfo = new ShopifyServerSoB2cDTO.OrderInfo();
         orderInfo.setCreatedAt(soB2c.getPlatformOrderCreateTime());
         // TODO 发货时间
-        orderInfo.setPackagedAt(null);
+        orderInfo.setPackagedAt(soB2c.getPlatformOrderCreateTime());
         logisticInfoDTO.setOrderInfo(orderInfo);
 
         // 设置物流信息
@@ -250,6 +251,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
             logisticInfoDTO.setLogistics(logistics);
         }
 
+        // TODO
         // 设置产品信息
         List<SoB2cDetailEntity> relatedDetails = detailMap.getOrDefault(soB2c.getId(), Collections.emptyList());
         List<ShopifyServerSoB2cDTO.Product> products = relatedDetails.stream().map(detail -> {
@@ -258,8 +260,8 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
             product.setPlatformDetailId(detail.getSourceDetailId());
             product.setPlatformSkuNo(detail.getPlatformSkuNo());
             product.setPlatformSpuNo(detail.getPlatformSpuNo());
-            product.setProductName(null);
-            product.setProductImage(null);
+            product.setProductName("");
+            product.setProductImage("");
             return product;
         }).collect(Collectors.toList());
         logisticInfoDTO.setProducts(products);
@@ -275,9 +277,9 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                 .eq(SoB2cLogisticsEntity::getTrackNo, dto.getTrackingNumber())
                 .list();
         if (CollectionUtils.isNotEmpty(logisticsEntityList)) {
-            List<String> mainIds = logisticsEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+            List<String> mainIds = logisticsEntityList.stream().map(SoB2cLogisticsEntity::getMainId).collect(Collectors.toList());
             List<SoB2cEntity> soB2cList = this.lambdaQuery()
-                    .eq(SoB2cEntity::getId, mainIds)
+                    .in(SoB2cEntity::getId, mainIds)
                     .eq(SoB2cEntity::getDictPlatform, PlatformDictEnum.SHOPIFY.getCode())
                     .eq(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
                     .list();
@@ -304,7 +306,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                         .anyMatch(receiver -> receiver.getEmail().equals(dto.getContactInfo()) || receiver.getTelNumber().equals(dto.getContactInfo()));
                 if (contactMatch) {
                     logisticsEntityList = soB2cLogisticsService.lambdaQuery()
-                            .eq(SoB2cLogisticsEntity::getMainId, mainIds)
+                            .in(SoB2cLogisticsEntity::getMainId, mainIds)
                             .list();
                 }
             }
