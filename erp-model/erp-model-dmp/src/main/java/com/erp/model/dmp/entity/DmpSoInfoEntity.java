@@ -283,6 +283,18 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     @TableField("after_tax_amount")
     private BigDecimal afterTaxAmount = BigDecimal.ZERO;
 
+    /**
+     * (速卖通)买家视角订单金额
+     */
+    @TableField("actual_amount")
+    private BigDecimal actualAmount = BigDecimal.ZERO;
+
+    /**
+     * (速卖通)买家视角订单金额币种
+     */
+    @TableField("actual_currency")
+    private String actualCurrency = "";
+
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 

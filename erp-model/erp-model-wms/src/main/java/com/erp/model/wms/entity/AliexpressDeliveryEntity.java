@@ -2,6 +2,8 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
@@ -85,6 +87,16 @@ public class AliexpressDeliveryEntity extends BaseEntity<AliexpressDeliveryEntit
      */
     @TableField("is_outstock")
     private Boolean isOutstock;
+    /**
+     * (速卖通)买家视角订单金额
+     */
+    @TableField("actual_amount")
+    private BigDecimal actualAmount;
+    /**
+     * (速卖通)买家视角订单金额币种
+     */
+    @TableField("actual_currency")
+    private String actualCurrency;
 
     public static final String PLATFORM_CODE = "platform_code";
 

@@ -181,6 +181,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             addDTO.setPlatformDeliveryStatus(AliexpressDeliveryOrderStatusEnum.getCode(deliveryDTO.getOrderStatus()));
             addDTO.setPlatformDeliveryCode(deliveryDTO.getSourceCode());
             addDTO.setIsOutstock(Boolean.FALSE);
+            addDTO.setActualAmount(deliveryDTO.getActualAmount());
+            addDTO.setActualCurrency(deliveryDTO.getActualCurrency());
             List<PlatformDeliveryDetailDTO> detailDTOList = deliveryDTO.getDetailDTOList();
             List<AliexpressDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             if (CollUtil.isNotEmpty(detailDTOList)){

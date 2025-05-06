@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -10,6 +11,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -177,6 +179,16 @@ public class AliexpressDeliveryDTO implements Serializable {
         * 平台发货仓库
         */
         private String warehouseName;
+
+        /**
+         * (速卖通)买家视角订单金额
+         */
+        private BigDecimal actualAmount;
+
+        /**
+         * (速卖通)买家视角订单金额币种
+         */
+        private String actualCurrency;
 
 
     }
