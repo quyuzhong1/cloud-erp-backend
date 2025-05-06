@@ -137,7 +137,9 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 listRetryOutstockDTO.setCountryName(receiverEntity.getCountryName());
                 //产品名称
                 listRetryOutstockDTO.setProductName(skuMap.get(soB2cDetailEntity.getSkuId()));
-                listRetryOutstockDTO.setOutstockTime(soB2cEntity.getSoOutstockDate().atStartOfDay());
+                if(Objects.nonNull(soB2cEntity.getSoOutstockDate())){
+                    listRetryOutstockDTO.setOutstockTime(soB2cEntity.getSoOutstockDate().atStartOfDay());
+                }
                 list.add(listRetryOutstockDTO);
             }
         }
