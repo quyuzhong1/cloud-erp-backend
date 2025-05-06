@@ -111,7 +111,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         List<String> deliveryStatusNameList = AliexpressDeliveryOrderStatusEnum.getOutStockStatusList();
         deliveryDTOList = deliveryDTOList.stream().filter(e -> deliveryStatusNameList.contains(e.getOrderStatus())).collect(Collectors.toList());
         if (CollUtil.isEmpty(deliveryDTOList)){
-            return Boolean.TRUE;//不需要生成销售出库单
+            return Boolean.FALSE;//不需要生成销售出库单
         }
         dto.setDeliveryDTOList(deliveryDTOList);
         try {
