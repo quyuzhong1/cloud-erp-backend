@@ -1829,6 +1829,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     inGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
                     inGoods.setPositionNo(detailEntity.getWarehouseLocation());
                     inGoods.setWarehouseId(warehouseId);
+                    inGoods.setRemark(detailEntity.getRemark());
                     inGoodsList.add(inGoods);
                 }
                 abstractWdtService.transfer(operateEnum, entity.getId(), entity.getCode(), inGoodsList, SourceTypeEnum.OTHER_INSTOCK);
@@ -1841,6 +1842,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     outGoods.setNum(BigDecimal.valueOf(detailEntity.getRealQty()));
                     outGoods.setPositionNo(detailEntity.getWarehouseLocation());
                     outGoods.setWarehouseId(warehouseId);
+                    outGoods.setRemark(detailEntity.getRemark());
                     outGoodsList.add(outGoods);
                 }
                 abstractWdtService.transfer(operateEnum, entity.getId(), entity.getCode(), outGoodsList, SourceTypeEnum.OTHER_OUTSTOCK);
