@@ -270,6 +270,8 @@ public class AbstractWdtService <T extends CommonCreateBillGoodsReq>{
             }
             int sum = collectGoodsList.stream().mapToInt(item -> item.getNum().intValue()).sum();
             goods.setNum(BigDecimal.valueOf(sum));
+            String remark = collectGoodsList.stream().map(CommonCreateBillGoodsReq::getRemark).filter(Objects::nonNull).distinct().collect(Collectors.joining(","));
+            goods.setRemark(remark);
             combinationList.add(goods);
         }
         return combinationList;
