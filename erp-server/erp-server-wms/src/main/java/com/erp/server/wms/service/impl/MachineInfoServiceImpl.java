@@ -1295,7 +1295,7 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
             //bom版本取最新
             String bomVersion = childrenSkuList.stream().max(Comparator.comparingDouble(obj -> Double.valueOf(obj.getBomVersion()))).map(BomChildrenSkuDTO::getBomVersion).get();
             String combinationType = BomTypeEnum.COMBINATION.getType();
-            List<BomChildrenSkuDTO> versionChildList = childrenList.stream().
+            List<BomChildrenSkuDTO> versionChildList = childrenSkuList.stream().
                     filter(obj -> obj.getBomVersion().equals(bomVersion) &&( combinationType.equals(obj.getType()) || BomTypeEnum.SINGLE.getType().equals(obj.getType()))).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(versionChildList)) {
                 resultList.add(new ArrayList<>());
