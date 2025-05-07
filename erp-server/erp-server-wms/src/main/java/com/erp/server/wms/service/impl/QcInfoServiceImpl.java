@@ -253,8 +253,10 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
             List<PurchaseOrderDetailEntity> purOrderDetailList = Collections.emptyList();
             //当采购订单明细id 为空的时候 sku id 不能为空
-            if (CharSequenceUtil.isBlank(purchaseOrderDetailId) && CharSequenceUtil.isBlank(skuId)) {
-                throw new ServiceException(ApiError.ERROR_95107);
+            if (CharSequenceUtil.isBlank(purchaseOrderDetailId)) {
+                if(CharSequenceUtil.isBlank(skuId)){
+                    throw new ServiceException(ApiError.ERROR_95107);
+                }
             } else {
                 List<String> podIds = Collections.singletonList(purchaseOrderDetailId);
                 //获取到对应的 订单明细
