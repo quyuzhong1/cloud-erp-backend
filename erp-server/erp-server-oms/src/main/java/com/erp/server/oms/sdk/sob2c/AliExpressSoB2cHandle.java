@@ -98,6 +98,10 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
 
     @Override
     public Boolean handleSoOutStock(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
+        if (Objects.isNull(dto)){
+            //没有推送数据，直接返回
+            return Boolean.TRUE;
+        }
         //平台仓订单
         Boolean hasPlatformWarehouse = mainEntity.hasPlatformWarehouseOrder();
         // 非平台仓由发货单生成销售出库单--不用实现

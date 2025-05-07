@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.CfgInvoiceSettingMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgInvoiceSettingEntity">
+        <result column="id" property="id" />
+        <result column="create_user_id" property="createUserId" />
+        <result column="create_user_name" property="createUserName" />
+        <result column="create_time" property="createTime" />
+        <result column="update_user_id" property="updateUserId" />
+        <result column="update_user_name" property="updateUserName" />
+        <result column="update_time" property="updateTime" />
+        <result column="version" property="version" />
+        <result column="is_deleted" property="isDeleted" />
+        <result column="type" property="type" />
+        <result column="company_name" property="companyName" />
+        <result column="lei_code" property="leiCode" />
+        <result column="disabled" property="disabled" />
+        <result column="tax_type" property="taxType" />
+        <result column="dict_company_type" property="dictCompanyType" />
+        <result column="state_tax_no" property="stateTaxNo" />
+        <result column="email" property="email" />
+        <result column="post_code" property="postCode" />
+        <result column="address" property="address" />
+        <result column="doorplate_no" property="doorplateNo" />
+        <result column="district" property="district" />
+        <result column="city" property="city" />
+        <result column="state" property="state" />
+        <result column="no" property="no" />
+        <result column="start_code" property="startCode" />
+        <result column="certificate_url" property="certificateUrl" />
+        <result column="certificate_password" property="certificatePassword" />
+        <result column="token" property="token" />
+    </resultMap>
+
+
+    <resultMap id="pagingWithShopsResultMap" type="com.erp.model.oms.dto.CfgInvoiceSettingDTO$PagingViewDTO">
+        <id property="id" column="id" />
+        <result property="type" column="type" />
+        <result property="companyName" column="company_name" />
+        <result property="createTime" column="create_time" />
+        <result property="updateTime" column="update_time" />
+        <result property="updateUserName" column="update_user_name" />
+        <result property="leiCode" column="lei_code" />
+        <result property="disabled" column="disabled" />
+        <result property="taxType" column="tax_type" />
+        <result property="dictCompanyType" column="dict_company_type" />
+        <result property="stateTaxNo" column="state_tax_no" />
+        <result property="email" column="email" />
+        <result property="postCode" column="post_code" />
+        <result property="address" column="address" />
+        <result property="doorplateNo" column="doorplate_no" />
+        <result property="district" column="district" />
+        <result property="city" column="city" />
+        <result property="state" column="state" />
+        <result property="no" column="no" />
+        <result property="startCode" column="start_code" />
+        <result property="certificateUrl" column="certificate_url" />
+        <result property="certificatePassword" column="certificate_password" />
+        <collection property="shopList" ofType="com.erp.model.oms.dto.CfgInvoiceSettingDTO$ShopInfoDTO">
+            <result property="name" column="shop_name" />
+            <result property="dictPlatform" column="dict_platform" />
+            <result property="dictPlatformName" column="dict_platform_name" />
+        </collection>
+    </resultMap>
+
+    <select id="pagingWithShops" resultMap="pagingWithShopsResultMap">
+        SELECT
+        cis.id,
+        cis.type,
+        cis.company_name,
+        cis.create_time,
+        cis.update_time,
+        cis.update_user_name,
+        cis.lei_code,
+        cis.disabled,
+        cis.tax_type,
+        cis.dict_company_type,
+        cis.state_tax_no,
+        cis.email,
+        cis.post_code,
+        cis.address,
+        cis.doorplate_no,
+        cis.district,
+        cis.city,
+        cis.state,
+        cis.no,
+        cis.start_code,
+        cis.certificate_url,
+        cis.certificate_password,
+        si.name AS shop_name,
+        si.dict_platform,
+        db.name AS dict_platform_name
+        FROM
+        cfg_invoice_setting AS cis
+        LEFT JOIN
+        cfg_invoice_setting_detail AS cisd ON cis.id = cisd.main_id AND cisd.is_deleted = FALSE
+        LEFT JOIN
+        shop_info si ON cisd.shop_id = si.id AND si.is_deleted = FALSE
+        LEFT JOIN
+        dict_basic db ON si.dict_platform = db.value
+        WHERE
+        ${params.sqlMap.default}
+        AND cis.is_deleted = FALSE
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        cis.update_time DESC
+    </select>
+</mapper>

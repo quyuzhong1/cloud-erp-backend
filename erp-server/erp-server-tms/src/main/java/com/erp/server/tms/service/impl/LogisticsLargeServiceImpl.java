@@ -6,35 +6,24 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.SearchType;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.anno.LogAction;
-import com.common.core.controller.vo.ApiResult;
-import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
-import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.scm.entity.SupplierEntity;
-import com.erp.model.srm.entity.PoReconciliationEntity;
-import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO.View;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
-import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -44,17 +33,12 @@ import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.tms.mapper.LogisticsLargeMapper;
 import com.erp.server.tms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -71,13 +54,9 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
-import javax.validation.Valid;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_OMS_SO;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_LOGISTICS_LARGE;
 import static com.common.core.controller.vo.ApiResult.success;
 
@@ -545,7 +524,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             } else {
                 List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, firstMileSkuCostAllocationEntity.getSkuId()).list();
                 if (CollUtil.isNotEmpty(packEntityList)) {
-                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), firstMileSkuCostAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiplyWithTwo(packEntityList.get(0).getGrossWeight(), firstMileSkuCostAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
                     addDTO.setWeight(grossWeight);
                     addDTO.setLogisticsBillingWeight(grossWeight);
                 }
@@ -583,7 +562,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
             //毛重
             List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, firstMileSkuCostAllocationEntity.getSkuId()).list();
             if (CollUtil.isNotEmpty(packEntityList)) {
-                BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), firstMileSkuCostAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                BigDecimal grossWeight = MathUtil.divide(MathUtil.multiplyWithTwo(packEntityList.get(0).getGrossWeight(), firstMileSkuCostAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
                 addDTO.setWeight(grossWeight);
             }
 
@@ -905,7 +884,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 //重量
                 List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
                 if (CollUtil.isNotEmpty(packEntityList)) {
-                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiplyWithTwo(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
                     addDTO.setWeight(grossWeight);
                 }
             }
@@ -927,7 +906,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
                 //重量
                 List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, costAllocationEntity.getSkuId()).list();
                 if (CollUtil.isNotEmpty(packEntityList)) {
-                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                    BigDecimal grossWeight = MathUtil.divide(MathUtil.multiplyWithTwo(packEntityList.get(0).getGrossWeight(), costAllocationEntity.getDeliveryQty()), MathUtil.BigDecimal_1000);
                     addDTO.setWeight(grossWeight);
                 }
             }
@@ -1178,7 +1157,7 @@ public class LogisticsLargeServiceImpl extends SuperServiceImpl<LogisticsLargeMa
         } else {
             List<ProductPackEntity> packEntityList = FeignQuery.create(ProductPackEntity.class).eq(ProductPackEntity::getSkuId, entity.getSkuId()).list();
             if (CollUtil.isNotEmpty(packEntityList)) {
-                BigDecimal grossWeight = MathUtil.divide(MathUtil.multiply(packEntityList.get(0).getGrossWeight(), entity.getDeliveryQty()), MathUtil.BigDecimal_1000);
+                BigDecimal grossWeight = MathUtil.divide(MathUtil.multiplyWithTwo(packEntityList.get(0).getGrossWeight(), entity.getDeliveryQty()), MathUtil.BigDecimal_1000);
                 addDTO.setWeight(grossWeight);
             }
         }

@@ -44,6 +44,8 @@
         <module>erp-sdk-tms-tiktok</module>
         <module>erp-sdk-third-wangdian</module>
         <module>erp-sdk-third-qimen</module>
+        <module>erp-sdk-third-tf</module>
+        <module>erp-sdk-wx-miniapp</module>
     </modules>
 
     <dependencies>

@@ -14,13 +14,11 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.server.wms.query.TransferInQueryHandler;
 import com.erp.server.wms.service.TransferInService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -201,7 +198,7 @@ public class TransferInController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(transferInService.approve(dto, entity));
+                resultDTOS.add(transferInService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), entity));
             }catch (Exception e){
                 log.error("分布式调入单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

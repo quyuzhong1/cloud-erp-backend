@@ -177,7 +177,7 @@ public class PurchaseChangeDetailServiceImpl extends SuperServiceImpl<PurchaseCh
 
         for (PurchaseChangeDetailEntity entity : newList) {
             entity.setPurchaseChangeId(purchaseChangeId);
-            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+            entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
             //操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseChangeDetailEntity old = oldList.stream().filter(obj -> obj.getId().equals(entity.getId())).findFirst().orElse(null);

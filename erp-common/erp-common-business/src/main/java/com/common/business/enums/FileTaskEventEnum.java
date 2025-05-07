@@ -34,6 +34,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PUSH_TASK("EXPORT_PUSH_TASK","中台推送任务表"),
     EXPORT_PULL_TASK("EXPORT_PULL_TASK","中台拉取任务表"),
     EXPORT_NEW_DMP_PUSH_TASK("EXPORT_NEW_DMP_PUSH_TASK","中台推送任务表"),
+    EXPORT_DMP_AFTER_SALE("EXPORT_DMP_AFTER_SALE","售后申请表"),
 
     //plm
     EXPORT_PLM_BOM("EXPORT_PLM_BOM", "BOM数据"),
@@ -78,6 +79,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_OMS_SHOP("EXPORT_OMS_SHOP","店铺导出"),
     EXPORT_OMS_CUSTOMER("EXPORT_OMS_CUSTOMER","客户列表"),
     EXPORT_INVOICE_INFO("EXPORT_INVOICE_INFO","发票管理"),
+    EXPORT_INVOICE_INVALID("EXPORT_INVOICE_INVALID","作废发票号"),
     EXPORT_SO_PRICE("EXPORT_SO_PRICE","销售价目数据"),
     EXPORT_SO_PRICE_CHANGE("EXPORT_SO_PRICE_CHANGE","销售调价数据"),
 

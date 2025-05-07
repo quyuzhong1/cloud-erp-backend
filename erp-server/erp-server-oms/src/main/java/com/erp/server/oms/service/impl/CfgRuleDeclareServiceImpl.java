@@ -331,7 +331,7 @@ public class CfgRuleDeclareServiceImpl extends SuperServiceImpl<CfgRuleDeclareMa
                         BigDecimal toDeclarePrice = entity.getToDeclarePrice();
                         BigDecimal rate = item.getRate();
                         BigDecimal ratePercent = MathUtil.divide(rate, MathUtil.BigDecimal_100);
-                        BigDecimal toDeclarePrice1 = MathUtil.multiply(toDeclarePrice, ratePercent);
+                        BigDecimal toDeclarePrice1 = MathUtil.multiplyWithTwo(toDeclarePrice, ratePercent);
                         //重置目的国申报价
                         if (Objects.nonNull(item.getMaxDeclarePrice()) && toDeclarePrice1.compareTo(item.getMaxDeclarePrice()) > 0){
                             toDeclarePrice1 = item.getMaxDeclarePrice();

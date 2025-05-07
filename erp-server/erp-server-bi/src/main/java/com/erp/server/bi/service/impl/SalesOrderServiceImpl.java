@@ -3269,7 +3269,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
                 findFirst().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).orElse(BigDecimal.ZERO);
         BigDecimal multiplyValue = MathUtil.BigDecimal_100;
         if (Boolean.TRUE.equals(isGrossProfitRate)) {
-            monthMetricsValue = MathUtil.multiply(monthMetricsValue, multiplyValue, 2);
+            monthMetricsValue = MathUtil.multiplyWithTwo(monthMetricsValue, multiplyValue, 2);
         }
         monthMetrics.setMetricsValue(monthMetricsValue);
         //完成值
@@ -3292,7 +3292,7 @@ public class SalesOrderServiceImpl extends ServiceImpl<SalesOrderServiceMapper, 
         //年度目标值
         BigDecimal yearMetricsValue = yearMonthValueList.stream().map(BiTargetYearDTO.YearMonthValueDTO::getMetricsValue).reduce(BigDecimal.ZERO, BigDecimal::add);
         if (Boolean.TRUE.equals(isGrossProfitRate)) {
-            yearMetricsValue = MathUtil.multiply(yearMetricsValue, multiplyValue, 2);
+            yearMetricsValue = MathUtil.multiplyWithTwo(yearMetricsValue, multiplyValue, 2);
         }
         yearMetrics.setMetricsValue(yearMetricsValue);
         BigDecimal yearFinishValue = biTargetYearService.getMetricsFinishValue(dto, "year", yearMonth, settleRate);

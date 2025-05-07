@@ -155,7 +155,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
                 throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
             }
             //校验区间到需要大于区间从
-            if (entity.getMaxQty().compareTo(entity.getMinQty()) < MathUtil.ZERO) {
+            if (entity.getMaxQty().compareTo(entity.getMinQty()) <= MathUtil.ZERO) {
                 throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
             }
             //校验录入数据是否存在时间重叠
@@ -185,6 +185,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
      * @param detailEntity
      */
     private void checkOverlap (SoPriceDetailEntity entity,SoPriceDetailEntity detailEntity) {
+
         //区间重叠时
         if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                 && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
@@ -555,7 +556,8 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
                 continue;
             }
             String effectiveDateStr = excelDTO.getEffectiveDateStr();
-            addDTO.setExpireDate(LocalDateUtil.parseStrToLocalDate(effectiveDateStr));
+            String expireDateStr = excelDTO.getExpireDateStr();
+            addDTO.setExpireDate(LocalDateUtil.parseStrToLocalDate(expireDateStr));
             addDTO.setEffectiveDate(LocalDateUtil.parseStrToLocalDate(effectiveDateStr));
             addDTO.setMinQty(Integer.valueOf(excelDTO.getMinQty()));
             addDTO.setMaxQty(Integer.valueOf(excelDTO.getMaxQty()));

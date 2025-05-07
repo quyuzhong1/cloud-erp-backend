@@ -644,7 +644,7 @@ public class BiTargetSkuSettingServiceImpl extends SuperServiceImpl<BiTargetSkuS
         BigDecimal value = dbList.stream().filter(d -> d.getMonth().equals(month)).findFirst().
                 map(BiTargetSkuSettingEntity::getValue).orElse(null);
         if (value != null && MetricsEnum.GROSS_PROFIT_RATE.getCode().equals(metrics)) {
-            value = MathUtil.multiply(value, MathUtil.NUMBER_100);
+            value = MathUtil.multiplyWithTwo(value, MathUtil.NUMBER_100);
         }
         return value;
     }

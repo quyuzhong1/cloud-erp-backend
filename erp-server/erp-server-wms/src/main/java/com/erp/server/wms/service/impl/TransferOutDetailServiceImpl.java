@@ -2,30 +2,31 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.ValidatorUtil;
-import com.erp.model.wms.dto.TransferOutDTO;
-import com.erp.model.wms.entity.PickingDetailEntity;
-import com.erp.model.wms.entity.TransferInDetailEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
-import com.erp.server.wms.service.*;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.TransferOutDetailDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.TransferInDetailEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferOutDetailMapper;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -176,6 +177,24 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
             }
         }
         return resultList;
+    }
+
+
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(TransferOutDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(TransferOutDetailEntity::getId, detailId)
+                    .update();
+        }
     }
 
     private void handleDetails(List<TransferOutDetailEntity> newList, String mainId, Boolean isUpdate) {

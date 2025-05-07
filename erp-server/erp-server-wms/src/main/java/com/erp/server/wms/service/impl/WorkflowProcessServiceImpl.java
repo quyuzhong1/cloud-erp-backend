@@ -43,6 +43,12 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
 
+    @Resource
+    private TransferInService transferInService;
+
+    @Resource
+    private TransferOutService transferOutService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -74,6 +80,14 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case TRANSFER_INFO:
                 //直接调拨单
                 transferInfoApproveEnd(dto);
+                break;
+            case TRANSFER_IN:
+                //调入单
+                transferInApproveEnd(dto);
+                break;
+            case TRANSFER_OUT:
+                //调出单
+                transferOutApproveEnd(dto);
                 break;
             case SO_DELIVERY_NOTICE_CHANGE:
                 //销售发货通知变更单
@@ -192,6 +206,36 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         //直接调拨单
         TransferInfoEntity entity = transferInfoService.getById(dto.getBusinessId());
         return transferInfoService.approveEnd(entity, dto.getApproveStatus().getStatus(), "", Boolean.TRUE);
+    }
+
+    /**
+     * 调入单
+     * @author will
+     * @date 2025/4/22 16:22
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean transferInApproveEnd(EndProcessDTO dto) {
+        //调入单
+        TransferInEntity entity = transferInService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        return transferInService.approveEnd(approveOneDTO,entity);
+    }
+
+    /**
+     * 调出单
+     * @author will
+     * @date 2025/4/22 16:22
+     * @param dto
+     * @return Boolean
+     */
+    private Boolean transferOutApproveEnd(EndProcessDTO dto) {
+        //调入单
+        TransferOutEntity entity = transferOutService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        return transferOutService.approveEnd(approveOneDTO,entity);
     }
     /**
      * 发货通知变更

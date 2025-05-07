@@ -479,6 +479,11 @@ public class PurchaseOrderDTO implements Serializable {
          * 来源编码
          */
         private String sourceCode;
+        /**
+         * 供应商账户id
+         * http://172.16.100.11:3002/project/83/interface/api/36188
+         */
+        private String supplierAccountId;
     }
 
     @Data
@@ -597,6 +602,22 @@ public class PurchaseOrderDTO implements Serializable {
          * ture 能编辑  false 不能编辑
          */
         private Boolean  canEdit = Boolean.FALSE;
+
+        /**
+         * 供应商账户信息
+         */
+        /**
+         * 收款方  账户名称
+         */
+        private String payee;
+        /**
+         * 收款银行
+         */
+        private String bankName;
+        /**
+         * 银行账号
+         */
+        private String bankAccount;
     }
 
 
@@ -706,6 +727,7 @@ public class PurchaseOrderDTO implements Serializable {
          * 合同号
          */
         private String code;
+        private String codeStr;
 
         /**
          * 结算方式名称
@@ -716,16 +738,40 @@ public class PurchaseOrderDTO implements Serializable {
          * 含税金额合计
          */
         private BigDecimal totalAmount;
+        /**
+         * 含税金额合计 增加千分位分割
+         */
+        private String totalAmountStr;
 
         /**
          * 不含税金额合计
          */
         private BigDecimal totalNotTaxAmount;
+        /**
+         * 不含税金额合计 增加千分位分割
+         */
+        private String totalNotTaxAmountStr;
+        /**
+         * 不含税金额合计 中文大写
+         */
+        private String totalNotTaxAmountChinese;
 
         /**
          * 币别
          */
         private String currency;
+        /**
+         * 供应商账户名称
+         */
+        private String supplierAccountName;
+        /**
+         * 供应商收款银行
+         */
+        private String supplierBankName;
+        /**
+         * 供应商银行账号
+         */
+        private String supplierBankNo;
 
         /**
          * 甲方

@@ -17,6 +17,8 @@ public enum InvoiceInfoUploadStatusEnum implements EnumMessage {
     UPLOADING("uploading", "上传中"),
 	UPLOAD_FAILED("uploadFailed", "上传失败"),
 	UPLOAD_SUCCESS("uploadSuccess", "上传成功"),
+    NOT_NEED_UPLOAD("notNeedUpload","无需上传"),
+
     ;
     /**
      * 类型

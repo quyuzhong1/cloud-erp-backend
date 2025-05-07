@@ -1,5 +1,7 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -11,7 +13,6 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -19,8 +20,6 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -40,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -110,6 +108,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private InvoiceInfoService invoiceInfoService;
+
+    @Resource
+    private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -225,14 +227,39 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             List<InvoiceInfoEntity> invoiceInfoEntities = invoiceInfoService.listBySoIds(Collections.singletonList(mainEntity.getId()));
             if (CollectionUtils.isEmpty(invoiceInfoEntities)){
                 try {
-                    invoiceInfoService.batchGenerateInvoice(Collections.singletonList(mainEntity.getId()));
+                    invoiceInfoService.batchGenerateVatInvoice(Collections.singletonList(mainEntity.getId()));
                 }catch (Exception e){
                     log.error("亚马逊订单已发货生成发票异常：{}",e.getMessage());
                 }
             }
         }
+        //生成nf-e发票
+        generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
     }
 
+    /**
+     * 生成NF-e发票
+     * @author will
+     * @date 2025/4/14 15:52
+     * @param soB2cEntity
+     * @param type
+     * @return void
+     */
+    private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
+        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
+            return;
+        }
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
+            return;
+        }
+        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
+            return;
+        }
+        if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
+            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+        }
+    }
 
     /**
      * 检查亚马逊卖家自发货订单无地址
@@ -409,6 +436,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
+        //生成Nf-e发票
+        generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
         return resultDTO;
     }
 

@@ -58,4 +58,8 @@ public class MercadoShopInfoDTO {
      * 平台店铺/用户id
      */
     private Long userId;
+    /**
+     * 站点ID
+     */
+    private String siteId;
 }

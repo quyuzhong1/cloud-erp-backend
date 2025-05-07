@@ -79,7 +79,7 @@ public interface ThirdWarehouseConverter {
     @Mapping(target = "state", source = "province")
     @Mapping(target = "smCode", source = "channelCode")
     @Mapping(target = "sku", ignore = true)
-    @Mapping(target = "propertyLabel", constant = "SFP")
+    @Mapping(target = "propertyLabel", ignore = true)
     @Mapping(target = "postcode", source = "postCode")
     @Mapping(target = "isSignServer", ignore = true)
     @Mapping(target = "isResidential", ignore = true)

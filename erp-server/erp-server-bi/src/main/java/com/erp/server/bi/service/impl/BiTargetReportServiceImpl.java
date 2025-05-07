@@ -140,7 +140,7 @@ public class BiTargetReportServiceImpl implements BiTargetReportService {
                         reduce(BigDecimal.ZERO, BigDecimal::add);
                 totalSlotDTO.setYearTotalReal(yearTotalReal);
                 BigDecimal yearRate = MathUtil.divide(yearTotalReal,yearTotalTarget);
-                totalSlotDTO.setRate(MathUtil.multiply(yearRate,MathUtil.BigDecimal_100));
+                totalSlotDTO.setRate(MathUtil.multiplyWithTwo(yearRate,MathUtil.BigDecimal_100));
                 result.put("totalName",totalSlotDTO);
                 for (MonthEnum monthEnum : values) {
                     TargetFinishDTO.SlotDTO slotDTO = new TargetFinishDTO.SlotDTO();

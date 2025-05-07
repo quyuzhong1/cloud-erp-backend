@@ -152,12 +152,12 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
 
         //销售平台
         orderDTO.setDictPlatform(PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode());
-
+        orderDTO.setNfeInvoiceStatus(dmpSoInfoEntityList.get(0).getNfeInvoiceStatus());
         // 店铺ID
         orderDTO.setShopId(dmpSoInfoEntityList.get(0).getNextLevelId());
 
         //订单金额
-        BigDecimal amount = dmpSoInfoEntityList.stream().map(DmpSoInfoEntity::getPayAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+        BigDecimal amount = dmpSoInfoEntityList.stream().map(DmpSoInfoEntity::getPayAmount).filter(Objects::nonNull).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
         orderDTO.setAmount(amount);
         //币别
         orderDTO.setCurrency(dmpSoInfoEntityList.get(0).getCurrencyCode());
@@ -198,7 +198,7 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
         orderDTO.setInvalidStatus(Boolean.FALSE);
 
         //付款状态
-        if (dmpSoInfoEntityList.get(0).getPayStatus()) {
+        if (dmpSoInfoEntityList.get(0).getPayStatus() != null && dmpSoInfoEntityList.get(0).getPayStatus()) {
             orderDTO.setPayStatus(SoB2cPayStatusEnum.ENUM_PAID.getCode());
         }
 
@@ -277,6 +277,9 @@ public class MercadoLocalOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskH
 
         // 平台sku编号
         detailDTO.setPlatformSkuNo(soDetailEntity.getPlatformSku());
+
+        //销售费用
+        detailDTO.setSaleFee(soDetailEntity.getSaleFee());
 
         //平台产品id
         detailDTO.setPlatformSpuNo(soDetailEntity.getPlatformSpuNo());

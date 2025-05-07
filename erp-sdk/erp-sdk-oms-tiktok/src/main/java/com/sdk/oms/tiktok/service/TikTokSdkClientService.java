@@ -60,6 +60,8 @@ import com.sdk.oms.tiktok.dto.tiktok.token.TokenDTO;
 import com.sdk.oms.tiktok.util.EncryptionUtils;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
@@ -268,13 +270,15 @@ public class TikTokSdkClientService {
             throw new ServiceException(ApiError.ERROR_SHOP_AUTHORIZE_FAIL, PlatformDictEnum.TIK_TOK.getName(), JSONUtil.toJsonStr(apiResult));
         }
         TokenDTO tokenDTO = tikTokTokenDTO.getData();
-        //查询店铺权限
-        TikTokShopAuthDTO tikTokShopAuthDTO = getAuthorizedShops(paramMap, tokenDTO.getAccessToken());
-        for (ShopsBean shop : tikTokShopAuthDTO.getData().getShops()) {
-//            if (tokenDTO.getSellerBaseRegion().equalsIgnoreCase(shop.getRegion())) {
-            tokenDTO.setShopCipher(shop.getCipher());
-            tokenDTO.setShopsBean(shop);
-//            }
+        if(StringUtils.isBlank(paramMap.get("isFully"))) {
+        	//查询店铺权限
+            TikTokShopAuthDTO tikTokShopAuthDTO = getAuthorizedShops(paramMap, tokenDTO.getAccessToken());
+            for (ShopsBean shop : tikTokShopAuthDTO.getData().getShops()) {
+//                if (tokenDTO.getSellerBaseRegion().equalsIgnoreCase(shop.getRegion())) {
+                tokenDTO.setShopCipher(shop.getCipher());
+                tokenDTO.setShopsBean(shop);
+//                }
+            }
         }
         tokenDTO.setCode(authCode);
         //返回token实体

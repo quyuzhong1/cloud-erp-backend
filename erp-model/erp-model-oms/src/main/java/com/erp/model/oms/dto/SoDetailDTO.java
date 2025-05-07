@@ -61,7 +61,10 @@ public class SoDetailDTO implements Serializable {
          * 税率
          */
         private BigDecimal taxRate;
-
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
         /**
          * 是否赠品
          */
@@ -540,6 +543,10 @@ public class SoDetailDTO implements Serializable {
          * 税率
          */
         private BigDecimal taxRate;
+        /**
+         * 含税单价
+         */
+        private BigDecimal taxPrice;
 
         /**
          * 是否赠品

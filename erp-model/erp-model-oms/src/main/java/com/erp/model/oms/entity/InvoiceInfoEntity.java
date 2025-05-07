@@ -1,13 +1,14 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -106,7 +107,37 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
      */
     @TableField("query_result")
     private String queryResult;
+    /**
+     * 发票性质
+     */
+    @TableField("invoice_nature")
+    private String invoiceNature;
+    /**
+     * 平台发票编号
+     */
+    @TableField("platform_invoice_no")
+    private String platformInvoiceNo;
+    /**
+     * 取消原因
+     */
+    @TableField("cancel_reason")
+    private String cancelReason;
+    /**
+     * 退货税务编码
+     */
+    @TableField("return_tax_code")
+    private String returnTaxCode;
+    /**
+     * 退票原因
+     */
+    @TableField("return_reason")
+    private String returnReason;
 
+    /**
+     * 开票备注
+     */
+    @TableField("invoice_remark")
+    private String invoiceRemark;
 
     public static final String CODE = "code";
 
