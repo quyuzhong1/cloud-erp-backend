@@ -429,6 +429,24 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
+    public List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(List<String> warehouseNameList) {
+        if (CollectionUtils.isEmpty(warehouseNameList)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseEntity> list = lambdaQuery().in(WarehouseEntity::getName,warehouseNameList).list();
+        if (CollectionUtils.isEmpty(list)) {
+            return new ArrayList<>();
+        }
+        List<WarehouseDTO.UpdateDTO> resultList = new ArrayList<>();
+        for (WarehouseEntity warehouseEntity : list) {
+            WarehouseDTO.UpdateDTO updateDTO = BeanMapperUtils.map(WarehouseDTO.UpdateDTO.class, warehouseEntity);
+            updateDTO.setApproveStatusEnum(warehouseEntity.getApproveStatus());
+            resultList.add(updateDTO);
+        }
+        return resultList;
+    }
+
+    @Override
     public PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         WarehouseDTO.SelectDTO params = searchDTO.getParams();
