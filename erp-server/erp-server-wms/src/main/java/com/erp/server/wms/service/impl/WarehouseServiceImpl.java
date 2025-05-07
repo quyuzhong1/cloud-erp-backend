@@ -1468,6 +1468,14 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         return Boolean.FALSE.equals(disabled) && warehouseEntity.getOpenTime() == null;
 	}
 
+    @Override
+    public List<WarehouseEntity> listByWarehouseNameList(List<String> warehouseNameList) {
+        if (CollUtil.isEmpty(warehouseNameList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(WarehouseEntity::getName,warehouseNameList).list();
+    }
+
     private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
 		if(this.checkOpenCloseTime(warehouseEntity)) {
 			throw new ServiceException(ApiError.OPEN_STATUS_OPEN_TIME_NOT_NULL);
