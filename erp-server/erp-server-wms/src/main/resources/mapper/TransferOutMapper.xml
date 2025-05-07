@@ -144,8 +144,7 @@
           AND ti.is_deleted = FALSE
           AND ti.approve_status = 'approve'
           AND ti.invalid_status = FALSE
-          AND tod.source_detail_id ='1917029503625723906'
-          and t.source_detail_id =#{detailId}
+          AND tod.source_detail_id =#{detailId}
     </select>
 
 </mapper>
