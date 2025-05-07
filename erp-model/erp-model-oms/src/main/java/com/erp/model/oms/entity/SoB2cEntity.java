@@ -394,6 +394,9 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
     @TableField(exist = false)
     private List<SoB2cDetailEntity> detailEntityList;
 
+    @TableField(exist = false)
+    private boolean coverOutDate;
+
     public static final String CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";

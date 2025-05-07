@@ -69,9 +69,7 @@ public class MercadoLocalSoB2cHandle extends AbstractSoB2cHandle {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-                if(Objects.nonNull(dto.getBillDate())){
-                    generateB2cDTO.setBillDate(dto.getBillDate());
-                }
+
                 //平台仓拆分
                 List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = soB2cCoreService.splitB2cSoOutstock(mainEntity,generateB2cDTO);
                 generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
