@@ -56,6 +56,9 @@ public enum ApiModuleTypeEnum {
     WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL(43, "wdtVwAllocationHandleDetail", "旺店通分货单处理明细", "wms"),
     WDT_EXT_OUT_STOCK(44, "wdtExtOutStock", "旺店通外仓调整出库单", "wms"),
     WDT_EXT_IN_STOCK(45, "wdtExtInStock", "旺店通外仓调整入库单", "wms"),
+    TRANSFER_IN(46, "transferIn", "分步式调入单","wms"),
+    TRANSFER_OUT(47, "transferOut", "分步式调出单","wms"),
+
     ;
     private Integer code;
 

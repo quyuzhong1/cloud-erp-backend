@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.TransferOutDetailDTO;
@@ -67,4 +68,12 @@ public interface TransferOutDetailService extends SuperService<TransferOutDetail
      */
     List<TransferOutDTO.ChooseListDTO> listChoose(TransferOutDTO.SearchParamDTO param, TransferOutEntity transferOutEntity);
 
+    /**
+     * 更新明细金蝶id
+     * @author will 
+     * @date 2025/4/23 18:36
+     * @param list 
+     * @return void
+     */
+    void updateKingdeeDetailId(JSONArray list);
 }

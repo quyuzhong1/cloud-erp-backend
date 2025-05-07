@@ -34,4 +34,9 @@ public class DmpPushWdtDetailDTO implements Serializable {
      * 仓位编码
      */
     private String positionNo;
+
+    /**
+     * 备注
+     */
+    private String remark;
 }

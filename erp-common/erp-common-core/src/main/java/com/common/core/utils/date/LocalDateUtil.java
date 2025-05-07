@@ -246,6 +246,13 @@ public class LocalDateUtil {
        return LocalDateUtil.date2LocalDateTime(date);
     }
 
+    /**
+     * 导入接收后转为localDate
+     */
+    public static LocalDate stringToLocalDate(String strDate) {
+        Date date = EnumTimePattern.parseDate(strDate);
+        return LocalDateUtil.date2LocalDate(date);
+    }
 
     /**
      * 获取本年开始时间
