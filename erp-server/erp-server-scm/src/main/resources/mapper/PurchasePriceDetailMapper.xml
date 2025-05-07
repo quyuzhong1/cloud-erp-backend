@@ -38,36 +38,40 @@
 
     <select id="listCheckPurchasePriceDetail" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$ViewDTO">
         SELECT
-        id,
-        sku_id,
-        delivery_day,
-        min_qty,
-        max_qty,
-        currency,
-        tax_price,
-        tax_rate,
-        effective_date,
-        expire_date,
-        disabled
-        FROM purchase_price_detail WHERE
-        is_deleted=FALSE AND
-        purchase_price_id IN (
-        SELECT id FROM purchase_price
-        WHERE supplier_id = #{supplierId} AND purchase_org_id = #{purchaseOrgId} AND is_deleted=FALSE
+        ppd.id,
+        ppd.sku_id,
+        ppd.delivery_day,
+        ppd.min_qty,
+        ppd.max_qty,
+        ppd.currency,
+        ppd.tax_price,
+        ppd.tax_rate,
+        ppd.effective_date,
+        ppd.expire_date,
+        ppd.disabled,
+        pp.supplier_id
+        FROM purchase_price_detail ppd
+        inner join purchase_price pp on ppd.purchase_price_id = pp.id and pp.is_deleted = false
+        WHERE
+        ppd.is_deleted = FALSE AND pp.purchase_org_id = #{purchaseOrgId}
+        <if test="supplierIdList != null and supplierIdList.size>0">
+            AND pp.supplier_id IN
+            <foreach collection="supplierIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <if test="statusList!=null and statusList.size>0">
-            AND approve_status IN
+            AND pp.approve_status IN
             <foreach collection="statusList" item="status" open="(" separator="," close=")">
                 #{status}
             </foreach>
         </if>
-        )
         <if test="skuIdList!=null and skuIdList.size>0">
-            AND sku_id  IN
+            AND ppd.sku_id  IN
             <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
         </if>
-
     </select>
 
     <select id="listBySupplierId" resultType="com.erp.model.scm.dto.PurchasePriceDetailDTO$AddDTO">
