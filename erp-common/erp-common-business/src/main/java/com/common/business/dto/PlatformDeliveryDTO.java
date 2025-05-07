@@ -68,6 +68,17 @@ public class PlatformDeliveryDTO {
      * (速卖通)买家视角订单金额币种
      */
     private String actualCurrency = "";
+
+    /**
+     * (速卖通)订单明细结算币种总价
+     */
+    private BigDecimal orderAmount = BigDecimal.ZERO;
+
+    /**
+     * (速卖通)订单明细结算币种
+     */
+    private String orderCurrency = "";
+
     /**
      * 发货单明细
      */

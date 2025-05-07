@@ -11,10 +11,12 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
+import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
@@ -26,8 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT;
 
@@ -76,7 +80,7 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
             throw new ServiceException("速卖通发货单保存失败");
         }
         addDTO.getDetailList().forEach(v->v.setMainId(aliexpressDeliveryEntity.getId()));
-        detailService.addOrUpdate(addDTO.getDetailList(), addDTO.getPlatformCode());
+        detailService.addOrUpdate(addDTO.getDetailList(), aliexpressDeliveryEntity, addDTO.getAllSourceDeliveryDetailList());
         return new BaseResultDTO.AddDTO(aliexpressDeliveryEntity.getId(), aliexpressDeliveryEntity.getPlatformCode());
     }
 

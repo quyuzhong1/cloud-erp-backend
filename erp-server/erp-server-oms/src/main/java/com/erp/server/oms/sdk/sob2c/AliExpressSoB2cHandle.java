@@ -162,6 +162,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }
         List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
         List<PlatformDeliveryDTO> deliveryDTOList = dto.getDeliveryDTOList();
+        // 所有发货明细(包含已发货和未发货)
+        List<PlatformDeliveryDetailDTO> allSourceDeliveryDetailList = dto.getDeliveryDTOList().stream().map(PlatformDeliveryDTO::getDetailDTOList).flatMap(List::stream).collect(Collectors.toList());
         for (PlatformDeliveryDTO deliveryDTO : deliveryDTOList){
             LocalDateTime deliveryWarehouseTime = deliveryDTO.getDeliveryWarehouseTime();
             if (Objects.isNull(deliveryWarehouseTime)){
@@ -218,6 +220,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                 }
             }
             addDTO.setDetailList(detailAddList);
+            addDTO.setAllSourceDeliveryDetailList(allSourceDeliveryDetailList);
             aliexpressDeliveryFeign.addOrUpdate(addDTO);
         }
 

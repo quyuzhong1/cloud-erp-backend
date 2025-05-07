@@ -2,6 +2,7 @@ package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -99,6 +100,8 @@ public class AliexpressDeliveryDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         private List<AliexpressDeliveryDetailDTO.AddDTO> detailList;
+
+        private List<PlatformDeliveryDetailDTO> allSourceDeliveryDetailList;
     }
 
     @Data

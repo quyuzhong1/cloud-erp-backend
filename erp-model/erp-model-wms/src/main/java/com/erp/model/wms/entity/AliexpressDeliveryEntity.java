@@ -97,6 +97,16 @@ public class AliexpressDeliveryEntity extends BaseEntity<AliexpressDeliveryEntit
      */
     @TableField("actual_currency")
     private String actualCurrency;
+    /**
+     * (速卖通)订单总明细结算总金额
+     */
+    @TableField("order_amount")
+    private BigDecimal orderAmount;
+    /**
+     * (速卖通)订单总明细结算币种
+     */
+    @TableField("order_currency")
+    private String orderCurrency;
 
     public static final String PLATFORM_CODE = "platform_code";
 
