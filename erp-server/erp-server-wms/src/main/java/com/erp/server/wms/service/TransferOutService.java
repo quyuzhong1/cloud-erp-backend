@@ -117,7 +117,7 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
 
     /**
      * 反审核
-     * @param ids
+     * @param
      */
     BatchResultDTO disApprove(TransferOutEntity transferOutEntity);
 
@@ -160,5 +160,4 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
      * @return void
      */
     Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId);
-    List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String detailId);
 }
