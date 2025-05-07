@@ -155,9 +155,20 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         if (!save) {
             throw new ServiceException("质检通知单保存失败");
         }
+
+        List<String> warehouseIds = Arrays.asList(old.getQcWarehouseId(), old.getPutawayWarehouseId(), qcNoticeEntity.getQcWarehouseId(), qcNoticeEntity.getPutawayWarehouseId());
+        List<WarehouseEntity> warehouseEntities = warehouseService.listByIds(warehouseIds);
+
+        Map<String, String> map = warehouseEntities.stream().collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName));
+
+        old.setQcWarehouseName(map.get(old.getQcWarehouseId()));
+        old.setPutawayWarehouseName(map.get(old.getPutawayWarehouseId()));
+        qcNoticeEntity.setQcWarehouseName(map.get(qcNoticeEntity.getQcWarehouseId()));
+        qcNoticeEntity.setPutawayWarehouseName(map.get(qcNoticeEntity.getPutawayWarehouseId()));
+
         // 记录主单操作日志
         log.info("编辑 开始记录质检通知单日志数据，单号：【{}】", qcNoticeEntity.getCode());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), qcNoticeEntity.getCode(), "质检通知单");
+        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "质检通知单");
         operateLogService.addModuleOperateLogByObj(old, qcNoticeEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeEntity.getId(), msg);
 
         qcNoticeDetailService.update(updateDTO, qcNoticeEntity.getId());
@@ -375,9 +386,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //质检单
         List<QcInfoEntity> qcInfoEntities = qcInfoService.listQCBySourceIdsAndType(Collections.singletonList(entity.getId()),SourceTypeEnum.QC_NOTICE.getCode());
         List<QcInfoEntity> qcInfoList = qcInfoEntities.stream().filter(e ->
-                e.equals(QcBillStatusEnum.EXEMPTION.getCode())
-                        || e.equals(QcBillStatusEnum.FINISH_QC.getCode())
-                        || e.equals(QcBillStatusEnum.WAIT_RE_QC.getCode())
+                e.getQcStatus().getCode().equals(QcBillStatusEnum.EXEMPTION.getCode())
+                        || e.getQcStatus().getCode().equals(QcBillStatusEnum.FINISH_QC.getCode())
+                        || e.getQcStatus().getCode().equals(QcBillStatusEnum.WAIT_RE_QC.getCode())
         ).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(qcInfoList)){
             StringBuffer sb = new StringBuffer();
@@ -409,7 +420,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
     public BatchResultDTO delete(String id) {
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         // 只有待提交数据允许删除
-        if (!Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus())) {
+        if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
             throw new ServiceException(ApiError.ERROR_98032);
         }
         // 删除主单数据
@@ -607,7 +618,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //质检通知单日志
             operateLogService.addModuleOperateLogByObj(detailMap.get(qcInfoView.getDetailId()), qcNoticeDetailEntity, ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(),"", StrUtil.format("【%s】", qcNoticeDetailEntity.getSkuNo()));
             // 记录主单完成质检操作
-            operateLogService.addModuleOperateLog(StrUtil.format("【%s】完成质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
+            operateLogService.addModuleOperateLog(StrUtil.format("【{}】完成质检", qcNoticeDetailEntity.getSkuNo()), ModuleTypeEnum.QC_NOTICE.getCode(), qcNoticeDetailEntity.getMainId(), "完成质检");
         }
         Map<String, List<QcNoticeDetailEntity>> detailMapByMainId = new ArrayList<>(detailMap.values()).stream().collect(Collectors.groupingBy(QcNoticeDetailEntity::getMainId));
 

@@ -314,8 +314,8 @@ public class TransferOutController extends BaseController {
      * @return
      */
     @GetMapping("/listPutawayDetail")
-    public ApiResult<List<TransferOutDTO.PutawayDetailDTO>> listPutawayDetail(@RequestParam("id") String id) {
-        return success(transferOutService.listPutawayDetail(id));
+    public ApiResult<List<TransferOutDTO.PutawayDetailDTO>> listPutawayDetail(@RequestParam("detailId") String detailId) {
+        return success(transferOutService.listPutawayDetail(detailId));
     }
 
 }

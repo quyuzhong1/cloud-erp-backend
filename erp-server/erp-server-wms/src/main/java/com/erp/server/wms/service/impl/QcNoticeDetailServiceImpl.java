@@ -53,7 +53,7 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
         //新增明细
         List<QcNoticeDetailEntity> qcNoticeDetailList = BeanMapperUtils.copyList(QcNoticeDetailEntity.class, addDTO.getDetailList());
 
-        handleData(qcNoticeDetailList, mainId);
+        handleData(qcNoticeDetailList, mainId,Boolean.FALSE);
 
         saveBatch(qcNoticeDetailList);
     }
@@ -77,7 +77,7 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
             this.removeByIds(deleteIds);
         }
 
-        handleData(qcNoticeDetailList, mainId);
+        handleData(qcNoticeDetailList, mainId,Boolean.TRUE);
         //新增或更新明细
         saveOrUpdateBatch(qcNoticeDetailList);
     }
@@ -108,7 +108,7 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
     /**
     * 新增修改处理数据
     */
-    private void handleData(List<QcNoticeDetailEntity> qcNoticeDetailList,String mainId) {
+    private void handleData(List<QcNoticeDetailEntity> qcNoticeDetailList,String mainId, Boolean isUpdate) {
         //原明细数据
         List<QcNoticeDetailEntity>  oldList = listByMainIds(Collections.singletonList(mainId));
 
@@ -137,7 +137,7 @@ public class QcNoticeDetailServiceImpl extends SuperServiceImpl<QcNoticeDetailMa
 
         //需要新增的数据
         List<QcNoticeDetailEntity> addList = qcNoticeDetailList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(addList)) {
+        if (CollectionUtils.isNotEmpty(addList) && isUpdate) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.QC_NOTICE.getCode(), addPairList, "编辑操作");
         }

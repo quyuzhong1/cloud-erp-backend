@@ -121,30 +121,31 @@
         </where>
     </select>
     <select id="listPutawayDetail" resultType="com.erp.model.wms.dto.TransferOutDTO$PutawayDetailDTO">
-        select
-            t.code as outCode,
-            t.approve_time as outApproveTime,
-            tod.qty as outQty,
-            t.out_warehouse_id as outWarehouseId,
-            t.out_warehouse_name as outWarehouseName,
-            ti.id as inId,
-            ti.code as inCode,
-            tid.qty as inQty,
-            ti.in_warehouse_id as inWarehouseId,
-            ti.in_warehouse_name as inWarehouseName
-        from
-            transfer_out t
-                left join (select main_id, sum(qty) as qty from transfer_out_detail where is_deleted = false GROUP BY main_id ) as tod on t.id = tod.main_id
-                left join transfer_in as ti on t.id = ti.source_id
-                left join (select main_id, sum(qty) as qty from transfer_in_detail where is_deleted = false GROUP BY main_id )  as tid on ti.id = tid.main_id
-        where t.is_deleted = FALSE
-          and t.approve_status = 'approve'
-          and t.invalid_status = false
-          and ti.is_deleted = FALSE
-          and ti.approve_status = 'approve'
-          and ti.invalid_status = false
-          and t.source_id =#{id}
-
+        SELECT T
+                   .code AS outCode,
+               T.approve_time AS outApproveTime,
+               tod.qty AS outQty,
+               T.out_warehouse_id AS outWarehouseId,
+               T.out_warehouse_name AS outWarehouseName,
+               ti.ID AS inId,
+               ti.code AS inCode,
+               TID.qty AS inQty,
+               ti.in_warehouse_id AS inWarehouseId,
+               ti.in_warehouse_name AS inWarehouseName
+        FROM
+            transfer_out_detail AS tod
+                LEFT JOIN transfer_out T ON T.ID = tod.main_id
+                LEFT JOIN transfer_in_detail AS TID ON  TID.source_detail_id = tod.id
+                LEFT JOIN transfer_in AS ti ON TID.main_id = ti.id
+        WHERE
+            T.is_deleted = FALSE
+          AND T.approve_status = 'approve'
+          AND T.invalid_status = FALSE
+          AND ti.is_deleted = FALSE
+          AND ti.approve_status = 'approve'
+          AND ti.invalid_status = FALSE
+          AND tod.source_detail_id ='1917029503625723906'
+          and t.source_detail_id =#{detailId}
     </select>
 
 </mapper>
