@@ -203,5 +203,6 @@ public class OperateLogDTO implements Serializable {
          * 父级id(用于综合数据查询)
          */
         private String pid;
+        private String searchKey;
     }
 }
