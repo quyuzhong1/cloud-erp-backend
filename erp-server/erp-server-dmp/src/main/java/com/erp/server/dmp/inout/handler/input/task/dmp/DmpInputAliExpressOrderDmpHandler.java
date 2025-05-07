@@ -164,7 +164,7 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						if (actualFee != null) {
 							dmpDataMap.put("actualAmount",actualFee);
 						}
-						Object actualFeeCurrency = actualFeeMap.get("currency");
+						Object actualFeeCurrency = actualFeeMap.get("currency_code");
 						if (actualFeeCurrency != null) {
 							dmpDataMap.put("actualCurrency",actualFeeCurrency);
 						}
