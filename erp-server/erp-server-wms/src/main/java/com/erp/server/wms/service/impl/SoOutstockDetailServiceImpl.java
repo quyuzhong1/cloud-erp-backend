@@ -901,7 +901,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 continue;
             }
             //虚拟仓库
-            detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
+            if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){
+                detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
+            }
 
             BigDecimal price=soDetailEntity.getPrice();
             //单价信息

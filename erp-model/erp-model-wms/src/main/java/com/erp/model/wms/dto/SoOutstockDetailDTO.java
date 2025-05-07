@@ -359,6 +359,7 @@ public class SoOutstockDetailDTO implements Serializable {
         private String platformDetailId;
 
         private String warehouseId;
+        private String virtualWarehouseId;
 
         public AddDTO(ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO, AddDTO addDTO, Integer currentQty) {
             this.skuId = currentSkuMappingDTO.getProductSkuId();
@@ -375,6 +376,7 @@ public class SoOutstockDetailDTO implements Serializable {
             this.historySkuMappingList = addDTO.getHistorySkuMappingList();
             this.platformCode = addDTO.getPlatformCode();
             this.platformDetailId = addDTO.getPlatformDetailId();
+            this.virtualWarehouseId = addDTO.getVirtualWarehouseId();
         }
     }
 
