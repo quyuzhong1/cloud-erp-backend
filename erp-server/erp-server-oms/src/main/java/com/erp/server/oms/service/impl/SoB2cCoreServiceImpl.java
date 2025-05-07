@@ -327,6 +327,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             }
             soB2cEntity.setSoOutstockDate(entry.getValue().get(0).getOutstockTime().toLocalDate());
             soB2cEntity.setDetailEntityList(thisDetailList);
+            soB2cEntity.setCoverOutDate(true);
             SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
         }
         return Boolean.TRUE;
@@ -365,6 +366,9 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             BeanUtil.copyProperties(generateB2cDTO,generateB2c);
             generateB2c.setWarehouseId(entry.getKey());
             generateB2c.setWarehouseName(entry.getValue().get(0).getWarehouseName());
+            if(mainEntity.isCoverOutDate()){
+                generateB2c.setBillDate(mainEntity.getSoOutstockDate());
+            }
             generateB2c.setDetailList(entry.getValue());
             generateB2cList.add(generateB2c);
         }

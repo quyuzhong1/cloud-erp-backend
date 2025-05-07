@@ -69,14 +69,12 @@ public class MercadoSoB2cHandle  extends AbstractSoB2cHandle {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-                if(Objects.nonNull(dto.getBillDate())){
-                    generateB2cDTO.setBillDate(dto.getBillDate());
-                }
+
                 //平台仓拆分
                 List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = soB2cCoreService.splitB2cSoOutstock(mainEntity,generateB2cDTO);
                 generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
             } catch (Exception e) {
-                log.error("[美客多生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
+                log.error("[美客多生成销售出库单异常]:order={},", mainEntity.getCode(), e);
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson("");
