@@ -27,12 +27,16 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
+import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.entity.SoOutstockEntity;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseLocationEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
 import com.erp.server.oms.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +77,9 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
+
+    @Resource
+    private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
 
     @Override
     public List<SoB2cCoreDTO.ListRetryOutstockDTO> listRetryOutstock(BaseIdsDTO.IdsDTO dto) {
@@ -234,6 +241,8 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         if (CollUtil.isEmpty(soB2cList)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
+        List<String> shopIdList = soB2cList.stream().map(SoB2cEntity::getShopId).distinct().collect(Collectors.toList());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(shopIdList);
         Map<String, SoB2cEntity> soB2cMap = soB2cList.stream().collect(Collectors.toMap(SoB2cEntity::getId, Function.identity()));
 
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(b2cSoIdList);
@@ -258,6 +267,9 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             SoB2cCoreDTO.RetryOutstockDTO retryOutstockDTO = list.stream().filter(obj -> obj.getB2cSoId().equals(receiverEntity.getMainId())).findFirst().orElse(new SoB2cCoreDTO.RetryOutstockDTO());
             receiverEntity.setCountry(retryOutstockDTO.getCountry());
             receiverEntity.setCountryName(dictCountryMap.get(retryOutstockDTO.getCountry()));
+            SoB2cEntity current = soB2cMap.get(receiverEntity.getMainId());
+            ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(obj -> obj.getId().equals(current.getShopId())).findFirst().orElse(new ShopInfoEntity());
+            soB2cReceiverService.buildPartitionId(receiverEntity,shopInfoEntity);
             operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新国家【{}】", receiverEntity.getCountryName()), ModuleTypeEnum.SO_B2C.getCode(), retryOutstockDTO.getB2cSoId(), "重新出库");
         }
         soB2cReceiverService.updateBatchById(soB2cReceiverList);
@@ -269,11 +281,25 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             List<String> b2cSoDetailIdList = entry.getValue().stream().map(SoB2cCoreDTO.RetryOutstockDTO::getB2cSoDetailId).distinct().collect(Collectors.toList());
             //明细
             List<SoB2cDetailEntity> thisDetailList = soB2cDetailList.stream().filter(obj -> b2cSoDetailIdList.contains(obj.getId())).collect(Collectors.toList());
+            //虚拟仓库查询
+            VirtualWarehouseChannelDTO.PlatformDTO platformDTO = new VirtualWarehouseChannelDTO.PlatformDTO();
+            platformDTO.setDictPlatform(soB2cEntity.getDictPlatform());
+            platformDTO.setRelationId(soB2cEntity.getShopId());
+            platformDTO.setWarehouseIdList(warehouseIdList);
+            SoB2cReceiverEntity soB2cReceiverEntity = soB2cReceiverList.stream().filter(obj -> obj.getMainId().equals(soB2cEntity.getId())).findFirst().orElse(new SoB2cReceiverEntity());
+            platformDTO.setPartitionId(soB2cReceiverEntity.getPartitionId());
+            List<VirtualWarehouseRelationEntity> virtualWarehouseList = wmsVirtualWarehouseFeign.getVirtualWarehouse(platformDTO);
+
             for (SoB2cDetailEntity soB2cDetailEntity : thisDetailList) {
                 SoB2cCoreDTO.RetryOutstockDTO retryOutstockDTO = list.stream().filter(obj -> obj.getB2cSoId().equals(soB2cDetailEntity.getMainId()) && obj.getB2cSoDetailId().equals(soB2cDetailEntity.getId())).findFirst().orElse(new SoB2cCoreDTO.RetryOutstockDTO());
                 soB2cDetailEntity.setWarehouseLocation(retryOutstockDTO.getWarehouseLocation());
                 soB2cDetailEntity.setWarehouseId(retryOutstockDTO.getWarehouseId());
                 soB2cDetailEntity.setWarehouseName(warehouseMap.get(retryOutstockDTO.getWarehouseId()));
+                //虚拟仓信息
+                String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), soB2cDetailEntity.getWarehouseId()))
+                        .map(VirtualWarehouseRelationEntity::getVirtualWarehouseId).findFirst().orElse("");
+                soB2cDetailEntity.setVirtualWarehouseId(virtualWarehouseId);
+
                 operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新仓库【{}】、仓位【{}】", soB2cDetailEntity.getWarehouseName(),soB2cDetailEntity.getWarehouseLocation()), ModuleTypeEnum.SO_B2C.getCode(), retryOutstockDTO.getB2cSoId(), "重新出库");
             }
             soB2cDetailService.updateBatchById(thisDetailList);
@@ -298,6 +324,8 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             if (Objects.nonNull(dmpOutputTaskRecordEntity)) {
                 dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
             }
+            soB2cEntity.setSoOutstockDate(entry.getValue().get(0).getOutstockTime().toLocalDate());
+            soB2cEntity.setDetailEntityList(thisDetailList);
             SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
         }
         return Boolean.TRUE;
@@ -312,7 +340,17 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
                 && !PlatformDictEnum.LING_XING.getCode().equals(mainEntity.getThirdSystem())) {
             return Collections.singletonList(generateB2cDTO);
         }
+        //封装明细仓库id和虚拟仓id
+        List<SoB2cDetailEntity> soB2cDetailList = mainEntity.getDetailEntityList();
         LinkedList<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
+        detailList.forEach(v->{
+            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailList.stream().filter(obj -> obj.getId().equals(v.getSoDetailId())).findFirst().orElse(null);
+            if(Objects.nonNull(soB2cDetailEntity)){
+                v.setWarehouseId(soB2cDetailEntity.getWarehouseId());
+                v.setVirtualWarehouseId(soB2cDetailEntity.getVirtualWarehouseId());
+                v.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
+            }
+        });
         //根据明细仓库id分组
         Map<String, LinkedList<SoOutstockDetailDTO.AddDTO>> map = detailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.AddDTO::getWarehouseId,Collectors.toCollection(LinkedList::new)));
         List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = new LinkedList<>();
