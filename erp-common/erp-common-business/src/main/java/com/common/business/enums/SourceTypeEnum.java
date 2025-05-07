@@ -40,6 +40,7 @@ public enum SourceTypeEnum {
     SO_DELIVERY_NOTICE("soDeliveryNotice", "销售发货通知单","so_delivery_notice"),
     SO_DELIVERY_NOTICE_CHANGE("soDeliveryNoticeChange", "销售发货通知变更单","so_delivery_notice_change"),
     TRANSFER_OUT("transferOut", "分布式调出单","transfer_out"),
+    TRANSFER_IN("transferIn", "分布式调入单","transfer_in"),
     TRANSFER_INFO("transferInfo", "直接调拨单","transfer_info"),
     MACHINE_INFO("machineInfo", "加工单","machine_info"),
     SO_OUTSTOCK("soOutstock", "销售出库单","so_outstock"),
@@ -80,6 +81,7 @@ public enum SourceTypeEnum {
     PICKING_LISTS_ADD("pickingListsAdd", "拣货单新增","picking_lists_add"),
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
     PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
+    QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),

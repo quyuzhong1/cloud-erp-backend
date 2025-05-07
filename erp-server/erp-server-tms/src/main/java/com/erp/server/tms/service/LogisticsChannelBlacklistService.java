@@ -61,4 +61,11 @@ public interface LogisticsChannelBlacklistService extends SuperService<Logistics
      *@date 2023-11-15
      */
     void copy(String channelId, String addChannelId);
+
+    /**
+     * 根据渠道获取黑名单
+     * @param channelIdList
+     * @return
+     */
+    List<LogisticsChannelBlacklistEntity> listChannelBlacklist(List<String> channelIdList);
 }

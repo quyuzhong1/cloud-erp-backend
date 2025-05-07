@@ -293,4 +293,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportVirtualWarehouse")
     PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto);
+    /**
+     * 导出质检通知单
+     */
+    @PostMapping("/feign/export/exportQcNotice")
+    PagingVO<QcNoticeDTO.ListDTO> exportQcNotice(PagingDTO<QcNoticeDTO.ExportDTO> dto);
 }

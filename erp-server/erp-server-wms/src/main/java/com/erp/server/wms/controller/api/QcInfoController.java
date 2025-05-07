@@ -5,6 +5,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.vo.PagingVO;
@@ -246,6 +247,10 @@ public class QcInfoController extends BaseController {
                 resultDTOS.add(BatchResultDTO.fail(id,id,"质检单不存在"));
                 continue;
             }
+            if(entity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "数据来源质检通知单不可在此操作"));
+                continue;
+            }
             try {
                 resultDTOS.add(qcInfoService.batchCancel(entity));
             }catch (Exception e){
@@ -310,6 +315,10 @@ public class QcInfoController extends BaseController {
             QcInfoEntity entity = entityMap.get(id);
             if (Objects.isNull(entity)) {
                 resultDTOS.add(BatchResultDTO.fail(id, id, "质检单不存在"));
+                continue;
+            }
+            if(entity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+                resultDTOS.add(BatchResultDTO.fail(id, id, "数据来源质检通知单不可在此操作"));
                 continue;
             }
             try {

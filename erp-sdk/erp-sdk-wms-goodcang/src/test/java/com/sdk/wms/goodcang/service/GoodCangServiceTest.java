@@ -238,10 +238,14 @@ public class GoodCangServiceTest {
     public void getCalculateDeliveryFeeTest() {
         GoodCangCalculateDeliveryFeeReq deliveryFeeReq = GoodCangCalculateDeliveryFeeReq
                 .builder()
-                .warehouseCode("USWE")
+                .warehouseCode("USEA")
                 .countryCode("US")
-                .postcode("33178")
-                .weight(1F)
+                .postcode("98103")
+                .smCode("USPS-BPARCEL")
+                .weight(2.066F)
+                .length(44.7F)
+                .width(34.2F)
+                .height(8.1F)
                 .build();
         GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> response = goodCangService.getCalculateDeliveryFee(deliveryFeeReq);
         System.out.println(response);

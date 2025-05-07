@@ -200,6 +200,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
     @Resource
     private CfgSettingService cfgSettingService;
 
+    @Resource
+    private QcNoticeService qcNoticeService;
+
     /**
      * 保存 质检单
      *
@@ -216,9 +219,17 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
         if (ObjectUtils.isNotEmpty(qcProduct)) {
-           compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
-           compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
-           compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            String skuNo = qcProduct.getSkuNo();
+            if(StringUtils.isNotBlank(skuNo)){
+                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT);
+                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT);
+                compareDimensionsWithSkuNo(skuNo,qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            }else {
+                compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
+                compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
+                compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
+            }
+
         }
         QcInfoEntity qc = null ;
         if (CharSequenceUtil.isBlank(billId)) {
@@ -234,32 +245,57 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         bill.setId(billId);
         //处理相关数据
         HandleData(dto.getQcUserId(), dto.getQcDeptId(), bill, dto.getSourceType(), dto.getSourceId());
-
-        //采购订单明细
-        String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
         String skuId = dto.getQcProduct().getSkuId();
-        List<PurchaseOrderDetailEntity> purOrderDetailList = Collections.emptyList();
-        //当采购订单明细id 为空的时候 sku id 不能为空
-        if (CharSequenceUtil.isBlank(purchaseOrderDetailId)) {
+        if(SourceTypeEnum.QC_NOTICE.getCode().equals(dto.getSourceType())){
+
+        }else {
+            //采购订单明细
+            String purchaseOrderDetailId = dto.getQcInfo().getPurchaseOrderDetailId();
+            List<PurchaseOrderDetailEntity> purOrderDetailList = Collections.emptyList();
+            //当采购订单明细id 为空的时候 sku id 不能为空
+            if (CharSequenceUtil.isBlank(purchaseOrderDetailId)) {
+                if(CharSequenceUtil.isBlank(skuId)){
+                    throw new ServiceException(ApiError.ERROR_95107);
+                }
+            } else {
+                List<String> podIds = Collections.singletonList(purchaseOrderDetailId);
+                //获取到对应的 订单明细
+                purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
+                skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
+                        .map(PurchaseOrderDetailEntity::getSkuId).findFirst().orElse("");
+            }
             if (CharSequenceUtil.isBlank(skuId)) {
                 throw new ServiceException(ApiError.ERROR_95107);
             }
-        } else {
-            List<String> podIds = Collections.singletonList(purchaseOrderDetailId);
-            //获取到对应的 订单明细
-            purOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
-            skuId = purOrderDetailList.stream().filter(p -> p.getId().equals(purchaseOrderDetailId))
-                    .map(PurchaseOrderDetailEntity::getSkuId).findFirst().orElse("");
-        }
-        if (CharSequenceUtil.isBlank(skuId)) {
-            throw new ServiceException(ApiError.ERROR_95107);
-        }
 
-        //检查质检数量
-        checkQcQty(dto.getQcInfo(), dto.getId(), dto.getPurchaseOrderId(), skuId);
+            //检查质检数量
+            checkQcQty(dto.getQcInfo(), dto.getId(), dto.getPurchaseOrderId(), skuId);
 
-        //检查采购价目明细
-        checkPurchaseOrderDetailId(dto.getPurchaseOrderId(), purchaseOrderDetailId);
+            //检查采购价目明细
+            checkPurchaseOrderDetailId(dto.getPurchaseOrderId(), purchaseOrderDetailId);
+
+            //采购订单
+            String purchaseOrderId = dto.getPurchaseOrderId();
+            if (CharSequenceUtil.isNotBlank(purchaseOrderId)) {
+                PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
+                if (purchaseOrder != null) {
+                    //采购订单验证
+                    String skuNos = purOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
+                                    && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
+                                    && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
+                            .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+                    if (CharSequenceUtil.isNotBlank(skuNos)) {
+                        throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
+                    }
+                    PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
+                    if (supplierInfo != null) {
+                        bill.setSupplierId(supplierInfo.getSupplierId());
+                    }
+                    bill.setWarehouseId(purchaseOrder.getDeliveryWarehouseId());
+                    bill.setPurchaseOrderCode(purchaseOrder.getCode());
+                }
+            }
+        }
 
         QcBillStatusEnum waitQc = QcBillStatusEnum.getByCode(QcBillStatusEnum.WAIT_QC.getCode());
         bill.setQcStatus(waitQc);
@@ -267,31 +303,8 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_QC);
         }
         bill.setCode(code);
-        //采购订单
-        String purchaseOrderId = dto.getPurchaseOrderId();
-        if (CharSequenceUtil.isNotBlank(purchaseOrderId)) {
-            PurchaseOrderDTO.GetOneDTO purchaseOrder = scmTaskFeign.getByOrderId(purchaseOrderId);
-            if (purchaseOrder != null) {
-                //采购订单验证
-                String skuNos = purOrderDetailList.stream().filter(obj -> !CharSequenceUtil.equals(ExecutionStatusEnum.CONFIRM.getCode(), obj.getExecutionStatus())
-                                && !CharSequenceUtil.equals(ExecutionStatusEnum.DELIVERY.getCode(), obj.getExecutionStatus())
-                                && !CharSequenceUtil.equals(ExecutionStatusEnum.FINISH.getCode(), obj.getExecutionStatus()))
-                        .map(PurchaseOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
-                if (CharSequenceUtil.isNotBlank(skuNos)) {
-                    throw new ServiceException(ApiError.ERROR_PURCHASE_ORDER_PUSH_DOWN,purchaseOrder.getCode(),skuNos);
-                }
-                PurchaseOrderSupplierDTO.UpdateDTO supplierInfo = purchaseOrder.getPurchaseOrderSupplierDTO();
-                if (supplierInfo != null) {
-                    bill.setSupplierId(supplierInfo.getSupplierId());
-                }
-                bill.setWarehouseId(purchaseOrder.getDeliveryWarehouseId());
-                bill.setPurchaseOrderCode(purchaseOrder.getCode());
-            }
-
-        }
-        String sourceDetailId = dto.getSourceDetailId();
-        bill.setSourceDetailId(sourceDetailId);
-
+        bill.setSourceDetailId(dto.getSourceDetailId());
+        bill.setVersion(0);
         Boolean result = this.saveOrUpdate(bill);
         if (result) {
             //质检产品 暂存
@@ -766,6 +779,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         } else if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(sourceType)) {
             SoReturnReceiveEntity info = soReturnReceiveService.getById(sourceId);
             entity.setSourceCode(info.getCode());
+        } else if (SourceTypeEnum.QC_NOTICE.getCode().equals(sourceType)) {
+            QcNoticeEntity info = qcNoticeService.getById(sourceId);
+            entity.setSourceCode(info.getCode());
         }
     }
 
@@ -892,6 +908,11 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         //校验 【箱规-长宽高】必须大于等于【包装尺寸-长宽高】【为空则忽略不校验】【长，宽，高分开校验】
         QcProductDTO.AddDTO qcProduct = dto.getQcProduct();
         if (ObjectUtils.isNotEmpty(qcProduct)) {
+            String skuNo = qcProduct.getSkuNo();
+            if(StringUtils.isBlank(skuNo)){
+                List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(qcProduct.getSkuId()));
+                skuNo = skuList.get(0).getSkuNo();
+            }
             compareDimensions(qcProduct.getBoxLength(), qcProduct.getProductLength(), ApiError.ERROR_LENGTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(qcProduct.getBoxWidth(), qcProduct.getProductWidth(), ApiError.ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT);
             compareDimensions(qcProduct.getBoxHeight(), qcProduct.getProductHeight(), ApiError.ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT);
@@ -965,6 +986,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
         }
         if (!CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.DRAFT.getCode()) && !CharSequenceUtil.equals(bill.getQcStatus().getCode(),QcBillStatusEnum.WAIT_QC.getCode())) {
             throw new ServiceException(ApiError.ERROR_99020);
+        }
+        if(bill.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+            throw new ServiceException("数据来源质检通知单不可在此操作");
         }
         //质检信息
         QcResultDTO.AddDTO qcInfo = dto.getQcInfo();
@@ -1138,8 +1162,13 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             throw new ServiceException(ApiError.ERROR_99020);
         }
         List<String> ids = Collections.singletonList(entity.getId());
-        //批量检查
-        batchCheckQcQty(qcList, true);
+
+        //质检通知单不检查数量
+        if(!entity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+            //批量检查
+            batchCheckQcQty(qcList, true);
+        }
+
         LocalDateTime now = LocalDateTime.now();
         //质检状态
         QcBillStatusEnum exemption = QcBillStatusEnum.getByCode(QcBillStatusEnum.EXEMPTION.getCode());
@@ -2481,6 +2510,9 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
             if (Objects.isNull(qcInfoEntity)){
                 throw new ServiceException(ApiError.NOT_EXIST_BILL,"质检单信息");
             }
+            if(qcInfoEntity.getSourceType().equals(SourceTypeEnum.QC_NOTICE.getCode())){
+                throw new ServiceException("数据来源质检通知单不可在此操作");
+            }
 
             // 只有已质检才允许操作
             QcBillStatusEnum qcBillStatusEnum = qcInfoEntity.getQcStatus();
@@ -2625,6 +2657,15 @@ public class QcInfoServiceImpl extends SuperServiceImpl<QcInfoMapper, QcInfoEnti
      * @param smaller  小尺寸
      * @param apiError 报错信息
      */
+    private void compareDimensionsWithSkuNo(String skuNo,BigDecimal larger, BigDecimal smaller, ApiError apiError) {
+        if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
+                && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0) {
+            if (larger.compareTo(smaller) < 0) {
+                throw new ServiceException(apiError,skuNo);
+            }
+        }
+    }
+
     private void compareDimensions(BigDecimal larger, BigDecimal smaller, ApiError apiError) {
         if (Objects.nonNull(larger) && larger.compareTo(BigDecimal.ZERO) > 0
                 && Objects.nonNull(smaller) && smaller.compareTo(BigDecimal.ZERO) > 0) {
