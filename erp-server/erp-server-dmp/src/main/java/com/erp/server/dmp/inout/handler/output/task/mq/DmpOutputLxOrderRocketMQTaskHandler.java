@@ -2,10 +2,7 @@ package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
-import com.common.business.dto.PlatformOrderFinanceDTO;
-import com.common.business.dto.PlatformOrderReceiverDTO;
+import com.common.business.dto.*;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
@@ -269,6 +266,10 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
             receiverDTO.setPostCode(dmpSoReceiverEntity.getPostCode());
         }
         orderDTO.setReceiver(receiverDTO);
+
+        // 物流信息
+        orderDTO.setLogisticsList(parseLogistics(dmpSoInfoEntity));
+
         return orderDTO;
     }
 
@@ -332,5 +333,25 @@ public class DmpOutputLxOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHa
         return detailDTO;
     }
 
-
+    /**
+     * 解析物流信息
+     */
+    private static List<PlatformOrderLogisticsDTO> parseLogistics(DmpSoInfoEntity dmpSoInfoEntity) {
+        List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
+        PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
+                .code(dmpSoInfoEntity.getLogisticsCode())
+                .name(dmpSoInfoEntity.getLogisticsName())
+                .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
+                .logisticsChannelId(dmpSoInfoEntity.getLogisticsChannelId())
+                .logisticsChannelName(dmpSoInfoEntity.getLogisticsChannelName())
+                .estimatedShippingCost(dmpSoInfoEntity.getEstimatedShippingFee())
+                .actualShippingCost(dmpSoInfoEntity.getActualShippingFee())
+                .accessoriesCostCurrency("")
+                .actualShippingCurrency("")
+                .estimatedShippingCurrency("")
+                .logisticType(dmpSoInfoEntity.getLogisticType())
+                .build();
+        logisticsDTOS.add(dto);
+        return logisticsDTOS;
+    }
 }

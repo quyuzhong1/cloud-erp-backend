@@ -56,7 +56,7 @@ public class WmsExecutorPoolConfig {
     public ExecutorService b2bVirtualFlowRefactorPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(20, 100,
                 30L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(200));
+                new LinkedBlockingQueue<>(1000));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
@@ -73,7 +73,7 @@ public class WmsExecutorPoolConfig {
     public ExecutorService b2cVirtualFlowRefactorPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(20, 100,
                 30L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(200));
+                new LinkedBlockingQueue<>(1000));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
@@ -90,7 +90,7 @@ public class WmsExecutorPoolConfig {
     public ExecutorService firstMileVirtualFlowRefactorPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(20, 100,
                 30L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(200));
+                new LinkedBlockingQueue<>(1000));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);
@@ -107,7 +107,7 @@ public class WmsExecutorPoolConfig {
     public ExecutorService allocationVirtualFlowRefactorPool() {
         ThreadPoolExecutor service = new ThreadPoolExecutor(20, 100,
                 30L, TimeUnit.SECONDS,
-                new LinkedBlockingQueue<>(200));
+                new LinkedBlockingQueue<>(1000));
         //设置线城池的饱和策略
         RejectedExecutionHandler handler = new ThreadPoolExecutor.CallerRunsPolicy();
         service.setRejectedExecutionHandler(handler);

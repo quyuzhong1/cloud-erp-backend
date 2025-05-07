@@ -5,6 +5,8 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
 import feign.Request;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,6 +30,8 @@ public interface ExportOmsFeign {
 
     @PostMapping("/feign/export/soB2C")
     PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(Request.Options options, @RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
+    @PostMapping("/feign/export/exportFullyManagedOrder")
+    PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(Request.Options options, @RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto);
     @PostMapping("/feign/export/soB2CDeclare")
     PagingVO<SoB2cDeclareProductDTO.ViewDTO> exportSoB2CDeclare(@RequestBody PagingDTO<SoB2cDeclareProductDTO.ListDTO> dto);
     @PostMapping("/feign/export/soB2CProductSales")
@@ -54,4 +58,14 @@ public interface ExportOmsFeign {
 
     @PostMapping("/feign/export/exportInvoice")
     PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportInvoiceInvalid")
+    PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto);
+    //销售调价导出
+    @PostMapping("/feign/export/soPriceChange")
+    PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto);
+    //销售价目导出
+    @PostMapping("/feign/export/soPrice")
+    PagingVO<SoPriceExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto);
+
 }

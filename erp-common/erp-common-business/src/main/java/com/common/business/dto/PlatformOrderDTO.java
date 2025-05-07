@@ -38,6 +38,11 @@ public class PlatformOrderDTO extends UniqueDto {
     private String dictPlatform;
 
     /**
+     * NF-E发票状态,nfeInvoiceStatus字典
+     */
+    private String nfeInvoiceStatus;
+
+    /**
      * 店铺
      */
     private String shopId;
@@ -240,6 +245,10 @@ public class PlatformOrderDTO extends UniqueDto {
      */
     private PlatformOrderReceiverDTO receiver;
 
+    /**
+     * 订单扩展表
+     */
+    private PlatformOrderExtendDTO extend;
 
     /**
      * 平台订单来源状态

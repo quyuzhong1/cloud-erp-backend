@@ -137,7 +137,7 @@ public class BiReturnOrderInfoServiceImpl extends ServiceImpl<BiReturnOrderInfoM
         if (CollectionUtils.isNotEmpty(dmpReturnOrderItemList)) {
             //计算明细退货金额合计
             BigDecimal reduce = dmpReturnOrderItemList.stream().filter(obj -> ObjectUtils.isNotEmpty(obj.getQuantity()) && ObjectUtils.isNotEmpty(obj.getSellPrice()))
-                    .map(obj -> MathUtil.multiply(new BigDecimal(obj.getQuantity()), obj.getSellPrice())).reduce(BigDecimal.ZERO, BigDecimal::add);
+                    .map(obj -> MathUtil.multiplyWithTwo(new BigDecimal(obj.getQuantity()), obj.getSellPrice())).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             LambdaUpdateWrapper<BiReturnOrderInfoEntity> updateWrapper = new LambdaUpdateWrapper<>();
             updateWrapper.set(BiReturnOrderInfoEntity::getOrderFee,reduce);

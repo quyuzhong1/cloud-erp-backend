@@ -291,7 +291,7 @@ public class SyncKingdeePurchaseOrderServiceImpl implements SyncKingdeePurchaseO
                 String kingdeeWarehouseCode = warehouseList.get(0).getKingdeeWarehouseCode();
                 jsonObject.set("kingdeeWarehouseCode",kingdeeWarehouseCode);
             }
-            jsonObject.set("taxRate",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("taxRate",MathUtil.multiplyWithTwo(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
                 //收料组织编码
                 String receiveOrgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getReceiveOrgId()))

@@ -12,7 +12,6 @@ import com.common.core.enums.PannoEnum;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
 import com.erp.oms.aliexpress.dto.response.*;
 import lombok.Data;
@@ -20,7 +19,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.csource.fastdfs.DownloadStream;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -446,7 +444,7 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 单价
         detailDTO.setPrice(price);
         // 金额
-        BigDecimal amount = MathUtil.multiply(price, qty);
+        BigDecimal amount = MathUtil.multiplyWithTwo(price, qty);
         // 金额
         String currency = item.getProductPrice().getCurrencyCode();
 

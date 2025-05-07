@@ -48,6 +48,8 @@ public class DropDownListController extends BaseController {
      *  invoiceStatus 发票状态
      *  uploadStatus 上传状态
      *  cfgInvoiceType 发票配置类型
+     *  fullyManaged 全托管平台类型
+     *  orderSourceType 订单来源类型
      * @return
      */
     @GetMapping("/dict/list")
@@ -61,6 +63,21 @@ public class DropDownListController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 销售平台下拉框
+     * @param key
+     * @return
+     */
+    @GetMapping("/dict/salesPlatform")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listSalesPlatform(@RequestParam("key") String key) {
+        List<DictBasicDTO.ViewDTO> list = dictBasicService.listSalesPlatform(key);
+        //list 根据sort排序
+        list = list.stream().sorted(Comparator.comparingInt(DictBasicDTO.ViewDTO::getSort)).collect(Collectors.toList());
+        List<BaseDropDownDTO.CommonDTO> result = list.stream()
+                .map(x -> new BaseDropDownDTO.CommonDTO(x.getValue(), x.getName()))
+                .collect(Collectors.toList());
+        return success(result);
+    }
     /**
      * 根据类型和子类型获取列表
      * @param type
@@ -133,6 +150,11 @@ public class DropDownListController extends BaseController {
                 .map(x -> new BaseDropDownDTO.DisabledDTO(x.getValue(), x.getName(), !x.getStatus()))
                 .collect(Collectors.toList());
         return success(result);
+    }
+
+    @GetMapping("/dict/listInternalSalesPlatform")
+    public ApiResult<List<BaseDropDownDTO.CommonDTO>> listInternalSalesPlatform(@RequestParam("key") String key) {
+        return success(dictBasicService.listInternalSalesPlatform(key));
     }
 
 

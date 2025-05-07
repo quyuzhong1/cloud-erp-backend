@@ -178,7 +178,14 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param cfClientId
      */
     Boolean saveOrUpdateShopee(ShopeeTokenAuth shopeeTokenAuth, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId);
-
+    /**
+     * 根据平台查询店铺
+     * @author will
+     * @date 2025/4/25 10:25
+     * @param platformList
+     * @return List<ShopInfoEntity>
+     */
+    List<ShopInfoEntity> listByPlatformList(List<String> platformList);
     /**
      * 查询亚马逊店铺信息
      * @Author Luo_WG
@@ -368,4 +375,10 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @date: 2023/10/18 10:00
      */
     List<ShopInfoEntity> listAuthPlatform(List<String> platformDTO);
+    /**
+     * 根据店铺名称查询店铺信息
+     * @param shopNameList
+     * @return
+     */
+    List<ShopInfoEntity> listShopByName(List<String> shopNameList);
 }

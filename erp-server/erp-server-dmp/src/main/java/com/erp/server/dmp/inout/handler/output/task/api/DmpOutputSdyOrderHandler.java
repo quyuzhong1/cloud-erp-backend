@@ -655,7 +655,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
 
             shudiyunB2cOrderDTO.setRemark(dmpSoDetailEntity.getItemRemark());
             shudiyunB2cOrderDTO.setGoods_transaction_quantity(dmpSoDetailEntity.getQty());
-            shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiply(shudiyunB2cOrderDTO.getPrice(), shudiyunB2cOrderDTO.getGoods_transaction_quantity()));
+            shudiyunB2cOrderDTO.setGoods_transaction_amount(MathUtil.multiplyWithTwo(shudiyunB2cOrderDTO.getPrice(), shudiyunB2cOrderDTO.getGoods_transaction_quantity()));
 
             shudiyunB2cOrderDTO.setUnit("PCS");
             shudiyunB2cOrderDTO.setPost_amount(dmpSoInfoEntity.getShippingAmount());

@@ -4,6 +4,7 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.B2cDeliveryLogisticTypeEnum;
 import lombok.*;
@@ -438,6 +439,10 @@ public class SoB2cDeliveryDTO implements Serializable {
          */
         private String printLogisticName;
         /**
+         * 打印sku条码状态 中文
+         */
+        private String printSkuBarcodeName;
+        /**
          * 是否验货【可排序】
          */
         private Boolean isInspection;
@@ -569,8 +574,32 @@ public class SoB2cDeliveryDTO implements Serializable {
          * 中转仓库名称
          */
         private String transferWarehouseNames;
+        /**
+         * 是否托管订单 true 是 false 否
+         */
+        private Boolean isFullyManaged;
+        /**
+         * 是否打印sku条码
+         */
+        private Boolean isPrintSkuBarcode;
     }
 
+    /**
+     * 打印拣货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintPickingMainDTO{
+        /**
+         * 拣货单信息
+         */
+        private List<PrintPickingMainViewDTO> printPickingMainViewDTOList;
+        /**
+         * 发货清单
+         */
+        private List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailList;
+    }
     /**
      * 打印拣货单
      */
@@ -643,6 +672,22 @@ public class SoB2cDeliveryDTO implements Serializable {
         }
     }
 
+    /**
+     * 打印拣货单
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintPickingDTO {
+        /**
+         * 拣货清单
+         */
+        private List<PrintPickingViewDTO> printPickingViewDTOList;
+        /**
+         * 发货清单
+         */
+        private List<PickingListsDTO.CombinationPrintDetailView> combinationPrintDetailList;
+    }
 
     /**
      * 打印拣货单
@@ -1061,6 +1106,89 @@ public class SoB2cDeliveryDTO implements Serializable {
         @NotNull(message = "是否添加库存")
         private Boolean isAddQty;
     }
-
-
+    /**
+     * 打印SKU条码
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintSkuBarcodeDTO {
+        /**
+         * 发货单id
+         */
+        private String id;
+        /**
+         * 发货单编码
+         */
+        private String code;
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         *销售订单编码
+         */
+        private String soCode;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 平台订单编码
+         */
+        private String platformCode;
+        /**
+         * 产品id
+         */
+        private String skuId;
+        /**
+         * 产品编码
+         */
+        private String skuNo;
+        /**
+         * 平台sku编码
+         */
+        private String platformSkuNo;
+        /**
+         * 平台spu
+         */
+        private String platformSpuNo;
+        /**
+         * 发货数量
+         */
+        private Integer qty;
+        /**
+         * 物流商名称
+         */
+        private String logisticsSupplierName;
+        /**
+         * 渠道id
+         */
+        private String logisticsChannelId;
+        /**
+         * 渠道名称
+         */
+        private String logisticsChannelName;
+        /**
+         * 物流单号
+         */
+        private String transportNo;
+    }
+    /**
+     * 打印SKU确认
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintSkuBarcodeConfirmDTO {
+        /**
+         * 打印类型 /wms/dict/list?key=barcodeSize
+         */
+        private String barcodeSize;
+        /**
+         * 详情
+         */
+        @NotEmpty(message = "详情不能为空")
+        private List<PrintSkuBarcodeDTO> detailList;
+    }
 }

@@ -10,9 +10,9 @@ import java.io.Serializable;
 /**
  * 通知信息表
  *
- * @TableName notice_message
+ * @TableName cfg_notice_rule
  */
-@TableName(value = "notice_message")
+@TableName(value = "cfg_notice_rule")
 @Data
 public class NoticeMessageEntity extends BaseEntity<NoticeMessageEntity> implements Serializable {
     /**

@@ -1,5 +1,7 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -11,19 +13,13 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.CalculateSizeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.SoB2cPayStatusEnum;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -43,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -69,6 +64,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     private SoB2cReceiverService soB2cReceiverService;
     @Resource
     private SoB2cFinanceService soB2cFinanceService;
+
+    @Resource
+    private SoB2cExtendService soB2cExtendService;
 
     @Resource
     private CustomerB2cService customerB2cService;
@@ -110,6 +108,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private InvoiceInfoService invoiceInfoService;
+
+    @Resource
+    private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -225,14 +227,39 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             List<InvoiceInfoEntity> invoiceInfoEntities = invoiceInfoService.listBySoIds(Collections.singletonList(mainEntity.getId()));
             if (CollectionUtils.isEmpty(invoiceInfoEntities)){
                 try {
-                    invoiceInfoService.batchGenerateInvoice(Collections.singletonList(mainEntity.getId()));
+                    invoiceInfoService.batchGenerateVatInvoice(Collections.singletonList(mainEntity.getId()));
                 }catch (Exception e){
                     log.error("亚马逊订单已发货生成发票异常：{}",e.getMessage());
                 }
             }
         }
+        //生成nf-e发票
+        generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
     }
 
+    /**
+     * 生成NF-e发票
+     * @author will
+     * @date 2025/4/14 15:52
+     * @param soB2cEntity
+     * @param type
+     * @return void
+     */
+    private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
+        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
+            return;
+        }
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
+            return;
+        }
+        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
+            return;
+        }
+        if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
+            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+        }
+    }
 
     /**
      * 检查亚马逊卖家自发货订单无地址
@@ -292,6 +319,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dto.getPlatform())
+                || PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getPlatform())){
             platformSpuList = dto.convertPlatformSpuList();
         }
@@ -322,7 +350,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         if (CollectionUtils.isNotEmpty(skuIds)) {
             skuList = plmTaskFeign.getSimpleSkuInfoByIds(skuIds);
         }
-
+        //全托管转换平台状态
+        if (PlatformDictEnum.TIK_TOK_FULLY.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            dto.setPlatformOrderStatus(FullyManagedPlatformStatusEnum.getErpCodeByCode(dto.getDictPlatform(),dto.getPlatformOrderStatus()));
+        }
         // 主表更新或保存
         SoB2cDTO.PullOrderResultDTO resultDTO = soB2cService.saveOrUpdateEntity(dto, shopInfo);
         SoB2cEntity mainEntity = resultDTO.getSoB2cEntity();
@@ -366,22 +397,28 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         //物流信息更新保存
         SoB2cLogisticsEntity logisticsEntity = soB2cLogisticsService.saveOrUpdateEntity(dto, mainEntity, allNetWeight,maxLength,maxWidth,totalHeight);
-        //买家信息更新保存
-        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity, countryList,null == soB2cError);
 
         //财务信息更新保存
         soB2cFinanceService.saveOrUpdateEntity(dto, mainEntity, logisticsEntity, detailList);
 
-        //客户信息
-        CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList,null == soB2cError);
+        //扩展信息保存
+        soB2cExtendService.saveOrUpdateEntity(dto, mainEntity);
+        if(!PlatformDictEnum.TIK_TOK_FULLY.getCode().equals(dto.getDictPlatform())){
+            //买家信息更新保存
+            SoB2cReceiverEntity receiverEntity = soB2cReceiverService.saveOrUpdateEntity(dto, mainEntity, countryList,null == soB2cError);
 
-        customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
+            //客户信息
+            CustomerB2cEntity customerB2cEntity = customerB2cService.saveOrUpdateEntity(dto, mainEntity, receiverEntity, shopInfo.getDictCountryCode(), countryList,null == soB2cError);
 
-        customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
+            customerB2cAddressService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
 
-        receiverEntity.setCustomerId(customerB2cEntity.getId());
-        soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
-        soB2cReceiverService.saveOrUpdate(receiverEntity);
+            customerB2cContactService.saveOrUpdateEntity(dto, customerB2cEntity, receiverEntity,null == soB2cError);
+
+            receiverEntity.setCustomerId(customerB2cEntity.getId());
+            soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
+            soB2cReceiverService.saveOrUpdate(receiverEntity);
+        }
+
 //        if (!soB2cReceiverService.saveOrUpdate(receiverEntity)) {
 //            throw new ServiceException("[SoB2cReceiverEntity] 保存失败");
 //        }
@@ -399,6 +436,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
+        //生成Nf-e发票
+        generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
         return resultDTO;
     }
 
@@ -542,57 +581,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         //如果是已经做了拆单，不允许更新订单
         return soB2cEntityList.size() <= 1;
-    }
-
-    private List<SplitSkuDTO> splitBySoDetail(List<SoB2cDetailEntity> detailList, List<SkuInfoSimpleVO> skuList) {
-        if (CollectionUtils.isEmpty(detailList)){
-            return Collections.emptyList();
-        }
-        Map<String, SkuInfoSimpleVO> sourceSkuMap = skuList.stream().collect(Collectors.toMap(SkuInfoSimpleVO::getSkuId, Function.identity()));
-
-        List<String> skuIds = detailList.stream().map(SoB2cDetailEntity::getSkuId).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
-        List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
-        List<SplitSkuDTO> splitSkuDTOS = new ArrayList<>();
-        detailList.forEach(addDTO -> {
-            BomChildrenSkuDTO skuVO = bomChildrenSkuDTOS.stream().filter(e -> StrUtil.isNotEmpty(e.getParentSkuId()) && StrUtil.isNotEmpty(e.getParentSkuNo()) && e.getParentSkuId().equals(addDTO.getSkuId()))
-                    .findFirst().orElse(null);
-            if (Objects.nonNull(skuVO) && StringUtils.isNotEmpty(skuVO.getType()) && BomTypeEnum.COMBINATION.getType().equals(skuVO.getType())){
-                //组合品时进行拆分
-                List<BomChildrenSkuDTO> childrenSkuDTOS = bomChildrenSkuDTOS.stream().filter(e -> Objects.nonNull(e.getParentSkuId()) && addDTO.getSkuId().equals(e.getParentSkuId()))
-                        .collect(Collectors.toList());
-
-                //子sku数量需要乘订单数量
-                childrenSkuDTOS.forEach(bomChildrenSkuDTO -> {
-                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty() * bomChildrenSkuDTO.getQuantity())
-                            .skuNo( StrUtil.isNotEmpty(bomChildrenSkuDTO.getSkuNo()) ? bomChildrenSkuDTO.getSkuNo() : "")
-                            .length( Objects.nonNull(bomChildrenSkuDTO.getLength()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getLength()) : BigDecimal.ZERO)
-                            .width( Objects.nonNull(bomChildrenSkuDTO.getWidth()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getWidth()) : BigDecimal.ZERO)
-                            .height( Objects.nonNull(bomChildrenSkuDTO.getHeight()) ? LengthConverterUtil.mmToCm(bomChildrenSkuDTO.getHeight()) : BigDecimal.ZERO)
-                            .build());
-                });
-            }else {
-
-                SkuInfoSimpleVO simpleSkuVO = sourceSkuMap.get(addDTO.getSkuId());
-                if (null == simpleSkuVO){
-                    // 部分无映射关系设置为空
-                    splitSkuDTOS.add(new SplitSkuDTO(addDTO.getSkuId(), addDTO.getSkuNo()));
-                } else {
-                    skuVO = BomChildrenSkuDTO.builder()
-                            .skuId(simpleSkuVO.getSkuId())
-                            .length(simpleSkuVO.getProductLength())
-                            .width(simpleSkuVO.getProductWidth())
-                            .height(simpleSkuVO.getProductHeight())
-                            .build();
-                    splitSkuDTOS.add(SplitSkuDTO.builder().skuId(addDTO.getSkuId()).qty(addDTO.getQty())
-                            .skuNo(Objects.nonNull(skuVO) && StrUtil.isNotEmpty(skuVO.getSkuNo()) ? skuVO.getSkuNo() : "")
-                            .length(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getLength()) ? LengthConverterUtil.mmToCm(skuVO.getLength()) : BigDecimal.ZERO)
-                            .width(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getWidth()) ? LengthConverterUtil.mmToCm(skuVO.getWidth()) : BigDecimal.ZERO)
-                            .height(Objects.nonNull(skuVO) && Objects.nonNull(skuVO.getHeight()) ? LengthConverterUtil.mmToCm(skuVO.getHeight()) : BigDecimal.ZERO)
-                            .build());
-                }
-            }
-        });
-        return splitSkuDTOS;
     }
 
     /**

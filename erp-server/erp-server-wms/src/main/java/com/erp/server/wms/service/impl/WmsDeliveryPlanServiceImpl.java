@@ -976,8 +976,8 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
                     //已发货数量
                     hasDeliveryPlanQty = deliveryQty - totalHasDeliveryQty;
                 } else {
-                    deliveryPlanQty = (int) Math.floor(MathUtil.multiply(ratio,  detailEntity.getQty()).doubleValue());
-                    hasDeliveryPlanQty = (int) Math.floor(MathUtil.multiply(ratio, deliveryQty).doubleValue());
+                    deliveryPlanQty = (int) Math.floor(MathUtil.multiplyWithTwo(ratio,  detailEntity.getQty()).doubleValue());
+                    hasDeliveryPlanQty = (int) Math.floor(MathUtil.multiplyWithTwo(ratio, deliveryQty).doubleValue());
                 }
                 //发货数量
                 totalDeliveryQty = MathUtil.add(totalDeliveryQty,deliveryPlanQty);
@@ -996,7 +996,7 @@ public class WmsDeliveryPlanServiceImpl extends SuperServiceImpl<WmsDeliveryPlan
     }
 
     public static void main(String[] args) {
-        System.out.println((int) Math.floor(MathUtil.multiply(new BigDecimal("1.23"), 14563245).doubleValue()));
+        System.out.println((int) Math.floor(MathUtil.multiplyWithTwo(new BigDecimal("1.23"), 14563245).doubleValue()));
     }
 
     /**

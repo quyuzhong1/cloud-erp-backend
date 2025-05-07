@@ -270,8 +270,19 @@ public class MathUtil {
      * @param d2
      * @return
      */
-    public BigDecimal multiply(BigDecimal d1, BigDecimal d2) {
-        return multiply(d1, d2, 2);
+    public BigDecimal multiplyWithTwo(BigDecimal d1, BigDecimal d2) {
+        return multiplyWithTwo(d1, d2, 2);
+    }
+
+    /**
+     * 两数相乘，得出结果，该结果未四舍五入，请注意, 默认保留四位小数
+     *
+     * @param d1
+     * @param d2
+     * @return
+     */
+    public BigDecimal multiplyWithFour(BigDecimal d1, BigDecimal d2) {
+        return multiplyWithTwo(d1, d2, 4);
     }
 
     /**
@@ -281,7 +292,7 @@ public class MathUtil {
      * @param d2
      * @return
      */
-    public BigDecimal multiply(BigDecimal d1, BigDecimal d2, int scale) {
+    public BigDecimal multiplyWithTwo(BigDecimal d1, BigDecimal d2, int scale) {
         if (d1 == null && d2 == null) {
             return BigDecimal.ZERO;
         }
@@ -304,7 +315,7 @@ public class MathUtil {
      * @param d2
      * @return
      */
-    public BigDecimal multiply(BigDecimal d1, Integer d2) {
+    public BigDecimal multiplyWithTwo(BigDecimal d1, Integer d2) {
         if (d1 == null && d2 == null) {
             return BigDecimal.ZERO;
         }
@@ -464,7 +475,7 @@ public class MathUtil {
      */
     public static BigDecimal getTaxValue(BigDecimal price, BigDecimal taxRate, int scale) {
         BigDecimal multiplyTax = MathUtil.add(taxRate, MathUtil.BigDecimal_1);
-        return MathUtil.multiply(price, multiplyTax,scale);
+        return MathUtil.multiplyWithTwo(price, multiplyTax,scale);
     }
 
     public static BigDecimal getBigDecimalByStr(String priceStr) {
@@ -660,4 +671,13 @@ public class MathUtil {
         }
     }
 
+
+    //去掉符号和空格
+    public static String removeSignAndSpace(String str) {
+        if (str == null) {
+            return null;
+        }
+        // 去掉符号和空格
+        return str.replaceAll("[^\\d.]", "").replaceAll("\\s+", "");
+    }
 }

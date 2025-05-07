@@ -530,7 +530,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
             newSplitSkuDTO.setQuantity(splitSkuDTO.getQuantity() * bomChildrenSkuDTO.getQuantity());
         }
         //清洗成本数据
-        newSplitSkuDTO.setCleanCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),newSplitSkuDTO.getQuantity()));
+        newSplitSkuDTO.setCleanCostPrice(ObjectUtil.isEmpty(dmpSkuCostEntity) ? BigDecimal.ZERO : MathUtil.multiplyWithTwo(dmpSkuCostEntity.getCostPrice(),newSplitSkuDTO.getQuantity()));
         return newSplitSkuDTO;
 
     }
@@ -558,7 +558,7 @@ public class BiOrderItemSplitServiceImpl extends ServiceImpl<BiOrderItemSplitMap
                     itemList.get(i).setAmountAfter(amountAfter.subtract(finalSumCostPrice));
                 } else {
                     //四位以后进行舍弃
-                    BigDecimal newAmountAfter = MathUtil.divide(MathUtil.multiply(itemList.get(i).getCleanCostPrice(), itemList.get(i).getAmountAfter(), 6)
+                    BigDecimal newAmountAfter = MathUtil.divide(MathUtil.multiplyWithTwo(itemList.get(i).getCleanCostPrice(), itemList.get(i).getAmountAfter(), 6)
                             , sumCostPrice, 4, BigDecimal.ROUND_DOWN);
                     itemList.get(i).setAmountAfter(newAmountAfter);
                     //除最后一条数据成本合计

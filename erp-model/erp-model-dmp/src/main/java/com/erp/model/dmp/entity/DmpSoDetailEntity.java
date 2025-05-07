@@ -259,6 +259,17 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     private BigDecimal shippingDiscountTax;
 
     /**
+     * 销售费用
+     */
+    @TableField("sale_fee")
+    private BigDecimal saleFee;
+
+    /**
+     * 变体属性
+     */
+    @TableField("variant_property")
+    private String variantProperty;
+    /**
      * 平台SKU ID
      */
     @TableField("platform_sku_id")

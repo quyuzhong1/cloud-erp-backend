@@ -6,6 +6,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.core.utils.IdUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.entity.MessageBody;
 import com.common.message.enums.RocketMqTagEnum;
@@ -246,7 +247,32 @@ public class MQProducerService<T> {
      * @return 同步时返回，异步返回null
      */
     public SendResult sendNoticeMsg(NoticeMsgInfoDTO msgInfoDTO) {
-        return sendNoticeMsg(msgInfoDTO, Boolean.TRUE);
+        if (Objects.isNull(msgInfoDTO.getDelayTime())){
+            return sendNoticeMsg(msgInfoDTO, Boolean.TRUE);
+        }else {
+            return sendNoticeMsgByDelayTimeLevel(msgInfoDTO, convertSecondsToDelayLevel(LocalDateUtil.calculateSeconds(LocalDateTime.now(),msgInfoDTO.getDelayTime())));
+        }
+    }
+    /**
+     * 往消息中心发送MQ任务消息
+     * @param msgInfoDTO
+     * @param delayTimeLevel 延迟队列
+     * 1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h
+     * 1  2   3   4  5  6  7  8  9  10 11 12 13 14  15  16  17  18
+     * @return 同步时返回，异步返回null
+     */
+    public SendResult sendNoticeMsgByDelayTimeLevel(NoticeMsgInfoDTO msgInfoDTO, Integer delayTimeLevel) {
+        ValidatorUtil.validateEntity(msgInfoDTO);
+        String key = IdUtil.simpleUUID();
+        Message<NoticeMsgInfoDTO> msg = MessageBuilder.withPayload(msgInfoDTO)
+                .setHeader(RocketMQHeaders.KEYS, key)
+                .build();
+
+        NoticeTypeEnum noticeTypeEnum = msgInfoDTO.getNoticeTypeEnum();
+        String topic = RocketMqTopic.NOTICE_MSG_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace);
+        String destination = CharSequenceUtil.format("{}:{}", topic , noticeTypeEnum.getMqTag());
+        Message<?> message = MessageBuilder.withPayload(msgInfoDTO).build();
+        return rocketMQTemplate.syncSend(destination, message,10000,delayTimeLevel);
     }
 
     /**

@@ -44,6 +44,18 @@ public enum RuleOrderHandleEnum {
         private final String name;
     }
 
+    /**
+     * 订单号处理方法
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum OrderCodeRuleContentEnum implements EnumMessage {
+        CUSTOM_REPLACE("customReplace","自定义替换"),
+        ;
+        private final String code;
+        private final String name;
+
+    }
     @Getter
     @AllArgsConstructor
     public enum Address1FilterEnum implements EnumMessage {

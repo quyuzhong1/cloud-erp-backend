@@ -36,7 +36,7 @@ public class JmsAmazonSqsConsumer {
     public void consumerListener(Message message) throws Exception {
         SQSTextMessage textMessage = (SQSTextMessage) message;
         log.warn("接收到亚马逊SQS通知:{}", textMessage.getText());
-        if (BusinessCommonConstants.hasProfile("dev") || BusinessCommonConstants.DEV.equalsIgnoreCase(namespace)){
+        if (BusinessCommonConstants.hasProfile("dev") || namespace.toLowerCase().startsWith(BusinessCommonConstants.DEV)){
             // 开发环境暂时过滤
             return ;
         }
@@ -54,7 +54,7 @@ public class JmsAmazonSqsConsumer {
         }
 
         // 开发环境忽略处理
-        if (!BusinessCommonConstants.hasProfile("dev") && !BusinessCommonConstants.DEV.equalsIgnoreCase(namespace)){
+        if (!BusinessCommonConstants.hasProfile("dev") && !namespace.toLowerCase().startsWith(BusinessCommonConstants.DEV)){
             //如果设置的是客户端确认模式(Session.CLIENT_ACKNOWLEDGE)，调用acknowledge()删除sqs消息。
             message.acknowledge();
         }

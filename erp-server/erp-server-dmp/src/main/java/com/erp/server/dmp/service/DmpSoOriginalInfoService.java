@@ -1,8 +1,11 @@
 package com.erp.server.dmp.service;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.DmpSoOriginalInfoEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpSoOriginalInfoDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -32,5 +35,5 @@ public interface DmpSoOriginalInfoService extends SuperService<DmpSoOriginalInfo
     */
     Boolean update(DmpSoOriginalInfoDTO.UpdateDTO dto);
 
-
+    List<AfterSaleDTO.DropDownDTO> listDetailByPlatformCode(String platformCode);
 }

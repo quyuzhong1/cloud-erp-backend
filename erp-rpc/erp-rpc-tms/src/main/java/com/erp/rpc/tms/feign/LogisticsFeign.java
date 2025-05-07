@@ -6,6 +6,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -64,6 +65,13 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/getChannelByName")
     List<LogisticsChannelEntity> getChannelByName(@RequestBody String channelName);
+    /**
+     * 获取渠道 根据渠道名称
+     * @param channelNameList
+     * @return
+     */
+    @PostMapping("/feign/logistics/listChannelByNameList")
+    List<LogisticsChannelEntity> listChannelByNameList(@RequestBody List<String> channelNameList);
     @PostMapping("/feign/logistics/getChannelInfoById")
     LogisticsChannelDTO.BaseDTO getChannelInfoById(@RequestBody String channelId);
 
@@ -149,4 +157,11 @@ public interface LogisticsFeign {
      */
     @GetMapping("/feign/logistics/listAll")
     List<BaseDropDownDTO.DisabledDTO> listAll();
+    /**
+     * 根据渠道查询黑名单
+     * @param channelIdList
+     * @return
+     */
+    @PostMapping("/feign/logistics/listChannelBlacklist")
+    List<LogisticsChannelBlacklistEntity> listChannelBlacklist(@RequestBody List<String> channelIdList);
 }

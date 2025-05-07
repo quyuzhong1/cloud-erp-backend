@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.SoPriceChangeMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.SoPriceChangeEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="reason" property="reason" />
+       <result column="approve_status" property="approveStatus" />
+       <result column="adjust_date" property="adjustDate" />
+       <result column="adjust_user_id" property="adjustUserId" />
+       <result column="adjust_user_name" property="adjustUserName" />
+       <result column="so_org_id" property="soOrgId" />
+       <result column="so_org_name" property="soOrgName" />
+       <result column="approve_time" property="approveTime" />
+       <result column="approve_user_name" property="approveUserName" />
+       <result column="approve_user_id" property="approveUserId" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, reason, approve_status, adjust_date, adjust_user_id, adjust_user_name, so_org_id, so_org_name, approve_time, approve_user_name, approve_user_id
+    </sql>
+
+    <select id="paging" resultType="com.erp.model.oms.dto.SoPriceChangeDTO$PagingViewDTO">
+        SELECT
+            spc.id,
+            spcd.id AS changeDetailId,
+            spc.code,
+            spc.create_user_id AS createUserId,
+            spc.create_user_name AS createUserName,
+            spc.create_time AS createTime,
+            spcd.customer_id AS customerId,
+            ci.name AS customerId,
+            spcd.sku_id AS skuId,
+            spcd.sku_no AS skuNo,
+            spcd.min_qty AS minQty,
+            spcd.max_qty AS maxQty,
+            spc.approve_status AS approveStatus,
+            spcd.tax_price AS taxPrice,
+            spcd.currency,
+            spcd.tax_rate * 100 AS taxRate ,
+            spcd.effective_date AS effectiveDate,
+            spcd.expire_date AS expireDate,
+            spc.so_org_id AS soOrgId,
+            spc.so_org_name AS soOrgName,
+            spcd.disabled,
+            spcd.so_price_detail_id as soPriceDetailId,
+            spcd.remark as detailRemark,
+            spc.approve_time
+        FROM so_price_change_detail spcd
+        INNER JOIN so_price_change spc ON spcd.main_id = spc.id  and spc.is_deleted = false
+        inner join customer_info ci on ci.id = spcd.customer_id and ci.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND spcd.is_deleted= false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        spc.id DESC,spcd.id DESC
+    </select>
+
+    <!-- 导出 -->
+    <select id="listExport" resultType="com.erp.model.oms.dto.SoPriceChangeDTO$PagingViewDTO">
+        SELECT
+            spc.id,
+            spcd.id AS changeDetailId,
+            spcd.so_price_detail_id,
+            spc.code,
+            spc.create_user_id AS createUserId,
+            spc.create_user_name AS createUserName,
+            spc.create_time AS createTime,
+            spcd.customer_id AS customerId,
+            ci.name AS customerId,
+            spcd.sku_id,
+            spcd.sku_no,
+            spcd.min_qty,
+            spcd.max_qty,
+            spc.approve_status,
+            spcd.tax_price,
+            spcd.currency,
+            spcd.tax_rate * 100 AS taxRate ,
+            spcd.effective_date,
+            spc.so_org_id,
+            spc.so_org_name,
+            spcd.disabled,
+            spcd.remark as detailRemark,
+            spc.approve_time
+        FROM so_price_change_detail spcd
+        INNER JOIN so_price_change spc ON spcd.main_id = spc.id and spc.is_deleted = false
+        left join customer_info ci on ci.id = spcd.customer_id and ci.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND spcd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        spc.create_time DESC,spcd.id DESC
+    </select>
+
+    <!-- tab列表 -->
+    <select id="tabList" resultType="java.lang.Integer">
+        select
+            count(distinct spc.id)
+        from so_price_change spc
+        left join so_price_change_detail spcd on spc.id = spcd.main_id and spcd.is_deleted = false
+        <where>
+            ${params.sqlMap.default}
+            and spc.is_deleted = false
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

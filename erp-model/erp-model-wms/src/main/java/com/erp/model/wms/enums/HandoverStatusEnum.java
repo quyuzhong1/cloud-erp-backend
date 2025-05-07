@@ -32,6 +32,23 @@ public enum HandoverStatusEnum implements EnumMessage {
     CANCEL_FAILURE("cancel_failure","取消失败"),
     CLOSING("closing","关闭中"),
     CLOSED("closed","已关闭"),
+
+    //TIKTOKFully
+    INIT_2("INIT","初始化"),
+    WAIT_CREATE("WAIT_CREATE","等待建单"),
+    CREATE_FAILED("CREATE_FAILED","建单失败"),
+    RTS("RTS","待揽收(建单成功)"),
+    RTS_FAILED("RTS_FAILED","揽收失败"),
+    TTS("TTS","已揽收"),
+    SHIPPED("SHIPPED","运输在途"),
+    SHIPPED_ABNORMAL("SHIPPED_ABNORMAL","在途异常"),
+    DELIVERED("DELIVERED","已妥投"),
+    DELIVERED_ABNORMAL("DELIVERED_ABNORMAL","到货异常"),
+    SIGNED("SIGNED","已签收"),
+    FINISHED("FINISHED","已完结"),
+    CANCELED_2("CANCELED","已取消"),
+    RETURNING_TO_SENDER("RETURNING_TO_SENDER","退回寄件人中"),
+    RETURNED_TO_SENDER("RETURNED_TO_SENDER","已退回寄件人"),
     ;
 
 

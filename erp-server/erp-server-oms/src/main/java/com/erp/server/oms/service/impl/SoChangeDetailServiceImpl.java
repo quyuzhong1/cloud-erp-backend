@@ -140,9 +140,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, qty);
             soChangeDetail.setIsGift(isGift);
             soChangeDetail.setPrice(price);
             soChangeDetail.setCurrency(currency);
@@ -212,7 +212,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
 
             BigDecimal oldPrice = item.getOldPrice();
@@ -221,7 +221,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+            BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
             item.setOldPrice(oldPrice);
             item.setOldTaxPrice(oldTaxPrice);
         }
@@ -267,7 +267,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 view.setOldTaxRate(oldTaxRate);
                 //含税单价=销售单价*（税率+1）
                 BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-                BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+                BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
                 view.setOldTaxPrice(oldTaxPrice);
                 view.setQty(0);
                 view.setTaxPrice(zero);
@@ -350,7 +350,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             view.setWarehouseOrgName(warehouseOrgName);
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+            BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
             view.setOldTaxPrice(oldTaxPrice);
             view.setQty(0);
             view.setTaxPrice(zero);
@@ -841,9 +841,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, qty);
             item.setPrice(price);
             item.setCurrencySymbol(symbol);
             item.setAmount(amount);

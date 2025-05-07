@@ -61,7 +61,9 @@ import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.CfgSettingEntity;
 import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.CfgSettingEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -986,15 +988,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal price = item.getPrice();
 
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiply(price, exchangeRate));
+            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate));
 
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
+            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate));
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
@@ -2783,7 +2785,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(item.getPrice(), multiplyTax);
+            BigDecimal taxPrice = item.getTaxPrice();
+            if (Objects.isNull(taxPrice)) {
+                taxPrice = MathUtil.multiplyWithTwo(item.getPrice(), multiplyTax,4);
+            }
             item.setTaxPrice(taxPrice);
 
             // 计算毛利成本
@@ -2794,7 +2799,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             SoDetailDTO.CalDetailResultDTO result = new SoDetailDTO.CalDetailResultDTO();
             BeanMapper.copy(item, result);
-            result.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
+            result.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
             resultList.add(result);
         }
         return resultList;
@@ -2822,7 +2827,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 continue;
             }
             BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
-            skuVO.setNotTaxCostPrice(MathUtil.multiply(rate,skuCostDTO.getProductCost(),4));
+            skuVO.setNotTaxCostPrice(MathUtil.multiplyWithTwo(rate,skuCostDTO.getProductCost(),4));
             skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
         }
     }
@@ -2951,13 +2956,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            taxPrice = MathUtil.multiply(taxPrice, exchangeRate);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
+            taxPrice = MathUtil.multiplyWithTwo(taxPrice, exchangeRate);
             item.setTaxPrice(taxPrice);
             viewPi.setSkuNo(item.getSkuNo());
             Integer qty = item.getQty();
             viewPi.setQty(qty);
-            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice, qty);
+            BigDecimal taxAmountBefore = MathUtil.multiplyWithTwo(taxPrice, qty);
             viewPi.setAmount(taxAmountBefore);
             viewPi.setTaxPriceStr(symbol + taxPrice);
             viewPi.setAmountStr(symbol + taxAmountBefore);

@@ -46,6 +46,8 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "imageUrl", source = "imageUrl"),
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
+            @Mapping(target = "saleFee", source = "detailDTO.saleFee"),
+            @Mapping(target = "variantProperty", source = "detailDTO.variantProperty"),
     })
     SoB2cDetailEntity convertNewDetail(PlatformOrderDetailDTO detailDTO, String mainId, String skuId, String skuNo, String imageUrl, String platformSpuNo);
 
@@ -99,6 +101,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "totalCancelGoodsAmount", source = "oldEntity.totalCancelGoodsAmount"),
             @Mapping(target = "cancelGoodsCurrency", source = "oldEntity.cancelGoodsCurrency"),
             @Mapping(target = "sellerOrderCode",ignore = true),
+            @Mapping(target = "nfeInvoiceStatus", source = "dto.nfeInvoiceStatus"),
     })
     SoB2cEntity convertUpdateMainOrder(SoB2cEntity oldEntity, PlatformOrderDTO dto);
 
@@ -148,11 +151,14 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "warehouseLocation", source = "oldEntity.warehouseLocation"),
             @Mapping(target = "platformLineNumber", source = "oldEntity.platformLineNumber"),
             @Mapping(target = "platformPackageId", source = "oldEntity.platformPackageId"),
+            @Mapping(target = "extendData", source = "oldEntity.extendData"),
             // 映射关系
             @Mapping(target = "skuId", source = "skuId"),
             @Mapping(target = "skuNo", source = "skuNo"),
             @Mapping(target = "imageUrl", source = "imageUrl"),
+            @Mapping(target = "saleFee", source = "detailDTO.saleFee"),
             @Mapping(target = "platformSpuNo", source = "platformSpuNo"),
+            @Mapping(target = "variantProperty", source = "detailDTO.variantProperty"),
 
     })
     SoB2cDetailEntity convertUpdateDetail(SoB2cDetailEntity oldEntity, PlatformOrderDetailDTO detailDTO, String skuId, String skuNo, String imageUrl, String platformSpuNo, boolean keepHistory);

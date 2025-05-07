@@ -521,6 +521,10 @@ public class CfgRuleOutDTO implements Serializable {
          */
         @NotBlank
         private String type;
+        /**
+         * 物流商id
+         */
+        private String dictPlatform;
 
         /**
          * 收货国家ID

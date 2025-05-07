@@ -727,7 +727,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
             //子级sku编号
             String childSkoNos = dto.getChildList().stream().map(BomCombinationDTO.ChildDTO::getChildSkuNo).collect(Collectors.joining(","));
             dto.setChildSkuNos(childSkoNos);
-            BigDecimal childSkuCost = dto.getChildList().stream().map(obj -> MathUtil.multiply(MathUtil.compareTo(obj.getActualTaxCost(), BigDecimal.ZERO) == MathUtil.ZERO ? obj.getTargetTaxCost() : obj.getActualTaxCost(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            BigDecimal childSkuCost = dto.getChildList().stream().map(obj -> MathUtil.multiplyWithTwo(MathUtil.compareTo(obj.getActualTaxCost(), BigDecimal.ZERO) == MathUtil.ZERO ? obj.getTargetTaxCost() : obj.getActualTaxCost(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
             dto.setChildSkuCost(childSkuCost);
         }
     }

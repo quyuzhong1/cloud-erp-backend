@@ -154,6 +154,8 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
     private KingdeePaymentConditionService kingdeePaymentConditionService;
     @Resource
     private PurchaseOrderMapper purchaseOrderMapper;
+    @Resource
+    private SupplierAccountService supplierAccountService;
 
     @Override
     public PagingVO<SubcontractOrderDTO.ListDTO> paging(PagingDTO<SubcontractOrderDTO.PagingParamDTO> pagingParamDTO) {
@@ -736,7 +738,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 dto.setTaxRate(viewDTO.getTaxRate());
                 dto.setCurrency(viewDTO.getCurrency());
                 dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                dto.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
+                dto.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),dto.getQty()).setScale(4, RoundingMode.DOWN));
             }
             //仓位名称
             String locationName = warehouseLocationList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),dto.getWarehouseId()) && StrUtil.equals(obj.getCode(), dto.getWarehouseLocation()))
@@ -792,12 +794,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //供应商默认联系人
         List<String> supplierIds = list.stream().map(SubcontractOrderDTO.GeneratePoDTO::getSupplierId).collect(Collectors.toList());
         List<SupplierContactEntity> defaultSupplierContactList = supplierContactService.getDefaultBySupplierIdList(supplierIds);
+        List<SupplierAccountEntity> defaultBySupplierAccountList = supplierAccountService.getDefaultBySupplierIdList(supplierIds);
 
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
 
         //生成采购订单
-        List<String> poIds = addGroupPoData(resultList, supplierList, skuList, defaultSupplierContactList);
+        List<String> poIds = addGroupPoData(resultList, supplierList, skuList, defaultSupplierContactList,defaultBySupplierAccountList);
         //ids为空则直接返回
         if (CollectionUtils.isEmpty(poIds)) {
             return;
@@ -820,16 +823,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
 
     /**
      * 分组生成采购订单
-     * @author will
-     * @date 2024/12/4 15:34
+     *
      * @param resultList
      * @param supplierList
      * @param skuList
      * @param defaultSupplierContactList
+     * @param defaultBySupplierAccountList
      * @return List<String>
+     * @author will
+     * @date 2024/12/4 15:34
      */
-    private List<String> addGroupPoData ( List<SubcontractOrderDTO.GeneratePoAddDTO> resultList,List<SupplierEntity> supplierList,List<SkuVO> skuList,
-                             List<SupplierContactEntity> defaultSupplierContactList) {
+    private List<String> addGroupPoData (List<SubcontractOrderDTO.GeneratePoAddDTO> resultList, List<SupplierEntity> supplierList, List<SkuVO> skuList,
+                                         List<SupplierContactEntity> defaultSupplierContactList, List<SupplierAccountEntity> defaultBySupplierAccountList) {
         if (CollUtil.isEmpty(resultList)) {
             return Collections.emptyList();
         }
@@ -867,6 +872,13 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
                 if (ObjectUtils.isNotEmpty(supplierContactEntity)) {
                     supplierDTO.setSupplierContactId(supplierContactEntity.getId());
                     supplierDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
+                }
+            }
+            //供应商默认账户
+            if (CollectionUtils.isNotEmpty(defaultBySupplierAccountList)) {
+                SupplierAccountEntity supplierAccountEntity = defaultBySupplierAccountList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
+                if (ObjectUtils.isNotEmpty(supplierAccountEntity)) {
+                    addDTO.setSupplierAccountId(supplierAccountEntity.getId());
                 }
             }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);

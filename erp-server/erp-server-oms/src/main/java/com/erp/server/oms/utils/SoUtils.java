@@ -15,6 +15,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 /**
@@ -76,8 +77,8 @@ public class SoUtils {
         SkuCostProfitDTO.SkuCostProfitParam costParam = new SkuCostProfitDTO.SkuCostProfitParam();
         costParam.setSkuId(item.getSkuId());
         //该值应该为数量*单价*汇率
-        BigDecimal amount = MathUtil.multiply(item.getPrice(), item.getQty());
-        BigDecimal saleAmount = MathUtil.multiply(amount, item.getExchangeRate());
+        BigDecimal amount = MathUtil.multiplyWithTwo(item.getPrice(), item.getQty());
+        BigDecimal saleAmount = MathUtil.multiplyWithTwo(amount, item.getExchangeRate());
         //销售毛利=销售金额(折后)*汇率-总成本
         //销售金额(折后)*汇率
         BigDecimal amountLocalCurrency = item.getAmountLocalCurrency();
@@ -127,10 +128,16 @@ public class SoUtils {
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = item.getTaxPrice();
+            if (Objects.nonNull(isGift) && isGift){
+                taxPrice = BigDecimal.ZERO;
+            }
+            if (Objects.isNull(taxPrice)){
+                taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
+            }
             //价税合计（折前）
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            totalTaxAmountBefore = totalTaxAmountBefore.add(taxAmount).setScale(4, BigDecimal.ROUND_HALF_UP);
+            BigDecimal taxAmount = MathUtil.multiplyWithTwo(taxPrice, new BigDecimal(qty),4);
+            totalTaxAmountBefore = totalTaxAmountBefore.add(taxAmount).setScale(4, RoundingMode.HALF_UP);
         }
 
         // 此处需要注意，所有的明细折扣额汇总起来需等于总的折扣额
@@ -169,21 +176,27 @@ public class SoUtils {
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = item.getTaxPrice();
+            if (Objects.nonNull(isGift) && isGift) {
+                taxPrice = BigDecimal.ZERO;
+            }
+            if (Objects.isNull(taxPrice)){
+                taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
+            }
             item.setTaxPrice(taxPrice);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, new BigDecimal(qty),4);
 
             //含税金额（折扣前）
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty);
-            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice, qty);
+            BigDecimal taxAmount = MathUtil.multiplyWithTwo(taxPrice, new BigDecimal(qty),4);
+            BigDecimal taxAmountBefore = MathUtil.multiplyWithTwo(taxPrice, new BigDecimal(qty),4);
             item.setTaxAmountBefore(taxAmountBefore);
             item.setAmount(amount);
 
             //折扣额=折扣总额*含税金额（折扣前）/总的价税合计（折前）
             BigDecimal detailDiscountAmount = BigDecimal.ZERO;
             if (Objects.nonNull(discountAmount) && totalTaxAmountBefore.compareTo(BigDecimal.ZERO) > 0) {
-                BigDecimal discountFlag = MathUtil.multiply(discountAmount, taxAmount);
+                BigDecimal discountFlag = MathUtil.multiplyWithTwo(discountAmount, taxAmount,4);
                 detailDiscountAmount = MathUtil.divide(discountFlag, totalTaxAmountBefore, 2, BigDecimal.ROUND_DOWN);
                 log.warn("销售订单明细第【{}】条数据，价税合计（折扣前）比例【{}】，折扣额【{}】", (i + 1), detailDiscountAmount);
             }
@@ -243,7 +256,7 @@ public class SoUtils {
         BigDecimal divideNumber = MathUtil.add(taxRate, MathUtil.BigDecimal_100);
         //除的结果
         BigDecimal divideResult = MathUtil.divide(diff, divideNumber, 8, BigDecimal.ROUND_HALF_UP);
-        return MathUtil.multiply(divideResult, taxRate);
+        return MathUtil.multiplyWithTwo(divideResult, taxRate,4);
     }
 
 

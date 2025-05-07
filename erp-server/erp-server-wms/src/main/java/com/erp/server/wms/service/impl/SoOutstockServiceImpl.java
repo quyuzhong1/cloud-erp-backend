@@ -344,7 +344,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             BigDecimal taxPrice = MathUtil.getTaxValue(price, flagTaxRate, 4);
 
-            outStockAmount = outStockAmount.add(MathUtil.multiply(taxPrice, actualQty));
+            outStockAmount = outStockAmount.add(MathUtil.multiplyWithTwo(taxPrice, actualQty));
         }
 
         //销售订单
@@ -358,7 +358,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         //折扣总额占比
         BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 6);
         //整单折扣额
-        BigDecimal totalDiscountAmount = MathUtil.multiply(discountAmount, discountAmountRate, 2);
+        BigDecimal totalDiscountAmount = MathUtil.multiplyWithTwo(discountAmount, discountAmountRate, 2);
 
         SoOutstockEntity soOutstock = new SoOutstockEntity();
         // 生成单号
@@ -1622,15 +1622,15 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 exchangeRate = MathUtil.BigDecimal_1;
             }
             //销售单价(本位币)
-            item.setCnyPrice(MathUtil.multiply(price, exchangeRate,4));
+            item.setCnyPrice(MathUtil.multiplyWithTwo(price, exchangeRate,4));
 
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax,4);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax,4);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setCnyTaxPrice(MathUtil.multiply(taxPrice, exchangeRate,4));
+            item.setCnyTaxPrice(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
             item.setCurrency(item.getCurrency());
             item.setCurrencySymbol(item.getCurrencySymbol());
             item.setAllAmountLocalCurrency(item.getAllAmountLocalCurrency());
@@ -1744,14 +1744,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             BigDecimal taxPrice = MathUtil.getTaxValue(price, flagTaxRate, 4);
-            outStockAmount = outStockAmount.add(MathUtil.multiply(taxPrice, actualQty));
+            outStockAmount = outStockAmount.add(MathUtil.multiplyWithTwo(taxPrice, actualQty));
         }
         //销售订单折扣额
         BigDecimal discountAmount = soInfo.getDiscountAmount();
         //折扣总额占比
         BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 6);
         //整单折扣额
-        BigDecimal totalDiscountAmount = MathUtil.multiply(discountAmount, discountAmountRate, 2);
+        BigDecimal totalDiscountAmount = MathUtil.multiplyWithTwo(discountAmount, discountAmountRate, 2);
 
         BeanMapper.copy(dto, soOutstock);
         soOutstock.setCode(code);
@@ -1835,6 +1835,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 ruleDTO.setReceiveCountry(customerDTO.getCountryId());
                 ruleDTO.setFromWarehouse(generateInfo.getWarehouseId());
                 ruleDTO.setSalesOrgId(soInfo.getSalesOrgId());
+                ruleDTO.setDictPlatform("");
                 CfgRuleOutDTO.MatchTransferResultDTO resultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);
                 String warehouseId;
                 String batchNo = "";
@@ -2523,14 +2524,14 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
                 BigDecimal taxPrice = MathUtil.getTaxValue(price, flagTaxRate, 4);
 
-                outStockAmount = outStockAmount.add(MathUtil.multiply(taxPrice, actualQty));
+                outStockAmount = outStockAmount.add(MathUtil.multiplyWithTwo(taxPrice, actualQty));
             }
             //销售订单折扣额
             BigDecimal discountAmount = soDetailList.get(0).getDiscountAmount();
             //折扣总额占比
             BigDecimal discountAmountRate = MathUtil.divide(outStockAmount, soAmount, 6);
             //整单折扣额
-            BigDecimal totalDiscountAmount = MathUtil.multiply(discountAmount, discountAmountRate, 2);
+            BigDecimal totalDiscountAmount = MathUtil.multiplyWithTwo(discountAmount, discountAmountRate, 2);
             item.setTotalDiscountAmount(totalDiscountAmount);
 
         }
@@ -3377,7 +3378,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 PlatformRetryHandler.retrySoOutStock(currentEntity, Collections.singletonList(currentEntity));
             } catch (Exception e) {
                 String message = e.getMessage();
-                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:{}", id, id, message);
+                log.error("重新创建或者修改B2C销售出库单失败,soB2cId:{},paramJson:{} 错误信息:", id, id, e);
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setMainId(id);
