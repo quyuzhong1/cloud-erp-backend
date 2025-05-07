@@ -73,37 +73,41 @@
         </where>
     </select>
 
+    <!-- 查询需要验证数据 -->
     <select id="listCheckSoPriceDetail" resultType="com.erp.model.oms.dto.SoPriceDetailDTO$ViewDTO">
         SELECT
-            id,
-            sku_id,
-            min_qty,
-            max_qty,
-            currency,
-            tax_price,
-            tax_rate,
-            effective_date,
-            expire_date,
-            disabled
-        FROM so_price_detail WHERE
-        is_deleted = false AND
-        main_id IN (
-        SELECT id FROM so_price
-        WHERE customer_id = #{customerId} AND so_org_id = #{soOrgId} AND is_deleted=FALSE
+            spd.id,
+            spd.sku_id,
+            spd.min_qty,
+            spd.max_qty,
+            spd.currency,
+            spd.tax_price,
+            spd.tax_rate,
+            spd.effective_date,
+            spd.expire_date,
+            spd.disabled,
+            sp.customer_id
+        FROM so_price_detail spd
+        inner join so_price sp on sp.id = spd.main_id and sp.is_deleted = false
+        WHERE spd.is_deleted = false AND sp.so_org_id = #{soOrgId}
+        <if test="customerIdList != null and customerIdList.size > 0">
+            AND sp.customer_id IN
+            <foreach collection="customerIdList" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
         <if test="statusList!=null and statusList.size>0">
-            AND approve_status IN
+            AND sp.approve_status IN
             <foreach collection="statusList" item="status" open="(" separator="," close=")">
                 #{status}
             </foreach>
         </if>
-        )
         <if test="skuIdList!=null and skuIdList.size>0">
-            AND sku_id  IN
+            AND spd.sku_id  IN
             <foreach collection="skuIdList" item="skuId" open="(" separator="," close=")">
                 #{skuId}
             </foreach>
         </if>
-
     </select>
 
     <!-- 根据客户和状态查询 -->
