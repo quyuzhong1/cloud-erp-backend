@@ -421,7 +421,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         QcNoticeEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到质检通知单数据"));
         // 只有待提交数据允许删除
         if (!(Objects.equals(ApproveStatusEnum.WAIT_SUBMIT, entity.getApproveStatus()) || Objects.equals(ApproveStatusEnum.REJECT, entity.getApproveStatus()))) {
-            throw new ServiceException(ApiError.ERROR_98032);
+            throw new ServiceException("只有待提交或审核不通过数据支持删除");
         }
         // 删除主单数据
         log.info("删除 开始删除质检通知单主单数据，id：【{}】", id);
@@ -521,7 +521,9 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         //质检员
         List<String> userIds = dto.stream().map(QcNoticeDTO.QcInfoView::getQcUserId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         List<FindUserDTO> userInfoList = sysUserFeign.getUserListByUserIds(userIds);
-        Map<String, String> userInfoMap = userInfoList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getDepartmentId));
+        Map<String, String> userDepartmentMap = userInfoList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getDepartmentId));
+
+        Map<String, String> userInfoMap = userInfoList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
 
         //sku包装信息
         List<String> skuIds = dto.stream().map(QcNoticeDTO.QcInfoView::getSkuId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -559,7 +561,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             //质检人
             addDto.setQcUserId(qcInfoView.getQcUserId());
             //质检部门
-            addDto.setQcDeptId(userInfoMap.get(qcInfoView.getQcUserId()));
+            addDto.setQcDeptId(userDepartmentMap.get(qcInfoView.getQcUserId()));
 
             //产品信息
             QcProductDTO.AddDTO qcProduct = new QcProductDTO.AddDTO();
@@ -606,6 +608,8 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
             qcNoticeDetailEntity.setQcDiffQty(qcInfoView.getQcDiffQty());
             qcNoticeDetailEntity.setQcProblemDict(qcInfoView.getQcProblemDict());
             qcNoticeDetailEntity.setQcDate(nowTime);
+            qcNoticeDetailEntity.setQcUserId(qcInfoView.getQcUserId());
+            qcNoticeDetailEntity.setQcUserName(userInfoMap.getOrDefault(qcInfoView.getQcUserId(),""));
             //该sku已完成质检
             qcNoticeDetailEntity.setQcStatus(QcNoticeStatusEnum.FINISH.getCode());
             //该sku待上架
