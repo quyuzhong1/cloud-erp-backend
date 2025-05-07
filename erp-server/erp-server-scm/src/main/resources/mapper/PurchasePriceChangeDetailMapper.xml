@@ -82,4 +82,47 @@
             </foreach>
         </if>
     </select>
+
+    <!-- 采购价目明细数据查询 -->
+    <select id="listCheckPurchasePriceChangeDetail"
+            resultType="com.erp.model.scm.entity.PurchasePriceChangeDetailEntity">
+        select
+            ppcd.id,
+            ppcd.sku_id,
+            ppcd.sku_no,
+            ppcd.delivery_day,
+            ppcd.min_qty,
+            ppcd.max_qty,
+            ppcd.currency,
+            ppcd.tax_price,
+            ppcd.tax_rate,
+            ppcd.disabled,
+            ppcd.effective_date,
+            ppcd.expire_date,
+            ppc.code as code,
+            ppcd.purchase_price_detail_id,
+            ppcd.purchase_price_change_id,
+            ppcd.supplier_id
+        FROM  purchase_price_change_detail ppcd
+        LEFT JOIN purchase_price_change ppc ON ppcd.purchase_price_change_id = ppc.id AND ppcd.is_deleted = FALSE
+        WHERE ppc.is_deleted = FALSE and ppc.purchase_org_id = #{purchaseOrgId}
+        <if test="statusList != null and statusList.size > 0">
+            and ppc.approve_status in
+            <foreach collection="statusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="supplierIdList != null and supplierIdList.size > 0">
+            and ppcd.supplier_id in
+            <foreach collection="supplierIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="skuIdList != null and skuIdList.size > 0">
+            and ppcd.sku_id in
+            <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>
