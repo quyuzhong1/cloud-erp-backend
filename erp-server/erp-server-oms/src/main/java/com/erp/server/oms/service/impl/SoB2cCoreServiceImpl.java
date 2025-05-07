@@ -323,9 +323,11 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             PlatformOrderDTO dto = null;
             if (Objects.nonNull(dmpOutputTaskRecordEntity)) {
                 dto = JSONUtil.toBean(dmpOutputTaskRecordEntity.getRequestData(), PlatformOrderDTO.class);
+                dto.setBillDate(entry.getValue().get(0).getOutstockTime().toLocalDate());
             }
             soB2cEntity.setSoOutstockDate(entry.getValue().get(0).getOutstockTime().toLocalDate());
             soB2cEntity.setDetailEntityList(thisDetailList);
+            soB2cEntity.setCoverOutDate(true);
             SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
         }
         return Boolean.TRUE;
@@ -343,14 +345,19 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         //封装明细仓库id和虚拟仓id
         List<SoB2cDetailEntity> soB2cDetailList = mainEntity.getDetailEntityList();
         LinkedList<SoOutstockDetailDTO.AddDTO> detailList = generateB2cDTO.getDetailList();
-        detailList.forEach(v->{
-            SoB2cDetailEntity soB2cDetailEntity = soB2cDetailList.stream().filter(obj -> obj.getId().equals(v.getSoDetailId())).findFirst().orElse(null);
-            if(Objects.nonNull(soB2cDetailEntity)){
-                v.setWarehouseId(soB2cDetailEntity.getWarehouseId());
-                v.setVirtualWarehouseId(soB2cDetailEntity.getVirtualWarehouseId());
-                v.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
-            }
-        });
+        if(CollUtil.isNotEmpty(soB2cDetailList)){
+            List<String> soDetailIds = soB2cDetailList.stream().map(SoB2cDetailEntity::getId).distinct().collect(Collectors.toList());
+            detailList =  detailList.stream().filter(v->soDetailIds.contains(v.getSoDetailId())).collect(Collectors.toCollection(LinkedList::new));
+            detailList.forEach(v->{
+                SoB2cDetailEntity soB2cDetailEntity = soB2cDetailList.stream().filter(obj -> obj.getId().equals(v.getSoDetailId())).findFirst().orElse(null);
+                if(Objects.nonNull(soB2cDetailEntity)){
+                    v.setWarehouseId(soB2cDetailEntity.getWarehouseId());
+                    v.setWarehouseName(soB2cDetailEntity.getWarehouseName());
+                    v.setVirtualWarehouseId(soB2cDetailEntity.getVirtualWarehouseId());
+                    v.setWarehouseLocation(soB2cDetailEntity.getWarehouseLocation());
+                }
+            });
+        }
         //根据明细仓库id分组
         Map<String, LinkedList<SoOutstockDetailDTO.AddDTO>> map = detailList.stream().collect(Collectors.groupingBy(SoOutstockDetailDTO.AddDTO::getWarehouseId,Collectors.toCollection(LinkedList::new)));
         List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = new LinkedList<>();
@@ -358,7 +365,10 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             SoOutstockDTO.GenerateB2cDTO generateB2c = new SoOutstockDTO.GenerateB2cDTO();
             BeanUtil.copyProperties(generateB2cDTO,generateB2c);
             generateB2c.setWarehouseId(entry.getKey());
-            generateB2c.setBillDate(mainEntity.getBillDate());
+            generateB2c.setWarehouseName(entry.getValue().get(0).getWarehouseName());
+            if(mainEntity.isCoverOutDate()){
+                generateB2c.setBillDate(mainEntity.getSoOutstockDate());
+            }
             generateB2c.setDetailList(entry.getValue());
             generateB2cList.add(generateB2c);
         }
