@@ -73,7 +73,7 @@ public class TeMuSoB2cHandle extends AbstractSoB2cHandle  {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
                 //平台仓拆分
                 List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = soB2cCoreService.splitB2cSoOutstock(mainEntity,generateB2cDTO);
-                generateB2cList.stream().filter(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
+                generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
             } catch (Exception e) {
                 log.error("[TeMu生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
