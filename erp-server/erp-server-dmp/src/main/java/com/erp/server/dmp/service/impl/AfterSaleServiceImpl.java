@@ -1324,7 +1324,6 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             case AFTER_SALSE_ORDER_APPROVE_MSG:
                 data.get("date2").setValue(LocalDateTimeUtil.format(afterSaleEntity.getApproveTime(), DateUtil.fmt));
                 data.get("phrase6").setValue(AfterSaleStatusEnum.getNode(status));
-                data.get("thing7").setValue("售后审核通过");
                 break;
             case AFTER_SALSE_ORDER_CANCEL_MSG:
                 data.get("character_string3").setValue(afterSaleEntity.getCode());
