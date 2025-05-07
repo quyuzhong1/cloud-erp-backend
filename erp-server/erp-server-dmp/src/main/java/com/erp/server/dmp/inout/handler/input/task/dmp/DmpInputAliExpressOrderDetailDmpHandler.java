@@ -114,7 +114,7 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 
 						c.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
 						c.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
-					});
+					}
 					dmpInputMongoChildEntityList.addAll(child_order_map_list);
 				}
 			}
