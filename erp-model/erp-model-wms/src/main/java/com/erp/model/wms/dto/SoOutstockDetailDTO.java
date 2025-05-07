@@ -359,6 +359,8 @@ public class SoOutstockDetailDTO implements Serializable {
         private String platformDetailId;
 
         private String warehouseId;
+
+        private String warehouseName;
         private String virtualWarehouseId;
 
         public AddDTO(ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO, AddDTO addDTO, Integer currentQty) {
