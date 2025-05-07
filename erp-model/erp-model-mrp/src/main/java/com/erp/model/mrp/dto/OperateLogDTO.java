@@ -105,6 +105,8 @@ public class OperateLogDTO implements Serializable {
          * 业务id集合
          */
         private List<String> businessIdList;
+
+        private String searchKey;
     }
 
 }
