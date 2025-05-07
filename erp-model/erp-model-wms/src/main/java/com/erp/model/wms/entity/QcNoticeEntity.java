@@ -5,6 +5,8 @@ import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -101,6 +103,11 @@ public class QcNoticeEntity extends BaseEntity<QcNoticeEntity> {
     public static final String QC_STATUS = "qc_status";
 
     public static final String REMARK = "remark";
+
+    @TableField(exist = false)
+    private String qcWarehouseName;
+    @TableField(exist = false)
+    private String putawayWarehouseName;
 
     @Override
     public Serializable pkVal() {

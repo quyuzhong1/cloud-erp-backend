@@ -538,8 +538,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     }
 
     @Override
-    public List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String id) {
-        List<TransferOutDTO.PutawayDetailDTO> putawayDetailDTOS = this.baseMapper.listPutawayDetail(id);
+    public List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String detailId) {
+        List<TransferOutDTO.PutawayDetailDTO> putawayDetailDTOS = this.baseMapper.listPutawayDetail(detailId);
         if(CollUtil.isNotEmpty(putawayDetailDTOS)){
             List<String> outIds = putawayDetailDTOS.stream().map(TransferOutDTO.PutawayDetailDTO::getInId).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(outIds)){

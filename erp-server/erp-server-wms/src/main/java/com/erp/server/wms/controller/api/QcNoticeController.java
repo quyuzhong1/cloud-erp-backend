@@ -386,10 +386,10 @@ public class QcNoticeController extends BaseController {
     @PostMapping("/generateQcInfoFinish")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "wms:qcNotice:generateQcInfo",
+            menuCode = "wms:qcNotice:generateQcInfoView",
             serviceClass = QcNoticeService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> generateQcInfo(@RequestBody @Valid ValidList<QcNoticeDTO.QcInfoView> dto) {
+    public ApiResult<List<BatchResultDTO>> generateQcInfoFinish(@RequestBody @Valid ValidList<QcNoticeDTO.QcInfoView> dto) {
         qcNoticeService.generateQcInfo(dto.getList());
         return success();
     }

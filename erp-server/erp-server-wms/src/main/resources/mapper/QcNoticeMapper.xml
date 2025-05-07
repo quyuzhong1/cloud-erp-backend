@@ -85,6 +85,7 @@
         FROM
         qc_notice AS qn
         LEFT JOIN qc_notice_detail AS qnd ON qn.ID = qnd.main_id
+        LEFT JOIN qc_info AS qi on qi.source_detail_id = qnd.id  and qi.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
         AND qn.is_deleted = FALSE

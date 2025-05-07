@@ -142,5 +142,5 @@ public interface TransferOutService extends SuperService<TransferOutEntity> {
 
     PagingVO<TransferOutDTO.PagingViewDTO> exportTransferOut(PagingDTO<TransferOutDTO.ExportDTO> dto);
 
-    List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String id);
+    List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String detailId);
 }
