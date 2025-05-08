@@ -112,6 +112,6 @@ public class DmpOutputLxFbaReceivedRocketMQTaskHandler extends DmpOutputRocketMQ
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Collections.singletonList("uniqueMd5");
+        return Collections.singletonList("uniqueId");
     }
 }
