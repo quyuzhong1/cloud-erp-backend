@@ -418,6 +418,10 @@ public class WmsCartonDTO {
          */
         private String skuNo;
         /**
+         * fnSku
+         */
+        private String fnSku;
+        /**
          * 装箱数量
          */
         private int packQty;
