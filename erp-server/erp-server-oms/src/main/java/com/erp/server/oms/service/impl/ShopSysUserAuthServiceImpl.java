@@ -1,19 +1,20 @@
 package com.erp.server.oms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.ShopSysUserAuthEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.ShopAuthTypeEnum;
 import com.erp.model.sys.dto.SysUserDTO;
+import com.erp.model.sys.enums.AuthDataTypeEnum;
 import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.ShopSysUserAuthMapper;
@@ -192,67 +193,24 @@ public class ShopSysUserAuthServiceImpl extends SuperServiceImpl<ShopSysUserAuth
 
     @Override
     public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(ShopSysUserAuthDTO.UserAuthShopParamDTO dto) {
-        //店铺权限设置信息
-        List<SysUserDTO.ShopDTO> list = authDataFeign.getShopUserList(dto.getUserId());
-        if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+        //店铺查询(默认有仓库权限的店铺)
+        List<ShopSysUserAuthDTO.ViewShopDTO> viewShopDTOS = shopInfoService.listUserAuthShop(dto.getDictPlatform());
+        //标识仓库权限
+        List<SysUserDTO.WarehouseDTO> warehouseUserList = authDataFeign.getWarehouseUserList(dto.getUserId());
+        if (CollUtil.isEmpty(warehouseUserList)){
+            return viewShopDTOS;
         }
-        //所有店铺
-        ShopDTO.PlatformDTO platformDTO = new ShopDTO.PlatformDTO();
-        platformDTO.setDictPlatform(dto.getDictPlatform());
-        List<ShopInfoEntity> shopInfoList = shopInfoService.listAuth(platformDTO);
-
-        //店铺
-        List<ShopSysUserAuthDTO.ViewShopDTO> resultList = new ArrayList<>();
-        Map<String, List<SysUserDTO.ShopDTO>> map = list.stream().collect(Collectors.groupingBy(obj -> obj.getUserId().concat(obj.getAuthType())));
-        for (Map.Entry<String, List<SysUserDTO.ShopDTO>> entry :  map.entrySet()) {
-            List<SysUserDTO.ShopDTO> value = entry.getValue();
-
-
-            //全部指定则返回全部店铺信息
-            if (ShopAuthTypeEnum.ENUM_ALL.getCode().equals(value.get(0).getAuthType())) {
-                //全部指定
-                if (CollectionUtils.isEmpty(shopInfoList)) {
-                    continue;
-                }
-                for (ShopInfoEntity shopInfoEntity : shopInfoList) {
-                    ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
-                    viewShopDTO.setShopId(shopInfoEntity.getId());
-                    viewShopDTO.setShopName(shopInfoEntity.getName());
-                    viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
-                    viewShopDTO.setDisabled(shopInfoEntity.getDisabled());
-                    viewShopDTO.setId(shopInfoEntity.getId());
-                    viewShopDTO.setName(shopInfoEntity.getName());
-                    viewShopDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
-                    viewShopDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
-                    viewShopDTO.setCountryId(shopInfoEntity.getDictCountryCode());
-                    viewShopDTO.setCountryName(shopInfoEntity.getCountryName());
-                    resultList.add(viewShopDTO);
-                }
-            } else {
-                //选择指定
-                for (SysUserDTO.ShopDTO shopSysUserAuthEntity : value) {
-                    //店铺信息
-                    ShopInfoEntity shopInfoEntity = shopInfoList.stream().filter(obj -> obj.getId().equals(shopSysUserAuthEntity.getShopId())).findFirst().orElse(null);
-                    if (ObjectUtils.isEmpty(shopInfoEntity)) {
-                        continue;
-                    }
-                    ShopSysUserAuthDTO.ViewShopDTO viewShopDTO = new ShopSysUserAuthDTO.ViewShopDTO();
-                    viewShopDTO.setShopId(shopSysUserAuthEntity.getShopId());
-                    viewShopDTO.setShopName(shopInfoEntity.getName());
-                    viewShopDTO.setDictPlatform(shopInfoEntity.getDictPlatform());
-                    viewShopDTO.setDisabled(shopInfoEntity.getDisabled());
-                    viewShopDTO.setId(shopInfoEntity.getId());
-                    viewShopDTO.setName(shopInfoEntity.getName());
-                    viewShopDTO.setWarehouseId(shopInfoEntity.getWarehouseId());
-                    viewShopDTO.setWarehouseName(shopInfoEntity.getWarehouseName());
-                    viewShopDTO.setCountryId(shopInfoEntity.getDictCountryCode());
-                    viewShopDTO.setCountryName(shopInfoEntity.getCountryName());
-                    resultList.add(viewShopDTO);
-                }
+        SysUserDTO.WarehouseDTO warehouseDTO = warehouseUserList.stream().filter(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType())).findFirst().orElse(null);
+        if (Objects.nonNull(warehouseDTO)){
+            return viewShopDTOS;
+        }
+        List<String> warehouseIdList = warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).distinct().collect(Collectors.toList());
+        viewShopDTOS.forEach(e -> {
+            if (!warehouseIdList.contains(e.getWarehouseId())){
+                e.setHasWarehouseAuth(false);
             }
-        }
-        return resultList;
+        });
+        return viewShopDTOS;
     }
 
     /**

@@ -109,6 +109,10 @@ public class ShopSysUserAuthDTO implements Serializable {
          * ShopTypeEnum
          */
         private String type;
+        /**
+         * 是否有仓库权限
+         */
+        private Boolean hasWarehouseAuth;
     }
 
     /**
