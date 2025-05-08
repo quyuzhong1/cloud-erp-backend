@@ -105,8 +105,9 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryCodeList);
         Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(item -> item.getNameCn(), item2 -> item2.getId()));
 
-        //预计费用
+        //物流信息
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        List<TmsFirstMileLogisticDTO.ReconciliationDTO> reconciliationDTOList = tmsFirstMileReconciliationService.listReconciliationAndCostByBillIds(logisticsBillIds);        //预计费用
         List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCostList = this.baseMapper.listEstimatedCost(logisticsBillIds);
         Map<String, List<FirstMileEstimatedBillDTO.EstimatedCost>> estimatedCostMap = estimatedCostList.stream().collect(Collectors.groupingBy(item -> item.getLogisticsBillId()));
         List<String> currencyIds = estimatedCostList.stream().map(FirstMileEstimatedBillDTO.EstimatedCost::getCurrency).collect(Collectors.toList());
@@ -115,12 +116,17 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 		Map<String, BigDecimal> rateMap = new HashMap<>();
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getName(item.getStatus()));
-            item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
             item.setToCountryName(item.getToCountry());
             item.setToCountry(countryMap.getOrDefault(item.getToCountryName(), ""));
             item.setFeeRuleName(ShippingFeeRuleEnum.getName(item.getFeeRule()));
-            item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
-
+            //对账单信息填充
+            TmsFirstMileLogisticDTO.ReconciliationDTO reconciliationDTO = reconciliationDTOList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getLogisticsBillId()) && Objects.equals(e.getLogisticsBillId(), item.getLogisticsBillId())).findFirst().orElse(null);
+            if (Objects.nonNull(reconciliationDTO)){
+                item.setActualBillStatus(reconciliationDTO.getReconciliationStatus());
+                item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
+                item.setCurrency(reconciliationDTO.getCurrency());
+                item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
+            }
             //预计费用
             if(estimatedCostMap.containsKey(item.getLogisticsBillId())){
                 List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCosts = estimatedCostMap.get(item.getLogisticsBillId());
