@@ -4,7 +4,6 @@ import cn.hutool.json.JSONArray;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
-import com.common.business.validator.ValidList;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
@@ -143,12 +142,12 @@ public interface PurchasePriceDetailService extends SuperService<PurchasePriceDe
      * 根据供应商、组织、SKU查询
      * @author yl
      * @date 2023-04-06 9:37
-     * @param supplierId
+     * @param supplierIdList
      * @param purchaseOrgId
      * @param skuIdList
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.ViewDTO>
      */
-    List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(String supplierId,String purchaseOrgId,List<String> skuIdList);
+    List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(List<String> supplierIdList,String purchaseOrgId,List<String> skuIdList);
 
     /**
      * 查询供应商的
