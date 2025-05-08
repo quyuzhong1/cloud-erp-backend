@@ -1083,11 +1083,16 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         List<FindUserDTO> resultList = new LinkedList<>();
         List<SysUserInfoEntity> list = this.list(queryWrapper);
         for (SysUserInfoEntity item : list) {
+            // 当前用户所属部门
+            SysDepartmentUserNumberDTO sysDepartmentUserNumberDTO = sysDepartmentUserService.getDeptByUserId(item.getUid());
+
             FindUserDTO userDTO = new FindUserDTO();
             userDTO.setUserId(item.getUid());
             userDTO.setUserName(item.getUserName());
             userDTO.setCode(item.getCode());
             userDTO.setIsMyState(0);
+            userDTO.setDepartmentId(sysDepartmentUserNumberDTO.getDepartmentId());
+            userDTO.setDepartmentName(sysDepartmentUserNumberDTO.getDepartmentName());
             resultList.add(userDTO);
         }
         return resultList;

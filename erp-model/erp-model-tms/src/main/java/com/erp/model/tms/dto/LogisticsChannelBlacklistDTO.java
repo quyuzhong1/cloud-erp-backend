@@ -151,4 +151,9 @@ public class LogisticsChannelBlacklistDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+        private String logisticsChannelId;
+    }
 }

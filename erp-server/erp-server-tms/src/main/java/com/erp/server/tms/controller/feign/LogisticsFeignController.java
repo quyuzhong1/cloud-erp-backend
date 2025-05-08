@@ -7,6 +7,7 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -48,6 +49,8 @@ public class LogisticsFeignController {
 
     @Resource
     private ShippingCalculationService shippingCalculationService;
+    @Resource
+    private LogisticsChannelBlacklistService logisticsChannelBlacklistService;
 
     @PostMapping("/queryOrderList")
     public List<LogisticsOrderResponseVO> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
@@ -249,5 +252,14 @@ public class LogisticsFeignController {
     @GetMapping("listAll")
     public List<BaseDropDownDTO.DisabledDTO> listAll(){
         return logisticsChannelService.listAll();
+    }
+    /**
+     * 根据渠道查询黑名单
+     * @param channelIdList
+     * @return
+     */
+    @PostMapping("listChannelBlacklist")
+    public List<LogisticsChannelBlacklistEntity> listChannelBlacklist(@RequestBody List<String> channelIdList){
+        return logisticsChannelBlacklistService.listChannelBlacklist(channelIdList);
     }
 }

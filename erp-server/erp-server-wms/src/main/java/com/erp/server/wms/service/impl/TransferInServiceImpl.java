@@ -1,6 +1,9 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -9,18 +12,17 @@ import com.common.business.constant.ApproveType;
 import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.BillApproveStatusEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.TransferInDTO;
@@ -30,31 +32,39 @@ import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.dto.inventory.InOutStockDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
-import com.erp.model.wms.entity.TransferInEntity;
-import com.erp.model.wms.entity.TransferOutDetailEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseLocationEntity;
+import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.PutawayStatusEnum;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.kingdee.SyncKingdeeTransferInService;
 import com.erp.server.wms.mapper.TransferInMapper;
 import com.erp.server.wms.service.*;
+import jodd.util.StringUtil;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static cn.hutool.core.text.CharSequenceUtil.format;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_IN;
 
 /**
@@ -97,6 +107,27 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+    @Resource
+    private AbstractWdtService abstractWdtService;
+
+    @Resource
+    private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SyncKingdeeTransferInService syncKingdeeTransferInService;
+
+    @Resource
+    private TransferOutService transferOutService;
+
+    @Resource
+    private QcNoticeService qcNoticeService;
+    @Resource
+    private QcNoticeDetailService qcNoticeDetailService;
+
     @Override
     public List<TransferInDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<TransferInDTO.TabListDTO> resultList = new ArrayList<>(4);
@@ -309,62 +340,158 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO approve(BaseApproveParamDTO dto, TransferInEntity transferInEntity) {
-        List<String> ids = Collections.singletonList(transferInEntity.getId());
-        List<TransferInEntity> list = Collections.singletonList(transferInEntity);
-        String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
-        long count = list.stream().filter(s -> !ingStatus.equals(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
+    public BatchResultDTO approve(ApproveOneDTO dto, TransferInEntity entity) {
+        if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE_ING.getStatus(),entity.getApproveStatus().getCode())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        String ingStatusName = ApproveStatusEnum.APPROVE_ING.getName();
-        //意见
-        String comment = dto.getComment();
-        String content = "";
-        LoginUser user = UserContext.getDefaultLoginUser();
-        ApproveStatusEnum approveStatus = ApproveStatusEnum.APPROVE;
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        //调用审核流程
+        approveProcess(entity, dto);
+        // 操作日志
+        String msg = format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "分步式调入单", approveType.getName(), dto.getComment());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_IN.getCode(), entity.getId(), "审核操作");
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"审核成功");
+    }
+
+   /**
+    * 流程审核
+    * @author will
+    * @date 2025/4/22 15:18
+    * @param entity
+    * @param dto
+    * @return void
+    */
+    private void approveProcess(TransferInEntity entity , ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.TRANSFER_IN.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, TransferInEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.FALSE;
+        }
+        ApproveStatusEnum approveStatus;
         if (dto.getType().equals(ApproveType.PASS)) {
-            handleData(ids);
-            //审核通
-            content = String.format("状态由[%s]变更为[%s] , 意见:%s", ingStatusName, ApproveStatusEnum.APPROVE.getName(), comment);
+            //审核通过
+            approveStatus = ApproveStatusEnum.APPROVE;
+
+            //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
+            this.updateQcNoticePutaway(entity,Boolean.TRUE);
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
-            content = String.format("状态由[%s]变更为[%s] 【不通过原因:%s】", ingStatusName, ApproveStatusEnum.REJECT.getName(), comment);
         }
-        Boolean result = this.updateApproveInfo(list, approveStatus, user.getUserName());
-        if (result) {
-            //添加日志
-            List<Pair<String, String>> pairList = list.stream().
-                    map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "状态变更");
+        LoginUser user = UserContext.getDefaultLoginUser();
+        Boolean result = this.updateApproveInfo(Arrays.asList(entity), approveStatus,user.getUserName());
+        if (!result) {
+            throw new ServiceException(ApiError.ERROR_94006);
         }
-        return BatchResultDTO.success(transferInEntity.getId(),transferInEntity.getCode(),"审核成功");
+        if (dto.getType().equals(ApproveType.PASS)) {
+            handleData(entity);
+        }
+        return Boolean.TRUE;
+    }
+
+    //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
+    private void updateQcNoticePutaway(TransferInEntity transferInEntity, Boolean approve) {
+        LocalDateTime nowTime = LocalDateTime.now();
+        //调出单
+        TransferOutEntity transferOutEntity = transferOutService.getById(transferInEntity.getSourceId());
+        //调出单来源是质检通知单
+        if(Objects.equals(transferOutEntity.getSourceType(),SourceTypeEnum.QC_NOTICE.getCode())){
+            //调入单明细
+            List<TransferInDetailEntity> transferInDetailList = transferInDetailService.lambdaQuery().in(TransferInDetailEntity::getMainId, transferInEntity.getId()).list();
+            //调出单明细
+            List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listByMainId(transferOutEntity.getId());
+            Map<String, TransferOutDetailEntity> transferOutDetailMap = transferOutDetailList.stream().collect(Collectors.toMap(TransferOutDetailEntity::getId, t -> t,(o1,o2)->o1));
+            //质检通知单
+            QcNoticeEntity qcNotice = qcNoticeService.getById(transferOutEntity.getSourceId());
+            //质检通知单明细
+            List<QcNoticeDetailEntity> qcNoticeDetailList = qcNoticeDetailService.listByMainIds(Collections.singletonList(qcNotice.getId()));
+            Map<String, QcNoticeDetailEntity> qcNoticeDetailMap = qcNoticeDetailList.stream().collect(Collectors.toMap(QcNoticeDetailEntity::getId, t -> t, (o1, o2) -> o1));
+
+            for (TransferInDetailEntity transferInDetailEntity : transferInDetailList) {
+                String sourceDetailId = transferInDetailEntity.getSourceDetailId();
+                //本次上架数量
+                Integer qty = transferInDetailEntity.getQty();
+                if(transferOutDetailMap.containsKey(sourceDetailId)){
+                    TransferOutDetailEntity transferOutDetailEntity = transferOutDetailMap.get(sourceDetailId);
+                    //质检通知单明细id
+                    String sourceDetailId1 = transferOutDetailEntity.getSourceDetailId();
+                    if(qcNoticeDetailMap.containsKey(sourceDetailId1)){
+                        QcNoticeDetailEntity qcNoticeDetailEntity = qcNoticeDetailMap.get(sourceDetailId1);
+                        Integer putawayQty = qcNoticeDetailEntity.getPutawayQty();
+
+                        if(approve){
+                            //上架数量
+                            qcNoticeDetailEntity.setPutawayQty(putawayQty+qty);
+                            //上架时间
+                            qcNoticeDetailEntity.setPutawayDate(nowTime);
+                            //上架状态
+                            if(qcNoticeDetailEntity.getPutawayQty().equals(qcNoticeDetailEntity.getQcQty()) ){
+                                qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.FINISH.getCode());
+                            }else {
+                                qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.PART.getCode());
+                            }
+                        }else {
+                            //上架数量
+                            qcNoticeDetailEntity.setPutawayQty(putawayQty-qty);
+                            //上架状态
+                            if(qcNoticeDetailEntity.getPutawayQty().equals(0) ){
+                                qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.WAIT.getCode());
+                            }else {
+                                qcNoticeDetailEntity.setPutawayStatus(PutawayStatusEnum.PART.getCode());
+                            }
+                        }
+                        qcNoticeDetailService.updateById(qcNoticeDetailEntity);
+                    }
+                }
+            }
+        }
     }
 
     /**
      * 方法说明
      *
-     * @param idList
+     * @param entity
      * @return void
      * @author yl
      * @date 2023-05-29 14:35
      */
     @Transactional(rollbackFor = Exception.class)
-    public void handleData(List<String> idList) {
-        if (CollectionUtils.isEmpty(idList)) {
-            return;
-        }
+    public void handleData(TransferInEntity entity) {
         InventoryInOutStockDTO inventoryInOutStockDTO = new InventoryInOutStockDTO();
         inventoryInOutStockDTO.setBusinessType(InventoryBusinessTypeEnum.TRANSFER_IN.getCode());
-        List<InOutStockDTO> members = baseMapper.listInventoryInOut(idList);
+        List<InOutStockDTO> members = baseMapper.listInventoryInOut(Collections.singletonList(entity.getId()));
         InventorySourceTypeEnum transferIn = InventorySourceTypeEnum.TRANSFER_IN;
         members.stream().forEach(m -> m.setSourceType(transferIn));
         if (CollectionUtils.isNotEmpty(members)) {
             inventoryInOutStockDTO.setParamList(members);
             inventoryTransCoreService.approveByType(inventoryInOutStockDTO);
         }
-
+        //推送旺店通
+        syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
+        //推送金蝶
+        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE);
     }
 
     /**
@@ -425,7 +552,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), pairList, "删除");
             //删除明细
             transferInDetailService.removeByMainIdList(ids);
-
+            //推送金蝶
+            list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
         }
         return result;
     }
@@ -433,7 +561,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
     /**
      * 反审核
      *
-     * @param dto
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-29 9:47
@@ -464,9 +592,16 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (result) {
             InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_IN, ids);
             inventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
+            //推送旺店通
+            syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_DISAPPROVE);
+            //推送金蝶
+            syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
             //审核通过
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_IN.getCode(), rejectPairList, "状态变更");
+            //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
+            this.updateQcNoticePutaway(entity,Boolean.FALSE);
+
         }
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
@@ -504,6 +639,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         lambdaUpdate().in(TransferInEntity::getId, ids).
                 set(TransferInEntity::getInvalidStatus, Boolean.TRUE).update();
+        //推送金蝶
+        list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_INVALID));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         String content = "作废了一个销售订单【%s】,作废原因: ".concat(remark);
         operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "作废");
@@ -696,6 +833,14 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         return new PagingVO<>(page);
     }
 
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(TransferInEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferInEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
+
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateApproveInfo(List<TransferInEntity> list, ApproveStatusEnum approveStatus, String approveUserName) {
         if (CollectionUtils.isNotEmpty(list)) {
@@ -751,6 +896,93 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
             return id;
         }
         return "";
+    }
+
+
+    /**
+     * 分步式调入单推审核送旺店通
+     * @author will
+     * @date 2025/4/22 14:21
+     * @param entity
+     * @param syncOperateEnum
+     * @return void
+     */
+    private void syncApproveInfoToWdt(TransferInEntity entity, SyncOperateEnum syncOperateEnum) {
+        //查询分步式调入单明细数据
+        List<TransferInDetailDTO.ViewDTO> transferDetailList = transferInDetailService.listByMainId(entity.getId());
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getInWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        //审核转其他入库单
+        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+        for (TransferInDetailDTO.ViewDTO detailEntity : transferDetailList) {
+            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+            inGoods.setSpecNo(detailEntity.getSkuNo());
+            inGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
+            inGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
+            inGoods.setWarehouseId(entity.getInWarehouseId());
+            inGoods.setRemark(detailEntity.getRemark());
+            inGoodsList.add(inGoods);
+        }
+        abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), inGoodsList, SourceTypeEnum.OTHER_INSTOCK);
+    }
+
+    /**
+     * 分步式调入单推反审核送旺店通
+     * @author will
+     * @date 2025/4/22 14:24
+     * @param entity
+     * @param syncOperateEnum
+     * @return void
+     */
+    private void syncDisApproveInfoToWdt(TransferInEntity entity, SyncOperateEnum syncOperateEnum) {
+        //查询调拨单明细数据
+        List<TransferInDetailDTO.ViewDTO> transferDetailList = transferInDetailService.listByMainId(entity.getId());
+        if(transferDetailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getInWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        //每个调入仓转换为一个其他出库单
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+        for (TransferInDetailDTO.ViewDTO detailEntity : transferDetailList) {
+            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+            outGoods.setSpecNo(detailEntity.getSkuNo());
+            outGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
+            outGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getInWarehouseLocation()) ? detailEntity.getInWarehouseLocation() : "");
+            outGoods.setWarehouseId(entity.getInWarehouseId());
+            outGoods.setRemark(detailEntity.getRemark());
+            outGoodsList.add(outGoods);
+        }
+        abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), outGoodsList, SourceTypeEnum.OTHER_OUTSTOCK);
+    }
+
+    /**
+     * 推送金蝶
+     * @author will
+     * @date 2025/4/22 16:34
+     * @param entity
+     * @param syncOperateEnum
+     * @return void
+     */
+    private void syncApproveInfoToKingdee(TransferInEntity entity, SyncOperateEnum syncOperateEnum) {
+
+        //直接调拨单明细
+        List<TransferInDetailEntity> transferInDetailList = transferInDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+        transferInDetailList = CollUtil.isNotEmpty(transferInDetailList) ? transferInDetailList.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+        //删除或者非服务sku不为空时推金蝶
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(syncOperateEnum.getCode()) || CollUtil.isNotEmpty(transferInDetailList)){
+            syncKingdeeTransferInService.syncDataToKingdee(entity,transferInDetailList, syncOperateEnum.getCode());
+        }
     }
 
     /**

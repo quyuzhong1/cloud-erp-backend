@@ -130,8 +130,13 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
     private String sourceCode;
 
 
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
-    
+
 
     public static final String APPROVE_STATUS = "approve_status";
 

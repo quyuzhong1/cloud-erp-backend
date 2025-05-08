@@ -1214,6 +1214,18 @@ public enum ApiError implements Serializable {
     WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
     WAREHOUSE_AREA_USED(92253, "库区被使用后，库存类型禁止修改"),
     WAREHOUSE_NOT_EDIT(92253, "所属仓库禁止修改"),
+    ERROR_92268(92268, "【{}】库存不足,质检通知数量{}，可用库存{}"),
+    ERROR_92269(92269, "【{}】已质检完成，不允许操作反审核"),
+    ERROR_92270(92270, "请先审核通过质检通知单"),
+    ERROR_92271(92271, "请至少选择一条明细"),
+    ERROR_92272(92272, "【{}】包装信息不存在"),
+    ERROR_92273(92273, "SKU库存不足,质检通知数量{}，可用库存{}，请确认是否继续创建"),
+    ERROR_92274(92274, "【{}】良品和不良品不能都为0"),
+
+    ERROR_92275(92275, "【{}】质检单没有下推的分步式调出单"),
+    ERROR_92276(92276, "【{}】质检单【{}】调出单已生成分步式调出单审核，不允许撤销质检"),
+    ERROR_92277(92277, "【{}】质检单【{}】未质检不能撤销"),
+    ERROR_92278(92278, "【{}】质检单【{}】调出单下sku未全部勾选"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1318,6 +1330,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_CHILD_HAS_INVALID(92083,"拆分后B2C销售订单【{}】已作废不支持取消拆分"),
     ERROR_SO_B2C_CHILD_HAS_APPROVE(92084,"拆分后B2C销售订单【{}】已审核不支持取消拆分"),
     ERROR_SO_B2C_NOT_LOGISTICS_CODE(92085,"B2C销售订单【{}】只有配货中支持获取物流单号"),
+    ERROR_SO_B2C_LOGISTICS_BLACKLIST(92085,"物流渠道【{}】不允许发【{}+{}{}{}】，请修改物流渠道"),
+    ERROR_SO_B2C_LOGISTICS_COUNTRY_BLACKLIST(92085,"物流渠道【{}】不允许发【{}】，请修改物流渠道"),
     ERROR_SO_B2C_NOT_SUBMIT_DELIVERY(92086,"B2C销售订单【{}】只有配货中支持提交发货"),
     ERROR_SO_B2C_NOT_MERGE(92087,"B2C销售订单【{}】只有待提交和审核不通过支持合并"),
     ERROR_SO_B2C_STATE_NOT_SPLIT(92088,"B2C销售订单【{}】只有待提交和审核不通过支持拆分"),
@@ -1601,6 +1615,10 @@ public enum ApiError implements Serializable {
     ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于等于包装宽度"),
     ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于等于包装高度"),
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于等于净重"),
+
+    ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"【{}】箱规长度必须大于等于包装长度"),
+    ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"【{}】箱规宽度必须大于等于包装宽度"),
+    ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"【{}】箱规高度必须大于等于包装高度"),
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 

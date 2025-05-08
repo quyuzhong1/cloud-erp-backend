@@ -539,6 +539,17 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
     }
 
     @Override
+    public List<WarehouseLocationEntity> listByWarehouseIdsAndNameList(List<String> warehouseIds, List<String> warehouseLocationNameList) {
+        if (CollectionUtils.isEmpty(warehouseIds) && CollectionUtils.isEmpty(warehouseLocationNameList)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery()
+                .in(CollectionUtils.isNotEmpty(warehouseIds), WarehouseLocationEntity::getWarehouseId,warehouseIds)
+                .in(CollectionUtils.isNotEmpty(warehouseLocationNameList), WarehouseLocationEntity::getName, warehouseLocationNameList)
+                .list();
+    }
+
+    @Override
     public PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WarehouseLocationExportVo> page = baseMapper.listAllByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()) ,dto.getParams());

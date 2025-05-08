@@ -2756,11 +2756,24 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public Boolean handleCreateB2cSoOutstockWithoutTx(SoOutstockDTO.GenerateB2cDTO dto) {
         SoOutstockEntity soOutstock = this.getBySoId(dto.getSoId());
         if(Objects.nonNull(soOutstock)
-        && (PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform())
-                || PlatformDictEnum.MERCADOLIBRE.getCode().equals(dto.getDictPlatform())
-                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(dto.getDictPlatform())
-                || PlatformDictEnum.SHOPEE.getCode().equals(dto.getDictPlatform()))){
+        && (PlatformDictEnum.TIK_TOK.getCode().equals(dto.getDictPlatform()))){
             return true;
+        }
+        SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class, dto.getSoId());
+        if (ObjectUtil.isEmpty(soB2cEntity)) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        //虾皮、美克多、领星平台需要按明细仓库出
+        if (PlatformDictEnum.SHOPEE.getCode().equals(dto.getDictPlatform())
+                ||  PlatformDictEnum.MERCADOLIBRE.getCode().equals(dto.getDictPlatform())
+                ||  PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(dto.getDictPlatform())
+                ||  PlatformDictEnum.LING_XING.getCode().equals(soB2cEntity.getThirdSystem())) {
+            List<String> soDetailIdList = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSoDetailId).distinct().collect(Collectors.toList());
+            List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listBySoDetailIds(soDetailIdList);
+            if (CollUtil.isNotEmpty(soOutstockDetailList)) {
+                String skuNos = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
+                throw new ServiceException(CharSequenceUtil.format("销售订单【{}】SKU【{}】已出库，不支持重复出库", dto.getSoCode(), skuNos));
+            }
         }
         String id = soOutstockService.addB2cSoOutstock(dto);
         //表示添加成功

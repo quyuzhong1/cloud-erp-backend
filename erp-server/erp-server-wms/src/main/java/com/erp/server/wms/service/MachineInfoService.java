@@ -220,4 +220,6 @@ public interface MachineInfoService extends SuperService<MachineInfoEntity> {
      * 取消流程
      */
     BatchResultDTO cancelProcessEntity(MachineInfoEntity entity);
+
+    List<List<MachineSubComponentsDTO.ViewDTO>> batchViewBomSubComponents(MachineSubComponentsDTO.BatchViewBomParamDTO dto);
 }

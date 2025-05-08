@@ -7,6 +7,8 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -23,12 +25,14 @@ import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -167,6 +171,8 @@ public class ExportWmsFeignController {
 
     @Resource
     private VirtualWarehouseService virtualWarehouseService;
+    @Resource
+    private QcNoticeService qcNoticeService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -979,5 +985,23 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery
     public PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(@RequestBody PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto){
         return virtualWarehouseService.exportVirtualWarehouse(dto);
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-04-21
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportQcNotice")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "wms:qcNotice:export",
+            tableAlias = "qn"
+    )
+    @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
+    public PagingVO<QcNoticeDTO.ListDTO> exportList(@RequestBody PagingDTO<QcNoticeDTO.ExportDTO> dto) {
+        return qcNoticeService.exportList(dto);
     }
 }
