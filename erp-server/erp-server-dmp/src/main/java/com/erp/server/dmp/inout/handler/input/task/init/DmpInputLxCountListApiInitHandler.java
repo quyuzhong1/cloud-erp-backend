@@ -61,14 +61,14 @@ public class DmpInputLxCountListApiInitHandler extends DmpInputInitHandler {
                     .eq(ThirdShopEntity::getPlatformId, "10027")
                     .eq(ThirdShopEntity::getDisabled, false)
                     .list();
-            storeIds = list.stream().map(ThirdShopEntity::getSubPlatformId).collect(Collectors.toList());
+            storeIds = list.stream().map(ThirdShopEntity::getShopId).collect(Collectors.toList());
         }
         TreeMap<String, Object> requestMap = new TreeMap<>();
         if (CollectionUtils.isNotEmpty(storeIds)){
             requestMap.put("store_ids", storeIds);
         }
 
-        Result<Object> result = LingxingApiUtils.postRequestData(apiType, requestMap);
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(apiType, requestMap);
         Object data = result.getData();
         if (null == data){
             return Collections.emptyList();
