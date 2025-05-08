@@ -2878,8 +2878,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
         }
         //赋值仓库名称
-        if(StringUtils.isBlank(soOutstock.getWarehouseName()) && StringUtils.isNotBlank(dto.getWarehouseId())){
-            WarehouseEntity warehouseInfo = warehouseService.getById(dto.getWarehouseId());
+        if(StringUtils.isBlank(soOutstock.getWarehouseName()) && StringUtils.isNotBlank(soOutstock.getWarehouseId())){
+            WarehouseEntity warehouseInfo = warehouseService.getById(soOutstock.getWarehouseId());
             if (Objects.nonNull(warehouseInfo)) {
                 soOutstock.setWarehouseName(warehouseInfo.getName());
             }
