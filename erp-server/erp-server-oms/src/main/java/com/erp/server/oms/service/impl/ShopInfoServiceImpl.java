@@ -1864,6 +1864,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
+    public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(String dictPlatform) {
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("si.id");
+        return baseMapper.listUserAuthShop(shopPermissionSql, dictPlatform);
+    }
+
+    @Override
     public PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds) {
         Page query = new Page(advanceQueryDTO.getCurrPage(), advanceQueryDTO.getPageSize());
         IPage pageData = baseMapper.pageAuthShop(query, advanceQueryDTO.getParams(),shopIds);

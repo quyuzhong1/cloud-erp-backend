@@ -171,4 +171,28 @@
             ${permissionSql}
         </if>
     </select>
+    <select id="listUserAuthShop" resultType="com.erp.model.oms.dto.ShopSysUserAuthDTO$ViewShopDTO">
+        select
+        si.id as id,
+        si.name as name,
+        si.id as shopId,
+        si.name as shopName,
+        si.dict_platform as dictPlatform,
+        si.disabled as disabled,
+        si.dict_country_code as countryId,
+        si.country_name as countryName,
+        si.warehouse_id as warehouseId,
+        si.warehouse_name as warehouseName,
+        si.type as type,
+        'true' as hasWarehouseAuth
+        from shop_info si
+        where
+            si.is_deleted = false
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        <if test="dictPlatform != null and dictPlatform != ''">
+            and si.dict_platform = #{dictPlatform}
+        </if>
+    </select>
 </mapper>

@@ -374,4 +374,11 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @return
      */
     List<ShopInfoDTO.ListDTO> listShopByName(List<String> shopNameList);
+
+    /**
+     * 根据权限查询对应平台店铺 (默认有仓库权限的店铺)
+     * @param dictPlatform
+     * @return
+     */
+    List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(String dictPlatform);
 }
