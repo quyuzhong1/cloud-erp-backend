@@ -247,6 +247,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.PagingView> paging(PagingDTO<CalcSalesInfoDimDTO.PagingParamDTO> params) {
+        params.getParams().setPermissionSql(params.getPermissionSql());
         Page<CalcSalesInfoDimDTO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         if (!CollectionUtils.isEmpty(pagingVO.getRecords())) {
             processData(pagingVO.getRecords());
@@ -359,7 +360,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<CalcSalesInfoDimDTO.ExportDTO> page = baseMapper.exportData(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
             return new PagingVO<>();

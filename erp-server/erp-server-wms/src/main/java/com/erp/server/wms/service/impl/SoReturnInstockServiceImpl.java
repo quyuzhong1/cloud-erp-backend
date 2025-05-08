@@ -1964,11 +1964,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //仓库
         List<String> warehosueNameList = successList.stream().map(SoReturnStockImportExcelDTO::getWarehouseName).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseList = warehouseService.listByWarehouseNameList(warehosueNameList);
-        Map<String, WarehouseEntity> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehosueNameList);
+        Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));
 
         //仓位
-        List<String> warehousIdList = warehouseList.stream().map(WarehouseEntity::getId).distinct().collect(Collectors.toList());
+        List<String> warehousIdList = warehouseList.stream().map(WarehouseDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         List<String> warehouseLocationNameList = successList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getWarehouseLocationName())).map(SoReturnStockImportExcelDTO::getWarehouseLocationName).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndNameList(warehousIdList, warehouseLocationNameList);
         Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getWarehouseId(),obj.getName()) , Function.identity()));
@@ -2007,7 +2007,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     addDetail.setSkuId(skuVO.getSkuId());
                     addDetail.setSkuNo(soReturnStockImportExcelDTO.getSkuNo());
                 }
-                WarehouseEntity warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
+                WarehouseDTO.ListDTO warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
                 if (ObjectUtil.isEmpty(warehouseEntity) || warehouseEntity.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouseEntity.getApproveStatus().getCode())) {
                     errorMsgList.add("未找到有效仓库：" + soReturnStockImportExcelDTO.getWarehouseName());
                 } else {
