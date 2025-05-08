@@ -78,7 +78,7 @@ public class MQLingxingConsumerService {
         @Override
         public void onMessage(Object extObj) {
             log.info("监听领星Fba签收明细消息：entity={}", JSONUtil.toJsonStr(extObj));
-//            try {
+            try {
                 FbaReceiveGroupEntity ext = JSONUtil.toBean(extObj.toString(), FbaReceiveGroupEntity.class);
                 // 检查店铺ID
                 if (null == ext.getShopId()){
@@ -89,9 +89,9 @@ public class MQLingxingConsumerService {
                 MapUtil mapUtil = getMapParam();
                 UniqueDto updateDto = UniqueDto.getUniqId(ext.getUniqueId());
                 finishClean(mapUtil, updateDto,MongoTableNameContant.ORIGINAL_LX_FBA_SHIPMENT_RECEIVE, FbaReceiveGroupEntity.class);
-//            } catch (Throwable e) {
-//                log.error("监听领星Fba签收明细消费失败：error={}", ExceptionUtil.stacktraceToString(e));
-//            }
+            } catch (Throwable e) {
+                log.error("监听领星Fba签收明细消费失败：error={}", ExceptionUtil.stacktraceToString(e));
+            }
         }
     }
 
