@@ -15,6 +15,7 @@ import com.erp.model.tms.dto.excel.FirstMileReconciliationStandardExcelDTO;
 import com.erp.model.tms.entity.LogisticsBillCostEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
+import com.erp.model.tms.entity.TmsFirstMileReconciliationEntity;
 import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
 import com.erp.model.tms.enums.ReconciliationStatusEnum;
 import com.erp.server.tms.service.FirstMileEstimatedBillService;
@@ -40,6 +41,7 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode(callSuper = true)
 public class FirstMileReconciliationStandardExcelListener extends AnalysisEventListener<FirstMileReconciliationStandardExcelDTO> {
 
+    private TmsFirstMileReconciliationEntity mainEntity;
     /**
      * 错误信息
      */
@@ -63,8 +65,8 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
     private final FirstMileEstimatedBillService firstMileEstimatedBillService = SpringUtil.getBean(FirstMileEstimatedBillService.class);
     private final TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService = SpringUtil.getBean(TmsFirstMileReconciliationDetailService.class);
 
-    public FirstMileReconciliationStandardExcelListener() {
-
+    public FirstMileReconciliationStandardExcelListener(TmsFirstMileReconciliationEntity mainEntity) {
+        this.mainEntity = mainEntity;
     }
 
     /**
@@ -248,7 +250,7 @@ public class FirstMileReconciliationStandardExcelListener extends AnalysisEventL
                 List<String> statusList = new ArrayList<>();
                 statusList.add(ReconciliationStatusEnum.TO_BE_GENERATED.getCode());
                 statusList.add(ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
-                reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !statusList.contains(v.getStatus())).findFirst().ifPresent(v->{
+                reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !statusList.contains(v.getStatus()) && v.getMainId().equals(mainEntity.getId())).findFirst().ifPresent(v->{
                     excelDTO.setErrorMsg("实际账单状态{已确认/已对账/差异确认}，不能更新信息");
                     errorNoSet.add(excelDTO.getNo());
                 });
