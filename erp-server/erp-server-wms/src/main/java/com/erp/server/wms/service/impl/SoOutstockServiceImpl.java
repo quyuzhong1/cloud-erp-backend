@@ -2877,6 +2877,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         } else {
             soOutstock.setActualDeliveryDate(billDate.atStartOfDay());
         }
+        //赋值仓库名称
+        if(StringUtils.isBlank(soOutstock.getWarehouseName()) && StringUtils.isNotBlank(dto.getWarehouseId())){
+            WarehouseEntity warehouseInfo = warehouseService.getById(dto.getWarehouseId());
+            if (Objects.nonNull(warehouseInfo)) {
+                soOutstock.setWarehouseName(warehouseInfo.getName());
+            }
+        }
         //取直接调拨单的流水号
         List<TransferInfoEntity> transferInfoList = transferInfoService.listBySourceIds(Collections.singletonList(dto.getSourceId()));
         if (CollectionUtils.isNotEmpty(transferInfoList)) {
