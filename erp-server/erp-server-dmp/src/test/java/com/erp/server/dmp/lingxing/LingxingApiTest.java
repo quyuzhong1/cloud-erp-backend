@@ -136,19 +136,20 @@ public class LingxingApiTest {
         List<String> storeIds = Arrays.asList("110537432579020800");
         String apiType = "basicOpen/multiplatform/temu/list";
 
+        // 分页参数
+        int length = 1000;
         TreeMap<String, Object> requestMap = new TreeMap<>();
         if (CollectionUtils.isNotEmpty(storeIds)){
             requestMap.put("store_ids", storeIds);
         }
+        requestMap.put("length", length);
 
         Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(apiType, requestMap);
         Object data = result.getData();
         if (null == data){
             System.out.println("空");
         }
-        // 分页参数
-        int page = 0;
-        int length = 1000;
+
 
         JSONObject dataResultMap = JSON.parseObject(JSON.toJSONString(data));
         Object listObj = dataResultMap.get("list");

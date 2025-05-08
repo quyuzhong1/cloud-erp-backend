@@ -46,12 +46,19 @@ public class DmpInputLxCountListApiInitHandler extends DmpInputInitHandler {
         DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
         String apiType = dmpCfgApiEntity.getApiType();
         String extendJson = dmpCfgInputDetailEntity.getExtendJson();
+
+        // 分页参数
+        int length = 1000;
         List<String> storeIds = new ArrayList<>();
         if (StringUtils.isNotBlank(extendJson)){
             JSONObject jsonObject = JSON.parseObject(extendJson);
             JSONArray jsonArray = jsonObject.getJSONArray("storeIds");
             if (CollectionUtils.isNotEmpty(jsonArray)){
                 storeIds = jsonArray.stream().map(Object::toString).collect(Collectors.toList());;
+            }
+            Integer cfgLength = jsonObject.getInteger("length");
+            if (null != cfgLength){
+                length = cfgLength;
             }
         }
         // 查下所有绑定店铺
@@ -67,15 +74,13 @@ public class DmpInputLxCountListApiInitHandler extends DmpInputInitHandler {
         if (CollectionUtils.isNotEmpty(storeIds)){
             requestMap.put("store_ids", storeIds);
         }
+        requestMap.put("length", length);
 
         Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(apiType, requestMap);
         Object data = result.getData();
         if (null == data){
             return Collections.emptyList();
         }
-        // 分页参数
-        int page = 0;
-        int length = 1000;
 
         JSONObject dataResultMap = JSON.parseObject(JSON.toJSONString(data));
         Object listObj = dataResultMap.get("list");
