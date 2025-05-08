@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.tms.mapper.FirstMileEstimatedBillMapper">
 
     <select id="paging" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$View">
-        select DISTINCT
+        select
                 eb.id,
                fd. businessCode,
                lb.outstock_id outStockId,
@@ -18,14 +18,11 @@
                eb.confirm_time confirmTime,
                eb.create_time createTime,
                lb.channel_id logisticsChannelId,
-               eb.logistics_bill_id,
-               lbc.reconciliation_status actualBillStatus,
-               lbc.currency
+               eb.logistics_bill_id
         from first_mile_estimated_bill eb
                  inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
                  left join logistics_channel lc on lb.channel_id = lc.id
                  left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-                 left join logistics_bill_cost lbc on lbc.is_deleted = FALSE AND eb.logistics_bill_id = lbc.logistics_bill_id
         LEFT JOIN (
         SELECT
             DISTINCT
