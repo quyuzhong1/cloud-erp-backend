@@ -583,6 +583,34 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         return soB2cEntityList.size() <= 1;
     }
 
+    @Override
+    public void updateTikTokDetail(PlatformOrderDTO dto) {
+        List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCodeList(Arrays.asList(dto.getPlatformCode()),dto.getDictPlatform(),dto.getShopId(),"");
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            return ;
+        }
+        List<String> ids = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(ids);
+        detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getSplitDetailId()) && StringUtils.isBlank(v.getPlatformPackageId()) && StringUtils.isNotBlank(v.getPlatformLineNumber())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailList)){
+            return;
+        }
+        List<SoB2cDetailEntity> updateList = new ArrayList<>();
+        List<PlatformOrderDetailDTO> platformOrderDetailDTOS = dto.getDetails();
+        detailList.forEach(v->{
+            PlatformOrderDetailDTO platformOrderDetailDTO = platformOrderDetailDTOS.stream().filter(e->e.getPlatformLineNumber().equals(v.getPlatformLineNumber())).findFirst().orElse(null);
+            if(Objects.nonNull(platformOrderDetailDTO)){
+                v.setPlatformPackageId(platformOrderDetailDTO.getPlatformPackageId());
+                v.setSourceDetailId(v.getPlatformSkuNo()+platformOrderDetailDTO.getPlatformPackageId());
+                updateList.add(v);
+            }
+        });
+        if(CollectionUtils.isNotEmpty(updateList)){
+            log.warn("[B2C订单消费] TIKTOK平台订单【{}】：更新包裹号", dto.getPlatformCode());
+            soB2cDetailService.updateBatchById(updateList);
+        }
+    }
+
     /**
      * 自发货订单不存在地址
      */
