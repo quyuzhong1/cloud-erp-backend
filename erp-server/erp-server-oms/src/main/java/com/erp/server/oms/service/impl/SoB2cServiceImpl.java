@@ -571,7 +571,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (isFullyManagedOrder(dictPlatform)){
                 businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSBH);
             }else {
-                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
+                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
             }
             soB2cEntity.setCode(businessNo);
         }
@@ -6152,7 +6152,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             if (isFullyManagedOrder(dto.getDictPlatform())){
                 businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSBH);
             }else {
-                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SO_B2C);
+                businessNo = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_XSDD);
             }
             entity.setCode(businessNo);
             boolean save = false;
