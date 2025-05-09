@@ -369,7 +369,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                 productSize = productSize.add(bomChildrenSkuDTO.getLength().multiply(bomChildrenSkuDTO.getWidth()).multiply(bomChildrenSkuDTO.getHeight()).multiply(BigDecimal.valueOf(bomChildrenSkuDTO.getQuantity())));
             }
         }
-        return productSize.divide(volumeSetting, 4, RoundingMode.HALF_UP);
+        return productSize.divide(new BigDecimal(1000)).divide(volumeSetting, 4, RoundingMode.HALF_UP);
     }
 
     /**
