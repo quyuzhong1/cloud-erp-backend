@@ -784,6 +784,10 @@ public class ShopDTO implements Serializable {
          * app secret
          */
         private String clientSecret;
+        /**
+         * dictAreaCode
+         */
+        private String dictAreaCode;
     }
     @Data
     @NoArgsConstructor
