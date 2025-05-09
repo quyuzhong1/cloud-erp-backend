@@ -122,6 +122,10 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     private void fillList(List<OverseasProviderDTO.ListDTO> list) {
         for (OverseasProviderDTO.ListDTO listDTO : list) {
             listDTO.setAuthStatusName(AuthStatusEnum.getName(listDTO.getAuthStatus()));
+            Map<String,Object> authMap = listDTO.getAuthJson();
+            if (Objects.nonNull(authMap) && authMap.containsKey("expireIn")){
+                listDTO.setAuthExpireTime((LocalDateTime)authMap.get("expireIn"));
+            }
         }
     }
 
@@ -247,6 +251,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         Map<String, Object> authJson = entity.getAuthJson();
         authorizeViewDTO.setAppKey(authJson.get("appKey").toString());
         authorizeViewDTO.setAppToken(authJson.get("appToken").toString());
+        authorizeViewDTO.setEmail(authJson.getOrDefault("email","").toString());
+        authorizeViewDTO.setDomain(authJson.getOrDefault("domain","").toString());
+        authorizeViewDTO.setToken(authJson.getOrDefault("token","").toString());
         return authorizeViewDTO;
     }
 

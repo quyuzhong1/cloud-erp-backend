@@ -2,14 +2,21 @@ package com.erp.server.wms.service.impl;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
+import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
+import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
+import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
 import com.sdk.wms.jifeng.service.JiFengService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 
 /**
@@ -76,7 +83,45 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
-//        jiFengService.authorize();
-        return null;
+        Map<String, Object> authJson = dto.getAuthJson();
+        JiFengAuthRequest jiFengAuthRequest = JiFengAuthRequest.builder()
+                .email(authJson.get("email").toString())
+                .token(authJson.get("token").toString())
+                .domain(authJson.get("domain").toString())
+                .clientId(authJson.get("appKey").toString())
+                .clientSecret(authJson.get("appToken").toString())
+                .build();
+        JiFengBaseResp<String> authResp = jiFengService.authorize(jiFengAuthRequest);
+        if(!isSuccess(authResp)){
+            throw new ServiceException("授权失败,"+authResp.getMessage());
+        }
+        jiFengAuthRequest.setKey(authResp.getData());
+        JiFengBaseResp<JiFengTokenResp> tokenResp = jiFengService.accessToken(jiFengAuthRequest);
+        if(!isSuccess(tokenResp)){
+            throw new ServiceException("授权失败,"+tokenResp.getMessage());
+        }
+        JiFengTokenResp jiFengTokenResp = tokenResp.getData();
+        authJson.put("accessToken",jiFengTokenResp.getAccessToken());
+        authJson.put("refreshToken",jiFengTokenResp.getRefreshToken());
+        authJson.put("userId",jiFengTokenResp.getUserId());
+        authJson.put("expireIn",Instant.ofEpochMilli(jiFengTokenResp.getExpireIn())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime());
+        authJson.put("refreshExpireIn",Instant.ofEpochMilli(jiFengTokenResp.getRefreshExpireIn())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime());
+        dto.setAuthJson(authJson);
+        return true;
+    }
+
+    public <T> boolean isSuccess(JiFengBaseResp<T> resp){
+        return resp.getCode()==0;
+    }
+
+    public static void main(String[] args) {
+        LocalDateTime localDateTime = Instant.ofEpochMilli(1778310710517l)
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+        System.out.println(localDateTime);
     }
 }

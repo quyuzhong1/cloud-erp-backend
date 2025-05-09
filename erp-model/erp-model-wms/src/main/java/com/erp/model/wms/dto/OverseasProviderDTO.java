@@ -65,6 +65,19 @@ public class OverseasProviderDTO implements Serializable {
          * 启用时间
          */
         private LocalDate enableDate;
+
+        /**
+         * OMS注册邮箱
+         */
+        private String email;
+        /**
+         * wms系统域名
+         */
+        private String domain;
+        /**
+         * OMS授权token
+         */
+        private String token;
     }
     /**
     * 详情
@@ -263,6 +276,12 @@ public class OverseasProviderDTO implements Serializable {
          * 修改人中文名
          */
         private String updateUserName;
+        /**
+         * 授权过期时间
+         */
+        private LocalDateTime authExpireTime;
+
+        private Map<String,Object> authJson;
     }
 
     /**

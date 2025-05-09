@@ -7,6 +7,7 @@ import com.alibaba.fastjson.parser.ParserConfig;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
+import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
 import com.sdk.wms.jifeng.utils.JiFengUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,7 +31,7 @@ public class JiFengService {
         String refreshToken = "201fcb2fc2c343188149c085b6c87c53";
         Integer userId = 7471;
         JiFengService jiFengService = new JiFengService();
-        JiFengBaseResp<String> resp = jiFengService.refreshToken(JiFengAuthRequest.builder().userId(userId).refreshToken(refreshToken).token(token).email(email).domain(url).clientId(clientId).clientSecret(clientSecret).key("vLdBchPpgi").build());
+        JiFengBaseResp<JiFengTokenResp> resp = jiFengService.refreshToken(JiFengAuthRequest.builder().userId(userId).refreshToken(refreshToken).token(token).email(email).domain(url).clientId(clientId).clientSecret(clientSecret).key("vLdBchPpgi").build());
         System.out.println(resp);
     }
 
@@ -47,7 +48,7 @@ public class JiFengService {
         return JiFengUtils.parseToJiFengResp(bodyStr, String.class);
     }
 
-    public JiFengBaseResp<String> accessToken(JiFengAuthRequest jiFengAuthRequest){
+    public JiFengBaseResp<JiFengTokenResp> accessToken(JiFengAuthRequest jiFengAuthRequest){
         String path = "/api/oauth/accessToken";
         String url = jiFengAuthRequest.getDomain();
 
@@ -56,9 +57,9 @@ public class JiFengService {
         param.put("clientSecret",jiFengAuthRequest.getClientSecret());
         param.put("key",jiFengAuthRequest.getKey());
         String bodyStr = OkHttpUtils.doGet(url+path, param, new HashMap<>());
-        return JiFengUtils.parseToJiFengResp(bodyStr, String.class);
+        return JiFengUtils.parseToJiFengResp(bodyStr, JiFengTokenResp.class);
     }
-    public JiFengBaseResp<String> refreshToken(JiFengAuthRequest jiFengAuthRequest){
+    public JiFengBaseResp<JiFengTokenResp> refreshToken(JiFengAuthRequest jiFengAuthRequest){
         String path = "/api/oauth/refreshToken";
         String url = jiFengAuthRequest.getDomain();
 
@@ -68,6 +69,6 @@ public class JiFengService {
         param.put("refreshToken",jiFengAuthRequest.getRefreshToken());
         param.put("userId",jiFengAuthRequest.getUserId());
         String bodyStr = OkHttpUtils.doGet(url+path, param, new HashMap<>());
-        return JiFengUtils.parseToJiFengResp(bodyStr, String.class);
+        return JiFengUtils.parseToJiFengResp(bodyStr, JiFengTokenResp.class);
     }
 }

@@ -39,6 +39,7 @@
             id,
             code,
             name,
+            auth_json as authJson,
             platform_account as platformAccount,
             short_name as shortName,
             auth_status AS authStatus,
