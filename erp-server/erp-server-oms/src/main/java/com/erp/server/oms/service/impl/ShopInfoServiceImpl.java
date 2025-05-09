@@ -67,6 +67,7 @@ import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
 import com.sdk.oms.shopify.utils.HmacVerificationUtils;
+import com.sdk.oms.temu.enums.TemuEnum;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -627,6 +628,10 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setWarehouseName("");
             shopInfo.setWarehouseId("");
         }
+        if(StringUtils.isNotBlank(dto.getDictAreaCode())){
+            shopInfo.setDictAreaCode(dto.getDictAreaCode());
+        }
+        shopInfo.setAuthExpireDate(dto.getAuthExpireDate());
         //设置用户信息
         setCustom(dto.getCustomerId(), shopInfo);
         //修改授权信息进行校验
@@ -864,6 +869,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                     continue;
                 }
                 item.setPlatformShopType(jsonObject.getString("sellerType"));
+            }
+            if (PlatformDictEnum.TE_MU.getCode().equals(item.getDictPlatform())) {
+                TemuEnum temuEnum = TemuEnum.getByCode(item.getDictAreaCode());
+                if(Objects.nonNull(temuEnum)){
+                    item.setAreaName(temuEnum.getName());
+                }
             }
             //客户名称
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(item.getCustomerId());
