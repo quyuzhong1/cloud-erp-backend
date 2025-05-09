@@ -135,6 +135,9 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
         }
         ShopAuthEntity shopAuth = this.lambdaQuery().eq(ShopAuthEntity::getShopId, shopId).
                 last("LIMIT 1").one();
+        if(Objects.isNull(shopAuth)){
+            return null;
+        }
         ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
         shopAuth.setExtendData(JSONUtil.toJsonStr(shopInfoEntity.getExtendData()));
         shopAuth.setAreaCode(shopInfoEntity.getDictAreaCode());
