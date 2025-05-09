@@ -3,7 +3,6 @@ package com.erp.server.wms.handler;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -26,13 +25,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
-import com.sdk.wms.antu.dto.request.AntuCalculateFeeReq;
-import com.sdk.wms.antu.dto.request.AntuUploadFileReq;
-import com.sdk.wms.antu.dto.response.AntuCalculateFeeResp;
-import com.sdk.wms.antu.dto.response.AntuResponse;
-import com.sdk.wms.antu.dto.response.AntuUploadFileResp;
 import io.seata.common.util.CollectionUtils;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
@@ -76,7 +69,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         try {
             ThirdWarehouseContext.setAuthMap(dto.getAuthJson());
-            boolean result = hasWarehouse();
+            boolean result = warehouseAuthorize(dto);
             if (result) {
                 dmpTaskFeign.createThirdWarehouseTask(new ThirdWarehouseTaskDTO.AddDTO(dto.getId(), dto.getAuthJson(), getPlatForm().getCode()));
             }
@@ -156,7 +149,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     protected abstract ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq);
 
-    protected abstract Boolean hasWarehouse();
+    protected abstract Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 
     private <T> ApiResult<T> handleAndRemoveContext(Handler<T> handler, String authId,SourceTypeEnum businessType,String erpBusinessCode) {
         try {

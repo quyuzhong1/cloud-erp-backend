@@ -1,5 +1,10 @@
 package com.sdk.wms.jifeng.utils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+import com.common.core.exception.ServiceException;
+import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.stereotype.Component;
 
@@ -10,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Component
 public class JiFengUtils {
 
@@ -35,5 +41,34 @@ public class JiFengUtils {
         }
     }
 
+    /**
+     * 解析 JSON 字符串，返回 JiFengBaseResp<T>
+     * @param jsonStr JSON 字符串
+     * @param clazz   目标类型（如 String.class 或自定义 DTO）
+     * @return 成功返回解析结果，失败返回 errorResp
+     */
+    public static <T> JiFengBaseResp<T> parseToJiFengResp(String jsonStr, Class<T> clazz) {
+        try {
+            return JSON.parseObject(jsonStr, new TypeReference<JiFengBaseResp<T>>(clazz) {});
+        } catch (Exception e) {
+            log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
+            return JiFengBaseResp.error("JSON 解析失败,原始值：{}，异常: {}", jsonStr,e);
+        }
+    }
+
+    /**
+     * 解析 JSON 字符串（带泛型 TypeReference）
+     * @param jsonStr JSON 字符串
+     * @param typeRef 目标类型（如 new TypeReference<JiFengBaseResp<String>>() {}）
+     * @return 成功返回解析结果，失败返回 errorResp
+     */
+    public static <T> JiFengBaseResp<T> parseToJiFengResp(String jsonStr, TypeReference<JiFengBaseResp<T>> typeRef) {
+        try {
+            return JSON.parseObject(jsonStr, typeRef);
+        } catch (Exception e) {
+            log.error("JSON 解析失败,原始值：{}，异常: ", jsonStr,e);
+            return JiFengBaseResp.error("JSON 解析失败,原始值：{}，异常:{} ", jsonStr,e);
+        }
+    }
 
 }

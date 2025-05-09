@@ -279,6 +279,9 @@ public class OverseasProviderDTO implements Serializable {
 
         /**
          * 授权的信息json格式 例如：{'app_key':'test','token':'test'}
+         * OMS注册邮箱: email
+         * OMS授权token: token
+         * wms系统域名: domain
          */
         @NotNull(message = "授权的信息不能为空")
         private Map<String, Object> authJson;

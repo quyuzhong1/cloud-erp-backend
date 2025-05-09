@@ -1,6 +1,7 @@
 package com.sdk.wms.jifeng.dto.request;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -13,13 +14,19 @@ import javax.validation.constraints.Max;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder
+@Builder
 public class JiFengAuthRequest {
 
     /**
      * 开发者应用Id
      */
     private String clientId;
+
+    /**
+     * 开发者应用Id
+     */
+    private String clientSecret;
+
     /**
      * wms域名
      */
@@ -36,4 +43,11 @@ public class JiFengAuthRequest {
      * oms授权用token
      */
     private String token;
+
+
+    private String key;
+    private String refreshToken;
+
+    private Integer userId;
+
 }
