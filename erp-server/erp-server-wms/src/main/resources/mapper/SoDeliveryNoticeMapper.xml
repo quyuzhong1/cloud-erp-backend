@@ -281,7 +281,7 @@
             sdnd.id as source_detail_id,
             sdn.create_time as bill_date,
             sdn.create_time as trade_time,
-            sdnd.delivery_qty as qty
+            case when sdn.approve_status = 'approve' then sdnd.picking_qty else sdnd.last_picking_qty end as qty
         from so_delivery_notice sdn
         inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false and sdn.virtual_warehouse_id != '' and sdn.invalid_status = false and sdnd.delivery_qty > 0
         where sdn.is_deleted = false
