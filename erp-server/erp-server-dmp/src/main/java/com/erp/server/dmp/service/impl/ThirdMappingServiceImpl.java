@@ -898,9 +898,6 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 
     @Override
     public List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(List<String> warehouseIdList, String sysType) {
-        if(warehouseIdList.isEmpty()){
-           return Collections.emptyList();
-        }
         return this.baseMapper.listMappingBySysIds(warehouseIdList, sysType);
     }
 
