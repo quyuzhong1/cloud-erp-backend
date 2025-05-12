@@ -91,6 +91,7 @@ import com.erp.server.scm.query.PurchaseOrderQueryHandler;
 import com.erp.server.scm.service.*;
 import com.google.common.collect.Lists;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.apache.commons.collections4.CollectionUtils;
@@ -118,6 +119,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static cn.hutool.json.XMLTokener.entity;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER;
 
 /**
@@ -1671,6 +1673,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             obj.setTaxPriceName(obj.getCurrencySymbol() + obj.getTaxPrice());
             //价税合计
             obj.setPurchaseAmountName(obj.getCurrencySymbol() + obj.getPurchaseAmount().stripTrailingZeros().toPlainString());
+            //合同盖章状态
+            obj.setContractStampStatusName(ContractStampStatusEnum.getName(obj.getContractStampStatus()));
         };
 
         if(CollUtil.isNotEmpty(purchaseApplicationIds)) {
@@ -3362,5 +3366,26 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购订单【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto) {
+        List<String> ids = dto.getIds();
+        if(CollUtil.isNotEmpty(ids) && StringUtil.isNotBlank(dto.getContractStampStatus())){
+            List<PurchaseOrderEntity> purchaseOrderEntities = listByIds(ids);
+            lambdaUpdate()
+                    .set(PurchaseOrderEntity::getContractStampStatus, dto.getContractStampStatus())
+                    .in(PurchaseOrderEntity::getId, ids)
+                    .update();
+
+            //操作日志
+            String name = ContractStampStatusEnum.getName(dto.getContractStampStatus());
+
+            for (PurchaseOrderEntity purchaseOrderEntity : purchaseOrderEntities) {
+                String oldName = ContractStampStatusEnum.getName(purchaseOrderEntity.getContractStampStatus());
+                moduleOperateLogService.addModuleOperateLog(String.format("合同盖章状态由[%s]变更为[%s]", oldName,name), ModuleTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), "合同盖章状态更新");
+            }
+        }
     }
 }

@@ -1,6 +1,8 @@
 package com.erp.model.scm.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -358,6 +360,14 @@ public class PurchaseOrderDTO implements Serializable {
          * 仓位名称
          */
         private String warehouseLocationName;
+
+        /**
+         * 合同盖章状态 ContractStampStatusEnum
+         */
+        private String contractStampStatus;
+
+        private String contractStampStatusName;
+
         /**
          * 采购申请单id集合
          */
@@ -1838,6 +1848,18 @@ public class PurchaseOrderDTO implements Serializable {
          * supplier
          */
         private List<String> supplierIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ContractStampStatusParamsDTO extends BaseIdsDTO.IdsDTO{
+
+        /**
+         * 合同盖章状态
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String contractStampStatus;
     }
 
 }
