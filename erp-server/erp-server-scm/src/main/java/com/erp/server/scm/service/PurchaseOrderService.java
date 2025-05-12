@@ -505,4 +505,12 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * 单提交
      */
     BatchResultDTO submitEntity(PurchaseOrderEntity entity, Boolean isStartProcess);
+    /**
+     * 合同状态更新
+     * @author jack
+     * @date: 2025/5/12
+     * @param dto
+     * @return ApiResult
+     */
+    void updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto);
 }
