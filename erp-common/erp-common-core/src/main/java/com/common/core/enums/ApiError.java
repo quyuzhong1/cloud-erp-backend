@@ -414,6 +414,7 @@ public enum ApiError implements Serializable {
     ERROR_95160(95160,"文件不可超过{}m"),
     REJECT_COMMENT_NOT_EMPTY(95161, "审核不通过必须填写审核意见"),
     ERROR_95162(95162, "SKU【{}】记录不存在"),
+    SO_B2C_DETAIL_PRICE_NOT_EXIST(95162, "销售订单【{}】SKU【{}】单价不能为0"),
 
 
 
