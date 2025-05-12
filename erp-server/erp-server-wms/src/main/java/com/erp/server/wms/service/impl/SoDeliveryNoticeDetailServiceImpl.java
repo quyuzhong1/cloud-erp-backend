@@ -361,6 +361,9 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      */
     private void handleSubSoParam(SoInfoEntity soInfoEntity,SoDetailEntity soDetailEntity,
             SoDeliveryNoticeDetailEntity detailEntity,List<VirtualInventoryStockDTO.OutInStockDTO> paramList) {
+        if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+            return;
+        }
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
         Integer qty = detailEntity.getDeliveryQty();
         if (MathUtil.compareTo(detailEntity.getDeliveryQty(),soDetailEntity.getFrozenQty()) > MathUtil.ZERO) {
