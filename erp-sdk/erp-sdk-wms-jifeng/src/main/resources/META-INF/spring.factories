@@ -1,4 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-   com.sdk.wms.goodcang.service.GoodCangService,\
-   com.sdk.wms.goodcang.utils.GoodCangUtils
+   com.sdk.wms.jifeng.service.JiFengService,\
+   com.sdk.wms.jifeng.utils.JiFengUtils
 
