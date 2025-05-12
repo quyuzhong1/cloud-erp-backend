@@ -97,7 +97,7 @@ public class TemuClient {
     public TemuResp<TemuOrderDTO> getOrderList(TemuOrderReq temuOrderReq){
         TemuEnum temuEnum = TemuEnum.getByCode(temuOrderReq.getAreaCode());
         this.checkShopInfo(temuOrderReq);
-        String api = "bg.logistics.shipment.v2.get";
+        String api = "bg.order.list.get";
         Map<String, Object> params = this.buildDefaultParams(temuOrderReq, api);
         Gson gson = new Gson();
         String jsonArray = gson.toJson(temuOrderReq.getParentOrderSnList());
