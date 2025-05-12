@@ -389,6 +389,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
             receiverEntity.setCustomerId(customerB2cEntity.getId());
             soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
+            if(PlatformDictEnum.TE_MU.getCode().equals(dto.getDictPlatform()) && StringUtils.isBlank(receiverEntity.getCountry()) && StringUtils.isNotBlank(shopInfo.getDictCountryCode())){
+                receiverEntity.setCountry(shopInfo.getDictCountryCode());
+            }
             soB2cReceiverService.saveOrUpdate(receiverEntity);
         }
 
