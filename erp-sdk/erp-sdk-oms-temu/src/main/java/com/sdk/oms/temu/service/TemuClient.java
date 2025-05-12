@@ -61,14 +61,14 @@ public class TemuClient {
         String clientSecret = "a05e0902cf9c1b3c372680e084f1d424332284fb";
         String clientId = "ab3a401ed6c265793776aa3d4c48bd6f";
         String token = "upskffqpqmkoltggbfegqtbs7ghjaenvzwo9kbr1bt1ee5ypb0drvfh20ih";
-        TemuShippingInfoReq temuCommonDTO = new TemuShippingInfoReq();
+        TemuOrderReq temuCommonDTO = new TemuOrderReq();
         temuCommonDTO.setToken(token);
         temuCommonDTO.setAppSecret(clientSecret);
         temuCommonDTO.setAppKey(clientId);
         temuCommonDTO.setAreaCode("US");
-        temuCommonDTO.setParentOrderSn("PO-211-1820964856952199");
+        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-03578627303033132"));
         TemuClient temuClient = new TemuClient();
-        TemuResp<TemuShippingDTO> resp = temuClient.getShippingInfo(temuCommonDTO);
+        TemuResp<TemuOrderDTO> resp = temuClient.getOrderList(temuCommonDTO);
         System.out.println(resp);
     }
 
@@ -97,7 +97,7 @@ public class TemuClient {
     public TemuResp<TemuOrderDTO> getOrderList(TemuOrderReq temuOrderReq){
         TemuEnum temuEnum = TemuEnum.getByCode(temuOrderReq.getAreaCode());
         this.checkShopInfo(temuOrderReq);
-        String api = "bg.order.list.get";
+        String api = "bg.logistics.shipment.v2.get";
         Map<String, Object> params = this.buildDefaultParams(temuOrderReq, api);
         Gson gson = new Gson();
         String jsonArray = gson.toJson(temuOrderReq.getParentOrderSnList());
