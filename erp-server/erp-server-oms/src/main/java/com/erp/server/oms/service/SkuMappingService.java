@@ -228,7 +228,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      */
     void deleteAll(String id, ListingInfoEntity listingInfoEntity);
 
-    PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto);
+    PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO.SearchDTO> dto);
 
 
     List<ListingInfoWithSkuMappingDTO> listByErpSkuIdAndType(List<String> erpSkuIdList,String provideCode,String warehouseId,String shopId);

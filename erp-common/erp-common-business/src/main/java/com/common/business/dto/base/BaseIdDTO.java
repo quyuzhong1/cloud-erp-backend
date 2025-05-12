@@ -23,6 +23,19 @@ public class BaseIdDTO extends PermissionsDTO  {
 
     @Data
     @NoArgsConstructor
+    public static class SearchDTO {
+
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String name;
+
+        private String searchKey;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class CodeDTO {
 
         private String id;

@@ -384,7 +384,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/getLog")
-    public ApiResult<PagingVO<OperateLogDTO.ListDTO>> getLog(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+    public ApiResult<PagingVO<OperateLogDTO.ListDTO>> getLog(@RequestBody @Validated PagingDTO<BaseIdDTO.SearchDTO> dto) {
         PagingVO<OperateLogDTO.ListDTO> pagingVO = skuMappingService.getLog(dto);
         return success(pagingVO);
     }
