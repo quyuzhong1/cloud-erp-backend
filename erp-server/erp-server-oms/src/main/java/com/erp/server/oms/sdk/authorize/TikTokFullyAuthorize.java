@@ -192,6 +192,7 @@ public class TikTokFullyAuthorize implements IShopAuthorizeService<T> {
         paramMap.put("clientSecret", cfgAppClient.getClientSecret());
         paramMap.put("baseUrl", cfgAppClient.getUrl());
         paramMap.put("code", dto.getCode());
+        paramMap.put("isFully", "1");
 
         TokenDTO tokenDTO = tikTokSdkClientService.sendTikTokPostToken(paramMap);
         if (ObjectUtil.isEmpty(tokenDTO)) {

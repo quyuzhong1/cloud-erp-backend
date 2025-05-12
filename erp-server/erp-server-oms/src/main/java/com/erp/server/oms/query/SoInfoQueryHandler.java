@@ -36,28 +36,12 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
                     || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
-                List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByAdvanceQuery(AdvanceQueryContainer.builder()
-                        .advanceQueryDTOList(Arrays.asList(AdvanceQueryDTO.buildSplicingSQLDTO("track_no", AdvanceQueryContext.getCompareCode(),value, QueryDataTypeEnum.STRING)
-                                ,AdvanceQueryDTO.buildSplicingSQLDTO("invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN)))
-                        .build());
-                List<String> soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).distinct().collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(soIdList)){
-                    return this.getQueryEmptySql();
-                }
-                this.buildDefaultDTO("si.id",soIdList);
+                return "exists ( SELECT 1 from so_outstock sout where sout.is_deleted = false and sout.so_id = si.id and sout.invalid_status = false and sout.track_no " + compareCodeSplicingValueSql +")";
             }
 
             if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
-                QueryConditionEnum queryCond = queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)?QueryConditionEnum.CONTAINS:QueryConditionEnum.IN_LIST;
-                List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByAdvanceQuery(AdvanceQueryContainer.builder()
-                        .advanceQueryDTOList(Arrays.asList(AdvanceQueryDTO.buildSplicingSQLDTO("track_no", queryCond,value, QueryDataTypeEnum.STRING)
-                                ,AdvanceQueryDTO.buildSplicingSQLDTO("invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN)))
-                        .build());
-                List<String> soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).distinct().collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(soIdList)){
-                    return this.getQueryAllSql();
-                }
-                this.buildSplicingSQLDTO("si.id",QueryConditionEnum.NOT_IN_LIST,soIdList,QueryDataTypeEnum.STRING);
+                return " not exists ( SELECT 1 from so_outstock sout where sout.is_deleted = false and sout.so_id = si.id and sout.invalid_status = false and sout.track_no " + compareCodeSplicingValueSql +")";
+
             }
         }
         if("remark".equals(field)){

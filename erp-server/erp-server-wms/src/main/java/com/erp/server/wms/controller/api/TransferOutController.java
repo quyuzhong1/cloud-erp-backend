@@ -13,7 +13,6 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.server.wms.query.TransferOutQueryHandler;
@@ -167,7 +166,7 @@ public class TransferOutController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(transferOutService.approve(dto, entity));
+                resultDTOS.add(transferOutService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), entity));
             }catch (Exception e){
                 log.error("分布式调出单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -306,6 +305,15 @@ public class TransferOutController extends BaseController {
     @PostMapping("/listTransferOut")
     public ApiResult<List<TransferOutDTO.ChooseListDTO>> listTransferOut(@RequestBody @Valid TransferOutDTO.SearchParamDTO param) {
         return success(transferOutService.listTransferOut(param));
+    }
+
+    /**
+     *上架详情弹窗
+     * @return
+     */
+    @GetMapping("/listPutawayDetail")
+    public ApiResult<List<TransferOutDTO.PutawayDetailDTO>> listPutawayDetail(@RequestParam("detailId") String detailId) {
+        return success(transferOutService.listPutawayDetail(detailId));
     }
 
 }

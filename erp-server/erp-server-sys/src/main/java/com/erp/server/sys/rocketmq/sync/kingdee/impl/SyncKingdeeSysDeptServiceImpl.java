@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
@@ -19,11 +20,13 @@ import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.SysPushMsgService;
+import com.erp.server.sys.service.impl.SysAccountingCompanyImpl;
 
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -131,9 +134,12 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
         resultMap.put("syncKingdeeId",entity.getKingdeeId());
         //操作（枚举SyncKingdeeOperateEnum）
         resultMap.put("operate", operate);
-        String useOrgCode = entity.getUseOrgCode();
-        resultMap.put("createOrgCode", useOrgCode);
-        resultMap.put("useOrgCode",useOrgCode);
+        SysAccountingCompanyEntity sysAccountingCompanyEntity = ApplicationContextUtils.getBean(SysAccountingCompanyImpl.class).getById(entity.getUseOrgId());
+        if(sysAccountingCompanyEntity != null) {
+        	String useOrgCode = sysAccountingCompanyEntity.getCode();
+            resultMap.put("createOrgCode", useOrgCode);
+            resultMap.put("useOrgCode",useOrgCode);
+        }
         //上级负责部门编码
         KingdeeDepartmentEntity parent = kingdeeDepartmentService.getById(entity.getParentId());
         if (ObjectUtils.isNotEmpty(parent)) {

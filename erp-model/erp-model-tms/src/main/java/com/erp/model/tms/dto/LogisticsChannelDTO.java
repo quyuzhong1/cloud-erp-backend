@@ -431,7 +431,10 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private String feeRule;
 
-
+        /**
+         * 是否发送发票
+         */
+        private Boolean isSendInvoice;
 
         /**
          * 最高报关金额
@@ -835,6 +838,10 @@ public class LogisticsChannelDTO implements Serializable {
          * 运费超限打标比例
          */
         private BigDecimal shipmentOverLimitRate;
+        /**
+         * 是否发送发票
+         */
+        private Boolean isSendInvoice;
     }
 
     @Data

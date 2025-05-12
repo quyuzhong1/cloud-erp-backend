@@ -901,7 +901,9 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 continue;
             }
             //虚拟仓库
-            detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
+            if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){
+                detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
+            }
 
             BigDecimal price=soDetailEntity.getPrice();
             //单价信息
@@ -929,7 +931,8 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @author Will
      * @date: 2023/11/1 15:45
      */
-    private List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList) {
+    @Override
+    public List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList) {
         if (CollectionUtils.isEmpty(soDetailIdList)) {
             return Collections.emptyList();
         }

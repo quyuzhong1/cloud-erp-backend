@@ -2,30 +2,31 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.ValidatorUtil;
-import com.erp.model.wms.dto.TransferOutDTO;
-import com.erp.model.wms.entity.PickingDetailEntity;
-import com.erp.model.wms.entity.TransferInDetailEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
-import com.erp.server.wms.service.*;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.TransferOutDetailDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.TransferInDetailEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferOutDetailMapper;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -94,17 +95,18 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         // 需要删除的id集合
         List<String> deleteIds = originIds.stream().filter(id->!nowIds.contains(id)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(deleteIds)) {
-            // 记录删除日志
-            List<TransferOutDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
-            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(),pairList,"编辑操作");
-            // 删除明细数据
-            super.removeByIds(deleteIds);
+            throw new ServiceException("仅支持修改明细数据，不支持删除明细");
+//            // 记录删除日志
+//            List<TransferOutDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
+//            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+//            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(),pairList,"编辑操作");
+//            // 删除明细数据
+//            super.removeByIds(deleteIds);
         }
         // 新增或修改的明细数据
         List<TransferOutDetailEntity> newList = BeanMapperUtils.copyList(TransferOutDetailEntity.class, detailList);
-        // 下推数量验证
-        checkTransferOutQty(newList, mainId);
+//        // 下推数量验证
+//        checkTransferOutQty(newList, mainId);
         // 记录新增或修改日志
         handleDetails(newList, mainId, Boolean.TRUE);
         //新增或修改明细
@@ -175,6 +177,24 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
             }
         }
         return resultList;
+    }
+
+
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(TransferOutDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(TransferOutDetailEntity::getId, detailId)
+                    .update();
+        }
     }
 
     private void handleDetails(List<TransferOutDetailEntity> newList, String mainId, Boolean isUpdate) {

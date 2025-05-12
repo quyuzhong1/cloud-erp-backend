@@ -1,9 +1,7 @@
 package com.erp.server.oms.sdk.sob2c;
 
-import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -13,15 +11,18 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.oms.service.*;
+import com.erp.server.oms.service.PlatformOrderConsumerHandleService;
+import com.erp.server.oms.service.SoB2cCoreService;
+import com.erp.server.oms.service.SoB2cErrorService;
+import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -43,6 +44,8 @@ public class ShopeeSoB2cHandle extends AbstractSoB2cHandle  {
     private SoB2cErrorService soB2cErrorService;
     @Resource
     private SoB2cService soB2cService;
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
 
     @Override
     public Boolean handleRule(SoB2cEntity mainEntity) {
@@ -71,7 +74,10 @@ public class ShopeeSoB2cHandle extends AbstractSoB2cHandle  {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-                soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
+
+                //平台仓拆分
+                List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = soB2cCoreService.splitB2cSoOutstock(mainEntity,generateB2cDTO);
+                generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
             } catch (Exception e) {
                 log.error("[虾皮生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();

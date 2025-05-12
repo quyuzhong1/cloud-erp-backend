@@ -177,6 +177,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
 
     /**
+     * 检查订单是否符合物流黑名单限制
+     * @param soId
+     * @param logisticsChannelId
+     * @param existChannelId
+     */
+    void checkLogisticsChannelBlacklist(String soId, String logisticsChannelId, String existChannelId);
+
+    /**
      * @description: 获取物流单号
      * @author Will
      * @date: 2023/8/18 16:47
@@ -1064,6 +1072,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
 
     void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 根据nfe发票状态
+     * @author will
+     * @date 2025/4/11 16:35
+     * @param soId
+     * @param nfeInvoiceStatus
+     * @return void
+     */
+    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
 
     /**
      * 根据销售订单id和平台获取分区id

@@ -337,6 +337,16 @@ public enum RocketMqTagEnum {
      * 业务员同步金蝶
      */
     KINGDEE_OPERATOR_TAG(1033, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_operator_tag"),
+
+    /**
+     * 分步式调出单同步金蝶
+     */
+    KINGDEE_TRANSFER_OUT_TAG(1034, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_out_tag"),
+
+    /**
+     * 分步式调入单同步金蝶
+     */
+    KINGDEE_TRANSFER_IN_TAG(1035, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_in_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**

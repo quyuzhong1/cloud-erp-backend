@@ -176,4 +176,13 @@ public interface SoOutstockDetailService extends SuperService<SoOutstockDetailEn
     List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceIdList(List<String> sourceDetailIdList);
 
     List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(List<String> soDetailIds);
+
+    /**
+     * 根据销售明细ids查询
+     * @author will
+     * @date 2025/4/28 10:58
+     * @param soDetailIdList
+     * @return List<SoOutstockDetailEntity>
+     */
+    List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList);
 }

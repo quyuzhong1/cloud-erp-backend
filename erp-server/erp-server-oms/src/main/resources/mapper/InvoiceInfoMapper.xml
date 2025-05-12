@@ -38,7 +38,7 @@
         update_time,
         version,
         is_deleted,
-        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time,bill_create_time, remark, file_url, upload_status
+        code, cfg_id, invoice_type, shop_id, so_id, so_code, platform_code, template_type, status, upload_time,bill_create_time, remark, file_url, upload_status,invoice_nature,platform_invoice_no,cancel_reason,return_tax_code,return_reason,invoice_remark
     </sql>
     <select id="paging" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$PagingViewDTO">
         SELECT
@@ -54,17 +54,20 @@
         i.status as status,
         i.bill_create_time as billCreateTime,
         i.remark as remark,
-        i.file_url as fileUrl,
+        case when i.invoice_type = 'nfe' then att.attach_url else i.file_url end as fileUrl,
         i.upload_status as uploadStatus,
         i.upload_time as uploadTime,
         id.id as detailId,
         id.sku_id,
         id.product_name as productName,
         id.sku_no as skuNo,
-        si.name as shopName
+        si.name as shopName,
+        i.invoice_nature as invoiceNature,
+        i.platform_invoice_no as platformInvoiceNo
         FROM invoice_info i
         left join invoice_detail id on i.id = id.main_id and id.is_deleted = false
         left join shop_info si on i.shop_id = si.id and si.disabled = false
+        left join attachment att on i.id = att.business_id and att.is_deleted = false and att.type = 'invoice_info_pdf'
         WHERE
         ${params.sqlMap.default}
         and i.is_deleted=FALSE
@@ -79,6 +82,33 @@
             </foreach>
         </if>
         i.create_time DESC
+    </select>
+
+    <!-- 查询导出的xmlUrl -->
+    <select id="listExportUrl" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$ExportAttachDTO">
+        select
+            DISTINCT
+            i.id,
+            att.attach_url,
+            att.attach_name,
+            att.type
+        from invoice_info i
+        inner join invoice_detail id on i.id = id.main_id and id.is_deleted = false
+        inner join attachment att on i.id = att.business_id and att.is_deleted = false and  att.attach_url != '' and att.type = #{type}
+        left join shop_info si on i.shop_id = si.id and si.disabled = false
+        where ${params.sqlMap.default} and i.is_deleted = false and i.invoice_type = 'nfe'
+    </select>
+
+    <!-- 获取最新发票 -->
+    <select id="getNewInvoicedAttachBySoId" resultType="com.erp.model.oms.dto.InvoiceInfoDTO$AttachDTO">
+        select
+            i.id,
+            att.attach_url,
+            att.attach_name
+        from invoice_info i
+        inner join attachment att on i.id = att.business_id and att.is_deleted = false and att.type = #{attachmentType}
+        where i.is_deleted = false and att.attach_url != '' and i.so_id = #{soId} and i.invoice_type  = #{invoiceType} and i.status = 'invoiceSuccess'
+        order by i.id desc,att.id desc limit 1
     </select>
 
 
