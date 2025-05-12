@@ -132,7 +132,7 @@
               'so_b2c_delivery' as businessType
           from so_b2c_delivery sbd
           inner join  so_b2c_delivery_detail sbdd on sbd.id = sbdd.main_id and sbdd.is_deleted = false and sbdd.delivery_qty > 0
-          and sbdd.virtual_warehouse_id != '' and sbd.status in ('shipped','cancelDelivery')
+          and sbdd.virtual_warehouse_id != ''
           where sbd.is_deleted = false
           union all
           --b2c发货单取消冻结
