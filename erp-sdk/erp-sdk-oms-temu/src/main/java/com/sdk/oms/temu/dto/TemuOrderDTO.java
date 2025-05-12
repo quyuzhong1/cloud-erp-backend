@@ -139,7 +139,7 @@ public class TemuOrderDTO {
                     @JSONField(name = "extCode")
                     private String extCode;
                     @JSONField(name = "productId")
-                    private Integer productId;
+                    private Long productId;
                 }
             }
         }
