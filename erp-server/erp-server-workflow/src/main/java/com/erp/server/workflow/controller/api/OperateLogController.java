@@ -6,7 +6,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.wms.dto.OperateLogDTO;
+import com.erp.model.workflow.dto.OperateLogDTO;
 import com.erp.server.workflow.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
