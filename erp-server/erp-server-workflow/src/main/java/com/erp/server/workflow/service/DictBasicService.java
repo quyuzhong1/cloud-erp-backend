@@ -23,4 +23,13 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return
      */
     List<DictBasicDTO.DropDownDTO> listByType(String type, String remark);
+    /**
+     * 根据类型和值查询
+     * @author will
+     * @date 2025/5/12 16:35
+     * @param value
+     * @param key
+     * @return DictBasicEntity
+     */
+    DictBasicEntity getByTypeAndValue(String value, String key);
 }

@@ -1,5 +1,6 @@
 package com.erp.server.workflow.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.erp.model.workflow.dto.DictBasicDTO;
 import com.erp.model.workflow.entity.DictBasicEntity;
 import com.erp.server.workflow.mapper.DictBasicMapper;
@@ -27,5 +28,23 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
                 .eq("processCondition".equalsIgnoreCase(type), DictBasicEntity::getRemark, remark)
                 .list();
         return list.stream().map(DictBasicDTO.DropDownDTO::new).collect(Collectors.toList());
+    }
+
+    /**
+     * 根据类型和值获取到对应信息
+     *
+     * @param type
+     * @param value
+     * @return DictBasicEntity
+     * @author yl
+     * @date 2023-06-28 16:25
+     */
+    @Override
+    public DictBasicEntity getByTypeAndValue(String type, String value) {
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DictBasicEntity::getType, type);
+        queryWrapper.eq(DictBasicEntity::getValue, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 }
