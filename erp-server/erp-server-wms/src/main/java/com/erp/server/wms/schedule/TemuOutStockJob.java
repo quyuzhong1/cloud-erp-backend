@@ -61,7 +61,7 @@ public class TemuOutStockJob {
         List<SoB2cEntity> soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
                 .eq(SoB2cEntity::getDictPlatform, PlatformDictEnum.TE_MU.getCode())
                 .eq(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
-                .isNotNull(SoB2cEntity::getSoOutstockDate)
+                .isNull(SoB2cEntity::getSoOutstockDate)
                 .list();
         soB2cEntityList = soB2cEntityList.stream().filter(SoB2cEntity::hasPlatformWarehouseOrder).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(soB2cEntityList)){
