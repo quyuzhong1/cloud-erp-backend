@@ -32,11 +32,25 @@
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE
-        ${params.sqlMap.default}
-        and fs.is_deleted = FALSE
+        fs.is_deleted = FALSE
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND fs.id IN
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.detailIds != null and params.detailIds.size > 0">
+            AND fsd.id IN
+            <foreach collection="params.detailIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -187,7 +201,7 @@
             fsr.diff_qty,
             fsr.receive_qty,
             fsr.receive_date,
-            fsr.source_type
+            fsr.source_platform
         from fba_shipment_receive fsr
                  LEFT JOIN fba_shipment_detail fsd on fsd.id = fsr.detail_id and fsd.is_deleted = FALSE
                  LEFT JOIN fba_shipment fs on fs.id = fsd.main_id and fs.is_deleted = FALSE

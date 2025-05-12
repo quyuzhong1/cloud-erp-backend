@@ -241,6 +241,24 @@ public class OverseasWarehouseInboundController extends BaseController {
         List<BatchResultDTO> resultDTOS = overseasWarehouseInboundDetailService.allManualReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+    /**
+     * 调整签收
+     *
+     * @return ApiResult
+     * @author Jim
+     * @date: 2023-11-24
+     */
+    @PostMapping("/changeReceived")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "调整签收:{detailId}")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:changeReceived",
+            serviceClass = OverseasWarehouseInboundService.class,
+            keyIdName = "id")
+    public ApiResult changeReceived(@RequestBody @Validated List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = overseasWarehouseInboundDetailService.allChangeReceived(dtoList);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
     /**
      * 手动完结

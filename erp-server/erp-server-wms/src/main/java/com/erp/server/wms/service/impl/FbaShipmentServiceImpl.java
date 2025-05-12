@@ -58,6 +58,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.oms.amz.spapi.model.fulfillmentinbound.ShipmentStatus;
 import com.erp.server.wms.convert.FbaShipmentConsumerConverter;
 import com.erp.server.wms.convert.FbaShipmentConverter;
+import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.FbaShipmentMapper;
 import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -1910,5 +1911,99 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
         }).collect(Collectors.toList());
 
         return new PagingVO<>(resultList, pageData.getTotalCount(), advanceQueryDTO.getPageSize(), advanceQueryDTO.getCurrPage());
+    }
+
+    @Override
+    public List<FbaShipmentDTO.ListDTO> viewList(FbaShipmentDTO.ViewListReqDTO dto) {
+        List<FbaShipmentDTO.ListDTO> listDTOS;
+        FbaShipmentDTO.PagingParamDTO params = new FbaShipmentDTO.PagingParamDTO();
+
+        if (RequestIdTypeEnum.MAIN_ID.equals(dto.getRequestIdType())) {
+            params.setIds(dto.getRequestIdList());
+        } else if (RequestIdTypeEnum.DETAIL_ID.equals(dto.getRequestIdType())) {
+            params.setDetailIds(dto.getRequestIdList());
+        }
+        listDTOS = baseMapper.paging(params);
+        if (CollectionUtils.isEmpty(listDTOS)) {
+            return Collections.emptyList();
+        }
+        // 数据处理
+        fillList(listDTOS);
+        return listDTOS;
+    }
+
+    @Override
+    public List<BatchResultDTO> changeReceived(List<FbaShipmentDTO.ReceivedDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        // 主表ID， 详情
+        Map<String, List<FbaShipmentDetailEntity>> detailResultMap = new HashMap<>();
+        // 主表ID， 主实体
+        Map<String, FbaShipmentEntity> mainResultMap = new HashMap<>();
+        Map<String, Integer> receiverdMap = new HashMap<>();
+        List<FbaShipmentDetailEntity> detailEntityList = fbaShipmentDetailService.listByIds(dtoList.stream().map(FbaShipmentDTO.ReceivedDTO::getDetailId).collect(Collectors.toList()));
+        List<FbaShipmentReceiveEntity> addReceivedList = new ArrayList<>();
+        List<String> mainIdList = detailEntityList.stream().map(FbaShipmentDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<FbaShipmentEntity> entityList = this.listByIds(mainIdList);
+        for (FbaShipmentDTO.ReceivedDTO dto : dtoList) {
+            // 查询详情
+            FbaShipmentDetailEntity detailEntity  = detailEntityList.stream()
+                    .filter(e -> StringUtils.equals(e.getId(), dto.getDetailId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.isNull(detailEntity)){
+                throw new ServiceException(ApiError.FBA_SHIPMENT_DETAIL_NOT_EXIST);
+            }
+            // 校验
+            FbaShipmentEntity mainEntity = entityList.stream().filter(v->v.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
+            if (Objects.isNull(mainEntity)){
+                throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
+            }
+            if (detailEntity.getDeliveryQty() < (detailEntity.getReceiveQty() + dto.getReceivedQty())){
+                throw new ServiceException("当前签收数量大于剩余签收数量");
+            }
+
+            detailEntity.setReceiveQty(detailEntity.getReceiveQty() + dto.getReceivedQty());
+            detailEntity.setDiffQty(detailEntity.getDiffQty() + dto.getReceivedQty());
+            detailEntity.setReceiveDate(dto.getReceiveDate().atStartOfDay());
+            // 添加签收记录
+            FbaShipmentReceiveEntity receivedEntity = FbaShipmentConverter.INSTANCE.receivedDTOToEntity(dto,mainEntity, detailEntity);
+            addReceivedList.add(receivedEntity);
+            // 添加主表
+            mainResultMap.putIfAbsent(mainEntity.getId(), mainEntity);
+
+            // 添加明细
+            List<FbaShipmentDetailEntity> currentDetailEntityList = detailResultMap.get(mainEntity.getId());
+            if (CollectionUtils.isEmpty(currentDetailEntityList)){
+                List<FbaShipmentDetailEntity> currentList = new LinkedList<>();
+                currentList.add(detailEntity);
+                detailResultMap.put(mainEntity.getId(), currentList);
+            } else {
+                currentDetailEntityList.add(detailEntity);
+                detailResultMap.put(mainEntity.getId(), currentDetailEntityList);
+            }
+            receiverdMap.put(receivedEntity.getDetailId(), receivedEntity.getReceiveQty());
+        }
+        fbaShipmentDetailService.updateBatchById(detailEntityList);
+        fbaShipmentReceiveService.saveBatch(addReceivedList);
+        List<FbaShipmentDetailEntity> allDetailEntityList = fbaShipmentDetailService.listByMainIds(mainIdList);
+        // 主订单状态
+        // 检查是否完全签收
+        List<FbaShipmentEntity> updateEntityList = new ArrayList<>();
+        for (FbaShipmentEntity entity : entityList) {
+            List<FbaShipmentDetailEntity> currentDetailEntityList = allDetailEntityList.stream()
+                    .filter(e -> StringUtils.equals(e.getMainId(), entity.getId()))
+                    .collect(Collectors.toList());
+            if( currentDetailEntityList.stream().allMatch(e-> 0 == e.getDiffQty())){
+                entity.setDeliveryStatus(FbaDeliveryStatusEnum.AUTOMATIC_COMPLETION.getCode());
+                updateEntityList.add(entity);
+            }
+        }
+        if (CollUtil.isNotEmpty(updateEntityList)){
+            this.updateBatchById(updateEntityList);
+        }
+        return resultDTOS;
+
     }
 }

@@ -17,13 +17,12 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.FbaShipmentPackingDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
+import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -410,4 +409,39 @@ public class FbaShipmentController extends BaseController {
         return success(fbaShipmentService.syncPaging(advanceQueryDTO));
     }
 
+    /**
+     * 查询详情列表
+     *
+     * @return ApiResult<List < FbaShipmentDTO.ViewDTO>>
+     * @author zdy
+     * @date: 2025/05/09
+     */
+    @PostMapping("/viewList")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaShipment:view",
+            serviceClass = FbaShipmentService.class,
+            keyIdName = "id")
+    public ApiResult<List<FbaShipmentDTO.ListDTO>> view(@RequestBody @Validated FbaShipmentDTO.ViewListReqDTO dto) {
+        List<FbaShipmentDTO.ListDTO> resultList = fbaShipmentService.viewList(dto);
+        return success(resultList);
+    }
+    /**
+     * 调整签收
+     *
+     * @return ApiResult
+     * @author Jim
+     * @date: 2023-11-24
+     */
+    @PostMapping("/changeReceived")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "调整签收:{detailId}")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:fbaShipment:changeReceived",
+            serviceClass = FbaShipmentService.class,
+            keyIdName = "id")
+    public ApiResult changeReceived(@RequestBody @Validated List<FbaShipmentDTO.ReceivedDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = fbaShipmentService.changeReceived(dtoList);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }
