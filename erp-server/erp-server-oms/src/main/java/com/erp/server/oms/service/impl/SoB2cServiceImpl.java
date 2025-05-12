@@ -1228,15 +1228,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-        if (isFullyManagedOrder(entity.getDictPlatform())){
-            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
-            //产品单价，非赠品时，校验必填
-            for (SoB2cDetailEntity detailEntity : soB2cDetailEntityList){
-                if (Objects.equals(detailEntity.getIsGift(), Boolean.FALSE) && (Objects.isNull(detailEntity.getPrice()) || detailEntity.getPrice().compareTo(BigDecimal.ZERO) <= 0)){
-                    throw new ServiceException(ApiError.SO_B2C_DETAIL_PRICE_NOT_EXIST, entity.getCode(), detailEntity.getSkuNo());
-                }
-            }
-        }
         //校验是否被冻结
         if (entity.getIsFrozen()) {
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
@@ -4493,7 +4484,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
         }
-
+        if (isFullyManagedOrder(entity.getDictPlatform())){
+            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
+            //产品单价，非赠品时，校验必填
+            for (SoB2cDetailEntity detailEntity : soB2cDetailEntityList){
+                if (Objects.equals(detailEntity.getIsGift(), Boolean.FALSE) && (Objects.isNull(detailEntity.getPrice()) || detailEntity.getPrice().compareTo(BigDecimal.ZERO) <= 0)){
+                    throw new ServiceException(ApiError.SO_B2C_DETAIL_PRICE_NOT_EXIST, entity.getCode(), detailEntity.getSkuNo());
+                }
+            }
+        }
 
         return;
     }
