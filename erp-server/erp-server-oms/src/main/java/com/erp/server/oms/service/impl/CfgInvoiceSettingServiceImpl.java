@@ -64,6 +64,9 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     @Resource
     private TfFiscalService tfFiscalService;
 
+    @Resource
+    InvoiceSettingConverter invoiceSettingConverter;
+
     @Override
     public PagingVO<CfgInvoiceSettingDTO.PagingViewDTO> paging(PagingDTO<CfgInvoiceSettingDTO.PagingParamDTO> dto) {
         CfgInvoiceSettingDTO.PagingParamDTO params = dto.getParams();
@@ -101,7 +104,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
         String type = tableName.value();
         omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, entity.getId());
         //CfgInvoiceSettingEntity -> AddCompanyDTO
-        AddCompanyDTO addCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToAddCompanyDTOTo(entity);
+        AddCompanyDTO addCompanyDTO = invoiceSettingConverter.invoiceSettinToAddCompanyDTOTo(entity);
         //username
         addCompanyDTO.setUsername(addCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
         //调用TF
@@ -157,7 +160,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
             omsAttachmentService.batchSave(dto.getAttachmentUrlList(), dto.getAttachmentNameList(), type, cfgInvoiceSettingEntity.getId());
         }
         //调用TF
-        UpdateCompanyDTO updateCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToUpdateCompanyDTOTo(cfgInvoiceSettingEntity);
+        UpdateCompanyDTO updateCompanyDTO = invoiceSettingConverter.invoiceSettinToUpdateCompanyDTOTo(cfgInvoiceSettingEntity);
         updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
         tfFiscalService.updateCompany(updateCompanyDTO);
         //保存日志
