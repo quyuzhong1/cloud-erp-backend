@@ -68,6 +68,20 @@
         </if>
         order by wc.box_no desc
     </select>
+    <select id="listSkuByBoxIds" resultType="com.erp.model.wms.dto.WmsCartonDTO$CartonSkuDTO">
+        select
+        wc.id boxId,
+        (select string_agg(wcd.sku_no|| '*' || wcd.pack_qty, ';') from wms_carton_detail wcd where wcd.is_deleted = false and wcd.main_id = wc.id) as sku
+        from wms_carton wc
+        where wc.is_deleted = false
+        <if test="boxIds!=null and boxIds.size>0">
+            AND wc.id IN
+            <foreach collection="boxIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        order by wc.box_no desc
+    </select>
 
 
 </mapper>

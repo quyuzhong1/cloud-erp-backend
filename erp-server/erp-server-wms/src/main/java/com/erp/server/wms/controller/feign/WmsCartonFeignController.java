@@ -26,4 +26,13 @@ public class WmsCartonFeignController {
     List<WmsCartonDTO.DetailDTO> listByPackingTaskId(@RequestParam String packingTaskId,@RequestParam("fbaShipmentCodes") List<String> fbaShipmentCodes){
         return wmsCartonService.listByPackingTaskId(packingTaskId, fbaShipmentCodes);
     }
+    /**
+     * 根据箱子查询装箱内容
+     * @param boxIds
+     * @return
+     */
+    @GetMapping("/listSkuByBoxIds")
+    List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(List<String> boxIds){
+        return wmsCartonService.listSkuByBoxIds(boxIds);
+    }
 }

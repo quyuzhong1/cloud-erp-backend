@@ -731,5 +731,27 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         }
     }
 
+    @Override
+    public List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> viewProductWeight(FirstMileWeightAllocationDTO.ViewProductWeightParamDTO dto) {
+        List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> list = baseMapper.viewProductWeight(dto);
+        //校验分摊数据-仅可操作未分摊数据
+        for (FirstMileWeightAllocationDTO.ViewProductWeightDTO productWeightDTO : list) {
+            if(!productWeightDTO.getCostAllocationStatus().equals(CostAllocationStatusEnum.NOT.getCode())){
+                throw new ServiceException("来源单号【{}】SKU【{}】已分摊，不允许修改",productWeightDTO.getSourceCode(),productWeightDTO.getSkuNo());
+            }
+        }
+        //是修改出库尺寸时，查询装箱信息
+        if (Objects.equals(dto.getChangeType(), "changeOutstockSize")){
+            List<String> boxIds = list.stream().map(FirstMileWeightAllocationDTO.ViewProductWeightDTO::getBoxId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<WmsCartonDTO.CartonSkuDTO> cartonDetailList = wmsCartonFeign.listSkuByBoxIds(boxIds);
+            Map<String, String> cartonSkuMap = cartonDetailList.stream().collect(Collectors.toMap(WmsCartonDTO.CartonSkuDTO::getBoxId, WmsCartonDTO.CartonSkuDTO::getSku));
+            for (FirstMileWeightAllocationDTO.ViewProductWeightDTO productWeightDTO : list) {
+                String sku = cartonSkuMap.get(productWeightDTO.getBoxId());
+                productWeightDTO.setSku(sku);
+            }
+        }
+        return list;
+    }
+
 
 }

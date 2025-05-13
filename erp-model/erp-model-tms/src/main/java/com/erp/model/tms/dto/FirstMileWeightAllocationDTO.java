@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 
 /**
  * <p>
@@ -848,5 +849,264 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          *
          */
         private LocalDate reportPeriod;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewProductWeightDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 来源ID
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号【可排序】
+         */
+        private String sourceCode;
+
+        /**
+         * 发货单明细id
+         */
+        private String deliveryDetailId;
+
+        /**
+         * 业务单号【可排序】
+         */
+        private String businessCode;
+
+        /**
+         * 物流运单号【可排序】
+         */
+        private String transportNo;
+
+        /**
+         * 产品名称【可排序】
+         */
+        private String productName;
+
+        /**
+         * 费用分摊状态【可排序】
+         * CostAllocationStatusEnum
+         */
+        private String costAllocationStatus;
+
+        /**
+         * 费用分摊状态(名称)
+         */
+        private String costAllocationStatusName;
+
+        private String skuId;
+
+        /**
+         * skuNo【可排序】
+         */
+        private String skuNo;
+        /**
+         * 装箱sku内容
+         */
+        private String sku;
+
+        /**
+         * 平台skuId
+         */
+        private String platformSkuId;
+
+        /**
+         * 平台skuNo【可排序】
+         */
+        private String platformSkuNo;
+
+        /**
+         * 箱ID
+         */
+        private String boxId;
+
+        /**
+         * 箱号【可排序】
+         */
+        private String boxNo;
+
+        /**
+         * 发货量【可排序】
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 箱长
+         */
+        private Integer boxLength;
+
+        /**
+         * 箱宽
+         */
+        private Integer boxWidth;
+
+        /**
+         * 箱高
+         */
+        private Integer BoxHeight;
+
+        /**
+         * 箱子尺寸单位
+         */
+        private String boxSizeUnit;
+
+        /**
+         * 出库尺寸（导出用）
+         */
+        private String boxSizeStr;
+
+        /**
+         * 出库重量
+         */
+        private BigDecimal outStockWeight;
+        /**
+         * 出库重量
+         */
+        private String outStockWeightStr;
+
+        /**
+         * 出库计费重【可排序】
+         */
+        private BigDecimal chargedWeight;
+        /**
+         * 出库计费重【可排序】
+         */
+        private String chargedWeightStr;
+
+        /**
+         * 体积重
+         */
+        private BigDecimal volumeWeight;
+
+        /**
+         * 单产品重量【可排序】
+         */
+        private BigDecimal productWeight;
+        /**
+         * 单产品重量【可排序】
+         */
+        private String productWeightStr;
+
+        /**
+         * 分摊重量【可排序】
+         */
+        private BigDecimal allocationWeight;
+        /**
+         * 分摊重量【可排序】
+         */
+        private String allocationWeightStr;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+
+        /**
+         * 物流商ID
+         */
+        private String supplierId;
+
+        /**
+         * 物流商名称【可排序】
+         */
+        private String supplierName;
+
+        /**
+         * 重量分摊方式【可排序】
+         */
+        private String allocationType;
+
+        /**
+         * 重量分摊方式名称
+         * WeightAllocationTypeEnum
+         */
+        private String allocationTypeName;
+
+        /**
+         * 计费规则【可排序】
+         */
+        private String feeRule;
+
+        /**
+         * 计费规则名称
+         * ShippingFeeRuleEnum
+         */
+        private String feeRuleName;
+
+        /**
+         * 店铺ID
+         */
+        private String shopId;
+
+        /**
+         * 店铺名称【可排序】
+         */
+        private String shopName;
+
+        /**
+         * 目的国家【可排序】
+         */
+        private String toCountry;
+
+        /**
+         * 目的国家（名称）
+         */
+        private String toCountryName;
+
+        /**
+         * 发货仓库ID【可排序】
+         */
+        private String fromWarehouseId;
+
+        /**
+         * 发货仓库（名称）
+         */
+        private String fromWarehouseName;
+
+        /**
+         * 最新核算期间id
+         */
+        private String calculatePeriodId;
+
+        /**
+         * 核算月份
+         */
+        private String calculateMonth;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 创建时间（导出用）
+         */
+        private String createTimeStr;
+
+        /**
+         * 物流单ID
+         */
+        private String logisticsBillId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewProductWeightParamDTO {
+        @NotEmpty(message = "头程重量分摊ID不能为空")
+        private List<String> ids;
+        /**
+         * 查询类型
+         * 修改单查询重量  changeProductWeight
+         * 修改出库重量/尺寸  changeOutstockSize
+         */
+        @NotBlank(message = "查询类型不能为空")
+        private String changeType;
     }
 }

@@ -88,4 +88,11 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * @param sourceId
      */
     void updateCalculateMonthBySourceId(String sourceId);
+
+    /**
+     * 查看商品重量
+     * @param dto
+     * @return
+     */
+    List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> viewProductWeight(FirstMileWeightAllocationDTO.ViewProductWeightParamDTO dto);
 }

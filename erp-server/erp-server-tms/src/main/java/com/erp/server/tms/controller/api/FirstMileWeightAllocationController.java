@@ -108,4 +108,15 @@ public class FirstMileWeightAllocationController extends BaseController {
         }
         return list.stream().allMatch(BatchResultDTO::getSuccess) ? success(list) : failure(list);
     }
+
+    /**
+     * 修改单产品重量预览
+     * @param dto
+     * @return
+     */
+    @PostMapping("/viewProductWeight")
+    public ApiResult<List<FirstMileWeightAllocationDTO.ViewProductWeightDTO>> viewProductWeight(@RequestBody FirstMileWeightAllocationDTO.ViewProductWeightParamDTO dto){
+        List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> list = firstMileWeightAllocationService.viewProductWeight(dto);
+        return success(list);
+    }
 }

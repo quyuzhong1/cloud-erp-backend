@@ -177,4 +177,5 @@ public interface BusinessNoConstant {
     String ZJTZ = "ZJTZ";
     //售后
     String SHSQ = "SHSQ";
+    String TCTZ = "TCTZ";
 }

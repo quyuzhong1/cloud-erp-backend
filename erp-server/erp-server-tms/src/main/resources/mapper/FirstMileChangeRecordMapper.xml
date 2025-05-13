@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.tms.mapper.FirstMileChangeRecordMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.tms.entity.FirstMileChangeRecordEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="code" property="code" />
+       <result column="source_type" property="sourceType" />
+       <result column="type" property="type" />
+       <result column="change_range" property="changeRange" />
+       <result column="report_period_id" property="reportPeriodId" />
+       <result column="report_period" property="reportPeriod" />
+       <result column="business_code" property="businessCode" />
+       <result column="delivery_id" property="deliveryId" />
+       <result column="delivery_code" property="deliveryCode" />
+       <result column="transport_no" property="transportNo" />
+       <result column="platform_sku_no" property="platformSkuNo" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="category" property="category" />
+       <result column="category_field" property="categoryField" />
+       <result column="old_value" property="oldValue" />
+       <result column="new_value" property="newValue" />
+       <result column="is_latest" property="isLatest" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, source_type, type, change_range, report_period_id, report_period, business_code, delivery_id, delivery_code, transport_no, platform_sku_no, sku_id, sku_no, category, category_field, old_value, new_value, is_latest
+    </sql>
+    <select id="paging" resultType="com.erp.model.tms.dto.FirstMileChangeRecordDTO$PagingVO">
+        select
+        to_char(fmcr.report_period, 'YYYY-MM') AS reportPeriodName,
+            <include refid="Base_Column_List"/>
+        from first_mile_change_record fmcr
+        <where>
+            ${params.sqlMap.default}
+            and fmcr.is_deleted=false
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+        </where>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        fmcr.create_time DESC
+    </select>
+
+
+</mapper>

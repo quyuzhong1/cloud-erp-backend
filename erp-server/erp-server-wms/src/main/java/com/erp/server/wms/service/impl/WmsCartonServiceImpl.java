@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
@@ -235,6 +236,14 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
             cartonIds = allFbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getCartonId).collect(Collectors.toList());
         }
         return baseMapper.listByPackingTaskId(packingTaskId,cartonIds);
+    }
+
+    @Override
+    public List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(List<String> boxIds) {
+        if(CollUtil.isEmpty(boxIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listSkuByBoxIds(boxIds);
     }
 
     /**
