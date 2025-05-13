@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -43,4 +44,6 @@ public interface CfgApproveSyncService extends SuperService<CfgApproveSyncEntity
     BatchResultDTO delete(String id);
 
     BatchResultDTO enable(String id,Boolean enableStatus);
+
+    void exportList(CfgApproveSyncDTO.PagingParamDTO dto, HttpServletResponse response);
 }

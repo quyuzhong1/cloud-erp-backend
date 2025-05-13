@@ -3,6 +3,7 @@ package com.erp.rpc.workflow;
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
@@ -26,4 +27,7 @@ public interface ExportWorkflowFeign {
      */
     @PostMapping("/feign/export/processDelegate")
     PagingVO<ProcessDelegateDTO.ListDTO> exportProcessDelegate(PagingDTO<ProcessDelegateDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportCfgApproveSync")
+    PagingVO<CfgApproveSyncDTO.ListDTO> exportCfgApproveSync(PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto);
 }

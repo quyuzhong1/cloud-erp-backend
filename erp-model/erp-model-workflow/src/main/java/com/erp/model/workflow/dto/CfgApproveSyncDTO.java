@@ -373,4 +373,16 @@ public class CfgApproveSyncDTO implements Serializable {
 
     }
 
+    /**
+     * 导出Excel
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO extends PagingParamDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+    }
+
 }

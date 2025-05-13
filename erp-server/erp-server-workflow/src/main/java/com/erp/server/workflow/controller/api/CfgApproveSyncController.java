@@ -9,6 +9,8 @@ import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.erp.model.workflow.entity.CfgApproveSyncEntity;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
@@ -83,7 +85,7 @@ public class CfgApproveSyncController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "workflow:cfgApproveSync:paging",
-            tableAlias = "afs"
+            tableAlias = "cas"
     )
     public ApiResult<List<CfgApproveSyncDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(cfgApproveSyncService.tabList(dto));
@@ -100,7 +102,7 @@ public class CfgApproveSyncController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "workflow:cfgApproveSync:paging",
-            tableAlias = "afs"
+            tableAlias = "cas"
     )
     @WebAdvanceQuery
     public ApiResult<PagingVO<CfgApproveSyncDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto) {
@@ -182,6 +184,27 @@ public class CfgApproveSyncController extends BaseController {
             resultDTOS.add(deleteResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 导出Excel数据
+     * @author jack
+     * @date:  2025-04-06
+     * @param dto
+     * @param response
+     * @return
+     */
+    @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgApproveSync:export",
+            tableAlias = "cas"
+    )
+    @LogAction(value = LogActionEnum.EXPORT, desc = "售后申请表导出Excel数据")
+    @WebAdvanceQuery
+    public ApiResult<Object> exportList(@RequestBody @Validated CfgApproveSyncDTO.PagingParamDTO dto, HttpServletResponse response) {
+        cfgApproveSyncService.exportList(dto, response);
+        return success();
     }
 
 
