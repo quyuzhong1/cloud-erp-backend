@@ -337,7 +337,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
             // 记录主单操作日志
             log.info("编辑 开始记录售后申请单日志数据，单号：【{}】", afterSaleEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSaleEntity.getCode(), "售后申请单");
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后申请单");
             operateLogService.addModuleOperateLogByObj(old, afterSaleEntity, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), msg);
         }else{ //正常更新
             AfterSaleEntity afterSaleEntity =  BeanMapperUtils.map(AfterSaleEntity.class, updateDTO);
@@ -352,6 +352,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
 
             //新增明细
             BigDecimal totalAmount = BigDecimal.ZERO;
+            List<AfterSaleDetailEntity> oldDetailList = afterSaleDetailService.lambdaQuery().eq(AfterSaleDetailEntity::getMainId, afterSaleEntity.getId()).list();
             List<AfterSaleDetailEntity> detailList = BeanMapper.copyList( updateDTO.getDetailList(),AfterSaleDetailEntity.class);
             if(CollUtil.isNotEmpty(detailList)){
                 List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -377,9 +378,38 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                         totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
                     }
                 }
-                // 删除明细数据
-                List<String> ids = detailList.stream().map(item -> item.getId()).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-
+                //删除明细
+                List<String> ids = detailList.stream().map(AfterSaleDetailEntity::getId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+                List<AfterSaleDetailEntity> removeList = oldDetailList.stream().filter(item -> !ids.contains(item.getId())).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(removeList)){
+                    String skuNos = removeList.stream()
+                            .map(AfterSaleDetailEntity::getSkuNo) // 提取每个对象的 skuNo
+                            .filter(StringUtil::isNotBlank) // 过滤掉可能为 null 的值
+                            .collect(Collectors.joining(",")); // 使用逗号拼接字符串
+                    String msg = StrUtil.format("用户【{}】删除明细【{}】 ", UserContext.getDefaultLoginUser().getUserName(),skuNos);
+                    operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.AFTER_SALE.getCode(),afterSaleEntity.getId(),"编辑信息");
+                }
+                //新增明细
+                List<AfterSaleDetailEntity> newList = detailList.stream().filter(item -> StringUtil.isBlank(item.getId())).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(newList)){
+                    String skuNos = newList.stream()
+                            .map(AfterSaleDetailEntity::getSkuNo) // 提取每个对象的 skuNo
+                            .filter(StringUtil::isNotBlank) // 过滤掉可能为 null 的值
+                            .collect(Collectors.joining(",")); // 使用逗号拼接字符串
+                    String msg = StrUtil.format("用户【{}】新增明细【{}】 ", UserContext.getDefaultLoginUser().getUserName(),skuNos);
+                    operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.AFTER_SALE.getCode(),afterSaleEntity.getId(),"编辑信息");
+                }
+                //编辑明细
+                List<AfterSaleDetailEntity> updateList = detailList.stream().filter(item -> StringUtil.isNotBlank(item.getId())).collect(Collectors.toList());
+                if(CollUtil.isNotEmpty(updateList)){
+                    String msg = StrUtil.format("用户【{}】编辑明细【{}】 ", UserContext.getDefaultLoginUser().getUserName());
+                    for (AfterSaleDetailEntity afterSaleDetailEntity : updateList) {
+                        AfterSaleDetailEntity oldDetail = oldDetailList.stream().filter(item -> item.getId().equals(afterSaleDetailEntity.getId())).findFirst().orElse(null);
+                        if(Objects.nonNull(oldDetail)){
+                            operateLogService.addModuleOperateLogByObj(oldDetail, afterSaleDetailEntity, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), msg);
+                        }
+                    }
+                }
                 if(CollUtil.isNotEmpty(ids)){
                     afterSaleDetailService.lambdaUpdate().eq(AfterSaleDetailEntity::getMainId, updateDTO.getId()).notIn(AfterSaleDetailEntity::getId, ids).remove();
                 }else {
@@ -427,10 +457,19 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             List<AfterSaleProgressEntity> afterSaleProgressList = afterSaleProgressService.listByMainIds(Collections.singletonList(updateDTO.getId()));
             for (AfterSaleProgressEntity afterSaleProgressEntity : afterSaleProgressList) {
                 if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_RETURNED.getCode())){//客户寄件
+                    if(!afterSaleProgressEntity.getTrackNo().equals(updateDTO.getReturnTrackNo())){
+                        String msg = StrUtil.format("用户【{}】编辑寄回快递单号由[{}]变更为[{}]  ", UserContext.getDefaultLoginUser().getUserName(),afterSaleProgressEntity.getTrackNo(),updateDTO.getReturnTrackNo());
+                        operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.AFTER_SALE.getCode(),afterSaleEntity.getId(),"编辑信息");
+                    }
                     afterSaleProgressEntity.setTrackNo(updateDTO.getReturnTrackNo());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
+
                 }
                 if(afterSaleProgressEntity.getNode().equals(AfterSaleStatusEnum.TO_BE_SHIPPED.getCode())){//售后发货
+                    if(!afterSaleProgressEntity.getTrackNo().equals(updateDTO.getOutboundTrackNo())){
+                        String msg = StrUtil.format("用户【{}】编辑寄出快递单号由[{}]变更为[{}] ", UserContext.getDefaultLoginUser().getUserName(),afterSaleProgressEntity.getTrackNo(),updateDTO.getOutboundTrackNo());
+                        operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.AFTER_SALE.getCode(),afterSaleEntity.getId(),"编辑信息");
+                    }
                     afterSaleProgressEntity.setTrackNo(updateDTO.getOutboundTrackNo());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
                 }
@@ -443,8 +482,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 throw new ServiceException("售后申请单保存失败");
             }
             // 记录主单操作日志
-            log.info("编辑 开始记录售后申请单日志数据，单号：【{}】", afterSaleEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), afterSaleEntity.getCode(), "售后申请单");
+            log.info("编辑 开始记录售后申请单日志数据，单号：【{}】", old.getCode());
+            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), old.getCode(), "售后申请单");
             operateLogService.addModuleOperateLogByObj(old, afterSaleEntity, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), msg);
         }
         return Boolean.TRUE;
@@ -717,6 +756,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
         afterSaleProgressEntity.setRemark(remark);
         afterSaleProgressService.updateById(afterSaleProgressEntity);
+
+        operateLogService.addModuleOperateLog(remark, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), "作废操作");
 
         //发送微信订阅消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -1027,13 +1068,16 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 }else {
                     batchResultDTO = BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
 
-
                     //更新状态
                     entity.setStatus(dto.getNode());
 
                     AfterSaleProgressEntity afterSaleProgressEntity = afterSaleProgressService.getByNode(entity.getId(), dto.getNode());
                     afterSaleProgressEntity.setNodeTime(LocalDateTime.now());
                     if(StringUtils.isNotBlank(dto.getTrackNo())){
+                        if(!afterSaleProgressEntity.getTrackNo().equals(dto.getTrackNo())){
+                            String msg = StrUtil.format("用户【{}】编辑寄回快递单号由[{}]变更为[{}]  ", UserContext.getDefaultLoginUser().getUserName(),afterSaleProgressEntity.getTrackNo(),dto.getTrackNo());
+                            operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.AFTER_SALE.getCode(),entity.getId(),"编辑信息");
+                        }
                         afterSaleProgressEntity.setTrackNo(dto.getTrackNo());
                     }
                     afterSaleProgressEntity.setRemark(dto.getRemark());
@@ -1061,6 +1105,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     }
                     //更新
                     updateById(entity);
+                    //日志
+                    String msg = StrUtil.format("用户【{}】更新状态由[{}]变更为[{}]  ", UserContext.getDefaultLoginUser().getUserName(),oldNodeDTO.getNodeName(),nodeMap.get(entity.getStatus()).getNodeName());
+                    operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.AFTER_SALE.getCode(),entity.getId(),"编辑信息");
                 }
             }
             resultList.add(batchResultDTO);
@@ -1273,6 +1320,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         //更新节点时间
         //更新通过，则进入下一个节点：售后签收
         updateProgressByMainId(afterSaleEntity.getId(), AfterSaleStatusEnum.AFTER_SALES_RECEIVED.getCode(),"","待签收");
+        //日志
+        String msg = StrUtil.format("用户填写寄回快递单号为[{}]",trackNo);
+        operateLogService.addModuleOperateLog(msg,ModuleTypeEnum.AFTER_SALE.getCode(),afterSaleEntity.getId(),"编辑信息");
         return update;
     }
 
