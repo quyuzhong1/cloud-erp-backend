@@ -35,6 +35,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -270,7 +271,6 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
 
         // 设置订单信息
         ShopifyServerSoB2cDTO.OrderInfo orderInfo = new ShopifyServerSoB2cDTO.OrderInfo();
-        orderInfo.setCreatedAt(soB2c.getPlatformOrderCreateTime());
         // 发货时间
         orderInfo.setCreatedAt(soB2c.getPlatformOrderCreateTime());
         orderInfo.setPackagedAt(soOutstockEntity.getPlatformCreateTime());
@@ -298,14 +298,17 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
 
         // 设置最新物流信息
         String orderStatus = "ordered";
+        LocalDateTime lastTime = soOutstockEntity.getPlatformUpdateTime();
         if(CollectionUtils.isNotEmpty(statusUpdates)){
             // 取statusUpdates最新记录状态属于sign，deliveryIng，trackIng的第一条记录
             List<String> activityStatus = Arrays.asList("sign", "deliveryIng", "trackIng");
             orderStatus = statusUpdates.stream().filter(e-> activityStatus.contains(e.getStatus()))
                     .map(ShopifyServerSoB2cDTO.StatusUpdate::getStatus)
                     .findFirst().orElse(orderStatus);
+            lastTime = statusUpdates.get(0).getTimestamp();
         }
         logisticInfoDTO.setOrderStatus(orderStatus);
+        logisticInfoDTO.setLastSignTime(lastTime);
 
         // 设置产品信息
         List<ShopifyServerSoB2cDTO.Product> products = dmpSoOutstockDetailEntityList.stream().map(detail -> {
