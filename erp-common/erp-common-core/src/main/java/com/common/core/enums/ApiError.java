@@ -245,6 +245,7 @@ public enum ApiError implements Serializable {
     PROCESS_DELEGATE_UPDATE(94034,"仅待执行可操作编辑"),
     PROCESS_DELEGATE_TIME_ERROR(94035,"委托失效时间不可小于生效时间"),
     PROCESS_DELEGATE_BUSINESS_KEY_ERROR(94036,"委托审批单【{}】已存在此流程"),
+    PROCESS_DELEGATE_BUSINESS_KEY_EXIST(94037,"委托流程【{}】已存在"),
 
 
     /**

@@ -41,4 +41,13 @@ public enum ProcessDelegateStatusEnum {
                 .filter(state -> code.equals(state.getCode()))
                 .findFirst().orElse(null);
     }
+
+    public static String getName(String type) {
+        for (ProcessDelegateStatusEnum statusEnum : ProcessDelegateStatusEnum.values()) {
+            if (type.equals(statusEnum.getCode())) {
+                return statusEnum.getName();
+            }
+        }
+        return "";
+    }
 }

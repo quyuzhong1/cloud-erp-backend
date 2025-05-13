@@ -43,6 +43,8 @@ public enum OperationTypeEnum {
     EXECUTE("execute", "执行"),
 
     LOCKING("locking", "锁定"),
+    CLOSE("close", "终止操作"),
+
     ;
     @JsonValue
     @EnumValue

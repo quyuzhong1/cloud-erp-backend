@@ -140,7 +140,7 @@ public class ProcessDelegateController extends BaseController {
             menuCode = "workflow:processDelegate:closeDelegate",
             serviceClass = ProcessDelegateService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CANCEL, desc = "委托审核单撤销")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "委托审批单终止委托")
     public ApiResult<List<BatchResultDTO>> closeDelegate(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -148,10 +148,10 @@ public class ProcessDelegateController extends BaseController {
             try {
                 cancelResult = processDelegateService.closeDelegate(id);
             }catch (Exception e){
-                log.error("委托审核单终止委托失败",e);
+                log.error("委托审批单终止委托失败",e);
                 ProcessDelegateEntity entity = processDelegateService.getById(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    cancelResult = BatchResultDTO.fail(id, id, "委托审核单不存在, 终止委托失败");
+                    cancelResult = BatchResultDTO.fail(id, id, "委托审批单不存在, 终止委托失败");
                     resultDTOS.add(cancelResult);
                     continue;
                 }

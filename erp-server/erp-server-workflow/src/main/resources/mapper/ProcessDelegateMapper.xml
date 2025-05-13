@@ -42,7 +42,7 @@
             pd.status as tabFlag,
             count(pd.id) as count
         FROM  process_delegate pd
-        WHERE si.is_deleted = FALSE
+        WHERE pd.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

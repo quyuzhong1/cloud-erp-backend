@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -26,6 +27,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.entity.ProcessDelegateEntity;
 import com.erp.model.workflow.enums.ProcessDelegateStatusEnum;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ProcessDelegateMapper;
 import com.erp.server.workflow.service.OperateLogService;
 import com.erp.server.workflow.service.ProcessDelegateService;
@@ -56,7 +58,8 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     private OperateLogService operateLogService;
     @Resource
     private DocNoGenHelper docNoGenHelper;
-
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -144,8 +147,8 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO closeDelegate(String id) {
         ProcessDelegateEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委托审批单数据"));
-        if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getCode())
-                && !ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getCode())) {
+        if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getStatus())
+                && !ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getStatus())) {
             throw new ServiceException(ApiError.PROCESS_DELEGATE_CLOSE);
         }
         //更新终止时间和状态
@@ -158,7 +161,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         //添加操作日志
         String msg = CharSequenceUtil.format("操作终止【{}】 ", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PROCESS_DELEGATE.getCode(), entity.getId(), "终止委托");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CLOSE);
     }
 
 
@@ -170,9 +173,17 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     * @return List<ProcessDelegateEntity>
     */
     private List<ProcessDelegateEntity> handleAddData(ProcessDelegateDTO.AddDTO addDTO) {
+        //委托信息
+        List<ProcessDelegateEntity> processDelegateList = listByBusinessKeyList(addDTO.getBusinessKeyList());
+        Map<String, ProcessDelegateEntity> map = CollUtil.isEmpty(processDelegateList) ? new HashMap<>() : processDelegateList.stream().collect(Collectors.toMap(ProcessDelegateEntity::getBusinessKey, Function.identity()));
+
         List<ProcessDelegateEntity> resultList = new ArrayList<>();
         for (String businessKey : addDTO.getBusinessKeyList()) {
             ProcessDelegateEntity processDelegateEntity = BeanUtil.toBean(addDTO, ProcessDelegateEntity.class);
+            ProcessDelegateEntity oldEntity = map.get(businessKey);
+            if (ObjectUtil.isNotEmpty(oldEntity)) {
+                throw new ServiceException(ApiError.PROCESS_DELEGATE_BUSINESS_KEY_EXIST,SourceTypeEnum.getName(businessKey));
+            }
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_LCWT);
             processDelegateEntity.setCode(code);
@@ -192,27 +203,27 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
      */
     private void checkUpdateData (ProcessDelegateEntity old,ProcessDelegateEntity entity) {
         //状态校验
-        if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(old.getCode())) {
+        if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(old.getStatus())) {
             throw new ServiceException(ApiError.PROCESS_DELEGATE_UPDATE);
         }
         //时间校验
         if (entity.getEffectiveTime().isAfter(entity.getExpireTime()) || entity.getEffectiveTime().equals(entity.getExpireTime())) {
             throw new ServiceException(ApiError.PROCESS_DELEGATE_TIME_ERROR);
         }
-        ProcessDelegateEntity byBusinessKey = this.getByBusinessKey(entity.getBusinessKey());
-        if (ObjectUtil.isNotEmpty(byBusinessKey) && !byBusinessKey.getId().equals(entity.getId())) {
-            throw new ServiceException(ApiError.PROCESS_DELEGATE_BUSINESS_KEY_ERROR,byBusinessKey.getCode());
+        List<ProcessDelegateEntity> processDelegateList = this.listByBusinessKeyList(Collections.singletonList(entity.getBusinessKey()));
+        if (CollUtil.isNotEmpty(processDelegateList) && !processDelegateList.get(0).getId().equals(entity.getId())) {
+            throw new ServiceException(ApiError.PROCESS_DELEGATE_BUSINESS_KEY_ERROR,processDelegateList.get(0).getCode());
         }
     }
     /**
      * 根据单据类型查询
      * @author will
      * @date 2025/5/12 19:32
-     * @param businessKey
-     * @return ProcessDelegateEntity
+     * @param businessKeyList
+     * @return List<ProcessDelegateEntity>
      */
-    private ProcessDelegateEntity getByBusinessKey (String businessKey) {
-        return lambdaQuery().eq(ProcessDelegateEntity::getBusinessKey,businessKey).last("limit 1").one();
+    private List<ProcessDelegateEntity> listByBusinessKeyList (List<String> businessKeyList) {
+        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).list();
     }
 
     /**
@@ -221,6 +232,17 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     private void fillList(List<ProcessDelegateDTO.ListDTO> list) {
         if (CollUtil.isEmpty(list)) {
             return;
+        }
+        List<FindUserDTO> userList = sysUserFeign.getUserList();
+        Map<String, String> map = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+
+        for (ProcessDelegateDTO.ListDTO listDTO : list) {
+            //状态名称
+            listDTO.setStatusName(ProcessDelegateStatusEnum.getName(listDTO.getStatus()));
+            //单据名称
+            listDTO.setBusinessKeyName(SourceTypeEnum.getName(listDTO.getBusinessKey()));
+            listDTO.setStartUserName(map.get(listDTO.getStartUserId()));
+            listDTO.setDelegateUserName(map.get(listDTO.getDelegateUserId()));
         }
     }
 }
