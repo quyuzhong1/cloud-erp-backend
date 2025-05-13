@@ -372,6 +372,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private InvoiceInfoService invoiceInfoService;
+    @Lazy
+    @Resource
+    private SoPriceService soPriceService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -10090,6 +10093,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CharSequenceUtil.isNotBlank(dto.getLogisticsDTO().getLogisticsChannelId()) && !entity.getIsMatchLogisticsRule()){
             this.lambdaUpdate().set(SoB2cEntity::getIsMatchLogisticsRule,Boolean.TRUE).eq(SoB2cEntity::getId,id).update();
         }
+    }
+
+    @Override
+    public void updateAmount(String id, BigDecimal amount) {
+        if (CharSequenceUtil.isBlank(id) || Objects.isNull(amount)){
+            return;
+        }
+        this.lambdaUpdate().set(SoB2cEntity::getAmount,amount).eq(SoB2cEntity::getId,id).update();
     }
 
 
