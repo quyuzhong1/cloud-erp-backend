@@ -135,7 +135,7 @@
         <!--sdk-->
         <dependency>
             <groupId>com.cloud.erp</groupId>
-            <artifactId>erp-sdk-approve-fs</artifactId>
+            <artifactId>erp-sdk-msg-fs</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
