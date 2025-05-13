@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -119,5 +120,39 @@ public class CfgApproveNoticeDTO implements Serializable {
 
     }
 
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class NoticeSettingDTO{
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 通知类型：approve=审批通知,approveResult=审核结果通知,cc=抄送通知,timeoutWarning=超时预警通知,recall=撤回通知
+         */
+        private String noticeType;
+
+        private List<String> noticeTypeList;
+
+        /**
+         * 角色：applicant=申请人,cc=抄送人,approver=审核人
+         */
+        @NotBlank(message = "角色不能为空")
+        private String roleType;
+        private List<String> roleTypeList;
+
+        /**
+         * 具体人员
+         */
+        @Size(max = 1024,message = "具体人员最大长度不能超过1024位")
+        private String specificPerson;
+        private List<String> specificPersonList;
+    }
 
 }

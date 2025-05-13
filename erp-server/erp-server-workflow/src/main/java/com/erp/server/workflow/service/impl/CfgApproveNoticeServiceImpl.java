@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.workflow.entity.CfgApproveNoticeEntity;
@@ -84,6 +85,14 @@ public class CfgApproveNoticeServiceImpl extends SuperServiceImpl<CfgApproveNoti
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, cfgApproveNoticeEntity, null, cfgApproveNoticeEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<CfgApproveNoticeEntity> listByMainIds(List<String> ids) {
+        if(CollUtil.isNotEmpty(ids)){
+            return lambdaQuery().in(CfgApproveNoticeEntity::getMainId, ids).list();
+        }
+        return Collections.emptyList();
     }
 
 

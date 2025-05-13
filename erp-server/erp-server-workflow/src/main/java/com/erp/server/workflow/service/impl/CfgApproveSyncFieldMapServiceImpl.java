@@ -1,8 +1,10 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.workflow.entity.CfgApproveNoticeEntity;
 import com.erp.model.workflow.entity.CfgApproveSyncFieldMapEntity;
 import com.erp.server.workflow.mapper.CfgApproveSyncFieldMapMapper;
 import com.erp.server.workflow.service.CfgApproveSyncFieldMapService;
@@ -86,6 +88,13 @@ public class CfgApproveSyncFieldMapServiceImpl extends SuperServiceImpl<CfgAppro
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<CfgApproveSyncFieldMapEntity> listByMainIds(List<String> ids) {
+        if(CollUtil.isNotEmpty(ids)){
+            return lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, ids).list();
+        }
+        return Collections.emptyList();
+    }
 
     /**
     * 新增修改处理数据

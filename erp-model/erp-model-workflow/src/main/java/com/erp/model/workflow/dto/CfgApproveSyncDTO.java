@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
@@ -147,8 +148,8 @@ public class CfgApproveSyncDTO implements Serializable {
         /**
         * 审批分组dict_basic表approveGroup
         */
-        @NotBlank(message = "审批分组dict_basic表approveGroup不能为空")
-        @Size(max = 32,message = "审批分组dict_basic表approveGroup最大长度不能超过32位")
+        @NotBlank(message = "审批分组不能为空")
+        @Size(max = 32,message = "审批分组最大长度不能超过32位")
         private String approveGroup;
 
         /**
@@ -160,7 +161,6 @@ public class CfgApproveSyncDTO implements Serializable {
         /**
         * 备注
         */
-        @NotBlank(message = "备注不能为空")
         @Size(max = 200,message = "备注最大长度不能超过200位")
         private String remark;
 
@@ -174,32 +174,38 @@ public class CfgApproveSyncDTO implements Serializable {
         /**
         * 可见范围dict_basic表viewerType：allUsers=所有用户,specificDepartments=指定部门,specificUsers=指定用户,none=不可见
         */
-        @NotBlank(message = "可见范围dict_basic表viewerType：allUsers=所有用户,specificDepartments=指定部门,specificUsers=指定用户,none=不可见不能为空")
-        @Size(max = 32,message = "可见范围dict_basic表viewerType：allUsers=所有用户,specificDepartments=指定部门,specificUsers=指定用户,none=不可见最大长度不能超过32位")
+        @NotBlank(message = "可见范围不能为空")
+        @Size(max = 32,message = "可见范围最大长度不能超过32位")
         private String viewerType;
 
         /**
         * 可见集合
         */
-        @NotBlank(message = "可见集合不能为空")
-        @Size(max = 500,message = "可见集合最大长度不能超过500位")
         private String viewer;
+
+        private List<String> viewerList;
 
         /**
         * 同步平台：feishu=飞书,dd=钉钉,qw=企业微信
         */
-        @NotBlank(message = "同步平台：feishu=飞书,dd=钉钉,qw=企业微信不能为空")
-        @Size(max = 32,message = "同步平台：feishu=飞书,dd=钉钉,qw=企业微信最大长度不能超过32位")
+        @NotBlank(message = "推送方式不能为空")
+        @Size(max = 32,message = "推送方式最大长度不能超过32位")
         private String syncPlatform;
 
         /**
         * 飞书审批定义
         */
-        @NotBlank(message = "飞书审批定义不能为空")
-        @Size(max = 255,message = "飞书审批定义最大长度不能超过255位")
         private String approvalCode;
-
-
+        /**
+         * 推送信息
+         */
+        @NotEmpty
+        private List<CfgApproveSyncFieldMapDTO.@Valid NoticeFieldMapDTO> pushMsgList;
+        /**
+         * 通知配置
+         */
+        @NotEmpty
+        private List<CfgApproveNoticeDTO.@Valid NoticeSettingDTO> noticeSettingList;
     }
 
     @Data
@@ -371,18 +377,6 @@ public class CfgApproveSyncDTO implements Serializable {
         @NotNull(message = "启用状态不能为空")
         private Boolean enableStatus;
 
-    }
-
-    /**
-     * 导出Excel
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ExportDTO extends PagingParamDTO {
-        /**
-         * 勾选的id集合
-         */
-        private List<String> ids;
     }
 
 }

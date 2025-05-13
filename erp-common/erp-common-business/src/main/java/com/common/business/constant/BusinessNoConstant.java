@@ -181,4 +181,6 @@ public interface BusinessNoConstant {
     //委托审批
     String LCWT = "LCWT";
 
+    String SFSP = "SFSP";
+
 }

@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * ERP审批同步-通知配置 服务类
@@ -33,4 +35,5 @@ public interface CfgApproveNoticeService extends SuperService<CfgApproveNoticeEn
     Boolean update(CfgApproveNoticeDTO.UpdateDTO dto);
 
 
+    List<CfgApproveNoticeEntity> listByMainIds(List<String> list);
 }

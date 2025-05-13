@@ -142,4 +142,52 @@ public class CfgApproveSyncFieldMapDTO implements Serializable {
     }
 
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class NoticeFieldMapDTO{
+
+        /**
+         *
+         */
+        private String id;
+        /**
+         * 主表id
+         */
+        private String mainId;
+
+        /**
+         * 国际化类型 默认zh-CN
+         */
+        private String locale;
+
+
+        /**
+         * 字段名
+         */
+        @NotBlank(message = "字段名不能为空")
+        @Size(max = 50,message = "字段名最大长度不能超过50位")
+        private String fieldName;
+
+        /**
+         * 字段来源
+         */
+        @NotBlank(message = "字段来源不能为空")
+        @Size(max = 50,message = "字段来源最大长度不能超过50位")
+        private String fieldSource;
+
+        /**
+         * 是否快捷审批
+         */
+        private Boolean isQuick;
+
+        /**
+         * 排序
+         */
+        private Integer sort;
+    }
+
+
 }
