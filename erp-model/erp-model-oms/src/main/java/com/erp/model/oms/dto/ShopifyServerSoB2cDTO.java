@@ -55,6 +55,7 @@ public class ShopifyServerSoB2cDTO {
         private LocalDateTime lastSignTime;
         private String platformCode;
         private String billStatus;
+        private String orderStatus;
         private OrderInfo orderInfo;
         private Logistics logistics;
         private List<Product> products;
@@ -83,6 +84,7 @@ public class ShopifyServerSoB2cDTO {
         private LocalDateTime timestamp;
         private String location;
         private String description;
+        private String status;
     }
 
     @Data
