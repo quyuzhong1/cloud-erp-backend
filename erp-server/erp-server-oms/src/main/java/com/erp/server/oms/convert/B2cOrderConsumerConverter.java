@@ -131,6 +131,7 @@ public interface B2cOrderConsumerConverter {
             @Mapping(target = "warehouseSkuNo", expression = "java(keepHistory ? oldEntity.getWarehouseSkuNo() : detailDTO.getWarehouseSkuNo())"),
             @Mapping(target = "qty", expression = "java(keepHistory ? oldEntity.getQty() : detailDTO.getQty())"),
             @Mapping(target = "price", source = "detailDTO.price"),
+            @Mapping(target = "taxRate", source = "detailDTO.taxRate"),
             @Mapping(target = "amount", source = "detailDTO.amount"),
             @Mapping(target = "currency", source = "detailDTO.currency"),
             @Mapping(target = "exchangeRate", source = "detailDTO.exchangeRate"),
