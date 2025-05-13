@@ -27,6 +27,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.entity.ProcessDelegateEntity;
 import com.erp.model.workflow.enums.ProcessDelegateStatusEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ProcessDelegateMapper;
 import com.erp.server.workflow.service.OperateLogService;
@@ -43,6 +44,8 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_DELEGATE;
+
 /**
  * <p>
  * 委托审批 服务实现类
@@ -56,10 +59,16 @@ import java.util.stream.Collectors;
 public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegateMapper, ProcessDelegateEntity> implements ProcessDelegateService {
     @Resource
     private OperateLogService operateLogService;
+
     @Resource
     private DocNoGenHelper docNoGenHelper;
+
     @Resource
     private SysUserFeign sysUserFeign;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -164,6 +173,10 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CLOSE);
     }
 
+    @Override
+    public void exportList(ProcessDelegateDTO.PagingParamDTO param) {
+        downloadTaskFeign.saveDownloadTask("委托审批单导出", EXPORT_PROCESS_DELEGATE.getCode(), param);
+    }
 
    /**
     * 批量新增数据转换

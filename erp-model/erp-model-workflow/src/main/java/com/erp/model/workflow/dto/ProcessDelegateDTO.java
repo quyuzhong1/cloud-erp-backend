@@ -144,6 +144,10 @@ public class ProcessDelegateDTO implements Serializable {
          * 创建人姓名【可排序】
          */
         private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
     }
 

@@ -67,4 +67,12 @@ public interface ProcessDelegateService extends SuperService<ProcessDelegateEnti
      * @return BatchResultDTO
      */
     BatchResultDTO closeDelegate(String id);
+    /**
+     * 导出Excel
+     * @author will
+     * @date 2025/5/13 11:10
+     * @param dto
+     * @return void
+     */
+    void exportList(ProcessDelegateDTO.PagingParamDTO dto);
 }

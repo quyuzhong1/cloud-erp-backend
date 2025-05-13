@@ -103,7 +103,7 @@ public class ProcessDelegateController extends BaseController {
         menuCode = "workflow:processDelegate:update",
         serviceClass = ProcessDelegateService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated ProcessDelegateDTO.UpdateDTO dto) {
+    public ApiResult<Boolean> update(@RequestBody @Validated ProcessDelegateDTO.UpdateDTO dto) {
         processDelegateService.update(dto);
         return success();
     }
@@ -161,4 +161,20 @@ public class ProcessDelegateController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 导出Excel
+     * @author will
+     * @date 2025/5/13 11:09
+     * @param dto
+     * @return ApiResult<Boolean>
+     */
+    @PostMapping("/export")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "委托审批导出Excel数据")
+    @WebAdvanceQuery(handler = ProcessDelegateQueryHandler.class)
+    public ApiResult<Boolean> exportList(@RequestBody @Validated ProcessDelegateDTO.PagingParamDTO dto) {
+        processDelegateService.exportList(dto);
+        return success();
+    }
+
 }
