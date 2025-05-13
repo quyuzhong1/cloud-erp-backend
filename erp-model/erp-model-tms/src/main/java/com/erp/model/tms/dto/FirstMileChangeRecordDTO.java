@@ -284,24 +284,27 @@ public class FirstMileChangeRecordDTO implements Serializable {
         private String  id;
 
         /**
-         * 调整单号
+         * 调整单号【可排序】
          */
         private String code;
 
         /**
          * 调整类型:firstMileCost=费用调整,firstMileWeight=重量调整,thirdReceive=签收调整
+         * 【可排序】
          */
         private String sourceType;
         private String sourceTypeName;
 
         /**
          * 操作类型:manual=人工调整,auto=系统计算
+         * 【可排序】
          */
         private String type;
         private String typeName;
 
         /**
          * 修改范围:current=仅修改当前值,box=修改同箱同SKU,order=修改同单同SKU
+         * 【可排序】
          */
         private String changeRange;
         private String changeRangeName;
@@ -313,12 +316,13 @@ public class FirstMileChangeRecordDTO implements Serializable {
 
         /**
          * 核算月份
+         * 【可排序】
          */
         private LocalDate reportPeriod;
         private String reportPeriodName;
 
         /**
-         * 业务单号
+         * 业务单号【可排序】
          */
         private String businessCode;
 
@@ -328,17 +332,17 @@ public class FirstMileChangeRecordDTO implements Serializable {
         private String deliveryId;
 
         /**
-         * 发货单编码
+         * 发货单编码【可排序】
          */
         private String deliveryCode;
 
         /**
-         * 物流运单号
+         * 物流运单号【可排序】
          */
         private String transportNo;
 
         /**
-         * 平台skuNo
+         * 平台skuNo【可排序】
          */
         private String platformSkuNo;
 
@@ -348,29 +352,34 @@ public class FirstMileChangeRecordDTO implements Serializable {
         private String skuId;
 
         /**
-         * skuNO
+         * skuNO【可排序】
          */
         private String skuNo;
 
         /**
          * 调整分类:boxNo=箱号,shippingCost=运费,declareCost=关税,otherTaxFee=其他税费,otherCost=其他费用
+         * 【可排序】
          */
         private String category;
         private String categoryName;
 
         /**
-         * 调整字段:current_period_allocated_cost=本期分摊费用,mid_period_transit_cost=冲期初在途费用,end_period_transit_cost=期末在途费用,end_period_estimated_cost=期末暂估费用,charged_weight=出库重量
+         * 调整字段:current_period_allocated_cost=本期分摊费用,mid_period_transit_cost=冲期初在途费用,end_period_transit_cost=期末在途费用,
+         * end_period_estimated_cost=期末暂估费用,charged_weight=出库重量
+         * FirstMileChangeRecordCategoryFieldEnum
+         *
+         * 【可排序】
          */
         private String categoryField;
         private String categoryFieldName;
 
         /**
-         * 调整前数值
+         * 调整前数值【可排序】
          */
         private String oldValue;
 
         /**
-         * 调整后数值
+         * 调整后数值【可排序】
          */
         private String newValue;
 
@@ -379,11 +388,11 @@ public class FirstMileChangeRecordDTO implements Serializable {
          */
         private Boolean isLatest;
         /**
-         * 操作人
+         * 操作人【可排序】
          */
         private String createUserName;
         /**
-         * 创建时间
+         * 创建时间【可排序】
          */
         private LocalDateTime createTime;
 

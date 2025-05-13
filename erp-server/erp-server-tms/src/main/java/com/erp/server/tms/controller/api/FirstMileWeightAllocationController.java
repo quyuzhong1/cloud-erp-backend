@@ -1,10 +1,13 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.server.tms.query.FirstMileWeightAllocationQueryHandler;
+import com.erp.server.tms.service.FirstMileChangeRecordService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -41,7 +44,8 @@ public class FirstMileWeightAllocationController extends BaseController {
 
     @Resource
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
-
+    @Resource
+    private FirstMileChangeRecordService firstMileChangeRecordService;
     /**
      * 分页
      * @param dto
@@ -118,5 +122,51 @@ public class FirstMileWeightAllocationController extends BaseController {
     public ApiResult<List<FirstMileWeightAllocationDTO.ViewProductWeightDTO>> viewProductWeight(@RequestBody FirstMileWeightAllocationDTO.ViewProductWeightParamDTO dto){
         List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> list = firstMileWeightAllocationService.viewProductWeight(dto);
         return success(list);
+    }
+    /**
+     * 修改单产品重量保存
+     * @param dtoValidList
+     * @return
+     */
+    @PostMapping("/changeProductWeight")
+    public ApiResult<List<BatchResultDTO>> changeProductWeight(@RequestBody @Valid ValidList<FirstMileWeightAllocationDTO.ProductWeightDTO> dtoValidList){
+        //批量校验是否存在相同维度的sku修改数据
+        List<BatchResultDTO> batchResultDTOS = firstMileChangeRecordService.checkSameDimension(dtoValidList);
+        //存在异常校验直接返回
+        if (batchResultDTOS.stream().anyMatch(item -> !item.getSuccess())) {
+            return failure(batchResultDTOS);
+        }
+        //批量保存修改记录
+        firstMileChangeRecordService.changeProductWeight(dtoValidList);
+        //按照保存成功记录，进行按照单据进行重新重量分摊
+        List<String> logisticsBillIds = dtoValidList.stream().map(FirstMileWeightAllocationDTO.ViewProductWeightDTO::getLogisticsBillId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        for (String logisticsBillId : logisticsBillIds) {
+            BatchResultDTO resultDTO = firstMileWeightAllocationService.weightReCompute(logisticsBillId);
+            batchResultDTOS.add(resultDTO);
+        }
+        return batchResultDTOS.stream().allMatch(BatchResultDTO::getSuccess)? success(batchResultDTOS) : failure(batchResultDTOS);
+    }
+    /**
+     * 修改出库重量/尺寸
+     * @param dtoValidList
+     * @return
+     */
+    @PostMapping("/changePackageWeight")
+    public ApiResult<List<BatchResultDTO>> changePackageWeight(@RequestBody @Valid ValidList<FirstMileWeightAllocationDTO.PackageSizeDTO> dtoValidList){
+        //批量校验是否存在相同维度的sku修改数据
+        List<BatchResultDTO> batchResultDTOS = firstMileChangeRecordService.checkPackageSameDimension(dtoValidList);
+        //存在异常校验直接返回
+        if (batchResultDTOS.stream().anyMatch(item -> !item.getSuccess())) {
+            return failure(batchResultDTOS);
+        }
+        //批量保存修改记录
+        firstMileChangeRecordService.changePackageWeight(dtoValidList);
+        //按照保存成功记录，进行按照单据进行重新重量分摊
+        List<String> logisticsBillIds = dtoValidList.stream().map(FirstMileWeightAllocationDTO.ViewProductWeightDTO::getLogisticsBillId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        for (String logisticsBillId : logisticsBillIds) {
+            BatchResultDTO resultDTO = firstMileWeightAllocationService.weightReCompute(logisticsBillId);
+            batchResultDTOS.add(resultDTO);
+        }
+        return batchResultDTOS.stream().allMatch(BatchResultDTO::getSuccess)? success(batchResultDTOS) : failure(batchResultDTOS);
     }
 }

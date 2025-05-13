@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 /**
  * <p>
@@ -137,7 +138,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱高
         */
-        private Integer BoxHeight;
+        private Integer boxHeight;
 
         /**
         * 箱子尺寸单位
@@ -859,6 +860,10 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 主键id
          */
         private String  id;
+        /**
+         * 调整单号[后端使用]
+         */
+        private String  code;
 
         /**
          * 来源ID
@@ -866,45 +871,42 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String sourceId;
 
         /**
-         * 来源单号【可排序】
+         * 来源单号
          */
+        @NotBlank(message = "来源单号不能为空")
         private String sourceCode;
-
         /**
-         * 发货单明细id
+         * 业务单号
          */
-        private String deliveryDetailId;
-
-        /**
-         * 业务单号【可排序】
-         */
+        @NotBlank(message = "来源单号不能为空")
         private String businessCode;
 
         /**
-         * 物流运单号【可排序】
+         * 物流运单号
          */
+        @NotBlank(message = "物流运单号不能为空")
         private String transportNo;
+        /**
+         * 头程物流单ID
+         */
+        @NotNull(message = "头程物流单ID不能为空")
+        private String logisticsBillId;
 
         /**
-         * 产品名称【可排序】
+         * 产品名称
          */
         private String productName;
 
         /**
-         * 费用分摊状态【可排序】
+         * 费用分摊状态
          * CostAllocationStatusEnum
          */
         private String costAllocationStatus;
 
-        /**
-         * 费用分摊状态(名称)
-         */
-        private String costAllocationStatusName;
-
         private String skuId;
 
         /**
-         * skuNo【可排序】
+         * skuNo
          */
         private String skuNo;
         /**
@@ -913,12 +915,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String sku;
 
         /**
-         * 平台skuId
-         */
-        private String platformSkuId;
-
-        /**
-         * 平台skuNo【可排序】
+         * 平台skuNo
          */
         private String platformSkuNo;
 
@@ -928,12 +925,13 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String boxId;
 
         /**
-         * 箱号【可排序】
+         * 箱号
          */
+        @NotBlank(message = "来源单号不能为空")
         private String boxNo;
 
         /**
-         * 发货量【可排序】
+         * 发货量
          */
         private Integer deliveryQty;
 
@@ -950,7 +948,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 箱高
          */
-        private Integer BoxHeight;
+        private Integer boxHeight;
 
         /**
          * 箱子尺寸单位
@@ -958,142 +956,19 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         private String boxSizeUnit;
 
         /**
-         * 出库尺寸（导出用）
-         */
-        private String boxSizeStr;
-
-        /**
          * 出库重量
          */
         private BigDecimal outStockWeight;
-        /**
-         * 出库重量
-         */
-        private String outStockWeightStr;
 
         /**
-         * 出库计费重【可排序】
-         */
-        private BigDecimal chargedWeight;
-        /**
-         * 出库计费重【可排序】
-         */
-        private String chargedWeightStr;
-
-        /**
-         * 体积重
-         */
-        private BigDecimal volumeWeight;
-
-        /**
-         * 单产品重量【可排序】
+         * 单产品重量
          */
         private BigDecimal productWeight;
-        /**
-         * 单产品重量【可排序】
-         */
-        private String productWeightStr;
-
-        /**
-         * 分摊重量【可排序】
-         */
-        private BigDecimal allocationWeight;
-        /**
-         * 分摊重量【可排序】
-         */
-        private String allocationWeightStr;
 
         /**
          * 重量单位
          */
         private String weightUnit;
-
-        /**
-         * 物流商ID
-         */
-        private String supplierId;
-
-        /**
-         * 物流商名称【可排序】
-         */
-        private String supplierName;
-
-        /**
-         * 重量分摊方式【可排序】
-         */
-        private String allocationType;
-
-        /**
-         * 重量分摊方式名称
-         * WeightAllocationTypeEnum
-         */
-        private String allocationTypeName;
-
-        /**
-         * 计费规则【可排序】
-         */
-        private String feeRule;
-
-        /**
-         * 计费规则名称
-         * ShippingFeeRuleEnum
-         */
-        private String feeRuleName;
-
-        /**
-         * 店铺ID
-         */
-        private String shopId;
-
-        /**
-         * 店铺名称【可排序】
-         */
-        private String shopName;
-
-        /**
-         * 目的国家【可排序】
-         */
-        private String toCountry;
-
-        /**
-         * 目的国家（名称）
-         */
-        private String toCountryName;
-
-        /**
-         * 发货仓库ID【可排序】
-         */
-        private String fromWarehouseId;
-
-        /**
-         * 发货仓库（名称）
-         */
-        private String fromWarehouseName;
-
-        /**
-         * 最新核算期间id
-         */
-        private String calculatePeriodId;
-
-        /**
-         * 核算月份
-         */
-        private String calculateMonth;
-
-        /**
-         * 创建时间
-         */
-        private LocalDateTime createTime;
-
-        /**
-         * 创建时间（导出用）
-         */
-        private String createTimeStr;
-
-        /**
-         * 物流单ID
-         */
-        private String logisticsBillId;
     }
 
     @Data
@@ -1108,5 +983,60 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          */
         @NotBlank(message = "查询类型不能为空")
         private String changeType;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class ProductWeightDTO extends ViewProductWeightDTO{
+        /**
+         * 新的单产品重量
+         */
+        @NotNull(message = "新的单产品重量不能为空")
+        private BigDecimal newProductWeight;
+        /**
+         * 修改范围:current=仅修改当前值,box=修改同箱同SKU,order=修改同单同SKU  枚举：FirstMileChangeRecordChangeRangeEnum
+         * 字典接口地址 http://172.16.100.11:3002/project/128/interface/api/25522  changeRange 修改范围
+         */
+        @NotBlank(message = "修改范围不能为空")
+        private String changeRange;
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "来源单号不能为空")
+        private String skuNo;
+        /**
+         * 平台skuNo
+         */
+        @NotBlank(message = "来源单号不能为空")
+        private String platformSkuNo;
+    }
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class PackageSizeDTO extends ViewProductWeightDTO{
+        /**
+         * 箱长
+         */
+        @NotNull(message = "新的箱长不能为空")
+        private Integer newBoxLength;
+
+        /**
+         * 箱宽
+         */
+        @NotNull(message = "新的箱宽不能为空")
+        private Integer newBoxWidth;
+
+        /**
+         * 箱高
+         */
+        @NotNull(message = "新的箱高不能为空")
+        private Integer newBoxHeight;
+
+        /**
+         * 出库重量
+         */
+        @NotNull(message = "新的出库重量不能为空")
+        private BigDecimal newOutStockWeight;
     }
 }

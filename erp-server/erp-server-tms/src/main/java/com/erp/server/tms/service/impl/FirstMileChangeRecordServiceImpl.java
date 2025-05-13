@@ -1,24 +1,30 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
+import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileChangeRecordEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.tms.convert.FirstMileChangeRecordConverter;
 import com.erp.server.tms.mapper.FirstMileChangeRecordMapper;
 import com.erp.server.tms.service.FirstMileChangeRecordService;
 import com.erp.server.tms.service.OperateLogService;
@@ -30,8 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
 
@@ -111,6 +116,184 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     @Override
     public void exportList(FirstMileChangeRecordDTO.PagingParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("头程调整记录导出", EXPORT_TMS_FIRST_MILE_COST_ALLOCATION.getCode(), dto);
+    }
+
+    @Override
+    public List<BatchResultDTO> checkSameDimension(List<FirstMileWeightAllocationDTO.ProductWeightDTO> dtoValidList) {
+        if (CollUtil.isEmpty(dtoValidList)) {
+            throw new ServiceException("请选择要修改的重量分摊记录");
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (FirstMileWeightAllocationDTO.ProductWeightDTO e : dtoValidList) {
+            //先判断校验范围
+            if (FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode().equals(e.getChangeRange())) {
+                if (e.getProductWeight().compareTo(e.getNewProductWeight()) == 0) {
+                    resultDTOS.add(new BatchResultDTO(e.getId(), e.getSourceCode(), "调整后重量与调整前重量一致", false));
+                    continue;
+                }
+                //判断当前值是否存在相同的SKU
+                dtoValidList.stream().filter(item -> !Objects.equals(item.getId(), e.getId())
+                        && item.getSkuId().equals(e.getSkuId())
+                        && item.getSourceCode().equals(e.getSourceCode())
+                        && item.getBoxId().equals(e.getBoxId())
+                        && item.getBusinessCode().equals(e.getBusinessCode())
+                        && item.getPlatformSkuNo().equals(e.getPlatformSkuNo())
+                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), "当前值存在相同的SKU", false)));
+            } else if (FirstMileChangeRecordChangeRangeEnum.BOX.getCode().equals(e.getChangeRange())) {
+                //判断是否同箱同SKU
+                dtoValidList.stream().filter(item -> !Objects.equals(item.getId(), e.getId())
+                        && item.getSkuId().equals(e.getSkuId())
+                        && item.getSourceCode().equals(e.getSourceCode())
+                        && item.getBoxId().equals(e.getBoxId())
+                        && item.getBusinessCode().equals(e.getBusinessCode())
+                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), "同箱同SKU存在其他相同配置", false)));
+            } else if (FirstMileChangeRecordChangeRangeEnum.ORDER.getCode().equals(e.getChangeRange())) {
+                //判断是否同单同SKU
+                dtoValidList.stream().filter(item -> !Objects.equals(item.getId(), e.getId())
+                        && item.getSkuId().equals(e.getSkuId())
+                        && item.getSourceCode().equals(e.getSourceCode())
+                        && item.getBusinessCode().equals(e.getBusinessCode())
+                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), "同单同SKU存在其他相同配置", false)));
+            }
+        }
+        return resultDTOS;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeProductWeight(List<FirstMileWeightAllocationDTO.ProductWeightDTO> dtoValidList) {
+        if (CollUtil.isEmpty(dtoValidList)){
+            return;
+        }
+        dtoValidList.forEach(e -> {
+            //赋值调整单号
+            e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+        });
+        List<FirstMileChangeRecordEntity> list = FirstMileChangeRecordConverter.INSTANCE.changeProductWeightDtoToEntityConvert(dtoValidList);
+        //新增记录前修改原来的记录为非最新记录
+        list.forEach(e -> this.lambdaUpdate()
+                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
+        //新增记录
+        boolean saveBatch = this.saveBatch(list);
+        if (!saveBatch){
+            throw new ServiceException("头程调整记录保存失败");
+        }
+    }
+
+    @Override
+    public FirstMileChangeRecordEntity getProductWeightByParams(String sourceType, String deliveryId, String businessCode, String skuId, String categoryField, String sourceId, String boxId) {
+        //先获取当前单头程调整记录
+        FirstMileChangeRecordEntity entity = this.lambdaQuery()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getSourceId, sourceId)
+                .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode())
+                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .last(" limit 1 ").one();
+        if (Objects.nonNull(entity)){
+            return entity;
+        }
+        //获取同箱同SKU的头程调整记录
+        entity = this.lambdaQuery()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getBoxId, boxId)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.BOX.getCode())
+                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .last(" limit 1 ").one();
+        if (Objects.nonNull(entity)){
+            return entity;
+        }
+        //获取同单同SKU的头程调整记录
+        return this.lambdaQuery()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.ORDER.getCode())
+                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .last(" limit 1 ").one();
+    }
+
+    @Override
+    public List<BatchResultDTO> checkPackageSameDimension(List<FirstMileWeightAllocationDTO.PackageSizeDTO> dtoValidList) {
+        if (CollUtil.isEmpty(dtoValidList)) {
+            throw new ServiceException("请选择要修改的重量分摊记录");
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (FirstMileWeightAllocationDTO.PackageSizeDTO dto : dtoValidList) {
+            if (dto.getNewBoxHeight().compareTo(dto.getBoxHeight()) == 0 && dto.getNewBoxLength().compareTo(dto.getBoxLength()) == 0 && dto.getNewBoxWidth().compareTo(dto.getBoxWidth()) == 0 && dto.getNewOutStockWeight().compareTo(dto.getOutStockWeight()) == 0) {
+                resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), "调整后重量/尺寸与调整前重量/尺寸一致", false));
+                continue;
+            }
+        }
+        return resultDTOS;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changePackageWeight(List<FirstMileWeightAllocationDTO.PackageSizeDTO> dtoValidList) {
+        if (CollUtil.isEmpty(dtoValidList)){
+            return;
+        }
+        List<FirstMileChangeRecordEntity> entityList = new ArrayList<>();
+        for (FirstMileWeightAllocationDTO.PackageSizeDTO dto : dtoValidList){
+            if (dto.getNewOutStockWeight().compareTo(dto.getOutStockWeight()) != 0){
+                //新增出库重量调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changePackageOutStockWeightDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+            }
+            if (dto.getNewBoxHeight().compareTo(dto.getBoxHeight()) != 0 || dto.getNewBoxLength().compareTo(dto.getBoxLength()) != 0 || dto.getNewBoxWidth().compareTo(dto.getBoxWidth()) != 0){
+                //新增尺寸调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changePackageSizeLengthDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changePackageSizeWidthDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changePackageSizeHeightDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+            }
+        }
+        if (CollUtil.isEmpty(entityList)){
+            return;
+        }
+        //新增记录前修改原来的记录为非最新记录
+        entityList.forEach(e -> this.lambdaUpdate()
+               .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+               .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+              .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+              .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+              .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+              .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+             .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+             .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
+        //新增记录
+        boolean saveBatch = this.saveBatch(entityList);
+        if (!saveBatch){
+            throw new ServiceException("头程调整记录保存失败");
+        }
+
+    }
+
+    @Override
+    public FirstMileChangeRecordEntity getOutStockWeightByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String boxId) {
+        return this.lambdaQuery()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getBoxId, boxId)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .last(" limit 1 ").one();
     }
 
     private void fillPagingDb(List<FirstMileChangeRecordDTO.PagingVO> list) {

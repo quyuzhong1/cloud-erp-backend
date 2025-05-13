@@ -17,7 +17,11 @@ public enum FirstMileChangeRecordCategoryFieldEnum implements EnumMessage {
 	MID_PERIOD_TRANSIT_COST("mid_period_transit_cost", "冲期初在途费用"),
 	END_PERIOD_TRANSIT_COST("end_period_transit_cost", "期末在途费用"),
 	END_PERIOD_ESTIMATED_COST("end_period_estimated_cost", "期末暂估费用"),
+	PRODUCT_WEIGHT("product_weight", "单产品重量"),
 	CHARGED_WEIGHT("charged_weight", "出库重量"),
+	BOX_LENGTH("box_length", "出库尺寸(长)"),
+    BOX_WIDTH("box_width", "出库尺寸(宽)"),
+    BOX_HEIGHT("box_height", "出库尺寸(高)"),
     ;
     /**
      * 类型

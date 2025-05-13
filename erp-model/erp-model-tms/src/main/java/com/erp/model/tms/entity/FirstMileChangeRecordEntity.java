@@ -66,6 +66,11 @@ public class FirstMileChangeRecordEntity extends BaseEntity<FirstMileChangeRecor
     @TableField("delivery_id")
     private String deliveryId;
     /**
+     * 来源id
+     */
+    @TableField("source_id")
+    private String sourceId;
+    /**
     * 发货单编码
     */
     @TableField("delivery_code")
@@ -76,6 +81,11 @@ public class FirstMileChangeRecordEntity extends BaseEntity<FirstMileChangeRecor
     @TableField("transport_no")
     private String transportNo;
     /**
+     * 物流单id
+     */
+    @TableField("logistics_bill_id")
+    private String logisticsBillId;
+    /**
     * 平台skuNo
     */
     @TableField("platform_sku_no")
@@ -85,6 +95,11 @@ public class FirstMileChangeRecordEntity extends BaseEntity<FirstMileChangeRecor
     */
     @TableField("sku_id")
     private String skuId;
+    /**
+     * 箱子id
+     */
+    @TableField("box_id")
+    private String boxId;
     /**
     * skuNO
     */

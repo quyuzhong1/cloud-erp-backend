@@ -48,7 +48,26 @@
     <select id="paging" resultType="com.erp.model.tms.dto.FirstMileChangeRecordDTO$PagingVO">
         select
         to_char(fmcr.report_period, 'YYYY-MM') AS reportPeriodName,
-            <include refid="Base_Column_List"/>
+        fmcr.id,
+        fmcr.create_user_name as createUserName,
+        fmcr.create_time as createTime,
+        fmcr.code,
+        fmcr.source_type as sourceType,
+        fmcr.type,
+        fmcr.change_range as changeRange,
+        fmcr.report_period_id,
+        fmcr.report_period as reportPeriod,
+        fmcr.business_code as businessCode,
+        fmcr.delivery_id as deliveryId,
+        fmcr.delivery_code as deliveryCode,
+        fmcr.transport_no as transportNo,
+        fmcr.platform_sku_no as platformSkuNo,
+        fmcr.sku_id as skuId,
+        fmcr.sku_no as skuNo,
+        fmcr.category,
+        fmcr.category_field as categoryField,
+        fmcr.old_value as oldValue,
+        fmcr.new_value as newValue
         from first_mile_change_record fmcr
         <where>
             ${params.sqlMap.default}

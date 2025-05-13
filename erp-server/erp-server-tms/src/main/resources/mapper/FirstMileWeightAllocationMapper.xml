@@ -283,6 +283,7 @@
             wa.source_code sourceCode,
             wa.business_code businessCode,
             wa.transport_no transportNo,
+            wa.logistics_bill_id logisticsBillId,
             wa.cost_allocation_status costAllocationStatus,
             <if test="params.changeType == 'changeProductWeight'">
                 wa.id,
@@ -299,7 +300,6 @@
                 wa.box_height,
                 wa.box_size_unit,
                 wa.out_stock_weight outStockWeight,
-                wa.volume_weight,
                 wa.weight_unit,
             </if>
             wa.box_id,
@@ -318,6 +318,7 @@
             wa.source_code,
             wa.business_code,
             wa.transport_no,
+            wa.logistics_bill_id,
             wa.cost_allocation_status,
             wa.box_length,
             wa.box_width,
