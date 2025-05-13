@@ -24,7 +24,7 @@ public class JiFengUtils {
     public static String sign(String key, String data) {
         return hmacsha256(key, data);
     }
-    public static String sign(String key, Map<String, Object> params) {
+    public static String sign(String key, Map<String, String> params) {
         String data = params.entrySet().stream().map(e -> e.getKey() + "=" + e.getValue()).sorted().collect(Collectors.joining("&"));
         return sign(key, data);
     }

@@ -77,6 +77,7 @@ public class LogisticsAuthController extends BaseController {
         String id = result.getId();
         if (StringUtils.isNotBlank(id)) {
             //先进行授权是否成功鉴权
+            authMap.put("id",id);
             ApiResult apiResult = logisticsAuthService.authLogistics(logisticsPlatform,authMap);
             if (apiResult.isSuccess()) {
                 logisticsAuthService.syncUpdateSaleChannel(logisticsPlatform,authMap);
