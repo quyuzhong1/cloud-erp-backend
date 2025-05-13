@@ -11,6 +11,8 @@ import java.util.Arrays;
  * @date 2025/5/12 18:17
  */
 public enum ProcessDelegateStatusEnum {
+    // 全部"
+    ALL("all", "全部"),
     // 待执行
     PENDING("pending", "待执行"),
     // 运行中
