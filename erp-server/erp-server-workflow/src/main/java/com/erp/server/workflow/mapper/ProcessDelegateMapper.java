@@ -1,8 +1,14 @@
 package com.erp.server.workflow.mapper;
-import com.erp.model.workflow.entity.ProcessDelegateEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.erp.model.workflow.dto.ProcessDelegateDTO;
+import com.erp.model.workflow.entity.ProcessDelegateEntity;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 
 /**
@@ -15,5 +21,21 @@ import org.apache.ibatis.annotations.Mapper;
  */
 @Mapper
 public interface ProcessDelegateMapper extends BaseMapper<ProcessDelegateEntity> {
-
+    /**
+     * tab列表显示
+     * @author will
+     * @date 2025/5/12 18:18
+     * @param searchParam
+     * @return Integer
+     */
+    List<ProcessDelegateDTO.TabListDTO> tabList(@Param("params") ProcessDelegateDTO.PagingParamDTO searchParam);
+    /**
+     * 分页查询
+     * @author will
+     * @date 2025/5/12 18:32
+     * @param query
+     * @param params
+     * @return IPage<ListDTO>
+     */
+    IPage<ProcessDelegateDTO.ListDTO> paging(Page query, @Param("params") ProcessDelegateDTO.PagingParamDTO params);
 }

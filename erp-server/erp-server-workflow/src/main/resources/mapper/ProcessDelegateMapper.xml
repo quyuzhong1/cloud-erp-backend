@@ -36,5 +36,40 @@
         code, status, business_key, start_user_id, delegate_user_id, effective_time, expire_time, closed_time
     </sql>
 
+    <!-- 查询tab列表 -->
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ProcessDelegateDTO$TabListDTO">
+        SELECT
+            pd.status as tabFlag,
+            count(pd.id) as count
+        FROM  process_delegate pd
+        WHERE si.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        group by pd.status
+    </select>
+
+    <!-- 分页查询 -->
+    <select id="paging" resultType="com.erp.model.workflow.dto.ProcessDelegateDTO$ListDTO">
+        select
+            <include refid="Base_Column_List" />
+        from process_delegate pd
+        <where>
+            ${params.sqlMap.default}
+            and pd.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
+            ORDER BY
+            <if test="params.sortList != null and params.sortList.size > 0">
+                <foreach collection="params.sortList" item="item" separator="," close=",">
+                    ${item.field} ${item.sort}
+                </foreach>
+            </if>
+            pd.id desc
+        </where>
+    </select>
+
 
 </mapper>

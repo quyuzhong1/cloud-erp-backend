@@ -240,6 +240,11 @@ public enum ApiError implements Serializable {
     PROCESS_NOT_START_USER(94030,"非流程发起人无法撤销"),
     // 下级节点无审核人，无法提交
     PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
+    PROCESS_DELEGATE_CLOSE(94032,"仅支持运行中/待执行可操作终止"),
+    PROCESS_DELEGATE_CLOSE_ERROR(94033,"委托审批单终止失败"),
+    PROCESS_DELEGATE_UPDATE(94034,"仅待执行可操作编辑"),
+    PROCESS_DELEGATE_TIME_ERROR(94035,"委托失效时间不可小于生效时间"),
+    PROCESS_DELEGATE_BUSINESS_KEY_ERROR(94036,"委托审批单【{}】已存在此流程"),
 
 
     /**

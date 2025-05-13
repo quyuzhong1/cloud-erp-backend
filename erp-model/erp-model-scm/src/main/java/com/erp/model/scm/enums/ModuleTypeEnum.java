@@ -140,6 +140,9 @@ public enum ModuleTypeEnum {
     INVOICE_SETTING_DETAIL("122", "发票设置明细"),
     INVOICE_INVALID("123", "发票设置明细"),
     QC_NOTICE("124", "质检通知"),
+
+    PROCESS_DELEGATE("125", "委托审批"),
+
     ;
 
 

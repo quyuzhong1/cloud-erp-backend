@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
@@ -216,13 +218,46 @@ public class ProcessDelegateDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO {
 
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+
+        /**
+         * 委托流程（单据类型）
+         */
+        @NotBlank(message = "委托流程（单据类型）不能为空")
+        private String businessKey;
+
+        /**
+         * 发起人ID
+         */
+        @NotBlank(message = "发起人ID不能为空")
+        @Size(max = 19,message = "发起人ID最大长度不能超过19位")
+        private String startUserId;
+
+        /**
+         * 委托人ID
+         */
+        @NotBlank(message = "委托人ID不能为空")
+        @Size(max = 19,message = "委托人ID最大长度不能超过19位")
+        private String delegateUserId;
+
+        /**
+         * 委托生效时间
+         */
+        @NotNull(message = "委托生效时间不能为空")
+        private LocalDateTime effectiveTime;
+
+        /**
+         * 委托失效时间
+         */
+        @NotNull(message = "委托失效时间不能为空")
+        private LocalDateTime expireTime;
 
     }
 
@@ -231,18 +266,10 @@ public class ProcessDelegateDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 委托状态
+        * 委托流程（单据类型）
         */
-        @NotBlank(message = "委托状态不能为空")
-        @Size(max = 32,message = "委托状态最大长度不能超过32位")
-        private String status;
-
-        /**
-        * 委托流程id(流程定义id)
-        */
-        @NotBlank(message = "委托流程id(流程定义id)不能为空")
-        @Size(max = 32,message = "委托流程id(流程定义id)最大长度不能超过32位")
-        private String businessKey;
+        @NotEmpty(message = "委托流程（单据类型）不能为空")
+        private List<String> businessKeyList;
 
         /**
         * 发起人ID
@@ -261,18 +288,14 @@ public class ProcessDelegateDTO implements Serializable {
         /**
         * 委托生效时间
         */
+        @NotNull(message = "委托生效时间不能为空")
         private LocalDateTime effectiveTime;
 
         /**
         * 委托失效时间
         */
+        @NotNull(message = "委托失效时间不能为空")
         private LocalDateTime expireTime;
-
-        /**
-        * 终止时间
-        */
-        private LocalDateTime closedTime;
-
 
     }
 

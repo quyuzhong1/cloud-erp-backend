@@ -1,32 +1,46 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.entity.ProcessDelegateEntity;
+import com.erp.model.workflow.enums.ProcessDelegateStatusEnum;
 import com.erp.server.workflow.mapper.ProcessDelegateMapper;
 import com.erp.server.workflow.service.OperateLogService;
 import com.erp.server.workflow.service.ProcessDelegateService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import javax.annotation.Resource;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 /**
  * <p>
  * 委托审批 服务实现类
@@ -38,92 +52,175 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegateMapper, ProcessDelegateEntity> implements ProcessDelegateService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ProcessDelegateDTO.AddDTO addDTO) {
-        ProcessDelegateEntity processDelegateEntity = new ProcessDelegateEntity();
-        BeanMapperUtils.copy(addDTO, processDelegateEntity);
-
+        //时间校验
+        if (addDTO.getEffectiveTime().isAfter(addDTO.getExpireTime()) || addDTO.getEffectiveTime().equals(addDTO.getExpireTime())) {
+            throw new ServiceException(ApiError.PROCESS_DELEGATE_TIME_ERROR);
+        }
         // 数据处理
-        handleData(processDelegateEntity);
+       List<ProcessDelegateEntity> list =  handleAddData(addDTO);
 
         log.info("开始新增委托审批");
-        // 生成单号
-        // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        processDelegateEntity.setCode(code);
-        boolean save = super.save(processDelegateEntity);
+        boolean save = super.saveBatch(list);
         if(!save) {
             throw new ServiceException("委托审批保存失败");
         }
-
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委托审批" , processDelegateEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, processDelegateEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(processDelegateEntity.getId(), code);
+        List<Pair<String, String>> addPairList = list.stream().map(obj -> new Pair<>(obj.getId(),  CharSequenceUtil.format("新增-【{}】-【{}】-【{}】", ProcessDelegateStatusEnum.PENDING.getCode(), SourceTypeEnum.getName(obj.getBusinessKey()) , obj.getCode()))).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PROCESS_DELEGATE.getCode(), addPairList, "新增操作");
+        return new BaseResultDTO.AddDTO(list.get(0).getId(), list.get(0).getCode());
     }
 
-    /**
-    * 修改
-    */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean update(ProcessDelegateDTO.UpdateDTO addOrUpdateDTO) {
-        ProcessDelegateEntity old = super.getById(addOrUpdateDTO.getId());
+    public Boolean update(ProcessDelegateDTO.UpdateDTO updateDTO) {
+        ProcessDelegateEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "委托审批"));
-        ProcessDelegateEntity processDelegateEntity =  BeanMapperUtils.map(ProcessDelegateEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(processDelegateEntity);
+        ProcessDelegateEntity entity =  BeanMapperUtils.map(ProcessDelegateEntity.class, updateDTO);
+        //更新校验
+        checkUpdateData(old,entity);
         log.info("编辑 开始修改委托审批数据，单号：【{}】", old.getCode());
-        boolean save = super.updateById(processDelegateEntity);
+        boolean save = super.updateById(entity);
         if(!save) {
             throw new ServiceException("委托审批保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
-            log.info("编辑 开始记录委托审批日志数据，单号：【{}】", processDelegateEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), processDelegateEntity.getCode(), "委托审批");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, processDelegateEntity, null, processDelegateEntity.getId(), msg);
+        log.info("编辑 开始记录委托审批日志数据，单号：【{}】", entity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委托审批");
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PROCESS_DELEGATE.getCode(), entity.getId(), msg);
         return Boolean.TRUE;
     }
 
+
     @Override
-    public List<ProcessDelegateDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return Collections.emptyList();
+    public List<ProcessDelegateDTO.TabListDTO> tabList(PermissionsDTO param) {
+        ProcessDelegateDTO.PagingParamDTO searchParam = new ProcessDelegateDTO.PagingParamDTO();
+        List<ProcessDelegateDTO.TabListDTO> tabList = this.baseMapper.tabList(searchParam);
+        Map<String, ProcessDelegateDTO.TabListDTO> map = CollUtil.isEmpty(tabList) ? new HashMap<>() : tabList.stream().collect(Collectors.toMap(ProcessDelegateDTO.TabListDTO::getTabFlag, Function.identity()));
+        ProcessDelegateStatusEnum[] values = ProcessDelegateStatusEnum.values();
+        List<ProcessDelegateDTO.TabListDTO> list = new ArrayList<>();
+        for (ProcessDelegateStatusEnum item : values) {
+            searchParam.setPermissionSql(param.getPermissionSql());
+            ProcessDelegateDTO.TabListDTO resultDTO = new ProcessDelegateDTO.TabListDTO();
+            ProcessDelegateDTO.TabListDTO tabListDTO = map.get(item.getCode());
+            resultDTO.setCount(ObjectUtil.isEmpty(tabListDTO) ? MathUtil.ZERO : tabListDTO.getCount());
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     @Override
-    public PagingVO<ProcessDelegateDTO.ListDTO> paging(PagingDTO<ProcessDelegateDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<ProcessDelegateDTO.ListDTO> paging(PagingDTO<ProcessDelegateDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page<>(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<ProcessDelegateDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO<>(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO<>(pageData);
     }
 
     @Override
     public ProcessDelegateDTO.ViewDTO view(String id) {
-        return null;
+        ProcessDelegateEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委托审批单数据"));
+        ProcessDelegateDTO.ViewDTO viewDTO = BeanMapperUtils.map(ProcessDelegateDTO.ViewDTO.class, entity);
+        return viewDTO;
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO closeDelegate(String id) {
-        return null;
+        ProcessDelegateEntity entity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到委托审批单数据"));
+        if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getCode())
+                && !ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getCode())) {
+            throw new ServiceException(ApiError.PROCESS_DELEGATE_CLOSE);
+        }
+        //更新终止时间和状态
+        entity.setStatus(ProcessDelegateStatusEnum.ENDED.getCode());
+        entity.setClosedTime(LocalDateTime.now());
+        boolean isClose = this.updateById(entity);
+        if (!isClose) {
+            throw new ServiceException(ApiError.PROCESS_DELEGATE_CLOSE_ERROR);
+        }
+        //添加操作日志
+        String msg = CharSequenceUtil.format("操作终止【{}】 ", entity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PROCESS_DELEGATE.getCode(), entity.getId(), "终止委托");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
 
 
-    /**
-    * 新增修改处理数据
+   /**
+    * 批量新增数据转换
+    * @author will
+    * @date 2025/5/12 19:17
+    * @param addDTO
+    * @return List<ProcessDelegateEntity>
     */
-    private void handleData(ProcessDelegateEntity processDelegateEntity) {
-    // TODO 验证数据 & 数据赋值
+    private List<ProcessDelegateEntity> handleAddData(ProcessDelegateDTO.AddDTO addDTO) {
+        List<ProcessDelegateEntity> resultList = new ArrayList<>();
+        for (String businessKey : addDTO.getBusinessKeyList()) {
+            ProcessDelegateEntity processDelegateEntity = BeanUtil.toBean(addDTO, ProcessDelegateEntity.class);
+            // 生成单号
+            String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_LCWT);
+            processDelegateEntity.setCode(code);
+            processDelegateEntity.setBusinessKey(businessKey);
+            resultList.add(processDelegateEntity);
+        }
+        return resultList;
+    }
+
+    /**
+     * 更新校验
+     * @author will
+     * @date 2025/5/12 19:30
+     * @param old
+     * @param entity
+     * @return void
+     */
+    private void checkUpdateData (ProcessDelegateEntity old,ProcessDelegateEntity entity) {
+        //状态校验
+        if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(old.getCode())) {
+            throw new ServiceException(ApiError.PROCESS_DELEGATE_UPDATE);
+        }
+        //时间校验
+        if (entity.getEffectiveTime().isAfter(entity.getExpireTime()) || entity.getEffectiveTime().equals(entity.getExpireTime())) {
+            throw new ServiceException(ApiError.PROCESS_DELEGATE_TIME_ERROR);
+        }
+        ProcessDelegateEntity byBusinessKey = this.getByBusinessKey(entity.getBusinessKey());
+        if (ObjectUtil.isNotEmpty(byBusinessKey) && !byBusinessKey.getId().equals(entity.getId())) {
+            throw new ServiceException(ApiError.PROCESS_DELEGATE_BUSINESS_KEY_ERROR,byBusinessKey.getCode());
+        }
+    }
+    /**
+     * 根据单据类型查询
+     * @author will
+     * @date 2025/5/12 19:32
+     * @param businessKey
+     * @return ProcessDelegateEntity
+     */
+    private ProcessDelegateEntity getByBusinessKey (String businessKey) {
+        return lambdaQuery().eq(ProcessDelegateEntity::getBusinessKey,businessKey).last("limit 1").one();
+    }
+
+    /**
+     * 分页查询、导出 数据处理
+     */
+    private void fillList(List<ProcessDelegateDTO.ListDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
     }
 }
