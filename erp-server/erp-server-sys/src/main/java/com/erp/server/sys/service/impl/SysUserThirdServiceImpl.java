@@ -40,10 +40,12 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
      * @date 2022-07-21 14:06
      */
     @Override
-    public void bindingThirdParty(String uid, String flagId, String bindingPlatform) {
+    public void bindingThirdParty(String uid, String flagId,String thirdOpenId,String thirdUserId, String bindingPlatform) {
         SysUserThirdEntity thirdEntity = new SysUserThirdEntity();
         thirdEntity.setUserId(uid);
         thirdEntity.setThirdUnionId(flagId);
+        thirdEntity.setThirdOpenId(thirdOpenId);
+        thirdEntity.setThirdUserId(thirdUserId);
         thirdEntity.setThirdPartyType(bindingPlatform);
         this.save(thirdEntity);
     }

@@ -54,7 +54,7 @@ public class FsService {
 
     /**
      * 根据code 获取飞书用户信息
-     *
+     * https://open.feishu.cn/document/server-docs/authentication-management/login-state-management/get?appId=cli_a2c644b09af9500d
      * @param dto
      * @return java.util.Map<java.lang.String, java.lang.Object>
      * @author yl

@@ -462,6 +462,8 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
         String code = dto.getCode();
         String bindingPlatform = dto.getBindingPlatform();
         String flagId = "";
+        String thirdOpenId = "";
+        String thirdUserId = "";
         //飞书平台
         if (ThirdConstants.FS_PLATFORM.equals(bindingPlatform)) {
             FindThirdUserDTO findThirdUserDTO = new FindThirdUserDTO();
@@ -473,7 +475,12 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             } else {
                 throw new ServiceException(ApiError.ERROR_9018);
             }
-
+            if (fsUserMap != null && fsUserMap.containsKey("open_id")) {
+                thirdOpenId = fsUserMap.get("open_id").toString();
+            }
+            if (fsUserMap != null && fsUserMap.containsKey("user_id")) {
+                thirdUserId = fsUserMap.get("user_id").toString();
+            }
         }
         //当不为空的时候
         if (StringUtils.isNotBlank(flagId)) {
@@ -483,7 +490,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             if (ifBinding) {
                 throw new ServiceException(ApiError.ERROR_9020);
             }
-            sysUserThirdService.bindingThirdParty(uid, flagId, bindingPlatform);
+            sysUserThirdService.bindingThirdParty(uid, flagId,thirdOpenId,thirdUserId, bindingPlatform);
         }
 
     }
