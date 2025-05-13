@@ -66,7 +66,7 @@ public class TemuClient {
         temuCommonDTO.setAppSecret(clientSecret);
         temuCommonDTO.setAppKey(clientId);
         temuCommonDTO.setAreaCode("US");
-        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-02059361096310156"));
+        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-20046726656633537"));
         TemuClient temuClient = new TemuClient();
         TemuResp<TemuOrderDTO> resp = temuClient.getOrderList(temuCommonDTO);
         System.out.println(resp);

@@ -161,11 +161,11 @@ public class TemuOutStockJob {
                 continue;
             }
             List<SoB2cDetailEntity> soB2cDetailEntityList = allSoB2cDetailEntityList.stream().filter(v->v.getMainId().equals(soB2cEntity.getId())).collect(Collectors.toList());
-            soB2cDetailEntityList = soB2cDetailEntityList.stream().filter(v-> erpWarehouseIds.contains(v.getWarehouseId())).collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(soB2cDetailEntityList)){
-                XxlJobHelper.log("没有匹配的订单明细,{}",soB2cEntity.getId());
-                continue;
-            }
+//            soB2cDetailEntityList = soB2cDetailEntityList.stream().filter(v-> erpWarehouseIds.contains(v.getWarehouseId())).collect(Collectors.toList());
+//            if(CollectionUtils.isEmpty(soB2cDetailEntityList)){
+//                XxlJobHelper.log("没有匹配的订单明细,{}",soB2cEntity.getId());
+//                continue;
+//            }
             soB2cDetailEntityList.forEach(v->{
                 v.setWarehouseId(erpWarehouseIds.get(0));
                 WarehouseEntity warehouse = warehouseEntityList.stream().filter(w->w.getId().equals(v.getWarehouseId())).findFirst().orElse(null);
