@@ -1,24 +1,32 @@
 package com.erp.server.workflow.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.dto.AfterSaleDTO;
+import com.erp.model.dmp.entity.AfterSaleEntity;
+import com.erp.model.workflow.entity.CfgApproveSyncEntity;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.workflow.service.CfgApproveSyncService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * ERP审批同步配置
@@ -57,16 +65,124 @@ public class CfgApproveSyncController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "ERP审批同步配置修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "workflow:cfgApproveSync:update",
-        serviceClass = CfgApproveSyncService.class,
-        keyIdName = "id")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgApproveSync:update",
+            serviceClass = CfgApproveSyncService.class,
+            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgApproveSyncDTO.UpdateDTO dto) {
         cfgApproveSyncService.update(dto);
         return success();
     }
 
+    /**
+     * 获取状态统计
+     * @return
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgApproveSync:paging",
+            tableAlias = "afs"
+    )
+    public ApiResult<List<CfgApproveSyncDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(cfgApproveSyncService.tabList(dto));
+    }
+
+    /**
+     * 列表查询
+     * @author jack
+     * @date: 2025-05-13
+     * @param dto
+     * @return ApiResult<PagingVO<CfgApproveSyncDTO.ListDTO>>
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgApproveSync:paging",
+            tableAlias = "afs"
+    )
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<CfgApproveSyncDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto) {
+        return success(cfgApproveSyncService.paging(dto));
+    }
+
+    /**
+     * 删除
+     * @author jack
+     * @date:  2025-05-13
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgApproveSync:delete",
+            serviceClass = CfgApproveSyncService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DELETE, desc = "ERP审批同步配置删除")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<CfgApproveSyncEntity> list = cfgApproveSyncService.lambdaQuery().in(CfgApproveSyncEntity::getId, ids).list();
+        Map<String, CfgApproveSyncEntity> idEntityMap = list.stream().collect(Collectors.toMap(CfgApproveSyncEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = cfgApproveSyncService.delete(id);
+            }catch (Exception e){
+                log.error("ERP审批同步配置删除失败",e);
+                CfgApproveSyncEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "ERP审批同步配置不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 启用/停用
+     * @author jack
+     * @date:  2025-05-13
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/enable")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgApproveSync:enable",
+            serviceClass = CfgApproveSyncService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "ERP审批同步配置启用/停用")
+    public ApiResult<List<BatchResultDTO>> enable(@RequestBody @Validated  CfgApproveSyncDTO.EnableStatusDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<CfgApproveSyncEntity> list = cfgApproveSyncService.lambdaQuery().in(CfgApproveSyncEntity::getId, ids).list();
+        Map<String, CfgApproveSyncEntity> idEntityMap = list.stream().collect(Collectors.toMap(CfgApproveSyncEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = cfgApproveSyncService.enable(id,dto.getEnableStatus());
+            }catch (Exception e){
+                log.error("ERP审批同步配置更新失败",e);
+                CfgApproveSyncEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "ERP审批同步配置不存在, 更新失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
 
 }

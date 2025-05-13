@@ -134,14 +134,13 @@ public enum ModuleTypeEnum {
     SO_B2C_EXTEND("119", "销售订单扩展信息"),
     SO_PRICE("118", "销售价目表"),
     SO_PRICE_CHANGE("119", "销售调目表"),
-
     AFTER_SALE("118", "售后申请"),
     INVOICE_SETTING("121", "发票设置"),
     INVOICE_SETTING_DETAIL("122", "发票设置明细"),
     INVOICE_INVALID("123", "发票设置明细"),
     QC_NOTICE("124", "质检通知"),
-
     PROCESS_DELEGATE("125", "委托审批"),
+    CFG_APPROVE_SYNC("126", "ERP审批同步配置"),
 
     ;
 

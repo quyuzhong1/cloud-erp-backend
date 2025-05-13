@@ -5,6 +5,7 @@ import com.erp.model.workflow.entity.DictBasicEntity;
 import com.common.business.service.SuperService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -32,4 +33,10 @@ public interface DictBasicService extends SuperService<DictBasicEntity> {
      * @return DictBasicEntity
      */
     DictBasicEntity getByTypeAndValue(String value, String key);
+
+    List<DictBasicEntity> getByType(String type);
+
+    Map<String,DictBasicEntity> getMapByType(String type);
+
+
 }

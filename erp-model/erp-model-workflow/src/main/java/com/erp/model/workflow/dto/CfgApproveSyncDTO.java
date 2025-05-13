@@ -1,10 +1,17 @@
 package com.erp.model.workflow.dto;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -195,5 +202,175 @@ public class CfgApproveSyncDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class BaseDTO {
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+    }
+
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
+        /**
+         * 主键id
+         */
+        private List<String> ids;
+
+    }
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型
+         */
+        private Boolean tabFlag;
+        /**
+         * 类型
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
+    }
+
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO extends BaseDTO{
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 来源类型
+         */
+        private String businessType;
+        private String businessTypeName;
+
+        /**
+         * SDC回调地址
+         */
+        private String webhookUrl;
+
+        /**
+         * 审批分组dict_basic表approveGroup
+         */
+        private String approveGroup;
+        private String approveGroupName;
+
+        /**
+         * 启用状态
+         */
+        private Boolean enableStatus;
+        private String enableStatusName;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 审批名称(标题)
+         */
+        private String title;
+
+        /**
+         * 可见范围dict_basic表viewerType：allUsers=所有用户,specificDepartments=指定部门,specificUsers=指定用户,none=不可见
+         */
+        private String viewerType;
+        private String viewerTypeName;
+
+        /**
+         * 可见集合
+         */
+        private String viewer;
+
+        /**
+         * 同步平台：feishu=飞书,dd=钉钉,qw=企业微信
+         */
+        private String syncPlatform;
+        private String syncPlatformName;
+
+        /**
+         * 飞书审批定义
+         */
+        private String approvalCode;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class EnableStatusDTO {
+
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        @NotNull(message = "启用状态不能为空")
+        private Boolean enableStatus;
+
+    }
 
 }

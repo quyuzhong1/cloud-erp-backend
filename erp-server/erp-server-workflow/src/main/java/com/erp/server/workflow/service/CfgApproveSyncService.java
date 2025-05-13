@@ -1,8 +1,11 @@
 package com.erp.server.workflow.service;
+import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.entity.CfgApproveSyncEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -33,4 +36,11 @@ public interface CfgApproveSyncService extends SuperService<CfgApproveSyncEntity
     Boolean update(CfgApproveSyncDTO.UpdateDTO dto);
 
 
+    List<CfgApproveSyncDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    PagingVO<CfgApproveSyncDTO.ListDTO> paging(PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto);
+
+    BatchResultDTO delete(String id);
+
+    BatchResultDTO enable(String id,Boolean enableStatus);
 }

@@ -69,6 +69,18 @@ public enum DictBasicEnum {
     GLOBAL_DEDUPE("globalDedupe","reviewSetting","全局去重","审核设置"),
     TIMEOUT_HANDLING_REJECT_APPLICANT("rejectApplicant","timeoutHandling","驳回申请人","超时处理方式"),
     TIMEOUT_HANDLING_ESCALATE("escalate","timeoutHandling","转上级","超时处理方式"),
+    TEST("test", "approveGroup", "测试组", "审批分组"),
+    ASSETS("assets", "approveGroup", "固定资产管理", "审批分组"),
+    GM_OFFICE("gm", "approveGroup", "总经办", "审批分组"),
+    HR("hr", "approveGroup", "人事服务", "审批分组"),
+    FINANCE("finance", "approveGroup", "财务", "审批分组"),
+    QUALITY("quality", "approveGroup", "品质", "审批分组"),
+    BRAND("brand", "approveGroup", "品牌", "审批分组"),
+    SALE("sale", "approveGroup", "销售运营", "审批分组"),
+    SUPPLY("supply", "approveGroup", "供应链", "审批分组"),
+    PRODUCT("product", "approveGroup", "产品研发", "审批分组"),
+    IT("it", "approveGroup", "AI数字化", "审批分组"),
+    OTHER("other", "approveGroup", "其他服务商提供", "审批分组"),
     ;
 
     @EnumValue

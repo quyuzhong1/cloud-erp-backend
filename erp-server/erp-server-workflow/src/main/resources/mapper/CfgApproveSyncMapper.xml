@@ -39,5 +39,63 @@
         code, business_type, webhook_url, approve_group, enable_status, remark, title, viewer_type, viewer, sync_platform, approval_code
     </sql>
 
+    <sql id="paging_sql">
+        SELECT
+            cas.ID AS ID,
+            cas.create_user_id AS createUserId,
+            cas.create_user_name AS createUserName,
+            cas.create_time AS createTime,
+            cas.update_user_id AS updateUserId,
+            cas.update_user_name AS updateUserName,
+            cas.update_time AS updateTime,
+            cas.VERSION AS VERSION,
+            cas.is_deleted AS isDeleted,
+            cas.code AS code,
+            cas.business_type AS businessType,
+            cas.webhook_url AS webhookUrl,
+            cas.approve_group AS approveGroup,
+            cas.enable_status AS enableStatus,
+            cas.remark AS remark,
+            cas.title AS title,
+            cas.viewer_type AS viewerType,
+            cas.viewer AS viewer,
+            cas.sync_platform AS syncPlatform,
+            cas.approval_code AS approvalCode
+        FROM
+            cfg_approve_sync AS cas
+        WHERE
+            ${params.sqlMap.default}
+            AND cas.is_deleted = FALSE
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        cas.create_time DESC
+    </sql>
+
+    <select id="tabList" resultType="com.erp.model.workflow.dto.CfgApproveSyncDTO$TabListDTO">
+        SELECT
+        cas.enable_status AS tabFlag,
+        count(1)  AS count
+        FROM  cfg_approve_sync as cas
+        WHERE cas.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY cas.enable_status
+    </select>
+
+    <select id="paging" resultType="com.erp.model.workflow.dto.CfgApproveSyncDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
+
+    <select id="listExport" resultType="com.erp.model.workflow.dto.CfgApproveSyncDTO$ListDTO">
+        <include refid="paging_sql"></include>
+    </select>
 
 </mapper>
