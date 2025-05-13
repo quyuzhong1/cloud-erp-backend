@@ -1,17 +1,25 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.entity.DmpSoInfoEntity;
+import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
+import com.erp.model.dmp.entity.DmpSoOutstockEntity;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.ShopifyServerSoB2cDTO;
 import com.erp.model.oms.dto.SoB2cForeignDTO;
 import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cOptionTypeEnum;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -24,8 +32,6 @@ import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -56,11 +62,11 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
 
     @Resource
     private SoB2cLogisticsService soB2cLogisticsService;
-
     @Resource
     private SoB2cReceiverService soB2cReceiverService;
-    @Autowired
-    private SoB2cDetailService soB2cDetailService;
+    @Resource
+    private SkuMappingService skuMappingService;
+
 
     @Override
     public PagingVO<SoB2cForeignDTO.OrderDeliveryResp> getOrderDeliveryInfo(PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> pagingDTO) {
@@ -170,53 +176,99 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
     public List<ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO> getShopifyLogisticInfo(ShopifyServerSoB2cDTO.SoB2cLogisticQueryDTO dto) {
         // 优化和抽取下面方法
         List<SoB2cEntity> soB2cList = new LinkedList<>();
-        List<SoB2cLogisticsEntity> logisticsEntityList = new LinkedList<>();
         if (StringUtils.isNotBlank(dto.getTrackingNumber())) {
-            Pair<List<SoB2cEntity>, List<SoB2cLogisticsEntity>> result = queryByTrackingNumber(dto);
-            soB2cList = result.getLeft();
-            logisticsEntityList = result.getRight();
+            soB2cList = queryByTrackingNumber(dto);
         } else if (dto.isOrderNumberQuery()) {
-            Pair<List<SoB2cEntity>, List<SoB2cLogisticsEntity>> result = queryByOrderNumberAndContactInfo(dto);
-            soB2cList = result.getLeft();
-            logisticsEntityList = result.getRight();
+            soB2cList = queryByOrderNumberAndContactInfo(dto);
         }
-        if (CollectionUtils.isEmpty(logisticsEntityList) || CollectionUtils.isEmpty(soB2cList)) {
+        if (CollectionUtils.isEmpty(soB2cList)) {
             return Collections.emptyList();
         }
-        Map<String, SoB2cLogisticsEntity> logisticsEntityMap = logisticsEntityList.stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
-        // 查询订单明细
-        List<String> mainIds = soB2cList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(mainIds);
-        Map<String, List<SoB2cDetailEntity>> detailMap = soB2cDetailEntityList.stream().collect(Collectors.groupingBy(SoB2cDetailEntity::getMainId));
-
+        String platformCode = soB2cList.stream().map(SoB2cEntity::getPlatformCode).findFirst().orElse("");
+        // 查询中台配送信息
+        List<DmpSoInfoEntity> soList = FeignQuery.create(DmpSoInfoEntity.class)
+                .eq(DmpSoInfoEntity::getPlatformCode, platformCode)
+                .list();
+        if (CollectionUtils.isEmpty(soList)) {
+            return Collections.emptyList();
+        }
+        List<String> soIds = soList.stream().map(BaseEntity::getId).collect(Collectors.toList());
+        List<DmpSoOutstockEntity> fulfillmentList = FeignQuery.create(DmpSoOutstockEntity.class)
+                .eq(DmpSoOutstockEntity::getSourceId, soIds)
+                .list();
+        if (CollectionUtils.isEmpty(fulfillmentList)) {
+            return Collections.emptyList();
+        }
+        Map<String, DmpSoOutstockEntity> fullfillmentMap = fulfillmentList.stream().collect(Collectors.toMap(DmpSoOutstockEntity::getId, Function.identity()));
+        List<DmpSoOutstockDetailEntity> fulfillmentDetailList = FeignQuery.create(DmpSoOutstockDetailEntity.class)
+                .eq(DmpSoOutstockDetailEntity::getMainId, fullfillmentMap.keySet())
+                .list();
+        if (CollectionUtils.isEmpty(fulfillmentDetailList)) {
+            return Collections.emptyList();
+        }
+        Map<String, List<DmpSoOutstockDetailEntity>> fulfillmentDetailMap = fulfillmentDetailList.stream().collect(Collectors.groupingBy(DmpSoOutstockDetailEntity::getMainId));
         // 查询跟踪信息
-        List<String> tradeNoList = logisticsEntityList.stream().map(SoB2cLogisticsEntity::getTrackNo).distinct().collect(Collectors.toList());
+        List<String> tradeNoList = fulfillmentList.stream().map(DmpSoOutstockEntity::getTransportNo).distinct().collect(Collectors.toList());
         List<LogisticsTrackEntity> list = FeignQuery.create(LogisticsTrackEntity.class)
                 .eq(LogisticsTrackEntity::getTrackNo, tradeNoList)
                 .list();
+
+        String shopId = soB2cList.get(0).getShopId();
+        SoB2cEntity sourceSoB2cEntity = soB2cList.stream().filter(e -> SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(e.getSourceType())).findFirst().orElse(null);
+        if (null == sourceSoB2cEntity){
+            ServiceException.runError("order not find");
+        }
+        // 查询原始listing信息
+        //查询未匹配的SKU
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
+        paramDTO.setShopIdList(Collections.singletonList(shopId));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        List<String> platformSkuList = fulfillmentDetailList.stream().map(DmpSoOutstockDetailEntity::getPlatformSku).distinct().collect(Collectors.toList());
+        paramDTO.setPlatformSkuNoList(platformSkuList);
+        List<String> platformSpuList = fulfillmentDetailList.stream().map(DmpSoOutstockDetailEntity::getThirdDetailId).distinct().collect(Collectors.toList());
+        paramDTO.setPlatformSkuIdList(platformSpuList);
+        paramDTO.setIsExpire(true);
+        // 映射关系
+        List<ListingInfoWithSkuMappingDTO> mappingList = skuMappingService.findListDto(paramDTO);
+        Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = mappingList.stream().collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
+
         Map<String, List<LogisticsTrackEntity>> trackMap = list.stream().collect(Collectors.groupingBy(LogisticsTrackEntity::getTrackNo));
-        //根据soB2c的id关联SoB2cDetailEntity/SoB2cLogisticsEntity的mainId, 在根据SoB2cLogisticsEntity的TrackNo关联LogisticsTrackEntity组合成ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO
-        return soB2cList.stream()
-                .map(soB2c -> combineSoB2cLogisticInfoDTO(soB2c, logisticsEntityMap, trackMap, detailMap))
-                .collect(Collectors.toList());
+
+        List<ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO> resultList = new LinkedList<>();
+        for (int i = 0; i < fulfillmentList.size(); i++) {
+            DmpSoOutstockEntity dmpSoOutstockEntity = fulfillmentList.get(i);
+            //根据soB2c的id关联SoB2cDetailEntity/SoB2cLogisticsEntity的mainId, 在根据SoB2cLogisticsEntity的TrackNo关联LogisticsTrackEntity组合成ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO
+            ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO item = combineSoB2cLogisticInfoDTO(sourceSoB2cEntity, fulfillmentDetailMap.get(dmpSoOutstockEntity.getId()), dmpSoOutstockEntity, trackMap, listingMap, fulfillmentList.size() > 1, i + 1);
+            resultList.add(item);
+        }
+        return resultList;
     }
 
     /**
      * 组合 SoB2cLogisticInfoDTO 对象。
      *
      * @param soB2c 当前的 SoB2cEntity 对象，包含订单的基本信息。
-     * @param logisticsEntityMap 物流实体的映射表，key 为 SoB2cEntity 的主键 ID，value 为对应的 SoB2cLogisticsEntity。
+     * @param dmpSoOutstockDetailEntityList 出库信息。
      * @param trackMap 物流跟踪信息的映射表，key 为物流单号，value 为对应的 LogisticsTrackEntity 列表。
-     * @param detailMap 订单明细的映射表，key 为 SoB2cEntity 的主键 ID，value 为对应的 SoB2cDetailEntity 列表。
+     * @param soOutstockEntity 当前出库信息
      * @return 组合后的 ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO 对象，包含订单、物流和产品信息。
      */
     private ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO combineSoB2cLogisticInfoDTO(SoB2cEntity soB2c,
-                                                                                   Map<String, SoB2cLogisticsEntity> logisticsEntityMap,
+                                                                                   List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList,
+                                                                                   DmpSoOutstockEntity soOutstockEntity,
                                                                                    Map<String, List<LogisticsTrackEntity>> trackMap,
-                                                                                   Map<String, List<SoB2cDetailEntity>> detailMap
+                                                                                   Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap,
+                                                                                   boolean multipleSoOutstock,
+                                                                                   Integer outstockIndex
     ) {
         ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO logisticInfoDTO = new ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO();
-        logisticInfoDTO.setOrderNumber(soB2c.getSellerOrderCode());
+        if (multipleSoOutstock){
+            // 按出库设置子订单信息
+            logisticInfoDTO.setOrderNumber(CharSequenceUtil.format("{}-F{}", soB2c.getSellerOrderCode(), outstockIndex));
+        } else {
+            logisticInfoDTO.setOrderNumber(soB2c.getSellerOrderCode());
+        }
         logisticInfoDTO.setPlatformCode(soB2c.getPlatformCode());
         logisticInfoDTO.setBillStatus(soB2c.getBillStatus());
         logisticInfoDTO.setCode(soB2c.getCode());
@@ -224,44 +276,45 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         // 设置订单信息
         ShopifyServerSoB2cDTO.OrderInfo orderInfo = new ShopifyServerSoB2cDTO.OrderInfo();
         orderInfo.setCreatedAt(soB2c.getPlatformOrderCreateTime());
-        // TODO 发货时间
-        orderInfo.setPackagedAt(soB2c.getPlatformOrderCreateTime());
+        // 发货时间
+        orderInfo.setCreatedAt(soB2c.getPlatformOrderCreateTime());
+        orderInfo.setPackagedAt(soOutstockEntity.getPlatformCreateTime());
         logisticInfoDTO.setOrderInfo(orderInfo);
 
         // 设置物流信息
-        SoB2cLogisticsEntity logisticsEntity = logisticsEntityMap.get(soB2c.getId());
-        if (logisticsEntity != null) {
-            ShopifyServerSoB2cDTO.Logistics logistics = new ShopifyServerSoB2cDTO.Logistics();
-            logistics.setCarrier(logisticsEntity.getLogisticsChannelName());
-            logistics.setTrackingNumber(logisticsEntity.getTrackNo());
+        ShopifyServerSoB2cDTO.Logistics logistics = new ShopifyServerSoB2cDTO.Logistics();
+        logistics.setCarrier(soOutstockEntity.getLogisticsCompanyName());
+        logistics.setTrackingNumber(soOutstockEntity.getTransportNo());
 
-            // 设置物流跟踪信息
-            List<LogisticsTrackEntity> trackEntities = trackMap.getOrDefault(logisticsEntity.getTrackNo(), Collections.emptyList());
-            List<ShopifyServerSoB2cDTO.StatusUpdate> statusUpdates = trackEntities.stream()
+        // 设置物流跟踪信息
+        List<LogisticsTrackEntity> trackEntities = trackMap.getOrDefault(soOutstockEntity.getTransportNo(), Collections.emptyList());
+        List<ShopifyServerSoB2cDTO.StatusUpdate> statusUpdates = trackEntities.stream()
                     .sorted(Comparator.comparing(LogisticsTrackEntity::getTrackTime))
                     .map(track -> {
-                ShopifyServerSoB2cDTO.StatusUpdate statusUpdate = new ShopifyServerSoB2cDTO.StatusUpdate();
+        ShopifyServerSoB2cDTO.StatusUpdate statusUpdate = new ShopifyServerSoB2cDTO.StatusUpdate();
                 statusUpdate.setTrackingId(track.getTrackNo());
                 statusUpdate.setTimestamp(track.getUpdateTime());
                 statusUpdate.setLocation(track.getAddress());
                 statusUpdate.setDescription(track.getContent());
-                return statusUpdate;
-            }).collect(Collectors.toList());
-            logistics.setStatusUpdates(statusUpdates);
-            logisticInfoDTO.setLogistics(logistics);
-        }
+                return statusUpdate;}).collect(Collectors.toList());
+        logistics.setStatusUpdates(statusUpdates);
+        logisticInfoDTO.setLogistics(logistics);
 
-        // TODO
         // 设置产品信息
-        List<SoB2cDetailEntity> relatedDetails = detailMap.getOrDefault(soB2c.getId(), Collections.emptyList());
-        List<ShopifyServerSoB2cDTO.Product> products = relatedDetails.stream().map(detail -> {
+        List<ShopifyServerSoB2cDTO.Product> products = dmpSoOutstockDetailEntityList.stream().map(detail -> {
             ShopifyServerSoB2cDTO.Product product = new ShopifyServerSoB2cDTO.Product();
             product.setDetailId(detail.getId());
-            product.setPlatformDetailId(detail.getSourceDetailId());
-            product.setPlatformSkuNo(detail.getPlatformSkuNo());
-            product.setPlatformSpuNo(detail.getPlatformSpuNo());
-            product.setProductName("");
-            product.setProductImage("");
+            product.setPlatformDetailId(detail.getPlatformDetailId());
+            product.setPlatformSkuNo(detail.getPlatformSku());
+            product.setPlatformSpuNo(detail.getThirdDetailId());
+            product.setProductName(detail.getSkuName());
+            List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = listingMap.get(detail.getPlatformSku());
+            if (CollectionUtils.isNotEmpty(listingInfoWithSkuMappingDTOS)) {
+                String productImageUrl = listingInfoWithSkuMappingDTOS.get(0).getProductImageUrl();
+                product.setProductImage(productImageUrl);
+            } else {
+                product.setProductImage("");
+            }
             return product;
         }).collect(Collectors.toList());
         logisticInfoDTO.setProducts(products);
@@ -272,32 +325,29 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
     /**
      * 通过跟踪号查询订单信息
      */
-    private Pair<List<SoB2cEntity>, List<SoB2cLogisticsEntity>> queryByTrackingNumber(ShopifyServerSoB2cDTO.SoB2cLogisticQueryDTO dto) {
+    private List<SoB2cEntity> queryByTrackingNumber(ShopifyServerSoB2cDTO.SoB2cLogisticQueryDTO dto) {
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.lambdaQuery()
                 .eq(SoB2cLogisticsEntity::getTrackNo, dto.getTrackingNumber())
                 .list();
         if (CollectionUtils.isNotEmpty(logisticsEntityList)) {
             List<String> mainIds = logisticsEntityList.stream().map(SoB2cLogisticsEntity::getMainId).collect(Collectors.toList());
-            List<SoB2cEntity> soB2cList = this.lambdaQuery()
+            return this.lambdaQuery()
                     .in(SoB2cEntity::getId, mainIds)
                     .eq(SoB2cEntity::getDictPlatform, PlatformDictEnum.SHOPIFY.getCode())
                     .eq(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
                     .list();
-            return Pair.of(soB2cList, logisticsEntityList);
         }
-        return Pair.of(Collections.emptyList(), Collections.emptyList());
+        return Collections.emptyList();
     }
 
     /**
      * 通过订单号和联系信息查询订单信息
      */
-    private Pair<List<SoB2cEntity>, List<SoB2cLogisticsEntity>> queryByOrderNumberAndContactInfo(ShopifyServerSoB2cDTO.SoB2cLogisticQueryDTO dto) {
+    private List<SoB2cEntity> queryByOrderNumberAndContactInfo(ShopifyServerSoB2cDTO.SoB2cLogisticQueryDTO dto) {
         List<SoB2cEntity> soB2cList = this.lambdaQuery()
                 .eq(SoB2cEntity::getSellerOrderCode, dto.getOrderNumber())
                 .eq(SoB2cEntity::getDictPlatform, PlatformDictEnum.SHOPIFY.getCode())
-                .eq(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
                 .list();
-        List<SoB2cLogisticsEntity> logisticsEntityList = new LinkedList<>();
         if (CollectionUtils.isNotEmpty(soB2cList)) {
             List<String> mainIds = soB2cList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             List<SoB2cReceiverEntity> receiverEntityList = soB2cReceiverService.listByMainIds(mainIds);
@@ -305,13 +355,11 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                 boolean contactMatch = receiverEntityList.stream()
                         .anyMatch(receiver -> receiver.getEmail().equals(dto.getContactInfo()) || receiver.getTelNumber().equals(dto.getContactInfo()));
                 if (contactMatch) {
-                    logisticsEntityList = soB2cLogisticsService.lambdaQuery()
-                            .in(SoB2cLogisticsEntity::getMainId, mainIds)
-                            .list();
+                    return soB2cList;
                 }
             }
         }
-        return Pair.of(soB2cList, logisticsEntityList);
+        return Collections.emptyList();
     }
 
 }
