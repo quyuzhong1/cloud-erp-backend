@@ -83,4 +83,7 @@ public interface AfterSaleFeign {
 
     @GetMapping("/invalidByCode")
     ApiResult<BatchResultDTO> invalidByCode(@RequestParam("code") String code);
+
+    @GetMapping("/view")
+    ApiResult<AfterSaleDTO.ViewDTO> view(@RequestParam("id") String id);
 }
