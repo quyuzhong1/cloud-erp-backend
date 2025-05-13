@@ -1,10 +1,8 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
-import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
@@ -181,7 +179,7 @@ public class TemuOutStockJob {
             // 将 Instant 对象转换为 LocalDateTime 对象
             LocalDateTime outTime = LocalDateTime.ofInstant(instant, zoneId);
             //出库
-            soOutstockService.generateB2cSoOutstock(soB2cEntity,soB2cDetailEntityList,outTime);
+            soOutstockService.generateOutstockByDetailAndTime(soB2cEntity,soB2cDetailEntityList,outTime);
         }
     }
 }
