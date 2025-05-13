@@ -11,6 +11,7 @@ import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
@@ -145,6 +146,8 @@ public class TemuOutStockJob {
         }
         List<String> soIds = handleSoB2cList.stream().map(SoB2cEntity::getId).distinct().collect(Collectors.toList());
         List<SoB2cDetailEntity> allSoB2cDetailEntityList = soB2cFeign.listDetailByMainIds(soIds);
+        List<String> allWarehouseIds = warehouseMappingDTOS.stream().map(ThirdMappingDTO.WarehouseMappingDTO::getSysWarehouseId).distinct().collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class,allWarehouseIds);
         //将仓库能匹配上的数据出库
         for (SoB2cEntity soB2cEntity : handleSoB2cList) {
             TemuOrderDTO.ResultDTO.PageItemsDTO temuDto = allTemuList.stream().filter(v->v.getParentOrderMap().getParentOrderSn().equals(soB2cEntity.getPlatformCode())).findFirst().orElse(null);
@@ -161,9 +164,16 @@ public class TemuOutStockJob {
             soB2cDetailEntityList = soB2cDetailEntityList.stream().filter(v-> erpWarehouseIds.contains(v.getWarehouseId())).collect(Collectors.toList());
             if(CollectionUtils.isEmpty(soB2cDetailEntityList)){
                 XxlJobHelper.log("没有匹配的订单明细,{}",soB2cEntity.getId());
-
                 continue;
             }
+            soB2cDetailEntityList.forEach(v->{
+                v.setWarehouseId(erpWarehouseIds.get(0));
+                WarehouseEntity warehouse = warehouseEntityList.stream().filter(w->w.getId().equals(v.getWarehouseId())).findFirst().orElse(null);
+                if(Objects.nonNull(warehouse)){
+                    v.setWarehouseName(warehouse.getName());
+                }
+            });
+            soB2cFeign.updateDetail(soB2cDetailEntityList);
             Integer outTimeInt = temuDto.getParentOrderMap().getParentShippingTime();
             Instant instant = Instant.ofEpochSecond(outTimeInt);
             // 获取系统默认时区
