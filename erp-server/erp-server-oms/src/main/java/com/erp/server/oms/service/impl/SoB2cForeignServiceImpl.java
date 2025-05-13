@@ -265,6 +265,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
 
         logisticInfoDTO.setPlatformCode(soB2c.getPlatformCode());
         logisticInfoDTO.setBillStatus(soB2c.getBillStatus());
+
         logisticInfoDTO.setCode(soB2c.getCode());
 
         // 设置订单信息
@@ -290,9 +291,21 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                 statusUpdate.setTimestamp(track.getUpdateTime());
                 statusUpdate.setLocation(track.getAddress());
                 statusUpdate.setDescription(track.getContent());
+                statusUpdate.setStatus(track.getStatus());
                 return statusUpdate;}).collect(Collectors.toList());
         logistics.setStatusUpdates(statusUpdates);
         logisticInfoDTO.setLogistics(logistics);
+
+        // 设置最新物流信息
+        String orderStatus = "ordered";
+        if(CollectionUtils.isNotEmpty(statusUpdates)){
+            // 取statusUpdates最新记录状态属于sign，deliveryIng，trackIng的第一条记录
+            List<String> activityStatus = Arrays.asList("sign", "deliveryIng", "trackIng");
+            orderStatus = statusUpdates.stream().filter(e-> activityStatus.contains(e.getStatus()))
+                    .map(ShopifyServerSoB2cDTO.StatusUpdate::getStatus)
+                    .findFirst().orElse(orderStatus);
+        }
+        logisticInfoDTO.setOrderStatus(orderStatus);
 
         // 设置产品信息
         List<ShopifyServerSoB2cDTO.Product> products = dmpSoOutstockDetailEntityList.stream().map(detail -> {
