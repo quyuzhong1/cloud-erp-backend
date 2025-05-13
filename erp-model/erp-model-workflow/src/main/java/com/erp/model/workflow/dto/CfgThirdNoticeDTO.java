@@ -189,7 +189,7 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 具体人员
         */
         @NotBlank(message = "具体人员不能为空")
-        @Size(max = 1,024,message = "具体人员最大长度不能超过1,024位")
+        @Size(max = 1024,message = "具体人员最大长度不能超过1,024位")
         private String specificPerson;
 
         /**
