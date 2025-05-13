@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -86,7 +87,23 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
         ProductPackEntity packEntity = new ProductPackEntity();
         BeanMapper.copy(productPackDTO, packEntity);
         packEntity.handleData();
+        //处理数据
+        handleSaveOrUpdate(packEntity);
         return this.saveOrUpdate(packEntity);
+    }
+    /**
+     * 数据处理
+     * @author will
+     * @date 2025/5/13 15:11
+     * @param packEntity
+     * @return void
+     */
+    private void handleSaveOrUpdate (ProductPackEntity packEntity) {
+        ProductPackEntity oldEntity = this.getBySkuId(packEntity.getSkuId());
+        if (ObjUtil.isEmpty(oldEntity)) {
+            return;
+        }
+        packEntity.setId(oldEntity.getId());
     }
 
     /**
@@ -99,7 +116,15 @@ public class ProductPackServiceImpl extends ServiceImpl<ProductPackMapper, Produ
     @Override
     public Boolean saveOrUpdateBatch(List<ProductPackDTO> productPackList) {
         List<ProductPackEntity> list = BeanMapper.copyList(productPackList, ProductPackEntity.class);
-        list.forEach(ProductPackEntity::handleData);
+        //根据sku查询
+        List<String> skuIdList = list.stream().map(ProductPackEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductPackEntity> oldList = this.listBySkuIdList(skuIdList);
+        Map<String, String> map = oldList.stream().collect(Collectors.toMap(ProductPackEntity::getSkuId, ProductPackEntity::getId));
+
+        for (ProductPackEntity packEntity : list) {
+            packEntity.handleData();
+            packEntity.setId(map.get(packEntity.getSkuId()));
+        }
         return this.saveOrUpdateBatch(list);
     }
 
