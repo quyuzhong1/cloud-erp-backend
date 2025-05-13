@@ -235,14 +235,10 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
 
         Map<String, List<LogisticsTrackEntity>> trackMap = list.stream().collect(Collectors.groupingBy(LogisticsTrackEntity::getTrackNo));
 
-        List<ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO> resultList = new LinkedList<>();
-        for (int i = 0; i < fulfillmentList.size(); i++) {
-            DmpSoOutstockEntity dmpSoOutstockEntity = fulfillmentList.get(i);
-            //根据soB2c的id关联SoB2cDetailEntity/SoB2cLogisticsEntity的mainId, 在根据SoB2cLogisticsEntity的TrackNo关联LogisticsTrackEntity组合成ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO
-            ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO item = combineSoB2cLogisticInfoDTO(sourceSoB2cEntity, fulfillmentDetailMap.get(dmpSoOutstockEntity.getId()), dmpSoOutstockEntity, trackMap, listingMap, fulfillmentList.size() > 1, i + 1);
-            resultList.add(item);
-        }
-        return resultList;
+        //根据soB2c的id关联SoB2cDetailEntity/SoB2cLogisticsEntity的mainId, 在根据SoB2cLogisticsEntity的TrackNo关联LogisticsTrackEntity组合成ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO
+        return fulfillmentList.stream()
+                .map(e -> combineSoB2cLogisticInfoDTO(sourceSoB2cEntity, fulfillmentDetailMap.get(e.getId()), e, trackMap, listingMap))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -258,17 +254,15 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                                                                                    List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList,
                                                                                    DmpSoOutstockEntity soOutstockEntity,
                                                                                    Map<String, List<LogisticsTrackEntity>> trackMap,
-                                                                                   Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap,
-                                                                                   boolean multipleSoOutstock,
-                                                                                   Integer outstockIndex
+                                                                                   Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap
     ) {
         ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO logisticInfoDTO = new ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO();
-        if (multipleSoOutstock){
-            // 按出库设置子订单信息
-            logisticInfoDTO.setOrderNumber(CharSequenceUtil.format("{}-F{}", soB2c.getSellerOrderCode(), outstockIndex));
-        } else {
-            logisticInfoDTO.setOrderNumber(soB2c.getSellerOrderCode());
-        }
+
+        String childOrderNumber = StringUtils.isNotBlank(soOutstockEntity.getTransportNo()) ? soOutstockEntity.getTransportNo().replace(".", "-F") : soOutstockEntity.getTransportNo();
+        logisticInfoDTO.setOrderNumber(childOrderNumber);
+
+        logisticInfoDTO.setOrderNumber(soB2c.getSellerOrderCode());
+
         logisticInfoDTO.setPlatformCode(soB2c.getPlatformCode());
         logisticInfoDTO.setBillStatus(soB2c.getBillStatus());
         logisticInfoDTO.setCode(soB2c.getCode());
