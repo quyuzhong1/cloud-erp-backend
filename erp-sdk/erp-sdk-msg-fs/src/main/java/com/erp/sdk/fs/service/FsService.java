@@ -12,6 +12,10 @@ import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.dto.LarkResultDTO;
+import com.google.gson.JsonParser;
+import com.lark.oapi.Client;
+import com.lark.oapi.core.utils.Jsons;
+import com.lark.oapi.service.contact.v3.model.*;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
@@ -21,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.erp.model.sys.vo.FsBatchSendMessageDTO.getTextMessageMap;
@@ -95,6 +100,71 @@ public class FsService {
 
         return Collections.emptyMap();
     }
+
+    /**
+     * 批量通过手机号或邮箱获取用户
+     * https://open.feishu.cn/document/server-docs/contact-v3/user/batch_get_id
+     * @author jack
+     * @date 2025-05-13
+     */
+    public UserContactInfo[] getBatchFsUserByMobileOrEmail(FindThirdUserDTO.UserParamsDTO dto) {
+        // 构建client
+        Client client = Client.newBuilder(fsProperties.getAppId(), fsProperties.getAppSecret()).build();
+        // 创建请求对象
+        BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
+                .userIdType(dto.getUserIdType())
+                .batchGetIdUserReqBody(BatchGetIdUserReqBody.newBuilder()
+                        .mobiles(dto.getMobiles())
+                        .includeResigned(Boolean.FALSE)
+                        .build())
+                .build();
+        try {
+            // 发起请求
+            BatchGetIdUserResp resp = client.contact().v3().user().batchGetId(req);
+            // 处理服务端错误
+            if (!resp.success()) {
+                log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail失败>>>>>{}",String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+                return null;
+            }
+            return resp.getData().getUserList();
+        } catch (Exception e) {
+            log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail出错>>>>>{}",e);
+        }
+        return null;
+    }
+
+    /**
+     * 批量获取用户信息
+     * https://open.feishu.cn/document/contact-v3/user/batch
+     * @author jack
+     * @date 2025-05-13
+     */
+    public User[] getBatchFsUser(FindThirdUserDTO.UserParamsDTO dto) {
+        // 构建client
+        Client client = Client.newBuilder(fsProperties.getAppId(), fsProperties.getAppSecret()).build();
+        // 创建请求对象
+        BatchUserReq req = BatchUserReq.newBuilder()
+                .userIdType(dto.getUserIdType())
+                .departmentIdType(dto.getDepartmenetIdType())
+                .userIds(dto.getUserIds())
+                .build();
+        try {
+            // 发起请求
+            BatchUserResp resp = client.contact().v3().user().batch(req);
+            // 处理服务端错误
+            if (!resp.success()) {
+                log.error("批量获取用户信息getBatchFsUser失败>>>>>{}",String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+                return null;
+            }
+            return resp.getData().getItems();
+        } catch (Exception e) {
+            log.error("批量获取用户信息getBatchFsUser出错>>>>>{}",e);
+        }
+        return null;
+    }
+
 
 
     /**
@@ -335,5 +405,54 @@ public class FsService {
         }
         cardMap.put("elements", elements);
         return cardMap;
+    }
+
+    public static void main(String[] args) {
+        Client client = Client.newBuilder("cli_a885904d16b5500e","U3pYsRdP7HTIpkolUjJol5cHtl12eoLu").build();
+//        String[] mobiles = new String[]{"13726267597"};
+//        // 构建client
+//        // 创建请求对象
+//        BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
+//                .userIdType("user_id")
+//                .batchGetIdUserReqBody(BatchGetIdUserReqBody.newBuilder()
+//                        .mobiles(mobiles)
+//                        .includeResigned(Boolean.FALSE)
+//                        .build())
+//                .build();
+//        try {
+//            // 发起请求
+//            BatchGetIdUserResp resp = client.contact().v3().user().batchGetId(req);
+//            // 处理服务端错误
+//            if (!resp.success()) {
+//                log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail失败>>>>>{}",String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+//                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+//            }
+//            System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+//        } catch (Exception e) {
+//            log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail出错>>>>>{}",e);
+//        }
+
+
+//        String[] userids = new String[]{"594g34ac"};
+//        // 构建client
+//        // 创建请求对象
+//        BatchUserReq req = BatchUserReq.newBuilder()
+//                .userIdType("user_id")
+//                .departmentIdType("open_department_id")
+//                .userIds(userids)
+//                .build();
+//        try {
+//            // 发起请求
+//            BatchUserResp resp = client.contact().v3().user().batch(req);
+//            // 处理服务端错误
+//            if (!resp.success()) {
+//                log.error("批量获取用户信息getBatchFsUser失败>>>>>{}",String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+//                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+//            }
+//            // 业务数据处理
+//            System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+//        } catch (Exception e) {
+//            log.error("批量获取用户信息getBatchFsUser出错>>>>>{}",e);
+//        }
     }
 }
