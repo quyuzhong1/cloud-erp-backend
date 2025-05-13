@@ -943,4 +943,16 @@ public class SoB2cFeignController extends BaseController {
     public SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId) {
         return soB2cRefService.getSplitCombination(soId);
     }
+
+
+    /**
+     * 更新明细
+     * */
+    @PostMapping("/updateDetail")
+    public Boolean updateDetail(@RequestBody List<SoB2cDetailEntity> soB2cDetailEntityList) {
+        if(CollectionUtils.isEmpty(soB2cDetailEntityList)){
+            return true;
+        }
+        return soB2cDetailService.updateBatchById(soB2cDetailEntityList);
+    }
 }
