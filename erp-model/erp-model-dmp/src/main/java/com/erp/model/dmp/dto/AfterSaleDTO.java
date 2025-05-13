@@ -698,6 +698,10 @@ public class AfterSaleDTO implements Serializable {
 
         /**
          */
+        private String id;
+
+        /**
+         */
         private String key;
 
 
