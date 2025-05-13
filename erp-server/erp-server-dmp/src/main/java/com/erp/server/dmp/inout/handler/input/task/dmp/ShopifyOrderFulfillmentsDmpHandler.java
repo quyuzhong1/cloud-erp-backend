@@ -7,10 +7,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -25,32 +22,19 @@ public class ShopifyOrderFulfillmentsDmpHandler extends DmpInputDoNextDmpHandler
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
-        List<Map<String, Object>> detailList = super.getDetailList(dmpInputMongoEntity);
-        if (CollectionUtils.isEmpty(detailList)){
-            return detailList;
-        }
         List<Map<String, Object>> resultMapList = new ArrayList<>();
-        List<Long> orderIds = detailList.stream().map(e -> Long.parseLong(e.getOrDefault("orderId", "0").toString())).distinct().collect(Collectors.toList());
+        long orderId = Long.parseLong(dmpInputMongoEntity.getOrDefault("orderId", "0").toString());
+        if (orderId <= 0){
+            return Collections.emptyList();
+        }
         //订单配送信息
         List<ParamData> conditionDataList = new ArrayList<>();
-        conditionDataList.add(new ParamData("order_id", "order_id", PannoEnum.IN, orderIds));
+        conditionDataList.add(new ParamData("order_id", "order_id", PannoEnum.EQ, orderId));
         List<Map<String, Object>> dmpInputFulfillmentMongoChildList = mongoService.findMongoData(conditionDataList, "shopify_fulfillments_data");
         if (CollectionUtils.isNotEmpty(dmpInputFulfillmentMongoChildList)){
-            Map<String, Map<String, Object>> fulfillmentsMap = dmpInputFulfillmentMongoChildList.stream().collect(Collectors.toMap(e -> e.getOrDefault("order_id", "").toString(), e -> e));
-            for (Map<String, Object> detail : detailList) {
-                Map<String, Object> fulfillmentItemMap = fulfillmentsMap.get(detail.get("orderId").toString());
-                if (fulfillmentItemMap == null) {
-                    continue;
-                }
-                fulfillmentItemMap.remove("_id");
-                fulfillmentItemMap.remove("convertId");
-                fulfillmentItemMap.remove("inputTaskId");
-                fulfillmentItemMap.remove("mongoCreateTime");
-                fulfillmentItemMap.remove("mongoUpdateTime");
-                fulfillmentItemMap.remove("uniqueEncrypt");
-                fulfillmentItemMap.remove("fileId");
-                fulfillmentItemMap.remove("dataEncrypt");
-                detail.putAll(fulfillmentItemMap);
+            for (Map<String, Object> detail : dmpInputFulfillmentMongoChildList) {
+                // 补充主表信息字段
+                dmpInputMongoEntity.forEach((key, value) -> detail.putIfAbsent(key, value));
                 resultMapList.add(detail);
             }
         }
