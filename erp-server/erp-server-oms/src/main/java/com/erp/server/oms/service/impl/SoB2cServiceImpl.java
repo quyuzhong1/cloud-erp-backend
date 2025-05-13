@@ -372,6 +372,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private InvoiceInfoService invoiceInfoService;
+    @Lazy
+    @Resource
+    private SoPriceService soPriceService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -6130,6 +6133,27 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         // 全托管币种取值为交易币种
         if (isFullyManagedOrder(dto.getDictPlatform())){
             dto.setCurrency(shopInfo.getTradeCurrency());
+            //重算真实售价和金额
+            List<PlatformOrderDetailDTO> details = dto.getDetails();
+            List<SoPriceDTO.PriceParamDTO> list = new ArrayList<>();
+            List<SoPriceDTO.PriceDTO> priceDTOS = new ArrayList<>();
+            details.forEach(detailEntity -> {
+                SoPriceDTO.PriceParamDTO priceParamDTO = new SoPriceDTO.PriceParamDTO();
+                priceParamDTO.setSkuId(detailEntity.getSkuId());
+                priceParamDTO.setDate(dto.getBillDate());
+                priceParamDTO.setQty(detailEntity.getQty());
+                priceParamDTO.setShopId(dto.getShopId());
+                list.add(priceParamDTO);
+            });
+            priceDTOS = soPriceService.batchGetSoPrice(list);
+            //赋值
+            List<SoPriceDTO.PriceDTO> finalPriceDTOS = priceDTOS;
+            dto.getDetails().forEach(detailEntity -> {
+                SoPriceDTO.PriceDTO priceDTO = finalPriceDTOS.stream().filter(priceDTO1 -> priceDTO1.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                detailEntity.setPrice(Objects.nonNull(priceDTO) ? priceDTO.getTaxPrice() : BigDecimal.ZERO);
+                detailEntity.setTaxRate(Objects.nonNull(priceDTO) ?  priceDTO.getTaxRate() : BigDecimal.ZERO);
+            });
+            dto.setAmount(dto.getDetails().stream().map(detailEntity -> MathUtil.multiplyWithTwo(detailEntity.getPrice(), detailEntity.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add));
         }
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
