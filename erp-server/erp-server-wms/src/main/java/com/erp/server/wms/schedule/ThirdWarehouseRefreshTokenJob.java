@@ -1,11 +1,16 @@
 package com.erp.server.wms.schedule;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.RefreshShopTokenDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.tms.entity.CfgLogisticsAuthFieldEntity;
+import com.erp.model.tms.entity.LogisticsAuthEntity;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
@@ -13,8 +18,8 @@ import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
@@ -31,6 +36,9 @@ public class ThirdWarehouseRefreshTokenJob {
 
     @Resource
     private ThirdWarehouseRegistry thirdWarehouseRegistry;
+
+    @Resource
+    private LogisticsAuthFeign logisticsAuthFeign;
 
     /**
      * 刷新三方仓token
@@ -65,6 +73,7 @@ public class ThirdWarehouseRefreshTokenJob {
             return ReturnT.SUCCESS;
         }
         List<OverseasProviderEntity> updateList = new ArrayList<>();
+        List<LogisticsAuthFieldEntity> updateLogistic = new ArrayList<>();
         for (OverseasProviderEntity overseasProviderEntity : overseasProviderEntityList) {
             ThirdWarehouseService thirdWarehouseService = thirdWarehouseRegistry.getHandler(overseasProviderEntity.getCode());
             Map<String,Object> authMap = overseasProviderEntity.getAuthJson();
@@ -73,6 +82,28 @@ public class ThirdWarehouseRefreshTokenJob {
                 XxlJobHelper.log("[刷新三方仓token] 刷新成功: shopId={}, PlatformCode={}", overseasProviderEntity.getId(), overseasProviderEntity.getCode());
                 overseasProviderEntity.setAuthJson(authMap);
                 updateList.add(overseasProviderEntity);
+                //同步刷新物流商token
+                List<LogisticsAuthEntity> logisticsAuthEntities = FeignQuery.create(LogisticsAuthEntity.class)
+                        .eq(LogisticsAuthEntity::getLogisticsPlatform, overseasProviderEntity.getCode())
+                        .list();
+                if(CollectionUtils.isEmpty(logisticsAuthEntities)){
+                    continue;
+                }
+                List<String> logisticAuthIds = logisticsAuthEntities.stream()
+                        .map(LogisticsAuthEntity::getId)
+                        .collect(Collectors.toList());
+                List<LogisticsAuthFieldEntity> logisticsAuthFieldEntities = FeignQuery.create(LogisticsAuthFieldEntity.class)
+                        .in(LogisticsAuthFieldEntity::getLogisticsAuthId, logisticAuthIds)
+                        .list();
+                if(CollectionUtils.isEmpty(logisticsAuthFieldEntities)){
+                    continue;
+                }
+                for (LogisticsAuthFieldEntity logisticsAuthFieldEntity : logisticsAuthFieldEntities) {
+                    if(authMap.containsKey(logisticsAuthFieldEntity.getFieldCode())){
+                        logisticsAuthFieldEntity.setFieldValue(authMap.get(logisticsAuthFieldEntity.getFieldCode()).toString());
+                        updateLogistic.add(logisticsAuthFieldEntity);
+                    }
+                }
             }else{
                 XxlJobHelper.log("[刷新三方仓token] 刷新失败: shopId={}, PlatformCode={}， error={}",
                         overseasProviderEntity.getId(),
@@ -81,7 +112,12 @@ public class ThirdWarehouseRefreshTokenJob {
                 );
             }
         }
-        overseasProviderService.updateBatchById(updateList);
+        if(CollectionUtils.isNotEmpty(updateList)){
+            overseasProviderService.updateBatchById(updateList);
+        }
+        if(CollectionUtils.isNotEmpty(updateLogistic)){
+            logisticsAuthFeign.updateLogisticAuthFile(updateLogistic);
+        }
         XxlJobHelper.log("[刷新三方仓token] 任务结束--------------------------------------->");
         return ReturnT.SUCCESS;
     }

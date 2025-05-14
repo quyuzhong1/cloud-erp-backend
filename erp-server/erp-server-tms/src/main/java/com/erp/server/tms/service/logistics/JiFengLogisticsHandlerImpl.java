@@ -98,7 +98,7 @@ public class JiFengLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 logisticsSaleChannelEntity.setPlatformWarehouseCode(platformWarehouseCode);
                 OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseEntityList.stream().filter(v->v.getPlatformWarehouseCode().equals(platformWarehouseCode) && StringUtils.isNotBlank(v.getWarehouseId())).findFirst().orElse(null);
                 if(Objects.nonNull(overseasProviderWarehouseEntity)){
-                    logisticsSaleChannelEntity.setOverseasWarehouseId(overseasProviderWarehouseEntity.getWarehouseId());
+                    logisticsSaleChannelEntity.setOverseasWarehouseId(overseasProviderWarehouseEntity.getId());
                 }
                 response.add(logisticsSaleChannelEntity);
             }
