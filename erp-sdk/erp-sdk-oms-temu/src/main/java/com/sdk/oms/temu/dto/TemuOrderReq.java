@@ -15,4 +15,9 @@ public class TemuOrderReq extends TemuCommonDTO {
      * 平台订单号
      */
     private List<String> parentOrderSnList;
+
+
+    private String parentOrderSn;
+
+    private String orderSn;
 }

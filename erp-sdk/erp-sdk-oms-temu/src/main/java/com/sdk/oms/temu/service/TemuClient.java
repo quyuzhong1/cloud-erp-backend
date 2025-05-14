@@ -66,10 +66,12 @@ public class TemuClient {
         temuCommonDTO.setAppSecret(clientSecret);
         temuCommonDTO.setAppKey(clientId);
         temuCommonDTO.setAreaCode("US");
-        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-20046726656633537"));
+        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-17525198915191892"));
+        temuCommonDTO.setParentOrderSn("PO-211-17525198915191892");
+        temuCommonDTO.setOrderSn( "211-17525268383351892");
         TemuClient temuClient = new TemuClient();
-        TemuResp<TemuOrderDTO> resp = temuClient.getOrderList(temuCommonDTO);
-        System.out.println(resp);
+        temuClient.getLogisticsShipment(temuCommonDTO);
+        System.out.println(1231);
     }
 
     public TemuResp<TemuWarehouseDTO> getWarehouseList(TemuCommonDTO temuCommonDTO){
@@ -97,11 +99,13 @@ public class TemuClient {
     public TemuResp<TemuOrderDTO> getOrderList(TemuOrderReq temuOrderReq){
         TemuEnum temuEnum = TemuEnum.getByCode(temuOrderReq.getAreaCode());
         this.checkShopInfo(temuOrderReq);
-        String api = "bg.order.list.get";
+        String api = "bg.order.list.v2.get";
         Map<String, Object> params = this.buildDefaultParams(temuOrderReq, api);
         Gson gson = new Gson();
         String jsonArray = gson.toJson(temuOrderReq.getParentOrderSnList());
         params.put("parentOrderSnList",jsonArray);
+        String typeJsonArray = gson.toJson(Arrays.asList("fulfillBySeller","fulfillByCooperativeWarehouse"));
+        params.put("fulfillmentTypeList",typeJsonArray);
         // 追加请求路径获取签名
         String sign = EncryptionUtils.generateSignature(params, temuOrderReq.getAppSecret());
         //加入sign签名入参
@@ -117,6 +121,30 @@ public class TemuClient {
             throw new ServiceException("temu半托管查询订单失败，返回值 responseMap={}",JSONUtil.toJsonStr(apiResult));
         }
         return JSON.parseObject(apiResult.getData(),new TypeReference<TemuResp<TemuOrderDTO>>() {}.getType());
+    }
+
+    public TemuResp<TemuLogisticShipmentDTO> getLogisticsShipment(TemuOrderReq temuOrderReq){
+        TemuEnum temuEnum = TemuEnum.getByCode(temuOrderReq.getAreaCode());
+        this.checkShopInfo(temuOrderReq);
+        String api = "bg.logistics.shipment.v2.get";
+        Map<String, Object> params = this.buildDefaultParams(temuOrderReq, api);
+        params.put("parentOrderSn",temuOrderReq.getParentOrderSn());
+        params.put("orderSn",temuOrderReq.getOrderSn());
+        // 追加请求路径获取签名
+        String sign = EncryptionUtils.generateSignature(params, temuOrderReq.getAppSecret());
+        //加入sign签名入参
+        params.put("sign", sign);
+
+        //设置请求头
+        Map<String, String> headerMap = new HashMap<>(2);
+        headerMap.put("content-type", "application/json");
+        String url = temuEnum.getUrl();
+        ApiResult<String> apiResult = HttpCommonUtil.sendOkHttpApiResult(url , JSONUtil.toJsonStr(params),new HashMap<>(), headerMap, RequestMethod.POST);
+        if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
+            log.error("入参params={}, temu半托管查询订单失败，返回值 responseMap={}",  params, JSONUtil.toJsonStr(apiResult));
+            throw new ServiceException("temu半托管查询订单失败，返回值 responseMap={}",JSONUtil.toJsonStr(apiResult));
+        }
+        return JSON.parseObject(apiResult.getData(),new TypeReference<TemuResp<TemuLogisticShipmentDTO>>() {}.getType());
     }
 
     public TemuCommonDTO getAuthInfo(String shopId){
