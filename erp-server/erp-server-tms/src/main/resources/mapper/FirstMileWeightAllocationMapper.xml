@@ -300,8 +300,8 @@
                 wa.box_height,
                 wa.box_size_unit,
                 wa.out_stock_weight outStockWeight,
-                wa.weight_unit,
             </if>
+            wa.weight_unit,
             wa.box_id,
             wa.box_no boxNo
         from first_mile_weight_allocation wa

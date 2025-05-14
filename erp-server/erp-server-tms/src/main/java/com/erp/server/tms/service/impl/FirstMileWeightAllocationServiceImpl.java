@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_WEIGHT_ALLOCATION;
+import static org.checkerframework.checker.nullness.Opt.ifPresent;
 
 /**
  * <p>
@@ -280,11 +281,11 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         List<String> fbaShipmentCodes = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
 
         List<WmsCartonDTO.DetailDTO> cartonDetailList = wmsCartonFeign.listByPackingTaskId(packingTaskEntity.getId(),fbaShipmentCodes);
-        Map<String, BigDecimal> cartonDetailMap = cartonDetailList.stream().distinct().collect(Collectors.toMap(
-                WmsCartonDTO.DetailDTO::getSkuId,
-                WmsCartonDTO.DetailDTO::getPackageWeight,
-                (existingValue, newValue) -> existingValue
-        ));
+//        Map<String, BigDecimal> cartonDetailMap = cartonDetailList.stream().distinct().collect(Collectors.toMap(
+//                WmsCartonDTO.DetailDTO::getSkuId,
+//                WmsCartonDTO.DetailDTO::getPackageWeight,
+//                (existingValue, newValue) -> existingValue
+//        ));
         //系统配置
         CfgSettingDTO.ViewDTO cfgSettingView = cfgSettingService.view();
         String cfgWeightAllocationType = cfgSettingView.getAllocationSettingDTO().getWeightFirstAllocation();
@@ -303,16 +304,20 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         List<FirstMileWeightAllocationEntity> updateList = new ArrayList<>(entityList.size());
         for (FirstMileWeightAllocationEntity oldEntity : entityList) {
             FirstMileWeightAllocationEntity entity = new FirstMileWeightAllocationEntity();
+            WmsCartonDTO.DetailDTO detailDTO = cartonDetailList.stream().filter(e -> e.getBoxId().equals(oldEntity.getBoxId())).findFirst().orElseThrow(() -> new ServiceException("物流单【{}】的装箱内容【{}】不存在", logisticsBillEntity.getTransportNo(), oldEntity.getBoxNo()));
             entity.setId(oldEntity.getId());
             entity.setBoxId(oldEntity.getBoxId());
             entity.setBoxNo(oldEntity.getBoxNo());
             entity.setDeliveryQty(oldEntity.getDeliveryQty());
             entity.setFeeRule(logisticsChannelEntity.getFeeRule());
             //2024-09-14 jack 重算时出库重量字段值从装箱内容物详情信息中获取
-            entity.setOutStockWeight(getOutStockWeight(cartonDetailMap.get(oldEntity.getSkuId()), oldEntity.getSkuId(),oldEntity.getBusinessCode(),oldEntity.getBoxId()));
-            BigDecimal boxLength = getBoxLength(oldEntity.getBoxLength(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId());
-            BigDecimal boxWidth = getBoxWidth(oldEntity.getBoxWidth(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId());
-            BigDecimal boxHeight = getBoxHeight(oldEntity.getBoxHeight(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId());
+            entity.setOutStockWeight(getOutStockWeight(detailDTO.getPackageWeight(), oldEntity.getSkuId(),oldEntity.getBusinessCode(),oldEntity.getBoxId()));
+            BigDecimal boxLength = getBoxLength(detailDTO.getBoxLength(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId());
+            entity.setBoxLength(boxLength);
+            BigDecimal boxWidth = getBoxWidth(detailDTO.getBoxWidth(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId());
+            entity.setBoxWidth(boxWidth);
+            BigDecimal boxHeight = getBoxHeight(detailDTO.getBoxHeight(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId());
+            entity.setBoxHeight(boxHeight);
             BigDecimal boxSize = boxLength.multiply(boxWidth).multiply(boxHeight);
             BigDecimal volumeSetting = BigDecimal.valueOf(logisticsChannelEntity.getVolumeSetting());
             if(volumeSetting.compareTo(BigDecimal.ZERO) == 0){

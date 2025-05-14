@@ -24,5 +24,5 @@ public interface WmsCartonFeign {
      * @return
      */
     @GetMapping("/listSkuByBoxIds")
-    List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(List<String> boxIds);
+    List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(@RequestParam("boxIds") List<String> boxIds);
 }

@@ -32,7 +32,7 @@ public class WmsCartonFeignController {
      * @return
      */
     @GetMapping("/listSkuByBoxIds")
-    List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(List<String> boxIds){
+    List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(@RequestParam("boxIds")List<String> boxIds){
         return wmsCartonService.listSkuByBoxIds(boxIds);
     }
 }

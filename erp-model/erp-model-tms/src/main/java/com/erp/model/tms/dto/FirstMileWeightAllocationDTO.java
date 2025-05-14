@@ -1003,13 +1003,8 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * skuNo
          */
-        @NotBlank(message = "来源单号不能为空")
+        @NotBlank(message = "SKU编号不能为空")
         private String skuNo;
-        /**
-         * 平台skuNo
-         */
-        @NotBlank(message = "来源单号不能为空")
-        private String platformSkuNo;
     }
     @EqualsAndHashCode(callSuper = true)
     @Data
