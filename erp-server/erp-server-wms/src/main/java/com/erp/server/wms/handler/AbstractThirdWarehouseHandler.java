@@ -135,6 +135,11 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         return handleAndRemoveContext(() -> uploadOrderLabel(uploadOrderLabelReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL,uploadOrderLabelReq.getOrderCode());
     }
 
+    @Override
+    public ApiResult<String> refreshToken(String authId,Map<String,Object> map) {
+        return handleAndRemoveContext(() ->  refreshToken(map), authId,SourceTypeEnum.THIRD_WAREHOUSE_REFRESH_TOKEN,authId);
+    }
+
     protected abstract ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq);
 
     protected abstract ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
@@ -146,6 +151,11 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq);
     protected abstract ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq);
     protected abstract ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
+
+    protected  ApiResult<String> refreshToken(Map<String,Object> map){
+        return success();
+    };
+
 
     protected abstract ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq);
 

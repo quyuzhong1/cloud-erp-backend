@@ -51,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -123,8 +124,11 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         for (OverseasProviderDTO.ListDTO listDTO : list) {
             listDTO.setAuthStatusName(AuthStatusEnum.getName(listDTO.getAuthStatus()));
             Map<String,Object> authMap = listDTO.getAuthJson();
-            if (Objects.nonNull(authMap) && authMap.containsKey("expireIn")){
-                listDTO.setAuthExpireTime((LocalDateTime)authMap.get("expireIn"));
+            if (Objects.nonNull(authMap) && authMap.containsKey("refreshExpireIn")){
+                listDTO.setAuthExpireTime(LocalDateTime.parse(
+                        (String)authMap.get("refreshExpireIn"),
+                        DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                ));
             }
         }
     }

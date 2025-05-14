@@ -17,6 +17,7 @@ import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 /**
@@ -104,16 +105,39 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         authJson.put("accessToken",jiFengTokenResp.getAccessToken());
         authJson.put("refreshToken",jiFengTokenResp.getRefreshToken());
         authJson.put("userId",jiFengTokenResp.getUserId());
-        authJson.put("expireIn",Instant.ofEpochMilli(jiFengTokenResp.getExpireIn())
+        LocalDateTime expireIn = Instant.ofEpochMilli(jiFengTokenResp.getExpireIn())
                 .atZone(ZoneId.systemDefault())
-                .toLocalDateTime());
-        authJson.put("refreshExpireIn",Instant.ofEpochMilli(jiFengTokenResp.getRefreshExpireIn())
+                .toLocalDateTime();
+        authJson.put("expireIn",expireIn.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        LocalDateTime refreshExpireIn = Instant.ofEpochMilli(jiFengTokenResp.getRefreshExpireIn())
                 .atZone(ZoneId.systemDefault())
-                .toLocalDateTime());
+                .toLocalDateTime();
+        authJson.put("refreshExpireIn",refreshExpireIn.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         dto.setAuthJson(authJson);
         return true;
     }
 
+    @Override
+    protected  ApiResult<String> refreshToken(Map<String,Object> map){
+        JiFengAuthRequest jiFengAuthRequest = JiFengAuthRequest.builder()
+                .domain(map.get("domain").toString())
+                .clientId(map.get("appKey").toString())
+                .clientSecret(map.get("appToken").toString())
+                .refreshToken(map.get("refreshToken").toString())
+                .userId(Integer.valueOf(map.get("userId").toString()))
+                .build();
+        JiFengBaseResp<JiFengTokenResp> resp = jiFengService.refreshToken(jiFengAuthRequest);
+        if(!isSuccess(resp)){
+            return failure(resp.getMessage());
+        }
+        JiFengTokenResp jiFengTokenResp = resp.getData();
+        map.put("accessToken",jiFengTokenResp.getAccessToken());
+        LocalDateTime expireIn = Instant.ofEpochMilli(jiFengTokenResp.getExpireIn())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+        map.put("expireIn",expireIn.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        return success();
+    };
     public <T> boolean isSuccess(JiFengBaseResp<T> resp){
         return resp.getCode()==0;
     }
