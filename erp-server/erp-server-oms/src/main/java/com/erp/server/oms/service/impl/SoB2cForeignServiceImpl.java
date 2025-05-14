@@ -185,10 +185,15 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         if (CollectionUtils.isEmpty(soB2cList)) {
             return Collections.emptyList();
         }
-        String platformCode = soB2cList.stream().map(SoB2cEntity::getPlatformCode).findFirst().orElse("");
+        List<String> platformCodeList = soB2cList.stream().map(SoB2cEntity::getPlatformCode)
+                .filter(StringUtils::isNotBlank)
+                .distinct().collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(platformCodeList)) {
+            return Collections.emptyList();
+        }
         // 查询中台配送信息
         List<DmpSoInfoEntity> soList = FeignQuery.create(DmpSoInfoEntity.class)
-                .eq(DmpSoInfoEntity::getPlatformCode, platformCode)
+                .in(DmpSoInfoEntity::getThirdCode, platformCodeList)
                 .list();
         if (CollectionUtils.isEmpty(soList)) {
             return Collections.emptyList();
@@ -202,7 +207,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         }
         Map<String, DmpSoOutstockEntity> fullfillmentMap = fulfillmentList.stream().collect(Collectors.toMap(DmpSoOutstockEntity::getId, Function.identity()));
         List<DmpSoOutstockDetailEntity> fulfillmentDetailList = FeignQuery.create(DmpSoOutstockDetailEntity.class)
-                .eq(DmpSoOutstockDetailEntity::getMainId, fullfillmentMap.keySet())
+                .in(DmpSoOutstockDetailEntity::getMainId, fullfillmentMap.keySet())
                 .list();
         if (CollectionUtils.isEmpty(fulfillmentDetailList)) {
             return Collections.emptyList();
@@ -215,8 +220,15 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                 .list();
 
         String shopId = soB2cList.get(0).getShopId();
-        SoB2cEntity sourceSoB2cEntity = soB2cList.stream().filter(e -> SourceTypeEnum.SO_B2C.getCode().equalsIgnoreCase(e.getSourceType())).findFirst().orElse(null);
-        if (null == sourceSoB2cEntity){
+        // 原始订单
+        Map<String, SoB2cEntity> sourceSoB2cMap = lambdaQuery()
+                .in(SoB2cEntity::getPlatformCode, platformCodeList)
+                .eq(SoB2cEntity::getDictPlatform, PlatformDictEnum.SHOPIFY.getCode())
+                .eq(SoB2cEntity::getSourceType, SourceTypeEnum.SO_B2C.getCode())
+                .list()
+                .stream()
+                .collect(Collectors.toMap(SoB2cEntity::getPlatformCode, Function.identity()));
+        if (sourceSoB2cMap.isEmpty()){
             ServiceException.runError("order not find");
         }
         // 查询原始listing信息
@@ -238,7 +250,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
 
         //根据soB2c的id关联SoB2cDetailEntity/SoB2cLogisticsEntity的mainId, 在根据SoB2cLogisticsEntity的TrackNo关联LogisticsTrackEntity组合成ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO
         return fulfillmentList.stream()
-                .map(e -> combineSoB2cLogisticInfoDTO(sourceSoB2cEntity, fulfillmentDetailMap.get(e.getId()), e, trackMap, listingMap))
+                .map(e -> combineSoB2cLogisticInfoDTO(sourceSoB2cMap.get(e.getThirdBillNo()), fulfillmentDetailMap.get(e.getId()), e, trackMap, listingMap))
                 .collect(Collectors.toList());
     }
 
@@ -257,15 +269,16 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                                                                                    Map<String, List<LogisticsTrackEntity>> trackMap,
                                                                                    Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap
     ) {
+        if(null == soB2c){
+            ServiceException.runError("{} order not find", soOutstockEntity.getThirdBillNo());
+        }
+
         ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO logisticInfoDTO = new ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO();
 
-        String childOrderNumber = StringUtils.isNotBlank(soOutstockEntity.getTransportNo()) ? soOutstockEntity.getTransportNo().replace(".", "-F") : soOutstockEntity.getTransportNo();
+        String childOrderNumber = StringUtils.isNotBlank(soOutstockEntity.getStockerName()) ? soOutstockEntity.getStockerName().replace(".", "-F") : soOutstockEntity.getTransportNo();
         logisticInfoDTO.setOrderNumber(childOrderNumber);
-
-        logisticInfoDTO.setOrderNumber(soB2c.getSellerOrderCode());
-
         logisticInfoDTO.setPlatformCode(soB2c.getPlatformCode());
-        logisticInfoDTO.setBillStatus(soB2c.getBillStatus());
+        logisticInfoDTO.setBillStatus(soB2c.getPlatformOrderStatus());
 
         logisticInfoDTO.setCode(soB2c.getCode());
 
@@ -344,7 +357,6 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
             return this.lambdaQuery()
                     .in(SoB2cEntity::getId, mainIds)
                     .eq(SoB2cEntity::getDictPlatform, PlatformDictEnum.SHOPIFY.getCode())
-                    .eq(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
                     .list();
         }
         return Collections.emptyList();
