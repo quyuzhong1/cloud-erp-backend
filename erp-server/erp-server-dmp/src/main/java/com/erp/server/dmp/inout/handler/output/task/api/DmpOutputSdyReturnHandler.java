@@ -141,10 +141,6 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                     return result;
                 }
             	
-            	if("10".equals(dmpSoReturnEntity.getStatus())) {
-            		sdyDTO.setStatus("已删除");
-            	}
-
                 sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
                 
                 Map<String, Object> shopListMap = cacheMap.get("shopList");
@@ -318,7 +314,11 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             }
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoReturnEntity.getPlatformUpdateTime()));
 
-            sdyDTO.setGoods_status("已退货");
+            if("10".equals(dmpSoReturnEntity.getStatus())) {
+            	sdyDTO.setGoods_status("已取消");
+        	}else {
+        		sdyDTO.setGoods_status("已退货");
+        	}
             sdyDTO.setMsku_code(dmpSoReturnDetailEntity.getSkuNo());
             if (CharSequenceUtil.isBlank(dmpSoReturnDetailEntity.getSkuName())) {
                 sdyDTO.setMsku_name(dmpSoReturnDetailEntity.getSkuNo());

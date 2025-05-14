@@ -160,6 +160,10 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 						.orderByDesc(DmpPushMsgEntity::getMessageUpdateTime)
 						.list();
 				if(CollUtil.isEmpty(list)) {
+					List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, Arrays.asList(dmpOutputTaskRecordEntity));
+					if(CollUtil.isNotEmpty(erpQuerySync)) {
+						requestData = erpQuerySync.get(0).getRequestData();
+					}
 					try {
 						JSONObject parseObject = JSON.parseObject(requestData);
 						String poSyncKingdeeId = parseObject.getString("poSyncKingdeeId");

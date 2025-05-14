@@ -615,12 +615,11 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/soOutStock")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
             warehouseTableField = "so.warehouse_id",
             menuCode = "wms:so:outstock:paging",
-            serviceClass = SoOutstockService.class,
-            keyIdName = "so"
+            tableAlias = "so"
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {

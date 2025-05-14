@@ -1521,7 +1521,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
-        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+//        String shopPermissionSql = authDataFeign.getShopPermissionSql("so.shop_id");
+        String shopPermissionSql = "";
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
             permissionSql = permissionSql + " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){

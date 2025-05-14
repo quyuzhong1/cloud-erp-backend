@@ -64,7 +64,6 @@
         so.logistics_channel_name
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
-        left join so_b2c sb on sb.id = so.so_id and sb.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
         and  so.is_deleted=FALSE

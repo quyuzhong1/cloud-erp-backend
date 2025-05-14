@@ -2332,7 +2332,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
-        dto.setPermissionSql(dto.getPermissionSql());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
