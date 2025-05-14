@@ -10,12 +10,15 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
+import com.erp.model.workflow.enums.CfgApproveSyncViewerTypeEnum;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.dto.LarkResultDTO;
 import com.google.gson.JsonParser;
 import com.lark.oapi.Client;
 import com.lark.oapi.core.utils.Jsons;
+import com.lark.oapi.service.approval.v4.model.*;
 import com.lark.oapi.service.contact.v3.model.*;
+import com.lark.oapi.service.contact.v3.model.User;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.erp.model.sys.vo.FsBatchSendMessageDTO.getTextMessageMap;
 
@@ -407,8 +411,173 @@ public class FsService {
         return cardMap;
     }
 
-    public static void main(String[] args) {
-        Client client = Client.newBuilder("cli_a885904d16b5500e","U3pYsRdP7HTIpkolUjJol5cHtl12eoLu").build();
+    /**
+     * 获取Client实例的方法
+     * 该方法用于构建并返回一个配置了必要参数的Client实例，以便与飞书API进行交互
+     * @return Client 实例，用于发送网络请求
+     */
+    public Client getClient() {
+        // 构建client
+        Client client = Client.newBuilder(fsProperties.getAppId(), fsProperties.getAppSecret())
+                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
+                .build();
+        //SDK 使用 client. 业务域.版本.资源 .方法名称 来定位具体的 API 方法
+        return client;
+    }
+
+    /**
+     * 创建三方审批定义
+     * https://open.feishu.cn/document/server-docs/approval-v4/external_approval/create
+     * @author jack
+     * @date 2025-05-14
+     */
+    public void externalApprovalsCreate() throws Exception {
+        // 构建client
+        Client client = getClient();
+
+        // 创建请求对象
+        CreateExternalApprovalReq req = CreateExternalApprovalReq.newBuilder()
+                .departmentIdType("open_department_id")
+                .userIdType("open_id")
+                .externalApproval(ExternalApproval.newBuilder()
+                        .approvalName("@i18n@1")
+                        .approvalCode("externalApprovalsCreateTest")
+                        .groupCode("work_group")
+                        .groupName("@i18n@2")
+                        .external(ApprovalCreateExternal.newBuilder()
+                                .createLinkMobile("https://applink.feishu.cn/client/mini_program/open?appId=cli_9c90fc38e07a9101&path=pages%2Fapproval-form%2Findex%3Fid%3D9999")
+                                .createLinkPc("https://applink.feishu.cn/client/mini_program/open?mode=appCenter&appId=cli_9c90fc38e07a9101&path=pc%2Fpages%2Fcreate-form%2Findex%3Fid%3D9999")
+                                .supportPc(true)
+                                .supportMobile(true)
+                                .supportBatchRead(false)
+                                .enableMarkReaded(false)
+                                .actionCallbackUrl("http://feishu.cn/approval/openapi/operate")
+                                .actionCallbackToken("sdjkljkx9lsadf110")
+                                .actionCallbackKey("gfdqedvsadfgfsd")
+                                .build())
+                        .viewers(new ApprovalCreateViewers[]{
+                                ApprovalCreateViewers.newBuilder()
+                                        .viewerType(CfgApproveSyncViewerTypeEnum.TENANT.getCode())
+                                        .build()
+                        })
+                        .i18nResources(new I18nResource[]{
+                                I18nResource.newBuilder()
+                                        .locale("zh-CN")
+                                        .texts(new I18nResourceText[]{
+                                                I18nResourceText.newBuilder()
+                                                        .key("@i18n@1")
+                                                        .value("people")
+                                                        .build(),
+                                                I18nResourceText.newBuilder()
+                                                        .key("@i18n@2")
+                                                        .value("hr")
+                                                        .build()
+                                        })
+                                        .isDefault(true)
+                                        .build()
+                        })
+                        .managers(new String[]{"96449fb3"})
+                        .build())
+                .build();
+
+        // 发起请求
+        CreateExternalApprovalResp resp = client.approval().v4().externalApproval().create(req);
+
+        // 处理服务端错误
+        if (!resp.success()) {
+            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+            return;
+        }
+        // 业务数据处理
+        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+    }
+
+
+    public static void main(String[] args) throws Exception {
+        Client client = Client.newBuilder("cli_a885904d16b5500e","U3pYsRdP7HTIpkolUjJol5cHtl12eoLu")
+                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
+                .build();
+
+
+        // 创建请求对象
+        GetExternalApprovalReq req = GetExternalApprovalReq.newBuilder()
+                .approvalCode("86A4154C-7BB1-41EF-8039-E0574C039E92")
+                .userIdType("open_id")
+                .build();
+
+        // 发起请求
+        GetExternalApprovalResp resp = client.approval().v4().externalApproval().get(req);
+
+        // 处理服务端错误
+        if (!resp.success()) {
+            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+            return;
+        }
+
+        // 业务数据处理
+        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+
+//        // 创建请求对象 86A4154C-7BB1-41EF-8039-E0574C039E92
+//        CreateExternalApprovalReq req = CreateExternalApprovalReq.newBuilder()
+//                .departmentIdType("open_department_id")
+//                .userIdType("open_id")
+//                .externalApproval(ExternalApproval.newBuilder()
+//                        .approvalName("@i18n@1")
+//                        .approvalCode("externalApprovalsCreateTest")
+//                        .groupCode("work_group")
+//                        .groupName("@i18n@2")
+//                        .external(ApprovalCreateExternal.newBuilder()
+//                                .createLinkMobile("https://applink.feishu.cn/client/mini_program/open?appId=cli_9c90fc38e07a9101&path=pages%2Fapproval-form%2Findex%3Fid%3D9999")
+//                                .createLinkPc("https://applink.feishu.cn/client/mini_program/open?mode=appCenter&appId=cli_9c90fc38e07a9101&path=pc%2Fpages%2Fcreate-form%2Findex%3Fid%3D9999")
+//                                .supportPc(true)
+//                                .supportMobile(true)
+//                                .supportBatchRead(false)
+//                                .enableMarkReaded(false)
+//                                .actionCallbackUrl("http://feishu.cn/approval/openapi/operate")
+//                                .actionCallbackToken("sdjkljkx9lsadf110")
+//                                .actionCallbackKey("gfdqedvsadfgfsd")
+//                                .build())
+//                        .viewers(new ApprovalCreateViewers[]{
+//                                ApprovalCreateViewers.newBuilder()
+//                                        .viewerType("TENANT")
+//                                        .build()
+//                        })
+//                        .i18nResources(new I18nResource[]{
+//                                I18nResource.newBuilder()
+//                                        .locale("zh-CN")
+//                                        .texts(new I18nResourceText[]{
+//                                                I18nResourceText.newBuilder()
+//                                                        .key("@i18n@1")
+//                                                        .value("people")
+//                                                        .build(),
+//                                                I18nResourceText.newBuilder()
+//                                                        .key("@i18n@2")
+//                                                        .value("hr")
+//                                                        .build()
+//                                        })
+//                                        .isDefault(true)
+//                                        .build()
+//                        })
+//                        .build())
+//                .build();
+//
+//        // 发起请求
+//        CreateExternalApprovalResp resp = client.approval().v4().externalApproval().create(req);
+//
+//        // 处理服务端错误
+//        if (!resp.success()) {
+//            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+//                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+//            return;
+//        }
+//        // 业务数据处理
+//        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+
+
 //        String[] mobiles = new String[]{"13726267597"};
 //        // 构建client
 //        // 创建请求对象

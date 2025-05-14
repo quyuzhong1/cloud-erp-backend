@@ -22,12 +22,15 @@ import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.model.workflow.enums.CfgApproveSyncViewerTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.sdk.fs.enmu.DepartmentIdTypeEnum;
+import com.erp.sdk.fs.enmu.UserIdTypeEnum;
 import com.erp.server.workflow.mapper.CfgApproveSyncMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import com.lark.oapi.service.approval.v4.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -442,9 +445,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         //同步平台，推送方式
         String syncPlatform = cfgApproveSyncEntity.getSyncPlatform();
         data.setSyncPlatform(Arrays.asList(syncPlatform.split(",")));
-
-        //启动状态
-        data.setEnableStatusName(Objects.equals(data.getEnableStatus(), Boolean.FALSE) ? "停用" : "启用");
 
         //推送消息
         List<CfgApproveSyncFieldMapEntity> cfgApproveSyncFieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId()));

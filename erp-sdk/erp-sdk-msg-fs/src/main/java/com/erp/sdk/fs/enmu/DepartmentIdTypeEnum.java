@@ -1,4 +1,4 @@
-package com.erp.model.workflow.enums;
+package com.erp.sdk.fs.enmu;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
@@ -6,17 +6,15 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * ERP审批同步配置 可见范围dict_basic表viewerType 枚举
+ *
  * </p>
  *
  * @author jack
  * @since 2025-05-12 18:31:25
  */
-public enum CfgApproveSyncViewerTypeEnum implements EnumMessage {
-    TENANT("tenant", "所有用户"),
-    DEPARTMENT("department", "指定部门"),
-    USER("user", "指定用户"),
-	NONE("none", "不可见"),
+public enum DepartmentIdTypeEnum implements EnumMessage {
+    DEPARTMENTID("department_id", "department_id"),
+    OPENDEPARTMENTID("open_department_id", "open_department_id"),
     ;
     /**
      * 类型
@@ -29,7 +27,7 @@ public enum CfgApproveSyncViewerTypeEnum implements EnumMessage {
      */
     private String name;
 
-    CfgApproveSyncViewerTypeEnum(String code, String name) {
+    DepartmentIdTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -48,7 +46,7 @@ public enum CfgApproveSyncViewerTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (CfgApproveSyncViewerTypeEnum statusEnum : CfgApproveSyncViewerTypeEnum.values()) {
+        for (DepartmentIdTypeEnum statusEnum : DepartmentIdTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }
