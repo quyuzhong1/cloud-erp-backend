@@ -32,8 +32,8 @@ public class JiFengService {
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
 
-        JiFengBaseResp<List<JiFengOnlineChannelResp.RowsDTO>>  jiFengBaseResp = jiFengService.getOnlineChannel(authMap);
-        System.out.println(jiFengBaseResp.getData().size());
+        JiFengBaseResp<JiFengOfflineChannelResp> jiFengBaseResp = jiFengService.getOfflineChannel(authMap,"BR01");
+        System.out.println(jiFengBaseResp.getData());
     }
 //    public static void main(String[] args) {
 //        String clientId = "a03b35bf7f0c4c4f8e23e0599b5be649";
@@ -111,7 +111,7 @@ public class JiFengService {
      * @param warehouseCode
      * @return
      */
-    public JiFengBaseResp<List<JiFengOfflineChannelResp>> getOfflineChannel(Map<String,Object> authMap, String warehouseCode){
+    public JiFengBaseResp<JiFengOfflineChannelResp> getOfflineChannel(Map<String,Object> authMap, String warehouseCode){
         String path = "/api/logistics/offline/page";
         String url = getUrl(authMap.get("domain").toString());
 
@@ -120,7 +120,7 @@ public class JiFengService {
         Map<String, Object> bodyMap = new HashMap<>();
         bodyMap.put("code",warehouseCode);
         String bodyStr = OkHttpUtils.doPostJson(url+path, bodyMap, headerMap);
-        return JiFengUtils.parseToJiFengResp(bodyStr, new TypeReference<JiFengBaseResp<List<JiFengOfflineChannelResp>>>() {});
+        return JiFengUtils.parseToJiFengResp(bodyStr, new TypeReference<JiFengBaseResp<JiFengOfflineChannelResp>>() {});
     }
 
 

@@ -3,6 +3,7 @@ package com.erp.server.tms.service.logistics;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
@@ -26,14 +27,18 @@ import com.sdk.wms.goodcang.dto.response.GoodCangResponse;
 import com.sdk.wms.goodcang.service.GoodCangService;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
+import com.sdk.wms.jifeng.dto.response.JiFengOfflineChannelResp;
+import com.sdk.wms.jifeng.dto.response.JiFengOnlineChannelResp;
 import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
 import com.sdk.wms.jifeng.service.JiFengService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -54,9 +59,51 @@ public class JiFengLogisticsHandlerImpl extends AbstractLogisticsHandler {
     @Resource
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
+    @Resource
+    private WmsOverseasWarehouseFeign overseasWarehouseFeign;
+
     @Override
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        return success();
+        Map<String, Object> authMap = chanelQueryVO.getAuthMap().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        List<LogisticsSaleChannelEntity> response = new ArrayList<>();
+        //查询线上渠道
+        JiFengBaseResp<List<JiFengOnlineChannelResp.RowsDTO>>  onlineChannel = jiFengService.getOnlineChannel(authMap);
+        if(!isSuccess(onlineChannel)){
+            log.error("极风查询线上渠道失败,请求参数：{}，返回结果：{}", JSONUtil.toJsonStr(authMap), JSONUtil.toJsonStr(onlineChannel));
+            return ApiResult.error(-1, "极风查询线上渠道失败,"+onlineChannel.getMessage());
+        }
+        List<JiFengOnlineChannelResp.RowsDTO> rowsDTOS = onlineChannel.getData();
+        for (JiFengOnlineChannelResp.RowsDTO rowsDTO : rowsDTOS) {
+            LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity();
+            logisticsSaleChannelEntity.setCode(rowsDTO.getId().toString());
+            logisticsSaleChannelEntity.setCnName(rowsDTO.getName());
+            logisticsSaleChannelEntity.setLogisticsPlatform(OmsPlatformEnum.JIFENG.getCode());
+            response.add(logisticsSaleChannelEntity);
+        }
+        //查询线下渠道,通过海外仓仓库查询
+        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList = overseasWarehouseFeign.getOverseasWarehouseListByPlatformCodes(new ArrayList<>(),getPlatForm().getCode());
+        List<String> platformWarehouseCodeList = overseasProviderWarehouseEntityList.stream().map(OverseasProviderWarehouseEntity::getPlatformWarehouseCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+        for (String platformWarehouseCode : platformWarehouseCodeList) {
+            JiFengBaseResp<JiFengOfflineChannelResp> offlineResp = jiFengService.getOfflineChannel(authMap,platformWarehouseCode);
+            if(!isSuccess(offlineResp)){
+                log.error("极风查询线下渠道失败,请求参数：{}，仓库,:{},返回结果：{}", JSONUtil.toJsonStr(authMap),platformWarehouseCode, JSONUtil.toJsonStr(offlineResp));
+                return ApiResult.error(-1, "极风查询线下渠道失败,"+offlineResp.getMessage());
+            }
+            List<JiFengOfflineChannelResp.RowsDTO> rowsDTOList = offlineResp.getData().getPage().getRows();
+            for (JiFengOfflineChannelResp.RowsDTO rowsDTO : rowsDTOList) {
+                LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity();
+                logisticsSaleChannelEntity.setCode(rowsDTO.getCode());
+                logisticsSaleChannelEntity.setCnName(rowsDTO.getName());
+                logisticsSaleChannelEntity.setLogisticsPlatform(OmsPlatformEnum.JIFENG.getCode());
+                logisticsSaleChannelEntity.setPlatformWarehouseCode(platformWarehouseCode);
+                OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseEntityList.stream().filter(v->v.getPlatformWarehouseCode().equals(platformWarehouseCode) && StringUtils.isNotBlank(v.getWarehouseId())).findFirst().orElse(null);
+                if(Objects.nonNull(overseasProviderWarehouseEntity)){
+                    logisticsSaleChannelEntity.setOverseasWarehouseId(overseasProviderWarehouseEntity.getWarehouseId());
+                }
+                response.add(logisticsSaleChannelEntity);
+            }
+        }
+        return success(response);
     }
 
     /**

@@ -33,16 +33,15 @@ public class JiFengOfflineChannelResp {
         private String totalSize;
         @JSONField(name = "rows")
         private List<RowsDTO> rows;
-
-        @NoArgsConstructor
-        @Data
-        public static class RowsDTO {
-            @JSONField(name = "id")
-            private Integer id;
-            @JSONField(name = "code")
-            private String code;
-            @JSONField(name = "name")
-            private String name;
-        }
+    }
+    @NoArgsConstructor
+    @Data
+    public static class RowsDTO {
+        @JSONField(name = "id")
+        private Integer id;
+        @JSONField(name = "code")
+        private String code;
+        @JSONField(name = "name")
+        private String name;
     }
 }
