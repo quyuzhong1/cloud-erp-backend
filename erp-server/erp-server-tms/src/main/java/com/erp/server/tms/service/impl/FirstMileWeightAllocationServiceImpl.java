@@ -50,7 +50,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FM_WEIGHT_ALLOCATION;
-import static org.checkerframework.checker.nullness.Opt.ifPresent;
 
 /**
  * <p>
@@ -390,7 +389,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     private BigDecimal getProductWeight(FirstMileWeightAllocationEntity oldEntity, FirstMileWeightAllocationEntity entity, List<String> singleSkuIds, List<ProductPackEntity> productPackList, List<String> comboSkuIds, Map<String, List<BomChildrenSkuDTO>> comboSkuMap, BigDecimal skuVolumeWeight) {
         //先根据调整记录检查是否存在修改的单产品重量-当前单配置查询
-        FirstMileChangeRecordEntity changeRecord = firstMileChangeRecordService.getProductWeightByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILEWEIGHT.getCode(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getSkuId(),FirstMileChangeRecordCategoryFieldEnum.PRODUCT_WEIGHT.getCode(),oldEntity.getId(),oldEntity.getBoxId());
+        FirstMileChangeRecordEntity changeRecord = firstMileChangeRecordService.getProductWeightByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILEWEIGHT.getCode(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getSkuId(),FirstMileChangeRecordCategoryFieldEnum.PRODUCT_WEIGHT.getCode(),oldEntity.getId(),oldEntity.getBoxId(),oldEntity.getPlatformSkuNo());
         if (Objects.nonNull(changeRecord)){
             //将字符串转成BigDecimal
             if(StringUtils.isNotBlank(changeRecord.getNewValue())){
@@ -725,7 +724,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     private BigDecimal getProductWeight(WmsCartonDTO.DetailDTO cartonDetail, FirstMileWeightAllocationEntity entity, List<String> singleSkuIds, List<ProductPackEntity> productPackList, List<String> comboSkuIds, Map<String, List<BomChildrenSkuDTO>> comboSkuMap, BigDecimal skuVolumeWeight) {
         //先根据调整记录检查是否存在修改的单产品重量-当前单配置查询
-        FirstMileChangeRecordEntity changeRecord = firstMileChangeRecordService.getProductWeightByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILEWEIGHT.getCode(),entity.getSourceId(),entity.getBusinessCode(),cartonDetail.getSkuId(),FirstMileChangeRecordCategoryFieldEnum.PRODUCT_WEIGHT.getCode(),entity.getId(),cartonDetail.getBoxId());
+        FirstMileChangeRecordEntity changeRecord = firstMileChangeRecordService.getProductWeightByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILEWEIGHT.getCode(),entity.getSourceId(),entity.getBusinessCode(),cartonDetail.getSkuId(),FirstMileChangeRecordCategoryFieldEnum.PRODUCT_WEIGHT.getCode(),entity.getId(),cartonDetail.getBoxId(), entity.getPlatformSkuNo());
         if (Objects.nonNull(changeRecord)){
             //将字符串转成BigDecimal
             if(StringUtils.isNotBlank(changeRecord.getNewValue())){

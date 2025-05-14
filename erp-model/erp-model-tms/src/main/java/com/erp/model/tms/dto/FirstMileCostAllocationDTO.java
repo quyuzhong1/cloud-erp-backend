@@ -6,16 +6,15 @@ import java.time.LocalDate;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
@@ -471,6 +470,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+        /**
+         * 分摊记录id
+         */
+        private List<String> ids;
     }
 
     @Data
@@ -887,5 +890,40 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 最新核算状态
          */
         private String status;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class CostAllocationDTO extends PagingVO {
+
+        /**
+         * 冲期初在途费用
+         */
+        @NotNull(message = "新的冲期初在途费用不能为空")
+        private String newMidPeriodTransitCost;
+
+        /**
+         * 本期分摊费用
+         */
+        @NotNull(message = "新的本期分摊费用不能为空")
+        private String newCurrentPeriodAllocatedCost;
+
+        /**
+         * 期末在途费用
+         */
+        @NotNull(message = "新的期末在途费用不能为空")
+        private String newEndPeriodTransitCost;
+
+        /**
+         * 期末暂估费用
+         */
+        @NotNull(message = "新的期末暂估费用不能为空")
+        private String newEndPeriodEstimatedCost;
+
+        /**
+         * 是否需要重算【后端使用】
+         */
+        private Boolean isRetry = Boolean.FALSE;
     }
 }

@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 import com.erp.model.tms.entity.TmsFirstMileReconciliationDetailEntity;
@@ -23,8 +24,10 @@ public class CurrentPeriodAllocatedCostDTO {
     private final Integer asLastMonthReceiveQty;
     private final LocalDate reconciliationMonth;
     private final LocalDate reportPeriodMonth;
+    private final FirstMileCostAllocationEntity entity;
 
     /**
+     * @param entity
      * @param detailEntity
      * @param judgeReconciliationDTO
      * @param initEntity
@@ -36,10 +39,11 @@ public class CurrentPeriodAllocatedCostDTO {
      * @param asCurrentMonthReceiveQty
      * @param initReceiveQty
      */
-    public CurrentPeriodAllocatedCostDTO(FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO,
+    public CurrentPeriodAllocatedCostDTO(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO,
                                          InitFirstMileAllocationDetailEntity initEntity, BigDecimal productAllocatedAmount, int receiveQty, Integer deliveryQty,
                                          int currentMonthReceiveQty, TmsFirstMileReconciliationDetailEntity reconciliationDetailEntity, int asCurrentMonthReceiveQty,
-                                         Integer initReceiveQty, Integer asLastMonthReceiveQty,LocalDate reportPeriodMonth,LocalDate reconciliationMonth) {
+                                         Integer initReceiveQty, Integer asLastMonthReceiveQty, LocalDate reportPeriodMonth, LocalDate reconciliationMonth) {
+        this.entity = entity;
         this.detailEntity = detailEntity;
         this.judgeReconciliationDTO = judgeReconciliationDTO;
         this.initEntity = initEntity;

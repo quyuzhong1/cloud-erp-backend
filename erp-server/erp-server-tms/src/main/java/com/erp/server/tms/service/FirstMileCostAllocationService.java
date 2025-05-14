@@ -120,4 +120,11 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     List<FirstMileCostAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds);
+
+    /**
+     * 查看费用分摊详情
+     * @param dto
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.PagingVO> viewCostAllocation(List<String> ids);
 }

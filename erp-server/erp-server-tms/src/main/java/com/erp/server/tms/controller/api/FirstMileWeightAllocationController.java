@@ -11,7 +11,6 @@ import com.erp.server.tms.service.FirstMileChangeRecordService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.web.bind.annotation.*;
@@ -137,7 +136,7 @@ public class FirstMileWeightAllocationController extends BaseController {
             return failure(batchResultDTOS);
         }
         //批量保存修改记录
-        firstMileChangeRecordService.changeProductWeight(dtoValidList);
+        firstMileChangeRecordService.saveProductWeight(dtoValidList);
         //按照保存成功记录，进行按照单据进行重新重量分摊
         List<String> logisticsBillIds = dtoValidList.stream().map(FirstMileWeightAllocationDTO.ViewProductWeightDTO::getLogisticsBillId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         for (String logisticsBillId : logisticsBillIds) {
@@ -160,7 +159,7 @@ public class FirstMileWeightAllocationController extends BaseController {
             return failure(batchResultDTOS);
         }
         //批量保存修改记录
-        firstMileChangeRecordService.changePackageWeight(dtoValidList);
+        firstMileChangeRecordService.savePackageWeight(dtoValidList);
         //按照保存成功记录，进行按照单据进行重新重量分摊
         List<String> logisticsBillIds = dtoValidList.stream().map(FirstMileWeightAllocationDTO.ViewProductWeightDTO::getLogisticsBillId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         for (String logisticsBillId : logisticsBillIds) {

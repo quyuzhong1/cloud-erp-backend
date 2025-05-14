@@ -20,6 +20,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileChangeRecordEntity;
 import com.erp.model.tms.enums.*;
@@ -27,6 +28,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.convert.FirstMileChangeRecordConverter;
 import com.erp.server.tms.mapper.FirstMileChangeRecordMapper;
 import com.erp.server.tms.service.FirstMileChangeRecordService;
+import com.erp.server.tms.service.FirstMileSkuCostAllocationDetailService;
 import com.erp.server.tms.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +59,8 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private FirstMileSkuCostAllocationDetailService firstMileSkuCostAllocationDetailService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -161,7 +165,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void changeProductWeight(List<FirstMileWeightAllocationDTO.ProductWeightDTO> dtoValidList) {
+    public void saveProductWeight(List<FirstMileWeightAllocationDTO.ProductWeightDTO> dtoValidList) {
         if (CollUtil.isEmpty(dtoValidList)){
             return;
         }
@@ -177,6 +181,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
                 .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
                 .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
                 .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
                 .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
                 .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
@@ -188,13 +193,14 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     }
 
     @Override
-    public FirstMileChangeRecordEntity getProductWeightByParams(String sourceType, String deliveryId, String businessCode, String skuId, String categoryField, String sourceId, String boxId) {
+    public FirstMileChangeRecordEntity getProductWeightByParams(String sourceType, String deliveryId, String businessCode, String skuId, String categoryField, String sourceId, String boxId, String platformSkuNo) {
         //先获取当前单头程调整记录
         FirstMileChangeRecordEntity entity = this.lambdaQuery()
                 .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
                 .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
                 .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
                 .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, platformSkuNo)
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getSourceId, sourceId)
                 .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode())
@@ -209,6 +215,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
                 .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
                 .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, platformSkuNo)
                 .eq(FirstMileChangeRecordEntity::getBoxId, boxId)
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.BOX.getCode())
@@ -223,6 +230,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
                 .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
                 .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, platformSkuNo)
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.ORDER.getCode())
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
@@ -238,7 +246,6 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         for (FirstMileWeightAllocationDTO.PackageSizeDTO dto : dtoValidList) {
             if (dto.getNewBoxHeight().compareTo(dto.getBoxHeight()) == 0 && dto.getNewBoxLength().compareTo(dto.getBoxLength()) == 0 && dto.getNewBoxWidth().compareTo(dto.getBoxWidth()) == 0 && dto.getNewOutStockWeight().compareTo(dto.getOutStockWeight()) == 0) {
                 resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), "调整后重量/尺寸与调整前重量/尺寸一致", false));
-                continue;
             }
         }
         return resultDTOS;
@@ -246,7 +253,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void changePackageWeight(List<FirstMileWeightAllocationDTO.PackageSizeDTO> dtoValidList) {
+    public void savePackageWeight(List<FirstMileWeightAllocationDTO.PackageSizeDTO> dtoValidList) {
         if (CollUtil.isEmpty(dtoValidList)){
             return;
         }
@@ -292,6 +299,105 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
                 .eq(FirstMileChangeRecordEntity::getBoxId, boxId)
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .last(" limit 1 ").one();
+    }
+
+    @Override
+    public List<BatchResultDTO> checkCostAllocationSameDimension(ValidList<FirstMileCostAllocationDTO.CostAllocationDTO> dtoValidList) {
+        if (CollUtil.isEmpty(dtoValidList)) {
+            throw new ServiceException("请选择要修改的费用分摊记录");
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>();
+        for (FirstMileCostAllocationDTO.CostAllocationDTO dto : dtoValidList) {
+            if (dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) == 0 && dto.getCurrentPeriodAllocatedCost().compareTo(dto.getNewCurrentPeriodAllocatedCost()) == 0
+                    && dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) == 0 && dto.getEndPeriodEstimatedCost().compareTo(dto.getNewEndPeriodEstimatedCost()) == 0) {
+                resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), "调整后费用值与调整前费用值全部一致", false));
+                continue;
+            }
+            //限制暂估账单不可调整本期/冲期初/期末在途；限制实际账单不可调整期末暂估
+            if (ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(dto.getBillSourceType())){
+                if (dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) != 0 || dto.getCurrentPeriodAllocatedCost().compareTo(dto.getNewCurrentPeriodAllocatedCost()) != 0
+                        || dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) != 0){
+                    resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), CharSequenceUtil.format("【{}】暂估账单不可调整本期/冲期初/期末在途", dto.getSourceCode()), false));
+                    continue;
+                }
+            }
+            if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(dto.getBillSourceType())){
+                if (dto.getEndPeriodEstimatedCost().compareTo(dto.getNewEndPeriodEstimatedCost())!= 0){
+                    resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), CharSequenceUtil.format("【{}】实际账单不可调整期末暂估", dto.getSourceCode()), false));
+                    continue;
+                }
+            }
+            resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), "校验通过", true));
+        }
+        return resultDTOS;
+    }
+
+    @Override
+    public void saveCostAllocation(ValidList<FirstMileCostAllocationDTO.CostAllocationDTO> dtoValidList) {
+        if (CollUtil.isEmpty(dtoValidList)){
+            return;
+        }
+        List<FirstMileChangeRecordEntity> entityList = new ArrayList<>();
+        for (FirstMileCostAllocationDTO.CostAllocationDTO dto : dtoValidList){
+            if (dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) != 0){
+                //新增冲期初在途费用调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostMidPeriodTransitDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                dto.setIsRetry(Boolean.TRUE);
+            }
+            if (dto.getCurrentPeriodAllocatedCost().compareTo(dto.getNewCurrentPeriodAllocatedCost()) != 0){
+                //新增本期分摊费用调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostCurrentPeriodAllocatedDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                dto.setIsRetry(Boolean.TRUE);
+            }
+            if (dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) != 0){
+                //新增期末在途费用调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostEndPeriodTransitDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                if (!dto.getIsRetry()){
+                    firstMileSkuCostAllocationDetailService.updateEndPeriodTransitCost(dto.getDetailId(), dto.getNewEndPeriodTransitCost());
+                }
+            }
+            if (dto.getEndPeriodEstimatedCost().compareTo(dto.getNewEndPeriodEstimatedCost()) != 0){
+                //新增期末暂估费用调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostEndPeriodEstimatedDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                if (!dto.getIsRetry()){
+                    firstMileSkuCostAllocationDetailService.updateEndPeriodEstimatedCost(dto.getDetailId(), dto.getNewEndPeriodEstimatedCost());
+                }
+            }
+        }
+        if (CollUtil.isEmpty(entityList)){
+            return;
+        }
+        //新增记录前修改原来的记录为非最新记录
+        entityList.forEach(e -> this.lambdaUpdate()
+                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                .eq(FirstMileChangeRecordEntity::getSkuId, e.getSkuId())
+                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
+        //新增记录
+        boolean saveBatch = this.saveBatch(entityList);
+        if (!saveBatch){
+            throw new ServiceException("头程调整记录保存失败");
+        }
+
+    }
+
+    @Override
+    public FirstMileChangeRecordEntity getCostAllocationByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo, String category, String reportPeriodId) {
+        return this.lambdaQuery()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, platformSkuNo)
+                .eq(FirstMileChangeRecordEntity::getCategory, category)
+                .eq(FirstMileChangeRecordEntity::getReportPeriodId, reportPeriodId)
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
                 .last(" limit 1 ").one();
     }
