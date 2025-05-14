@@ -240,7 +240,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         List<String> platformSkuList = fulfillmentDetailList.stream().map(DmpSoOutstockDetailEntity::getPlatformSku).distinct().collect(Collectors.toList());
         paramDTO.setPlatformSkuNoList(platformSkuList);
         List<String> platformSpuList = fulfillmentDetailList.stream().map(DmpSoOutstockDetailEntity::getThirdDetailId).distinct().collect(Collectors.toList());
-        paramDTO.setPlatformSkuIdList(platformSpuList);
+        paramDTO.setPlatformSpuNoList(platformSpuList);
         paramDTO.setIsExpire(true);
         // 映射关系
         List<ListingInfoWithSkuMappingDTO> mappingList = skuMappingService.findListDto(paramDTO);
@@ -315,10 +315,14 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         if(CollectionUtils.isNotEmpty(statusUpdates)){
             // 取statusUpdates最新记录状态属于sign，deliveryIng，trackIng的第一条记录
             List<String> activityStatus = Arrays.asList("sign", "deliveryIng", "trackIng");
-            orderStatus = statusUpdates.stream().filter(e-> activityStatus.contains(e.getStatus()))
-                    .map(ShopifyServerSoB2cDTO.StatusUpdate::getStatus)
-                    .findFirst().orElse(orderStatus);
-            lastTime = statusUpdates.get(0).getTimestamp();
+            ShopifyServerSoB2cDTO.StatusUpdate lastStatus = statusUpdates.stream()
+                    .filter(e -> activityStatus.contains(e.getStatus()))
+                    .reduce((first, second) -> second)
+                    .orElse(null);
+            if (null != lastStatus) {
+                orderStatus = lastStatus.getStatus();
+                lastTime = lastStatus.getTimestamp();
+            }
         }
         logisticInfoDTO.setOrderStatus(orderStatus);
         logisticInfoDTO.setLastSignTime(lastTime);
