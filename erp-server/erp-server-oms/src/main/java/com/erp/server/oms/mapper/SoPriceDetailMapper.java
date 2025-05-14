@@ -34,10 +34,10 @@ public interface SoPriceDetailMapper extends BaseMapper<SoPriceDetailEntity> {
      * 根据供应商、组织、SKU查询
      * @author yl
      * @date 2023-04-06 9:52
-     * @param customerId
+     * @param customerIdList
      * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.AddDTO>
      */
-    List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(@Param("customerId") String customerId, @Param("statusList") List<String> statusList, @Param("soOrgId") String soOrgId, @Param("skuIdList") List<String> skuIdList);
+    List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(@Param("customerIdList") List<String> customerIdList, @Param("statusList") List<String> statusList, @Param("soOrgId") String soOrgId, @Param("skuIdList") List<String> skuIdList);
 
     /**
      * 根据客户状态查询

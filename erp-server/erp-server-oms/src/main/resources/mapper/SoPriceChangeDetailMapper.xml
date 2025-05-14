@@ -69,4 +69,45 @@
             </foreach>
         </if>
     </select>
+
+    <!--查询需要验证的数据 -->
+    <select id="listCheckSoPriceChangeDetail" resultType="com.erp.model.oms.entity.SoPriceChangeDetailEntity">
+        SELECT
+            spcd.id,
+            spcd.sku_id,
+            spcd.sku_no,
+            spcd.min_qty,
+            spcd.max_qty,
+            spcd.currency,
+            spcd.tax_price,
+            spcd.tax_rate,
+            spcd.disabled,
+            spcd.effective_date,
+            spcd.expire_date,
+            spc.code as code,
+            spcd.so_price_detail_id,
+            spcd.main_id,
+            spcd.customer_id
+        FROM  so_price_change_detail spcd
+        inner join so_price_change spc ON spcd.main_id = spc.id AND spcd.is_deleted = FALSE
+        WHERE spc.is_deleted = FALSE and spc.so_org_id = #{soOrgId}
+        <if test="statusList != null and statusList.size > 0">
+            and spc.approve_status in
+            <foreach collection="statusList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="customerIdList != null and customerIdList.size > 0">
+            and spcd.customer_id in
+            <foreach collection="customerIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="skuIdList != null and skuIdList.size > 0">
+            and spcd.sku_id in
+            <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+    </select>
 </mapper>

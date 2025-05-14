@@ -1369,7 +1369,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO.SearchDTO> dto) {
         SkuMappingEntity skuMappingEntity = this.getById(dto.getParams().getId());
         if (Objects.isNull(skuMappingEntity)) {
             throw new ServiceException("sku对照表为空");
@@ -1384,6 +1384,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isNotBlank(skuMappingEntity.getListingId())) {
             logSearchDTO.setBusinessId(skuMappingEntity.getListingId());
             logSearchDTO.setModuleType(ModuleTypeEnum.LISTING_INFO.getCode());
+            logSearchDTO.setSearchKey(dto.getParams().getSearchKey());
             listDTOPagingVO = operateLogService.paging(logDTO);
         }
 
@@ -1393,6 +1394,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if(allList.size() < listDTOPagingVO.getPageSize()){
                 logSearchDTO.setBusinessId(skuMappingEntity.getId());
                 logSearchDTO.setModuleType(ModuleTypeEnum.SKU_MAPPING.getCode());
+                logSearchDTO.setSearchKey(dto.getParams().getSearchKey());
                 logDTO.setCurrPage(1);
                 PagingVO<OperateLogDTO.ListDTO> skuMappingPagingVO = operateLogService.paging(logDTO);
                 List<OperateLogDTO.ListDTO> skuLogList = (List<OperateLogDTO.ListDTO>) skuMappingPagingVO.getList();

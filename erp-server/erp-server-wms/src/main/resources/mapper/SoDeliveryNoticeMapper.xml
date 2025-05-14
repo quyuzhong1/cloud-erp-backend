@@ -272,6 +272,7 @@
         where si.is_deleted = false and si.virtual_warehouse_id != ''
         union all
         -- 发货通知单冻结
+        select * from (
         select
             sdnd.sku_id,
             sdnd.sku_no,
@@ -283,10 +284,10 @@
             sdnd.id as source_detail_id,
             sdn.create_time as bill_date,
             sdn.create_time as trade_time,
-            sdnd.delivery_qty as qty
+            case when sdn.approve_status = 'approve' then sdnd.picking_qty else sdnd.last_picking_qty end as qty
         from so_delivery_notice sdn
-        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false and sdn.virtual_warehouse_id != '' and sdn.invalid_status = false and sdnd.delivery_qty > 0
-        where sdn.is_deleted = false
+        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false and sdn.virtual_warehouse_id != '' and sdn.invalid_status = false
+        where sdn.is_deleted = false ) as soDelivery where soDelivery.qty > 0
         -- 加工单出库(发货通知单下推)
         union all
         select
@@ -323,8 +324,7 @@
         from machine_info mi
          inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'  and mi.source_type = 'soInfo' and md.qty > 0
          inner join machine_ref_so mrs on md.id = mrs.machine_detail_id and mi.id = mrs.machine_id and mrs.is_deleted = false
-         inner join so_detail sd on sd.id = mrs.so_detail_id and sd.is_deleted = false
-         inner join  so_info si on si.id = sd.main_id and si.is_deleted = false and si.virtual_warehouse_id != ''
+         inner join  so_info si on si.id = mrs.so_id and si.is_deleted = false and si.virtual_warehouse_id != ''
         where mi.is_deleted = false
         --直接调拨单出库
         union all

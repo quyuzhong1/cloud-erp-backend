@@ -4,7 +4,9 @@ package com.erp.server.oms.controller.feign;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
+import com.erp.model.oms.dto.ShopifyServerSoB2cDTO;
 import com.erp.model.oms.dto.SoB2cForeignDTO;
+import com.erp.model.oms.dto.SoB2cRefDTO;
 import com.erp.server.oms.service.SoB2cForeignService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -32,6 +34,15 @@ public class SoB2cForeignFeignController extends BaseController {
     @PostMapping("/getB2cOrderDeliveryInfo")
     public PagingVO<SoB2cForeignDTO.OrderDeliveryResp> getOrderDeliveryInfo(@RequestBody PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> orderDeliveryReq){
         return soB2cForeignService.getOrderDeliveryInfo(orderDeliveryReq);
+    }
+
+
+    /**
+     * 订单物流信息
+     * */
+    @PostMapping("/getShopifyLogisticInfo")
+    public  List<ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO> getShopifyLogisticInfo(@RequestBody ShopifyServerSoB2cDTO.SoB2cLogisticQueryDTO dto) {
+        return soB2cForeignService.getShopifyLogisticInfo(dto);
     }
 
 }

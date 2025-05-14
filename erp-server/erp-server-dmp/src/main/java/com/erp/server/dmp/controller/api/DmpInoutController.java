@@ -592,9 +592,6 @@ public class DmpInoutController extends BaseController {
 			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
 			queryParams.add(new QueryParam(QueryTypeEnum.GE, "return_time", startTime));
 			queryParams.add(new QueryParam(QueryTypeEnum.LT, "return_time", endTime));
-			if("1858830998851050201".equals(cfgOutputId)) {
-				queryParams.add(new QueryParam(QueryTypeEnum.NE, "status", "10"));
-			}
 			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
 			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
 		} catch (Exception e) {

@@ -1680,7 +1680,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //扣减可用
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(paramList);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_LESS.getCode());
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_APPROVE.getCode());
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
         }

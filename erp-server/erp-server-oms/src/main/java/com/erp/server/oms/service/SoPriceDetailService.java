@@ -145,12 +145,12 @@ public interface SoPriceDetailService extends SuperService<SoPriceDetailEntity> 
      * 根据供应商、组织、SKU查询
      * @author yl
      * @date 2023-04-06 9:37
-     * @param supplierId
+     * @param customerIdList
      * @param soOrgId
      * @param skuIdList
      * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.ViewDTO>
      */
-    List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(String supplierId,String soOrgId,List<String> skuIdList);
+    List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(List<String> customerIdList,String soOrgId,List<String> skuIdList);
 
     /**
      * 获取根据主表id
