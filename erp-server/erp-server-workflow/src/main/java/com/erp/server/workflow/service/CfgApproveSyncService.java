@@ -46,4 +46,6 @@ public interface CfgApproveSyncService extends SuperService<CfgApproveSyncEntity
     BatchResultDTO enable(String id,Boolean enableStatus);
 
     void exportList(CfgApproveSyncDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    CfgApproveSyncDTO.ViewDTO view(String id);
 }

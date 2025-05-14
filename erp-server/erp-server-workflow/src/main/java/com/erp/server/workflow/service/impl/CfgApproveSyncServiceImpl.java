@@ -136,9 +136,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }else{
             for (CfgApproveNoticeDTO.NoticeSettingDTO noticeSettingDTO : noticeSettingList) {
                 noticeSettingDTO.setMainId(id);
-                if(CollUtil.isNotEmpty(noticeSettingDTO.getNoticeTypeList())){
-                    noticeSettingDTO.setNoticeType(noticeSettingDTO.getNoticeTypeList().stream().collect(Collectors.joining(",")));
-                }
                 if(CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())){
                     noticeSettingDTO.setRoleType(noticeSettingDTO.getRoleTypeList().stream().collect(Collectors.joining(",")));
                 }
@@ -248,9 +245,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }else{
             for (CfgApproveNoticeDTO.NoticeSettingDTO noticeSettingDTO : noticeSettingList) {
                 noticeSettingDTO.setMainId(id);
-                if(CollUtil.isNotEmpty(noticeSettingDTO.getNoticeTypeList())){
-                    noticeSettingDTO.setNoticeType(noticeSettingDTO.getNoticeTypeList().stream().collect(Collectors.joining(",")));
-                }
                 if(CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())){
                     noticeSettingDTO.setRoleType(noticeSettingDTO.getRoleTypeList().stream().collect(Collectors.joining(",")));
                 }
@@ -353,23 +347,23 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                 item.setApproveGroupName(dictBasicEntity.getName());
             }
 
-            getSyncPlatform(item);
+            item.setSyncPlatformName(getSyncPlatformName(item.getSyncPlatform()));
 
             item.setEnableStatusName(Objects.equals(item.getEnableStatus(), Boolean.FALSE) ? "停用" : "启用");
         });
     }
 
-    private static void getSyncPlatform(CfgApproveSyncDTO.ListDTO item) {
-        if(StringUtils.isBlank(item.getSyncPlatform())){
-            return;
+    private static String getSyncPlatformName(String syncPlatform) {
+        if(StringUtils.isBlank(syncPlatform)){
+            return "";
         }
-        String[] split = item.getSyncPlatform().split(",");
+        String[] split = syncPlatform.split(",");
         StringBuffer sb = new StringBuffer();
         for (String str : split) {
             sb.append(CfgApproveSyncSyncPlatformEnum.getName(str));
             sb.append(",");
         }
-        item.setSyncPlatformName(sb.toString().substring(0, sb.length()-1));
+        return sb.toString().substring(0, sb.length()-1);
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -415,5 +409,64 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         downloadTaskFeign.saveDownloadTask("ERP审批同步配置导出", EXPORT_PROCESS_CFG_APPROVE_SYNC.getCode(), param);
     }
 
+    @Override
+    public CfgApproveSyncDTO.ViewDTO view(String id) {
+        CfgApproveSyncEntity cfgApproveSyncEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到ERP审批同步配置数据"));
+        // 数据填充处理
+        return fillOne(cfgApproveSyncEntity);
+    }
+
+    private CfgApproveSyncDTO.ViewDTO fillOne(CfgApproveSyncEntity cfgApproveSyncEntity) {
+        CfgApproveSyncDTO.ViewDTO data = BeanMapperUtils.map(CfgApproveSyncDTO.ViewDTO.class, cfgApproveSyncEntity);
+
+        Map<String, WorkMenuEntity> workMenuMap = workMenuService.list().stream().collect(Collectors.toMap(WorkMenuEntity::getModuleCode, item -> item));
+
+        Map<String, DictBasicEntity> mapByType = dictBasicService.getMapByType(DictBasicEnum.TEST.getName());
+
+        //单据
+        WorkMenuEntity workMenuEntity = workMenuMap.getOrDefault(data.getBusinessType(),null);
+        if(Objects.nonNull(workMenuEntity)){
+            data.setBusinessTypeName(workMenuEntity.getModuleClassify());
+        }
+        //审批分组
+        DictBasicEntity dictBasicEntity = mapByType.getOrDefault(data.getApproveGroup(),null);
+        if(Objects.nonNull(dictBasicEntity)){
+            data.setApproveGroupName(dictBasicEntity.getName());
+        }
+        //可见范围
+        data.setViewerTypeName(CfgApproveSyncViewerTypeEnum.getName(data.getViewerType()));
+        //可见人员
+        if(StringUtils.isNotBlank(data.getViewer())){
+            data.setViewerList(Arrays.asList(data.getViewer().split(",")));
+        }
+        //同步平台，推送方式
+        String syncPlatform = cfgApproveSyncEntity.getSyncPlatform();
+        data.setSyncPlatform(Arrays.asList(syncPlatform.split(",")));
+
+        //启动状态
+        data.setEnableStatusName(Objects.equals(data.getEnableStatus(), Boolean.FALSE) ? "停用" : "启用");
+
+        //推送消息
+        List<CfgApproveSyncFieldMapEntity> cfgApproveSyncFieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId()));
+        if(CollUtil.isNotEmpty(cfgApproveSyncFieldMapEntities)){
+            List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = BeanMapper.copyList(cfgApproveSyncFieldMapEntities, CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO.class);
+            //pushMsgList 根据sort字段进行排序，sort字段是integer类型
+            pushMsgList.sort(Comparator.comparingInt(CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO::getSort));
+            data.setPushMsgList(pushMsgList);
+        }
+        //通知配置
+        List<CfgApproveNoticeEntity> cfgApproveNoticeEntities = cfgApproveNoticeService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId()));
+        if(CollUtil.isNotEmpty(cfgApproveNoticeEntities)){
+            List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = BeanMapper.copyList(cfgApproveNoticeEntities, CfgApproveNoticeDTO.NoticeSettingDTO.class);
+            for (CfgApproveNoticeDTO.NoticeSettingDTO dto : noticeSettingList) {
+
+                dto.setRoleTypeList(Arrays.asList(dto.getRoleType().split(",")));
+
+                dto.setSpecificPersonList(Arrays.asList(dto.getSpecificPerson().split(",")));
+            }
+            data.setNoticeSettingList(noticeSettingList);
+        }
+        return data;
+    }
 
 }

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -43,12 +44,12 @@ public class CfgApproveNoticeDTO implements Serializable {
         private String mainId;
 
         /**
-        * 通知类型：approve=审批通知,approveResult=审核结果通知,cc=抄送通知,timeoutWarning=超时预警通知,recall=撤回通知
+        * 通知类型 /workflow/common/enumDropDown?type=CfgApproveNoticeRoleType
         */
         private String noticeType;
 
         /**
-        * 角色：applicant=申请人,cc=抄送人,approver=审核人
+        * 角色 /workflow/common/enumDropDown?type=CfgApproveNoticeRoleType
         */
         private String roleType;
 
@@ -97,14 +98,14 @@ public class CfgApproveNoticeDTO implements Serializable {
         private String mainId;
 
         /**
-        * 通知类型：approve=审批通知,approveResult=审核结果通知,cc=抄送通知,timeoutWarning=超时预警通知,recall=撤回通知
+        * 通知类型 /workflow/common/enumDropDown?type=CfgApproveNoticeRoleType
         */
         @NotBlank(message = "通知类型：approve=审批通知,approveResult=审核结果通知,cc=抄送通知,timeoutWarning=超时预警通知,recall=撤回通知不能为空")
         @Size(max = 50,message = "通知类型：approve=审批通知,approveResult=审核结果通知,cc=抄送通知,timeoutWarning=超时预警通知,recall=撤回通知最大长度不能超过50位")
         private String noticeType;
 
         /**
-        * 角色：applicant=申请人,cc=抄送人,approver=审核人
+        * 角色 /workflow/common/enumDropDown?type=CfgApproveNoticeRoleType
         */
         @NotBlank(message = "角色：applicant=申请人,cc=抄送人,approver=审核人不能为空")
         @Size(max = 50,message = "角色：applicant=申请人,cc=抄送人,approver=审核人最大长度不能超过50位")
@@ -134,23 +135,20 @@ public class CfgApproveNoticeDTO implements Serializable {
         private String mainId;
 
         /**
-         * 通知类型：approve=审批通知,approveResult=审核结果通知,cc=抄送通知,timeoutWarning=超时预警通知,recall=撤回通知
+         * 通知类型 /workflow/common/enumDropDown?type=CfgApproveNoticeRoleType
          */
+        @NotBlank(message = "通知类型不能为空")
         private String noticeType;
-
-        private List<String> noticeTypeList;
-
         /**
-         * 角色：applicant=申请人,cc=抄送人,approver=审核人
+         * 角色 /workflow/common/enumDropDown?type=CfgApproveNoticeRoleType
          */
-        @NotBlank(message = "角色不能为空")
         private String roleType;
+        @NotEmpty
         private List<String> roleTypeList;
 
         /**
          * 具体人员
          */
-        @Size(max = 1024,message = "具体人员最大长度不能超过1024位")
         private String specificPerson;
         private List<String> specificPersonList;
     }

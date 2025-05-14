@@ -4,6 +4,7 @@ package com.erp.server.workflow.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogViewService;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.erp.model.workflow.entity.CfgApproveSyncEntity;
@@ -107,6 +108,24 @@ public class CfgApproveSyncController extends BaseController {
     @WebAdvanceQuery
     public ApiResult<PagingVO<CfgApproveSyncDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto) {
         return success(cfgApproveSyncService.paging(dto));
+    }
+
+    /**
+     * 详情
+     * @author jack
+     * @date:  2025-05-14
+     * @param id
+     * @return ApiResult<AfterSaleDTO.ViewDTO>>
+     */
+    @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgApproveSync:view",
+            serviceClass = CfgApproveSyncService.class,
+            keyIdName = "id")
+    @LogViewService
+    public ApiResult<CfgApproveSyncDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(cfgApproveSyncService.view(id));
     }
 
     /**

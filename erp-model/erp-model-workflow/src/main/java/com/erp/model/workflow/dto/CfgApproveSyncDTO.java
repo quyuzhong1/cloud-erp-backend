@@ -53,6 +53,7 @@ public class CfgApproveSyncDTO implements Serializable {
         * 来源类型
         */
         private String businessType;
+        private String businessTypeName;
 
         /**
         * SDC回调地址
@@ -63,6 +64,7 @@ public class CfgApproveSyncDTO implements Serializable {
         * 审批分组dict_basic表approveGroup
         */
         private String approveGroup;
+        private String approveGroupName;
 
         /**
         * 启用状态
@@ -83,23 +85,29 @@ public class CfgApproveSyncDTO implements Serializable {
         * 可见范围dict_basic表viewerType：allUsers=所有用户,specificDepartments=指定部门,specificUsers=指定用户,none=不可见
         */
         private String viewerType;
+        private String viewerTypeName;
 
         /**
         * 可见集合
         */
         private String viewer;
+        private List<String> viewerList;
 
         /**
         * 同步平台：feishu=飞书,dd=钉钉,qw=企业微信
         */
-        private String syncPlatform;
+        private List<String> syncPlatform;
 
         /**
-        * 飞书审批定义
-        */
-        private String approvalCode;
-
-
+         * 推送信息
+         */
+        @NotEmpty
+        private List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList;
+        /**
+         * 通知配置
+         */
+        @NotEmpty
+        private List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList;
     }
 
     /**
@@ -132,7 +140,7 @@ public class CfgApproveSyncDTO implements Serializable {
     public static class CommonDTO {
 
         /**
-        * 来源类型
+        * 来源类型 /workflow/work/menu/drop/down
         */
         @NotBlank(message = "来源类型不能为空")
         @Size(max = 32,message = "来源类型最大长度不能超过32位")
@@ -146,7 +154,7 @@ public class CfgApproveSyncDTO implements Serializable {
         private String webhookUrl;
 
         /**
-        * 审批分组dict_basic表approveGroup
+        * 审批分组 /workflow/dict/basic/drop/down?type=approveGroup
         */
         @NotBlank(message = "审批分组不能为空")
         @Size(max = 32,message = "审批分组最大长度不能超过32位")
@@ -172,7 +180,7 @@ public class CfgApproveSyncDTO implements Serializable {
         private String title;
 
         /**
-        * 可见范围dict_basic表viewerType：allUsers=所有用户,specificDepartments=指定部门,specificUsers=指定用户,none=不可见
+        * 可见范围  /workflow/common/enumDropDown?type=CfgApproveSyncViewerType
         */
         @NotBlank(message = "可见范围不能为空")
         @Size(max = 32,message = "可见范围最大长度不能超过32位")
@@ -186,7 +194,7 @@ public class CfgApproveSyncDTO implements Serializable {
         private List<String> viewerList;
 
         /**
-        * 同步平台：feishu=飞书,dd=钉钉,qw=企业微信
+        * 同步平台 /workflow/common/enumDropDown?type=CfgApproveSyncSyncPlatform
         */
         @NotBlank(message = "推送方式不能为空")
         @Size(max = 32,message = "推送方式最大长度不能超过32位")
@@ -357,11 +365,6 @@ public class CfgApproveSyncDTO implements Serializable {
          */
         private String syncPlatform;
         private String syncPlatformName;
-
-        /**
-         * 飞书审批定义
-         */
-        private String approvalCode;
     }
 
     /**
