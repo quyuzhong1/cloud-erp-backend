@@ -10,16 +10,14 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.AfterSaleDTO;
-import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncFieldMapDTO;
 import com.erp.model.workflow.entity.*;
+import com.erp.model.workflow.enums.CfgApproveNoticeNoticeTypeEnum;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.model.workflow.enums.CfgApproveSyncViewerTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
@@ -30,10 +28,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.common.core.controller.vo.ApiResult;
-import cn.hutool.core.util.ObjectUtil;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -47,7 +42,6 @@ import com.common.core.enums.ApiError;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_DMP_AFTER_SALE;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_CFG_APPROVE_SYNC;
 
 /**
@@ -85,6 +79,13 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgApproveSyncDTO.AddDTO addDTO) {
+        //校验是否已存在
+        String businessType = addDTO.getBusinessType();
+        List<CfgApproveSyncEntity> existList = lambdaQuery().eq(CfgApproveSyncEntity::getBusinessType, businessType).list();
+        if(CollUtil.isNotEmpty(existList)){
+            throw new ServiceException("单据名称已添加配置，不可重复添加");
+        }
+
         //可见范围类型为不可见时。viewr才能为空
         if(!Objects.equals(addDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.NONE.getCode())
                 && CollUtil.isEmpty(addDTO.getViewerList())){
@@ -160,6 +161,13 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         CfgApproveSyncEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "ERP审批同步配置"));
 
+        //校验是否已存在
+        String businessType = addOrUpdateDTO.getBusinessType();
+        List<CfgApproveSyncEntity> existList = lambdaQuery().eq(CfgApproveSyncEntity::getBusinessType, businessType).ne(CfgApproveSyncEntity::getId, addOrUpdateDTO.getId()).list();
+        if(CollUtil.isNotEmpty(existList)){
+            throw new ServiceException("单据名称已添加配置，不可重复添加");
+        }
+
         //可见范围类型为不可见时。viewr才能为空
         if(!Objects.equals(addOrUpdateDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.NONE.getCode())
                 && CollUtil.isEmpty(addOrUpdateDTO.getViewerList())){
@@ -225,7 +233,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                 updateList.stream().forEach(e -> {
                     CfgApproveSyncFieldMapEntity cfgApproveSyncFieldMapEntity = oldList.stream().filter(o -> e.getId().equals(o.getId())).findFirst().orElse(null);
                     if(Objects.nonNull(cfgApproveSyncFieldMapEntity)){
-                        String updateMsg = StrUtil.format("用户【{}】编辑推送消息 ", UserContext.getDefaultLoginUser().getUserName());
+                        String updateMsg = StrUtil.format("用户【{}】编辑推送消息", UserContext.getDefaultLoginUser().getUserName());
                         operateLogService.addModuleOperateLogByObj(cfgApproveSyncFieldMapEntity, e, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgApproveSyncEntity.getId(), updateMsg);
                     }
                 });
@@ -253,17 +261,37 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             List<CfgApproveNoticeEntity> list = BeanMapper.copyList(noticeSettingList, CfgApproveNoticeEntity.class);
 
             List<CfgApproveNoticeEntity> oldList = cfgApproveNoticeService.listByMainIds(Arrays.asList(id));
-            DetailEntityChangeLogger.logChanges(list, oldList, id, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), "", "", "",UserContext.getDefaultLoginUser().getUserName(), new DetailEntityChangeLogger.Logger() {
-                @Override
-                public void addModuleOperateLog(String message, String moduleType, String entityId, String operationType) {
-                    operateLogService.addModuleOperateLog(message, moduleType, entityId, operationType);
-                }
+            //日志
+            List<String> ids = list.stream().map(CfgApproveNoticeEntity::getId).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
+            List<CfgApproveNoticeEntity> removeList = oldList.stream().filter(e -> !ids.contains(e.getId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(removeList)) {
+                // 操作日志
+                removeList.stream().forEach(e -> {
+                    String removeMsg = StrUtil.format("用户【{}】删除通知配置【{}】", UserContext.getDefaultLoginUser().getUserName(), CfgApproveNoticeNoticeTypeEnum.getName(e.getNoticeType()));
+                    operateLogService.addModuleOperateLog(removeMsg, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgApproveSyncEntity.getId(), "编辑信息");
+                });
+            }
 
-                @Override
-                public void addModuleOperateLogByObj(Object oldObj, Object newObj, String moduleType, String entityId, String operationType) {
-                    operateLogService.addModuleOperateLogByObj(oldObj, newObj, moduleType, entityId, operationType);
-                }
-            });
+            List<CfgApproveNoticeEntity> newList = list.stream().filter(e -> StringUtils.isBlank(e.getId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(newList)) {
+                // 操作日志
+                newList.stream().forEach(e -> {
+                    String newMsg = StrUtil.format("用户【{}】新增通知配置【{}】", UserContext.getDefaultLoginUser().getUserName(), CfgApproveNoticeNoticeTypeEnum.getName(e.getNoticeType()));
+                    operateLogService.addModuleOperateLog(newMsg, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgApproveSyncEntity.getId(), "编辑信息");
+                });
+            }
+
+            List<CfgApproveNoticeEntity> updateList = list.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
+            if (CollUtil.isNotEmpty(updateList)) {
+                // 操作日志
+                updateList.stream().forEach(e -> {
+                    CfgApproveNoticeEntity cfgApproveNoticeEntity = oldList.stream().filter(o -> e.getId().equals(o.getId())).findFirst().orElse(null);
+                    if(Objects.nonNull(cfgApproveNoticeEntity)){
+                        String updateMsg = StrUtil.format("用户【{}】编辑通知配置", UserContext.getDefaultLoginUser().getUserName());
+                        operateLogService.addModuleOperateLogByObj(cfgApproveNoticeEntity, e, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgApproveSyncEntity.getId(), updateMsg);
+                    }
+                });
+            }
             cfgApproveNoticeService.saveOrUpdateBatch(list);
         }
         return Boolean.TRUE;
