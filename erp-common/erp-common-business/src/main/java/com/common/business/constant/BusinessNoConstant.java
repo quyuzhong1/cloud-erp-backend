@@ -183,4 +183,6 @@ public interface BusinessNoConstant {
 
     String SFSP = "SFSP";
 
+    //流程配置
+    String LCPZ = "LCPZ";
 }

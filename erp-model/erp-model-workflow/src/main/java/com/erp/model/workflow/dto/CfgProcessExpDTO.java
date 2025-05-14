@@ -1,0 +1,171 @@
+package com.erp.model.workflow.dto;
+
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
+
+/**
+ * <p>
+ * 流程设置审核条件请求响应实体
+ * </p>
+ *
+ * @author hcg
+ * @since 2025-05-12
+*/
+@Data
+@NoArgsConstructor
+public class CfgProcessExpDTO implements Serializable {
+
+
+
+
+    /**
+    * 详情
+    */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDTO {
+
+        /**
+        * 主键id
+        */
+        private String  id;
+
+        /**
+        * 流程设置ID
+        */
+        private String ruleId;
+
+        /**
+        * 条件包含-左括号
+        */
+        private String leftBracket;
+
+        /**
+        * 选择条件字段
+        */
+        private String field;
+
+        /**
+        * 条件符号
+        */
+        private String compare;
+
+        /**
+        * 条件值
+        */
+        private String value;
+
+        /**
+        * 条件包含-右括号
+        */
+        private Boolean rightBracket;
+
+        /**
+        * 多条件逻辑关系
+        */
+        private Boolean logic;
+
+        /**
+        * 序号
+        */
+        private String index;
+
+        /**
+        * 值对应名称
+        */
+        private String name;
+
+
+    }
+
+    /**
+    * 新增
+    */
+    @Data
+    @NoArgsConstructor
+    public static class AddOrUpdateDTO extends CommonDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CommonDTO {
+
+        /**
+        * 流程设置ID
+        */
+        @NotBlank(message = "流程设置ID不能为空")
+        @Size(max = 100,message = "流程设置ID最大长度不能超过100位")
+        private String ruleId;
+
+        /**
+        * 条件包含-左括号
+        */
+        @NotBlank(message = "条件包含不能为空")
+        @Size(max = 100,message = "条件包含最大长度不能超过100位")
+        private String leftBracket;
+
+        /**
+        * 选择条件字段
+        */
+        @NotBlank(message = "选择条件字段不能为空")
+        @Size(max = 30,message = "选择条件字段最大长度不能超过30位")
+        private String field;
+
+        /**
+        * 条件符号
+        */
+        @NotBlank(message = "条件符号不能为空")
+        @Size(max = 100,message = "条件符号最大长度不能超过100位")
+        private String compare;
+
+        /**
+        * 条件值
+        */
+        @NotBlank(message = "条件值不能为空")
+        @Size(max = 100,message = "条件值最大长度不能超过100位")
+        private String value;
+
+        /**
+        * 条件包含-右括号
+        */
+        @NotNull(message = "条件包含不能为空")
+        private Boolean rightBracket;
+
+        /**
+        * 多条件逻辑关系
+        */
+        @NotNull(message = "多条件逻辑关系不能为空")
+        private Boolean logic;
+
+        /**
+        * 序号
+        */
+        @NotBlank(message = "序号不能为空")
+        @Size(max = 100,message = "序号最大长度不能超过100位")
+        private String index;
+
+        /**
+        * 值对应名称
+        */
+        @NotBlank(message = "值对应名称不能为空")
+        @Size(max = 100,message = "值对应名称最大长度不能超过100位")
+        private String name;
+
+
+    }
+
+
+
+}

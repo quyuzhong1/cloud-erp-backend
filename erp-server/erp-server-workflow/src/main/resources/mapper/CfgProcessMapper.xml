@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.CfgProcessMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.CfgProcessEntity">
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="bussiness_key" property="bussinessKey"/>
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        code, name, bussiness_key
+    </sql>
+
+    <resultMap id="processResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO.ProcessDTO">
+        <id property="id" column="process_id"/>
+        <result property="code" column="process_code"/>
+        <result property="name" column="process_name"/>
+        <result property="bussinessKey" column="process_bussiness_key"/>
+        <collection property="ruleList" ofType="com.erp.model.workflow.dto.CfgProcessDTO.ProcessRuleDTO" resultMap="processRuleResultMap"/>
+    </resultMap>
+
+    <resultMap id="processRuleResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO.ProcessRuleDTO">
+        <result property="id" column="rule_id"/>
+        <result property="type" column="rule_type"/>
+        <result property="processDefinitionName" column="process_definition_name"/>
+        <result property="processDefinitionVersion" column="process_definition_version"/>
+        <result property="createTime" column="rule_create_time"/>
+        <result property="createUserName" column="rule_create_user_name"/>
+        <result property="updateTime" column="rule_update_time"/>
+        <result property="updateUserName" column="rule_update_user_name"/>
+        <result property="disabled" column="disabled"/>
+        <result property="isDefault" column="is_default"/>
+        <collection property="expList" ofType="com.erp.model.workflow.dto.CfgProcessDTO.ProcessExpDTO" resultMap="processExpResultMap"/>
+    </resultMap>
+
+    <resultMap id="processExpResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO.ProcessExpDTO">
+        <result property="index" column="exp_index"/>
+        <result property="expDesc" column="expDesc"/>
+    </resultMap>
+
+    <select id="getProcessWithRulesAndExps" resultMap="processResultMap">
+        SELECT
+        p.id AS process_id,
+        p.code AS process_code,
+        p.name AS process_name,
+        p.bussiness_key AS process_bussiness_key,
+
+        r.id AS rule_id,
+        r.type AS rule_type,
+        r.process_definition_version,
+        r.disabled,
+        r.is_default As is_default,
+        r.create_time AS rule_create_time,
+        r.create_user_name AS rule_create_user_name,
+        r.update_time AS rule_update_time,
+        r.update_user_name AS rule_update_user_name,
+        CASE
+        WHEN r.type = 'fsProcess' THEN tpd.name
+        WHEN r.type = 'sysProcess' THEN pd.process_name
+        ELSE NULL
+        END AS process_definition_name,
+
+        CONCAT(e.left_bracket,e.field,drc.value,e.right_bracket,e.logic,e.name) AS expDesc,
+        e.index AS exp_index
+
+        FROM
+        public.cfg_process p
+        LEFT JOIN
+        public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
+        LEFT JOIN
+        public.third_process_definition tpd ON r.type = 'fsProcess' AND r.process_definition_id = tpd.id AND
+        tpd.is_deleted = false
+        LEFT JOIN
+        public.process_definition pd ON r.type = 'sysProcess' AND r.process_definition_id = pd.id AND pd.is_deleted =
+        false
+        LEFT JOIN
+        public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
+        LEFT JOIN
+        public.dict_rule_condition drc ON e.compare = drc.key AND drc.is_deleted = false
+        WHERE
+        ${params.sqlMap.default}
+        AND
+        p.is_deleted = false
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        r.create_time,p.code desc
+    </select>
+
+    <select id="getProcessById" resultMap="processResultMap">
+        SELECT
+            p.id AS process_id,
+            p.code AS process_code,
+            p.name AS process_name,
+            p.bussiness_key AS process_bussiness_key,
+
+            r.id AS rule_id,
+            r.type AS rule_type,
+            r.process_definition_version,
+            r.disabled,
+            r.is_default As is_default,
+            r.create_time AS rule_create_time,
+            r.create_user_name AS rule_create_user_name,
+            r.update_time AS rule_update_time,
+            r.update_user_name AS rule_update_user_name,
+            CASE
+                WHEN r.type = 'fsProcess' THEN tpd.name
+                WHEN r.type = 'sysProcess' THEN pd.process_name
+                ELSE NULL
+                END AS process_definition_name,
+
+            CONCAT(e.left_bracket,e.field,drc.value,e.right_bracket,e.logic,e.name) AS expDesc,
+            e.index AS exp_index
+
+        FROM
+            public.cfg_process p
+                LEFT JOIN
+            public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
+                LEFT JOIN
+            public.third_process_definition tpd ON r.type = 'fsProcess' AND r.process_definition_id = tpd.id AND tpd.is_deleted = false
+                LEFT JOIN
+            public.process_definition pd ON r.type = 'sysProcess' AND r.process_definition_id = pd.id AND pd.is_deleted = false
+                LEFT JOIN
+            public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
+                LEFT JOIN
+            public.dict_rule_condition drc ON e.compare = drc.key AND drc.is_deleted = false
+        WHERE
+            p.is_deleted = false
+        AND p.id = #{id}
+        ORDER BY
+        r.create_time desc
+    </select>
+
+</mapper>

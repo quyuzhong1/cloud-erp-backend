@@ -251,7 +251,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PROCESS_DEFINITION("EXPORT_PROCESS_DEFINITION", "流程设计记录"),
     EXPORT_PROCESS_DELEGATE("EXPORT_PROCESS_DELEGATE", "委托审批导出"),
     EXPORT_PROCESS_CFG_APPROVE_SYNC("EXPORT_PROCESS_CFG_APPROVE_SYNC", "ERP审批同步配置导出"),
-
+    EXPORT_CFG_PROCESS("EXPORT_CFG_PROCESS","流程配置Excel导出"),
 
     DEFAULT("DEFAULT", "默认");
     private final String code;

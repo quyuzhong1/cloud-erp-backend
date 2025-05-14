@@ -2,14 +2,8 @@ package com.erp.server.workflow.controller.feign;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.workflow.dto.CfgApproveSyncDTO;
-import com.erp.model.workflow.dto.ProcessDefinitionDTO;
-import com.erp.model.workflow.dto.ProcessDelegateDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
-import com.erp.server.workflow.service.CfgApproveSyncService;
-import com.erp.server.workflow.service.ProcessDefinitionService;
-import com.erp.server.workflow.service.ProcessDelegateService;
-import com.erp.server.workflow.service.ProcessManagementService;
+import com.erp.model.workflow.dto.*;
+import com.erp.server.workflow.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +27,8 @@ public class ExportWorkflowFeignController {
     @Resource
     private CfgApproveSyncService cfgApproveSyncService;
 
+    @Resource
+    private CfgProcessService cfgProcessService;
 
     @PostMapping("/processDefinition")
     public PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto){
@@ -57,5 +53,10 @@ public class ExportWorkflowFeignController {
     @PostMapping("/exportCfgApproveSynce")
     public PagingVO<CfgApproveSyncDTO.ListDTO> exportCfgApproveSync(PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto){
         return cfgApproveSyncService.paging(dto);
+    }
+
+    @PostMapping("/cfgProcess")
+    public PagingVO<CfgProcessDTO.ProcessViewDTO> exportCfgProcess(@RequestBody PagingDTO<CfgProcessDTO.SearchParamDTO> dto){
+        return cfgProcessService.paging(dto);
     }
 }

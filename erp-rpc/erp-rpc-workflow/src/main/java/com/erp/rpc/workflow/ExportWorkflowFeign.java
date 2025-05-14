@@ -3,10 +3,7 @@ package com.erp.rpc.workflow;
 import com.common.business.config.ExportFeignConfig;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
-import com.erp.model.workflow.dto.CfgApproveSyncDTO;
-import com.erp.model.workflow.dto.ProcessDefinitionDTO;
-import com.erp.model.workflow.dto.ProcessDelegateDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.dto.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -30,4 +27,7 @@ public interface ExportWorkflowFeign {
 
     @PostMapping("/feign/export/exportCfgApproveSync")
     PagingVO<CfgApproveSyncDTO.ListDTO> exportCfgApproveSync(PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto);
+
+    @PostMapping("/feign/export/exportCfgProcess")
+    PagingVO<CfgProcessDTO.ProcessViewDTO> exportCfgProcess(PagingDTO<CfgProcessDTO.SearchParamDTO> dto);
 }
