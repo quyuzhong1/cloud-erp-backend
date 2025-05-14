@@ -151,6 +151,8 @@ public class CfgApproveNoticeDTO implements Serializable {
          */
         private String specificPerson;
         private List<String> specificPersonList;
+
+        private Boolean enableStatus;
     }
 
 }

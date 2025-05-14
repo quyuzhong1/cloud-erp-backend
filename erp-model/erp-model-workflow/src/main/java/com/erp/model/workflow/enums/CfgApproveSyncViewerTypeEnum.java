@@ -13,10 +13,10 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-05-12 18:31:25
  */
 public enum CfgApproveSyncViewerTypeEnum implements EnumMessage {
-    TENANT("tenant", "所有用户"),
-    DEPARTMENT("department", "指定部门"),
-    USER("user", "指定用户"),
-	NONE("none", "不可见"),
+    TENANT("TENANT", "所有用户"),
+    DEPARTMENT("DEPARTMENT", "指定部门"),
+    USER("USER", "指定用户"),
+	NONE("NONE", "不可见"),
     ;
     /**
      * 类型

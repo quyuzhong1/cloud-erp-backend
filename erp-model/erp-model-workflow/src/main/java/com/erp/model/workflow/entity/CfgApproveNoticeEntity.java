@@ -44,6 +44,11 @@ public class CfgApproveNoticeEntity extends BaseEntity<CfgApproveNoticeEntity> {
     */
     @TableField("specific_person")
     private String specificPerson;
+    /**
+    * 是否启用
+    */
+    @TableField("enable_status")
+    private String enableStatus;
 
 
     public static final String MAIN_ID = "main_id";
@@ -53,6 +58,8 @@ public class CfgApproveNoticeEntity extends BaseEntity<CfgApproveNoticeEntity> {
     public static final String ROLE_TYPE = "role_type";
 
     public static final String SPECIFIC_PERSON = "specific_person";
+
+    public static final String ENABLE_STATUS = "enable_status";
 
     @Override
     public Serializable pkVal() {
