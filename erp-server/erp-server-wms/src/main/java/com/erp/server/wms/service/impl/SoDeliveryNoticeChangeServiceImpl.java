@@ -108,6 +108,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoDeliveryNoticeChangeDTO.ViewDTO addDTO) {
+        //校验soDetailId是否重复
+        List<String> soDetailIds = addDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSoDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        boolean hasDuplicates = soDetailIds.stream().distinct().count() != soDetailIds.size();
+        if (hasDuplicates) {
+            throw new ServiceException("存在相同sku");
+        }
         List<String> sourceDetailIds = addDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         this.checkExist(sourceDetailIds,addDTO.getNoticeId(), addDTO.getId());
         SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity = this.buildEntity(addDTO);
