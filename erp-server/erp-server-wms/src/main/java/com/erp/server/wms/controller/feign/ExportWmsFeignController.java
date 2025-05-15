@@ -242,7 +242,7 @@ public class ExportWmsFeignController {
     @PostMapping("/listDiffExportData")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "diff.warehouseId",
-            menuCode = "wms:diffPaging:paging"
+            menuCode = "wms:virtualInventoryDiff:diffPaging"
     )
     @WebAdvanceQuery(handler = VirtualInventoryDiffQueryHandler.class)
     public PagingVO<VirtualInventoryDiffDTO.ListDiffExportDataDTO> exportListDiffExportData(@RequestBody PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
@@ -821,6 +821,10 @@ public class ExportWmsFeignController {
      * 订单需求明细导出
      */
     @PostMapping("/listReportOrderDemandDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "rodd.warehouse_id",
+            menuCode = "wms:reportOrderDemandDetail:paging"
+    )
     @WebAdvanceQuery
     public PagingVO<ReportOrderDemandDetailDTO.ListDTO> listReportOrderDemandDetail(@RequestBody PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto){
         return reportOrderDemandDetailService.listReportOrderDemandDetail(dto);
