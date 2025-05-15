@@ -13,6 +13,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
+import com.erp.server.tms.query.FirstMileChangeRecordQueryHandler;
 import com.erp.server.tms.query.FirstMileCostAllocationQueryHandler;
 import com.erp.server.tms.service.FirstMileChangeRecordService;
 import lombok.extern.slf4j.Slf4j;
@@ -85,7 +86,7 @@ public class FirstMileChangeRecordController extends BaseController {
             menuCode = "tms:firstMileChangeRecord:paging",
             tableAlias = "fmcr"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = FirstMileChangeRecordQueryHandler.class)
     public ApiResult<PagingVO<FirstMileChangeRecordDTO.PagingVO>> paging(@RequestBody @Valid PagingDTO<FirstMileChangeRecordDTO.PagingParamDTO> dto) {
         PagingVO<FirstMileChangeRecordDTO.PagingVO> pagingVO = firstMileChangeRecordService.paging(dto);
         return success(pagingVO);
