@@ -128,17 +128,17 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱长
         */
-        private Integer boxLength;
+        private BigDecimal boxLength;
 
         /**
         * 箱宽
         */
-        private Integer boxWidth;
+        private BigDecimal boxWidth;
 
         /**
         * 箱高
         */
-        private Integer boxHeight;
+        private BigDecimal boxHeight;
 
         /**
         * 箱子尺寸单位

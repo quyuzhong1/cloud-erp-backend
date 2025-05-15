@@ -661,6 +661,14 @@ public class FbaShipmentDTO implements Serializable {
          * 签收数量
          */
         private Integer receiveQty;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
 
         @Override
         public String toString(){

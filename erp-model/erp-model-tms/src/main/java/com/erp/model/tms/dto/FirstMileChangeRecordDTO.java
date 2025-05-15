@@ -180,7 +180,7 @@ public class FirstMileChangeRecordDTO implements Serializable {
         /**
         * 修改范围:current=仅修改当前值,box=修改同箱同SKU,order=修改同单同SKU
         */
-        @NotBlank(message = "修改范围:current=仅修改当前值,box=修改同箱同SKU,order=修改同单同SKU不能为空")
+//        @NotBlank(message = "修改范围:current=仅修改当前值,box=修改同箱同SKU,order=修改同单同SKU不能为空")
         @Size(max = 30,message = "修改范围:current=仅修改当前值,box=修改同箱同SKU,order=修改同单同SKU最大长度不能超过30位")
         private String changeRange;
 
@@ -253,7 +253,7 @@ public class FirstMileChangeRecordDTO implements Serializable {
         /**
         * 调整前数值
         */
-        @NotBlank(message = "调整前数值不能为空")
+//        @NotBlank(message = "调整前数值不能为空")
         @Size(max = 255,message = "调整前数值最大长度不能超过255位")
         private String oldValue;
 
@@ -270,6 +270,18 @@ public class FirstMileChangeRecordDTO implements Serializable {
         @NotNull(message = "是否最新记录不能为空")
         private Boolean isLatest;
 
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 物流单id
+         */
+        private String logisticsBillId;
+        /**
+         * 箱id
+         */
+        private String boxId;
 
     }
 

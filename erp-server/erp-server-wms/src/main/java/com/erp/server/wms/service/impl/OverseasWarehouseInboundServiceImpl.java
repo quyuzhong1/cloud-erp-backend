@@ -1094,7 +1094,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 receivedEntity.setDetailId(detailEntity.getId());
                 receivedEntity.setReceiveQty(thisSignNumber);
                 receivedEntity.setReceiveTime(dto.getDownloadTime());
-                receivedEntity.setDataSource(SignSourceTypeEnum.API.getCode());
+                receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
@@ -1130,9 +1130,9 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 receivedEntity.setDetailId(detailId);
                 receivedEntity.setReceiveQty(receiving.getReceiveQty());
                 receivedEntity.setReceiveTime(receiving.getReceiveTime());
+                receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
                 receivedEntity.setFlowId(StringUtil.isBlank(receiving.getThirdId()) ? "" : receiving.getThirdId());
                 receivedEntity.setCreateUserId(dto.getAuthId());
-                receivedEntity.setDataSource(SignSourceTypeEnum.API.getCode());
                 insertReceiveEntityList.add(receivedEntity);
             }
         }

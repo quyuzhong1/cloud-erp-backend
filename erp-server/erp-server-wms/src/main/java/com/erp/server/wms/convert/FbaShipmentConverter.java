@@ -30,7 +30,8 @@ public interface FbaShipmentConverter {
     FbaShipmentDetailDTO.ViewDTO fbaShipmentDetailToViewDTO(FbaShipmentDetailEntity detailEntity);
 
     @Mapping(target = "receiveTime", source = "receiveDate")
-    FbaShipmentDTO.ReceiveRecordView fbaShipmentReceiveEntityToView(FbaShipmentReceiveEntity entities);
+    @Mapping(target = "sourceTypeName", expression = "java(com.erp.model.wms.enums.SignSourceTypeEnum.getName(entity.getSourceType()))")
+    FbaShipmentDTO.ReceiveRecordView fbaShipmentReceiveEntityToView(FbaShipmentReceiveEntity entity);
 
     @Mapping(target = "shipmentStatus", source = "platformShipmentStatus")
     FbaShipmentDTO.ShipmentStatusRecordView fbaShipmentStatusEntityToView(FbaShipmentStatusEntity entities);

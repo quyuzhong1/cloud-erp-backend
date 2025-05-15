@@ -22,7 +22,7 @@ public class FirstMileChangeRecordQueryHandler extends AbstractQueryHandler {
         if ("reportPeriodStr".equals(field)){
             if (value instanceof String){
                 String value1 = value + "-01";
-                this.buildDefaultDTO("rpm.month", Collections.singletonList(LocalDate.parse(value1)));
+                this.buildDefaultDTO("fmcr.report_period", Collections.singletonList(LocalDate.parse(value1)));
             }else if (value instanceof List){
                 List<LocalDate> values = new ArrayList<>();
                 for (String s : (List<String>)value) {
@@ -31,7 +31,7 @@ public class FirstMileChangeRecordQueryHandler extends AbstractQueryHandler {
                         values.add(LocalDate.parse(value1, dateTimeFormatter));
                     }
                 }
-                this.buildDefaultDTO("rpm.month", values);
+                this.buildDefaultDTO("fmcr.report_period", values);
             }
         }
         return null;
