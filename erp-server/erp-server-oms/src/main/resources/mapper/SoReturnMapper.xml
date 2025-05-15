@@ -196,5 +196,17 @@
         </if>
         ORDER BY sr.create_time DESC
     </select>
+    <select id="listSoReturnByApproveStatus" resultType="com.erp.model.oms.entity.SoReturnEntity">
+        SELECT
+            sr.*
+        FROM so_return sr
+        WHERE sr.is_deleted = FALSE
+        AND sr.approve_status = #{approveStatus}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        order by sr.code desc
+    </select>
 
 </mapper>

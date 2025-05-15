@@ -54,6 +54,7 @@ import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -157,6 +158,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
 
     @Override
@@ -1106,10 +1109,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public List<SoReturnEntity> listSoReturnByApproveStatus() {
-        LambdaQueryWrapper<SoReturnEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
-        queryWrapper.orderByDesc(SoReturnEntity::getCode);
-        return baseMapper.selectList(queryWrapper);
+        String permissionSql = authDataFeign.getWarehousePermissionSql("sr.warehouse_id");
+        return baseMapper.listSoReturnByApproveStatus(ApproveStatusEnum.APPROVE.getStatus(), permissionSql);
     }
 
     @Override
