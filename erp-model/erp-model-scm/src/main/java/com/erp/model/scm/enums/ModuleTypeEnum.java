@@ -141,7 +141,7 @@ public enum ModuleTypeEnum {
     QC_NOTICE("124", "质检通知"),
     PROCESS_DELEGATE("125", "委托审批"),
     CFG_APPROVE_SYNC("126", "ERP审批同步配置"),
-
+    CFG_PROCESS("127", "流程配置"),
     ;
 
 

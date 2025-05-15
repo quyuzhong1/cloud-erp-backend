@@ -62,4 +62,6 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
     boolean deleteByIds(List<String> ids);
 
     PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
+
+    List<ProcessDefinitionDTO.DropDTO> getProcessDefinition(String businessKey);
 }

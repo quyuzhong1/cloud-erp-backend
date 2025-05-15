@@ -33,7 +33,7 @@ public class ThirdProcessDefinitionEntity extends BaseEntity<ThirdProcessDefinit
     * 状态
     */
     @TableField("status")
-    private String status;
+    private Boolean status;
     /**
     * 单据名称
     */

@@ -1,5 +1,6 @@
 package com.erp.model.workflow.dto;
 
+import com.common.business.dto.base.UpdateStateDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
@@ -134,8 +135,24 @@ public class CfgProcessRuleDTO implements Serializable {
         @NotNull(message = "启用状态不能为空")
         private Boolean disabled;
 
-
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateStateDTO{
 
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+
+        /**
+         * true为默认
+         * false为非默认
+         */
+        @NotNull(message = "状态值不能为空")
+        private Boolean state;
+
+        @NotBlank(message = "cfgProcessId不能为空")
+        private String cfgProcessId;
+    }
 }

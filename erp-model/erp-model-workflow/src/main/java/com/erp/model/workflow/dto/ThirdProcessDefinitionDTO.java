@@ -44,7 +44,7 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         /**
         * 状态
         */
-        private String status;
+        private Boolean status;
 
         /**
         * 单据名称
@@ -114,8 +114,7 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         * 状态
         */
         @NotBlank(message = "状态不能为空")
-        @Size(max = 10,message = "状态最大长度不能超过10位")
-        private String status;
+        private Boolean status;
 
         /**
         * 单据名称
@@ -155,5 +154,17 @@ public class ThirdProcessDefinitionDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO {
+        /**
+         * 单据编码
+         */
+        private String approvalCode;
 
+        /**
+         * 单据名称
+         */
+        private String name;
+    }
 }

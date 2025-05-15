@@ -14,13 +14,11 @@ import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.server.workflow.service.ProcessDefinitionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.List;
 
 /**
  * 流程定义
@@ -116,5 +114,15 @@ public class ProcessDefinitionController extends BaseController {
         return success(result);
     }
 
+    /**
+     * 获取指定单据类型的ERP审批定义
+     * @param bussinessKey
+     * @return
+     */
+    @GetMapping("/getProcessDefinition")
+    public ApiResult<List<ProcessDefinitionDTO.DropDTO>> getProcessDefinition(@RequestParam(value = "bussinessKey") String bussinessKey) {
+        List<ProcessDefinitionDTO.DropDTO> result = processDefinitionService.getProcessDefinition(bussinessKey);
+        return success(result);
+    }
 }
 

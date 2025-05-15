@@ -381,4 +381,30 @@ public class ProcessDefinitionDTO {
         private LocalDateTime createTime;
 
     }
+    @Data
+    @NoArgsConstructor
+    public static class DropDTO {
+
+        private String id;
+
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 是否已发布
+         */
+        private Boolean isDeploy;
+
+        /**
+         * 流程单据名称
+         */
+        private String businessName;
+
+        /**
+         * 业务类型
+         */
+        private String businessKey;
+    }
 }

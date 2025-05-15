@@ -170,4 +170,11 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         Page<ProcessDefinitionDTO.ExportDTO> page = this.baseMapper.query(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(page);
     }
+
+    @Override
+    public List<ProcessDefinitionDTO.DropDTO> getProcessDefinition(String businessKey) {
+        //TODO 启用状态判断，暂未添加
+        List<ProcessDefinitionDTO.DropDTO> reslut = baseMapper.getProcessDefinition(businessKey);
+        return reslut;
+    }
 }

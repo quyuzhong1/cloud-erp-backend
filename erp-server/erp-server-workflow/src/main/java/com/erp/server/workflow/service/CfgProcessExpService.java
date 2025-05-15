@@ -24,8 +24,7 @@ public interface CfgProcessExpService extends SuperService<CfgProcessExpEntity> 
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO addOrUpdate(String ruleId,List<CfgProcessExpDTO.AddOrUpdateDTO> dto);
-
+    BaseResultDTO.AddDTO add(String cfgProcessId,String ruleId,List<CfgProcessExpDTO.AddOrUpdateDTO> dto);
     /**
     * 修改
     * @author hcg
@@ -33,8 +32,7 @@ public interface CfgProcessExpService extends SuperService<CfgProcessExpEntity> 
     * @param dto
     * @return
     */
-    Boolean update(CfgProcessExpDTO.AddOrUpdateDTO dto);
-
+    BaseResultDTO.UpdateDTO addOrUpdate(String cfgProcessId,String ruleId,List<CfgProcessExpDTO.AddOrUpdateDTO> dto);
 
     void delete(List<String> ids);
 

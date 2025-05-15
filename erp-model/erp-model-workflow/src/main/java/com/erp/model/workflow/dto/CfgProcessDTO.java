@@ -95,6 +95,11 @@ public class CfgProcessDTO implements Serializable {
         @Size(max = 30, message = "配置单据最大长度不能超过30位")
         private String bussinessKey;
 
+        /**
+         * 单据编码
+         */
+        @Size(max = 30, message = "配置编码最大长度不能超过30位")
+        private String code;
     }
 
     @Data

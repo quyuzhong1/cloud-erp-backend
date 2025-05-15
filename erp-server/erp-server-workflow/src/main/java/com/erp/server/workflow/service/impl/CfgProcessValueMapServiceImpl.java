@@ -7,26 +7,21 @@ import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.vo.LoginUser;
-import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.server.workflow.mapper.CfgProcessValueMapMapper;
 import com.erp.server.workflow.service.CfgProcessValueMapService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-//import com.erp.server.workflow.service.OperateLogService;
-import com.erp.server.workflow.service.CommonService;
+import com.erp.server.workflow.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 /**
@@ -41,7 +36,7 @@ import com.common.core.enums.ApiError;
 @Service
 public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessValueMapMapper, CfgProcessValueMapEntity> implements CfgProcessValueMapService {
     @Autowired
-//    private OperateLogService operateLogService;
+    private OperateLogService operateLogService;
 
 
     @Transactional(rollbackFor = Exception.class)

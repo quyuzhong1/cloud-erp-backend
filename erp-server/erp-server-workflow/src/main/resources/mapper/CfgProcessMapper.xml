@@ -31,15 +31,15 @@
         code, name, bussiness_key
     </sql>
 
-    <resultMap id="processResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO.ProcessDTO">
+    <resultMap id="processResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO$ProcessDTO">
         <id property="id" column="process_id"/>
         <result property="code" column="process_code"/>
         <result property="name" column="process_name"/>
         <result property="bussinessKey" column="process_bussiness_key"/>
-        <collection property="ruleList" ofType="com.erp.model.workflow.dto.CfgProcessDTO.ProcessRuleDTO" resultMap="processRuleResultMap"/>
+        <collection property="ruleList" ofType="com.erp.model.workflow.dto.CfgProcessDTO$ProcessRuleDTO" resultMap="processRuleResultMap"/>
     </resultMap>
 
-    <resultMap id="processRuleResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO.ProcessRuleDTO">
+    <resultMap id="processRuleResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO$ProcessRuleDTO">
         <result property="id" column="rule_id"/>
         <result property="type" column="rule_type"/>
         <result property="processDefinitionName" column="process_definition_name"/>
@@ -50,10 +50,10 @@
         <result property="updateUserName" column="rule_update_user_name"/>
         <result property="disabled" column="disabled"/>
         <result property="isDefault" column="is_default"/>
-        <collection property="expList" ofType="com.erp.model.workflow.dto.CfgProcessDTO.ProcessExpDTO" resultMap="processExpResultMap"/>
+        <collection property="expList" ofType="com.erp.model.workflow.dto.CfgProcessDTO$ProcessExpDTO" resultMap="processExpResultMap"/>
     </resultMap>
 
-    <resultMap id="processExpResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO.ProcessExpDTO">
+    <resultMap id="processExpResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO$ProcessExpDTO">
         <result property="index" column="exp_index"/>
         <result property="expDesc" column="expDesc"/>
     </resultMap>

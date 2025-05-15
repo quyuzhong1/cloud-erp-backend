@@ -3,40 +3,25 @@ package com.erp.server.workflow.controller.api;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.model.workflow.enums.CfgProcessBussinessKeyEnum;
 import com.erp.server.workflow.handler.CfgProcessQueryHandler;
 import com.erp.server.workflow.service.CfgProcessRuleService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import javax.annotation.Resource;
-
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.common.core.controller.BaseController;
 import com.erp.server.workflow.service.CfgProcessService;
 import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.workflow.dto.CfgProcessDTO;
-
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +29,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static com.common.core.controller.vo.ApiResult.success;
 
 /**
  * 流程配置
@@ -182,10 +166,10 @@ public class CfgProcessController extends BaseController {
      * @author hcg
      * @date: 2025-05-12
      */
-    @PostMapping("/addOrUpdate")
+    @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "流程配置新增/删除")
-    public ApiResult<BaseResultDTO.AddDTO> addOrUpdate(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
-        return success(cfgProcessService.addOrUpdate(dto));
+    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
+        return success(cfgProcessService.add(dto));
     }
 
     /**
@@ -196,9 +180,9 @@ public class CfgProcessController extends BaseController {
      * @author hcg
      * @date: 2025-05-12
      */
-    @PostMapping("/updateDefault")
+    @PostMapping("/update")
     @LogAction(value = LogActionEnum.INSERT, desc = "流程配置新增/删除")
-    public ApiResult<BaseResultDTO.UpdateDTO> updateDefault(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
-        return success(cfgProcessService.updateDefault(dto));
+    public ApiResult<BaseResultDTO.AddDTO> update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
+        return success(cfgProcessService.update(dto));
     }
 }

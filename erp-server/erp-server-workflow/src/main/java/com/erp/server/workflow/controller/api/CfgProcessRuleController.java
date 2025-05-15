@@ -52,4 +52,17 @@ public class CfgProcessRuleController extends BaseController {
 //    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated List<CfgProcessRuleDTO.AddOrUpdateDTO> dto) {
 //        return success(cfgProcessRuleService.addOrUpdate(dto));
 //    }
+    /**
+     * 新增/更新
+     *
+     * @param dto
+     * @return ApiResult<String>
+     * @author hcg
+     * @date: 2025-05-12
+     */
+    @PostMapping("/updateDefault")
+    @LogAction(value = LogActionEnum.INSERT, desc = "流程配置新增/删除")
+    public ApiResult<BaseResultDTO.UpdateDTO> updateDefault(@RequestBody @Validated CfgProcessRuleDTO.UpdateStateDTO dto) {
+        return success(cfgProcessRuleService.updateDefault(dto));
+    }
 }

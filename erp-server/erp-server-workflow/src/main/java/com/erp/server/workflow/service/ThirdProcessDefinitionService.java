@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 三方审批定义 服务类
@@ -33,4 +35,5 @@ public interface ThirdProcessDefinitionService extends SuperService<ThirdProcess
     Boolean update(ThirdProcessDefinitionDTO.UpdateDTO dto);
 
 
+    List<ThirdProcessDefinitionDTO.DropDownDTO> dropDown();
 }

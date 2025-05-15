@@ -84,7 +84,21 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     */
     @TableField("process_defintion_id")
     private String processDefintionId;
-
+    /**
+     * 第三方字段id，唯一标识
+     */
+    @TableField("third_field_id")
+    private String thirdFieldId;
+    /**
+     * 第三方字段是否是明细控件
+     */
+    @TableField("is_detail_field")
+    private Boolean isDetailField;
+    /**
+     * 第三方字段所属明细控件id
+     */
+    @TableField("third_field_fieldList_id")
+    private String thirdFieldFieldListId;
 
     public static final String THIRD_FIELD = "third_field";
 
@@ -109,6 +123,12 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     public static final String CFG_TYPE = "cfg_type";
 
     public static final String PROCESS_DEFINTION_ID = "process_defintion_id";
+
+    public static final String THIRD_FIELD_ID = "third_field_id";
+
+    public static final String IS_DETAIL_FIELD = "is_detail_field";
+
+    public static final String THIRD_FIELD_FIELD_LIST_ID = "third_field_fieldList_id";
 
     @Override
     public Serializable pkVal() {

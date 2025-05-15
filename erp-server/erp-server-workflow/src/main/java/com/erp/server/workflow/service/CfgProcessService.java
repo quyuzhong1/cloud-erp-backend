@@ -27,7 +27,7 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO addOrUpdate(CfgProcessDTO.AddOrUpdateDTO dto);
+    BaseResultDTO.AddDTO add(CfgProcessDTO.AddOrUpdateDTO dto);
 
     /**
     * 修改
@@ -36,6 +36,7 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
     * @param dto
     * @return
     */
+    BaseResultDTO.AddDTO update(CfgProcessDTO.AddOrUpdateDTO dto);
 
     /**
      * 高级查询
@@ -52,6 +53,6 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
 
     void exportList(PagingDTO<CfgProcessDTO.SearchParamDTO> dto);
 
-    BaseResultDTO.UpdateDTO updateDefault(CfgProcessDTO.AddOrUpdateDTO dto);
+
 
 }

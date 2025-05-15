@@ -10,7 +10,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.workflow.dto.CfgProcessRuleDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.enums.CfgProcessBussinessKeyEnum;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
@@ -19,13 +19,11 @@ import com.erp.server.workflow.mapper.CfgProcessMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-//import com.erp.server.workflow.service.OperateLogService;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.CfgProcessDTO;
 
@@ -49,8 +47,8 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_CFG_PROCESS;
 @Slf4j
 @Service
 public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, CfgProcessEntity> implements CfgProcessService {
-    //    @Autowired
-    //    private OperateLogService operateLogService;
+    @Autowired
+    private OperateLogService operateLogService;
     @Autowired
     private DocNoGenHelper docNoGenHelper;
 
@@ -63,34 +61,42 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addOrUpdate(CfgProcessDTO.AddOrUpdateDTO addDTO) {
+    public BaseResultDTO.AddDTO add(CfgProcessDTO.AddOrUpdateDTO dto) {
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
-        BeanMapperUtils.copy(addDTO, cfgProcessEntity);
-        //TODO 数据处理，处理映射
-        handleData(cfgProcessEntity);
+        BeanMapperUtils.copy(dto, cfgProcessEntity);
+        // 生成单号
+        String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_LCPZ);
+        cfgProcessEntity.setCode(code);
         log.info("开始新增流程配置");
-        String code = "";
-        if (StrUtil.isNotEmpty(addDTO.getId())) {
-            code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_LCPZ);
-            // 生成单号
-            cfgProcessEntity.setCode(code);
+        boolean save = super.save(cfgProcessEntity);
+        if (!save) {
+            throw new ServiceException("流程配置保存失败");
         }
+        //保存执行条件
+        cfgProcessRuleService.add(cfgProcessEntity.getBussinessKey(), cfgProcessEntity.getId(), dto.getProcessRuleDTOList());
+        // 操作日志
+        String msg = StrUtil.format("新增【{}】配置编码为【{}】", "流程配置", cfgProcessEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(cfgProcessEntity.getId(), code);
+    }
+
+    @Override
+    public BaseResultDTO.AddDTO update(CfgProcessDTO.AddOrUpdateDTO dto) {
+        CfgProcessEntity old = this.getById(dto.getId());
+        CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
+        BeanMapperUtils.copy(dto, cfgProcessEntity);
+        //code不能修改
+        cfgProcessEntity.setCode(old.getCode());
+        log.info("开始新增流程配置");
         boolean save = super.saveOrUpdate(cfgProcessEntity);
         if (!save) {
             throw new ServiceException("流程配置保存失败");
         }
-        try{
-            //保存执行条件
-            cfgProcessRuleService.addOrUpdate(cfgProcessEntity.getBussinessKey(),cfgProcessEntity.getId(),addDTO.getProcessRuleDTOList());
-        }catch (Exception e){
-            throw new ServiceException(e.getMessage());
-        }
+        //保存执行条件
+        cfgProcessRuleService.update(cfgProcessEntity.getBussinessKey(), cfgProcessEntity.getId(), dto.getProcessRuleDTOList());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "流程配置", cfgProcessEntity.getCode());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        // TODO operateLogService.addModuleOperateLog(msg, null, cfgProcessEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-        return new BaseResultDTO.AddDTO(cfgProcessEntity.getId(), code);
+        operateLogService.addModuleOperateLogByObj(old,  cfgProcessEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "更新操作");
+        return new BaseResultDTO.AddDTO(cfgProcessEntity.getId(), dto.getCode());
     }
 
     @Override
@@ -157,11 +163,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     public void exportList(PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
         downloadTaskFeign.saveDownloadTask("流程配置导出", EXPORT_CFG_PROCESS.getCode(), dto);
-    }
-
-    @Override
-    public BaseResultDTO.UpdateDTO updateDefault(CfgProcessDTO.AddOrUpdateDTO dto) {
-        return null;
     }
 
 

@@ -23,7 +23,7 @@ public interface CfgProcessFieldMapService extends SuperService<CfgProcessFieldM
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO addOrUpdate(String bussinessKey,String ruleId,List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
+    BaseResultDTO.AddDTO add(String bussinessKey,String cfgProcessId,String ruleId,List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
 
     /**
     * 修改
@@ -32,7 +32,8 @@ public interface CfgProcessFieldMapService extends SuperService<CfgProcessFieldM
     * @param dto
     * @return
     */
-    Boolean update(CfgProcessFieldMapDTO.UpdateDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(String bussinessKey,String ruleId,List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
+
 
 
     List<CfgProcessFieldMapDTO.ViewDTO> view(String ruleId);

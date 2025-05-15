@@ -67,6 +67,4 @@ public class DictCfgSysFieldController extends BaseController {
         return success();
     }
 
-
-
 }

@@ -98,9 +98,19 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private String processDefintionId;
 
         /**
-         * children
+         * 第三方字段id，唯一标识
          */
-        private List<CfgProcessFieldSubMapDTO.ViewDTO> processFieldSubMapDTOList;
+        private String thirdFieldId;
+
+        /**
+         * 第三方字段是否是明细控件
+         */
+        private Boolean isDetailField;
+
+        /**
+         * 第三方字段所属明细控件id
+         */
+        private String thirdFieldFieldListFid;
     }
 
     /**
@@ -119,11 +129,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
          * 选项条件
          */
         private List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList;
-
-        /**
-         * fieldList 明细字段映射
-         */
-        private List<CfgProcessFieldSubMapDTO.AddOrUpdateDTO> processFieldSubMapDTOList;
     }
 
     /**
@@ -226,7 +231,23 @@ public class CfgProcessFieldMapDTO implements Serializable {
         @Size(max = 19,message = "流程定义code最大长度不能超过19位")
         private String processDefintionId;
 
+        /**
+         * 第三方字段id，唯一标识
+         */
+        @NotBlank(message = "第三方字段id")
+        @Size(max = 255,message = "第三方字段id最大长度不能超过255位")
+        private String thirdFieldId;
 
+        /**
+         * 第三方字段是否是明细控件
+         */
+        @NotBlank(message = "第三方字段是否是明细控件")
+        private Boolean isDetailField;
+
+        /**
+         * 第三方字段所属明细控件id
+         */
+        private String thirdFieldFieldListFid;
     }
 
 

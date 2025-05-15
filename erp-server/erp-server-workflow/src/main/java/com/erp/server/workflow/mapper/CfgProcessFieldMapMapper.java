@@ -19,5 +19,4 @@ import java.util.List;
 @Mapper
 public interface CfgProcessFieldMapMapper extends BaseMapper<CfgProcessFieldMapEntity> {
 
-    List<CfgProcessFieldMapDTO.ViewDTO> getFieldWithSub(String ruleId);
 }

@@ -8,7 +8,7 @@ import com.erp.server.workflow.mapper.ThirdProcessInstanceMapper;
 import com.erp.server.workflow.service.ThirdProcessInstanceService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-//import com.erp.server.workflow.service.OperateLogService;
+import com.erp.server.workflow.service.OperateLogService;
 import com.erp.server.workflow.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
@@ -31,8 +31,8 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class ThirdProcessInstanceServiceImpl extends SuperServiceImpl<ThirdProcessInstanceMapper, ThirdProcessInstanceEntity> implements ThirdProcessInstanceService {
-//    @Autowired
-//    private OperateLogService operateLogService;
+    @Autowired
+    private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)

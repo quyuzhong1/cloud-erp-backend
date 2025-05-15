@@ -20,6 +20,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
 
+import java.util.List;
+
 /**
  * 三方审批定义
  *
@@ -67,6 +69,13 @@ public class ThirdProcessDefinitionController extends BaseController {
         return success();
     }
 
-
-
+    /**
+     * 飞书流程对应的流程名称
+     * @return
+     */
+    @GetMapping("/drop/down")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "三方审批定义")
+    public ApiResult<List<ThirdProcessDefinitionDTO.DropDownDTO>> dropDown() {
+        return success(thirdProcessDefinitionService.dropDown());
+    }
 }
