@@ -12,10 +12,12 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.SysRefererConfigEntity;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncFieldMapDTO;
 import com.erp.model.workflow.entity.*;
@@ -250,26 +252,32 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     }
 
     //可见人列表
-    private static void getApprovalViewers(CfgApproveSyncEntity cfgApproveSyncEntity, ExternalApproval externalApproval) {
+    private void getApprovalViewers(CfgApproveSyncEntity cfgApproveSyncEntity, ExternalApproval externalApproval) {
         //审批可见人列表，列表长度上限 200，只有在审批可见人列表内的用户，才可以在审批发起页看到该审批。若该参数不传值，则表示任何人不可见。
         List<ApprovalCreateViewers> approvalCreateViewers = new ArrayList<>();
         String viewer = cfgApproveSyncEntity.getViewer();
         if(cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.USER.getCode())){
             if(StringUtils.isNotBlank(viewer)){
-                String[] split = viewer.split(",");
-                for (String userId : split) {
-                    ApprovalCreateViewers approvalCreateViewer = ApprovalCreateViewers.newBuilder()
-                            .viewerType(cfgApproveSyncEntity.getViewerType())
-                            .viewerUserId(userId)
-                            .build();
-                    approvalCreateViewers.add(approvalCreateViewer);
+                List<String> viewerList = Arrays.asList(viewer.split(","));
+                //查询飞书的用户第三方信息
+                List<ThirdUnionDTO> thirdUnionList = sysUserFeign.getThirdUnionIdsByUserIds(ThirdpartyPlatformEnum.FS.getCode(), viewerList);
+                if(CollUtil.isEmpty(thirdUnionList)){
+                    throw new ServiceException("审批可见人列表人员未关联第三方用户信息");
+                }else{
+                    List<String> thirdUnionIds = thirdUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
+                    for (String userId : thirdUnionIds) {
+                        ApprovalCreateViewers approvalCreateViewer = ApprovalCreateViewers.newBuilder()
+                                .viewerType(cfgApproveSyncEntity.getViewerType())
+                                .viewerUserId(userId)
+                                .build();
+                        approvalCreateViewers.add(approvalCreateViewer);
+                    }
                 }
-
             }
         }else if(cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode())){
             if(StringUtils.isNotBlank(viewer)){
-                String[] split = viewer.split(",");
-                for (String deptId : split) {
+                List<String> viewerList = Arrays.asList(viewer.split(","));
+                for (String deptId : viewerList) {
                     ApprovalCreateViewers approvalCreateViewer = ApprovalCreateViewers.newBuilder()
                             .viewerType(cfgApproveSyncEntity.getViewerType())
                             .viewerDepartmentId(deptId)
@@ -492,25 +500,13 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         CfgApproveSyncDTO.PagingParamDTO searchParam = new CfgApproveSyncDTO.PagingParamDTO();
         searchParam.setPermissionSql(param.getPermissionSql());
         List<CfgApproveSyncDTO.TabListDTO> list = baseMapper.tabList(searchParam);
-        // 获取状态列表
-        List<String> statusList = Arrays.asList("t", "f");
-        // 不存在的状态赋值为0
-        List<String> existStatusList = list.stream().map(CfgApproveSyncDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
-        statusList.stream().forEach(status -> {
-            if (!existStatusList.contains(status)) {
-                list.add(new CfgApproveSyncDTO.TabListDTO(status, "" , 0));
-            }
-        });
-        list.forEach(item -> item.setTabFlagName(Objects.equals(item.getTabFlag(), "f") ? "停用" : "启用"));
-
-        list.add(new CfgApproveSyncDTO.TabListDTO("all", "全部" , list.stream()
-                .map(CfgApproveSyncDTO.TabListDTO::getCount)
-                .filter(Objects::nonNull)
-                .reduce(0, Integer::sum)));
-
-        // 倒排 list 的元素
-        Collections.reverse(list);
-        return list;
+        List<CfgApproveSyncDTO.TabListDTO> result = new ArrayList<>();
+        CfgApproveSyncDTO.TabListDTO enable = list.stream().filter(e -> e.getTabFlag().equals("t")).findFirst().orElse(null);
+        CfgApproveSyncDTO.TabListDTO disable = list.stream().filter(e -> e.getTabFlag().equals("f")).findFirst().orElse(null);
+        result.add(new CfgApproveSyncDTO.TabListDTO("all", "全部" , 0));
+        result.add(new CfgApproveSyncDTO.TabListDTO("true", "启用" , null == enable ? 0 : enable.getCount()));
+        result.add(new CfgApproveSyncDTO.TabListDTO("false", "停用" ,null == disable ? 0 : disable.getCount()));
+        return result;
     }
 
     @Override

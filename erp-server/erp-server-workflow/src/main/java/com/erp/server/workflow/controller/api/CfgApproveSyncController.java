@@ -221,7 +221,7 @@ public class CfgApproveSyncController extends BaseController {
             tableAlias = "cas"
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "售后申请表导出Excel数据")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = CfgApproveSyncQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated CfgApproveSyncDTO.PagingParamDTO dto, HttpServletResponse response) {
         cfgApproveSyncService.exportList(dto, response);
         return success();

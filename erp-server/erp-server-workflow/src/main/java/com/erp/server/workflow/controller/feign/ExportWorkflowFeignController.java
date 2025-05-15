@@ -1,8 +1,10 @@
 package com.erp.server.workflow.controller.feign;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.*;
+import com.erp.server.workflow.query.CfgApproveSyncQueryHandler;
 import com.erp.server.workflow.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -51,6 +53,7 @@ public class ExportWorkflowFeignController {
     }
 
     @PostMapping("/exportCfgApproveSynce")
+    @WebAdvanceQuery(handler = CfgApproveSyncQueryHandler.class)
     public PagingVO<CfgApproveSyncDTO.ListDTO> exportCfgApproveSync(PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto){
         return cfgApproveSyncService.paging(dto);
     }

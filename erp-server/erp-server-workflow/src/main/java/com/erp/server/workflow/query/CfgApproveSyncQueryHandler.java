@@ -30,10 +30,10 @@ public class CfgApproveSyncQueryHandler extends AbstractQueryHandler {
         if(value.equals("all") || value.equals("")){
             return "";
         }
-        if ("t".equals(value)) {
+        if ("true".equals(value)) {
             return "cas.enable_status ="+ Boolean.TRUE;
         }
-        if ("f".equals(value)) {
+        if ("false".equals(value)) {
             return "cas.enable_status ="+ Boolean.FALSE;
         }
         return "";
