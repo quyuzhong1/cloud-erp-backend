@@ -6,15 +6,22 @@ import org.apache.commons.lang3.StringUtils;
 
 /**
  * <p>
- * 数大臣单据字段 字段所属单据类型 枚举
+ * 查询option配置表(数大臣单据字段) 字段类型 枚举
  * </p>
  *
  * @author hcg
- * @since 2025-05-12 18:18:13
+ * @since 2025-05-15 12:14:18
  */
-public enum DictCfgSysFieldFieldBelongsTypeEnum implements EnumMessage {
-	TABLE("table", "表头"),
-	DETAIL("detail", "明细"),
+public enum CfgQueryOptionFieldTypeEnum implements EnumMessage {
+	CHECKBOXV2("checkboxV2", "多选"),
+	RADIOV2("radioV2", "单选"),
+	INPUT("input", "单行文本"),
+    TEXTAREA("input", "多行文本"),
+	DATETIME("datetime", "日期"),
+	NUMBER("number", "数值"),
+	AMOUNT("amount", "金额"),
+	ATTACHMENTV2("attachmentV2", "附件"),
+	FIELDLIST("fieldList", "明细"),
     ;
     /**
      * 类型
@@ -27,7 +34,7 @@ public enum DictCfgSysFieldFieldBelongsTypeEnum implements EnumMessage {
      */
     private String name;
 
-    DictCfgSysFieldFieldBelongsTypeEnum(String code, String name) {
+    CfgQueryOptionFieldTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -46,7 +53,7 @@ public enum DictCfgSysFieldFieldBelongsTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (DictCfgSysFieldFieldBelongsTypeEnum statusEnum : DictCfgSysFieldFieldBelongsTypeEnum.values()) {
+        for (CfgQueryOptionFieldTypeEnum statusEnum : CfgQueryOptionFieldTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

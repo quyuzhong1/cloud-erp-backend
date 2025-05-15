@@ -2,11 +2,13 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.vo.LoginUser;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.server.workflow.mapper.CfgProcessValueMapMapper;
 import com.erp.server.workflow.service.CfgProcessValueMapService;
@@ -38,11 +40,34 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
     @Autowired
     private OperateLogService operateLogService;
 
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public BaseResultDTO.AddDTO add(String cfgProcessId,String fieldMapId,List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTO) {
+        List<CfgProcessValueMapEntity> entities = addDTO.stream()
+                .map(dto -> {
+                    CfgProcessValueMapEntity entity = new CfgProcessValueMapEntity();
+                    BeanMapperUtils.copy(dto, entity);
+                    entity.setFieldMapId(fieldMapId);
+                    return entity;
+                })
+                .collect(Collectors.toList());
+        if (entities.isEmpty()) {
+            return new BaseResultDTO.AddDTO();
+        }
+        boolean b = this.saveOrUpdateBatch(entities);
+        if(!b){
+            throw new ServiceException("保存值映射失败");
+        };
+        // 操作日志
+        String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "流程设置值映射");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
+
+        return new BaseResultDTO.AddDTO();
+    }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addOrUpdate(String fieldMapId,List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTO) {
-        //遍历addDTO，id为空的保存，id不为空的更新，使用ruleId查询ruleId的记录，如果查询的结果数小于addDTO数量，那么找出结果中未包含于addDTO的中的id，然后将此id对应的entiy删除
+    public BaseResultDTO.AddDTO addOrUpdate(String cfgProcessId,String fieldMapId,List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTO) {
         // 查询数据库中与 field_map_id 关联的记录
         List<CfgProcessValueMapEntity> existingEntities = this.list(
                 new LambdaQueryWrapper<CfgProcessValueMapEntity>()
@@ -59,6 +84,12 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                 .map(CfgProcessValueMapEntity::getId)
                 .filter(id -> !addDTOIds.contains(id))
                 .collect(Collectors.toList());
+        //分离add
+        List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTOs = addDTO.stream()
+                .filter(dto -> StrUtil.isEmpty(dto.getId()))
+                .collect(Collectors.toList());
+        add(cfgProcessId, fieldMapId, addDTOs);
+        addDTO.removeAll(addDTOs);
         // 删除未包含的记录
         if (!idsToDelete.isEmpty()) {
             this.removeByIds(idsToDelete);
@@ -73,43 +104,26 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                     return entity;
                 })
                 .collect(Collectors.toList());
-        if (!entities.isEmpty()) {
-            this.saveOrUpdateBatch(entities);
+        log.info("批量保存或更新流程设置值映射: {}", entities);
+        Map<String, CfgProcessValueMapEntity> entityMap = entities.stream()
+                .collect(Collectors.toMap(CfgProcessValueMapEntity::getId, entity -> entity));
+        if (entities.isEmpty()) {
+            return new BaseResultDTO.AddDTO();
         }
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "流程设置值映射" , "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLog(msg, null, cfgProcessValueMapEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+        //保存
+        boolean b = this.saveOrUpdateBatch(entities);
+        if(!b){
+            throw new ServiceException("保存值映射失败");
+        };
+        //生成日志
+        existingEntities.forEach(entity -> {
+            CfgProcessValueMapEntity ruleEntity = entityMap.get(entity.getId());
+            if (ObjectUtil.isNotEmpty(ruleEntity)) {
+                operateLogService.addModuleOperateLogByObj(entity, ruleEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "更新操作");
+            }
+        });
 
         return new BaseResultDTO.AddDTO();
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(CfgProcessValueMapDTO.UpdateDTO addOrUpdateDTO) {
-        CfgProcessValueMapEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "流程设置值映射"));
-        CfgProcessValueMapEntity cfgProcessValueMapEntity =  BeanMapperUtils.map(CfgProcessValueMapEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(cfgProcessValueMapEntity);
-        log.info("编辑 开始修改流程设置值映射数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgProcessValueMapEntity);
-        if(!save) {
-            throw new ServiceException("流程设置值映射保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录流程设置值映射日志数据，id：【{}】", cfgProcessValueMapEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgProcessValueMapEntity.getId(), "流程设置值映射");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLogByObj(old, cfgProcessValueMapEntity, null, cfgProcessValueMapEntity.getId(), msg);
-        return Boolean.TRUE;
     }
 
     @Override

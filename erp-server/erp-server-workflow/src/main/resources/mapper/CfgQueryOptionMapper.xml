@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.erp.server.workflow.mapper.DictCfgSysFieldMapper">
+<mapper namespace="com.erp.server.workflow.mapper.CfgQueryOptionMapper">
     <!-- 通用查询映射结果 -->
-    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.DictCfgSysFieldEntity">
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.CfgQueryOptionEntity">
        <result column="id" property="id" />
        <result column="create_user_id" property="createUserId" />
        <result column="create_user_name" property="createUserName" />
@@ -27,6 +27,7 @@
        <result column="bussiness_key" property="bussinessKey" />
        <result column="field_name" property="fieldName" />
        <result column="field_belongs_type" property="fieldBelongsType" />
+       <result column="logic" property="logic" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -40,7 +41,7 @@
         update_time,
         version,
         is_deleted,
-        field, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, props, api_type, field_type, is_required, bussiness_key, field_name, field_belongs_type
+        field, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, props, api_type, field_type, is_required, bussiness_key, field_name, field_belongs_type, logic
     </sql>
 
 

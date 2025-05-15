@@ -1,4 +1,5 @@
 package com.erp.server.workflow.service;
+
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -17,23 +18,24 @@ import java.util.List;
 public interface CfgProcessFieldMapService extends SuperService<CfgProcessFieldMapEntity> {
 
     /**
-    * 新增
-    * @author hcg
-    * @date: 2025-05-12
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(String bussinessKey,String cfgProcessId,String ruleId,List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
+     * 新增
+     *
+     * @param dto
+     * @return
+     * @author hcg
+     * @date: 2025-05-12
+     */
+    BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
 
     /**
-    * 修改
-    * @author hcg
-    * @date: 2025-05-12
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO addOrUpdate(String bussinessKey,String ruleId,List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
-
+     * 修改
+     *
+     * @param dto
+     * @return
+     * @author hcg
+     * @date: 2025-05-12
+     */
+    BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
 
 
     List<CfgProcessFieldMapDTO.ViewDTO> view(String ruleId);

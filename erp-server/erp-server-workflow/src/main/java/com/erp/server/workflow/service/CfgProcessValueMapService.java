@@ -23,7 +23,7 @@ public interface CfgProcessValueMapService extends SuperService<CfgProcessValueM
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO addOrUpdate(String ruleId,List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto);
+    BaseResultDTO.AddDTO add(String cfgProcessId,String ruleId,List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto);
 
     /**
     * 修改
@@ -32,7 +32,8 @@ public interface CfgProcessValueMapService extends SuperService<CfgProcessValueM
     * @param dto
     * @return
     */
-    Boolean update(CfgProcessValueMapDTO.UpdateDTO dto);
+    BaseResultDTO.AddDTO addOrUpdate(String cfgProcessId,String ruleId,List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto);
+
 
 
     List<CfgProcessValueMapDTO.ViewDTO> view(String fieldId);

@@ -155,7 +155,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             List<CfgProcessFieldMapDTO.AddOrUpdateDTO> processFieldMapDTOList = dto.getProcessFieldMapDTOList() != null
                     ? dto.getProcessFieldMapDTOList() : Collections.emptyList();
             if (!processFieldMapDTOList.isEmpty()) {
-                cfgProcessFieldMapService.addOrUpdate(bussinessKey, ruleId, processFieldMapDTOList);
+                cfgProcessFieldMapService.addOrUpdate(bussinessKey, cfgProcessId,ruleId, processFieldMapDTOList);
             }
         }
         // 操作日志，遍历entities，找出old中和entity id相同的
