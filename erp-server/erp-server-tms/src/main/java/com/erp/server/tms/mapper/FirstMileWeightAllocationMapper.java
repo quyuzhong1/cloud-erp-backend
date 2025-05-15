@@ -49,4 +49,11 @@ public interface FirstMileWeightAllocationMapper extends BaseMapper<FirstMileWei
      * @return
      */
     Integer countTabNum(@Param("permissionSql") String permissionSql, @Param("statusList") List<String> statusList);
+
+    /**
+     * 查看商品重量
+     * @param params
+     * @return
+     */
+    List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> viewProductWeight(@Param("params") FirstMileWeightAllocationDTO.ViewProductWeightParamDTO params);
 }

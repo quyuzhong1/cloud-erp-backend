@@ -34,6 +34,7 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.FbaShipmentDTO.ListDTO>
      **/
     IPage<FbaShipmentDTO.ListDTO> paging(Page query, @Param("params") FbaShipmentDTO.PagingParamDTO params);
+    List<FbaShipmentDTO.ListDTO> paging(@Param("params") FbaShipmentDTO.PagingParamDTO params);
 
     /**
      * 下推发货单列表查询
@@ -60,8 +61,6 @@ public interface FbaShipmentMapper extends BaseMapper<FbaShipmentEntity> {
      * @return java.util.List<com.erp.model.wms.dto.FbaShipmentDTO.GenerateRequisitionApplicationViewDTO>
      **/
     List<FbaShipmentDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(@Param("ids") List<String> ids);
-
-    List<FbaShipmentDTO.ListDTO> export(@Param("params") FbaShipmentDTO.PagingParamDTO dto);
     Page<FbaShipmentDTO.ListDTO> export(@Param("page") Page<FbaShipmentDTO.ListDTO> page, @Param("params") FbaShipmentDTO.PagingParamDTO dto);
 
     /**

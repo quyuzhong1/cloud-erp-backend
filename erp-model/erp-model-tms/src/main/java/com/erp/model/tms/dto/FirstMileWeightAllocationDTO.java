@@ -15,6 +15,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 /**
  * <p>
@@ -136,7 +138,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱高
         */
-        private Integer BoxHeight;
+        private Integer boxHeight;
 
         /**
         * 箱子尺寸单位
@@ -848,5 +850,188 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          *
          */
         private LocalDate reportPeriod;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewProductWeightDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+        /**
+         * 调整单号[后端使用]
+         */
+        private String  code;
+
+        /**
+         * 来源ID
+         */
+        private String sourceId;
+
+        /**
+         * 来源单号
+         */
+        @NotBlank(message = "来源单号不能为空")
+        private String sourceCode;
+        /**
+         * 业务单号
+         */
+        @NotBlank(message = "来源单号不能为空")
+        private String businessCode;
+
+        /**
+         * 物流运单号
+         */
+        @NotBlank(message = "物流运单号不能为空")
+        private String transportNo;
+        /**
+         * 头程物流单ID
+         */
+        @NotNull(message = "头程物流单ID不能为空")
+        private String logisticsBillId;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 费用分摊状态
+         * CostAllocationStatusEnum
+         */
+        private String costAllocationStatus;
+
+        private String skuId;
+
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * 装箱sku内容
+         */
+        private String sku;
+
+        /**
+         * 平台skuNo
+         */
+        private String platformSkuNo;
+
+        /**
+         * 箱ID
+         */
+        private String boxId;
+
+        /**
+         * 箱号
+         */
+        @NotBlank(message = "来源单号不能为空")
+        private String boxNo;
+
+        /**
+         * 发货量
+         */
+        private Integer deliveryQty;
+
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength;
+
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth;
+
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight;
+
+        /**
+         * 箱子尺寸单位
+         */
+        private String boxSizeUnit;
+
+        /**
+         * 出库重量
+         */
+        private BigDecimal outStockWeight;
+
+        /**
+         * 单产品重量
+         */
+        private BigDecimal productWeight;
+
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewProductWeightParamDTO {
+        @NotEmpty(message = "头程重量分摊ID不能为空")
+        private List<String> ids;
+        /**
+         * 查询类型
+         * 修改单查询重量  changeProductWeight
+         * 修改出库重量/尺寸  changeOutstockSize
+         */
+        @NotBlank(message = "查询类型不能为空")
+        private String changeType;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class ProductWeightDTO extends ViewProductWeightDTO{
+        /**
+         * 新的单产品重量
+         */
+        @NotNull(message = "新的单产品重量不能为空")
+        private BigDecimal newProductWeight;
+        /**
+         * 修改范围:current=仅修改当前值,box=修改同箱同SKU,order=修改同单同SKU  枚举：FirstMileChangeRecordChangeRangeEnum
+         * 字典接口地址 http://172.16.100.11:3002/project/128/interface/api/25522  changeRange 修改范围
+         */
+        @NotBlank(message = "修改范围不能为空")
+        private String changeRange;
+        /**
+         * skuNo
+         */
+        @NotBlank(message = "SKU编号不能为空")
+        private String skuNo;
+    }
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class PackageSizeDTO extends ViewProductWeightDTO{
+        /**
+         * 箱长
+         */
+        @NotNull(message = "新的箱长不能为空")
+        private BigDecimal newBoxLength;
+
+        /**
+         * 箱宽
+         */
+        @NotNull(message = "新的箱宽不能为空")
+        private BigDecimal newBoxWidth;
+
+        /**
+         * 箱高
+         */
+        @NotNull(message = "新的箱高不能为空")
+        private BigDecimal newBoxHeight;
+
+        /**
+         * 出库重量
+         */
+        @NotNull(message = "新的出库重量不能为空")
+        private BigDecimal newOutStockWeight;
     }
 }

@@ -1,6 +1,7 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -9,6 +10,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -17,6 +19,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.model.tms.entity.ReportPeriodMonthEntity;
@@ -24,6 +27,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.server.tms.query.FirstMileCostAllocationQueryHandler;
+import com.erp.server.tms.service.FirstMileChangeRecordService;
 import com.erp.server.tms.service.FirstMileCostAllocationService;
 import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import com.erp.server.tms.service.ReportPeriodMonthService;
@@ -64,6 +68,8 @@ public class FirstMileCostAllocationController extends BaseController {
     private FirstMileWeightAllocationService firstMileWeightAllocationService;
     @Resource
     private ReportPeriodMonthService reportPeriodMonthService;
+    @Resource
+    private FirstMileChangeRecordService firstMileChangeRecordService;
     /**
      * tab 列表
      *
@@ -279,5 +285,42 @@ public class FirstMileCostAllocationController extends BaseController {
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 修改费用分摊预览
+     * @param dto
+     * @return
+     */
+    @PostMapping("/viewCostAllocation")
+    public ApiResult<List<FirstMileCostAllocationDTO.PagingVO>> viewCostAllocation(@RequestBody @Valid BaseIdsDTO.IdsDTO dto){
+        List<FirstMileCostAllocationDTO.PagingVO> list = firstMileCostAllocationService.viewCostAllocation(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 修改费用分摊字段保存
+     * @param dtoValidList
+     * @return
+     */
+    @PostMapping("/changeCostAllocation")
+    public ApiResult<List<BatchResultDTO>> changeCostAllocation(@RequestBody @Valid ValidList<FirstMileCostAllocationDTO.CostAllocationDTO> dtoValidList){
+        //批量校验是否存在相同维度的sku修改数据
+        List<BatchResultDTO> batchResultDTOS = firstMileChangeRecordService.checkCostAllocationSameDimension(dtoValidList);
+        //存在异常校验直接返回
+        if (batchResultDTOS.stream().anyMatch(item -> !item.getSuccess())) {
+            return failure(batchResultDTOS);
+        }
+        //批量保存修改记录
+        firstMileChangeRecordService.saveCostAllocation(dtoValidList);
+        //按照保存成功记录，进行按照单据进行重新重量分摊
+        List<String> ids = dtoValidList.stream().filter(FirstMileCostAllocationDTO.CostAllocationDTO::getIsRetry).map(FirstMileCostAllocationDTO.CostAllocationDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(ids)){
+            BaseIdsDTO.IdsDTO dto = new BaseIdsDTO.IdsDTO();
+            dto.setIds(ids);
+            ApiResult<List<BatchResultDTO>> listApiResult = this.calcAllocatedCost(dto);
+            batchResultDTOS.addAll(listApiResult.getData());
+        }
+        return batchResultDTOS.stream().allMatch(BatchResultDTO::getSuccess)? success(batchResultDTOS) : failure(batchResultDTOS);
     }
 }

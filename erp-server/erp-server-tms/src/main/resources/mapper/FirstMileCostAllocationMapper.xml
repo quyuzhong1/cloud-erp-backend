@@ -89,10 +89,18 @@
         LEFT JOIN logistics_bill_detail lbd ON lbd.main_id = a.logistics_bill_id AND lbd.is_deleted = FALSE
         LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
         <where>
-            ${params.sqlMap.default}
-            and a.is_deleted=false
+            a.is_deleted=false
+            <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default!=''">
+                and ${params.sqlMap.default}
+            </if>
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
+            </if>
+            <if test="params.ids != null and params.ids.size > 0">
+                and a.id in
+                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
             </if>
         </where>
         ORDER BY
