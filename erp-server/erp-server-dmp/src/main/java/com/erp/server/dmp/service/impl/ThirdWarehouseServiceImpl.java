@@ -13,6 +13,8 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.erp.model.dmp.entity.ThirdWarehouseEntity;
+import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.dmp.mapper.ThirdWarehouseMapper;
@@ -53,34 +55,37 @@ public class ThirdWarehouseServiceImpl extends SuperServiceImpl<ThirdWarehouseMa
     @Resource
     private WmsOverseasWarehouseFeign wmsOverseasWarehouseFeign;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ThirdWarehouseDTO.AddDTO addDTO) {
+        //判断是否存在
+        addDTO.setCategory(ThirdSysTypeEnum.WAREHOUSE.getCode());
+        ThirdWarehouseEntity existEntity = this.getOne(new LambdaQueryWrapper<ThirdWarehouseEntity>()
+                .eq(ThirdWarehouseEntity::getSysType, addDTO.getSysType())
+                .eq(ThirdWarehouseEntity::getCategory, addDTO.getCategory())
+                        .eq(ThirdWarehouseEntity::getCode, addDTO.getCode())
+                ,false);
+        if (Objects.nonNull(existEntity)) {
+            throw new ServiceException("第三方仓库已存在");
+        }
         ThirdWarehouseEntity thirdWarehouseEntity = new ThirdWarehouseEntity();
         BeanMapperUtils.copy(addDTO, thirdWarehouseEntity);
-
-        // 数据处理
-        handleData(thirdWarehouseEntity);
+        if(StringUtils.isBlank(thirdWarehouseEntity.getWarehouseId())){
+            thirdWarehouseEntity.setWarehouseId(thirdWarehouseEntity.getCode());
+        }
         String code = thirdWarehouseEntity.getCode();
         boolean save;
         String operationMsg;
-        if (StringUtils.isBlank(thirdWarehouseEntity.getId())) {
-            log.info("开始新增第三方系统仓库单");
-            save = super.save(thirdWarehouseEntity);
-            operationMsg="新增操作";
-        }else{
-            log.info("开始修改第三方系统仓库单");
-            save = super.updateById(thirdWarehouseEntity);
-            operationMsg="编辑操作";
-        }
+        log.info("开始新增第三方系统仓库单");
+        save = super.save(thirdWarehouseEntity);
+        operationMsg="新增操作";
         if(!save) {
             throw new ServiceException("第三方系统仓库单保存失败");
         }
 
 //        // 操作日志
-//        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "第三方系统仓库单" , thirdWarehouseEntity.getCode());
-//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_WAREHOUSE.getCode(), thirdWarehouseEntity.getId(), operationMsg);
+        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "第三方系统仓库单" , thirdWarehouseEntity.getCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DMP_THIRD_WAREHOUSE.getCode(), thirdWarehouseEntity.getId(), operationMsg);
 
         return new BaseResultDTO.AddDTO(thirdWarehouseEntity.getId(), code);
     }

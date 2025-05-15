@@ -30,6 +30,7 @@ public class TemuOrderDTO {
         @JSONField(name = "pageItems")
         private List<PageItemsDTO> pageItems;
 
+
         @NoArgsConstructor
         @Data
         public static class PageItemsDTO {
@@ -39,6 +40,8 @@ public class TemuOrderDTO {
             private List<OrderListDTO> orderList;
 
             private List<String> warehouseIdList;
+            private Boolean hasWarehouse;
+            private String trackNo;
 
             @NoArgsConstructor
             @Data
@@ -83,6 +86,16 @@ public class TemuOrderDTO {
             @NoArgsConstructor
             @Data
             public static class OrderListDTO {
+
+                @JSONField(name = "warehouseProviderBrandName")
+                private String warehouseProviderBrandName;
+                @JSONField(name = "warehouseName")
+                private String warehouseName;
+                @JSONField(name = "warehouseProviderCode")
+                private String warehouseProviderCode;
+                @JSONField(name = "warehouseCode")
+                private String warehouseCode;
+
                 @JSONField(name = "canceledQuantityBeforeShipment")
                 private Integer canceledQuantityBeforeShipment;
                 @JSONField(name = "quantity")
@@ -112,7 +125,7 @@ public class TemuOrderDTO {
                 @JSONField(name = "thumbUrl")
                 private String thumbUrl;
                 @JSONField(name = "inventoryDeductionWarehouseName")
-                private Object inventoryDeductionWarehouseName;
+                private String inventoryDeductionWarehouseName;
                 @JSONField(name = "goodsName")
                 private String goodsName;
                 @JSONField(name = "productList")
