@@ -227,7 +227,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
                 .eq(SoB2cEntity::getSourceType, SourceTypeEnum.SO_B2C.getCode())
                 .list()
                 .stream()
-                .collect(Collectors.toMap(SoB2cEntity::getPlatformCode, Function.identity()));
+                .collect(Collectors.toMap(SoB2cEntity::getPlatformCode, Function.identity(), (existing, replacement) -> existing));
         if (sourceSoB2cMap.isEmpty()){
             ServiceException.runError("order not find");
         }
@@ -241,7 +241,6 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         paramDTO.setPlatformSkuNoList(platformSkuList);
         List<String> platformSpuList = fulfillmentDetailList.stream().map(DmpSoOutstockDetailEntity::getThirdDetailId).distinct().collect(Collectors.toList());
         paramDTO.setPlatformSpuNoList(platformSpuList);
-        paramDTO.setIsExpire(true);
         // 映射关系
         List<ListingInfoWithSkuMappingDTO> mappingList = skuMappingService.findListDto(paramDTO);
         Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = mappingList.stream().collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
@@ -337,7 +336,11 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
             product.setProductName(detail.getSkuName());
             List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = listingMap.get(detail.getPlatformSku());
             if (CollectionUtils.isNotEmpty(listingInfoWithSkuMappingDTOS)) {
-                String productImageUrl = listingInfoWithSkuMappingDTOS.get(0).getProductImageUrl();
+                String productImageUrl = listingInfoWithSkuMappingDTOS.stream()
+                        .map(ListingInfoWithSkuMappingDTO::getProductImageUrl)
+                        .filter(StringUtils::isNotBlank)
+                        .findFirst()
+                        .orElse("");
                 product.setProductImage(productImageUrl);
             } else {
                 product.setProductImage("");
