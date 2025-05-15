@@ -38,9 +38,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_COST_ALLOCATION;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_TMS_FIRST_MILE_CHANGE_RECORD;
 
 /**
  * <p>
@@ -119,7 +122,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
 
     @Override
     public void exportList(FirstMileChangeRecordDTO.PagingParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("头程调整记录导出", EXPORT_TMS_FIRST_MILE_COST_ALLOCATION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("头程调整记录导出", EXPORT_TMS_FIRST_MILE_CHANGE_RECORD.getCode(), dto);
     }
 
     @Override
@@ -175,7 +178,9 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         });
         List<FirstMileChangeRecordEntity> list = FirstMileChangeRecordConverter.INSTANCE.changeProductWeightDtoToEntityConvert(dtoValidList);
         //新增记录前修改原来的记录为非最新记录
-        list.forEach(e -> this.lambdaUpdate()
+        list.forEach(e -> {
+            e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            this.lambdaUpdate()
                 .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
                 .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
                 .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
@@ -184,7 +189,8 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
                 .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
                 .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
-                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
+                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+        });
         //新增记录
         boolean saveBatch = this.saveBatch(list);
         if (!saveBatch){

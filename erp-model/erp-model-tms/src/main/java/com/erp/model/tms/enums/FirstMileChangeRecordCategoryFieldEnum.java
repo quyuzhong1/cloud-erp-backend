@@ -22,6 +22,7 @@ public enum FirstMileChangeRecordCategoryFieldEnum implements EnumMessage {
 	BOX_LENGTH("box_length", "出库尺寸(长)"),
     BOX_WIDTH("box_width", "出库尺寸(宽)"),
     BOX_HEIGHT("box_height", "出库尺寸(高)"),
+    RECEIVE_QTY("receive_qty", "新增签收数量"),
     ;
     /**
      * 类型

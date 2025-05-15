@@ -926,4 +926,13 @@ public class FirstMileCostAllocationDTO implements Serializable {
          */
         private Boolean isRetry = Boolean.FALSE;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
+        private String id;
+        private String sourceId;
+        private String businessCode;
+        private LocalDate reportMonth;
+    }
 }

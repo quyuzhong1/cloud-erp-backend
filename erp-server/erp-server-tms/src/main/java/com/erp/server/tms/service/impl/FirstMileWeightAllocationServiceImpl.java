@@ -66,23 +66,13 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     @Resource
     private PackingTaskFeign packingTaskFeign;
     @Resource
-    private ProductDetailFeign productDetailFeign;
-    @Resource
     private ProductPackFeign productPackFeign;
     @Resource
     private CfgSettingService cfgSettingService;
     @Resource
     private FirstMileCostAllocationService costAllocationService;
     @Resource
-    private TmsFirstMileReconciliationDetailService reconciliationDetailService;
-    @Resource
     private WmsWarehouseFeign warehouseFeign;
-    private final DateTimeFormatter monthFormatter = DateTimeFormatter.ofPattern("yyyy-MM");
-    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-    @Resource
-    private LogisticsBillCostService logisticsBillCostService;
-    @Resource
-    private TmsCostDetailService tmsCostDetailService;
     @Resource
     private SysDictFeign sysDictFeign;
     @Resource
@@ -97,8 +87,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     private FirstMileDeliveryDetailFeign firstMileDeliveryDetailFeign;
     @Resource
     private LogisticsBillService logisticsBillService;
-    @Resource
-    private PackingTaskDetailFeign packingTaskDetailFeign;
     @Resource
     private WmsCartonFeign wmsCartonFeign;
     @Resource
@@ -154,40 +142,11 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             item.setChargedWeightStr(decimalFormat.format(item.getChargedWeight()));
             item.setProductWeightStr(decimalFormat.format(item.getProductWeight()));
             item.setAllocationWeightStr(decimalFormat.format(item.getAllocationWeight()));
-            /*FirstMileCostAllocationDTO.LastedAllocMonthDTO lastedAllocMonthDTO = lastedAllocationMonthList.stream().filter(v -> v.getLogisticsBillId().equals(item.getLogisticsBillId())).findFirst().orElse(null);
-            if(lastedAllocMonthDTO != null){
-                item.setCalculatePeriodId(lastedAllocMonthDTO.getReportPeriodId());
-                item.setLatestCostAllocationMonth(lastedAllocMonthDTO.getLatestMonth());
-                if(lastedAllocMonthDTO.getLatestMonth() != null){
-                    item.setLatestCostAllocationMonthStr(lastedAllocMonthDTO.getLatestMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")));
-                }
-                if(StringUtils.isNotBlank(lastedAllocMonthDTO.getStatus()) && StringUtils.isNotBlank(lastedAllocMonthDTO.getBillSourceType()) && lastedAllocMonthDTO.getEndPeriodTransitCost() != null){
-                    if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getBillSourceType().equals(ReconciliationBillTypeEnum.ACTUAL.getCode()) && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0){
-                        item.setCostAllocationStatus(CostAllocationStatusEnum.ALREADY.getCode());
-                    }else if(lastedAllocMonthDTO.getStatus().equals("confirm") && lastedAllocMonthDTO.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) > 0){
-                        item.setCostAllocationStatus(CostAllocationStatusEnum.PART.getCode());
-                    }else{
-                        item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
-                    }
-                }
-            }else {
-                item.setCostAllocationStatus(CostAllocationStatusEnum.NOT.getCode());
-            }*/
         }
     }
 
     @Override
     public void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto) {
-        /*List<FirstMileWeightAllocationDTO.ViewDTO> list = baseMapper.listByParam(dto);
-        fillData(list);
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        StringBuilder builder = new StringBuilder();
-        builder.append("头程重量分摊导出").append(date);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, builder.toString(), "excel/firstMileWeightAllocationExport.xlsx");
-        } catch (IOException e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }*/
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         StringBuilder builder = new StringBuilder();
         builder.append("头程重量分摊导出").append(date);
@@ -280,11 +239,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         List<String> fbaShipmentCodes = firstMileDeliveryDetailList.stream().map(FirstMileDeliveryDetailEntity::getFbaShipmentCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
 
         List<WmsCartonDTO.DetailDTO> cartonDetailList = wmsCartonFeign.listByPackingTaskId(packingTaskEntity.getId(),fbaShipmentCodes);
-//        Map<String, BigDecimal> cartonDetailMap = cartonDetailList.stream().distinct().collect(Collectors.toMap(
-//                WmsCartonDTO.DetailDTO::getSkuId,
-//                WmsCartonDTO.DetailDTO::getPackageWeight,
-//                (existingValue, newValue) -> existingValue
-//        ));
         //系统配置
         CfgSettingDTO.ViewDTO cfgSettingView = cfgSettingService.view();
         String cfgWeightAllocationType = cfgSettingView.getAllocationSettingDTO().getWeightFirstAllocation();

@@ -216,6 +216,17 @@
         </if>
         order by rpm.month
     </select>
+    <select id="getRecordBySourceIdAndCode"
+            resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$DetailDTO">
+        select
+            fmca.id,fmca.source_id,fmca.business_code,rpm.month
+        from first_mile_cost_allocation fmca
+        left join report_period_month rpm on fmca.report_period_id = rpm.id and rpm.is_deleted = false
+        where fmca.is_deleted = false
+        and fmca.source_id = #{sourceId}
+        and fmca.business_code = #{businessCode}
+        and rpm.month = #{reportMonth}
+    </select>
 
 
 </mapper>

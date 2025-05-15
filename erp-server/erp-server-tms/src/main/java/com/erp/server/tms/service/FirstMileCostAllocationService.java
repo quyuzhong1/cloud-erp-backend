@@ -7,7 +7,6 @@ import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -127,4 +126,13 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     List<FirstMileCostAllocationDTO.PagingVO> viewCostAllocation(List<String> ids);
+
+    /**
+     * 根据业务信息查询分摊记录
+     * @param sourceId
+     * @param businessCode
+     * @param reportMonth
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySourceIdAndCode(String sourceId, String businessCode, LocalDate reportMonth);
 }
