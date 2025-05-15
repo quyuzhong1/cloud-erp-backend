@@ -142,6 +142,7 @@ public enum ModuleTypeEnum {
     INVOICE_INVALID("123", "发票设置明细"),
 
     QC_NOTICE("124", "质检通知"),
+    FIRST_MILE_CHANGE_RECORD("125", "头程调整记录"),
     ;
 
 

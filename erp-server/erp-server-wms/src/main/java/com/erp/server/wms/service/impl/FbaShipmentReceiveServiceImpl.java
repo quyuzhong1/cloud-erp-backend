@@ -1,11 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.date.DateTime;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.InventoryClosedRecordEnum;
@@ -36,7 +33,6 @@ import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.wms.mapper.FbaShipmentReceiveMapper;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.springframework.stereotype.Service;
@@ -312,7 +308,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
 
         List<FbaShipmentReceiveEntity> oldList = this.lambdaQuery()
                 .in(FbaShipmentReceiveEntity::getDetailId, detailIds)
-                .ne(FbaShipmentReceiveEntity::getSourceType, "erp")
+                .ne(FbaShipmentReceiveEntity::getSourcePlatform, "erp")
                 .list();
         if (CollectionUtils.isEmpty(oldList)){
             return;
@@ -339,7 +335,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     public List<FbaShipmentReceiveEntity> checkAndBindHistory(FbaShipmentEntity entity, List<FbaShipmentDetailEntity> detailEntityList, String sourceType) {
         List<FbaShipmentReceiveEntity> list = this.lambdaQuery()
                 .eq(FbaShipmentReceiveEntity::getFbaShipmentId, entity.getFbaShipmentId())
-                .eq(FbaShipmentReceiveEntity::getSourceType, sourceType)
+                .eq(FbaShipmentReceiveEntity::getSourcePlatform, sourceType)
                 .ne(FbaShipmentReceiveEntity::getHandleStatus, FbaReceiveHandleStatusEnum.ALREADY.getCode())
                 .list();
         if (CollectionUtils.isEmpty(list)){
@@ -387,7 +383,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         }
         return lambdaQuery()
                 .in(FbaShipmentReceiveEntity::getDetailId, detailIds)
-                .eq(FbaShipmentReceiveEntity::getSourceType, sourceType)
+                .eq(FbaShipmentReceiveEntity::getSourcePlatform, sourceType)
                 .list();
     }
 
@@ -455,7 +451,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
     public List<FbaShipmentReceiveEntity> listByUniqueMd5AndReceivedDate(List<String> md5List, String fbaShipmentId, LocalDate billDate) {
         return this.lambdaQuery()
                 .eq(FbaShipmentReceiveEntity::getFbaShipmentId, fbaShipmentId)
-                .eq(FbaShipmentReceiveEntity::getSourceType, "lingxing")
+                .eq(FbaShipmentReceiveEntity::getSourcePlatform, "lingxing")
                 .and( st -> st.in(FbaShipmentReceiveEntity::getUniqueMd5, md5List)
                     .or(i-> i.eq(FbaShipmentReceiveEntity::getReceiveDate, LocalDateTime.of(billDate, LocalTime.MIN))
                     ))

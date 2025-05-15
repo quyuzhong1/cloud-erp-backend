@@ -46,4 +46,18 @@ public interface FirstMileSkuCostAllocationDetailService extends SuperService<Fi
      * @return
      */
     List<FirstMileSkuCostAllocationDetailEntity> listByMainIds(List<String> mainIds);
+
+    /**
+     * 根据明细id修改期末在途费用
+     * @param detailId
+     * @param newEndPeriodTransitCost
+     */
+    void updateEndPeriodTransitCost(String detailId, String newEndPeriodTransitCost);
+
+    /**
+     * 根据明细id修改期末暂估费用
+     * @param detailId
+     * @param newEndPeriodEstimatedCost
+     */
+    void updateEndPeriodEstimatedCost(String detailId, String newEndPeriodEstimatedCost);
 }

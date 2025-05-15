@@ -20,8 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -98,6 +100,22 @@ public class FirstMileSkuCostAllocationDetailServiceImpl extends SuperServiceImp
             return Collections.emptyList();
         }
         return baseMapper.listByMainIds(mainIds);
+    }
+
+    @Override
+    public void updateEndPeriodTransitCost(String detailId, String newEndPeriodTransitCost) {
+        if (CharSequenceUtil.isBlank(detailId) || Objects.isNull(newEndPeriodTransitCost)){
+            return;
+        }
+        this.lambdaUpdate().set(FirstMileSkuCostAllocationDetailEntity::getEndPeriodTransitCost, new BigDecimal(newEndPeriodTransitCost)).eq(FirstMileSkuCostAllocationDetailEntity::getId, detailId).update();
+    }
+
+    @Override
+    public void updateEndPeriodEstimatedCost(String detailId, String newEndPeriodEstimatedCost) {
+        if (CharSequenceUtil.isBlank(detailId) || Objects.isNull(newEndPeriodEstimatedCost)){
+            return;
+        }
+        this.lambdaUpdate().set(FirstMileSkuCostAllocationDetailEntity::getEndPeriodEstimatedCost, new BigDecimal(newEndPeriodEstimatedCost)).eq(FirstMileSkuCostAllocationDetailEntity::getId, detailId).update();
     }
 
 }
