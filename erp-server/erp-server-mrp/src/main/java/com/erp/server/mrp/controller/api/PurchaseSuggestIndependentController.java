@@ -55,7 +55,7 @@ public class PurchaseSuggestIndependentController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "psm.shop_id",
-            menuCode = "oms:purchaseSuggestIndependent:paging"
+            menuCode = "mrp:purchaseSuggestIndependent:paging"
     )
     @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult<PagingVO<PurchaseSuggestIndependentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto) {

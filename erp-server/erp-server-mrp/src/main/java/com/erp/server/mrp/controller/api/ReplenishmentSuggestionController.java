@@ -63,7 +63,7 @@ public class ReplenishmentSuggestionController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "rs.shop_id",
-            menuCode = "oms:replenishment:paging"
+            menuCode = "mrp:replenishment:paging"
     )
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult<PagingVO<ReplenishmentSuggestionVO.PagingView>> paging(@RequestBody @Validated PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
