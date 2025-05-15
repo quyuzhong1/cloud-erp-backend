@@ -25,6 +25,7 @@ import com.erp.model.workflow.enums.CfgApproveSyncViewerTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysRefereConfigFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.enmu.DepartmentIdTypeEnum;
 import com.erp.sdk.fs.enmu.UserIdTypeEnum;
 import com.erp.sdk.fs.service.FsService;
@@ -89,6 +90,9 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Resource
     private FsService fsService;
 
+    @Resource
+    private SysUserFeign sysUserFeign;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -101,16 +105,10 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }
 
         //可见范围类型为不可见时。viewr才能为空
-        if((Objects.equals(addDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode()) || Objects.equals(addDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.USER.getCode()))
-                && CollUtil.isEmpty(addDTO.getViewerList())){
-            throw new ServiceException("指定部门/指定用户时，审批可见人列表不能为空");
-        }else {
-            if(addDTO.getViewerList().size() > 200){
-                throw new ServiceException("审批可见人列表不能超过200上限");
-            }
-            String viewer = addDTO.getViewerList().stream().collect(Collectors.joining(","));
-            addDTO.setViewer(viewer);
-        }
+        String viewerType = addDTO.getViewerType();
+        List<String> viewerList = addDTO.getViewerList();
+        String viewer = checkViewType(viewerType, viewerList);
+        addDTO.setViewer(viewer);
 
         CfgApproveSyncEntity cfgApproveSyncEntity = new CfgApproveSyncEntity();
         BeanMapperUtils.copy(addDTO, cfgApproveSyncEntity);
@@ -184,6 +182,20 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                 .update();
 
         return new BaseResultDTO.AddDTO(cfgApproveSyncEntity.getId(), code);
+    }
+
+    private String checkViewType(String viewerType, List<String> viewerList) {
+        if(Objects.equals(viewerType, CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode()) || Objects.equals(viewerType, CfgApproveSyncViewerTypeEnum.USER.getCode())){
+            if( Objects.isNull(viewerList) || CollUtil.isEmpty(viewerList)){
+                throw new ServiceException("指定部门/指定用户时，审批可见人列表不能为空");
+            }else {
+                if(viewerList.size() > 200){
+                    throw new ServiceException("审批可见人列表不能超过200上限");
+                }
+                return viewerList.stream().collect(Collectors.joining(","));
+            }
+        }
+        return "";
     }
 
     /**
@@ -336,16 +348,8 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }
 
         //可见范围类型为不可见时。viewr才能为空
-        if((Objects.equals(addOrUpdateDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode()) || Objects.equals(addOrUpdateDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.USER.getCode()))
-                && CollUtil.isEmpty(addOrUpdateDTO.getViewerList())){
-            throw new ServiceException("指定部门/指定用户时，审批可见人列表不能为空");
-        }else {
-            if(addOrUpdateDTO.getViewerList().size() > 200){
-                throw new ServiceException("审批可见人列表不能超过200上限");
-            }
-            String viewer = addOrUpdateDTO.getViewerList().stream().collect(Collectors.joining(","));
-            addOrUpdateDTO.setViewer(viewer);
-        }
+        String viewer = checkViewType(addOrUpdateDTO.getViewerType(), addOrUpdateDTO.getViewerList());
+        addOrUpdateDTO.setViewer(viewer);
 
         CfgApproveSyncEntity cfgApproveSyncEntity =  BeanMapperUtils.map(CfgApproveSyncEntity.class, addOrUpdateDTO);
 
@@ -481,15 +485,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                 .update();
 
         return Boolean.TRUE;
-    }
-
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(CfgApproveSyncEntity cfgApproveSyncEntity) {
-
-
-
     }
 
     @Override
@@ -657,8 +652,15 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         if(CollUtil.isNotEmpty(cfgApproveNoticeEntities)){
             List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = BeanMapper.copyList(cfgApproveNoticeEntities, CfgApproveNoticeDTO.NoticeSettingDTO.class);
             for (CfgApproveNoticeDTO.NoticeSettingDTO dto : noticeSettingList) {
-                dto.setRoleTypeList(Arrays.asList(dto.getRoleType().split(",")));
-                dto.setSpecificPersonList(Arrays.asList(dto.getSpecificPerson().split(",")));
+
+                if(StringUtils.isNotBlank(dto.getRoleType())){
+                    dto.setRoleTypeList(Arrays.asList(dto.getRoleType().split(",")));
+                }
+
+                if(StringUtils.isNotBlank(dto.getSpecificPerson())){
+                    dto.setSpecificPersonList(Arrays.asList(dto.getSpecificPerson().split(",")));
+                }
+
                 if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode())){
                     data.setApprove(dto);
                 }else if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode())){
