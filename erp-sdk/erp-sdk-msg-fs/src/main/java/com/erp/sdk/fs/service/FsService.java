@@ -432,66 +432,24 @@ public class FsService {
      * @author jack
      * @date 2025-05-14
      */
-    public void externalApprovalsCreate() throws Exception {
-        // 构建client
-        Client client = getClient();
+    public CreateExternalApprovalResp externalApprovalsCreate(CreateExternalApprovalReq req) {
+        try {
+            // 构建client
+            Client client = getClient();
 
-        // 创建请求对象
-        CreateExternalApprovalReq req = CreateExternalApprovalReq.newBuilder()
-                .departmentIdType("open_department_id")
-                .userIdType("open_id")
-                .externalApproval(ExternalApproval.newBuilder()
-                        .approvalName("@i18n@1")
-                        .approvalCode("externalApprovalsCreateTest")
-                        .groupCode("work_group")
-                        .groupName("@i18n@2")
-                        .external(ApprovalCreateExternal.newBuilder()
-                                .createLinkMobile("https://applink.feishu.cn/client/mini_program/open?appId=cli_9c90fc38e07a9101&path=pages%2Fapproval-form%2Findex%3Fid%3D9999")
-                                .createLinkPc("https://applink.feishu.cn/client/mini_program/open?mode=appCenter&appId=cli_9c90fc38e07a9101&path=pc%2Fpages%2Fcreate-form%2Findex%3Fid%3D9999")
-                                .supportPc(true)
-                                .supportMobile(true)
-                                .supportBatchRead(false)
-                                .enableMarkReaded(false)
-                                .actionCallbackUrl("http://feishu.cn/approval/openapi/operate")
-                                .actionCallbackToken("sdjkljkx9lsadf110")
-                                .actionCallbackKey("gfdqedvsadfgfsd")
-                                .build())
-                        .viewers(new ApprovalCreateViewers[]{
-                                ApprovalCreateViewers.newBuilder()
-                                        .viewerType(CfgApproveSyncViewerTypeEnum.TENANT.getCode())
-                                        .build()
-                        })
-                        .i18nResources(new I18nResource[]{
-                                I18nResource.newBuilder()
-                                        .locale("zh-CN")
-                                        .texts(new I18nResourceText[]{
-                                                I18nResourceText.newBuilder()
-                                                        .key("@i18n@1")
-                                                        .value("people")
-                                                        .build(),
-                                                I18nResourceText.newBuilder()
-                                                        .key("@i18n@2")
-                                                        .value("hr")
-                                                        .build()
-                                        })
-                                        .isDefault(true)
-                                        .build()
-                        })
-                        .managers(new String[]{"96449fb3"})
-                        .build())
-                .build();
+            // 发起请求
+            CreateExternalApprovalResp resp = client.approval().v4().externalApproval().create(req);
 
-        // 发起请求
-        CreateExternalApprovalResp resp = client.approval().v4().externalApproval().create(req);
-
-        // 处理服务端错误
-        if (!resp.success()) {
-            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-            return;
+            // 处理服务端错误
+            if (!resp.success()) {
+                String msg = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
+                throw new ServiceException("创建飞书三方审批定义失败>>>>>{}",msg);
+            }
+            return resp;
+        } catch (Exception e) {
+            throw new ServiceException("创建飞书三方审批定义出错>>>>>{}",e);
         }
-        // 业务数据处理
-        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
     }
 
 

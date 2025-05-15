@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.json.Json;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -96,18 +97,26 @@ public class CfgApproveSyncDTO implements Serializable {
         /**
         * 同步平台：feishu=飞书,dd=钉钉,qw=企业微信
         */
-        private List<String> syncPlatform;
+        private String syncPlatform;
+
+        private List<String> syncPlatformList;
 
         /**
          * 推送信息
          */
-        @NotEmpty
         private List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList;
         /**
          * 通知配置
          */
-        @NotEmpty
-        private List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList;
+        private CfgApproveNoticeDTO.NoticeSettingDTO approve;
+
+        private CfgApproveNoticeDTO.NoticeSettingDTO approveResult;
+
+        private CfgApproveNoticeDTO.NoticeSettingDTO cc;
+
+        private CfgApproveNoticeDTO.NoticeSettingDTO timeoutWarning;
+
+        private CfgApproveNoticeDTO.NoticeSettingDTO recall;
     }
 
     /**
@@ -196,9 +205,9 @@ public class CfgApproveSyncDTO implements Serializable {
         /**
         * 同步平台 /workflow/common/enumDropDown?type=CfgApproveSyncSyncPlatform
         */
-        @NotBlank(message = "推送方式不能为空")
-        @Size(max = 32,message = "推送方式最大长度不能超过32位")
         private String syncPlatform;
+        @NotEmpty(message = "推送方式不能为空")
+        private List<String> syncPlatformList;
 
         /**
         * 飞书审批定义
@@ -212,8 +221,17 @@ public class CfgApproveSyncDTO implements Serializable {
         /**
          * 通知配置
          */
-        @NotEmpty
-        private List<CfgApproveNoticeDTO.@Valid NoticeSettingDTO> noticeSettingList;
+//        private List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList;
+        @NotNull(message = "审核通知配置不能为空")
+        private CfgApproveNoticeDTO.NoticeSettingDTO approve;
+
+        private CfgApproveNoticeDTO.NoticeSettingDTO approveResult;
+
+        private CfgApproveNoticeDTO.NoticeSettingDTO cc;
+
+        private CfgApproveNoticeDTO.NoticeSettingDTO timeoutWarning;
+
+        private CfgApproveNoticeDTO.NoticeSettingDTO recall;
     }
 
     @Data
@@ -286,7 +304,7 @@ public class CfgApproveSyncDTO implements Serializable {
         /**
          * 类型
          */
-        private Boolean tabFlag;
+        private String tabFlag;
         /**
          * 类型
          */

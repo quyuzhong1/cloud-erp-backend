@@ -8,6 +8,7 @@ import com.common.core.anno.LogViewService;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.erp.model.workflow.entity.CfgApproveSyncEntity;
+import com.erp.server.workflow.query.CfgApproveSyncQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -105,7 +106,7 @@ public class CfgApproveSyncController extends BaseController {
             menuCode = "workflow:cfgApproveSync:paging",
             tableAlias = "cas"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = CfgApproveSyncQueryHandler.class)
     public ApiResult<PagingVO<CfgApproveSyncDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto) {
         return success(cfgApproveSyncService.paging(dto));
     }

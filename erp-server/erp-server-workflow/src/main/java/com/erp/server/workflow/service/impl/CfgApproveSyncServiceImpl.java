@@ -13,7 +13,9 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.entity.SysRefererConfigEntity;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncFieldMapDTO;
 import com.erp.model.workflow.entity.*;
@@ -22,14 +24,17 @@ import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.model.workflow.enums.CfgApproveSyncViewerTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysRefereConfigFeign;
 import com.erp.sdk.fs.enmu.DepartmentIdTypeEnum;
 import com.erp.sdk.fs.enmu.UserIdTypeEnum;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.mapper.CfgApproveSyncMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import com.google.gson.Gson;
 import com.lark.oapi.service.approval.v4.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -78,6 +83,12 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private SysRefereConfigFeign sysRefereConfigFeign;
+
+    @Resource
+    private FsService fsService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -90,16 +101,22 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }
 
         //可见范围类型为不可见时。viewr才能为空
-        if(!Objects.equals(addDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.NONE.getCode())
+        if((Objects.equals(addDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode()) || Objects.equals(addDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.USER.getCode()))
                 && CollUtil.isEmpty(addDTO.getViewerList())){
-            throw new ServiceException("请选择部门/人员");
-        }else{
+            throw new ServiceException("指定部门/指定用户时，审批可见人列表不能为空");
+        }else {
+            if(addDTO.getViewerList().size() > 200){
+                throw new ServiceException("审批可见人列表不能超过200上限");
+            }
             String viewer = addDTO.getViewerList().stream().collect(Collectors.joining(","));
             addDTO.setViewer(viewer);
         }
 
         CfgApproveSyncEntity cfgApproveSyncEntity = new CfgApproveSyncEntity();
         BeanMapperUtils.copy(addDTO, cfgApproveSyncEntity);
+
+        String syncPlatform = addDTO.getSyncPlatformList().stream().collect(Collectors.joining(","));
+        cfgApproveSyncEntity.setSyncPlatform(syncPlatform);
 
         log.info("开始新增ERP审批同步配置");
         // 生成单号
@@ -115,12 +132,13 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
 
         String id = cfgApproveSyncEntity.getId();
         //新增明细--推送信息
+        List<CfgApproveSyncFieldMapEntity> fieldMapEntityList;
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addDTO.getPushMsgList();
         if(CollUtil.isEmpty(pushMsgList)){
             throw new ServiceException("推送信息不能为空");
         }else{
             long count = pushMsgList.stream().filter(e -> e.getIsQuick().equals(Boolean.TRUE)).count();
-            if(count > 5){
+            if(count > 5 ){
                 throw new ServiceException("快捷审批勾选不能超过5个");
             }
             int sort = 1;
@@ -128,28 +146,177 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                 noticeFieldMapDTO.setMainId(id);
                 noticeFieldMapDTO.setSort(sort++);
             }
-            List<CfgApproveSyncFieldMapEntity> list = BeanMapper.copyList(pushMsgList, CfgApproveSyncFieldMapEntity.class);
-            cfgApproveSyncFieldMapService.saveBatch(list);
+            fieldMapEntityList = BeanMapper.copyList(pushMsgList, CfgApproveSyncFieldMapEntity.class);
+            cfgApproveSyncFieldMapService.saveBatch(fieldMapEntityList);
         }
 
         //新增明细--通知配置
-        List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = addDTO.getNoticeSettingList();
-        if(CollUtil.isEmpty(noticeSettingList)){
-            throw new ServiceException("通知配置不能为空");
-        }else{
-            for (CfgApproveNoticeDTO.NoticeSettingDTO noticeSettingDTO : noticeSettingList) {
-                noticeSettingDTO.setMainId(id);
-                if(CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())){
-                    noticeSettingDTO.setRoleType(noticeSettingDTO.getRoleTypeList().stream().collect(Collectors.joining(",")));
+        List<CfgApproveNoticeEntity> cfgApproveNoticeEntityList = new ArrayList<>();
+        addDTO.getApprove().setNoticeType(CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode());
+        addDTO.getApproveResult().setNoticeType(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
+        addDTO.getCc().setNoticeType(CfgApproveNoticeNoticeTypeEnum.CC.getCode());
+        addDTO.getTimeoutWarning().setNoticeType(CfgApproveNoticeNoticeTypeEnum.TIMEOUTWARNING.getCode());
+        addDTO.getRecall().setNoticeType(CfgApproveNoticeNoticeTypeEnum.RECALL.getCode());
+        List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = Arrays.asList(addDTO.getApprove(),addDTO.getApproveResult(),addDTO.getCc(),addDTO.getTimeoutWarning(),addDTO.getRecall());
+        for (CfgApproveNoticeDTO.NoticeSettingDTO noticeSettingDTO : noticeSettingList) {
+            if (Objects.isNull(noticeSettingDTO)) {
+                continue;
+            }
+            noticeSettingDTO.setMainId(id);
+            if (CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())) {
+                noticeSettingDTO.setRoleType(noticeSettingDTO.getRoleTypeList().stream().collect(Collectors.joining(",")));
+            }
+            if (CollUtil.isNotEmpty(noticeSettingDTO.getSpecificPersonList())) {
+                noticeSettingDTO.setSpecificPerson(noticeSettingDTO.getSpecificPersonList().stream().collect(Collectors.joining(",")));
+            }
+            CfgApproveNoticeEntity cfgApproveNoticeEntity = new CfgApproveNoticeEntity();
+            BeanMapper.copy(noticeSettingDTO,cfgApproveNoticeEntity);
+            cfgApproveNoticeEntityList.add(cfgApproveNoticeEntity);
+        }
+        if(cfgApproveNoticeEntityList.size() > 0 ){
+            cfgApproveNoticeService.saveBatch(cfgApproveNoticeEntityList);
+        }
+
+        //组装请求体并创建（飞书的）三方审批定义
+        CreateExternalApprovalResp resp = fsService.externalApprovalsCreate(buildexternalApprovalReq(cfgApproveSyncEntity));
+        lambdaUpdate().set(CfgApproveSyncEntity::getApprovalCode, resp.getData().getApprovalCode())
+                .eq(CfgApproveSyncEntity::getId, id)
+                .update();
+
+        return new BaseResultDTO.AddDTO(cfgApproveSyncEntity.getId(), code);
+    }
+
+    /**
+     * 组装（飞书的）三方审批定义请求体
+     */
+    private CreateExternalApprovalReq buildexternalApprovalReq(CfgApproveSyncEntity cfgApproveSyncEntity) {
+        //三方审批相关信息
+        ExternalApproval externalApproval = getExternalApproval(cfgApproveSyncEntity);
+        //国际化文案
+        I18nResource[] i18nResources = getI18nResources(cfgApproveSyncEntity);
+        externalApproval.setI18nResources(i18nResources);
+        //可见人列表
+        getApprovalViewers(cfgApproveSyncEntity, externalApproval);
+        // 创建请求对象
+        return CreateExternalApprovalReq.newBuilder()
+                .departmentIdType(DepartmentIdTypeEnum.OPENDEPARTMENTID.getCode())
+                .userIdType(UserIdTypeEnum.UNIONID.getCode())
+                .externalApproval(externalApproval)
+                .build();
+    }
+
+    //三方审批相关信息
+    private ExternalApproval getExternalApproval(CfgApproveSyncEntity cfgApproveSyncEntity) {
+        List<SysRefererConfigEntity> refererConfig = sysRefereConfigFeign.getByReferer(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+        String referer = "";
+        if(CollUtil.isNotEmpty(refererConfig)){
+            referer = refererConfig.get(0).getReferer();
+        }
+
+        ExternalApproval externalApproval = ExternalApproval.newBuilder()
+                .approvalName("@i18n@1")
+                .approvalCode(cfgApproveSyncEntity.getBusinessType())
+                .groupCode(cfgApproveSyncEntity.getApproveGroup())
+                .groupName("@i18n@2")
+                .description("@i18n@3")
+                .external(ApprovalCreateExternal.newBuilder()
+                        .bizName("@i18n@4")
+                        .bizType(cfgApproveSyncEntity.getBusinessType())
+                        .createLinkMobile("")
+                        .createLinkPc("")
+                        .supportPc(true)
+                        .supportMobile(true)
+                        .supportBatchRead(false)
+                        .enableMarkReaded(false)
+                        .allowBatchOperate(false)
+                        .actionCallbackUrl(cfgApproveSyncEntity.getWebhookUrl())
+                        .actionCallbackToken(referer)
+                        .actionCallbackKey(referer)
+                        .build())
+                .build();
+        return externalApproval;
+    }
+
+    //可见人列表
+    private static void getApprovalViewers(CfgApproveSyncEntity cfgApproveSyncEntity, ExternalApproval externalApproval) {
+        //审批可见人列表，列表长度上限 200，只有在审批可见人列表内的用户，才可以在审批发起页看到该审批。若该参数不传值，则表示任何人不可见。
+        List<ApprovalCreateViewers> approvalCreateViewers = new ArrayList<>();
+        String viewer = cfgApproveSyncEntity.getViewer();
+        if(cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.USER.getCode())){
+            if(StringUtils.isNotBlank(viewer)){
+                String[] split = viewer.split(",");
+                for (String userId : split) {
+                    ApprovalCreateViewers approvalCreateViewer = ApprovalCreateViewers.newBuilder()
+                            .viewerType(cfgApproveSyncEntity.getViewerType())
+                            .viewerUserId(userId)
+                            .build();
+                    approvalCreateViewers.add(approvalCreateViewer);
                 }
-                if(CollUtil.isNotEmpty(noticeSettingDTO.getSpecificPersonList())){
-                    noticeSettingDTO.setSpecificPerson(noticeSettingDTO.getSpecificPersonList().stream().collect(Collectors.joining(",")));
+
+            }
+        }else if(cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode())){
+            if(StringUtils.isNotBlank(viewer)){
+                String[] split = viewer.split(",");
+                for (String deptId : split) {
+                    ApprovalCreateViewers approvalCreateViewer = ApprovalCreateViewers.newBuilder()
+                            .viewerType(cfgApproveSyncEntity.getViewerType())
+                            .viewerDepartmentId(deptId)
+                            .build();
+                    approvalCreateViewers.add(approvalCreateViewer);
                 }
             }
-            List<CfgApproveNoticeEntity> list = BeanMapper.copyList(noticeSettingList, CfgApproveNoticeEntity.class);
-            cfgApproveNoticeService.saveBatch(list);
         }
-        return new BaseResultDTO.AddDTO(cfgApproveSyncEntity.getId(), code);
+        //上限200
+        if(approvalCreateViewers.size() > 200){
+            throw new ServiceException("审批可见人列表不能超过200上限");
+        }else if(approvalCreateViewers.size() == 0 && (cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode()) || cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.USER.getCode()))){
+            throw new ServiceException("指定部门/指定用户时，审批可见人列表不能为空");
+        }else if(approvalCreateViewers.size() > 0){
+            ApprovalCreateViewers[] array = (ApprovalCreateViewers[]) approvalCreateViewers.toArray();
+            externalApproval.setViewers(array);
+        }
+    }
+
+    //国际化文案
+    private I18nResource[] getI18nResources(CfgApproveSyncEntity cfgApproveSyncEntity) {
+        Map<String, WorkMenuEntity> workMenuMap = workMenuService.list().stream().collect(Collectors.toMap(WorkMenuEntity::getModuleCode, item -> item));
+
+        Map<String, DictBasicEntity> mapByType = dictBasicService.getMapByType(DictBasicEnum.TEST.getName());
+        Map<String,String> values = new HashMap<>();
+        //单据
+        WorkMenuEntity workMenuEntity = workMenuMap.getOrDefault(cfgApproveSyncEntity.getBusinessType(),null);
+        if(Objects.nonNull(workMenuEntity)){
+            values.put("@i18n@1",  workMenuEntity.getModuleClassify());
+        }
+        //审批分组
+        DictBasicEntity dictBasicEntity = mapByType.getOrDefault(cfgApproveSyncEntity.getApproveGroup(),null);
+        if(Objects.nonNull(dictBasicEntity)){
+            values.put("@i18n@2",  dictBasicEntity.getName());
+        }
+
+        //审批定义的说明，后续企业员工发起审批时，该说明会在审批发起页展示。
+        values.put("@i18n@3", dictBasicEntity.getRemark());
+        //列表中用于提示审批来自哪个三方系统。
+        values.put("@i18n@4", DmpBasicSystemCodeEnum.ERP.getName());
+
+
+        Set<Map.Entry<String, String>> entries = values.entrySet();
+        I18nResource[] i18nResources = new I18nResource[1];
+        I18nResourceText[] i18nResourceTexts = new I18nResourceText[entries.size()];
+        int i = 0;
+        for (Map.Entry<String, String> entry : entries) {
+            i18nResourceTexts[i++] = I18nResourceText.newBuilder()
+                    .key(entry.getKey())
+                    .value(entry.getValue())
+                    .build();
+        }
+        i18nResources[0] = I18nResource.newBuilder()
+                .locale("zh-CN")
+                .texts(i18nResourceTexts)
+                .isDefault(true)
+                .build();
+
+        return i18nResources;
     }
 
     /**
@@ -169,14 +336,21 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }
 
         //可见范围类型为不可见时。viewr才能为空
-        if(!Objects.equals(addOrUpdateDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.NONE.getCode())
+        if((Objects.equals(addOrUpdateDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode()) || Objects.equals(addOrUpdateDTO.getViewerType(), CfgApproveSyncViewerTypeEnum.USER.getCode()))
                 && CollUtil.isEmpty(addOrUpdateDTO.getViewerList())){
-            throw new ServiceException("请选择部门/人员");
-        }else{
+            throw new ServiceException("指定部门/指定用户时，审批可见人列表不能为空");
+        }else {
+            if(addOrUpdateDTO.getViewerList().size() > 200){
+                throw new ServiceException("审批可见人列表不能超过200上限");
+            }
             String viewer = addOrUpdateDTO.getViewerList().stream().collect(Collectors.joining(","));
             addOrUpdateDTO.setViewer(viewer);
         }
+
         CfgApproveSyncEntity cfgApproveSyncEntity =  BeanMapperUtils.map(CfgApproveSyncEntity.class, addOrUpdateDTO);
+
+        String syncPlatform = addOrUpdateDTO.getSyncPlatformList().stream().collect(Collectors.joining(","));
+        cfgApproveSyncEntity.setSyncPlatform(syncPlatform);
 
         log.info("编辑 开始修改ERP审批同步配置数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(cfgApproveSyncEntity);
@@ -242,21 +416,29 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }
 
         //新增明细--通知配置
-        List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = addOrUpdateDTO.getNoticeSettingList();
-        if(CollUtil.isEmpty(noticeSettingList)){
-            throw new ServiceException("通知配置不能为空");
-        }else{
-            for (CfgApproveNoticeDTO.NoticeSettingDTO noticeSettingDTO : noticeSettingList) {
-                noticeSettingDTO.setMainId(id);
-                if(CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())){
-                    noticeSettingDTO.setRoleType(noticeSettingDTO.getRoleTypeList().stream().collect(Collectors.joining(",")));
-                }
-                if(CollUtil.isNotEmpty(noticeSettingDTO.getSpecificPersonList())){
-                    noticeSettingDTO.setSpecificPerson(noticeSettingDTO.getSpecificPersonList().stream().collect(Collectors.joining(",")));
-                }
+        List<CfgApproveNoticeEntity> list = new ArrayList<>();
+        addOrUpdateDTO.getApprove().setNoticeType(CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode());
+        addOrUpdateDTO.getApproveResult().setNoticeType(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
+        addOrUpdateDTO.getCc().setNoticeType(CfgApproveNoticeNoticeTypeEnum.CC.getCode());
+        addOrUpdateDTO.getTimeoutWarning().setNoticeType(CfgApproveNoticeNoticeTypeEnum.TIMEOUTWARNING.getCode());
+        addOrUpdateDTO.getRecall().setNoticeType(CfgApproveNoticeNoticeTypeEnum.RECALL.getCode());
+        List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = Arrays.asList(addOrUpdateDTO.getApprove(),addOrUpdateDTO.getApproveResult(),addOrUpdateDTO.getCc(),addOrUpdateDTO.getTimeoutWarning(),addOrUpdateDTO.getRecall());
+        for (CfgApproveNoticeDTO.NoticeSettingDTO noticeSettingDTO : noticeSettingList) {
+            if (Objects.isNull(noticeSettingDTO)) {
+                continue;
             }
-            List<CfgApproveNoticeEntity> list = BeanMapper.copyList(noticeSettingList, CfgApproveNoticeEntity.class);
-
+            noticeSettingDTO.setMainId(id);
+            if (CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())) {
+                noticeSettingDTO.setRoleType(noticeSettingDTO.getRoleTypeList().stream().collect(Collectors.joining(",")));
+            }
+            if (CollUtil.isNotEmpty(noticeSettingDTO.getSpecificPersonList())) {
+                noticeSettingDTO.setSpecificPerson(noticeSettingDTO.getSpecificPersonList().stream().collect(Collectors.joining(",")));
+            }
+            CfgApproveNoticeEntity cfgApproveNoticeEntity = new CfgApproveNoticeEntity();
+            BeanMapper.copy(noticeSettingDTO,cfgApproveNoticeEntity);
+            list.add(cfgApproveNoticeEntity);
+        }
+        if(list.size() > 0 ){
             List<CfgApproveNoticeEntity> oldList = cfgApproveNoticeService.listByMainIds(Arrays.asList(id));
             //日志
             List<String> ids = list.stream().map(CfgApproveNoticeEntity::getId).filter(StringUtils::isNotEmpty).collect(Collectors.toList());
@@ -283,7 +465,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                 // 操作日志
                 updateList.stream().forEach(e -> {
                     CfgApproveNoticeEntity cfgApproveNoticeEntity = oldList.stream().filter(o -> e.getId().equals(o.getId())).findFirst().orElse(null);
-                    if(Objects.nonNull(cfgApproveNoticeEntity)){
+                    if (Objects.nonNull(cfgApproveNoticeEntity)) {
                         String updateMsg = StrUtil.format("用户【{}】编辑通知配置", UserContext.getDefaultLoginUser().getUserName());
                         operateLogService.addModuleOperateLogByObj(cfgApproveNoticeEntity, e, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgApproveSyncEntity.getId(), updateMsg);
                     }
@@ -291,6 +473,13 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             }
             cfgApproveNoticeService.saveOrUpdateBatch(list);
         }
+
+        //组装请求体并创建（飞书的）三方审批定义
+        CreateExternalApprovalResp resp = fsService.externalApprovalsCreate(buildexternalApprovalReq(cfgApproveSyncEntity));
+        lambdaUpdate().set(CfgApproveSyncEntity::getApprovalCode, resp.getData().getApprovalCode())
+                .eq(CfgApproveSyncEntity::getId, id)
+                .update();
+
         return Boolean.TRUE;
     }
 
@@ -309,15 +498,23 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         searchParam.setPermissionSql(param.getPermissionSql());
         List<CfgApproveSyncDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
-        List<Boolean> statusList = Arrays.asList(Boolean.TRUE,Boolean.FALSE);
+        List<String> statusList = Arrays.asList("t", "f");
         // 不存在的状态赋值为0
-        List<Boolean> existStatusList = list.stream().map(CfgApproveSyncDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
+        List<String> existStatusList = list.stream().map(CfgApproveSyncDTO.TabListDTO::getTabFlag).collect(Collectors.toList());
         statusList.stream().forEach(status -> {
             if (!existStatusList.contains(status)) {
                 list.add(new CfgApproveSyncDTO.TabListDTO(status, "" , 0));
             }
         });
-        list.forEach(item -> item.setTabFlagName(Objects.equals(item.getTabFlag(), Boolean.FALSE) ? "停用" : "启用"));
+        list.forEach(item -> item.setTabFlagName(Objects.equals(item.getTabFlag(), "f") ? "停用" : "启用"));
+
+        list.add(new CfgApproveSyncDTO.TabListDTO("all", "全部" , list.stream()
+                .map(CfgApproveSyncDTO.TabListDTO::getCount)
+                .filter(Objects::nonNull)
+                .reduce(0, Integer::sum)));
+
+        // 倒排 list 的元素
+        Collections.reverse(list);
         return list;
     }
 
@@ -420,7 +617,8 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     }
 
     private CfgApproveSyncDTO.ViewDTO fillOne(CfgApproveSyncEntity cfgApproveSyncEntity) {
-        CfgApproveSyncDTO.ViewDTO data = BeanMapperUtils.map(CfgApproveSyncDTO.ViewDTO.class, cfgApproveSyncEntity);
+        CfgApproveSyncDTO.ViewDTO data = new CfgApproveSyncDTO.ViewDTO();
+        BeanMapper.copy(cfgApproveSyncEntity,data);
 
         Map<String, WorkMenuEntity> workMenuMap = workMenuService.list().stream().collect(Collectors.toMap(WorkMenuEntity::getModuleCode, item -> item));
 
@@ -444,7 +642,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }
         //同步平台，推送方式
         String syncPlatform = cfgApproveSyncEntity.getSyncPlatform();
-        data.setSyncPlatform(Arrays.asList(syncPlatform.split(",")));
+        data.setSyncPlatformList(Arrays.asList(syncPlatform.split(",")));
 
         //推送消息
         List<CfgApproveSyncFieldMapEntity> cfgApproveSyncFieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId()));
@@ -459,14 +657,21 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         if(CollUtil.isNotEmpty(cfgApproveNoticeEntities)){
             List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = BeanMapper.copyList(cfgApproveNoticeEntities, CfgApproveNoticeDTO.NoticeSettingDTO.class);
             for (CfgApproveNoticeDTO.NoticeSettingDTO dto : noticeSettingList) {
-
                 dto.setRoleTypeList(Arrays.asList(dto.getRoleType().split(",")));
-
                 dto.setSpecificPersonList(Arrays.asList(dto.getSpecificPerson().split(",")));
+                if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode())){
+                    data.setApprove(dto);
+                }else if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode())){
+                    data.setApproveResult(dto);
+                }else if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.CC.getCode())){
+                    data.setCc(dto);
+                }else if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.TIMEOUTWARNING.getCode())){
+                    data.setTimeoutWarning(dto);
+                }else if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.RECALL.getCode())){
+                    data.setRecall(dto);
+                }
             }
-            data.setNoticeSettingList(noticeSettingList);
         }
         return data;
     }
-
 }
