@@ -74,6 +74,7 @@ public class ShopifyServerSoB2cDTO {
     public static class Logistics {
         private String carrier;
         private String trackingNumber;
+        private String trackingUrl;
         private List<StatusUpdate> statusUpdates;
     }
 
