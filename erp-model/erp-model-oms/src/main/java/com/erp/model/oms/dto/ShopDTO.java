@@ -199,6 +199,10 @@ public class ShopDTO implements Serializable {
          */
          private String returnWarehouse;
          private String returnWarehouseName;
+        /**
+         * 是否存在授权
+         */
+        private Boolean isAuth;
     }
 
 
@@ -222,6 +226,10 @@ public class ShopDTO implements Serializable {
          * 展示对应用的的权限集合
          */
         private String userId;
+        /**
+         * 店铺ID集合【后端使用】
+         */
+        private List<String> shopIdList = new ArrayList<>();
 
     }
 

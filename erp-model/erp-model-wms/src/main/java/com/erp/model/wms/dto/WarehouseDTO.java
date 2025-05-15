@@ -593,6 +593,10 @@ public class WarehouseDTO implements Serializable {
          * 停用日期
          */
         private LocalDateTime closeTime;
+        /**
+         * 是否存在授权
+         */
+        private Boolean isAuth;
     }
 
 
@@ -614,6 +618,10 @@ public class WarehouseDTO implements Serializable {
          * 展示对应用的的权限集合
          */
         private String userId;
+        /**
+         * 仓库列表【后端使用】
+         */
+        private List<String> warehouseIdList = new ArrayList<>();;
     }
 
 

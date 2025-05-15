@@ -1,11 +1,14 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -93,15 +96,9 @@ public class ShopInfoController extends BaseController {
     public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
         if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())){
             List<SysUserDTO.ShopDTO> shopUserList = authDataFeign.getShopUserList(dto.getParams().getUserId());
-            //如果用户没有店铺权限，就返回空
-            if (CollectionUtils.isEmpty(shopUserList)){
-                return success(new PagingVO<>());
-            }
-            StringBuilder sqlString = new StringBuilder();
-            String authType = shopUserList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
-            if ("part".equals(authType)){
-                sqlString.append(" AND string_to_array(").append("si.id").append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
-                dto.getParams().setPermissionSql(sqlString.toString());
+            //设置店铺权限列表
+            if (CollUtil.isNotEmpty(shopUserList)){
+                dto.getParams().setShopIdList(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
             }
         }
         PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);

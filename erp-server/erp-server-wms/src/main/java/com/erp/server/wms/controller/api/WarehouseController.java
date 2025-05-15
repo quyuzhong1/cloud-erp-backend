@@ -1,11 +1,14 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -35,6 +38,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static com.common.business.threadlocal.UserContext.getLoginUser;
 
 /**
  * 仓库管理
@@ -80,17 +85,10 @@ public class WarehouseController extends BaseController {
     @PostMapping("/pagingCustom")
     @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
     public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
-        if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())){
-            List<SysUserDTO.ShopDTO> shopUserList = authDataFeign.getShopUserList(dto.getParams().getUserId());
-            //如果用户没有店铺权限，就返回空
-            if (CollectionUtils.isEmpty(shopUserList)){
-                return success(new PagingVO<>());
-            }
-            StringBuilder sqlString = new StringBuilder();
-            String authType = shopUserList.stream().map(SysUserDTO.ShopDTO::getAuthType).filter("all"::equals).findFirst().orElse("part");
-            if ("part".equals(authType)){
-                sqlString.append(" AND string_to_array(").append("id").append(",',') && string_to_array('").append(StringUtils.join(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).collect(Collectors.toList()), ",")).append("',',')");
-                dto.getParams().setPermissionSql(sqlString.toString());
+        if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())) {
+            List<SysUserDTO.WarehouseDTO> warehouseUserList = authDataFeign.getWarehouseUserList(dto.getParams().getUserId());
+            if (CollUtil.isNotEmpty(warehouseUserList)){
+                dto.getParams().setWarehouseIdList(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
             }
         }
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
