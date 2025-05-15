@@ -333,6 +333,7 @@
     </select>
     <select id="getGenerateDeclare" resultType="com.erp.model.tms.dto.TmsDeclareBillDTO$DeliveryDTO">
         select
+        fmd.source_id as requisitionId,
             fmd.id as sourceId,
             fmd.code as sourceCode,
             fmd.country_id as country,
