@@ -368,7 +368,7 @@ public class ExportTmsFeignController {
             menuCode = "tms:firstMileChangeRecord:paging",
             tableAlias = "fmcr"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = FirstMileChangeRecordQueryHandler.class)
     public PagingVO<FirstMileChangeRecordDTO.PagingVO> exportFirstMileChangeRecord(@RequestBody PagingDTO<FirstMileChangeRecordDTO.PagingParamDTO> dto){
         return firstMileChangeRecordService.paging(dto);
     }
