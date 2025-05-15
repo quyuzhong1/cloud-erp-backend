@@ -329,6 +329,8 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             soB2cEntity.setDetailEntityList(thisDetailList);
             soB2cEntity.setCoverOutDate(true);
             SoB2cHandler.handleSoOutStock(dto, null, soB2cEntity);
+            operateLogService.addModuleOperateLog("重新出库", ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "重新出库");
+
         }
         return Boolean.TRUE;
     }
