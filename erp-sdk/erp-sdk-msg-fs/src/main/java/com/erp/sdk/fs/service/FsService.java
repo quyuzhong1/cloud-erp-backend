@@ -452,32 +452,73 @@ public class FsService {
         }
     }
 
+    /**
+     * 获取子部门列表
+     * https://open.feishu.cn/document/server-docs/contact-v3/department/children
+     * @author jack
+     * @date 2025-05-14
+     */
+    public ChildrenDepartmentResp getChildrenDepartments(ChildrenDepartmentReq req) {
+        try {
+            // 构建client
+            Client client = getClient();
+            // 创建请求对象
+            if(Objects.isNull(req)){
+                req = ChildrenDepartmentReq.newBuilder()
+                        .departmentId("0")
+                        .userIdType("open_id")
+                        .departmentIdType("open_department_id")
+                        .fetchChild(true)
+                        .pageSize(50)
+                        .build();
+            }
+            // 发起请求
+            ChildrenDepartmentResp resp = client.contact().v3().department().children(req);
+
+            // 处理服务端错误
+            if (!resp.success()) {
+                String msg = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
+                throw new ServiceException("获取子部门列表>>>>>{}",msg);
+            }
+            return resp;
+        } catch (Exception e) {
+            throw new ServiceException("获取子部门列表>>>>>{}",e);
+        }
+    }
+
 
     public static void main(String[] args) throws Exception {
+        //测试
         Client client = Client.newBuilder("cli_a885904d16b5500e","U3pYsRdP7HTIpkolUjJol5cHtl12eoLu")
                 .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
                 .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
                 .build();
+        //生产
+//        Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
+//                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+//                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
+//                .build();
 
 
-        // 创建请求对象
-        GetExternalApprovalReq req = GetExternalApprovalReq.newBuilder()
-                .approvalCode("86A4154C-7BB1-41EF-8039-E0574C039E92")
-                .userIdType("open_id")
-                .build();
-
-        // 发起请求
-        GetExternalApprovalResp resp = client.approval().v4().externalApproval().get(req);
-
-        // 处理服务端错误
-        if (!resp.success()) {
-            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-            return;
-        }
-
-        // 业务数据处理
-        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+//        // 创建请求对象
+//        GetExternalApprovalReq req = GetExternalApprovalReq.newBuilder()
+//                .approvalCode("86A4154C-7BB1-41EF-8039-E0574C039E92")
+//                .userIdType("open_id")
+//                .build();
+//
+//        // 发起请求
+//        GetExternalApprovalResp resp = client.approval().v4().externalApproval().get(req);
+//
+//        // 处理服务端错误
+//        if (!resp.success()) {
+//            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+//                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+//            return;
+//        }
+//
+//        // 业务数据处理
+//        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
 
 //        // 创建请求对象 86A4154C-7BB1-41EF-8039-E0574C039E92
 //        CreateExternalApprovalReq req = CreateExternalApprovalReq.newBuilder()
