@@ -1,8 +1,11 @@
 package com.erp.server.workflow.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -11,6 +14,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
+import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.server.workflow.service.ProcessDefinitionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,6 +51,18 @@ public class ProcessDefinitionController extends BaseController {
     public ApiResult<Boolean> addOrUpdate(@RequestBody @Valid ProcessDefinitionDTO.AddOrUpdateDTO dto) {
         boolean result = processDefinitionService.addOrUpdate(dto);
         return result ? success() : failure();
+    }
+
+    /**
+     * 获取状态统计
+     * @author will
+     * @date 2025/5/15 16:10
+     * @param dto
+     * @return ApiResult<List<TabListDTO>>
+     */
+    @PostMapping("/tabList")
+    public ApiResult<List<ProcessDefinitionDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(processDefinitionService.tabList(dto));
     }
 
     /**
@@ -123,6 +140,36 @@ public class ProcessDefinitionController extends BaseController {
     public ApiResult<List<ProcessDefinitionDTO.DropDTO>> getProcessDefinition(@RequestParam(value = "bussinessKey") String bussinessKey) {
         List<ProcessDefinitionDTO.DropDTO> result = processDefinitionService.getProcessDefinition(bussinessKey);
         return success(result);
+    }
+
+
+    /**
+     * 更新启禁用状态
+     * @author will
+     * @date 2025/5/15 15:55
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateDisabled")
+    public ApiResult<List<BatchResultDTO>> updateDisabled(@RequestBody @Validated ProcessDefinitionDTO.DisableDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = processDefinitionService.updateDisabled(id,dto.getDisabled());
+            }catch (Exception e){
+                log.error("流程设计启禁用失败",e);
+                ProcessDefinitionEntity entity = processDefinitionService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "流程设计单不存在, 启禁用失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getProcessName(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
 

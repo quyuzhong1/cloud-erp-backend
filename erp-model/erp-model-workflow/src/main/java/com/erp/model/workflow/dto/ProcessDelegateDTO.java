@@ -37,7 +37,7 @@ public class ProcessDelegateDTO implements Serializable {
     public static class TabListDTO {
 
         /**
-         * 类型 ,(waitSubmit待提交,approveIng待审核,approve已审核,reject不通过)
+         * 类型
          */
         private String tabFlag;
 
