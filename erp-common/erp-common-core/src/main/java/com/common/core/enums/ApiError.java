@@ -246,6 +246,11 @@ public enum ApiError implements Serializable {
     PROCESS_DELEGATE_TIME_ERROR(94035,"委托失效时间不可小于生效时间"),
     PROCESS_DELEGATE_BUSINESS_KEY_ERROR(94036,"委托审批单【{}】已存在此流程"),
     PROCESS_DELEGATE_BUSINESS_KEY_EXIST(94037,"委托流程【{}】已存在"),
+    PROCESS_MANAGEMENT_NOT_EXIST(94038,"流程管理不存在"),
+    PROCESS_MANAGEMENT_PASS_ERROR(94039,"强制通过操作仅针对运行、暂停状态的流程有效"),
+    PROCESS_MANAGEMENT_REJECT_ERROR(94040,"强制驳回操作仅针对运行、暂停状态的流程有效"),
+    PROCESS_MANAGEMENT_RESTORE_ERROR(94041,"恢复操作仅针对暂停状态的流程实例有效"),
+    PROCESS_MANAGEMENT_SUSPEND_ERROR(94042,"暂停操作仅针对状态为“运行中”的流程有效"),
 
 
     /**

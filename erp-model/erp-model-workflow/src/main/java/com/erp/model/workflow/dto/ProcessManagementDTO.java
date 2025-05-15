@@ -2,7 +2,6 @@ package com.erp.model.workflow.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -28,6 +27,31 @@ import java.util.Map;
 public class ProcessManagementDTO {
 
     private ProcessManagementDTO() {
+    }
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型
+         */
+        private String tabFlag;
+
+        /**
+         * 类型
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
+
     }
 
     @Data

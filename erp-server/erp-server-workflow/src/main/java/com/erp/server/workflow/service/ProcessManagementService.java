@@ -1,13 +1,14 @@
 package com.erp.server.workflow.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.erp.model.workflow.enums.DictBasicEnum;
 import org.camunda.bpm.engine.delegate.DelegateTask;
 import org.camunda.bpm.engine.impl.pvm.PvmActivity;
 
@@ -225,5 +226,44 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
 
     PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(PagingDTO<ProcessManagementDTO.ExportDTO> dto);
 
-
+    /**
+     * 流程强制通过
+     * @author will
+     * @date 2025/5/15 17:27
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO processPass(String id);
+    /**
+     * 流程强制驳回
+     * @author will
+     * @date 2025/5/15 17:27
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO processReject(String id);
+    /**
+     * 恢复
+     * @author will
+     * @date 2025/5/15 17:28
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO processRestore(String id);
+    /**
+     * 暂停
+     * @author will
+     * @date 2025/5/15 17:28
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO processSuspend(String id);
+    /**
+     * tab列表
+     * @author will
+     * @date 2025/5/15 17:57
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<ProcessManagementDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

@@ -217,4 +217,17 @@
         </foreach>
     </select>
 
+    <!-- tab数据查询 -->
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$TabListDTO">
+        SELECT
+        pm.process_status as tabFlag,
+        count(pm.id) as count
+        FROM  process_management pm
+        WHERE pm.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        group by pm.process_status
+    </select>
+
 </mapper>

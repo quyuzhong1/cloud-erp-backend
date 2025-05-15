@@ -1,17 +1,21 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -19,6 +23,7 @@ import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.DeduplicationUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
@@ -30,6 +35,7 @@ import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.DictBasicEnum;
+import com.erp.model.workflow.enums.ProcessManagementTabEnum;
 import com.erp.model.workflow.enums.ProcessStatusEnum;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -65,7 +71,6 @@ import org.camunda.bpm.model.bpmn.instance.StartEvent;
 import org.camunda.bpm.model.bpmn.instance.UserTask;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -1037,6 +1042,90 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .forEach(x -> x.setProcessStatusName(x.getProcessStatus().getName()));
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO processPass(String id) {
+        ProcessManagementEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+        }
+        if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PASS_ERROR);
+        }
+        entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
+        this.updateById(entity);
+
+        //TODO 对接飞书
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.PASS);
+    }
+
+    @Override
+    public BatchResultDTO processReject(String id) {
+        ProcessManagementEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+        }
+        if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_REJECT_ERROR);
+        }
+        entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
+        this.updateById(entity);
+
+        //TODO 对接飞书
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.REJECT);
+    }
+
+    @Override
+    public BatchResultDTO processRestore(String id) {
+        ProcessManagementEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+        }
+        if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_RESTORE_ERROR);
+        }
+        entity.setProcessStatus(ProcessStatusEnum.RUNNING);
+        this.updateById(entity);
+
+        //TODO 对接飞书
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.RESTORE);
+    }
+
+    @Override
+    public BatchResultDTO processSuspend(String id) {
+        ProcessManagementEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+        }
+        if (!ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_SUSPEND_ERROR);
+        }
+        entity.setProcessStatus(ProcessStatusEnum.PAUSE);
+        this.updateById(entity);
+        //TODO 对接飞书
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.SUSPEND);
+    }
+
+    @Override
+    public List<ProcessManagementDTO.TabListDTO> tabList(PermissionsDTO param) {
+        List<ProcessManagementDTO.TabListDTO> tabList = this.baseMapper.tabList(param);
+        Map<String, Integer> map = CollUtil.isEmpty(tabList) ? new HashMap<>() : tabList.stream().collect(Collectors.toMap(ProcessManagementDTO.TabListDTO::getTabFlag, ProcessManagementDTO.TabListDTO::getCount));
+        ProcessManagementTabEnum[] values = ProcessManagementTabEnum.values();
+        List<ProcessManagementDTO.TabListDTO> list = new ArrayList<>();
+        for (ProcessManagementTabEnum item : values) {
+            ProcessManagementDTO.TabListDTO resultDTO = new ProcessManagementDTO.TabListDTO();
+            Integer count = map.get(item.getCode());
+            //异常枚举额外处理
+            if (ProcessManagementTabEnum.ABNORMAL.getCode().equals(item.getCode())) {
+                count =  MathUtil.add(map.get(ProcessStatusEnum.PAUSE.getCode()),map.get(ProcessStatusEnum.TERMINATION.getCode()));
+            }
+            resultDTO.setCount(ObjectUtil.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     /**
