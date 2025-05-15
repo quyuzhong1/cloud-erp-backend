@@ -206,6 +206,10 @@ public class ShopDTO implements Serializable {
          * 授权过期时间
          */
         private LocalDate authExpireDate;
+        /**
+         * 是否存在授权
+         */
+        private Boolean isAuth;
     }
 
 
@@ -229,6 +233,10 @@ public class ShopDTO implements Serializable {
          * 展示对应用的的权限集合
          */
         private String userId;
+        /**
+         * 店铺ID集合【后端使用】
+         */
+        private List<String> shopIdList = new ArrayList<>();
 
     }
 

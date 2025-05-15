@@ -25,6 +25,12 @@
          channel_affiliation channelAffiliation,
          shipping_organization shippingOrganization,
          financial_organization financialOrganization,
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+            id = ANY(#{params.warehouseIdList,jdbcType=ARRAY,typeHandler=com.erp.server.wms.handler.PgStringArrayTypeHandler}::varchar[]) as isAuth,
+        </if>
+        <if test="params.warehouseIdList== null or params.warehouseIdList.size == 0">
+            false as isAuth,
+        </if>
          open_time openTime,
          close_time closeTime
       FROM  warehouse  WHERE ${params.sqlMap.default}
@@ -39,7 +45,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        create_time desc
+        isAuth DESC,create_time desc
     </select>
 
     <select id="getExport" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
