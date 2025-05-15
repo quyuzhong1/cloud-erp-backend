@@ -5,14 +5,10 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.erp.model.oms.dto.CustomerDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
-import com.erp.model.wms.dto.OtherOutstockCustomerDTO;
-import com.erp.model.wms.dto.OtherOutstockDTO;
-import com.erp.model.wms.dto.OtherOutstockDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.OtherOutStockImportExcelDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
-import com.erp.model.wms.enums.OutstockTypeEnum;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -20,7 +16,6 @@ import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
-import java.util.List;
 
 /**
  * 其他出库实体映射工具
@@ -64,8 +59,8 @@ public interface OtherOutStockConverter {
             @Mapping(target = "billDate", source = "billDate"),
             @Mapping(target = "remark", source = "remark"),
             @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
-            @Mapping(target = "warehouseKeeperId", constant = ""),
-            @Mapping(target = "warehouseKeeperName", constant = ""),
+            @Mapping(target = "warehouseKeeperId", source = "uid"),
+            @Mapping(target = "warehouseKeeperName", source = "userName"),
             @Mapping(target = "receiverId", expression = "java(null == userDTO ? \"\" : userDTO.getUserId())"),
             @Mapping(target = "receiverName", expression = "java(null == userDTO ? \"\" : userDTO.getUserName())"),
             @Mapping(target = "warehouseId", source = "warehouseDTO.id"),
@@ -80,6 +75,13 @@ public interface OtherOutStockConverter {
             @Mapping(target = "deptName", source = "departmentDTO.name"),
             @Mapping(target = "code", source = "code"),
             @Mapping(target = "approveStatus", constant = "waitSubmit"),
+            @Mapping(target = "approveTime", ignore = true),
+            @Mapping(target = "approveUserId", ignore = true),
+            @Mapping(target = "approveUserName", ignore = true),
+            @Mapping(target = "customerEntity", ignore = true),
+            @Mapping(target = "detailEntityList", ignore = true),
+            @Mapping(target = "invalidRemark", ignore = true),
+            @Mapping(target = "invalidStatus", ignore = true)
     })
     OtherOutstockEntity combineAddEntity(OtherOutStockImportExcelDTO importExcelDTO,
                                          String type,
@@ -92,8 +94,8 @@ public interface OtherOutStockConverter {
                                          FindUserDTO userDTO,
                                          BaseIdDTO orgDTO,
                                          String code,
-                                         String remark
-    );
+                                         String remark,
+                                         String uid, String userName);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),

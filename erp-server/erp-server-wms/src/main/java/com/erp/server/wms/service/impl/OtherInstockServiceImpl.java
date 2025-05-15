@@ -1009,7 +1009,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
         // 可保存处理的列表
         List<OtherInstockEntity> canHandleList = new ArrayList<>();
-
+        //获取当前用户
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         // 校验和处理
         for (OtherInStockImportExcelDTO importExcelDTO : successList) {
             // 库存类型Map
@@ -1121,7 +1122,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                         locationEntity,
                         departmentDTO,
                         userDTO,
-                        code
+                        code,
+                        userInfo.getUid(),
+                        userInfo.getUserName()
                 );
 
                 // 明细
