@@ -55,7 +55,7 @@ public class PurchaseSuggestMergeController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "psm.shop_id",
-            menuCode = "oms:purchaseSuggestMerge:paging"
+            menuCode = "mrp:purchaseSuggestMerge:paging"
     )
     @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult<PagingVO<PurchaseSuggestMergeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
@@ -73,7 +73,7 @@ public class PurchaseSuggestMergeController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "psm.shop_id",
-            menuCode = "oms:purchaseSuggestMerge:paging"
+            menuCode = "mrp:purchaseSuggestMerge:paging"
     )
     public ApiResult<List<PurchaseSuggestMergeDTO.TabListDTO>> tabList(@RequestBody PurchaseSuggestMergeDTO.TabListParamDTO dto) {
         List<PurchaseSuggestMergeDTO.TabListDTO> tabList = purchaseSuggestMergeService.tabList(dto);

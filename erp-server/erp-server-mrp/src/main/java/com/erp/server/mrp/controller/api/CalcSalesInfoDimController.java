@@ -134,7 +134,7 @@ public class CalcSalesInfoDimController extends BaseController {
     @PostMapping("/pagingDetail")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "csic.shop_id",
-            menuCode = "oms:calcSalesInfoDim:pagingDetail"
+            menuCode = "mrp:calcSalesInfoDim:pagingDetail"
     )
     @WebAdvanceQuery
     public ApiResult<PagingVO<CalcSalesInfoDimDTO.DetailViewDTO>> pagingDetail(@RequestBody @Validated PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {

@@ -54,7 +54,7 @@ public class DeliverySuggestController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "ds.shop_id",
-            menuCode = "oms:deliverySuggest:paging"
+            menuCode = "mrp:deliverySuggest:paging"
     )
     @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
     public ApiResult<PagingVO<DeliverySuggestDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
@@ -85,7 +85,7 @@ public class DeliverySuggestController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "ds.shop_id",
-            menuCode = "oms:deliverySuggest:paging"
+            menuCode = "mrp:deliverySuggest:paging"
     )
     public ApiResult<List<DeliverySuggestDTO.TabListDTO>> tabList(@RequestBody DeliverySuggestDTO.TabListParamDTO dto) {
         List<DeliverySuggestDTO.TabListDTO> tabList = deliverySuggestService.tabList(dto);

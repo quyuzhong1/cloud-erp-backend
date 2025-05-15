@@ -46,7 +46,7 @@ public class VirtualInventoryDiffController extends BaseController {
     @PostMapping("/diffPaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "diff.warehouseId",
-            menuCode = "wms:virtualInventoryDiff:paging"
+            menuCode = "wms:virtualInventoryDiff:diffPaging"
     )
     @WebAdvanceQuery(handler = VirtualInventoryDiffQueryHandler.class)
     public ApiResult<PagingVO<VirtualInventoryDiffDTO.ListDTO>> diffPaging(@RequestBody @Validated PagingDTO<VirtualInventoryDiffDTO.SearchParamDTO> dto) {
@@ -63,7 +63,7 @@ public class VirtualInventoryDiffController extends BaseController {
     @PostMapping("/diffPagingCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "vi.warehouse_id",
-            menuCode = "wms:virtualInventoryDiff:paging"
+            menuCode = "wms:virtualInventoryDiff:diffPaging"
     )
     public ApiResult<Integer> diffPagingCount(@RequestBody PermissionsDTO dto) {
         Integer count = virtualInventoryDiffService.diffPagingCount(dto);

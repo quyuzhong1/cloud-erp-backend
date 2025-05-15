@@ -124,7 +124,7 @@ public class ExportMrpFeignController {
     @PostMapping("/pagingPurchaseSuggestionMerge")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "psm.shop_id",
-            menuCode = "oms:purchaseSuggestMerge:paging"
+            menuCode = "mrp:purchaseSuggestMerge:paging"
     )
     @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public PagingVO<PurchaseSuggestMergeDTO.ListDTO> pagingPurchaseSuggestionMerge(@RequestBody PagingDTO<PurchaseSuggestMergeDTO.PagingParamDTO> dto) {
@@ -141,7 +141,7 @@ public class ExportMrpFeignController {
     @PostMapping("/pagingDeliverySuggestion")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "ds.shop_id",
-            menuCode = "oms:deliverySuggest:paging"
+            menuCode = "mrp:deliverySuggest:paging"
     )
     @WebAdvanceQuery(handler = DeliverySuggestionQueryHandler.class)
     public PagingVO<DeliverySuggestDTO.ListDTO> pagingDeliverySuggestion(@RequestBody PagingDTO<DeliverySuggestDTO.PagingParamDTO> dto) {
@@ -216,7 +216,7 @@ public class ExportMrpFeignController {
     @PostMapping("/exportMrpSalesCalcList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             shopTableField = "csic.shop_id",
-            menuCode = "oms:calcSalesInfoDim:pagingDetail"
+            menuCode = "mrp:calcSalesInfoDim:pagingDetail"
     )
     @WebAdvanceQuery
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
