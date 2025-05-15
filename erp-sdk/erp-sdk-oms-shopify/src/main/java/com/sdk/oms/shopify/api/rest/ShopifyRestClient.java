@@ -1,6 +1,6 @@
 package com.sdk.oms.shopify.api.rest;
 
-import cn.hutool.json.JSONNull;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
@@ -1527,6 +1527,14 @@ public class ShopifyRestClient {
     public ShopifyFulfillmentServicesRoot getFulfillmentServices() {
         Response response = get(getWebTarget().path(FULFILLMENT_SERVICES.concat(JSON)).queryParam(SCOPE, ALL));
         return response.readEntity(ShopifyFulfillmentServicesRoot.class);
+    }
+
+    /**
+     * 获取物流渠道
+     */
+    public JSONObject getFulfillments(String orderId) {
+        Response response = get(buildOrdersEndpoint().path(orderId).path(FULFILLMENTS.concat(JSON)));
+        return JSONUtil.parseObj(response.getEntity());
     }
 
     /**

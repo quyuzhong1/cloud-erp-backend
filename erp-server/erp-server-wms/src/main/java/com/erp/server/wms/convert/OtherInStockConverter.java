@@ -81,8 +81,8 @@ public interface OtherInStockConverter {
             @Mapping(target = "version", ignore = true),
             @Mapping(target = "billDate", source = "billDate"),
             @Mapping(target = "inventoryDirection", source = "inventoryDirectionEnum.code"),
-            @Mapping(target = "warehouseKeeperId", constant = ""),
-            @Mapping(target = "warehouseKeeperName", constant = ""),
+            @Mapping(target = "warehouseKeeperId", source = "uid"),
+            @Mapping(target = "warehouseKeeperName", source = "userName"),
             // 入库单无领料人
             @Mapping(target = "receiverId", expression = "java(null == userDTO ? \"\" : userDTO.getUserId())"),
             @Mapping(target = "receiverName", expression = "java(null == userDTO ? \"\" : userDTO.getUserName())"),
@@ -96,6 +96,15 @@ public interface OtherInStockConverter {
             @Mapping(target = "code", source = "code"),
             @Mapping(target = "approveStatus", constant = "waitSubmit"),
             @Mapping(target = "remark", ignore = true),
+            @Mapping(target = "approveTime", ignore = true),
+            @Mapping(target = "approveUserId", ignore = true),
+            @Mapping(target = "approveUserName", ignore = true),
+            @Mapping(target = "detailEntityList", ignore = true),
+            @Mapping(target = "invalidRemark", ignore = true),
+            @Mapping(target = "invalidStatus", ignore = true),
+            @Mapping(target = "returnLogisticCode", ignore = true),
+            @Mapping(target = "thirdCode", ignore = true),
+            @Mapping(target = "thirdPlatform", ignore = true)
     })
     OtherInstockEntity combineAddEntity(OtherInStockImportExcelDTO importExcelDTO,
                                         InstockTypeEnum inStockTypeEnum,
@@ -105,7 +114,7 @@ public interface OtherInStockConverter {
                                         WarehouseLocationEntity locationEntity,
                                         SysDepartmentDTO departmentDTO,
                                         FindUserDTO userDTO,
-                                        String code);
+                                        String code, String uid, String userName);
 
     @Mappings({
             @Mapping(target = "id", ignore = true),
