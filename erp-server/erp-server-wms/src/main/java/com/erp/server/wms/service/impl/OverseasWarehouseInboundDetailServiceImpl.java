@@ -215,6 +215,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     userInfo.getUserName(),
                     dto.getReceivedQty(),
                     dto.getReceiveDate().atStartOfDay(),
+                    "",
                     SignSourceTypeEnum.MANUAL.getCode());
             addReceivedList.add(receivedEntity);
             // 添加主表
@@ -336,6 +337,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     userInfo.getUserName(),
                     dto.getReceivedQty(),
                     dto.getReceiveDate().atStartOfDay(),
+                    "",
                     SignSourceTypeEnum.CHANGE.getCode());
             addReceivedList.add(receivedEntity);
             // 添加主表
