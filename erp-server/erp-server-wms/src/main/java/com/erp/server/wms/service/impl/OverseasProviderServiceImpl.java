@@ -168,6 +168,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             entity.setAuthJson(dto.getAuthJson());
             entity.setEnableDate(dto.getEnabledDate());
             this.updateById(entity);
+            dmpTaskFeign.createThirdWarehouseTask(entity);
         }
         return result;
     }
@@ -185,6 +186,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         //删除数据同步任务
         String platformCode = this.getPlatFormCodeById(id);
         dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(id,null, platformCode));
+        dmpTaskFeign.removeThirdWarehouseTask(entity);
         return true;
     }
 

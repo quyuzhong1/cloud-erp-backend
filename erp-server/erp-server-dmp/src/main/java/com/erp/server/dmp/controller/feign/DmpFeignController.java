@@ -10,9 +10,11 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.PlatformEnum;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.sdk.third.kingdee.utils.KingdeeApiUtils;
 import com.erp.server.dmp.push.service.kingdee.KingdeeCommonService;
 import com.erp.server.dmp.service.*;
+import com.erp.server.dmp.service.impl.TbTaskTypeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -73,6 +75,9 @@ public class DmpFeignController extends BaseController {
     private CfgApiAuthService cfgApiAuthService;
     @Resource
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
+
+    @Resource
+    private TbTaskTypeService tbTaskTypeService;
 
     @PostMapping("/getShopById")
     public BiShopInfoDTO getShopById(@RequestBody String shopId) {
@@ -302,5 +307,21 @@ public class DmpFeignController extends BaseController {
             return null;
         }
         return dmpOutputTaskRecordService.getOutputTaskRecord(sourceCode, outputClass);
+    }
+
+    /**
+     * 创建第三方任务
+     */
+    @PostMapping("/createThirdWarehouseTask")
+    public void createThirdWarehouseTask(@RequestBody OverseasProviderEntity overseasProviderEntity){
+        tbTaskTypeService.addNewDmpTask(overseasProviderEntity);
+    }
+
+    /**
+     * 创建第三方任务
+     */
+    @PostMapping("/removeThirdWarehouseTask")
+    public void removeThirdWarehouseTask(@RequestBody OverseasProviderEntity overseasProviderEntity){
+        tbTaskTypeService.removeThirdWarehouseTask(overseasProviderEntity);
     }
 }

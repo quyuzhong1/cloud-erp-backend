@@ -69,11 +69,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         try {
             ThirdWarehouseContext.setAuthMap(dto.getAuthJson());
-            boolean result = warehouseAuthorize(dto);
-            if (result) {
-                dmpTaskFeign.createThirdWarehouseTask(new ThirdWarehouseTaskDTO.AddDTO(dto.getId(), dto.getAuthJson(), getPlatForm().getCode()));
-            }
-            return result;
+            return warehouseAuthorize(dto);
         } finally {
             ThirdWarehouseContext.remove();
         }
