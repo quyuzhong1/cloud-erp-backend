@@ -48,7 +48,7 @@ public class CfgApproveNoticeEntity extends BaseEntity<CfgApproveNoticeEntity> {
     * 是否启用
     */
     @TableField("enable_status")
-    private String enableStatus;
+    private Boolean enableStatus;
 
 
     public static final String MAIN_ID = "main_id";
