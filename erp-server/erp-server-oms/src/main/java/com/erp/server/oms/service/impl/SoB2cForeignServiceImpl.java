@@ -355,7 +355,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
      */
     private List<SoB2cEntity> queryByTrackingNumber(ShopifyServerSoB2cDTO.SoB2cLogisticQueryDTO dto) {
         List<SoB2cLogisticsEntity> logisticsEntityList = soB2cLogisticsService.lambdaQuery()
-                .eq(SoB2cLogisticsEntity::getTrackNo, dto.getTrackingNumber())
+                .eq(SoB2cLogisticsEntity::getCode, dto.getTrackingNumber())
                 .list();
         if (CollectionUtils.isNotEmpty(logisticsEntityList)) {
             List<String> mainIds = logisticsEntityList.stream().map(SoB2cLogisticsEntity::getMainId).collect(Collectors.toList());
