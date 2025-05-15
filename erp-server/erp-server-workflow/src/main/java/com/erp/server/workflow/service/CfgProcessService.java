@@ -1,7 +1,6 @@
 package com.erp.server.workflow.service;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
+
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -54,5 +53,5 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
     void exportList(PagingDTO<CfgProcessDTO.SearchParamDTO> dto);
 
 
-
+    List<CfgProcessDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

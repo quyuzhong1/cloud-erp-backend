@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -18,7 +19,6 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.CfgProcessMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import org.springframework.stereotype.Service;
@@ -163,6 +163,44 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     public void exportList(PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
         downloadTaskFeign.saveDownloadTask("流程配置导出", EXPORT_CFG_PROCESS.getCode(), dto);
+    }
+
+    @Override
+    public List<CfgProcessDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        CfgProcessDTO.SearchParamDTO searchParam = new CfgProcessDTO.SearchParamDTO();
+        searchParam.setPermissionSql(dto.getPermissionSql());
+
+        List<CfgProcessDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+
+        // 定义需要展示的状态列表
+        List<String> statusList = Arrays.asList("t", "f");
+
+        // 获取已存在的状态
+        List<String> existStatusList = list.stream()
+                .map(CfgProcessDTO.TabListDTO::getTabFlag)
+                .collect(Collectors.toList());
+
+        // 补充不存在的状态并设置默认值
+        statusList.forEach(status -> {
+            if (!existStatusList.contains(status)) {
+                list.add(new CfgProcessDTO.TabListDTO(status, "", 0));
+            }
+        });
+
+        // 设置状态中文名称
+        list.forEach(item -> item.setTabFlagName(Objects.equals(item.getTabFlag(), "f") ? "停用" : "启用"));
+
+        // 计算总数并添加“全部”条目
+        int totalCount = list.stream()
+                .map(CfgProcessDTO.TabListDTO::getCount)
+                .filter(Objects::nonNull)
+                .reduce(0, Integer::sum);
+        list.add(new CfgProcessDTO.TabListDTO("all", "全部", totalCount));
+
+        // 倒序排列
+        Collections.reverse(list);
+
+        return list;
     }
 
 

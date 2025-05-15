@@ -7,6 +7,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import java.util.List;
+
 
 /**
  * <p>
@@ -34,4 +36,6 @@ public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
      * @return: CfgProcessDTO.ListDTO
      **/
     CfgProcessDTO.ProcessDTO getProcessById(String id);
+
+    List<CfgProcessDTO.TabListDTO> tabList(CfgProcessDTO.SearchParamDTO searchParam);
 }

@@ -152,4 +152,16 @@
         r.create_time desc
     </select>
 
+    <select id="tabList" resultType="com.erp.model.workflow.dto.CfgProcessDTO$TabListDTO">
+        SELECT
+        cp.disable AS tabFlag,
+        count(1)  AS count
+        FROM  cfg_process as cp
+        left join cfg_process_rule on cp.id = cfg_process_rule.cfg_process_id
+        WHERE cp.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY cp.disable
+    </select>
 </mapper>

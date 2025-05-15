@@ -2,8 +2,11 @@ package com.erp.server.workflow.controller.api;
 
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.model.workflow.enums.CfgProcessBussinessKeyEnum;
@@ -58,10 +61,10 @@ public class CfgProcessController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "分页查询")
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "",
-//            menuCode = "",
-//            tableAlias = "cp")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgProcess:paging",
+            tableAlias = "cp")
     @WebAdvanceQuery(handler = CfgProcessQueryHandler.class)
     public ApiResult<PagingVO<CfgProcessDTO.ProcessViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
         PagingVO<CfgProcessDTO.ProcessViewDTO> pagingVO = cfgProcessService.paging(dto);
@@ -159,7 +162,7 @@ public class CfgProcessController extends BaseController {
 
 
     /**
-     * 新增/更新
+     * 新增
      *
      * @param dto
      * @return ApiResult<String>
@@ -173,7 +176,7 @@ public class CfgProcessController extends BaseController {
     }
 
     /**
-     * 新增/更新
+     * 更新
      *
      * @param dto
      * @return ApiResult<String>
@@ -184,5 +187,19 @@ public class CfgProcessController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "流程配置新增/删除")
     public ApiResult<BaseResultDTO.AddDTO> update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         return success(cfgProcessService.update(dto));
+    }
+
+    /**
+     * 获取状态统计
+     * @return
+     */
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgProcess:paging",
+            tableAlias = "cp"
+    )
+    public ApiResult<List<CfgProcessDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
+        return success(cfgProcessService.tabList(dto));
     }
 }

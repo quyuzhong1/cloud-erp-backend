@@ -20,19 +20,16 @@ public class CfgProcessQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("tab".equals(field)) {
-            if ("all".equals(value)) {
-                return this.getQueryAllSql();
+            if(value.equals("all") || value.equals("")){
+                return "";
             }
-            if ("".equals(value)) {
-                super.buildDefaultDTO("pp.product_status", Arrays.asList("", "1"));
+            if ("t".equals(value)) {
+                return "cas.enable_status ="+ Boolean.TRUE;
             }
-            if ("2".equals(value)) {
-                super.buildDefaultDTO("pp.product_status", Arrays.asList("3", "4", "5", "6"));
+            if ("f".equals(value)) {
+                return "cas.enable_status ="+ Boolean.FALSE;
             }
-            if ("3".equals(value)) {
-                super.buildDefaultDTO("pp.product_status", Arrays.asList("4", "5", "6"));
-            }
-            return super.getSplicingSQL();
+            return "";
         }
         return null;
     }{
