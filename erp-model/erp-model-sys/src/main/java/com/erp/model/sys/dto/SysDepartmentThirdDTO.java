@@ -5,6 +5,8 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -151,8 +153,8 @@ public class SysDepartmentThirdDTO implements Serializable {
         /**
          * 主键id
          */
-        @NotBlank(message = "第三方平台不能为空")
-        private String platform;
+        @NotEmpty(message = "第三方平台不能为空")
+        private List<String> platform;
 
         private String departmentName;
     }

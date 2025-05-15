@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.erp.model.sys.entity.SysDepartmentThirdEntity;
+import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.mapper.SysDepartmentThirdMapper;
 import com.erp.server.sys.service.SysDepartmentThirdService;
@@ -48,7 +49,7 @@ public class SysDepartmentThirdServiceImpl extends SuperServiceImpl<SysDepartmen
     @Override
     public List<SysDepartmentThirdDTO.ThirdDeptDropDownDTO> listThirdDeptDropDown(SysDepartmentThirdDTO.ThirdDeptParamDTO dto) {
         LambdaQueryWrapper<SysDepartmentThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SysDepartmentThirdEntity::getPlatform, dto.getPlatform());
+        queryWrapper.in(SysDepartmentThirdEntity::getPlatform, dto.getPlatform());
         if(StringUtils.isNotBlank(dto.getDepartmentName())){
             queryWrapper.like(SysDepartmentThirdEntity::getThirdDepartmentName, dto.getDepartmentName());
         }
@@ -94,7 +95,7 @@ public class SysDepartmentThirdServiceImpl extends SuperServiceImpl<SysDepartmen
             }
             SysDepartmentThirdEntity entity = new SysDepartmentThirdEntity();
             entity.setDeptId("");
-            entity.setPlatform(ThirdpartyPlatformEnum.FS.getCode());
+            entity.setPlatform(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
             entity.setThirdDeptId(department.getDepartmentId());
             entity.setThirdOpenDeptId(department.getOpenDepartmentId());
             entity.setThirdParentOpenDeptId(department.getParentDepartmentId());
@@ -118,59 +119,4 @@ public class SysDepartmentThirdServiceImpl extends SuperServiceImpl<SysDepartmen
                 .pageSize(50)
                 .build();
     }
-
-//    @Override
-//    public void syncFsDept() {
-//        ChildrenDepartmentResp childrenDepartment = fsService.getChildrenDepartments(null);
-//        ChildrenDepartmentRespBody data = childrenDepartment.getData();
-//        Department[] items = data.getItems();
-//        if(Objects.nonNull(items) && items.length > 0){
-//            List<SysDepartmentThirdEntity> result = new ArrayList<>();
-//            for (Department department : items) {
-//                if(department.getStatus().getIsDeleted()){
-//                    continue;
-//                }
-//                SysDepartmentThirdEntity entity = new SysDepartmentThirdEntity();
-//                entity.setDeptId("");
-//                entity.setPlatform(ThirdpartyPlatformEnum.FS.getCode());
-//                entity.setThirdDeptId(department.getDepartmentId());
-//                entity.setThirdOpenDeptId(department.getOpenDepartmentId());
-//                entity.setThirdParentOpenDeptId(department.getParentDepartmentId());
-//                entity.setThirdDepartmentName(department.getName());
-//                result.add(entity);
-//            }
-//            saveBatch(result);
-//        }
-//
-//        if(StringUtils.isNotBlank(data.getPageToken())){
-//            ChildrenDepartmentReq req = ChildrenDepartmentReq.newBuilder()
-//                    .departmentId("0")
-//                    .userIdType("open_id")
-//                    .departmentIdType("open_department_id")
-//                    .fetchChild(true)
-//                    .pageToken(data.getPageToken())
-//                    .pageSize(50)
-//                    .build();
-//
-//            childrenDepartment = fsService.getChildrenDepartments(req);
-//            data = childrenDepartment.getData();
-//            if(Objects.nonNull(data.getItems()) && data.getItems().length > 0){
-//                List<SysDepartmentThirdEntity> result = new ArrayList<>();
-//                for (Department department : data.getItems()) {
-//                    if(department.getStatus().getIsDeleted()){
-//                        continue;
-//                    }
-//                    SysDepartmentThirdEntity entity = new SysDepartmentThirdEntity();
-//                    entity.setDeptId("");
-//                    entity.setPlatform(ThirdpartyPlatformEnum.FS.getCode());
-//                    entity.setThirdDeptId(department.getDepartmentId());
-//                    entity.setThirdOpenDeptId(department.getOpenDepartmentId());
-//                    entity.setThirdParentOpenDeptId(department.getParentDepartmentId());
-//                    entity.setThirdDepartmentName(department.getName());
-//                    result.add(entity);
-//                }
-//                saveBatch(result);
-//            }
-//        }
-//    }
 }
