@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
 
@@ -61,7 +63,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgProcessDTO.AddOrUpdateDTO dto) {
+    public BaseResultDTO.AddDTO add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
         // 生成单号
@@ -81,7 +83,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     }
 
     @Override
-    public BaseResultDTO.AddDTO update(CfgProcessDTO.AddOrUpdateDTO dto) {
+    public BaseResultDTO.AddDTO update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         CfgProcessEntity old = this.getById(dto.getId());
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
@@ -100,7 +102,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     }
 
     @Override
-    public PagingVO<CfgProcessDTO.ProcessViewDTO> paging(PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
+    public PagingVO<CfgProcessDTO.ProcessViewDTO> paging(@RequestBody @Validated PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
         CfgProcessDTO.SearchParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<CfgProcessDTO.ProcessDTO> pageData = baseMapper.getProcessWithRulesAndExps(params);

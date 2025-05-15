@@ -21,7 +21,6 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgQueryOptionDTO.AddDTO dto);
 
     /**
     * 修改
@@ -30,7 +29,6 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     * @param dto
     * @return
     */
-    Boolean update(CfgQueryOptionDTO.UpdateDTO dto);
 
 
 }

@@ -35,38 +35,5 @@ public class CfgQueryOptionController extends BaseController {
     @Resource
     private CfgQueryOptionService cfgQueryOptionService;
 
-    /**
-    * 新增
-    * @author hcg
-    * @date:  2025-05-15
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "查询option配置表(数大臣单据字段)新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgQueryOptionDTO.AddDTO dto) {
-        return success(cfgQueryOptionService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author hcg
-    * @date:  2025-05-15
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "查询option配置表(数大臣单据字段)修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "workflow:cfgQueryOption:update",
-        serviceClass = CfgQueryOptionService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgQueryOptionDTO.UpdateDTO dto) {
-        cfgQueryOptionService.update(dto);
-        return success();
-    }
-
-
 
 }

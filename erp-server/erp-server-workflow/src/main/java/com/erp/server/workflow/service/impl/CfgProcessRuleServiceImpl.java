@@ -11,8 +11,9 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessExpDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
-import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
+import com.erp.model.workflow.entity.ProcessManagementEntity;
+import com.erp.model.workflow.entity.ThirdProcessInstanceEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.server.workflow.mapper.CfgProcessRuleMapper;
 import com.erp.server.workflow.service.*;
@@ -52,6 +53,10 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     CfgProcessExpService cfgProcessExpService;
     @Resource
     CfgProcessFieldMapService cfgProcessFieldMapService;
+    @Resource
+    ProcessManagementService processManagementService;
+    @Resource
+    ThirdProcessInstanceService thirdProcessInstanceService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -143,19 +148,19 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         // 组装审核条件和字段配置的Map
         for (CfgProcessRuleDTO.AddOrUpdateDTO dto : addDTO) {
             CfgProcessRuleEntity ruleEntity = entityMap.get(dto.getId());
-            if (ObjectUtil.isEmpty(ruleEntity)){
+            if (ObjectUtil.isEmpty(ruleEntity)) {
                 continue;
             }
             String ruleId = dto.getId();
             List<CfgProcessExpDTO.AddOrUpdateDTO> processExpDTOList = dto.getProcessExpDTOList() != null
                     ? dto.getProcessExpDTOList() : Collections.emptyList();
             if (!processExpDTOList.isEmpty()) {
-                cfgProcessExpService.addOrUpdate(cfgProcessId,ruleId, processExpDTOList);
+                cfgProcessExpService.addOrUpdate(cfgProcessId, ruleId, processExpDTOList);
             }
             List<CfgProcessFieldMapDTO.AddOrUpdateDTO> processFieldMapDTOList = dto.getProcessFieldMapDTOList() != null
                     ? dto.getProcessFieldMapDTOList() : Collections.emptyList();
             if (!processFieldMapDTOList.isEmpty()) {
-                cfgProcessFieldMapService.addOrUpdate(bussinessKey, cfgProcessId,ruleId, processFieldMapDTOList);
+                cfgProcessFieldMapService.addOrUpdate(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList);
             }
         }
         // 操作日志，遍历entities，找出old中和entity id相同的
@@ -172,13 +177,25 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
         //删除执行条件
-        CfgProcessRuleEntity byId = this.getById(ids.get(0));
+        List<CfgProcessRuleEntity> processRuleEntityList = this.list(new LambdaQueryWrapper<CfgProcessRuleEntity>().in(CfgProcessRuleEntity::getId, ids).eq(CfgProcessRuleEntity::getIsDeleted, false));
+        processRuleEntityList.forEach(item -> {
+            if (item.getType().equals(CfgProcessRuleTypeEnum.ERPPROGRESS.getCode())) {
+                List<ProcessManagementEntity> processManagementEntities = processManagementService.list(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getActProcessDefinitionId, item.getProcessDefinitionId()).eq(ProcessManagementEntity::getIsDeleted, false));
+                if (processManagementEntities.size() > 0) {
+                    throw new ServiceException("流程已被单据使用，不可删除");
+                }
+            }
+            List<ThirdProcessInstanceEntity> thirdProcessInstanceEntities = thirdProcessInstanceService.list(new LambdaQueryWrapper<ThirdProcessInstanceEntity>().eq(ThirdProcessInstanceEntity::getApprovalCode, item.getProcessDefinitionId()).eq(ThirdProcessInstanceEntity::getIsDeleted, false));
+            if (thirdProcessInstanceEntities.size() > 0) {
+                throw new ServiceException("流程已被单据使用，不可删除");
+            }
+        });
         removeByIds(ids);
         cfgProcessExpService.delete(ids);
         cfgProcessFieldMapService.delete(ids);
         // 操作日志
         String msg = StrUtil.format("删除【{}】流程设置执行条件", UserContext.getDefaultLoginUser().getUserName(), "流程设置执行条件", "");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), byId.getCfgProcessId(), "删除操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntityList.get(0).getCfgProcessId(), "删除操作");
     }
 
     @Override
