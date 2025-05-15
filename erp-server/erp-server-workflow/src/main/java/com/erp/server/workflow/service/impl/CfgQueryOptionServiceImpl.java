@@ -34,59 +34,6 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(CfgQueryOptionDTO.AddDTO addDTO) {
-        CfgQueryOptionEntity cfgQueryOptionEntity = new CfgQueryOptionEntity();
-        BeanMapperUtils.copy(addDTO, cfgQueryOptionEntity);
-
-        // 数据处理
-        handleData(cfgQueryOptionEntity);
-
-        log.info("开始新增查询option配置表(数大臣单据字段)");
-        boolean save = super.save(cfgQueryOptionEntity);
-        if(!save) {
-            throw new ServiceException("查询option配置表(数大臣单据字段)保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "查询option配置表(数大臣单据字段)" , cfgQueryOptionEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgQueryOptionEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(cfgQueryOptionEntity.getId(), cfgQueryOptionEntity.getId());
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(CfgQueryOptionDTO.UpdateDTO addOrUpdateDTO) {
-        CfgQueryOptionEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "查询option配置表(数大臣单据字段)"));
-        CfgQueryOptionEntity cfgQueryOptionEntity =  BeanMapperUtils.map(CfgQueryOptionEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(cfgQueryOptionEntity);
-        log.info("编辑 开始修改查询option配置表(数大臣单据字段)数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgQueryOptionEntity);
-        if(!save) {
-            throw new ServiceException("查询option配置表(数大臣单据字段)保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录查询option配置表(数大臣单据字段)日志数据，id：【{}】", cfgQueryOptionEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgQueryOptionEntity.getId(), "查询option配置表(数大臣单据字段)");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgQueryOptionEntity, null, cfgQueryOptionEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
-
-
     /**
     * 新增修改处理数据
     */

@@ -454,4 +454,18 @@ public class ProcessDefinitionDTO {
         @NotNull(message = "是否禁用不能为空")
         private Boolean disabled;
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO {
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 单据名称
+         */
+        private String name;
+    }
 }

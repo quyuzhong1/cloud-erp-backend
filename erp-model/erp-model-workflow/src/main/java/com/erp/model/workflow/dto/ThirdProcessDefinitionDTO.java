@@ -160,7 +160,7 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         /**
          * 单据编码
          */
-        private String approvalCode;
+        private String code;
 
         /**
          * 单据名称

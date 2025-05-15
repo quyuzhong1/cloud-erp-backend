@@ -1,8 +1,10 @@
 package com.erp.server.workflow.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
@@ -15,15 +17,20 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
+import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
+import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ProcessDefinitionMapper;
 import com.erp.server.workflow.service.ProcessBusinessService;
 import com.erp.server.workflow.service.ProcessDefinitionService;
+import com.erp.server.workflow.service.ThirdProcessDefinitionService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.impl.persistence.entity.DeploymentEntity;
@@ -32,10 +39,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_DEFINITION;
@@ -59,7 +63,8 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     private RedisService redisService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private ThirdProcessDefinitionService  thirdProcessDefinitionService;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
@@ -215,5 +220,20 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             list.add(resultDTO);
         }
         return list;
+    }
+
+    @Override
+    public List<ProcessDefinitionDTO.DropDownDTO> dropDown() {
+        //1、定时拉取获取定义状态
+        List<ProcessDefinitionDTO.DropDownDTO> downDTOList = this.list(new LambdaQueryWrapper<ProcessDefinitionEntity>().eq(ProcessDefinitionEntity::getIsDeploy, true).eq(ProcessDefinitionEntity::getIsDeleted, false)).stream().map(processDefinitionEntity -> {
+            ProcessDefinitionDTO.DropDownDTO dropDownDTO = new ProcessDefinitionDTO.DropDownDTO();
+            dropDownDTO.setCode(processDefinitionEntity.getId());
+            dropDownDTO.setName(processDefinitionEntity.getProcessName());
+            return dropDownDTO;
+        }).collect(Collectors.toList());
+        List<ThirdProcessDefinitionDTO.DropDownDTO> dropDownDTOS = thirdProcessDefinitionService.dropDown();
+        //组合
+        downDTOList.addAll(BeanUtil.copyToList(dropDownDTOS, ProcessDefinitionDTO.DropDownDTO.class));
+        return downDTOList;
     }
 }

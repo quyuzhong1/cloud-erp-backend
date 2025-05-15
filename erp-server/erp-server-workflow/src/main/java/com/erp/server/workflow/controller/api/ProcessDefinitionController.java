@@ -171,5 +171,15 @@ public class ProcessDefinitionController extends BaseController {
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
+    /**
+     * 下拉ERP审评定义
+     * @return
+     */
+    @GetMapping("/drop/down")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "下拉ERP审评定义")
+    public ApiResult<List<ProcessDefinitionDTO.DropDownDTO>> dropDown() {
+        return success(processDefinitionService.dropDown());
+    }
 }
 
