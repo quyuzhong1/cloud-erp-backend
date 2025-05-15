@@ -50,7 +50,7 @@ public class ProcessDelegateController extends BaseController {
      */
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "start_user_id",
             menuCode = "workflow:processDelegate:paging",
             tableAlias = "pd"
     )
@@ -67,7 +67,7 @@ public class ProcessDelegateController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
+            tableField = "start_user_id",
             menuCode = "workflow:processDelegate:paging",
             tableAlias = "pd"
     )
@@ -99,7 +99,7 @@ public class ProcessDelegateController extends BaseController {
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "委托审批修改")
         @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
+        tableField = "start_user_id",
         menuCode = "workflow:processDelegate:update",
         serviceClass = ProcessDelegateService.class,
         keyIdName = "id")
@@ -117,7 +117,7 @@ public class ProcessDelegateController extends BaseController {
      */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "start_user_id",
             menuCode = "workflow:processDelegate:view",
             serviceClass = ProcessDelegateService.class,
             keyIdName = "id")
@@ -136,7 +136,7 @@ public class ProcessDelegateController extends BaseController {
      */
     @PostMapping("/closeDelegate")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
+            tableField = "start_user_id",
             menuCode = "workflow:processDelegate:closeDelegate",
             serviceClass = ProcessDelegateService.class,
             keyIdName = "ids")
@@ -172,6 +172,11 @@ public class ProcessDelegateController extends BaseController {
     @PostMapping("/export")
     @LogAction(value = LogActionEnum.EXPORT, desc = "委托审批导出Excel数据")
     @WebAdvanceQuery(handler = ProcessDelegateQueryHandler.class)
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "start_user_id",
+            menuCode = "workflow:processDelegate:paging",
+            tableAlias = "pd"
+    )
     public ApiResult<Boolean> exportList(@RequestBody @Validated ProcessDelegateDTO.PagingParamDTO dto) {
         processDelegateService.exportList(dto);
         return success();

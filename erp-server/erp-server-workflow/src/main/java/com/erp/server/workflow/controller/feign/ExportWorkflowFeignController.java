@@ -52,9 +52,8 @@ public class ExportWorkflowFeignController {
         return processDelegateService.paging(dto);
     }
 
-    @PostMapping("/exportCfgApproveSynce")
-    @WebAdvanceQuery(handler = CfgApproveSyncQueryHandler.class)
-    public PagingVO<CfgApproveSyncDTO.ListDTO> exportCfgApproveSync(PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto){
+    @PostMapping("/exportCfgApproveSync")
+    public PagingVO<CfgApproveSyncDTO.ListDTO> exportCfgApproveSync(@RequestBody PagingDTO<CfgApproveSyncDTO.PagingParamDTO> dto){
         return cfgApproveSyncService.paging(dto);
     }
 

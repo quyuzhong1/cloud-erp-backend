@@ -78,6 +78,11 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
     @TableField("is_deploy")
     private Boolean isDeploy;
 
+    /**
+     * 是否禁用，false否，true是
+     */
+    @TableField("disabled")
+    private Boolean disabled;
 
     public static final String PROCESS_NAME = "process_name";
 

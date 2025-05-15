@@ -116,12 +116,12 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     @Override
     public List<ProcessDelegateDTO.TabListDTO> tabList(PermissionsDTO param) {
         ProcessDelegateDTO.PagingParamDTO searchParam = new ProcessDelegateDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
         List<ProcessDelegateDTO.TabListDTO> tabList = this.baseMapper.tabList(searchParam);
         Map<String, ProcessDelegateDTO.TabListDTO> map = CollUtil.isEmpty(tabList) ? new HashMap<>() : tabList.stream().collect(Collectors.toMap(ProcessDelegateDTO.TabListDTO::getTabFlag, Function.identity()));
         ProcessDelegateStatusEnum[] values = ProcessDelegateStatusEnum.values();
         List<ProcessDelegateDTO.TabListDTO> list = new ArrayList<>();
         for (ProcessDelegateStatusEnum item : values) {
-            searchParam.setPermissionSql(param.getPermissionSql());
             ProcessDelegateDTO.TabListDTO resultDTO = new ProcessDelegateDTO.TabListDTO();
             ProcessDelegateDTO.TabListDTO tabListDTO = map.get(item.getCode());
             resultDTO.setCount(ObjectUtil.isEmpty(tabListDTO) ? MathUtil.ZERO : tabListDTO.getCount());

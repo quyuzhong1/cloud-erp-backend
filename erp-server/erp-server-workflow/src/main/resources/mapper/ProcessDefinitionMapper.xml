@@ -54,7 +54,8 @@
         pb.id as businessId,
         pb.business_key,
         pd.remark,
-        pd.review_setting
+        pd.review_setting,
+        pd.disabled
         FROM
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
@@ -108,6 +109,19 @@
           and pd.is_deploy = true
           and pb.business_key = '${params.businessKey}'
 --         缺少启用状态
+    </select>
+
+    <!-- 查询tab数据 -->
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ProcessDefinitionDTO$TabListDTO">
+        SELECT
+        pd.disabled as tabFlag,
+        count(pd.id) as count
+        FROM  process_definition pd
+        WHERE pd.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        group by pd.disabled
     </select>
 
 </mapper>
