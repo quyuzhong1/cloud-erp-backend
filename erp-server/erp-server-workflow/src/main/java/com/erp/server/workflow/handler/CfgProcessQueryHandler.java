@@ -7,6 +7,7 @@ package com.erp.server.workflow.handler;
  */
 
 import com.common.business.query.AbstractQueryHandler;
+import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 
@@ -16,6 +17,7 @@ import java.util.Arrays;
  * @Description:
  * @Version: 1.0
  */
+@Component
 public class CfgProcessQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {

@@ -36,11 +36,12 @@
         <result property="code" column="process_code"/>
         <result property="name" column="process_name"/>
         <result property="bussinessKey" column="process_bussiness_key"/>
+
         <collection property="ruleList" ofType="com.erp.model.workflow.dto.CfgProcessDTO$ProcessRuleDTO" resultMap="processRuleResultMap"/>
     </resultMap>
 
     <resultMap id="processRuleResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO$ProcessRuleDTO">
-        <result property="id" column="rule_id"/>
+        <id property="id" column="rule_id"/>
         <result property="type" column="rule_type"/>
         <result property="processDefinitionName" column="process_definition_name"/>
         <result property="processDefinitionVersion" column="process_definition_version"/>
@@ -50,63 +51,71 @@
         <result property="updateUserName" column="rule_update_user_name"/>
         <result property="disabled" column="disabled"/>
         <result property="isDefault" column="is_default"/>
+
         <collection property="expList" ofType="com.erp.model.workflow.dto.CfgProcessDTO$ProcessExpDTO" resultMap="processExpResultMap"/>
     </resultMap>
 
     <resultMap id="processExpResultMap" type="com.erp.model.workflow.dto.CfgProcessDTO$ProcessExpDTO">
-        <result property="index" column="exp_index"/>
-        <result property="expDesc" column="expDesc"/>
+        <id property="index" column="exp_index"/>
+        <result property="expDesc" column="exp_desc"/>
     </resultMap>
 
     <select id="getProcessWithRulesAndExps" resultMap="processResultMap">
         SELECT
+        -- Process
         p.id AS process_id,
         p.code AS process_code,
         p.name AS process_name,
         p.bussiness_key AS process_bussiness_key,
 
+        -- Rule
         r.id AS rule_id,
         r.type AS rule_type,
-        r.process_definition_version,
-        r.disabled,
-        r.is_default As is_default,
+        r.process_definition_version AS process_definition_version,
+        r.disabled AS disabled,
+        r.is_default AS is_default,
         r.create_time AS rule_create_time,
         r.create_user_name AS rule_create_user_name,
         r.update_time AS rule_update_time,
         r.update_user_name AS rule_update_user_name,
+
         CASE
         WHEN r.type = 'fsProcess' THEN tpd.name
-        WHEN r.type = 'sysProcess' THEN pd.process_name
+        WHEN r.type = 'erpProcess' THEN pd.process_name
         ELSE NULL
         END AS process_definition_name,
 
-        CONCAT(e.left_bracket,e.field,drc.value,e.right_bracket,e.logic,e.name) AS expDesc,
-        e.index AS exp_index
+        -- Expression
+        e.index AS exp_index,
+        CONCAT(
+        COALESCE(e.left_bracket, ''),
+        COALESCE(e.field, ''),
+        COALESCE(drc.value, ''),
+        COALESCE(e.right_bracket, ''),
+        COALESCE(e.logic, ''),
+        COALESCE(e.name, '')
+        ) AS exp_desc
 
-        FROM
-        public.cfg_process p
-        LEFT JOIN
-        public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
-        LEFT JOIN
-        public.third_process_definition tpd ON r.type = 'fsProcess' AND r.process_definition_id = tpd.id AND
+        FROM public.cfg_process p
+        LEFT JOIN public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
+        LEFT JOIN public.third_process_definition tpd ON r.type = 'fsProcess' AND r.process_definition_id = tpd.id AND
         tpd.is_deleted = false
-        LEFT JOIN
-        public.process_definition pd ON r.type = 'sysProcess' AND r.process_definition_id = pd.id AND pd.is_deleted =
-        false
-        LEFT JOIN
-        public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
-        LEFT JOIN
-        public.dict_rule_condition drc ON e.compare = drc.key AND drc.is_deleted = false
+        LEFT JOIN public.process_definition pd ON r.type = 'erpProcess' AND r.process_definition_id = pd.id AND
+        pd.is_deleted = false
+        LEFT JOIN public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
+        LEFT JOIN public.dict_rule_condition drc ON e.compare = drc.key AND drc.is_deleted = false
+
         WHERE
         ${params.sqlMap.default}
-        AND
-        p.is_deleted = false
-        <if test="params.permissionSql!=null and params.permissionSql!=''">
+        AND p.is_deleted = false
+
+        <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        ORDER BY
-        r.create_time,p.code desc
+
+        ORDER BY r.create_time,p.code desc
     </select>
+
 
     <select id="getProcessById" resultMap="processResultMap">
         SELECT

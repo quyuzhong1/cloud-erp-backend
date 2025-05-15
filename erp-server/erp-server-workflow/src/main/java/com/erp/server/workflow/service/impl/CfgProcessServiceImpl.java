@@ -105,7 +105,8 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     public PagingVO<CfgProcessDTO.ProcessViewDTO> paging(@RequestBody @Validated PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
         CfgProcessDTO.SearchParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
-        IPage<CfgProcessDTO.ProcessDTO> pageData = baseMapper.getProcessWithRulesAndExps(params);
+        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        IPage<CfgProcessDTO.ProcessDTO> pageData = baseMapper.getProcessWithRulesAndExps(query,params);
         //处理processResultMap
         List<CfgProcessDTO.ProcessViewDTO> viewDTOList = pageData.getRecords().stream()
                 .flatMap(processDTO -> processDTO.getRuleList().stream().map(rule -> {
@@ -169,10 +170,10 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public List<CfgProcessDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        CfgProcessDTO.SearchParamDTO searchParam = new CfgProcessDTO.SearchParamDTO();
-        searchParam.setPermissionSql(dto.getPermissionSql());
+        CfgProcessDTO.SearchParamDTO params = new CfgProcessDTO.SearchParamDTO();
+        params.setPermissionSql(dto.getPermissionSql());
 
-        List<CfgProcessDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        List<CfgProcessDTO.TabListDTO> list = baseMapper.tabList(params);
 
         // 定义需要展示的状态列表
         List<String> statusList = Arrays.asList("t", "f");

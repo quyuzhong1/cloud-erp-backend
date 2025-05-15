@@ -64,7 +64,7 @@ public class CfgProcessController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "workflow:cfgProcess:paging",
-            tableAlias = "cp")
+            tableAlias = "p")
     @WebAdvanceQuery(handler = CfgProcessQueryHandler.class)
     public ApiResult<PagingVO<CfgProcessDTO.ProcessViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
         PagingVO<CfgProcessDTO.ProcessViewDTO> pagingVO = cfgProcessService.paging(dto);
@@ -170,7 +170,7 @@ public class CfgProcessController extends BaseController {
      * @date: 2025-05-12
      */
     @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "流程配置新增/删除")
+    @LogAction(value = LogActionEnum.INSERT, desc = "流程配置新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         return success(cfgProcessService.add(dto));
     }
@@ -184,7 +184,7 @@ public class CfgProcessController extends BaseController {
      * @date: 2025-05-12
      */
     @PostMapping("/update")
-    @LogAction(value = LogActionEnum.INSERT, desc = "流程配置新增/删除")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "流程配置更新")
     public ApiResult<BaseResultDTO.AddDTO> update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         return success(cfgProcessService.update(dto));
     }
@@ -197,7 +197,7 @@ public class CfgProcessController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "workflow:cfgProcess:paging",
-            tableAlias = "cp"
+            tableAlias = "p"
     )
     public ApiResult<List<CfgProcessDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(cfgProcessService.tabList(dto));

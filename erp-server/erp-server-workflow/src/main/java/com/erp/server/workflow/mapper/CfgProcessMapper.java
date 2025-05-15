@@ -6,6 +6,7 @@ import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -27,7 +28,7 @@ public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
        * @param: query, params
        * @return: CfgProcessDTO.ListDTO
        **/
-    IPage<CfgProcessDTO.ProcessDTO> getProcessWithRulesAndExps(CfgProcessDTO.SearchParamDTO params);
+    IPage<CfgProcessDTO.ProcessDTO> getProcessWithRulesAndExps(Page query, @Param("params") CfgProcessDTO.SearchParamDTO params);
     /**
      * @description: view
      * @author: hcg
@@ -37,5 +38,5 @@ public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
      **/
     CfgProcessDTO.ProcessDTO getProcessById(String id);
 
-    List<CfgProcessDTO.TabListDTO> tabList(CfgProcessDTO.SearchParamDTO searchParam);
+    List<CfgProcessDTO.TabListDTO> tabList(@Param("params") CfgProcessDTO.SearchParamDTO params);
 }
