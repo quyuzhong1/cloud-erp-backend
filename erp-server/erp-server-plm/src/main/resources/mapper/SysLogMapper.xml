@@ -20,6 +20,13 @@
             <if test="params.pid !=null and params.pid!=''">
                 AND sl.pid = #{params.pid}
             </if>
+            <if test="params.searchKey !=null and params.searchKey!=''">
+                and (
+                sl.content ILIKE concat('%',#{params.searchKey}::text,'%') or
+                sl.operation ILIKE concat('%',#{params.searchKey}::text,'%') or
+                sl.create_user_name ILIKE concat('%',#{params.searchKey}::text,'%')
+                )
+            </if>
         </where>
         group by sl.class_path,sl.business_id,sl.create_time
         order by sl.create_time desc
