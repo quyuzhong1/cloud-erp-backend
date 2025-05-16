@@ -263,7 +263,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             entity.setDeliveryQty(oldEntity.getDeliveryQty());
             entity.setFeeRule(logisticsChannelEntity.getFeeRule());
             //2024-09-14 jack 重算时出库重量字段值从装箱内容物详情信息中获取
-            entity.setOutStockWeight(getOutStockWeight(detailDTO.getPackageWeight(), oldEntity.getSkuId(),oldEntity.getBusinessCode(),oldEntity.getBoxId()));
+            entity.setOutStockWeight(getOutStockWeight(detailDTO.getPackageWeight(), oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId()));
             BigDecimal boxLength = getBoxLength(detailDTO.getBoxLength(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId());
             entity.setBoxLength(boxLength);
             BigDecimal boxWidth = getBoxWidth(detailDTO.getBoxWidth(),oldEntity.getSourceId(),oldEntity.getBusinessCode(),oldEntity.getBoxId());
