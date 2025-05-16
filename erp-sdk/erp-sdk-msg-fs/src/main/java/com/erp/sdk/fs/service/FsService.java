@@ -111,31 +111,36 @@ public class FsService {
      * @author jack
      * @date 2025-05-13
      */
-    public UserContactInfo[] getBatchFsUserByMobileOrEmail(FindThirdUserDTO.UserParamsDTO dto) {
-        // 构建client
-        Client client = Client.newBuilder(fsProperties.getAppId(), fsProperties.getAppSecret()).build();
-        // 创建请求对象
-        BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
-                .userIdType(dto.getUserIdType())
-                .batchGetIdUserReqBody(BatchGetIdUserReqBody.newBuilder()
-                        .mobiles(dto.getMobiles())
-                        .includeResigned(Boolean.FALSE)
-                        .build())
-                .build();
+    public BatchGetIdUserResp getBatchFsUserByMobileOrEmail(FindThirdUserDTO.UserParamsDTO dto) {
         try {
+            // 构建client
+//            Client client = Client.newBuilder(fsProperties.getAppId(), fsProperties.getAppSecret()).build();
+//            飞书生产
+            Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
+                    .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+                    .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
+                    .build();
+            // 创建请求对象
+            BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
+                    .userIdType(dto.getUserIdType())
+                    .batchGetIdUserReqBody(BatchGetIdUserReqBody.newBuilder()
+                            .mobiles(dto.getMobiles())
+                            .includeResigned(Boolean.FALSE)
+                            .build())
+                    .build();
             // 发起请求
             BatchGetIdUserResp resp = client.contact().v3().user().batchGetId(req);
             // 处理服务端错误
             if (!resp.success()) {
-                log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail失败>>>>>{}",String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-                return null;
+                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
+                log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMob;ileOrEmail失败>>>>>{}", resp.getMsg() );
+                throw new ServiceException("获取子部门列表>>>>>{}",msg);
             }
-            return resp.getData().getUserList();
+            return resp;
         } catch (Exception e) {
-            log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail出错>>>>>{}",e);
+            log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail出错>>>>>{}", e);
+            throw new ServiceException("获取子部门列表>>>>>{}",e);
         }
-        return null;
     }
 
     /**
@@ -158,8 +163,7 @@ public class FsService {
             BatchUserResp resp = client.contact().v3().user().batch(req);
             // 处理服务端错误
             if (!resp.success()) {
-                log.error("批量获取用户信息getBatchFsUser失败>>>>>{}",String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
                 return null;
             }
             return resp.getData().getItems();
@@ -442,8 +446,7 @@ public class FsService {
 
             // 处理服务端错误
             if (!resp.success()) {
-                String msg = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
+                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
                 throw new ServiceException("创建飞书三方审批定义失败>>>>>{}",msg);
             }
             return resp;
@@ -477,8 +480,7 @@ public class FsService {
 
             // 处理服务端错误
             if (!resp.success()) {
-                String msg = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
+                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
                 throw new ServiceException("获取子部门列表>>>>>{}",msg);
             }
             return resp;
@@ -500,127 +502,5 @@ public class FsService {
 //                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
 //                .build();
 
-
-//        // 创建请求对象
-//        GetExternalApprovalReq req = GetExternalApprovalReq.newBuilder()
-//                .approvalCode("86A4154C-7BB1-41EF-8039-E0574C039E92")
-//                .userIdType("open_id")
-//                .build();
-//
-//        // 发起请求
-//        GetExternalApprovalResp resp = client.approval().v4().externalApproval().get(req);
-//
-//        // 处理服务端错误
-//        if (!resp.success()) {
-//            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-//                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-//            return;
-//        }
-//
-//        // 业务数据处理
-//        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
-
-//        // 创建请求对象 86A4154C-7BB1-41EF-8039-E0574C039E92
-//        CreateExternalApprovalReq req = CreateExternalApprovalReq.newBuilder()
-//                .departmentIdType("open_department_id")
-//                .userIdType("open_id")
-//                .externalApproval(ExternalApproval.newBuilder()
-//                        .approvalName("@i18n@1")
-//                        .approvalCode("externalApprovalsCreateTest")
-//                        .groupCode("work_group")
-//                        .groupName("@i18n@2")
-//                        .external(ApprovalCreateExternal.newBuilder()
-//                                .createLinkMobile("https://applink.feishu.cn/client/mini_program/open?appId=cli_9c90fc38e07a9101&path=pages%2Fapproval-form%2Findex%3Fid%3D9999")
-//                                .createLinkPc("https://applink.feishu.cn/client/mini_program/open?mode=appCenter&appId=cli_9c90fc38e07a9101&path=pc%2Fpages%2Fcreate-form%2Findex%3Fid%3D9999")
-//                                .supportPc(true)
-//                                .supportMobile(true)
-//                                .supportBatchRead(false)
-//                                .enableMarkReaded(false)
-//                                .actionCallbackUrl("http://feishu.cn/approval/openapi/operate")
-//                                .actionCallbackToken("sdjkljkx9lsadf110")
-//                                .actionCallbackKey("gfdqedvsadfgfsd")
-//                                .build())
-//                        .viewers(new ApprovalCreateViewers[]{
-//                                ApprovalCreateViewers.newBuilder()
-//                                        .viewerType("TENANT")
-//                                        .build()
-//                        })
-//                        .i18nResources(new I18nResource[]{
-//                                I18nResource.newBuilder()
-//                                        .locale("zh-CN")
-//                                        .texts(new I18nResourceText[]{
-//                                                I18nResourceText.newBuilder()
-//                                                        .key("@i18n@1")
-//                                                        .value("people")
-//                                                        .build(),
-//                                                I18nResourceText.newBuilder()
-//                                                        .key("@i18n@2")
-//                                                        .value("hr")
-//                                                        .build()
-//                                        })
-//                                        .isDefault(true)
-//                                        .build()
-//                        })
-//                        .build())
-//                .build();
-//
-//        // 发起请求
-//        CreateExternalApprovalResp resp = client.approval().v4().externalApproval().create(req);
-//
-//        // 处理服务端错误
-//        if (!resp.success()) {
-//            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-//                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-//            return;
-//        }
-//        // 业务数据处理
-//        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
-
-
-//        String[] mobiles = new String[]{"13726267597"};
-//        // 构建client
-//        // 创建请求对象
-//        BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
-//                .userIdType("user_id")
-//                .batchGetIdUserReqBody(BatchGetIdUserReqBody.newBuilder()
-//                        .mobiles(mobiles)
-//                        .includeResigned(Boolean.FALSE)
-//                        .build())
-//                .build();
-//        try {
-//            // 发起请求
-//            BatchGetIdUserResp resp = client.contact().v3().user().batchGetId(req);
-//            // 处理服务端错误
-//            if (!resp.success()) {
-//                log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail失败>>>>>{}",String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-//                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-//            }
-//            System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
-//        } catch (Exception e) {
-//            log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail出错>>>>>{}",e);
-//        }
-
-
-//        String[] userids = new String[]{"594g34ac"};
-//        // 构建client
-//        // 创建请求对象
-//        BatchUserReq req = BatchUserReq.newBuilder()
-//                .userIdType("user_id")
-//                .departmentIdType("open_department_id")
-//                .userIds(userids)
-//                .build();
-//        try {
-//            // 发起请求
-//            BatchUserResp resp = client.contact().v3().user().batch(req);
-//            // 处理服务端错误
-//            if (!resp.success()) {
-//                log.error("批量获取用户信息getBatchFsUser失败>>>>>{}",String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-//                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-//            }
-//            // 业务数据处理
-//            System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
-//        } catch (Exception e) {
-//            log.error("批量获取用户信息getBatchFsUser出错>>>>>{}",e);
-//        }
     }
 }
