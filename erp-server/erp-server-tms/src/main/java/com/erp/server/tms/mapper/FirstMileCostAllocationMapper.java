@@ -86,4 +86,12 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
      * @return
      */
     List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@Param("skuId") String skuId, @Param("businessCode") String businessCode, @Param("reportMonth") LocalDate reportMonth);
+
+    /**
+     * 根据核算期间查询分摊记录
+     * @param reportPeriodMonth
+     * @param reportStatus
+     * @return
+     */
+    List<FirstMileCostAllocationEntity> listByReportPeriodMonth(@Param("reportPeriodMonth") LocalDate reportPeriodMonth, @Param("reportStatus") String reportStatus);
 }

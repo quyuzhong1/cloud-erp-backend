@@ -239,6 +239,18 @@
           and fmca.business_code = #{businessCode}
           and rpm.month = #{reportMonth}
     </select>
+    <select id="listByReportPeriodMonth" resultType="com.erp.model.tms.entity.FirstMileCostAllocationEntity">
+        select
+            a.*,
+            rpm.month as reportPeriodMonth
+        from first_mile_cost_allocation a
+        left join report_period_month rpm on a.report_period_id = rpm.id and rpm.is_deleted = false
+        where a.is_deleted = false
+        and rpm.month = #{reportPeriodMonth}
+        <if test="reportStatus != null and reportStatus!=''">
+            and a.status = #{reportStatus}
+        </if>
+    </select>
 
 
 </mapper>
