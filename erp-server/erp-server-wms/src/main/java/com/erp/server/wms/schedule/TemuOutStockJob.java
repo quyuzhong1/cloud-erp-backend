@@ -87,7 +87,7 @@ public class TemuOutStockJob {
             XxlJobHelper.log("没查到店铺有效授权信息");
             return;
         }
-        List<TemuOrderDTO.ResultDTO.PageItemsDTO> allTemuList = new ArrayList<>();
+        List<TemuOrderDTO.PageItemsDTO> allTemuList = new ArrayList<>();
         //根据店铺分组处理
         Map<String,List<SoB2cEntity>> groupShopMap = soB2cEntityList.stream().collect(Collectors.groupingBy(SoB2cEntity::getShopId));
         for (Map.Entry<String, List<SoB2cEntity>> entry : groupShopMap.entrySet()) {
@@ -114,27 +114,22 @@ public class TemuOutStockJob {
                     continue;
                 }
                 TemuOrderDTO temuOrderDTO = temuResp.getResult();
-                if(!temuOrderDTO.getSuccess()){
-                    XxlJobHelper.log("查询temu订单数据失败,{}",temuOrderDTO.getErrorMsg());
-                    log.error("查询temu订单数据失败,{}",temuResp.getErrorMsg());
-                    continue;
-                }
-                if(CollectionUtils.isEmpty(temuOrderDTO.getResult().getPageItems())){
+                if(CollectionUtils.isEmpty(temuOrderDTO.getPageItems())){
                     XxlJobHelper.log("没有查询到订单数据");
                     continue;
                 }
-                List<TemuOrderDTO.ResultDTO.PageItemsDTO> pageItemsDTOList = temuOrderDTO.getResult().getPageItems();
+                List<TemuOrderDTO.PageItemsDTO> pageItemsDTOList = temuOrderDTO.getPageItems();
                 //过滤掉没有发货时间的数据
                 pageItemsDTOList = pageItemsDTOList.stream().filter(v->{
-                    Integer shippingTimeInt = v.getParentOrderMap().getParentShippingTime();
+                    Long shippingTimeInt = v.getParentOrderMap().getParentShippingTime();
                     return Objects.nonNull(shippingTimeInt);
                 }).collect(Collectors.toList());
                 //查询发货仓库(明细维度)
-                for (TemuOrderDTO.ResultDTO.PageItemsDTO pageItemsDTO : pageItemsDTOList) {
-                    TemuOrderDTO.ResultDTO.PageItemsDTO.ParentOrderMapDTO parentOrderMapDTO = pageItemsDTO.getParentOrderMap();
+                for (TemuOrderDTO.PageItemsDTO pageItemsDTO : pageItemsDTOList) {
+                    TemuOrderDTO.PageItemsDTO.ParentOrderMapDTO parentOrderMapDTO = pageItemsDTO.getParentOrderMap();
                     String parentOrder = parentOrderMapDTO.getParentOrderSn();
-                    List<TemuOrderDTO.ResultDTO.PageItemsDTO.OrderListDTO> orderListDTOList = pageItemsDTO.getOrderList();
-                    for (TemuOrderDTO.ResultDTO.PageItemsDTO.OrderListDTO orderListDTO : orderListDTOList) {
+                    List<TemuOrderDTO.PageItemsDTO.OrderListDTO> orderListDTOList = pageItemsDTO.getOrderList();
+                    for (TemuOrderDTO.PageItemsDTO.OrderListDTO orderListDTO : orderListDTOList) {
                         temuOrderReq.setParentOrderSn(parentOrder);
                         temuOrderReq.setOrderSn(orderListDTO.getOrderSn());
                         TemuResp<TemuLogisticShipmentDTO> temuLogisticShipmentDTOTemuResp = temuClient.getLogisticsShipment(temuOrderReq);
@@ -161,7 +156,7 @@ public class TemuOutStockJob {
                     pageItemsDTO.setOrderList(orderListDTOList);
                 }
                 //过滤没有仓库的数据
-                pageItemsDTOList = pageItemsDTOList.stream().filter(TemuOrderDTO.ResultDTO.PageItemsDTO::getHasWarehouse).collect(Collectors.toList());
+                pageItemsDTOList = pageItemsDTOList.stream().filter(TemuOrderDTO.PageItemsDTO::getHasWarehouse).collect(Collectors.toList());
                 allTemuList.addAll(pageItemsDTOList);
             }
         }
@@ -183,7 +178,7 @@ public class TemuOutStockJob {
         List<WarehouseEntity> warehouseEntityList = FeignQuery.getByIds(WarehouseEntity.class,allWarehouseIds);
         //将仓库能匹配上的数据出库
         for (SoB2cEntity soB2cEntity : handleSoB2cList) {
-            TemuOrderDTO.ResultDTO.PageItemsDTO temuDto = allTemuList.stream().filter(v->v.getParentOrderMap().getParentOrderSn().equals(soB2cEntity.getPlatformCode())).findFirst().orElse(null);
+            TemuOrderDTO.PageItemsDTO temuDto = allTemuList.stream().filter(v->v.getParentOrderMap().getParentOrderSn().equals(soB2cEntity.getPlatformCode())).findFirst().orElse(null);
             if(temuDto == null){
                 continue;
             }
@@ -195,8 +190,8 @@ public class TemuOutStockJob {
             }
             for (SoB2cDetailEntity soB2cDetailEntity : soB2cDetailEntityList) {
                 //通过sku匹配对应明细
-                TemuOrderDTO.ResultDTO.PageItemsDTO.OrderListDTO orderListDTO = temuDto.getOrderList().stream().filter(v->{
-                    TemuOrderDTO.ResultDTO.PageItemsDTO.OrderListDTO.ProductListDTO productListDTO = v.getProductList().get(0);
+                TemuOrderDTO.PageItemsDTO.OrderListDTO orderListDTO = temuDto.getOrderList().stream().filter(v->{
+                    TemuOrderDTO.PageItemsDTO.OrderListDTO.ProductListDTO productListDTO = v.getProductList().get(0);
                     return productListDTO.getExtCode().equals(soB2cDetailEntity.getPlatformSkuNo());
                 }).findFirst().orElse(null);
                 if(orderListDTO == null){
@@ -227,7 +222,7 @@ public class TemuOutStockJob {
             //不同仓库生成不同的出库单
             Map<String,List<SoB2cDetailEntity>> detailMap = soB2cDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getWarehouseId())).collect(Collectors.groupingBy(SoB2cDetailEntity::getWarehouseId));
 
-            Integer outTimeInt = temuDto.getParentOrderMap().getParentShippingTime();
+            Long outTimeInt = temuDto.getParentOrderMap().getParentShippingTime();
             Instant instant = Instant.ofEpochSecond(outTimeInt);
             // 获取系统默认时区
             ZoneId zoneId = ZoneId.systemDefault();
