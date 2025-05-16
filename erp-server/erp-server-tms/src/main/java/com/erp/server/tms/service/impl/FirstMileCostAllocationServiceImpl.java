@@ -1785,4 +1785,9 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     public List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySourceIdAndCode(String sourceId, String businessCode, LocalDate reportMonth) {
         return baseMapper.getRecordBySourceIdAndCode(sourceId, businessCode, reportMonth);
     }
+
+    @Override
+    public List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(String skuId, String businessCode, LocalDate reportMonth) {
+        return baseMapper.getRecordBySkuIdAndCode(skuId, businessCode, reportMonth);
+    }
 }

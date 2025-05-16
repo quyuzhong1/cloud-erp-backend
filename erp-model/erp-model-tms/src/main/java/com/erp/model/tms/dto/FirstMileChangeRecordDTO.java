@@ -235,6 +235,7 @@ public class FirstMileChangeRecordDTO implements Serializable {
         @NotBlank(message = "skuId不能为空")
         @Size(max = 19,message = "skuId最大长度不能超过19位")
         private String skuId;
+        private String skuNo;
 
         /**
         * 调整分类:boxNo=箱号,shippingCost=运费,declareCost=关税,otherTaxFee=其他税费,otherCost=其他费用

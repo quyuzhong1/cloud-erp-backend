@@ -957,5 +957,9 @@ public class FbaShipmentDTO implements Serializable {
          */
         @NotNull(message = "签收日期不能为空")
         private LocalDate receiveDate;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
     }
 }

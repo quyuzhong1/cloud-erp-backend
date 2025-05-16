@@ -369,7 +369,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             }
             receiverdMap.put(receivedEntity.getDetailId(), receivedEntity.getReceiveQty());
             // 头程调整记录
-            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertChangeRecord(entity, detailEntity, receivedEntity, date));
+            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertOverseasToChangeRecord(entity, detailEntity, receivedEntity, date));
         }
         //调整记录新增
         firstMileChangeRecordFeign.batchAdd(changeRecordList);
