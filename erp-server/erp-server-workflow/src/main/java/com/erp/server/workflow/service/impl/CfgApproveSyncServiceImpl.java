@@ -251,49 +251,61 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         return externalApproval;
     }
 
-    //可见人列表
     private void getApprovalViewers(CfgApproveSyncEntity cfgApproveSyncEntity, ExternalApproval externalApproval) {
-        //审批可见人列表，列表长度上限 200，只有在审批可见人列表内的用户，才可以在审批发起页看到该审批。若该参数不传值，则表示任何人不可见。
-        List<ApprovalCreateViewers> approvalCreateViewers = new ArrayList<>();
         String viewer = cfgApproveSyncEntity.getViewer();
-        if(cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.USER.getCode())){
-            if(StringUtils.isNotBlank(viewer)){
-                List<String> viewerList = Arrays.asList(viewer.split(","));
-                //查询飞书的用户第三方信息
-                List<ThirdUnionDTO> thirdUnionList = sysUserFeign.getThirdUnionIdsByUserIds(ThirdpartyPlatformEnum.FS.getCode(), viewerList);
-                if(CollUtil.isEmpty(thirdUnionList)){
-                    throw new ServiceException("审批可见人列表人员未关联第三方用户信息");
-                }else{
-                    List<String> thirdUnionIds = thirdUnionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
-                    for (String userId : thirdUnionIds) {
-                        ApprovalCreateViewers approvalCreateViewer = ApprovalCreateViewers.newBuilder()
-                                .viewerType(cfgApproveSyncEntity.getViewerType())
-                                .viewerUserId(userId)
-                                .build();
-                        approvalCreateViewers.add(approvalCreateViewer);
-                    }
-                }
+        String viewerType = cfgApproveSyncEntity.getViewerType();
+
+        List<String> viewerList = Arrays.stream(viewer.split(","))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toList());
+
+        List<ApprovalCreateViewers> approvalCreateViewersList = new ArrayList<>();
+
+        if (CfgApproveSyncViewerTypeEnum.USER.getCode().equals(viewerType)) {
+            List<ThirdUnionDTO> thirdUnionList = sysUserFeign.getThirdUnionIdsByUserIds(ThirdpartyPlatformEnum.FS.getCode(), viewerList);
+            if (CollUtil.isEmpty(thirdUnionList)) {
+                throw new ServiceException("审批可见人列表人员未关联第三方用户信息");
             }
-        }else if(cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode())){
-            if(StringUtils.isNotBlank(viewer)){
-                List<String> viewerList = Arrays.asList(viewer.split(","));
-                for (String deptId : viewerList) {
-                    ApprovalCreateViewers approvalCreateViewer = ApprovalCreateViewers.newBuilder()
-                            .viewerType(cfgApproveSyncEntity.getViewerType())
+            List<String> thirdUnionIds = thirdUnionList.stream()
+                    .map(ThirdUnionDTO::getThirdUnionId)
+                    .distinct()
+                    .collect(Collectors.toList());
+
+            approvalCreateViewersList = thirdUnionIds.stream()
+                    .map(userId -> ApprovalCreateViewers.newBuilder()
+                            .viewerType(viewerType)
+                            .viewerUserId(userId)
+                            .build())
+                    .collect(Collectors.toList());
+
+        } else if (CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode().equals(viewerType)) {
+            approvalCreateViewersList = viewerList.stream()
+                    .map(deptId -> ApprovalCreateViewers.newBuilder()
+                            .viewerType(viewerType)
                             .viewerDepartmentId(deptId)
-                            .build();
-                    approvalCreateViewers.add(approvalCreateViewer);
-                }
-            }
+                            .build())
+                    .collect(Collectors.toList());
         }
-        //上限200
-        if(approvalCreateViewers.size() > 200){
+
+        handleApprovalViewers(approvalCreateViewersList, externalApproval, viewerType);
+    }
+
+    // 提取公共逻辑
+    private void handleApprovalViewers(List<ApprovalCreateViewers> viewersList, ExternalApproval externalApproval, String viewerType) {
+        int size = viewersList.size();
+
+        if (size > 200) {
             throw new ServiceException("审批可见人列表不能超过200上限");
-        }else if(approvalCreateViewers.size() == 0 && (cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode()) || cfgApproveSyncEntity.getViewerType().equals(CfgApproveSyncViewerTypeEnum.USER.getCode()))){
+        }
+
+        if (size == 0 && (CfgApproveSyncViewerTypeEnum.DEPARTMENT.getCode().equals(viewerType)
+                || CfgApproveSyncViewerTypeEnum.USER.getCode().equals(viewerType))) {
             throw new ServiceException("指定部门/指定用户时，审批可见人列表不能为空");
-        }else if(approvalCreateViewers.size() > 0){
-            ApprovalCreateViewers[] array = (ApprovalCreateViewers[]) approvalCreateViewers.toArray();
-            externalApproval.setViewers(array);
+        }
+
+        if (size > 0) {
+            externalApproval.setViewers(viewersList.toArray(new ApprovalCreateViewers[0]));
         }
     }
 

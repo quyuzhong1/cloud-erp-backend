@@ -19,6 +19,7 @@ import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.enums.UserTypeEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
@@ -41,6 +42,7 @@ import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.password.PassEntity;
 import com.erp.model.sys.entity.password.PassHandler;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.sys.enums.ThirdPlatformEnums;
 import com.erp.model.sys.utils.RedisKeyUtil;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.SysMenuVO;
@@ -55,6 +57,9 @@ import com.erp.server.sys.mapper.SysDepartmentMapper;
 import com.erp.server.sys.mapper.SysUserInfoMapper;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysUserInfoService;
 import com.erp.server.sys.service.*;
+import com.lark.oapi.service.acs.v1.enums.UserIdTypeEnum;
+import com.lark.oapi.service.contact.v3.model.BatchGetIdUserResp;
+import com.lark.oapi.service.contact.v3.model.UserContactInfo;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -76,6 +81,7 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Slf4j
 @Service
@@ -1689,5 +1695,106 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             String shopNames = viewDTO.getDetailList().stream().filter(obj -> !obj.getDisabled()).map(ShopSysUserAuthDTO.ViewShopDTO::getShopName).collect(Collectors.joining(","));
             shopAuthPagingDTO.setShopNames(shopNames);
         }
+    }
+
+
+    @Override
+    public void syncFsUser() {
+        //获取飞书平台
+        List<SysUserInfoEntity> list = lambdaQuery().eq(SysUserInfoEntity::getUserState, 1)
+                .list()
+                .stream().filter(e -> StringUtils.isNotBlank(e.getMobile()))
+                .collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(list)){
+            //第三方用户信息拓展表
+            List<String> ids = list.stream().map(SysUserInfoEntity::getUid).collect(Collectors.toList());
+            List<SysUserThirdEntity> sysUserThird = sysUserThirdService.lambdaQuery().in(SysUserThirdEntity::getUserId, ids)
+                    .eq(SysUserThirdEntity::getThirdPartyType, ThirdPlatformEnums.FS.code)
+                    .list();
+
+            Map<String, SysUserThirdEntity> sysUserThirdMap = sysUserThird.stream().collect(Collectors.toMap(SysUserThirdEntity::getUserId, e -> e));
+
+            // 分割为每 50 条数据一个子列表
+            List<List<SysUserInfoEntity>> partitions = splitList(list, 50);
+            List<SysUserThirdEntity> result = new ArrayList<>();
+            for (List<SysUserInfoEntity> partition : partitions) {
+                List<String> mobiles = partition.stream().map(SysUserInfoEntity::getMobile).collect(Collectors.toList());
+                String[] mobileArray = mobiles.toArray(new String[0]);
+
+                FindThirdUserDTO.UserParamsDTO params = new FindThirdUserDTO.UserParamsDTO();
+                params.setMobiles(mobileArray);
+                params.setUserIdType(UserIdTypeEnum.OPEN_ID.getValue());
+                //根据手机号码查询openId
+                BatchGetIdUserResp batchGetOpenIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
+                UserContactInfo[] thirdOpenId = batchGetOpenIdResp.getData().getUserList();
+                Map<String, String> mobileToOpendIdMap = Arrays.stream(thirdOpenId)
+                        .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                        .collect(Collectors.toMap(
+                                UserContactInfo::getMobile, // Key: mobile
+                                UserContactInfo::getUserId  // Value: userId
+                        ));
+
+                //根据手机号码查询userId
+                params.setUserIdType(UserIdTypeEnum.USER_ID.getValue());
+                BatchGetIdUserResp batchGetUserIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
+                UserContactInfo[] thirdUserIdList = batchGetUserIdResp.getData().getUserList();
+                Map<String, String> mobileToUserIdMap = Arrays.stream(thirdUserIdList)
+                        .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                        .collect(Collectors.toMap(
+                                UserContactInfo::getMobile, // Key: mobile
+                                UserContactInfo::getUserId  // Value: userId
+                        ));
+
+                //根据手机号码查询unionId
+                params.setUserIdType(UserIdTypeEnum.UNION_ID.getValue());
+                BatchGetIdUserResp batchGetUnionIdResp = fsService.getBatchFsUserByMobileOrEmail(params);
+                UserContactInfo[] thirdUnionIdList = batchGetUnionIdResp.getData().getUserList();
+                Map<String, String> mobileToUnionIdMap = Arrays.stream(thirdUnionIdList)
+                        .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                        .collect(Collectors.toMap(
+                                UserContactInfo::getMobile, // Key: mobile
+                                UserContactInfo::getUserId  // Value: userId
+                        ));
+
+                for (SysUserInfoEntity sysUserInfoEntity : partition) {
+                    SysUserThirdEntity sysUserThirdEntity = sysUserThirdMap.getOrDefault(sysUserInfoEntity.getUid(),null);
+                    if(Objects.isNull(sysUserThirdEntity)){
+                        sysUserThirdEntity = new SysUserThirdEntity();
+                        sysUserThirdEntity.setUserId(sysUserInfoEntity.getUid());
+                        sysUserThirdEntity.setThirdPartyType(ThirdPlatformEnums.FS.code);
+                    }
+
+                    String unionId = mobileToUnionIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
+                    if(StringUtils.isNotBlank(unionId) && StringUtils.isBlank(sysUserThirdEntity.getThirdUnionId())){
+                        sysUserThirdEntity.setThirdUnionId(unionId);
+                    }
+
+                    String openId = mobileToOpendIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
+                    if(StringUtils.isNotBlank(openId)){
+                        sysUserThirdEntity.setThirdOpenId(openId);
+
+                    }
+                    String userId = mobileToUserIdMap.getOrDefault(sysUserInfoEntity.getMobile(), "");
+                    if(StringUtils.isNotBlank(userId)){
+                        sysUserThirdEntity.setThirdUserId(userId);
+                    }
+                    result.add(sysUserThirdEntity);
+                }
+            }
+            if(CollectionUtils.isNotEmpty(result)){
+                sysUserThirdService.saveOrUpdateBatch(result);
+            }
+        }
+    }
+
+
+    public static <T> List<List<T>> splitList(List<T> list, int size) {
+        if (list == null || list.isEmpty()) {
+            return Collections.emptyList();
+        }
+        int partitionSize = Math.max(1, size); // 确保分区大小至少为1
+        return IntStream.range(0, (list.size() + partitionSize - 1) / partitionSize)
+                .mapToObj(i -> list.subList(i * partitionSize, Math.min(list.size(), (i + 1) * partitionSize)))
+                .collect(Collectors.toList());
     }
 }

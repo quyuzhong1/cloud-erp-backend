@@ -151,10 +151,10 @@ public class SysDepartmentThirdDTO implements Serializable {
     public static class ThirdDeptParamDTO {
 
         /**
-         * 主键id
+         * 第三方平台
          */
         @NotEmpty(message = "第三方平台不能为空")
-        private List<String> platform;
+        private List<String> platformList;
 
         private String departmentName;
     }

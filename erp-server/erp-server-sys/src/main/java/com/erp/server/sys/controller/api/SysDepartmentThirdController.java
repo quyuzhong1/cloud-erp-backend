@@ -38,7 +38,7 @@ public class SysDepartmentThirdController extends BaseController {
     private SysDepartmentThirdService sysDepartmentThirdService;
 
     /**
-     * 下拉
+     * 第三方部门下拉查询
      * @author jack
      * @date:  2025-05-15
      * @param dto
