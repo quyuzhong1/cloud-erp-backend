@@ -27,13 +27,13 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","63e18ce9b4dd4f71a66efd07feb972e5");
+        authMap.put("accessToken","1f52658306f7478bb0c44a1633702ace");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
 
-        JiFengBaseResp<JiFengOfflineChannelResp> jiFengBaseResp = jiFengService.getOfflineChannel(authMap,"BR01");
-        System.out.println(jiFengBaseResp.getData());
+        jiFengService.getWarehouseList(authMap);
+        System.out.println(123);
     }
 //    public static void main(String[] args) {
 //        String clientId = "a03b35bf7f0c4c4f8e23e0599b5be649";
