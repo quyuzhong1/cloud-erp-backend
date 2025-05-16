@@ -2,10 +2,7 @@ package com.erp.model.workflow.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -107,8 +104,20 @@ public class CfgProcessValueMapDTO implements Serializable {
         @Size(max = 30,message = "数大臣r选项值最大长度不能超过30位")
         private String sysValue;
 
-
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO {
 
+        /**
+        * 前段展示
+        */
+        private String name;
+
+        /**
+        * 实际value
+        */
+        private String value;
+    }
 }

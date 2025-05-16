@@ -36,7 +36,7 @@ public interface CfgProcessValueMapService extends SuperService<CfgProcessValueM
 
 
 
-    List<CfgProcessValueMapDTO.ViewDTO> view(String fieldId);
+    List<CfgProcessValueMapDTO.DropDownDTO> view(String fieldId,String approvalCode);
 
     void delete(List<String> ids);
 }

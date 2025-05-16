@@ -1,21 +1,26 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.vo.LoginUser;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.mapper.CfgProcessValueMapMapper;
 import com.erp.server.workflow.service.CfgProcessValueMapService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.workflow.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import com.lark.oapi.service.approval.v4.model.GetApprovalResp;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,7 +30,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 流程设置值映射 服务实现类
@@ -39,6 +46,9 @@ import com.common.core.enums.ApiError;
 public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessValueMapMapper, CfgProcessValueMapEntity> implements CfgProcessValueMapService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Resource
+    private FsService fsService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -127,15 +137,24 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
     }
 
     @Override
-    public List<CfgProcessValueMapDTO.ViewDTO> view(String fieldId) {
-        // 查询数据库中与 fieldId 关联的记录
-        List<CfgProcessValueMapEntity> existingEntities = this.list(
-                new LambdaQueryWrapper<CfgProcessValueMapEntity>()
-                        .eq(CfgProcessValueMapEntity::getFieldMapId, fieldId)
-                        .eq(CfgProcessValueMapEntity::getIsDeleted, false)
-        );
-        List<CfgProcessValueMapDTO.ViewDTO> viewDTOList = BeanUtil.copyToList(existingEntities, CfgProcessValueMapDTO.ViewDTO.class);
-        return viewDTOList;
+    public List<CfgProcessValueMapDTO.DropDownDTO> view(String fieldId,String approvalCode) {
+        try {
+            GetApprovalResp approval = fsService.getApproval(approvalCode);
+            String jsonStr = JSONUtil.toJsonStr(approval.getData());
+            Map<String, Map<String, String>> stringMapMap = parseFormValue(jsonStr);
+            Map<String, String> stringMap = stringMapMap.get(fieldId);
+            //遍历map，key作为DropDownDTO的value，value作为DropDownDTO的name
+            List<CfgProcessValueMapDTO.DropDownDTO> dropDownDTOS = new ArrayList<>();
+            for (Map.Entry<String, String> entry : stringMap.entrySet()) {
+                CfgProcessValueMapDTO.DropDownDTO dropDownDTO = new CfgProcessValueMapDTO.DropDownDTO();
+                dropDownDTO.setName(entry.getValue());
+                dropDownDTO.setValue(entry.getKey());
+                dropDownDTOS.add(dropDownDTO);
+            }
+            return dropDownDTOS;
+        } catch (Exception e) {
+            throw new ServiceException("飞书选项值列表转换异常");
+        }
     }
 
     @Override
@@ -166,5 +185,65 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
     */
     private void handleData(CfgProcessValueMapEntity cfgProcessValueMapEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    public static Map<String, Map<String, String>> parseFormValue(String formString) {
+        JSONObject root = JSONUtil.parseObj(formString);
+        String formStringValue = root.getStr("form");
+        JSONArray formArray = JSONUtil.parseArray(formStringValue);
+        //处理下拉数据
+        Map<String, Map<String, String>> parsedValues = new HashMap<>();
+        for (JSONObject field : formArray.jsonIter()) {
+            String fieldId = field.getStr("id");
+            String type = field.getStr("type");
+            if (!"fieldList".equals(type) && field.containsKey("option")) {
+                Object valueObj = field.get("option");
+                if (valueObj instanceof JSONArray) {
+                    JSONArray valueList = (JSONArray) valueObj;
+                    //校验valueList是否为null
+                    if (valueList == null) {
+                        continue;
+                    }
+                    Map<String, String> valueMap = new HashMap<>();
+                    for (JSONObject value : valueList.jsonIter()) {
+                        valueMap.put(value.getStr("value"), value.getStr("text"));
+                    }
+                    parsedValues.put(fieldId, valueMap);
+                } else if (valueObj != null) {
+                    // 如果不是 JSONArray，则直接处理为单个值
+                    Map<String, String> valueMap = new HashMap<>();
+                    valueMap.put("value", valueObj.toString());
+                    parsedValues.put(fieldId, valueMap);
+                }
+            } else if ("fieldList".equals(type)) {
+                JSONArray detailFields = field.getJSONArray("children");
+                if (detailFields != null) {
+                    for (JSONObject detail : detailFields.jsonIter()) {
+                        String detailId = detail.getStr("id");
+                        if (detail.containsKey("option")) {
+                            Object valueObj = detail.get("option");
+                            if (valueObj instanceof JSONArray) {
+                                JSONArray valueList = (JSONArray) valueObj;
+                                //校验valueList是否为null
+                                if (valueList == null) {
+                                    continue;
+                                }
+                                Map<String, String> valueMap = new HashMap<>();
+                                for (JSONObject value : valueList.jsonIter()) {
+                                    valueMap.put(value.getStr("value"), value.getStr("text"));
+                                }
+                                parsedValues.put(detailId, valueMap);
+                            } else if (valueObj != null) {
+                                // 如果不是 JSONArray，则直接处理为单个值
+                                Map<String, String> valueMap = new HashMap<>();
+                                valueMap.put("value", valueObj.toString());
+                                parsedValues.put(detailId, valueMap);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return parsedValues;
     }
 }

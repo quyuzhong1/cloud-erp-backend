@@ -1,20 +1,19 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.util.CollectionUtils;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.vo.LoginUser;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
-import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
-import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.sdk.fs.service.FsService;
@@ -36,7 +35,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
 
@@ -70,7 +68,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
         // 批量插入和更新
         boolean b = this.saveOrUpdateBatch(entitiesToAddOrUpdate);
-        if (!b){
+        if (!b) {
             throw new ServiceException("流程设置字段配置新增失败");
         }
         //插入值映射
@@ -78,12 +76,12 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             String id = dto.getId();
             List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList = dto.getProcessValueMapDTOList();
             if (ObjectUtil.isNotEmpty(processValueMapDTOList)) {
-                cfgProcessValueMapService.add(cfgProcessId,id, processValueMapDTOList);
+                cfgProcessValueMapService.add(cfgProcessId, id, processValueMapDTOList);
             }
         }
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】", UserContext.getDefaultLoginUser().getUserName(), "流程设置字段配置");
-         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
         return new BaseResultDTO.AddDTO();
     }
 
@@ -102,7 +100,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO);
         // 批量插入和更新
         boolean b = this.saveOrUpdateBatch(entitiesToAddOrUpdate);
-        if (!b){
+        if (!b) {
             throw new ServiceException("流程设置字段配置更新失败");
         }
         //更新值映射
@@ -110,7 +108,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             String id = dto.getId();
             List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList = dto.getProcessValueMapDTOList();
             if (ObjectUtil.isNotEmpty(processValueMapDTOList)) {
-                cfgProcessValueMapService.addOrUpdate(cfgProcessId,id, processValueMapDTOList);
+                cfgProcessValueMapService.addOrUpdate(cfgProcessId, id, processValueMapDTOList);
             }
         }
         //生成日志
@@ -130,19 +128,12 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId) {
         try {
             GetApprovalResp approval = fsService.getApproval(processDefinitionId);
-            if (!approval.success()||ObjectUtil.isNotEmpty(approval.getData().getForm())) {
-                //调用飞书接口获取指定审批定义code，解析form体
-                throw new ServiceException("该飞书审批定义form解析");
-            }
-            approval.getData();
-            Map map = JSONObject.parseObject(approval.getData().getForm(), Map.class);
-            //approval.getData().getForm()转为map
-
-            return Collections.emptyList();
+            String formStr = JSONUtil.toJsonStr(approval.getData());
+            List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = parseForm(formStr);
+            return viewDTOList;
         } catch (Exception e) {
             throw new ServiceException("获取指定飞书审批定义失败");
         }
-
     }
 
     @Override
@@ -210,7 +201,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                 fieldList.remove(dto.getSysField());
             }
             // 校验通过后，进行保存或更新操作
-            if (StrUtil.isEmpty(dto.getId())){
+            if (StrUtil.isEmpty(dto.getId())) {
                 dto.setId(IdWorker.getIdStr());
             }
             CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
@@ -218,11 +209,45 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             entity.setCfgId(ruleId); // 设置关联的 ruleId
             entitiesToAddOrUpdate.add(entity);
         }
-        if (ObjectUtil.isNotEmpty(fieldList)&&fieldList.size()>0){
+        if (ObjectUtil.isNotEmpty(fieldList) && fieldList.size() > 0) {
             //将fieldList转为一个字符串
             String fieldListStr = String.join(",", fieldList);
             throw new ServiceException("存在{}尚未映射，无法提交保存", fieldListStr);
         }
         return entitiesToAddOrUpdate;
+    }
+
+    //解析form数据
+    public static List<CfgProcessFieldMapDTO.ViewDTO> parseForm(String formString) {
+        JSONObject root = JSONUtil.parseObj(formString);
+        String form = root.getStr("form");
+        JSONArray formArray = JSONUtil.parseArray(form);
+        List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = new ArrayList<>();
+        for (cn.hutool.json.JSONObject field : formArray.jsonIter()) {
+            CfgProcessFieldMapDTO.ViewDTO viewDTO = new CfgProcessFieldMapDTO.ViewDTO();
+            viewDTO.setThirdField(field.getStr("name"));
+            viewDTO.setThirdFieldType(field.getStr("type"));
+            viewDTO.setThirdFieldRequired(field.getBool("required", false));
+            viewDTO.setThirdFieldId(field.getStr("id")); // 父级 fieldList 的 ID
+
+            if ("fieldList".equals(field.getStr("type"))) {
+                viewDTO.setIsDetailField(true);
+                JSONArray detailFields = field.getJSONArray("children");
+
+                for (JSONObject detail : detailFields.jsonIter()) {
+                    CfgProcessFieldMapDTO.ViewDTO detailViewDTO = new CfgProcessFieldMapDTO.ViewDTO();
+                    detailViewDTO.setThirdField(detail.getStr("name"));
+                    detailViewDTO.setThirdFieldType(detail.getStr("type"));
+                    detailViewDTO.setThirdFieldRequired(detail.getBool("required", false));
+                    detailViewDTO.setThirdFieldId(detail.getStr("id")); // 父级 fieldList 的 ID
+                    detailViewDTO.setIsDetailField(true);
+                    detailViewDTO.setThirdFieldFieldListFid(field.getStr("id"));
+                    viewDTOList.add(detailViewDTO); // 将子元素直接添加到 viewDTOList
+                }
+                continue; // 跳过当前 viewDTO 的添加
+            }
+            viewDTOList.add(viewDTO);
+        }
+        return viewDTOList;
     }
 }
