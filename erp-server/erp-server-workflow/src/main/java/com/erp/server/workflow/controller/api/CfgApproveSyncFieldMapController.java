@@ -35,38 +35,4 @@ public class CfgApproveSyncFieldMapController extends BaseController {
     @Resource
     private CfgApproveSyncFieldMapService cfgApproveSyncFieldMapService;
 
-    /**
-    * 新增
-    * @author jack
-    * @date:  2025-05-12
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "ERP审批同步-推送信息配置新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgApproveSyncFieldMapDTO.AddDTO dto) {
-        return success(cfgApproveSyncFieldMapService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author jack
-    * @date:  2025-05-12
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "ERP审批同步-推送信息配置修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "workflow:cfgApproveSyncFieldMap:update",
-        serviceClass = CfgApproveSyncFieldMapService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgApproveSyncFieldMapDTO.UpdateDTO dto) {
-        cfgApproveSyncFieldMapService.update(dto);
-        return success();
-    }
-
-
-
 }

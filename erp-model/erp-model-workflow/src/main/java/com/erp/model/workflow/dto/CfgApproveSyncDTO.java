@@ -1,9 +1,8 @@
 package com.erp.model.workflow.dto;
 
-import com.baomidou.mybatisplus.annotation.FieldFill;
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.erp.model.workflow.entity.CfgApproveSyncEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -11,7 +10,6 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.json.Json;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -397,6 +395,23 @@ public class CfgApproveSyncDTO implements Serializable {
 
         @NotNull(message = "启用状态不能为空")
         private Boolean enableStatus;
+
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class SyncFsProcessToMqDTO {
+        private CfgApproveSyncEntity cfgApproveSyncEntity;
+
+        private String processManagementId;
+
+        private String taskId;
+
+        private String createUserId;
 
     }
 

@@ -21,10 +21,7 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveNoticeDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncFieldMapDTO;
 import com.erp.model.workflow.entity.*;
-import com.erp.model.workflow.enums.CfgApproveNoticeNoticeTypeEnum;
-import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
-import com.erp.model.workflow.enums.CfgApproveSyncViewerTypeEnum;
-import com.erp.model.workflow.enums.DictBasicEnum;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysRefereConfigFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -37,7 +34,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
-import com.google.gson.Gson;
 import com.lark.oapi.service.approval.v4.model.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -173,12 +169,12 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             BeanMapper.copy(noticeSettingDTO,cfgApproveNoticeEntity);
             cfgApproveNoticeEntityList.add(cfgApproveNoticeEntity);
         }
-        if(cfgApproveNoticeEntityList.size() > 0 ){
+        if(CollUtil.isNotEmpty(cfgApproveNoticeEntityList) ){
             cfgApproveNoticeService.saveBatch(cfgApproveNoticeEntityList);
         }
 
         //组装请求体并创建（飞书的）三方审批定义
-        CreateExternalApprovalResp resp = fsService.externalApprovalsCreate(buildexternalApprovalReq(cfgApproveSyncEntity));
+        CreateExternalApprovalResp resp = fsService.externalApprovalsCreate(buildExternalApprovalReq(cfgApproveSyncEntity));
         lambdaUpdate().set(CfgApproveSyncEntity::getApprovalCode, resp.getData().getApprovalCode())
                 .eq(CfgApproveSyncEntity::getId, id)
                 .update();
@@ -203,12 +199,11 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     /**
      * 组装（飞书的）三方审批定义请求体
      */
-    private CreateExternalApprovalReq buildexternalApprovalReq(CfgApproveSyncEntity cfgApproveSyncEntity) {
+    private CreateExternalApprovalReq buildExternalApprovalReq(CfgApproveSyncEntity cfgApproveSyncEntity) {
         //三方审批相关信息
         ExternalApproval externalApproval = getExternalApproval(cfgApproveSyncEntity);
         //国际化文案
-        I18nResource[] i18nResources = getI18nResources(cfgApproveSyncEntity);
-        externalApproval.setI18nResources(i18nResources);
+        externalApproval.setI18nResources(getExternalApprovalI18nResources(cfgApproveSyncEntity));
         //可见人列表
         getApprovalViewers(cfgApproveSyncEntity, externalApproval);
         // 创建请求对象
@@ -227,7 +222,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             referer = refererConfig.get(0).getReferer();
         }
 
-        ExternalApproval externalApproval = ExternalApproval.newBuilder()
+        return ExternalApproval.newBuilder()
                 .approvalName("@i18n@1")
                 .approvalCode(cfgApproveSyncEntity.getBusinessType())
                 .groupCode(cfgApproveSyncEntity.getApproveGroup())
@@ -248,7 +243,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                         .actionCallbackKey(referer)
                         .build())
                 .build();
-        return externalApproval;
     }
 
     private void getApprovalViewers(CfgApproveSyncEntity cfgApproveSyncEntity, ExternalApproval externalApproval) {
@@ -310,7 +304,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     }
 
     //国际化文案
-    private I18nResource[] getI18nResources(CfgApproveSyncEntity cfgApproveSyncEntity) {
+    private I18nResource[] getExternalApprovalI18nResources(CfgApproveSyncEntity cfgApproveSyncEntity) {
         Map<String, WorkMenuEntity> workMenuMap = workMenuService.list().stream().collect(Collectors.toMap(WorkMenuEntity::getModuleCode, item -> item));
 
         Map<String, DictBasicEntity> mapByType = dictBasicService.getMapByType(DictBasicEnum.TEST.getName());
@@ -330,25 +324,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         values.put("@i18n@3", dictBasicEntity.getRemark());
         //列表中用于提示审批来自哪个三方系统。
         values.put("@i18n@4", DmpBasicSystemCodeEnum.ERP.getName());
-
-
-        Set<Map.Entry<String, String>> entries = values.entrySet();
-        I18nResource[] i18nResources = new I18nResource[1];
-        I18nResourceText[] i18nResourceTexts = new I18nResourceText[entries.size()];
-        int i = 0;
-        for (Map.Entry<String, String> entry : entries) {
-            i18nResourceTexts[i++] = I18nResourceText.newBuilder()
-                    .key(entry.getKey())
-                    .value(entry.getValue())
-                    .build();
-        }
-        i18nResources[0] = I18nResource.newBuilder()
-                .locale("zh-CN")
-                .texts(i18nResourceTexts)
-                .isDefault(true)
-                .build();
-
-        return i18nResources;
+        return mapToI18nResouceArray(values);
     }
 
     /**
@@ -499,7 +475,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }
 
         //组装请求体并创建（飞书的）三方审批定义
-        CreateExternalApprovalResp resp = fsService.externalApprovalsCreate(buildexternalApprovalReq(cfgApproveSyncEntity));
+        CreateExternalApprovalResp resp = fsService.externalApprovalsCreate(buildExternalApprovalReq(cfgApproveSyncEntity));
         lambdaUpdate().set(CfgApproveSyncEntity::getApprovalCode, resp.getData().getApprovalCode())
                 .eq(CfgApproveSyncEntity::getId, id)
                 .update();
@@ -684,4 +660,160 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         }
         return data;
     }
+
+    @Override
+    public List<CfgApproveSyncEntity> getByBusinessType(List<String> businessTypes){
+        if(CollUtil.isEmpty(businessTypes)){
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(CfgApproveSyncEntity::getBusinessType, businessTypes).list();
+    }
+
+    @Override
+    public CreateExternalInstanceReq buildExternalInstanceReq(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto){
+
+        CfgApproveSyncEntity cfgApproveSyncEntity = mqDto.getCfgApproveSyncEntity();
+
+        String intanceId = mqDto.getProcessManagementId();
+
+        String taskId = mqDto.getTaskId();
+
+        String createUserId = mqDto.getCreateUserId();
+        //国际化文案
+        Map<String,String> values = new HashMap<>();
+        //标题
+        values.put("@i18n@title",cfgApproveSyncEntity.getTitle());
+
+        //查询飞书的用户信息
+        String thirdUserId = "";
+        String thirdOpenUserId = "";
+        List<ThirdUnionDTO> thirdUnionDTOS = sysUserFeign.getThirdUnionIdsByUserIds(ThirdpartyPlatformEnum.FS.getCode(), Arrays.asList(createUserId));
+        if(CollUtil.isEmpty(thirdUnionDTOS)){
+            //todo 推送记录 创建人为绑定飞书
+        }else{
+            ThirdUnionDTO thirdUnionDTO = thirdUnionDTOS.get(0);
+            if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenUserId())){
+                //todo 推送记录 创建人为绑定飞书
+            }
+            thirdUserId = thirdUnionDTO.getThirdUserId();
+            thirdOpenUserId = thirdUnionDTO.getThirdOpenUserId();
+            values.put("@i18n@userName", thirdUnionDTO.getUserName());
+        }
+
+        //任务列表数组
+
+        //抄送列表数组
+
+        I18nResource[] i18nResources = mapToI18nResouceArray(values);
+
+        //获取（String类型）当前时间戳
+        String currentTimeMillis = String.valueOf(System.currentTimeMillis());
+        ExternalInstance externalInstance = ExternalInstance.newBuilder()
+                .approvalCode(cfgApproveSyncEntity.getApprovalCode())
+                .status(FSApprovalStatusEnum.PENDING.getCode())
+                .instanceId(intanceId)
+                .links(ExternalInstanceLink.newBuilder()
+                        .pcLink("")
+                        .mobileLink("")
+                        .build())
+                .title("@i18n@title")
+                .userId(thirdUserId)
+                .userName("@i18n@userName")
+                .openId(thirdOpenUserId)
+                .startTime(currentTimeMillis)//审批发起时间
+                .endTime("0") //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
+                .updateTime(currentTimeMillis)//审批实例最近更新时间
+                .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
+                .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
+                .taskList(new ExternalInstanceTaskNode[]{
+                        ExternalInstanceTaskNode.newBuilder()
+                                .taskId("112534")
+                                .userId("a987sf9s")
+                                .openId("ou_be73cbc0ee35eb6ca54e9e7cc14998c1")
+                                .title("@i18n@4")
+                                .links(ExternalInstanceLink.newBuilder()
+                                        .pcLink("https://applink.feishu.cn/client/mini_program/open?mode=appCenter&appId=cli_9c90fc38e07a9101&path=pc/pages/detail?id=1234")
+                                        .mobileLink("https://applink.feishu.cn/client/mini_program/open?appId=cli_9c90fc38e07a9101&path=pages/detail?id=1234")
+                                        .build())
+                                .status("PENDING")
+                                .extra("{\"complete_reason\":\"approved\",\"xxx\":\"xxx\"}")
+                                .createTime("1556468012678")
+                                .endTime("1556468012678")
+                                .updateTime("1556468012678")
+                                .actionContext("123456")
+                                .actionConfigs(new ActionConfig[]{
+                                        ActionConfig.newBuilder()
+                                                .actionType("APPROVE")
+                                                .actionName("@i18n@5")
+                                                .isNeedReason(false)
+                                                .isReasonRequired(false)
+                                                .isNeedAttachment(false)
+                                                .build()
+                                })
+                                .displayMethod("BROWSER")
+                                .excludeStatistics(false)
+                                .nodeId("node")
+                                .nodeName("i18n@name")
+                                .build()
+                })
+                .ccList(new CcNode[]{
+                        CcNode.newBuilder()
+                                .ccId("123456")
+                                .userId("12345")
+                                .openId("ou_be73cbc0ee35eb6ca54e9e7cc14998c1")
+                                .links(ExternalInstanceLink.newBuilder()
+                                        .pcLink("https://applink.feishu.cn/client/mini_program/open?mode=appCenter&appId=cli_9c90fc38e07a9101&path=pc/pages/detail?id=1234")
+                                        .mobileLink("https://applink.feishu.cn/client/mini_program/open?appId=cli_9c90fc38e07a9101&path=pages/detail?id=1234")
+                                        .build())
+                                .readStatus("READ")
+                                .extra("{\"xxx\":\"xxx\"}")
+                                .title("xxx")
+                                .createTime("1556468012678")
+                                .updateTime("1556468012678")
+                                .displayMethod("BROWSER")
+                                .build()
+                })
+                .i18nResources(i18nResources)
+                .build();
+
+
+        //推送消息
+        List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId()));
+        fieldMapEntities.sort(Comparator.comparingInt(CfgApproveSyncFieldMapEntity::getSort));
+        if(CollUtil.isNotEmpty(fieldMapEntities)){
+            //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
+            int len = fieldMapEntities.size() > 3 ? 3 : fieldMapEntities.size();
+            ExternalInstanceForm[] externalInstanceForm = fieldMapEntities.subList(0, len).stream().map(entry -> ExternalInstanceForm.newBuilder()
+                            .name("@i18n@"+entry.getFieldName())
+                            .value("@i18n@"+entry.getFieldSource())
+                            .build())
+                    .toArray(ExternalInstanceForm[]::new);
+            externalInstance.setForm(externalInstanceForm);
+        }
+
+        // 创建请求对象
+        return CreateExternalInstanceReq.newBuilder()
+                .externalInstance(externalInstance)
+                .build();
+    }
+
+    //构建I18nResource数组
+    private I18nResource[] mapToI18nResouceArray(Map<String, String> values) {
+        // 转换为 I18nResourceText 数组
+        I18nResourceText[] i18nResourceTexts = values.entrySet().stream()
+                .map(entry -> I18nResourceText.newBuilder()
+                        .key(entry.getKey())
+                        .value(entry.getValue())
+                        .build())
+                .toArray(I18nResourceText[]::new);
+        // 构建 I18nResource 数组（预留多语言扩展）
+        return new I18nResource[]{
+                I18nResource.newBuilder()
+                        .locale(LocaleEnum.LOCALE_ZH_CN.getCode())
+                        .texts(i18nResourceTexts)
+                        .isDefault(true)
+                        .build()
+        };
+    }
+
 }

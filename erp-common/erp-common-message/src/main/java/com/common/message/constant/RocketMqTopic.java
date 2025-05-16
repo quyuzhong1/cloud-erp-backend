@@ -146,4 +146,9 @@ public class RocketMqTopic {
      */
     public static final String DMP_WECHAT_SUBSCRIBE_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wechat_subscribe_msg_topic";
 
+    /**
+     *  workflow 同步飞书流程实例
+     */
+    public static final String WORKFLOW_SYNC_FS_INSTANCE_TOPIC = "${spring.cloud.nacos.discovery.namespace}-workflow_sync_fs_instance_topic";
+
 }

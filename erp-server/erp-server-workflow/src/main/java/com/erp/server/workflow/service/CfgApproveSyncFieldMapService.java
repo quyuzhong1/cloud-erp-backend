@@ -16,24 +16,5 @@ import java.util.List;
  */
 public interface CfgApproveSyncFieldMapService extends SuperService<CfgApproveSyncFieldMapEntity> {
 
-    /**
-    * 新增
-    * @author jack
-    * @date: 2025-05-12
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(CfgApproveSyncFieldMapDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author jack
-    * @date: 2025-05-12
-    * @param dto
-    * @return
-    */
-    Boolean update(CfgApproveSyncFieldMapDTO.UpdateDTO dto);
-
-
     List<CfgApproveSyncFieldMapEntity> listByMainIds(List<String> list);
 }

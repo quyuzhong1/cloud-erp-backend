@@ -33,60 +33,6 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class CfgApproveSyncFieldMapServiceImpl extends SuperServiceImpl<CfgApproveSyncFieldMapMapper, CfgApproveSyncFieldMapEntity> implements CfgApproveSyncFieldMapService {
-    @Autowired
-    private OperateLogService operateLogService;
-
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public BaseResultDTO.AddDTO add(CfgApproveSyncFieldMapDTO.AddDTO addDTO) {
-        CfgApproveSyncFieldMapEntity cfgApproveSyncFieldMapEntity = new CfgApproveSyncFieldMapEntity();
-        BeanMapperUtils.copy(addDTO, cfgApproveSyncFieldMapEntity);
-
-        // 数据处理
-        handleData(cfgApproveSyncFieldMapEntity);
-
-        log.info("开始新增ERP审批同步-推送信息配置");
-        boolean save = super.save(cfgApproveSyncFieldMapEntity);
-        if(!save) {
-            throw new ServiceException("ERP审批同步-推送信息配置保存失败");
-        }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "ERP审批同步-推送信息配置" , cfgApproveSyncFieldMapEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgApproveSyncFieldMapEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(cfgApproveSyncFieldMapEntity.getId(), cfgApproveSyncFieldMapEntity.getId());
-    }
-
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(CfgApproveSyncFieldMapDTO.UpdateDTO addOrUpdateDTO) {
-        CfgApproveSyncFieldMapEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "ERP审批同步-推送信息配置"));
-        CfgApproveSyncFieldMapEntity cfgApproveSyncFieldMapEntity =  BeanMapperUtils.map(CfgApproveSyncFieldMapEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(cfgApproveSyncFieldMapEntity);
-        log.info("编辑 开始修改ERP审批同步-推送信息配置数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgApproveSyncFieldMapEntity);
-        if(!save) {
-            throw new ServiceException("ERP审批同步-推送信息配置保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录ERP审批同步-推送信息配置日志数据，id：【{}】", cfgApproveSyncFieldMapEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgApproveSyncFieldMapEntity.getId(), "ERP审批同步-推送信息配置");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgApproveSyncFieldMapEntity, null, cfgApproveSyncFieldMapEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
 
     @Override
     public List<CfgApproveSyncFieldMapEntity> listByMainIds(List<String> ids) {
@@ -96,10 +42,4 @@ public class CfgApproveSyncFieldMapServiceImpl extends SuperServiceImpl<CfgAppro
         return Collections.emptyList();
     }
 
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(CfgApproveSyncFieldMapEntity cfgApproveSyncFieldMapEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 }

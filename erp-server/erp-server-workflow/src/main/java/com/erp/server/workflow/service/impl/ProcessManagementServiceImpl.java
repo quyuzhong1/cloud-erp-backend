@@ -2,10 +2,13 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -26,12 +29,18 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RocketMqNewTag;
+import com.common.message.constant.RocketMqNewTopic;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.plm.enums.NoticeEnum;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.CamundaDTO;
+import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.*;
@@ -44,6 +53,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.*;
+import com.lark.oapi.service.approval.v4.model.CreateExternalInstanceReq;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -72,8 +82,11 @@ import org.camunda.bpm.model.bpmn.instance.StartEvent;
 import org.camunda.bpm.model.bpmn.instance.UserTask;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Nullable;
@@ -127,18 +140,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Resource
     private ProcessTaskCcService processTaskCcService;
     @Resource
-    private MQProducerService<?> mqProducerService;
+    private MQProducerService mqProducerService;
     @Resource
     private WorkMenuService workMenuService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private CfgApproveSyncService cfgApproveSyncService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto) {
         // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
         if (null == processBusiness) {
             // 业务未绑定流程定义
             return new ProcessManagementDTO.StartResultDTO(dto);
@@ -156,7 +170,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         String processDefinitionId = processBusiness.getProcessDefinitionId();
         // 查询流程定义
-        ProcessDefinitionEntity processDefinition= processDefinitionService.getById(processDefinitionId);
+        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId);
         if (null == processDefinition) {
             // 流程定义不存在
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
@@ -177,47 +191,65 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         ActivityImpl activity = executionEntity.getActivity();
         String taskId;
         String activityId;
-        if(ObjectUtil.isEmpty(activity)){
+        if (ObjectUtil.isEmpty(activity)) {
             // 多实例节点 获取当前活动节点方法
             ActivityInstance[] childActivityInstances = activityInstance.getChildActivityInstances();
-            if(ObjectUtil.isEmpty(childActivityInstances) || childActivityInstances.length == 0){
-                log.error("流程实例[{}]没有多实例子节点",processInstance.getId());
+            if (ObjectUtil.isEmpty(childActivityInstances) || childActivityInstances.length == 0) {
+                log.error("流程实例[{}]没有多实例子节点", processInstance.getId());
                 throw new ServiceException(ApiError.ERROR_94004);
             }
             activityId = childActivityInstances[0].getActivityId();
             activityId = activityId.contains("#") ? activityId.substring(0, activityId.indexOf("#")) : activityId;
             List<ExecutionEntity> executions = executionEntity.getExecutions();
             if (CollectionUtils.isEmpty(executions)) {
-                log.error("流程实例[{}]没有多实例执行任务",processInstance.getId());
+                log.error("流程实例[{}]没有多实例执行任务", processInstance.getId());
                 throw new ServiceException(ApiError.ERROR_94004);
             }
-            List<TaskEntity> tasks  = executions.get(0).getTasks();
-            if(CollectionUtils.isEmpty(tasks)){
+            List<TaskEntity> tasks = executions.get(0).getTasks();
+            if (CollectionUtils.isEmpty(tasks)) {
                 List<ExecutionEntity> executionChild = executions.get(0).getExecutions();
                 if (CollectionUtils.isEmpty(executionChild)) {
-                    log.error("流程实例[{}]没有多实例执行子任务",processInstance.getId());
+                    log.error("流程实例[{}]没有多实例执行子任务", processInstance.getId());
                     throw new ServiceException(ApiError.ERROR_94004);
                 }
                 tasks = executionChild.get(0).getTasks();
             }
             if (CollectionUtils.isEmpty(tasks)) {
-                log.error("流程实例[{}]没有多实例执行任务列表为空",processInstance.getId());
+                log.error("流程实例[{}]没有多实例执行任务列表为空", processInstance.getId());
                 throw new ServiceException(ApiError.ERROR_94004);
             }
             taskId = tasks.get(0).getId();
-        }else {
+        } else {
             activityId = activity.getActivityId();
             taskId = executionEntity.getTasks().get(0).getId();
         }
         String processInstanceId = processInstance.getProcessInstanceId();
         // 保存审批节点数据
-        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activityId, processStartTime, processDefinition,processInstance.getProcessDefinitionId());
+        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activityId, processStartTime, processDefinition, processInstance.getProcessDefinitionId());
         if (!save(insertManagementEntity)) {
             // 保存流程数据失败
             throw new ServiceException(ApiError.ERROR_94004);
         }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                //判断该单据类型是否有ERP审批同步定义
+                List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(insertManagementEntity.getBusinessKey()));
+                if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
+                    CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
+                    CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                    mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
+                    mqDto.setProcessManagementId(insertManagementEntity.getId());
+                    mqDto.setTaskId(taskId);
+                    mqDto.setCreateUserId(dto.getUserId());
+                    mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
+                }
+            }
+        });
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
+
 
     /**
      * 审批任务填充审批信息

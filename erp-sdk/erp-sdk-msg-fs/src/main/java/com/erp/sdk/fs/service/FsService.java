@@ -13,6 +13,8 @@ import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.workflow.enums.CfgApproveSyncViewerTypeEnum;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.dto.LarkResultDTO;
+import com.erp.sdk.fs.enmu.DepartmentIdTypeEnum;
+import com.erp.sdk.fs.enmu.UserIdTypeEnum;
 import com.google.gson.JsonParser;
 import com.lark.oapi.Client;
 import com.lark.oapi.core.utils.Jsons;
@@ -104,76 +106,6 @@ public class FsService {
 
         return Collections.emptyMap();
     }
-
-    /**
-     * 批量通过手机号或邮箱获取用户
-     * https://open.feishu.cn/document/server-docs/contact-v3/user/batch_get_id
-     * @author jack
-     * @date 2025-05-13
-     */
-    public BatchGetIdUserResp getBatchFsUserByMobileOrEmail(FindThirdUserDTO.UserParamsDTO dto) {
-        try {
-            // 构建client
-//            Client client = Client.newBuilder(fsProperties.getAppId(), fsProperties.getAppSecret()).build();
-//            飞书生产
-            Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
-                    .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
-                    .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
-                    .build();
-            // 创建请求对象
-            BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
-                    .userIdType(dto.getUserIdType())
-                    .batchGetIdUserReqBody(BatchGetIdUserReqBody.newBuilder()
-                            .mobiles(dto.getMobiles())
-                            .includeResigned(Boolean.FALSE)
-                            .build())
-                    .build();
-            // 发起请求
-            BatchGetIdUserResp resp = client.contact().v3().user().batchGetId(req);
-            // 处理服务端错误
-            if (!resp.success()) {
-                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
-                log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMob;ileOrEmail失败>>>>>{}", resp.getMsg() );
-                throw new ServiceException("获取子部门列表>>>>>{}",msg);
-            }
-            return resp;
-        } catch (Exception e) {
-            log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail出错>>>>>{}", e);
-            throw new ServiceException("获取子部门列表>>>>>{}",e);
-        }
-    }
-
-    /**
-     * 批量获取用户信息
-     * https://open.feishu.cn/document/contact-v3/user/batch
-     * @author jack
-     * @date 2025-05-13
-     */
-    public User[] getBatchFsUser(FindThirdUserDTO.UserParamsDTO dto) {
-        // 构建client
-        Client client = Client.newBuilder(fsProperties.getAppId(), fsProperties.getAppSecret()).build();
-        // 创建请求对象
-        BatchUserReq req = BatchUserReq.newBuilder()
-                .userIdType(dto.getUserIdType())
-                .departmentIdType(dto.getDepartmenetIdType())
-                .userIds(dto.getUserIds())
-                .build();
-        try {
-            // 发起请求
-            BatchUserResp resp = client.contact().v3().user().batch(req);
-            // 处理服务端错误
-            if (!resp.success()) {
-                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
-                return null;
-            }
-            return resp.getData().getItems();
-        } catch (Exception e) {
-            log.error("批量获取用户信息getBatchFsUser出错>>>>>{}",e);
-        }
-        return null;
-    }
-
-
 
     /**
      * 根据code 获取飞书用户信息
@@ -430,6 +362,76 @@ public class FsService {
         return client;
     }
 
+
+    /**
+     * 批量通过手机号或邮箱获取用户
+     * https://open.feishu.cn/document/server-docs/contact-v3/user/batch_get_id
+     * @author jack
+     * @date 2025-05-13
+     */
+    public BatchGetIdUserResp getBatchFsUserByMobileOrEmail(FindThirdUserDTO.UserParamsDTO dto) {
+        try {
+            // 构建client
+            Client client =getClient();
+//            飞书生产
+//            Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
+//                    .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+//                    .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
+//                    .build();
+            // 创建请求对象
+            BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
+                    .userIdType(dto.getUserIdType())
+                    .batchGetIdUserReqBody(BatchGetIdUserReqBody.newBuilder()
+                            .mobiles(dto.getMobiles())
+                            .includeResigned(Boolean.FALSE)
+                            .build())
+                    .build();
+            // 发起请求
+            BatchGetIdUserResp resp = client.contact().v3().user().batchGetId(req);
+            // 处理服务端错误
+            if (!resp.success()) {
+                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
+                log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMob;ileOrEmail失败>>>>>{}", resp.getMsg() );
+                throw new ServiceException("获取子部门列表>>>>>{}",msg);
+            }
+            return resp;
+        } catch (Exception e) {
+            log.error("批量通过手机号或邮箱获取用户getBatchFsUserByMobileOrEmail出错>>>>>{}", e);
+            throw new ServiceException("获取子部门列表>>>>>{}",e);
+        }
+    }
+
+    /**
+     * 批量获取用户信息
+     * https://open.feishu.cn/document/contact-v3/user/batch
+     * @author jack
+     * @date 2025-05-13
+     */
+    public User[] getBatchFsUser(FindThirdUserDTO.UserParamsDTO dto) {
+        // 构建client
+        Client client = getClient();
+        // 创建请求对象
+        BatchUserReq req = BatchUserReq.newBuilder()
+                .userIdType(dto.getUserIdType())
+                .departmentIdType(dto.getDepartmenetIdType())
+                .userIds(dto.getUserIds())
+                .build();
+        try {
+            // 发起请求
+            BatchUserResp resp = client.contact().v3().user().batch(req);
+            // 处理服务端错误
+            if (!resp.success()) {
+                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
+                return null;
+            }
+            return resp.getData().getItems();
+        } catch (Exception e) {
+            log.error("批量获取用户信息getBatchFsUser出错>>>>>{}",e);
+        }
+        return null;
+    }
+
+
     /**
      * 创建三方审批定义
      * https://open.feishu.cn/document/server-docs/approval-v4/external_approval/create
@@ -469,8 +471,8 @@ public class FsService {
             if(Objects.isNull(req)){
                 req = ChildrenDepartmentReq.newBuilder()
                         .departmentId("0")
-                        .userIdType("open_id")
-                        .departmentIdType("open_department_id")
+                        .userIdType(UserIdTypeEnum.UNIONID.getCode())
+                        .departmentIdType(DepartmentIdTypeEnum.OPENDEPARTMENTID.getCode())
                         .fetchChild(true)
                         .pageSize(50)
                         .build();
@@ -487,6 +489,34 @@ public class FsService {
             return resp;
         } catch (Exception e) {
             throw new ServiceException("获取子部门列表>>>>>{}",e);
+        }
+    }
+
+
+    /**
+     * 同步三方审批实例
+     * https://open.feishu.cn/document/server-docs/approval-v4/external_instance/create
+     * @author jack
+     * @date 2025-05-16
+     */
+    public CreateExternalInstanceResp createExternalInstance(CreateExternalInstanceReq req) {
+        try {
+            // 构建client
+            Client client = getClient();
+
+
+
+            // 发起请求
+            CreateExternalInstanceResp resp = client.approval().v4().externalInstance().create(req);
+            // 处理服务端错误
+            if (!resp.success()) {
+                String msg = String.format("code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
+                log.error("同步三方审批实例失败>>>>>{}",msg);
+                throw new ServiceException("同步三方审批实例失败>>>>>{}",msg);
+            }
+            return resp;
+        } catch (Exception e) {
+            throw new ServiceException("同步三方审批实例出错>>>>>{}", e);
         }
     }
 
