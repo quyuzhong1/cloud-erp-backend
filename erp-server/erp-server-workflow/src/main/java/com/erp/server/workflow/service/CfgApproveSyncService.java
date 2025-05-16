@@ -5,9 +5,11 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.lark.oapi.service.approval.v4.model.CreateExternalInstanceReq;
+import com.lark.oapi.service.approval.v4.model.I18nResource;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -52,5 +54,6 @@ public interface CfgApproveSyncService extends SuperService<CfgApproveSyncEntity
 
     List<CfgApproveSyncEntity> getByBusinessType(List<String> businessTypes);
 
-    CreateExternalInstanceReq buildExternalInstanceReq(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto);
+    //构建I18nResource数组
+    I18nResource[] mapToI18nResouceArray(Map<String, String> values);
 }

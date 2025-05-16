@@ -109,4 +109,6 @@ public interface ProcessTaskManagementService extends SuperService<ProcessTaskMa
      * @return List<ProcessTaskManagementEntity>
      **/
     List<ProcessTaskManagementEntity> listProcessByBusinessKey(ProcessManagementDTO.TaskKeyInfoDTO dto);
+
+    List<ProcessTaskManagementEntity> listTask(String processInstanceId);
 }

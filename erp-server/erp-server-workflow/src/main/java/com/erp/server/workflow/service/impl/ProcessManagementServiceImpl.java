@@ -235,7 +235,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             @Override
             public void afterCommit() {
                 //判断该单据类型是否有ERP审批同步定义
-                List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(insertManagementEntity.getBusinessKey()));
+                List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(insertManagementEntity.getBusinessKey()))
+                        .stream()
+                        .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
+                        .collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
                     CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
                     CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
