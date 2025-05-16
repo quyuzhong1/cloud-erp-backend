@@ -1,11 +1,9 @@
 package com.erp.server.workflow.service;
 
-import com.common.core.controller.vo.ApiResult;
-import com.erp.model.sys.dto.UpdateUserStateDTO;
-import com.erp.model.workflow.entity.CfgProcessRuleEntity;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgProcessRuleDTO;
+import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 
 import java.util.List;
 
@@ -50,4 +48,12 @@ public interface CfgProcessRuleService extends SuperService<CfgProcessRuleEntity
     void delete(List<String> ids);
 
     BaseResultDTO.UpdateDTO updateDefault(CfgProcessRuleDTO.UpdateStateDTO dto);
+    /**
+     * 根据流程定义id查询规则
+     * @author will
+     * @date 2025/5/16 10:06
+     * @param id
+     * @return CfgProcessRuleEntity
+     */
+    CfgProcessRuleEntity getByDefinitionId(String id);
 }

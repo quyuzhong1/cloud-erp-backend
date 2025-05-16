@@ -21,10 +21,12 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
+import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ProcessDefinitionMapper;
+import com.erp.server.workflow.service.CfgProcessRuleService;
 import com.erp.server.workflow.service.ProcessBusinessService;
 import com.erp.server.workflow.service.ProcessDefinitionService;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
@@ -54,14 +56,22 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
 
     @Resource
     private ProcessBusinessService processBusinessService;
+
     @Resource
     private RepositoryService repositoryService;
+
     @Resource
     private RedisService redisService;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
     @Resource
     private ThirdProcessDefinitionService  thirdProcessDefinitionService;
+
+    @Resource
+    private CfgProcessRuleService cfgProcessRuleService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
@@ -197,6 +207,12 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         if(ObjUtil.isEmpty(entity)){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
+        //查询配置信息
+        CfgProcessRuleEntity processRuleEntity = cfgProcessRuleService.getByDefinitionId(id);
+        if (ObjUtil.isNotEmpty(processRuleEntity)) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_DISABLED_ERROR);
+        }
+
         entity.setDisabled(disabled);
         this.updateById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getProcessName(), OperationTypeEnum.DISABLED);

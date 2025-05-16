@@ -8,32 +8,29 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessExpDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
+import com.erp.model.workflow.dto.CfgProcessRuleDTO;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ThirdProcessInstanceEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.server.workflow.mapper.CfgProcessRuleMapper;
 import com.erp.server.workflow.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.workflow.service.OperateLogService;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.CfgProcessRuleDTO;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-
-import javax.annotation.Resource;
 
 
 /**
@@ -214,6 +211,11 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                 .set(CfgProcessRuleEntity::getIsDefault, dto.getState())
                 .update();
         return new BaseResultDTO.UpdateDTO(dto.getId(), dto.getState().toString());
+    }
+
+    @Override
+    public CfgProcessRuleEntity getByDefinitionId(String id) {
+        return lambdaQuery().eq(CfgProcessRuleEntity::getProcessDefinitionId,id).last("limit 1").one();
     }
 
     /**

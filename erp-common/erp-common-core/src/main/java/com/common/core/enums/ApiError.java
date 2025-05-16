@@ -251,6 +251,7 @@ public enum ApiError implements Serializable {
     PROCESS_MANAGEMENT_REJECT_ERROR(94040,"强制驳回操作仅针对运行、暂停状态的流程有效"),
     PROCESS_MANAGEMENT_RESTORE_ERROR(94041,"恢复操作仅针对暂停状态的流程实例有效"),
     PROCESS_MANAGEMENT_SUSPEND_ERROR(94042,"暂停操作仅针对状态为“运行中”的流程有效"),
+    PROCESS_DEFINITION_DISABLED_ERROR(94043,"关联流程配置有关联启用流程时，不可操作停用"),
 
 
     /**

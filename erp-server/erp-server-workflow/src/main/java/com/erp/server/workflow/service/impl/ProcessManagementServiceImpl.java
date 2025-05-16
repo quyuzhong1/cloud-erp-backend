@@ -16,6 +16,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
@@ -673,6 +674,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             if(null != record.getTaskStatus()){
                 record.setTaskStatusName(record.getTaskStatus().getName());
             }
+            record.setBusinessKeyName(SourceTypeEnum.getName(record.getBusinessKey()));
         }).collect(Collectors.toList());
         return new PagingVO<>(pageData);
     }
@@ -894,7 +896,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
         LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
         // 流程信息传递给业务系统
-        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate);
+        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate,variables);
         // 获取业务系统feign
         return callFeign(entity.getBusinessKey(), dto);
     }

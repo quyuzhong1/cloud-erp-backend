@@ -1,6 +1,7 @@
 package com.erp.model.workflow.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -770,6 +771,26 @@ public class ProcessManagementDTO {
         private String businessName;
 
         /**
+         * 业务类型KEY
+         */
+        private String businessKey;
+        /**
+         * 单据名称
+         */
+        private String businessKeyName;
+        /**
+         * 审核来源
+         */
+        private String sourcePlatform;
+        /**
+         * 审核来源名称
+         */
+        private String sourcePlatformName;
+        /**
+         * 标签标识
+         */
+        private JSONObject labelJson;
+        /**
          * 当前节点id
          */
         private String curActivityId;
@@ -838,7 +859,10 @@ public class ProcessManagementDTO {
          * 更新时间
          */
         private LocalDateTime updateTime;
-
+        /**
+         * 审核完成时间
+         */
+        private LocalDateTime endTime;
     }
 
 

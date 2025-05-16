@@ -23,7 +23,6 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.plm.dto.AuditParamDTO;
-import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskHandleDataDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -517,24 +516,18 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 plmTaskFeign.pilotApprovalPass(approveOneDTO);
                 break;
             case PRODUCT_BOM_INFO:
-                AuditParamDTO auditParamDTO = new AuditParamDTO();
-                auditParamDTO.setId(dto.getId());
-                auditParamDTO.setComment(dto.getComment());
-                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-                    plmTaskFeign.bomInfoApprovalPass(auditParamDTO);
-                } else {
-                    plmTaskFeign.bomInfoApprovalNoPass(auditParamDTO);
-                }
+                ApproveOneDTO bomApproveOneDTO = new ApproveOneDTO();
+                bomApproveOneDTO.setId(dto.getId());
+                bomApproveOneDTO.setComment(dto.getComment());
+                bomApproveOneDTO.setType(dto.getType());
+                plmTaskFeign.bomInfoApprove(bomApproveOneDTO);
                 break;
             case PRODUCT_DETAIL:
-                ProductDetailOperateDTO paramDTO = new ProductDetailOperateDTO();
+                ApproveOneDTO paramDTO = new ApproveOneDTO();
                 paramDTO.setId(dto.getId());
                 paramDTO.setComment(dto.getComment());
-                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-                    plmTaskFeign.productDetailApprovalPass(paramDTO);
-                } else {
-                    plmTaskFeign.productDetailApprovalNoPass(paramDTO);
-                }
+                paramDTO.setType(dto.getType());
+                plmTaskFeign.productDetailApprove(paramDTO);
                 break;
             case PROJECT_TASK:
                 LoginUser userInfo = UserContext.getDefaultLoginUser();

@@ -1,5 +1,6 @@
 package com.erp.server.wms.service;
 
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -117,6 +118,15 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @param id
      */
     BatchResultDTO approve(String id, String type, String comment);
+    /**
+     * 结束审核
+     * @author will
+     * @date 2025/5/16 10:28
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, OtherOutstockEntity entity);
     /**
      * @description: 反审核
      * @author Will
