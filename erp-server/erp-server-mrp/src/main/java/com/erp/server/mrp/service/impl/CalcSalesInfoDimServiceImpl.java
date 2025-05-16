@@ -638,6 +638,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> page = baseMapper.exportMrpSalesCalcList(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), user.getUid());
         if (CollectionUtils.isEmpty(page.getRecords())) {
@@ -716,6 +717,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> page = baseMapper.exportMrpSalesCalcTemplateList(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), user.getUid());
         if (!CollectionUtils.isEmpty(page.getRecords())) {

@@ -86,7 +86,6 @@ public class PurchaseSuggestIndependentController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出发货建议")
     @PostMapping(value = "/export")
-    @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public ApiResult export(@RequestBody DeliverySuggestDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = purchaseSuggestIndependentService.export(pagingParamDTO);
         return flag == true ? success() : failure();

@@ -34,6 +34,22 @@
         is_deleted,
         warehouse_id, virtual_warehouse_id, warehouse_type, channel_type, channel_id_json, inventory_allocate_type, main_id
     </sql>
+    <select id="listByParams" resultType="com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity">
+        select
+        <include refid="Base_Column_List"/>
+        from cfg_rule_warehouse_detail
+        where is_deleted = false
+          <if test="mainIdList != null and mainIdList.size() > 0">
+              and main_id in
+              <foreach collection="mainIdList" item="mainId" open="(" separator="," close=")">
+                  #{mainId}
+              </foreach>
+          </if>
+        <!--权限-->
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+    </select>
 
 
 </mapper>

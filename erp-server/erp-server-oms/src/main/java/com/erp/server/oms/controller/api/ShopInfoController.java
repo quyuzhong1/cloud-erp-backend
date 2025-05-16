@@ -7,8 +7,7 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -30,7 +29,6 @@ import com.erp.server.oms.service.ShopCostService;
 import com.erp.server.oms.service.ShopInfoService;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +36,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -411,7 +410,7 @@ public class ShopInfoController extends BaseController {
      **/
     @GetMapping("/listShopByAmazon")
     public ApiResult<List<ShopInfoEntity>> listShopByAmazon() {
-        List<ShopInfoEntity> result = shopInfoService.listShopByAmazon();
+        List<ShopInfoEntity> result = shopInfoService.listAuthPlatform(Collections.singletonList(PlatformDictEnum.AMAZON.getCode()));
         return success(result);
     }
 

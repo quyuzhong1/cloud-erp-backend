@@ -598,7 +598,6 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货规则")
     @PostMapping(value = "/exportReplenishmentRule")
-    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult<String> exportExcel(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportReplenishmentRule(pagingParamDTO);
         return Boolean.TRUE.equals(flag) ? success() : failure();
@@ -613,7 +612,6 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出历史销量")
     @PostMapping(value = "/exportHistorySalesQty")
-    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult<String> exportHistorySalesQty(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportHistorySalesQty(pagingParamDTO);
         return Boolean.TRUE.equals(flag) ? success() : failure();
@@ -628,7 +626,6 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货计划_采购建议")
     @PostMapping(value = "/exportPurchaseSuggestion")
-    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult<String> exportPurchaseSuggestion(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportPurchaseSuggestion(pagingParamDTO);
         return Boolean.TRUE.equals(flag) ? success() : failure();
@@ -644,7 +641,6 @@ public class ReplenishmentSuggestionController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出补货计划_建议发货")
     @PostMapping(value = "/exportDeliverySuggest")
-    @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public ApiResult<String> exportDeliverySuggest(@RequestBody ReplenishmentSuggestionDTO.PagingParamDTO pagingParamDTO) {
         Boolean flag = replenishmentSuggestionService.exportDeliverySuggest(pagingParamDTO);
         return Boolean.TRUE.equals(flag) ? success() : failure();

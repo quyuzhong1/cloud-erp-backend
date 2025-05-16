@@ -163,6 +163,7 @@
             auth_status as authStatus,
             sales_org_id as salesOrgId,
             sales_org_name as salesOrgName,
+            dict_platform as dictPlatform,
             disabled
         from shop_info
         where is_deleted = false

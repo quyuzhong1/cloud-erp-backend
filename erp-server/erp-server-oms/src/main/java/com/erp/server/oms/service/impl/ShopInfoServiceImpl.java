@@ -1821,23 +1821,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public List<ShopInfoEntity> listAuthPlatform(List<String> platformDTO) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Collections.singletonList(userInfo.getUid()));
-        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-            return Collections.emptyList();
-        }
-        ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-        List<String> shopIdList;
-        if (CollectionUtils.isNotEmpty(platformDTO)) {
-            shopIdList = viewDTO.getDetailList().stream().filter(obj -> platformDTO.contains(obj.getDictPlatform())).map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-        } else {
-            shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-        }
-        if (CollectionUtils.isEmpty(shopIdList)) {
-            return Collections.emptyList();
-        }
-        return this.listByIds(shopIdList);
+    public List<ShopInfoEntity> listAuthPlatform(List<String> platformList) {
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("si.id");
+        return baseMapper.listByParam(platformList,shopPermissionSql);
     }
 
     @Override
