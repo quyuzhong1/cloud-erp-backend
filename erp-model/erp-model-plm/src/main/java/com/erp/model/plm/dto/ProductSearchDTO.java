@@ -358,6 +358,10 @@ public class ProductSearchDTO extends PermissionsDTO {
          * 实际不含税成本
          */
         private BigDecimal actualNoTaxCost = BigDecimal.ZERO;
+        /**
+         * 标准零售价
+         */
+        private BigDecimal retailPrice = BigDecimal.ZERO;
     }
 
 }

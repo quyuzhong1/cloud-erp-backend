@@ -4626,6 +4626,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
             String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             skuListDTO.setMainSupplierName(supplierName);
+            //标准零售价
+            skuListDTO.setRetailPrice(Objects.isNull(skuListDTO.getRetailPrice()) ? BigDecimal.ZERO : skuListDTO.getRetailPrice());
             resultList.add(skuListDTO);
         }
         return resultList;
