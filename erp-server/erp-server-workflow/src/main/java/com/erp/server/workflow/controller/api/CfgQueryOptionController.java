@@ -1,6 +1,7 @@
 package com.erp.server.workflow.controller.api;
 
 
+import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +20,6 @@ import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 
 import java.util.List;
 
@@ -43,7 +43,7 @@ public class CfgQueryOptionController extends BaseController {
      * @return
      */
     @GetMapping("/processDefinition/drop/down")
-    public ApiResult<List<ProcessDefinitionDTO.DropDownDTO>> proDropDown() {
-        return success(cfgQueryOptionService.proDropDown());
+    public ApiResult<List<CfgQueryOptionDTO.ViewDTO>> proDropDown(@RequestParam(value = "bussinessKey") String bussinessKey) {
+        return success(cfgQueryOptionService.proDropDown(bussinessKey));
     }
 }

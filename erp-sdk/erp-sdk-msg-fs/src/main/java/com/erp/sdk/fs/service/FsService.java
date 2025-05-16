@@ -480,7 +480,8 @@ public class FsService {
 
             // 处理服务端错误
             if (!resp.success()) {
-                String msg = String.format("code:%s,msg:%s,reqId:%s",resp.getCode(), resp.getMsg(), resp.getRequestId());
+                String msg = String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                        resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8))));
                 throw new ServiceException("获取子部门列表>>>>>{}",msg);
             }
             return resp;
@@ -503,4 +504,35 @@ public class FsService {
 //                .build();
 
     }
+
+    /**
+     * 获取指定飞书审批定义
+     */
+    public GetApprovalResp getApproval(String code) throws Exception {
+        // 构建client
+        Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+
+        // 创建请求对象
+        GetApprovalReq req = GetApprovalReq.newBuilder()
+                .approvalCode(code)
+                .locale("zh-CN")
+                .withAdminId(false)
+                .userIdType("open_id")
+                .build();
+
+        // 发起请求
+        GetApprovalResp resp = client.approval().v4().approval().get(req);
+
+        // 处理服务端错误
+        if (!resp.success()) {
+            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+            throw new ServiceException(resp.getMsg());
+        }
+
+        // 业务数据处理
+        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+        return resp;
+    }
+
 }

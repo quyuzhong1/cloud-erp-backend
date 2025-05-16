@@ -1,9 +1,9 @@
 package com.erp.server.workflow.service;
+import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
-import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     * @param dto
     * @return
     */
-    List<ProcessDefinitionDTO.DropDownDTO> proDropDown();
+    List<CfgQueryOptionDTO.ViewDTO> proDropDown(String bussinessKey);
 
     /**
     * 修改

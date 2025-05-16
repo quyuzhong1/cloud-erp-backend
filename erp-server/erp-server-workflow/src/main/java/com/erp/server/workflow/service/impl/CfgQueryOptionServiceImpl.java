@@ -1,8 +1,11 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
@@ -17,10 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.web.bind.annotation.RequestParam;
+
 /**
  * <p>
  * 查询option配置表(数大臣单据字段) 服务实现类
@@ -43,7 +48,8 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     }
 
     @Override
-    public List<ProcessDefinitionDTO.DropDownDTO> proDropDown() {
-        return Collections.emptyList();
+    public List<CfgQueryOptionDTO.ViewDTO> proDropDown(String bussinessKey) {
+        List<CfgQueryOptionEntity> cfgQueryOptionEntities = this.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
+        return BeanUtil.copyToList(cfgQueryOptionEntities, CfgQueryOptionDTO.ViewDTO.class);
     }
 }
