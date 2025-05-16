@@ -64,6 +64,7 @@
         fmcr.platform_sku_no as platformSkuNo,
         fmcr.sku_id as skuId,
         fmcr.sku_no as skuNo,
+        fmcr.box_no as boxNo,
         fmcr.category,
         fmcr.category_field as categoryField,
         fmcr.old_value as oldValue,

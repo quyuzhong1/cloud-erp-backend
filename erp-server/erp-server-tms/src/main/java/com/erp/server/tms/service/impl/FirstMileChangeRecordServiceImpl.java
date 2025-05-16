@@ -419,7 +419,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         }
         //添加类型名称
         list.forEach(e -> {
-            e.setCategoryName(FirstMileChangeRecordCategoryEnum.getName(e.getCategory()));
+            if (FirstMileChangeRecordCategoryEnum.BOXNO.getCode().equals(e.getCategory())){
+                e.setCategoryName(FirstMileChangeRecordCategoryEnum.getName(e.getCategory()) + " " +  e.getBoxNo());
+            }else{
+                e.setCategoryName(FirstMileChangeRecordCategoryEnum.getName(e.getCategory()));
+            }
             e.setCategoryFieldName(FirstMileChangeRecordCategoryFieldEnum.getName(e.getCategoryField()));
             e.setChangeRangeName(FirstMileChangeRecordChangeRangeEnum.getName(e.getChangeRange()));
             e.setSourceTypeName(FirstMileChangeRecordSourceTypeEnum.getName(e.getSourceType()));

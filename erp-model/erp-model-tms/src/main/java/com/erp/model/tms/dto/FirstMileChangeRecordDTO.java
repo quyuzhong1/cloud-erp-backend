@@ -368,6 +368,10 @@ public class FirstMileChangeRecordDTO implements Serializable {
          * skuNO【可排序】
          */
         private String skuNo;
+        /**
+         * 箱号【可排序】
+         */
+        private String boxNo;
 
         /**
          * 调整分类:boxNo=箱号,shippingCost=运费,declareCost=关税,otherTaxFee=其他税费,otherCost=其他费用
