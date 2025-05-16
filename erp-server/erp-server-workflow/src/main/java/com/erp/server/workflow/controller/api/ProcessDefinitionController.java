@@ -173,13 +173,21 @@ public class ProcessDefinitionController extends BaseController {
     }
 
     /**
-     * 下拉ERP审评定义
+     * 高级查询下拉流程名称
      * @return
      */
     @GetMapping("/drop/down")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "下拉ERP审评定义")
     public ApiResult<List<ProcessDefinitionDTO.DropDownDTO>> dropDown() {
         return success(processDefinitionService.dropDown());
+    }
+
+    /**
+     * 下拉ERP审评定义
+     * @return
+     */
+    @GetMapping("/processDefinition/drop/down")
+    public ApiResult<List<ProcessDefinitionDTO.DropDownDTO>> proDropDown() {
+        return success(processDefinitionService.proDropDown());
     }
 }
 

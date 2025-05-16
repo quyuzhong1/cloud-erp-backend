@@ -93,7 +93,7 @@ public class CfgProcessController extends BaseController {
      * @return: CfgInvoiceSettingDTO.ViewDTO
      **/
     @GetMapping("/view")
-    public ApiResult<CfgProcessDTO.ProcessDTO> view(@RequestParam(value = "settingId") String settingId) {
+    public ApiResult<CfgProcessDTO.ViewDTO> view(@RequestParam(value = "settingId") String settingId) {
         return success(cfgProcessService.view(settingId));
     }
 

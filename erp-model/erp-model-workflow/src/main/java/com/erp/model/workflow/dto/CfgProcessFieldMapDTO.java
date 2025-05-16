@@ -38,7 +38,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private String  id;
 
         /**
-        * 第三方字段(英文：控件name)
+        * 第三方字段(中文：控件name)
         */
         private String thirdField;
 
@@ -51,11 +51,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         * 第三方是否必填：必填
         */
         private Boolean thirdFieldRequired;
-
-        /**
-        * 第三方字段说明：description
-        */
-        private String thirdFieldDescription;
 
         /**
         * 数大臣字段
@@ -111,6 +106,8 @@ public class CfgProcessFieldMapDTO implements Serializable {
          * 第三方字段所属明细控件id
          */
         private String thirdFieldFieldListFid;
+
+        private List<CfgProcessValueMapDTO.ViewDTO> processValueMapDTOList;
     }
 
     /**

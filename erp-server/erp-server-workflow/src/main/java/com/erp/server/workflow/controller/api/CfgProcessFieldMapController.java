@@ -80,7 +80,7 @@ public class CfgProcessFieldMapController extends BaseController {
      * @return: List<CfgProcessFieldMapDTO.ViewDTO>
      **/
     @GetMapping("/view")
-    public ApiResult<List<CfgProcessFieldMapDTO.ViewDTO>> view(@RequestParam(value = "ruleId") String ruleId) {
-        return success(cfgProcessFieldMapService.view(ruleId));
+    public ApiResult<List<CfgProcessFieldMapDTO.ViewDTO>> view(@RequestParam(value = "processDefinitionId") String processDefinitionId) {
+        return success(cfgProcessFieldMapService.view(processDefinitionId));
     }
 }

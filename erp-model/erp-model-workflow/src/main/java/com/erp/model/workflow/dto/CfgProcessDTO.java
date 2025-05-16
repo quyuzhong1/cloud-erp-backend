@@ -57,7 +57,7 @@ public class CfgProcessDTO implements Serializable {
          */
         private String bussinessKey;
 
-
+        private List<CfgProcessRuleDTO.ViewDTO> processRuleDTOList;
     }
 
     /**
@@ -244,6 +244,5 @@ public class CfgProcessDTO implements Serializable {
          * 数量
          */
         private Integer count;
-
     }
 }

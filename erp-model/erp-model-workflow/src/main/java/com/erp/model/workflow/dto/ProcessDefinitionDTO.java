@@ -427,16 +427,6 @@ public class ProcessDefinitionDTO {
          * 是否已发布
          */
         private Boolean isDeploy;
-
-        /**
-         * 流程单据名称
-         */
-        private String businessName;
-
-        /**
-         * 业务类型
-         */
-        private String businessKey;
     }
 
     @Data

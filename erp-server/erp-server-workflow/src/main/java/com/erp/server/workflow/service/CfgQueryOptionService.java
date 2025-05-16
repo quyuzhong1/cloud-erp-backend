@@ -1,8 +1,11 @@
 package com.erp.server.workflow.service;
+import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+
+import java.util.List;
 
 /**
  * <p>
@@ -14,6 +17,7 @@ import com.erp.model.workflow.dto.CfgQueryOptionDTO;
  */
 public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity> {
 
+
     /**
     * 新增
     * @author hcg
@@ -21,6 +25,7 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     * @param dto
     * @return
     */
+    List<ProcessDefinitionDTO.DropDownDTO> proDropDown();
 
     /**
     * 修改

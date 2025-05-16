@@ -66,7 +66,14 @@ public class CfgProcessRuleDTO implements Serializable {
         */
         private Boolean disabled;
 
+        /**
+         * 启动条件
+         */
+        private String ruleDesc;
 
+        private List<CfgProcessExpDTO.ViewDTO> processExpDTOList;
+
+        private List<CfgProcessFieldMapDTO.ViewDTO> processFieldMapDTOList;
     }
 
     /**

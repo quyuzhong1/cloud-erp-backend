@@ -5,6 +5,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.CollectionUtils;
+import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.dto.base.BaseResultDTO;
@@ -16,12 +17,14 @@ import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.mapper.CfgProcessFieldMapMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.workflow.service.OperateLogService;
 import com.common.core.exception.ServiceException;
+import com.lark.oapi.service.approval.v4.model.GetApprovalResp;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +59,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
     @Resource
     private CfgQueryOptionService cfgQueryOptionService;
+
+    @Resource
+    private FsService fsService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -92,28 +98,6 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                         .eq(CfgProcessFieldMapEntity::getIsDeleted, false)
         );
 
-        // 提取 addDTO 中的 id
-        List<String> addDTOIds = addDTO.stream()
-                .map(CfgProcessFieldMapDTO.AddOrUpdateDTO::getId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-
-        // 找出 existingEntities 中未包含于 addDTOIds 的记录
-        List<String> idsToDelete = existingEntities.stream()
-                .map(CfgProcessFieldMapEntity::getId)
-                .filter(id -> !addDTOIds.contains(id))
-                .collect(Collectors.toList());
-        //分离add
-        List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addOrUpdateDTOS = addDTO.stream()
-                .filter(dto -> StrUtil.isEmpty(dto.getId()))
-                .collect(Collectors.toList());
-        add(bussinessKey, cfgProcessId, ruleId, addOrUpdateDTOS);
-        addDTO.removeAll(addOrUpdateDTOS);
-        // 删除未包含的记录
-        if (!idsToDelete.isEmpty()) {
-            this.removeByIds(idsToDelete);
-            log.info("删除流程设置字段配置: {}", idsToDelete);
-        }
         //校验更新数据
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO);
         // 批量插入和更新
@@ -143,15 +127,22 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     }
 
     @Override
-    public List<CfgProcessFieldMapDTO.ViewDTO> view(String ruleId) {
-        // 查询数据库中与 ruleId 关联的记录
-        List<CfgProcessFieldMapEntity> processFieldMapEntityList = this.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, ruleId).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
-        List<CfgProcessFieldMapDTO.ViewDTO> copyToList = BeanUtil.copyToList(processFieldMapEntityList, CfgProcessFieldMapDTO.ViewDTO.class);
-        if (ObjectUtil.isNotEmpty(processFieldMapEntityList)) {
-            //调用飞书接口获取指定审批定义code，解析form体
+    public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId) {
+        try {
+            GetApprovalResp approval = fsService.getApproval(processDefinitionId);
+            if (!approval.success()||ObjectUtil.isNotEmpty(approval.getData().getForm())) {
+                //调用飞书接口获取指定审批定义code，解析form体
+                throw new ServiceException("该飞书审批定义form解析");
+            }
+            approval.getData();
+            Map map = JSONObject.parseObject(approval.getData().getForm(), Map.class);
+            //approval.getData().getForm()转为map
 
+            return Collections.emptyList();
+        } catch (Exception e) {
+            throw new ServiceException("获取指定飞书审批定义失败");
         }
-        return copyToList;
+
     }
 
     @Override

@@ -46,7 +46,7 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
      */
     PagingVO<CfgProcessDTO.ProcessViewDTO> paging(PagingDTO<CfgProcessDTO.SearchParamDTO> dto);
 
-    CfgProcessDTO.ProcessDTO view(String settingId);
+    CfgProcessDTO.ViewDTO view(String settingId);
 
     void delete(@NotEmpty(message = "ids不能为空") List<String> ids);
 

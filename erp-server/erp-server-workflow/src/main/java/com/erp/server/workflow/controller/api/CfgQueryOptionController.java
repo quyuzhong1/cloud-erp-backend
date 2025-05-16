@@ -1,6 +1,7 @@
 package com.erp.server.workflow.controller.api;
 
 
+import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -20,6 +21,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 
+import java.util.List;
+
 /**
  * 查询option配置表(数大臣单据字段)
  *
@@ -35,5 +38,12 @@ public class CfgQueryOptionController extends BaseController {
     @Resource
     private CfgQueryOptionService cfgQueryOptionService;
 
-
+    /**
+     *
+     * @return
+     */
+    @GetMapping("/processDefinition/drop/down")
+    public ApiResult<List<ProcessDefinitionDTO.DropDownDTO>> proDropDown() {
+        return success(cfgQueryOptionService.proDropDown());
+    }
 }

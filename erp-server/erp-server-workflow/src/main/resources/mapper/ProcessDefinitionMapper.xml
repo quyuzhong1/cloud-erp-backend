@@ -98,16 +98,13 @@
         SELECT
         pd.id,
         pd.process_name,
-        wm.module_classify as businessName,
-        pd.is_deploy as isDeploy,
-        pb.business_key
+        pd.is_deploy as isDeploy
         FROM
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false
-        LEFT JOIN work_menu wm on pb.business_key = wm.module_code and pb.is_deleted = false
         where pd.is_deleted = false
           and pd.is_deploy = true
-          and pb.business_key = '${params.businessKey}'
+          and pb.business_key = '${businessKey}'
         --         缺少启用状态
     </select>
 

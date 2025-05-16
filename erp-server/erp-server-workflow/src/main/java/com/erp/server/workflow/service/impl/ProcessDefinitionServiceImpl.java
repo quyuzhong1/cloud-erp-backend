@@ -233,4 +233,15 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         downDTOList.addAll(BeanUtil.copyToList(dropDownDTOS, ProcessDefinitionDTO.DropDownDTO.class));
         return downDTOList;
     }
+
+    @Override
+    public List<ProcessDefinitionDTO.DropDownDTO> proDropDown() {
+        List<ProcessDefinitionDTO.DropDownDTO> downDTOList = this.list(new LambdaQueryWrapper<ProcessDefinitionEntity>().eq(ProcessDefinitionEntity::getIsDeploy, true).eq(ProcessDefinitionEntity::getIsDeleted, false)).stream().map(processDefinitionEntity -> {
+            ProcessDefinitionDTO.DropDownDTO dropDownDTO = new ProcessDefinitionDTO.DropDownDTO();
+            dropDownDTO.setCode(processDefinitionEntity.getId());
+            dropDownDTO.setName(processDefinitionEntity.getProcessName());
+            return dropDownDTO;
+        }).collect(Collectors.toList());
+        return downDTOList;
+    }
 }

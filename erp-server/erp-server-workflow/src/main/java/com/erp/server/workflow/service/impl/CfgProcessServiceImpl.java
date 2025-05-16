@@ -136,25 +136,13 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     }
 
     @Override
-    public CfgProcessDTO.ProcessDTO view(String settingId) {
-        CfgProcessDTO.ProcessDTO processDTO = baseMapper.getProcessById(settingId);
-        if (ObjectUtil.isEmpty(processDTO)) {
+    public CfgProcessDTO.ViewDTO view(String settingId) {
+        CfgProcessDTO.ViewDTO viewDTO = baseMapper.getViewDTOById(settingId);
+        if (ObjectUtil.isEmpty(viewDTO)) {
             throw new ServiceException("此流程配置不存在！,id{}", settingId);
         }
-        //迭代器遍历processDTO.getRuleList()
-        for (CfgProcessDTO.ProcessRuleDTO rule : processDTO.getRuleList()) {
-            // 拼接 expList 中的 expDesc 按 index 排序
-            String ruleDesc = rule.getExpList().stream()
-                    .sorted(Comparator.comparing(CfgProcessDTO.ProcessExpDTO::getIndex))
-                    .map(CfgProcessDTO.ProcessExpDTO::getExpDesc)
-                    .collect(Collectors.joining(" "));
-            rule.setRuleDesc(ruleDesc);
-            // 从 ProcessRuleDTO 中获取字段
-            rule.setType(CfgProcessRuleTypeEnum.getName(rule.getType()));
-        }
-        // TODO type:fsProcess、sysProcess的,processDefinitionName映射的列表不一样
-        processDTO.setBussinessKey(CfgProcessBussinessKeyEnum.getName(processDTO.getBussinessKey()));
-        return processDTO;
+
+        return viewDTO;
     }
 
     @Override

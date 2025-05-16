@@ -15,7 +15,6 @@
         <result column="third_field" property="thirdField"/>
         <result column="third_field_type" property="thirdFieldType"/>
         <result column="third_field_required" property="thirdFieldRequired"/>
-        <result column="third_field_description" property="thirdFieldDescription"/>
         <result column="sys_field" property="sysField"/>
         <result column="sys_field_type" property="sysFieldType"/>
         <result column="sys_field_required" property="sysFieldRequired"/>
@@ -39,7 +38,7 @@
         update_time,
         version,
         is_deleted,
-        third_field, third_field_type, third_field_required, third_field_description, sys_field, sys_field_type, sys_field_required, cfg_id, default_value,
+        third_field, third_field_type, third_field_required, sys_field, sys_field_type, sys_field_required, cfg_id, default_value,
         is_unique, cfg_type, process_defintion_id
     </sql>
 </mapper>

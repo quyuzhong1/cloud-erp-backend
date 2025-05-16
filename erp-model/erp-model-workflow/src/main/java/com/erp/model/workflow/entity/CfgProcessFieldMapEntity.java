@@ -40,11 +40,6 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     @TableField("third_field_required")
     private Boolean thirdFieldRequired;
     /**
-    * 第三方字段说明：description
-    */
-    @TableField("third_field_description")
-    private String thirdFieldDescription;
-    /**
     * 数大臣字段
     */
     @TableField("sys_field")

@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
 import com.erp.server.workflow.service.CfgQueryOptionService;
@@ -39,5 +40,10 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     */
     private void handleData(CfgQueryOptionEntity cfgQueryOptionEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public List<ProcessDefinitionDTO.DropDownDTO> proDropDown() {
+        return Collections.emptyList();
     }
 }

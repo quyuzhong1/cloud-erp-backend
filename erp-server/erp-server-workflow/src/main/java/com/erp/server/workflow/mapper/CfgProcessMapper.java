@@ -36,7 +36,7 @@ public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
      * @param: query, params
      * @return: CfgProcessDTO.ListDTO
      **/
-    CfgProcessDTO.ProcessDTO getProcessById(String id);
+    CfgProcessDTO.ViewDTO getViewDTOById(String id);
 
     List<CfgProcessDTO.TabListDTO> tabList(@Param("params") CfgProcessDTO.SearchParamDTO params);
 }
