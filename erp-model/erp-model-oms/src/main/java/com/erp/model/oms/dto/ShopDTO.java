@@ -586,6 +586,10 @@ public class ShopDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+        /**
+         * 权限接口【后端时间】
+         */
+        private String permissionSql;
     }
 
     @Data

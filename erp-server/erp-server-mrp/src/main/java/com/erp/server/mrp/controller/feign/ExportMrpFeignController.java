@@ -58,6 +58,10 @@ public class ExportMrpFeignController {
      * @return PagingVO<DynamicExcelDTO>
      */
     @PostMapping("/listHistorySalesQty")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "rs.shop_id",
+            menuCode = "mrp:replenishment:paging"
+    )
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<DynamicExcelDTO> listHistorySalesQty(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
         return replenishmentSuggestionService.listHistorySalesQty(dto);
@@ -70,6 +74,10 @@ public class ExportMrpFeignController {
      * @return PagingVO<PurchaseSuggestionDTO>
      */
     @PostMapping("/listPurchaseSuggestion")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "psm.shop_id",
+            menuCode = "mrp:replenishment:paging"
+    )
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
         return purchaseSuggestIndependentService.listPurchaseSuggestion(dto);
@@ -83,6 +91,10 @@ public class ExportMrpFeignController {
      * @return PagingVO<ReplenishmentRuleDTO>
      */
     @PostMapping("/listReplenishmentRule")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "rs.shop_id",
+            menuCode = "mrp:replenishment:paging"
+    )
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
         return replenishmentSuggestionService.listReplenishmentRule(dto);
@@ -96,6 +108,10 @@ public class ExportMrpFeignController {
      * @return PagingVO<DeliverySuggestionDTO>
      */
     @PostMapping("/listDeliverySuggestion")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "ds.shop_id",
+            menuCode = "mrp:replenishment:paging"
+    )
     @WebAdvanceQuery(handler = ReplenishmentSuggestionQueryHandler.class)
     public PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(@RequestBody PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> dto) {
         return deliverySuggestService.listDeliverySuggestion(dto);
@@ -109,6 +125,10 @@ public class ExportMrpFeignController {
      * @return PagingVO<ListDTO>
      */
     @PostMapping("/pagingPurchaseSuggestion")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "psm.shop_id",
+            menuCode = "mrp:purchaseSuggestIndependent:paging"
+    )
     @WebAdvanceQuery(handler = PurchaseSuggestionMergeQueryHandler.class)
     public PagingVO<PurchaseSuggestIndependentDTO.ListDTO> pagingPurchaseSuggestion(@RequestBody PagingDTO<PurchaseSuggestIndependentDTO.PagingParamDTO> dto) {
         return purchaseSuggestIndependentService.paging(dto);
@@ -228,6 +248,10 @@ public class ExportMrpFeignController {
      * @param dto 参数
      */
     @PostMapping("/exportMrpSalesCalcTemplateList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "csic.shop_id",
+            menuCode = "mrp:calcSalesInfoDim:paging"
+    )
     @WebAdvanceQuery
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(@RequestBody PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto){
         return calcSalesInfoDimService.exportMrpSalesCalcTemplateList(dto);
