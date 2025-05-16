@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -375,7 +376,7 @@ public class DmpInoutController extends BaseController {
 									List<WarehouseLocationMoveDetailDTO.AddDTO> detailList = new ArrayList<>();
 									
 									WarehouseEntity warehouseEntity = list.get(0);
-									PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO = new PagingDTO<WarehouseLocationDTO.SelectDTO>();
+									PagingDTO<WarehouseLocationDTO.SelectDTO> searchDTO = new PagingDTO<>();
 									searchDTO.setPageSize(-1);
 									searchDTO.setCurrPage(1);
 									WarehouseLocationDTO.SelectDTO params = new WarehouseLocationDTO.SelectDTO();
@@ -401,53 +402,72 @@ public class DmpInoutController extends BaseController {
 					    				if(CollUtil.isNotEmpty(dataList)) {
 					    					Integer num = wdtInsufficientInventoryDTO.getNum();
 					    					List<WarehouseLocationDTO.LocationListDTO> locationList = JSON.parseArray(JSON.toJSONString(dataList), LocationListDTO.class);
-					    					String positionName = wdtInsufficientInventoryDTO.getPosition();
-					    					locationList.removeIf(l -> l.getName().equals(positionName));
-					    					LocationListDTO dto = locationList.stream().filter(l -> l.getCode().startsWith("3") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-					    					if(dto == null) {
-					    						dto = locationList.stream().filter(l -> l.getCode().startsWith("2") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-					    						if(dto == null) {
-					    							dto = locationList.stream().filter(l -> l.getCode().startsWith("4") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-					    							if(dto == null) {
-						    							dto = locationList.stream().filter(l -> l.getCode().equals("") && l.getUsableQty().compareTo(num) >= 0).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).findFirst().orElse(null);
-						    						}
+					    					String position = wdtInsufficientInventoryDTO.getPosition();
+				    						if("空仓位".equals(position)) {
+				    							position = "";
+				    						}else {
+				    							position = locationNameCodeMap.get(position);
+				    						}
+				    						String finalPosition = position;
+				    						Map<String, Integer> addNumMaps = new HashMap<>();
+				    						Map<String, Integer> lastNumMaps = new HashMap<>();
+				    						for(WarehouseLocationMoveDetailDTO.AddDTO lastAdd : detailList) {
+				    							if(sku.equals(lastAdd.getSkuNo())) {
+				    								String lastKey = lastAdd.getOutWarehouseLocation();
+													Integer lastNum = lastNumMaps.get(lastKey);
+					    							if(lastNum == null) {
+					    								lastNum = 0;
+					    							}
+					    							lastNum = lastNum + lastAdd.getQty();
+					    							lastNumMaps.put(lastKey, lastNum);
+				    							}
+				    						}
+				    						
+				    						locationList.forEach(l -> {
+				    							Integer usableQty = l.getUsableQty();
+				    							Integer lastQty = lastNumMaps.get(l.getCode());
+				    							if(lastQty == null) {
+				    								lastQty = 0;
+				    							}
+				    							l.setUsableQty(usableQty - lastQty);
+				    						});
+				    						
+				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().equals(finalPosition));
+				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().startsWith("3"));
+				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().startsWith("2"));
+				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().startsWith("4"));
+				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().equals(""));
+				    						
+					    					if(num <= 0 && CollUtil.isNotEmpty(addNumMaps)) {
+					    						for(Map.Entry<String, Integer> addNumMap : addNumMaps.entrySet()) {
+					    							WarehouseLocationMoveDetailDTO.AddDTO detailAddDto = new WarehouseLocationMoveDetailDTO.AddDTO();
+						    						detailAddDto.setSkuId(skuIdNoMap.get(sku));
+						    						detailAddDto.setSkuNo(sku);
+						    						detailAddDto.setQty(addNumMap.getValue());
+						    						detailAddDto.setOutWarehouseLocation(addNumMap.getKey());
+													detailAddDto.setInWarehouseLocation(position);
+						    						detailAddDto.setOutInventoryStatus("usable");
+						    						detailAddDto.setInInventoryStatus("usable");
+						    						detailAddDto.setWarehouseId(warehouseId);
+						    						detailAddDto.setRemark("旺店通同步销售出库单库存不足自动仓位移动");
+						    						detailList.add(detailAddDto);
 					    						}
-					    					}
-					    					if(dto != null) {
-					    						WarehouseLocationMoveDetailDTO.AddDTO detailAddDto = new WarehouseLocationMoveDetailDTO.AddDTO();
-					    						detailAddDto.setSkuId(skuIdNoMap.get(sku));
-					    						detailAddDto.setSkuNo(sku);
-					    						detailAddDto.setQty(num);
-					    						detailAddDto.setOutWarehouseLocation(dto.getCode());
-					    						String position = wdtInsufficientInventoryDTO.getPosition();
-					    						if("空仓位".equals(position)) {
-					    							position = "";
-					    						}else {
-					    							position = locationNameCodeMap.get(position);
-					    						}
-					    						if(position.equals(dto.getCode())) {
-					    							continue;
-					    						}
-												detailAddDto.setInWarehouseLocation(position);
-					    						detailAddDto.setOutInventoryStatus("usable");
-					    						detailAddDto.setInInventoryStatus("usable");
-					    						detailAddDto.setWarehouseId(warehouseId);
-					    						detailAddDto.setRemark("旺店通同步销售出库单库存不足自动仓位移动");
-					    						
-					    						detailList.add(detailAddDto);
 					    					}
 					    				}
 									}
 									if(CollUtil.isNotEmpty(detailList)) {
 										addDto.setDetailList(detailList);
-										FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "wdtAutoAdd", Arrays.asList(addDto));
-										List<DmpOutputTaskRecordEntity> dealDmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
-					    					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
-					    			    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%" + warehouseName + "%'")
-					    			    	.list();
-										dealDmpOutputTaskRecordEntityList.forEach(d -> d.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode()));
-										dmpOutputTaskRecordService.updateBatchById(dealDmpOutputTaskRecordEntityList);
-										dmpOutputTaskRecordService.batchSync(dealDmpOutputTaskRecordEntityList);
+										detailList.removeIf(d -> d.getInWarehouseLocation().equals(d.getOutWarehouseLocation()) || d.getQty() <= 0);
+										if(CollUtil.isNotEmpty(detailList)) {
+											FeignQuery.invoke("com.erp.server.wms.service.impl.WarehouseLocationMoveServiceImpl", "wdtAutoAdd", Arrays.asList(addDto));
+											List<DmpOutputTaskRecordEntity> dealDmpOutputTaskRecordEntityList = dmpOutputTaskRecordService.lambdaQuery()
+						    					.eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+						    			    	.last(" and response_data like '旺店通出库消费数据失败%库存不足%" + warehouseName + "%'")
+						    			    	.list();
+											dealDmpOutputTaskRecordEntityList.forEach(d -> d.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode()));
+											dmpOutputTaskRecordService.updateBatchById(dealDmpOutputTaskRecordEntityList);
+											dmpOutputTaskRecordService.batchSync(dealDmpOutputTaskRecordEntityList);
+										}
 									}
 								}
 							}
@@ -466,6 +486,33 @@ public class DmpInoutController extends BaseController {
 		return success(values);
     }
 
+    private Integer addWdtMoveNum(Integer currNum , Map<String, Integer> addNumMaps , List<WarehouseLocationDTO.LocationListDTO> locationList , Predicate<? super WarehouseLocationDTO.LocationListDTO> paramPredicate) {
+    	if(currNum > 0) {
+    		List<LocationListDTO> currDtoList = locationList.stream().filter(paramPredicate).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).collect(Collectors.toList());
+        	if(CollUtil.isNotEmpty(currDtoList)) {
+        		for(LocationListDTO dto : currDtoList) {
+        			String code = dto.getCode();
+        			if(addNumMaps.containsKey(code)) {
+        				continue;
+        			}
+            		Integer usableQty = dto.getUsableQty();
+            		if(usableQty <= 0) {
+            			continue;
+            		}
+            		if(usableQty >= currNum) {
+            			addNumMaps.put(code, currNum);
+            			currNum = 0;
+            			break;
+            		}else {
+            			addNumMaps.put(code, usableQty);
+            			currNum = currNum - usableQty;
+            		}
+            	}
+        	}
+    	}
+    	return currNum;
+    }
+    
     @PostMapping("querySyncSdy")
     public ApiResult<?> querySyncSdy(@RequestBody SdyPushDTO dto) {
     	LocalDateTime startTime = dto.getStartTime();
