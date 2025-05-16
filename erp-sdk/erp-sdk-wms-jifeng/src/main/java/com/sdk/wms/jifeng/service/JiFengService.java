@@ -27,12 +27,12 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","1f52658306f7478bb0c44a1633702ace");
+        authMap.put("accessToken","23d555750eac4d39a80ec03ea26bfa2a");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
 
-        jiFengService.getWarehouseList(authMap);
+        jiFengService.getProductList(authMap);
         System.out.println(123);
     }
 //    public static void main(String[] args) {
@@ -171,6 +171,57 @@ public class JiFengService {
         }
 
         JiFengBaseResp<List<JiFengOnlineChannelResp.RowsDTO>> result = new JiFengBaseResp<>();
+        result.setCode(0);
+        result.setMessage("success");
+        result.setData(allData);
+        return result;
+    }
+
+    /**
+     * 查询产品
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<List<JiFengProductResp.RowsDTO>> getProductList(Map<String,Object> authMap){
+        String path = "/api/sku/detail";
+        String url = getUrl(authMap.get("domain").toString());
+        List<JiFengProductResp.RowsDTO> allData = new ArrayList<>();
+        int pageNo = 1;
+        boolean hasMore = true;
+
+        while (hasMore) {
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("pageNo", pageNo);
+            bodyMap.put("pageSize", 50); // 每页大小，可根据实际情况调整
+            Map<String, String> headerMap = buildHearderMap(authMap, path);
+            String bodyStr = OkHttpUtils.doPostJson(url+path, bodyMap, headerMap);
+            JiFengBaseResp<JiFengProductResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengProductResp.class);
+
+            if (response.getCode() == 0) {
+                JiFengProductResp pageData = response.getData();
+                if (pageData != null && pageData.getPageNo() != null) {
+                    allData.addAll(pageData.getRows());
+
+                    // 判断是否还有下一页
+                    if (pageData.getRows().isEmpty() || pageData.getTotalPage() <= pageNo) {
+                        hasMore = false;
+                    } else {
+                        pageNo++;
+                    }
+                } else {
+                    hasMore = false;
+                }
+            } else {
+                // 如果请求失败，直接返回错误信息
+                JiFengBaseResp<List<JiFengProductResp.RowsDTO>> errorResp = new JiFengBaseResp<>();
+                errorResp.setCode(response.getCode());
+                errorResp.setMessage(response.getMessage());
+                errorResp.setRequestId(response.getRequestId());
+                return errorResp;
+            }
+        }
+
+        JiFengBaseResp<List<JiFengProductResp.RowsDTO>> result = new JiFengBaseResp<>();
         result.setCode(0);
         result.setMessage("success");
         result.setData(allData);
