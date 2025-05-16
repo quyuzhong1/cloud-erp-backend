@@ -403,7 +403,7 @@ public class SoReturnInstockController extends BaseController {
      * 下推物流自发货费用
      * @author Will
      * @date: 2023/8/28 15:26
-     * @param list
+     * @param dto
      * @return ApiResult
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "下推物流单")

@@ -1027,9 +1027,16 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
 
         List<DictKingdeeDTO.ListDTO> typeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_TYPE_NAME);
         List<DictKingdeeDTO.ListDTO> outTypeList = this.kingdeeTypeListByTypeName(DictKindgeeConstant.OTHER_OUT_TYPE_NAME);
+        //获取当前操作人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
         // 校验和处理
         for (OtherOutStockImportExcelDTO importExcelDTO : successList) {
-            DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(importExcelDTO.getType())).findFirst().orElse(new DictKingdeeDTO.ListDTO());
+            DictKingdeeDTO.ListDTO typeDTO = typeList.stream().filter(v->v.getName().equals(importExcelDTO.getType())).findFirst().orElse(null);
+            if (null == typeDTO){
+                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】业务类型不存在", importExcelDTO.getType()));
+                errorList.add(importExcelDTO);
+                continue;
+            }
             DictKingdeeDTO.ListDTO outTypeDTO = outTypeList.stream().filter(v->v.getName().equals(importExcelDTO.getOutType())).findFirst().orElse(new DictKingdeeDTO.ListDTO());
 
             Integer actualQty = Integer.valueOf(importExcelDTO.getActualQtyStr());
@@ -1164,7 +1171,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
                         userDTO,
                         orgDTO,
                         code,
-                        ""
+                        "",
+                        userInfo.getUid(),
+                        userInfo.getUserName()
                 );
                 // 明细
                 OtherOutstockDetailEntity detailEntity = OtherOutStockConverter.INSTANCE.combineDetailEntity(importExcelDTO, skuVO, locationEntity, actualQty);
