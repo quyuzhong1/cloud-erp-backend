@@ -13,6 +13,7 @@ import com.common.business.vo.LoginUser;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
+import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.mapper.CfgProcessValueMapMapper;
 import com.erp.server.workflow.service.CfgProcessValueMapService;
@@ -189,15 +190,15 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
 
     public static Map<String, Map<String, String>> parseFormValue(String formString) {
         JSONObject root = JSONUtil.parseObj(formString);
-        String formStringValue = root.getStr("form");
+        String formStringValue = root.getStr(FsRequestBodyAttributesEnum.FORM.getCode());
         JSONArray formArray = JSONUtil.parseArray(formStringValue);
         //处理下拉数据
         Map<String, Map<String, String>> parsedValues = new HashMap<>();
         for (JSONObject field : formArray.jsonIter()) {
-            String fieldId = field.getStr("id");
-            String type = field.getStr("type");
-            if (!"fieldList".equals(type) && field.containsKey("option")) {
-                Object valueObj = field.get("option");
+            String fieldId = field.getStr(FsRequestBodyAttributesEnum.ID.getCode());
+            String type = field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode());
+            if (!FsRequestBodyAttributesEnum.FIELDLIST.getCode().equals(type) && field.containsKey(FsRequestBodyAttributesEnum.OPTION.getCode())) {
+                Object valueObj = field.get(FsRequestBodyAttributesEnum.OPTION.getCode());
                 if (valueObj instanceof JSONArray) {
                     JSONArray valueList = (JSONArray) valueObj;
                     //校验valueList是否为null
@@ -206,22 +207,22 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                     }
                     Map<String, String> valueMap = new HashMap<>();
                     for (JSONObject value : valueList.jsonIter()) {
-                        valueMap.put(value.getStr("value"), value.getStr("text"));
+                        valueMap.put(value.getStr(FsRequestBodyAttributesEnum.VALUE.getCode()), value.getStr(FsRequestBodyAttributesEnum.TEXT.getCode()));
                     }
                     parsedValues.put(fieldId, valueMap);
                 } else if (valueObj != null) {
                     // 如果不是 JSONArray，则直接处理为单个值
                     Map<String, String> valueMap = new HashMap<>();
-                    valueMap.put("value", valueObj.toString());
+                    valueMap.put(FsRequestBodyAttributesEnum.VALUE.getCode(), valueObj.toString());
                     parsedValues.put(fieldId, valueMap);
                 }
-            } else if ("fieldList".equals(type)) {
-                JSONArray detailFields = field.getJSONArray("children");
+            } else if (FsRequestBodyAttributesEnum.FIELDLIST.getCode().equals(type)) {
+                JSONArray detailFields = field.getJSONArray(FsRequestBodyAttributesEnum.CHILDREN.getCode());
                 if (detailFields != null) {
                     for (JSONObject detail : detailFields.jsonIter()) {
                         String detailId = detail.getStr("id");
-                        if (detail.containsKey("option")) {
-                            Object valueObj = detail.get("option");
+                        if (detail.containsKey(FsRequestBodyAttributesEnum.OPTION.getCode())) {
+                            Object valueObj = detail.get(FsRequestBodyAttributesEnum.OPTION.getCode());
                             if (valueObj instanceof JSONArray) {
                                 JSONArray valueList = (JSONArray) valueObj;
                                 //校验valueList是否为null
@@ -230,13 +231,14 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                                 }
                                 Map<String, String> valueMap = new HashMap<>();
                                 for (JSONObject value : valueList.jsonIter()) {
-                                    valueMap.put(value.getStr("value"), value.getStr("text"));
+                                    valueMap.put(value.getStr(FsRequestBodyAttributesEnum.VALUE.getCode()), value.getStr(FsRequestBodyAttributesEnum.TEXT.getCode()));
                                 }
                                 parsedValues.put(detailId, valueMap);
                             } else if (valueObj != null) {
                                 // 如果不是 JSONArray，则直接处理为单个值
+                                JSONObject object = (JSONObject) valueObj;
                                 Map<String, String> valueMap = new HashMap<>();
-                                valueMap.put("value", valueObj.toString());
+                                valueMap.put(object.getStr(FsRequestBodyAttributesEnum.VALUE.getCode()), object.getStr(FsRequestBodyAttributesEnum.TEXT.getCode()));
                                 parsedValues.put(detailId, valueMap);
                             }
                         }

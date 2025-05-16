@@ -16,6 +16,7 @@ import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.mapper.CfgProcessFieldMapMapper;
 import com.erp.server.workflow.service.*;
@@ -220,28 +221,28 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     //解析form数据
     public static List<CfgProcessFieldMapDTO.ViewDTO> parseForm(String formString) {
         JSONObject root = JSONUtil.parseObj(formString);
-        String form = root.getStr("form");
+        String form = root.getStr(FsRequestBodyAttributesEnum.FORM.getCode());
         JSONArray formArray = JSONUtil.parseArray(form);
         List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = new ArrayList<>();
         for (cn.hutool.json.JSONObject field : formArray.jsonIter()) {
             CfgProcessFieldMapDTO.ViewDTO viewDTO = new CfgProcessFieldMapDTO.ViewDTO();
-            viewDTO.setThirdField(field.getStr("name"));
-            viewDTO.setThirdFieldType(field.getStr("type"));
-            viewDTO.setThirdFieldRequired(field.getBool("required", false));
-            viewDTO.setThirdFieldId(field.getStr("id")); // 父级 fieldList 的 ID
+            viewDTO.setThirdField(field.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
+            viewDTO.setThirdFieldType(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()));
+            viewDTO.setThirdFieldRequired(field.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
+            viewDTO.setThirdFieldId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode())); // 父级 fieldList 的 ID
 
-            if ("fieldList".equals(field.getStr("type"))) {
+            if ("fieldList".equals(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()))) {
                 viewDTO.setIsDetailField(true);
-                JSONArray detailFields = field.getJSONArray("children");
+                JSONArray detailFields = field.getJSONArray(FsRequestBodyAttributesEnum.CHILDREN.getCode());
 
                 for (JSONObject detail : detailFields.jsonIter()) {
                     CfgProcessFieldMapDTO.ViewDTO detailViewDTO = new CfgProcessFieldMapDTO.ViewDTO();
-                    detailViewDTO.setThirdField(detail.getStr("name"));
-                    detailViewDTO.setThirdFieldType(detail.getStr("type"));
-                    detailViewDTO.setThirdFieldRequired(detail.getBool("required", false));
-                    detailViewDTO.setThirdFieldId(detail.getStr("id")); // 父级 fieldList 的 ID
+                    detailViewDTO.setThirdField(detail.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
+                    detailViewDTO.setThirdFieldType(detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()));
+                    detailViewDTO.setThirdFieldRequired(detail.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
+                    detailViewDTO.setThirdFieldId(detail.getStr(FsRequestBodyAttributesEnum.ID.getCode())); // 父级 fieldList 的 ID
                     detailViewDTO.setIsDetailField(true);
-                    detailViewDTO.setThirdFieldFieldListFid(field.getStr("id"));
+                    detailViewDTO.setThirdFieldFieldListFid(field.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
                     viewDTOList.add(detailViewDTO); // 将子元素直接添加到 viewDTOList
                 }
                 continue; // 跳过当前 viewDTO 的添加
