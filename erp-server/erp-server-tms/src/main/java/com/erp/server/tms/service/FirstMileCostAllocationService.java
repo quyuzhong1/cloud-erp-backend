@@ -143,4 +143,12 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(String skuId, String businessCode, LocalDate reportMonth);
+
+    /**
+     * 根据账期查询头程费用分摊记录
+     * @param reportPeriodStr
+     * @param reportStatus
+     * @return
+     */
+    List<FirstMileCostAllocationEntity> listByReportPeriodStr(String reportPeriodStr, String reportStatus);
 }

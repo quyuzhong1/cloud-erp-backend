@@ -432,6 +432,20 @@ public class FirstMileCostAllocationDTO implements Serializable {
     }
     @Data
     @NoArgsConstructor
+    public static class ResetIdsDTO extends PermissionsDTO {
+        /**
+         * 核算期间 yyyy-mm
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 表 ids
+         */
+        private List<String> ids;
+
+    }
+    @Data
+    @NoArgsConstructor
     public static class UpdateStatusDTO extends PermissionsDTO {
         /**
          * 会计期间
@@ -446,8 +460,11 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 表 ids
          */
-        @NotEmpty(message = "ids不能为空")
         private List<String> ids;
+        /**
+         * 核算期间 yyyy-mm
+         */
+        private String reportPeriodStr;
 
     }
 

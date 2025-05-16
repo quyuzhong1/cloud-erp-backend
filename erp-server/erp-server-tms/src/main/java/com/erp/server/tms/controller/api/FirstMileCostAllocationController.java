@@ -117,16 +117,18 @@ public class FirstMileCostAllocationController extends BaseController {
             serviceClass = FirstMileCostAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody @Valid FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
-        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(ids);
-        for (String id : ids) {
-            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id, MSG));
-                continue;
-            }
+    public ApiResult<List<BatchResultDTO>> updateStatus(@RequestBody FirstMileCostAllocationDTO.UpdateStatusDTO dto) {
+        List<FirstMileCostAllocationEntity> entityList = null;
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = firstMileCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), null);
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            entityList = firstMileCostAllocationService.listByIds(dto.getIds());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            return failure("批量更新状态失败，未查询到费用分摊记录");
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
+        for (FirstMileCostAllocationEntity entity : entityList) {
             try {
                 resultDTOS.add(firstMileCostAllocationService.updateStatus(entity,dto.getStatus(),dto.getAccountPeriod()));
             }catch (Exception e){
@@ -146,16 +148,18 @@ public class FirstMileCostAllocationController extends BaseController {
             serviceClass = FirstMileCostAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(ids);
-        for (String id : ids) {
-            FirstMileCostAllocationEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
-            if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id, MSG));
-                continue;
-            }
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+        List<FirstMileCostAllocationEntity> entityList = null;
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = firstMileCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), ConfirmStatusEnum.WAIT_CONFIRM.getCode());
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            entityList = firstMileCostAllocationService.listByIds(dto.getIds());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            return failure("批量删除记录失败，未查询到费用分摊记录");
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
+        for (FirstMileCostAllocationEntity entity : entityList) {
             try {
                 resultDTOS.add(firstMileCostAllocationService.delete(entity));
             }catch (Exception e){
@@ -190,14 +194,20 @@ public class FirstMileCostAllocationController extends BaseController {
             serviceClass = FirstMileCostAllocationService.class,
             keyIdName = "ids"
     )
-    public ApiResult<List<BatchResultDTO>> calcAllocatedCost(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        List<FirstMileCostAllocationEntity> entityList = firstMileCostAllocationService.listByIds(ids);
+    public ApiResult<List<BatchResultDTO>> calcAllocatedCost(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+        List<FirstMileCostAllocationEntity> entityList = new ArrayList<>();
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = firstMileCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), ConfirmStatusEnum.WAIT_CONFIRM.getCode());
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+            entityList = firstMileCostAllocationService.listByIds(ids);
+        }
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
         if (CollectionUtils.isEmpty(entityList)){
-            resultDTOS.add(BatchResultDTO.fail(String.join(",",ids),"", MSG));
+            resultDTOS.add(BatchResultDTO.fail("","", MSG));
             return failure(resultDTOS);
         }
+
         List<String> sourceIds = entityList.stream().filter(e -> ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
         List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
         List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
@@ -313,7 +323,7 @@ public class FirstMileCostAllocationController extends BaseController {
         //按照保存成功记录，进行按照单据进行重新重量分摊
         List<String> ids = dtoValidList.stream().filter(FirstMileCostAllocationDTO.CostAllocationDTO::getIsRetry).map(FirstMileCostAllocationDTO.CostAllocationDTO::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         if (CollUtil.isNotEmpty(ids)){
-            BaseIdsDTO.IdsDTO dto = new BaseIdsDTO.IdsDTO();
+            FirstMileCostAllocationDTO.ResetIdsDTO dto = new FirstMileCostAllocationDTO.ResetIdsDTO();
             dto.setIds(ids);
             ApiResult<List<BatchResultDTO>> listApiResult = this.calcAllocatedCost(dto);
             batchResultDTOS.addAll(listApiResult.getData());

@@ -4,15 +4,12 @@ package com.erp.server.tms.service.impl;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -339,7 +336,15 @@ public class SmallBagCostAllocationServiceImpl extends SuperServiceImpl<SmallBag
 		return null;
 	}
 
-	@Override
+    @Override
+    public List<SmallBagCostAllocationEntity> listByReportPeriodStr(String reportPeriodStr, String reportStatus) {
+		if (CharSequenceUtil.isBlank(reportPeriodStr)) {
+			return Collections.emptyList();
+		}
+        return baseMapper.listByReportPeriodStr(reportPeriodStr,reportStatus);
+    }
+
+    @Override
 	@Transactional(rollbackFor = Exception.class)
 	public BatchResultDTO delete(String id) {
 		SmallBagCostAllocationMainEntity smallBagCostAllocationMainEntity = smallBagCostAllocationMainService.getById(id);
