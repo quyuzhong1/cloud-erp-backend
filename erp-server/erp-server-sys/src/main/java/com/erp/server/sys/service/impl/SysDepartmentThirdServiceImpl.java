@@ -49,7 +49,7 @@ public class SysDepartmentThirdServiceImpl extends SuperServiceImpl<SysDepartmen
     @Override
     public List<SysDepartmentThirdDTO.ThirdDeptDropDownDTO> listThirdDeptDropDown(SysDepartmentThirdDTO.ThirdDeptParamDTO dto) {
         LambdaQueryWrapper<SysDepartmentThirdEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(SysDepartmentThirdEntity::getPlatform, dto.getPlatform());
+        queryWrapper.in(SysDepartmentThirdEntity::getPlatform, dto.getPlatformList());
         if(StringUtils.isNotBlank(dto.getDepartmentName())){
             queryWrapper.like(SysDepartmentThirdEntity::getThirdDepartmentName, dto.getDepartmentName());
         }
