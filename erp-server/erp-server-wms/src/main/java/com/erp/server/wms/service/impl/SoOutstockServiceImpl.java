@@ -2768,8 +2768,9 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             List<String> soDetailIdList = dto.getDetailList().stream().map(SoOutstockDetailDTO.AddDTO::getSoDetailId).distinct().collect(Collectors.toList());
             List<SoOutstockDetailEntity> soOutstockDetailList = soOutstockDetailService.listBySoDetailIds(soDetailIdList);
             if (CollUtil.isNotEmpty(soOutstockDetailList)) {
-                String skuNos = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
-                throw new ServiceException(CharSequenceUtil.format("销售订单【{}】SKU【{}】已出库，不支持重复出库", dto.getSoCode(), skuNos));
+//                String skuNos = soOutstockDetailList.stream().map(SoOutstockDetailEntity::getSkuNo).distinct().collect(Collectors.joining(","));
+//                throw new ServiceException(CharSequenceUtil.format("销售订单【{}】SKU【{}】已出库，不支持重复出库", dto.getSoCode(), skuNos));
+                return true;
             }
         }
         String id = soOutstockService.addB2cSoOutstock(dto);
