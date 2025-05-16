@@ -190,7 +190,7 @@ public class ShopInfoController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult<List<ShopInfoEntity>> list() {
-        List<ShopInfoEntity> list = shopInfoService.list();
+        List<ShopInfoEntity> list = shopInfoService.listAuth(null);
         return success(list);
     }
 

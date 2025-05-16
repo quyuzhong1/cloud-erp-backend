@@ -1045,22 +1045,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     public List<ShopInfoEntity> listAuth(ShopDTO.PlatformDTO platformDTO) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-            return Collections.EMPTY_LIST;
-        }
-        ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-        List<String> shopIdList;
-        if (StringUtils.isNotBlank(platformDTO.getDictPlatform())) {
-            shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(platformDTO.getDictPlatform())).map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-        } else {
-            shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-        }
-        if (CollectionUtils.isEmpty(shopIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return this.listByIds(shopIdList);
+        String dictPlatform = Objects.nonNull(platformDTO) ? platformDTO.getDictPlatform() : "";
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("si.id");
+        return baseMapper.listByParam(CharSequenceUtil.isNotBlank(dictPlatform) ? Collections.singletonList(dictPlatform) : null, shopPermissionSql);
     }
 
     @Override
@@ -1771,9 +1758,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listShopSelect() {
-        List<ShopInfoEntity> list = this.list();
-        List<BaseDropDownDTO.DisabledDTO> resultList = ShopInfoConverter.INSTANCE.ShopInfoEntityToDisabledDTO(list);
-        return resultList;
+        List<ShopInfoEntity> list = this.listAuth(null);
+        return ShopInfoConverter.INSTANCE.ShopInfoEntityToDisabledDTO(list);
     }
     /**
      * 如果没有选客户，就进行绑定
