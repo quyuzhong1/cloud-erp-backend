@@ -445,11 +445,16 @@ public class DmpInoutController extends BaseController {
 				    							l.setUsableQty(usableQty - lastQty);
 				    						});
 				    						
-				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().equals(finalPosition));
-				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().startsWith("3"));
-				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().startsWith("2"));
-				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().startsWith("4"));
-				    						num = this.addWdtMoveNum(num, addNumMaps, locationList, l -> l.getCode().equals(""));
+				    						locationList.removeIf(l -> l.getUsableQty() <= 0);
+				    						List<Predicate<? super WarehouseLocationDTO.LocationListDTO>> predicateList = new ArrayList<>();
+											predicateList.add(l -> l.getCode().equals(finalPosition));
+											predicateList.add(l -> l.getCode().startsWith("3"));
+											predicateList.add(l -> l.getCode().startsWith("2"));
+											predicateList.add(l -> l.getCode().startsWith("4"));
+											predicateList.add(l -> l.getCode().equals(""));
+				    						for(Predicate<? super WarehouseLocationDTO.LocationListDTO> predicate : predicateList) {
+				    							num = this.addWdtMoveNum(num, addNumMaps, locationList, predicate);
+				    						}
 				    						
 					    					if(num <= 0 && CollUtil.isNotEmpty(addNumMaps)) {
 					    						for(Map.Entry<String, Integer> addNumMap : addNumMaps.entrySet()) {
@@ -501,21 +506,14 @@ public class DmpInoutController extends BaseController {
 
     private Integer addWdtMoveNum(Integer currNum , Map<String, Integer> addNumMaps , List<WarehouseLocationDTO.LocationListDTO> locationList , Predicate<? super WarehouseLocationDTO.LocationListDTO> paramPredicate) {
     	if(currNum > 0) {
-    		List<LocationListDTO> currDtoList = locationList.stream().filter(paramPredicate).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).collect(Collectors.toList());
+    		List<LocationListDTO> currDtoList = locationList.stream().filter(paramPredicate).filter(l -> !addNumMaps.containsKey(l.getCode())).sorted((l1 , l2) -> l2.getUsableQty().compareTo(l1.getUsableQty())).collect(Collectors.toList());
         	if(CollUtil.isNotEmpty(currDtoList)) {
         		for(LocationListDTO dto : currDtoList) {
         			String code = dto.getCode();
-        			if(addNumMaps.containsKey(code)) {
-        				continue;
-        			}
             		Integer usableQty = dto.getUsableQty();
-            		if(usableQty <= 0) {
-            			continue;
-            		}
             		if(usableQty >= currNum) {
             			addNumMaps.put(code, currNum);
-            			currNum = 0;
-            			break;
+            			return 0;
             		}else {
             			addNumMaps.put(code, usableQty);
             			currNum = currNum - usableQty;
