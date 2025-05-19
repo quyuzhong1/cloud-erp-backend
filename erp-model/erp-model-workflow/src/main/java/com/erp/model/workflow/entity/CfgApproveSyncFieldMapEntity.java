@@ -35,6 +35,11 @@ public class CfgApproveSyncFieldMapEntity extends BaseEntity<CfgApproveSyncField
     @TableField("locale")
     private String locale;
     /**
+     * 字段id
+     */
+    @TableField("field_id")
+    private String fieldId;
+    /**
     * 字段名
     */
     @TableField("field_name")
@@ -59,6 +64,8 @@ public class CfgApproveSyncFieldMapEntity extends BaseEntity<CfgApproveSyncField
     public static final String MAIN_ID = "main_id";
 
     public static final String LOCALE = "locale";
+
+    public static final String FIELD_ID = "field_id";
 
     public static final String FIELD_NAME = "field_name";
 

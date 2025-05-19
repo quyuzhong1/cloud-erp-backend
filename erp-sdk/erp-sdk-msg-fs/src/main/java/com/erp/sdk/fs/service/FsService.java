@@ -372,12 +372,8 @@ public class FsService {
     public BatchGetIdUserResp getBatchFsUserByMobileOrEmail(FindThirdUserDTO.UserParamsDTO dto) {
         try {
             // 构建client
-//            Client client =getClient();
+            Client client =getClient();
 //            飞书生产
-            Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
-                    .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
-                    .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
-                    .build();
             // 创建请求对象
             BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
                     .userIdType(dto.getUserIdType())

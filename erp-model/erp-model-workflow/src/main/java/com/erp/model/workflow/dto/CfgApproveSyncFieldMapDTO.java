@@ -47,6 +47,11 @@ public class CfgApproveSyncFieldMapDTO implements Serializable {
         private String locale;
 
         /**
+         * 字段id
+         */
+        private String fieldId;
+
+        /**
         * 字段名
         */
         private String fieldName;
@@ -113,6 +118,11 @@ public class CfgApproveSyncFieldMapDTO implements Serializable {
         private String locale;
 
         /**
+         * 字段id
+         */
+        private String fieldId;
+
+        /**
         * 字段名
         */
         @NotBlank(message = "字段名不能为空")
@@ -164,6 +174,10 @@ public class CfgApproveSyncFieldMapDTO implements Serializable {
         private String locale;
 
 
+        /**
+         * 字段id
+         */
+        private String fieldId;
         /**
          * 字段名
          */
