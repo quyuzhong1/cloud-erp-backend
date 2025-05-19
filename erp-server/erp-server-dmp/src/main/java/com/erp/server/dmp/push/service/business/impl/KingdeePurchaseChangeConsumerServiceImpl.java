@@ -119,7 +119,8 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         LinkedList<String> queryFilters = new LinkedList<>();
         queryFilters.add(String.format("FBillNo = '%s'", map.get("sourceCode")));
         String filterStr = String.join(" and ", queryFilters);
-        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate,FPayConditionId.FNumber,FIinstallment_FENTRYID,FRelBillNo,FOrderActualPaySubEntity_FDetailID,FPOORDERID";
+        String fieldKeys = "FPOOrderFinance_FEntryID,FExchangeRate,FPayConditionId.FNumber," +
+                "FIinstallment_FENTRYID,FYFDATE,FYFRATIO,FYFAMOUNT,FISPREPAYMENT,FInsPrepaidAmount,FRemarks,FPayMaterialId.FNUMBER,FMATERIALSEQ,FPayPlanQty,FPayPlanPrice,FPURCHASEORDERNO,FOrderEntryId,FinsPayAdvanceRate,FInsPayAdvanceAmount,FPAYPLANPRICEUNITID.FNumber,FBasePriceUnit.FNumber,FPayMaterialDesc,FBasePayPlanQty,FPayAuxPropId,FPayChargeProjectID.FNUMBER,FOrderActualPaySubEntity_FDetailID,FPAYBILLID,FPAYBILLENTITYID,FPOORDERID,FAmount,FPREAMOUNT,FPPSettleOrgId.FNumber,FAPPLYBILLNO,FPREPAYBillNo,FPAPPLYAMOUNT,FPPayJoinAmount";
         List<Map<String, Object>> queryList = apiUtils.queryList(filterStr, fieldKeys, 100, 1, 20);
         if (CollectionUtils.isEmpty(queryList)) {
             throw new ServiceException(10000, StrUtil.format("未找到采购订单{}",map.get("sourceCode").toString()));
@@ -141,15 +142,79 @@ public class KingdeePurchaseChangeConsumerServiceImpl implements KingdeePurchase
         List<JSONObject> fIinstallmentList = new ArrayList<>();
         Map<Object, List<Map<String, Object>>> resultMap = queryList.stream().collect(Collectors.groupingBy(obj -> obj.get("FIinstallment_FENTRYID")));
         for (Map.Entry<Object, List<Map<String, Object>>> entry : resultMap.entrySet()) {
+            Map<String, Object> stringObjectMap = entry.getValue().get(0);
             JSONObject actualPayJson = new JSONObject();
             //付款计划id
-            actualPayJson.set("finstallmentId",entry.getKey());
+            actualPayJson.set("FENTRYID",entry.getKey());
+            //应付日期
+            actualPayJson.set("FYFDATE",stringObjectMap.get("FYFDATE"));
+            //应付比例(%)
+            actualPayJson.set("FYFRATIO",stringObjectMap.get("FYFRATIO"));
+            //应付金额
+            actualPayJson.set("FYFAMOUNT",stringObjectMap.get("FYFAMOUNT"));
+            //是否预付
+            actualPayJson.set("FISPREPAYMENT",stringObjectMap.get("FISPREPAYMENT"));
+            //单次预付额度
+            actualPayJson.set("FInsPrepaidAmount",stringObjectMap.get("FInsPrepaidAmount"));
+            //备注
+            actualPayJson.set("FRemarks",stringObjectMap.get("FRemarks"));
+            //物料编码
+            actualPayJson.set("FPayMaterialId",stringObjectMap.get("FPayMaterialId.FNUMBER"));
+            //物料行号
+            actualPayJson.set("FMATERIALSEQ",stringObjectMap.get("FMATERIALSEQ"));
+            //数量
+            actualPayJson.set("FPayPlanQty",stringObjectMap.get("FPayPlanQty"));
+            //含税单价
+            actualPayJson.set("FPayPlanPrice",stringObjectMap.get("FPayPlanPrice"));
+            //采购订单号
+            actualPayJson.set("FPURCHASEORDERNO",stringObjectMap.get("FPURCHASEORDERNO"));
+            //订单明细行内码
+            actualPayJson.set("FOrderEntryId",stringObjectMap.get("FOrderEntryId"));
+            //预付比例%
+            actualPayJson.set("FinsPayAdvanceRate",stringObjectMap.get("FinsPayAdvanceRate"));
+            //预付款
+            actualPayJson.set("FInsPayAdvanceAmount",stringObjectMap.get("FInsPayAdvanceAmount"));
+            //计价单位
+            actualPayJson.set("FPAYPLANPRICEUNITID",stringObjectMap.get("FPAYPLANPRICEUNITID"));
+            //计价基本单位
+            actualPayJson.set("FBasePriceUnit",stringObjectMap.get("FBasePriceUnit"));
+            //物料说明
+            actualPayJson.set("FPayMaterialDesc",stringObjectMap.get("FPayMaterialDesc"));
+            //数量(基本单位)
+            actualPayJson.set("FBasePayPlanQty",stringObjectMap.get("FBasePayPlanQty"));
+            //辅助属性
+            actualPayJson.set("FPayAuxPropId",stringObjectMap.get("FPayAuxPropId"));
+            //费用项目
+            actualPayJson.set("FPayChargeProjectID",stringObjectMap.get("FPayChargeProjectID"));
+
             //付款计划明细id
             List<JSONObject> fDetailIdList = new ArrayList<>();
             for (Map<String, Object> detailMap : entry.getValue()) {
                 JSONObject detailJson = new JSONObject();
-                Object fDetailId = detailMap.get("FOrderActualPaySubEntity_FDetailID");
-                detailJson.set("fDetailId",fDetailId);
+                //主键id
+                detailJson.set("FDetailID",detailMap.get("FOrderActualPaySubEntity_FDetailID"));
+                //付款单内码
+                detailJson.set("FPAYBILLID",detailMap.get("FPAYBILLID"));
+                //付款单分录内码
+                detailJson.set("FPAYBILLENTITYID",detailMap.get("FPAYBILLENTITYID"));
+                //采购订单内码
+                detailJson.set("FPOORDERID",detailMap.get("FPOORDERID"));
+                //实付预付金额
+                detailJson.set("FAmount",detailMap.get("FAmount"));
+
+                //预分配金额
+                detailJson.set("FPREAMOUNT",detailMap.get("FPREAMOUNT"));
+                //结算组织
+                detailJson.set("FPPSettleOrgId",detailMap.get("FPPSettleOrgId.FNumber"));
+                //付款申请单号
+                detailJson.set("FAPPLYBILLNO",detailMap.get("FAPPLYBILLNO"));
+                //预付单号
+                detailJson.set("FPREPAYBillNo",detailMap.get("FPREPAYBillNo"));
+                //付款申请关联金额
+                detailJson.set("FPAPPLYAMOUNT",detailMap.get("FPAPPLYAMOUNT"));
+                //付款关联金额
+                detailJson.set("FPPayJoinAmount",detailMap.get("FPPayJoinAmount"));
+
                 fDetailIdList.add(detailJson);
             }
             actualPayJson.set("fDetailIdList",fDetailIdList);
