@@ -5,11 +5,11 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
-import com.erp.model.workflow.enums.CfgProcessBussinessKeyEnum;
 import com.erp.server.workflow.handler.CfgProcessQueryHandler;
 import com.erp.server.workflow.service.CfgProcessRuleService;
 import lombok.extern.slf4j.Slf4j;
@@ -129,7 +129,7 @@ public class CfgProcessController extends BaseController {
             //判断审核条件状态是否发生变化
             CfgProcessEntity cfgProcess = processEntityMap.get(entity.getCfgProcessId());
             if (disabled.equals(entity.getDisabled())) {
-                resultDTOS.add(BatchResultDTO.fail(id, cfgProcess.getCode() + CfgProcessBussinessKeyEnum.getName(cfgProcess.getBussinessKey()), "状态未发生变化"));
+                resultDTOS.add(BatchResultDTO.fail(id, cfgProcess.getCode() + SourceTypeEnum.getName(cfgProcess.getBussinessKey()), "状态未发生变化"));
                 continue;
             }
             //更新审核条件
@@ -138,10 +138,10 @@ public class CfgProcessController extends BaseController {
                 entity.setDisabled(disabled);
                 entity.setUpdateTime(LocalDateTime.now());
                 cfgProcessRuleService.updateById(entity);
-                resultDTOS.add(BatchResultDTO.success(id, cfgProcess.getCode() + CfgProcessBussinessKeyEnum.getName(cfgProcess.getBussinessKey())));
+                resultDTOS.add(BatchResultDTO.success(id, cfgProcess.getCode() + SourceTypeEnum.getName(cfgProcess.getBussinessKey())));
             } catch (Exception e) {
                 log.error("流程规则更改状态失败，ID: {}", id, e);
-                resultDTOS.add(BatchResultDTO.fail(id, cfgProcess.getCode() + CfgProcessBussinessKeyEnum.getName(cfgProcess.getBussinessKey()), e.getMessage()));
+                resultDTOS.add(BatchResultDTO.fail(id, cfgProcess.getCode() + SourceTypeEnum.getName(cfgProcess.getBussinessKey()), e.getMessage()));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
