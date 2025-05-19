@@ -12,7 +12,7 @@
        <result column="update_time" property="updateTime" />
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
-       <result column="field" property="field" />
+       <result column="condition_field_name" property="conditionFieldName" />
        <result column="api_url" property="apiUrl" />
        <result column="request_method" property="requestMethod" />
        <result column="param" property="param" />
@@ -25,7 +25,7 @@
        <result column="field_type" property="fieldType" />
        <result column="is_required" property="isRequired" />
        <result column="bussiness_key" property="bussinessKey" />
-       <result column="field_name" property="fieldName" />
+       <result column="condition_field" property="conditionField" />
        <result column="field_belongs_type" property="fieldBelongsType" />
        <result column="logic" property="logic" />
     </resultMap>
@@ -41,7 +41,7 @@
         update_time,
         version,
         is_deleted,
-        field, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, props, api_type, field_type, is_required, bussiness_key, field_name, field_belongs_type, logic
+        condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, props, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic
     </sql>
 
 

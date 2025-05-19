@@ -25,10 +25,10 @@ import com.common.business.enums.ApproveStatusEnum;
 public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
 
     /**
-    * 字段：对应cfg_process_exp中的field，cfg_process_field_map中的sys_field
+    * 字段中文名
     */
-    @TableField("field")
-    private String field;
+    @TableField("condition_field_name")
+    private String conditionFieldName;
     /**
     * 请求路径
     */
@@ -90,10 +90,10 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     @TableField("bussiness_key")
     private String bussinessKey;
     /**
-    * 字段名
+    * 字段英文名：对应cfg_process_exp中的field，cfg_process_field_map中的sys_field
     */
-    @TableField("field_name")
-    private String fieldName;
+    @TableField("condition_field")
+    private String conditionField;
     /**
     * 字段所属单据类型：table=表头,detail=明细  枚举：CfgQueryOptionFieldBelongsTypeEnum
     */
@@ -106,7 +106,7 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     private String logic;
 
 
-    public static final String FIELD = "field";
+    public static final String Condition_Field_Name = "condition_field_name";
 
     public static final String API_URL = "api_url";
 
@@ -132,7 +132,7 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
 
     public static final String BUSSINESS_KEY = "bussiness_key";
 
-    public static final String FIELD_NAME = "field_name";
+    public static final String Condition_Field = "condition_field";
 
     public static final String FIELD_BELONGS_TYPE = "field_belongs_type";
 

@@ -37,9 +37,9 @@ public class CfgQueryOptionDTO implements Serializable {
         private String  id;
 
         /**
-        * 字段：对应cfg_process_exp中的field，cfg_process_field_map中的sys_field
+        * 字段中文名
         */
-        private String field;
+        private String conditionFieldName;
 
         /**
         * 请求路径
@@ -102,9 +102,9 @@ public class CfgQueryOptionDTO implements Serializable {
         private String bussinessKey;
 
         /**
-        * 字段名
+        * 字段英文名：对应cfg_process_exp中的field，cfg_process_field_map中的sys_field
         */
-        private String fieldName;
+        private String conditionField;
 
         /**
         * 字段所属单据类型：table=表头,detail=明细
@@ -151,9 +151,7 @@ public class CfgQueryOptionDTO implements Serializable {
         /**
         * 字段：对应cfg_process_exp中的field，cfg_process_field_map中的sys_field
         */
-        @NotBlank(message = "字段：对应cfg_process_exp中的field，cfg_process_field_map中的sys_field不能为空")
-        @Size(max = 100,message = "字段：对应cfg_process_exp中的field，cfg_process_field_map中的sys_field最大长度不能超过100位")
-        private String field;
+        private String conditionFieldName;
 
         /**
         * 请求路径
@@ -241,7 +239,7 @@ public class CfgQueryOptionDTO implements Serializable {
         */
         @NotBlank(message = "字段名不能为空")
         @Size(max = 30,message = "字段名最大长度不能超过30位")
-        private String fieldName;
+        private String conditionField;
 
         /**
         * 字段所属单据类型：table=表头,detail=明细

@@ -167,7 +167,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
      * 新增修改处理数据
      */
     private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
-        List<String> fieldList = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false)).stream().map(CfgQueryOptionEntity::getField).collect(Collectors.toList());
+        List<String> fieldList = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false)).stream().map(CfgQueryOptionEntity::getConditionField).collect(Collectors.toList());
         // 遍历 addDTO，id 为空的保存，id 不为空的更新
         // 先校验所有 DTO，收集需要新增和更新的实体
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = new ArrayList<>();
