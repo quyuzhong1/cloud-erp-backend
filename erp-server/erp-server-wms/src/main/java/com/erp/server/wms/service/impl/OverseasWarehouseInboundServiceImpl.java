@@ -1208,6 +1208,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         return new PagingVO<>(page);
     }
 
+    @Override
+    public List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> viewChangeList(OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
+        if (Objects.isNull(dto) || CollUtil.isNotEmpty(dto.getRequestIdList()) || Objects.isNull(dto.getRequestIdType()) || CharSequenceUtil.isBlank(dto.getRequestIdType().getCode())){
+            return Collections.emptyList();
+        }
+        return baseMapper.viewChangeList(dto);
+    }
+
     /**
      * 分页查询、导出 数据处理
      */

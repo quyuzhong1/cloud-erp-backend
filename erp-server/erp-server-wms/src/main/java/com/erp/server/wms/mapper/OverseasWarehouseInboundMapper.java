@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -66,4 +67,6 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @return
      */
     List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(@Param("params") FirstMileDeliveryDTO.RequestReceiveDTO dto);
+
+    List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> viewChangeList(@Param("params")OverseasWarehouseInboundDTO.ViewListReqDTO dto);
 }

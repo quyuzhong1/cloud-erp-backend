@@ -928,7 +928,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 箱号
          */
-        @NotBlank(message = "来源单号不能为空")
+        @NotNull(message = "来源单号不能为空")
         private Integer boxNo;
 
         /**
