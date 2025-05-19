@@ -238,7 +238,7 @@
         from overseas_warehouse_inbound owi
         LEFT JOIN overseas_warehouse_inbound_detail owid on owi.id = owid.main_id and owid.is_deleted = false
         where owi.is_deleted = false
-        <if test="params.requestIdType!= null and params.requestIdType != '' and params.requestIdType == 'mainId'">
+        <if test="params.requestIdType!= null and params.requestIdType.code != '' and params.requestIdType.code == 'mainId'">
           <if test="params.requestIdList != null and params.requestIdList.size > 0">
             and owi.id in
             <foreach collection="params.requestIdList" item="item" open="(" close=")" separator=",">
@@ -246,7 +246,7 @@
             </foreach>
           </if>
         </if>
-        <if test="params.requestIdType!= null and params.requestIdType != '' and params.requestIdType == 'detailId'">
+        <if test="params.requestIdType!= null and params.requestIdType.code != '' and params.requestIdType.code == 'detailId'">
             <if test="params.requestIdList != null and params.requestIdList.size > 0">
                 and owid.id in
                 <foreach collection="params.requestIdList" item="item" open="(" close=")" separator=",">
