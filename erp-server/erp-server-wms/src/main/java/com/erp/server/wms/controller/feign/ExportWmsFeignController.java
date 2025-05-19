@@ -738,6 +738,7 @@ public class ExportWmsFeignController {
     @PostMapping("/transferOut")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "tfo.out_warehouse_id",
             menuCode = "wms:transfer:out:export",
             tableAlias = "tfo"
     )
@@ -970,10 +971,8 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/exportFbaTransitReport")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
             warehouseTableField = "ftcr.warehouse_id",
-            menuCode = "wms:fbaTransitCalculateReport:paging",
-            tableAlias = "ftcr"
+            menuCode = "wms:fbaTransitCalculateReport:paging"
     )
     @WebAdvanceQuery
     public PagingVO<FbaTransitCalculateReportDTO.ListDTO> exportFbaTransitReport(@RequestBody PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto){
