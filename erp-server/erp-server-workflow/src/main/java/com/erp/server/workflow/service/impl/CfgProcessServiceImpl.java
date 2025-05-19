@@ -4,23 +4,32 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.entity.CfgProcessEntity;
-import com.erp.model.workflow.enums.CfgProcessBussinessKeyEnum;
+import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.sdk.fs.service.FsService;
+import com.erp.server.sys.service.impl.SysUserThirdServiceImpl;
 import com.erp.server.workflow.mapper.CfgProcessMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
+import com.lark.oapi.service.approval.v4.model.CreateInstanceReq;
+import com.lark.oapi.service.approval.v4.model.InstanceCreate;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +69,14 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
 
+    @Resource
+    private FsService fsService;
+
+    @Resource
+    private SysUserThirdServiceImpl sysUserThirdService;
+
+    @Resource
+    private ThirdProcessDefinitionService thirdProcessDefinitionService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -97,7 +114,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //保存执行条件
         cfgProcessRuleService.update(cfgProcessEntity.getBussinessKey(), cfgProcessEntity.getId(), dto.getProcessRuleDTOList());
         // 操作日志
-        operateLogService.addModuleOperateLogByObj(old,  cfgProcessEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "更新操作");
+        operateLogService.addModuleOperateLogByObj(old, cfgProcessEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "更新操作");
         return new BaseResultDTO.AddDTO(cfgProcessEntity.getId(), dto.getCode());
     }
 
@@ -106,7 +123,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         CfgProcessDTO.SearchParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<CfgProcessDTO.ProcessDTO> pageData = baseMapper.getProcessWithRulesAndExps(query,params);
+        IPage<CfgProcessDTO.ProcessDTO> pageData = baseMapper.getProcessWithRulesAndExps(query, params);
         //处理processResultMap
         List<CfgProcessDTO.ProcessViewDTO> viewDTOList = pageData.getRecords().stream()
                 .flatMap(processDTO -> processDTO.getRuleList().stream().map(rule -> {
@@ -115,7 +132,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                     viewDTO.setId(processDTO.getId());
                     viewDTO.setCode(processDTO.getCode());
                     viewDTO.setName(processDTO.getName());
-                    viewDTO.setBussinessKey(CfgProcessBussinessKeyEnum.getName(processDTO.getBussinessKey()));
+                    viewDTO.setBussinessKey(SourceTypeEnum.getName(processDTO.getBussinessKey()));
                     // 从 ProcessRuleDTO 中获取字段
                     viewDTO.setType(CfgProcessRuleTypeEnum.getName(rule.getType()));
                     viewDTO.setRuleId(rule.getId());
@@ -201,4 +218,29 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     private void handleData(CfgProcessEntity cfgProcessEntity) {
         // TODO 验证数据 & 数据赋值
     }
+
+    /**
+     * 创建飞书审批实例
+     */
+    public void startThirdProcess(CfgProcessDTO.StartDTO dto) throws Exception {
+        //查询approvalCode
+        String approvalCode = baseMapper.getApprovalCode(dto.getBusinessKey());
+        //查询userid
+        String userId = sysUserThirdService.findByUserId(dto.getUserId()).getThirdUserId();
+        //组装form
+//        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, approvalCode).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "7DCF7A99-6E25-4A24-8386-5E2639712983").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+        //解析body
+        JSONArray formArray = JSONUtil.parseArray(body);
+        // 创建请求对象（创建样式）
+        CreateInstanceReq req = CreateInstanceReq.newBuilder()
+                .instanceCreate(InstanceCreate.newBuilder()
+                        .approvalCode(approvalCode)
+                        .userId(userId)
+                        .form("[{\"id\":\"111\",\"type\":\"input\",\"value\":\"11111\"},{\"id\":\"222\",\"required\":true,\"type\":\"dateInterval\",\"value\":{\"end\":\"2019-10-02T08:12:01+08:00\",\"interval\":2,\"start\":\"2019-10-01T08:12:01+08:00\"}},{\"id\":\"333\",\"type\":\"radioV2\",\"value\":\"1\"},{\"id\":\"444\",\"type\":\"number\",\"value\":\"4\"},{\"id\":\"555\",\"type\":\"textarea\",\"value\":\"fsafs\"}]")
+                        .build())
+                .build();
+        fsService.createInstance(req);
+    }
+
 }
