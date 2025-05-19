@@ -104,7 +104,7 @@ public class FirstMileChangeRecordEntity extends BaseEntity<FirstMileChangeRecor
      * 箱子编号
      */
     @TableField("box_no")
-    private String boxNo;
+    private Integer boxNo;
     /**
     * skuNO
     */
