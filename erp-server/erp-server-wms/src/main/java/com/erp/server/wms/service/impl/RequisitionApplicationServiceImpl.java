@@ -283,7 +283,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<RequisitionApplicationDTO.TabListDTO> tabList(PermissionsDTO param) {
         FirstMileDeliveryDTO.PagingParamDTO searchParam = new FirstMileDeliveryDTO.PagingParamDTO();
-        searchParam.setPermissionSql(getPermissionSql(param.getPermissionSql()));
+        searchParam.setPermissionSql(getPermissionSql());
         List<RequisitionApplicationDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = RequisitionApplicationStatusEnum.getStatusList();
@@ -301,7 +301,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public PagingVO<RequisitionApplicationDTO.ListDTO> paging(PagingDTO<RequisitionApplicationDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<RequisitionApplicationDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
@@ -312,15 +312,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
         return new PagingVO(pageData);
     }
 
-    private String getPermissionSql(String permissionSql) {
-        permissionSql = CharSequenceUtil.isBlank(permissionSql) ? " AND 1=1 " : permissionSql;
+    private String getPermissionSql() {
         // 店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("ra.channel_id");
         shopPermissionSql = CharSequenceUtil.isBlank(shopPermissionSql)? " AND 1=1 " : shopPermissionSql;
         // 仓库权限
-        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("rad.to_warehouse_id");
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}))", permissionSql, shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))", shopPermissionSql, warehousePermissionSql);
     }
 
     @Override
@@ -1394,7 +1393,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
 
     @Override
     public PagingVO<RequisitionApplicationDTO.ListDTO> exportRequisitionApplication(PagingDTO<RequisitionApplicationDTO.PagingParamDTO> dto) {
-        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        dto.getParams().setPermissionSql(getPermissionSql());
         Page<RequisitionApplicationDTO.ListDTO> page1 = new Page<>(dto.getCurrPage(), dto.getPageSize());
         page1.setOptimizeCountSql(false);
         Page<RequisitionApplicationDTO.ListDTO> page = baseMapper.listExport(page1, dto.getParams());

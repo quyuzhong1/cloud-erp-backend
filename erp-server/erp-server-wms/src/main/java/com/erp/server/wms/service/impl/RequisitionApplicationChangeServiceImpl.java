@@ -166,7 +166,7 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
 
     @Override
     public PagingVO<RequisitionApplicationChangeDTO.ListDTO> paging(PagingDTO<RequisitionApplicationChangeDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<RequisitionApplicationChangeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if(CollUtil.isEmpty(pageData.getRecords())) {
@@ -176,20 +176,19 @@ public class RequisitionApplicationChangeServiceImpl extends SuperServiceImpl<Re
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
-    private String getPermissionSql(String permissionSql) {
-        permissionSql = CharSequenceUtil.isBlank(permissionSql) ? " AND 1=1 " : permissionSql;
+    private String getPermissionSql() {
         // 店铺权限
         String shopPermissionSql = authDataFeign.getShopPermissionSql("ra.channel_id");
         shopPermissionSql = CharSequenceUtil.isBlank(shopPermissionSql)? " AND 1=1 " : shopPermissionSql;
         // 仓库权限
-        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("rad.to_warehouse_id");
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("ra.channel_id");
         warehousePermissionSql = CharSequenceUtil.isBlank(warehousePermissionSql)? " AND 1=1 " : warehousePermissionSql;
-        return CharSequenceUtil.format("{} and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}))", permissionSql, shopPermissionSql, warehousePermissionSql);
+        return CharSequenceUtil.format(" and ((ra.type = 'fba' {}) or (ra.type = 'thirdWarehouse' {}) or (ra.channel_id = ''))" , shopPermissionSql, warehousePermissionSql);
     }
     @Override
     public List<RequisitionApplicationChangeDTO.TabListDTO> tabList(PermissionsDTO param) {
         RequisitionApplicationChangeDTO.PagingParamDTO searchParam = new RequisitionApplicationChangeDTO.PagingParamDTO();
-        searchParam.setPermissionSql(getPermissionSql(param.getPermissionSql()));
+        searchParam.setPermissionSql(getPermissionSql());
         List<RequisitionApplicationChangeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = ApproveStatusEnum.getStatusList();

@@ -51,7 +51,6 @@
         ra.status AS tabFlag,
         count(distinct ra.id)  AS count
         FROM requisition_application ra
-        INNER JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         WHERE ra.is_deleted=FALSE
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
