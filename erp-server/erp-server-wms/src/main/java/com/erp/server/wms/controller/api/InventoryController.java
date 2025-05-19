@@ -271,7 +271,7 @@ public class InventoryController extends BaseController {
     @PostMapping("/dailyInventoryPaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "tf.warehouse_id",
-            menuCode = "wms:inventory:dailyInventoryPaging:paging"
+            menuCode = "wms:inventory:dailyInventoryPaging"
     )
     @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public ApiResult<PagingVO<InventoryReportDTO.ListDailyInventoryDTO>> dailyInventoryPaging(@RequestBody @Validated PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {

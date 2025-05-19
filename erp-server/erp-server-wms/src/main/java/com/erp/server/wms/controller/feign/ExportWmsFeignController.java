@@ -355,7 +355,7 @@ public class ExportWmsFeignController {
     @PostMapping("/inventoryDaily")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             warehouseTableField = "tf.warehouse_id",
-            menuCode = "wms:inventory:dailyInventoryPaging:paging"
+            menuCode = "wms:inventory:dailyInventoryPaging"
     )
     @WebAdvanceQuery(handler = InventoryQueryHandler.class)
     public PagingVO<InventoryReportDTO.ListDailyInventoryDTO> exportInventoryDaily(@RequestBody PagingDTO<InventoryReportDTO.DailyInventoryParamDTO> dto) {
