@@ -240,7 +240,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                         .form("[{\"id\":\"111\",\"type\":\"input\",\"value\":\"11111\"},{\"id\":\"222\",\"required\":true,\"type\":\"dateInterval\",\"value\":{\"end\":\"2019-10-02T08:12:01+08:00\",\"interval\":2,\"start\":\"2019-10-01T08:12:01+08:00\"}},{\"id\":\"333\",\"type\":\"radioV2\",\"value\":\"1\"},{\"id\":\"444\",\"type\":\"number\",\"value\":\"4\"},{\"id\":\"555\",\"type\":\"textarea\",\"value\":\"fsafs\"}]")
                         .build())
                 .build();
-        fsService.createInstance(req);
+//        fsService.createInstance(req);
     }
 
 }
