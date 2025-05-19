@@ -119,7 +119,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱号【可排序】
         */
-        private String boxNo;
+        private Integer boxNo;
 
         /**
         * 发货量【可排序】
@@ -402,7 +402,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 箱编号
          */
-        private String boxNo;
+        private Integer boxNo;
         /**
          * 箱子重量(出库重量)
          */
@@ -459,7 +459,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 箱号
          */
-        private String boxNo;
+        private Integer boxNo;
 
         private String skuId;
 
@@ -570,7 +570,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱号
         */
-        private String boxNo;
+        private Integer boxNo;
 
         /**
         * 发货量
@@ -929,7 +929,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 箱号
          */
         @NotBlank(message = "来源单号不能为空")
-        private String boxNo;
+        private Integer boxNo;
 
         /**
          * 发货量
