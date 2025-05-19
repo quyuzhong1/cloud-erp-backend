@@ -216,8 +216,12 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             LocalDate date = dto.getReceiveDate().with(TemporalAdjusters.firstDayOfMonth());
             String sourceId = CharSequenceUtil.isNotBlank(mainEntity.getSourceId()) ? mainEntity.getSourceId() : "";//发货单id
             String code = CharSequenceUtil.isNotBlank(mainEntity.getCode()) ? mainEntity.getCode() : "";//业务单号
+            FirstMileCostAllocationDTO.DetailDTO detailDTO = new FirstMileCostAllocationDTO.DetailDTO();
+            detailDTO.setSourceId(sourceId);
+            detailDTO.setBusinessCode(code);
+            detailDTO.setReportMonth(date);
             //判断是否存在对应的头程分摊
-            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySourceIdAndCode(sourceId, code, date);
+            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySourceIdAndCode(detailDTO);
             if (CollUtil.isNotEmpty(detailDTOS)){
                 throw new ServiceException("发货单【{}】该月【{}】已生成头程分摊，不可修改",mainEntity.getSourceCode(),date);
             }
@@ -333,8 +337,12 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             LocalDate date = dto.getReceiveDate().with(TemporalAdjusters.firstDayOfMonth());
             String sourceId = CharSequenceUtil.isNotBlank(entity.getSourceId()) ? entity.getSourceId() : "";//发货单id
             String code = CharSequenceUtil.isNotBlank(entity.getCode()) ? entity.getCode() : "";//业务单号
+            FirstMileCostAllocationDTO.DetailDTO detailDTO = new FirstMileCostAllocationDTO.DetailDTO();
+            detailDTO.setSourceId(sourceId);
+            detailDTO.setBusinessCode(code);
+            detailDTO.setReportMonth(date);
             //判断是否存在对应的头程分摊
-            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySourceIdAndCode(sourceId, code, date);
+            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySourceIdAndCode(detailDTO);
             if (CollUtil.isNotEmpty(detailDTOS)){
                 throw new ServiceException("发货单【{}】该月【{}】已生成头程分摊，不可修改",entity.getSourceCode(),date);
             }

@@ -46,14 +46,12 @@ public class TmsFirstMileLogisticFeignController {
     }
     /**
      * 根据来源id和业务类型查询头程费用分摊记录
-     * @param sourceId
-     * @param businessCode
-     * @param reportMonth
+     * @param detailDTO
      * @return
      */
-    @GetMapping("/getRecordBySourceIdAndCode")
-    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySourceIdAndCode(@RequestParam("sourceId") String sourceId, @RequestParam("businessCode") String businessCode, @RequestParam("reportMonth") LocalDate reportMonth){
-        return firstMileCostAllocationService.getRecordBySourceIdAndCode(sourceId,businessCode,reportMonth);
+    @PostMapping("/getRecordBySourceIdAndCode")
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySourceIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO){
+        return firstMileCostAllocationService.getRecordBySourceIdAndCode(detailDTO.getSourceId(),detailDTO.getBusinessCode(),detailDTO.getReportMonth());
     }
     /**
      * 根据skuId和业务类型查询头程费用分摊记录
