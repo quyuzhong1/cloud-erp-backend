@@ -1,6 +1,7 @@
 package com.erp.server.workflow.controller.api;
 
 
+import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import lombok.extern.slf4j.Slf4j;
@@ -54,5 +55,18 @@ public class CfgQueryOptionController extends BaseController {
     @GetMapping("/cfgApproveSync/drop/cfgApproveSyncDropDown")
     public ApiResult<List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO>> cfgApproveSyncDropDown(@RequestParam(value = "bussinessKey") String bussinessKey) {
         return success(cfgQueryOptionService.cfgApproveSyncDropDown(bussinessKey));
+    }
+
+    /**
+     * 条件 树结构
+     * @author yl
+     * @date 2023-10-08 15:08
+     * @param
+     * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.oms.dto.CfConditionDTO.TreeDTO>>
+     */
+    @GetMapping("/tree")
+    public ApiResult<List<CfgQueryOptionDTO.TreeDTO>> tree(String bussinessKey) {
+        List<CfgQueryOptionDTO.TreeDTO> result = cfgQueryOptionService.tree(bussinessKey);
+        return success(result);
     }
 }

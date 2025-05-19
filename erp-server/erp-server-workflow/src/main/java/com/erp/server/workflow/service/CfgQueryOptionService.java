@@ -1,4 +1,5 @@
 package com.erp.server.workflow.service;
+import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.model.sys.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
@@ -22,20 +23,13 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     * 新增
     * @author hcg
     * @date: 2025-05-15
-    * @param dto
+    * @param
     * @return
     */
     List<CfgQueryOptionDTO.ViewDTO> proDropDown(String bussinessKey);
 
     List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey);
 
-    /**
-    * 修改
-    * @author hcg
-    * @date: 2025-05-15
-    * @param dto
-    * @return
-    */
-
+    List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey);
 
 }
