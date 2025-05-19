@@ -171,7 +171,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      */
     private String getProcessDefinitionId(ProcessManagementDTO.StartDTO dto) {
         //查询流程配置
-        CfgProcessEntity cfgProcessEntity = cfgProcessService.getByBussinessKey(dto.getBusinessKey());
+        CfgProcessEntity cfgProcessEntity = cfgProcessService.getByBusinessKey(dto.getBusinessKey());
         if (ObjectUtil.isEmpty(cfgProcessEntity)) {
             // 业务无流程配置
             log.warn("业务无流程配置, businessKey={}", dto.getBusinessKey());

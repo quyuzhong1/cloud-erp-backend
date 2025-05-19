@@ -1,12 +1,13 @@
 package com.erp.server.workflow.service;
-import com.common.business.vo.PagingVO;
 
-import com.erp.model.workflow.entity.CfgProcessEntity;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.CfgProcessDTO;
+import com.erp.model.workflow.entity.CfgProcessEntity;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
@@ -55,6 +56,13 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
 
 
     List<CfgProcessDTO.TabListDTO> tabList(PermissionsDTO dto);
-
-    CfgProcessEntity getByBussinessKey(String businessKey);
+    /**
+     * 查询流程配置
+     * @author will
+     * @date 2025/5/19 18:48
+     * @param businessKey
+     * @return CfgProcessEntity
+     */
+    CfgProcessEntity getByBusinessKey(String businessKey);
 }
+
