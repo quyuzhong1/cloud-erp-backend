@@ -11,7 +11,6 @@ import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -22,7 +21,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
-import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.TaskHandleDataDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -547,14 +545,11 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 plmTaskFeign.projectTaskApprovalPass(taskOperateDTO);
                 break;
             case PRODUCT_CHANGE:
-                AuditParamDTO approveDTO = new AuditParamDTO();
+                ApproveOneDTO approveDTO = new ApproveOneDTO();
                 approveDTO.setId(dto.getId());
                 approveDTO.setComment(dto.getComment());
-                if (ApproveTypeEnum.PASS.getStatus().equals(dto.getType())) {
-                    plmTaskFeign.productChangeApprovalPass(approveDTO);
-                } else {
-                    plmTaskFeign.productChangeApprovalNoPass(approveDTO);
-                }
+                approveDTO.setType(dto.getType());
+                plmTaskFeign.productChangeApprove(approveDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

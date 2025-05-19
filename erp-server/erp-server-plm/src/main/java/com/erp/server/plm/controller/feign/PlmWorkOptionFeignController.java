@@ -2,7 +2,6 @@ package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.erp.model.plm.dto.AuditParamDTO;
 import com.erp.model.plm.dto.PilotApplicationDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
@@ -106,20 +105,9 @@ public class PlmWorkOptionFeignController {
      * @param
      * @return 新增结果
      */
-    @PostMapping("/productChangeApprovalPass")
-    public void productChangeApprovalPass(@RequestBody @Validated AuditParamDTO dto) {
-        productChangeService.approvalPass(dto);
-    }
-
-    /**
-     * change  审核 不通过
-     *
-     * @param
-     * @return 新增结果
-     */
-    @PostMapping("/productChangeApprovalNoPass")
-    public void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto) {
-        productChangeService.approvalNoPass(dto);
+    @PostMapping("/productChangeApprove")
+    public void productChangeApprove(@RequestBody @Validated ApproveOneDTO dto) {
+        productChangeService.approve(dto);
     }
 
     /**
