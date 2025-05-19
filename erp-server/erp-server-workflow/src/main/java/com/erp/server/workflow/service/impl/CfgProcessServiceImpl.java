@@ -21,8 +21,8 @@ import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserThirdFeign;
 import com.erp.sdk.fs.service.FsService;
-import com.erp.server.sys.service.impl.SysUserThirdServiceImpl;
 import com.erp.server.workflow.mapper.CfgProcessMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -73,7 +73,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     private FsService fsService;
 
     @Resource
-    private SysUserThirdServiceImpl sysUserThirdService;
+    private SysUserThirdFeign sysUserThirdFeign;
 
     @Resource
     private ThirdProcessDefinitionService thirdProcessDefinitionService;
@@ -226,7 +226,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //查询approvalCode
         String approvalCode = baseMapper.getApprovalCode(dto.getBusinessKey());
         //查询userid
-        String userId = sysUserThirdService.findByUserId(dto.getUserId()).getThirdUserId();
+        String userId = sysUserThirdFeign.findByUserId(dto.getUserId()).getThirdUserId();
         //组装form
 //        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, approvalCode).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "7DCF7A99-6E25-4A24-8386-5E2639712983").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
