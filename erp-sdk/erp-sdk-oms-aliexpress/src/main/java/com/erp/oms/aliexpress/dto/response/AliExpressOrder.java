@@ -1,17 +1,16 @@
 package com.erp.oms.aliexpress.dto.response;
 
-import com.alibaba.fastjson.annotation.JSONField;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONArray;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.experimental.Accessors;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.Serializable;
-import java.util.List;
 
 /**
  * @Description TODO
@@ -302,7 +301,7 @@ public class AliExpressOrder implements Serializable {
     }
 
 
-    public String convertApproveStatus(Boolean isPlatformWarehouseOrder) {
+    public String convertApproveStatus(Boolean isPlatformWarehouseOrder, Object logisticInfoListObj) {
         String orderStatus = this.getOrderStatus();
         if (StringUtils.isBlank(orderStatus)) {
             return ApproveStatusEnum.WAIT_SUBMIT.getCode();
@@ -312,7 +311,7 @@ public class AliExpressOrder implements Serializable {
             return ApproveStatusEnum.APPROVE.getCode();
         }
         // 订单取消=待提交
-        if(convertCancel()){
+        if(convertNewCancel(logisticInfoListObj)){
             return ApproveStatusEnum.WAIT_SUBMIT.getCode();
         }
 
@@ -362,6 +361,7 @@ public class AliExpressOrder implements Serializable {
      * buyer_cancel_order_in_risk买家取消风控订单
      * security_close安全关闭
      */
+    @Deprecated
     public boolean convertCancel() {
         // 冻结中视为取消走拦截逻辑或初始化作废
         if("IN_CANCEL".equals(orderStatus)
@@ -392,5 +392,36 @@ public class AliExpressOrder implements Serializable {
         return "IN_CANCEL".equals(orderStatus)
                 || "RISK_CONTROL".equals(orderStatus)
                 || "IN_FROZEN".equals(orderStatus);
+    }
+
+    /**
+     * 判断速卖通订单是否是售前取消
+     * logisticInfoListObj
+     */
+    public boolean convertNewCancel(Object logisticInfoListObj) {
+        // 冻结中视为取消走拦截逻辑或初始化作废
+        if("IN_CANCEL".equals(orderStatus)
+                || "RISK_CONTROL".equals(orderStatus)
+                ||"IN_FROZEN".equals(orderStatus)){
+            return true;
+        }
+
+        if (!"FINISH".equalsIgnoreCase(this.orderStatus)){
+            // 非完结
+            return false;
+        }
+        // 无物流信息
+        if (null == logisticInfoListObj){
+            return true;
+        }
+        JSONArray logisticInfoArray = JSON.parseArray(JSON.toJSONString(logisticInfoListObj));
+        if (CollectionUtils.isEmpty(logisticInfoArray)){
+            return true;
+        }
+        // 存在签收信息
+        boolean existReceive = logisticInfoArray.stream()
+                .map(e -> JSON.parseObject(JSON.toJSONString(e)))
+                .anyMatch(e -> "received".equalsIgnoreCase(e.getString("receive_status")));
+        return !existReceive;
     }
 }
