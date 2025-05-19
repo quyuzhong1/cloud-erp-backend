@@ -1771,7 +1771,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             return Collections.emptyList();
         }
         FirstMileCostAllocationDTO.PagingParamDTO params = new FirstMileCostAllocationDTO.PagingParamDTO();
-        params.setIds(ids.stream().distinct().collect(Collectors.toList()));
+        params.setDetailIds(ids.stream().distinct().collect(Collectors.toList()));
         List<FirstMileCostAllocationDTO.PagingVO> list = baseMapper.exportList(params);
         //检查是否存在非待确认数据，存在就报错
         list.stream().filter(e -> !ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).findFirst().ifPresent(e -> {

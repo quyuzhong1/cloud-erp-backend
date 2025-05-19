@@ -485,9 +485,9 @@ public class FirstMileCostAllocationDTO implements Serializable {
          */
         private Map<String,String> sqlMap;
         /**
-         * 分摊记录id
+         * 分摊明细记录id
          */
-        private List<String> ids;
+        private List<String> detailIds;
     }
 
     @Data

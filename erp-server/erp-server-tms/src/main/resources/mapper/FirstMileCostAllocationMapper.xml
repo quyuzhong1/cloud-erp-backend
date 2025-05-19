@@ -96,9 +96,9 @@
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
-            <if test="params.ids != null and params.ids.size > 0">
-                and a.id in
-                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+            <if test="params.detailIds != null and params.detailIds.size > 0">
+                and ca.id in
+                <foreach collection="params.detailIds" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
