@@ -843,7 +843,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             currencyName = CurrencyEnum.getNameByCode(currency);
         }
         //将totalNotTaxAmount转换为中文大写
-        String totalNotTaxAmountChinese = Convert.digitToChinese(totalNotTaxAmount.doubleValue());
+        String totalNotTaxAmountChinese = Convert.digitToChinese(totalAmount.doubleValue());
         exportPdfDTO.setTotalNotTaxAmountChinese(currencyName + totalNotTaxAmountChinese);
         exportPdfDTO.setCurrency(currency);
         exportPdfDTO.setDetails(details);
