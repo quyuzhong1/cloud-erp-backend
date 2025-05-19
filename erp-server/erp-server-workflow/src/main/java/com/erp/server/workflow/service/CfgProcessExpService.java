@@ -1,9 +1,9 @@
 package com.erp.server.workflow.service;
-import com.erp.model.workflow.dto.CfgProcessDTO;
-import com.erp.model.workflow.entity.CfgProcessExpEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgProcessExpDTO;
+import com.erp.model.workflow.entity.CfgProcessExpEntity;
 
 import java.util.List;
 
@@ -37,4 +37,12 @@ public interface CfgProcessExpService extends SuperService<CfgProcessExpEntity> 
     void delete(List<String> ids);
 
     List<CfgProcessExpDTO.ViewDTO> view(String ruleId);
+    /**
+     * 根据规则id集合查询条件设置
+     * @author will
+     * @date 2025/5/19 16:24
+     * @param ruleIdList
+     * @return List<CfgProcessExpEntity>
+     */
+    List<CfgProcessExpEntity> listByRuleIdList(List<String> ruleIdList);
 }

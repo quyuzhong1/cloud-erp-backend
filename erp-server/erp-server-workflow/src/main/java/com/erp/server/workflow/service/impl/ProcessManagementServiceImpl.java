@@ -2,13 +2,11 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -24,19 +22,19 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
+import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.common.message.constant.RocketMqNewTag;
-import com.common.message.constant.RocketMqNewTopic;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
-import com.erp.model.plm.enums.NoticeEnum;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.CamundaDTO;
@@ -44,16 +42,12 @@ import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.*;
-import com.erp.model.workflow.enums.DictBasicEnum;
-import com.erp.model.workflow.enums.ProcessManagementTabEnum;
-import com.erp.model.workflow.enums.ProcessStatusEnum;
-import com.erp.model.workflow.enums.TimeoutStatusEnum;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.*;
-import com.lark.oapi.service.approval.v4.model.CreateExternalInstanceReq;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.client.producer.SendResult;
@@ -82,7 +76,6 @@ import org.camunda.bpm.model.bpmn.instance.StartEvent;
 import org.camunda.bpm.model.bpmn.instance.UserTask;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -147,17 +140,89 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private CfgApproveSyncService cfgApproveSyncService;
+    @Resource
+    private CfgProcessService cfgProcessService;
+    @Resource
+    private CfgProcessRuleService cfgProcessRuleService;
+    @Resource
+    private CfgProcessExpService cfgProcessExpService;
+    @Resource
+    private SpElServer spElServer;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto) {
-        // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
+    public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
+        String processDefinitionId = getProcessDefinitionId(dto);
+        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+            // 业务无已启用的Erp流程配置
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
+        //启动流程
+        return startProcess(dto, processDefinitionId);
+    }
 
+
+    /**
+     * 查询流程定义id
+     * @author will
+     * @date 2025/5/19 16:10
+     * @param dto
+     * @return String
+     */
+    private String getProcessDefinitionId(ProcessManagementDTO.StartDTO dto) {
+        //查询流程配置
+        CfgProcessEntity cfgProcessEntity = cfgProcessService.getByBussinessKey(dto.getBusinessKey());
+        if (ObjectUtil.isEmpty(cfgProcessEntity)) {
+            // 业务无流程配置
+            log.warn("业务无流程配置, businessKey={}", dto.getBusinessKey());
+            return "";
+        }
+        List<CfgProcessRuleEntity> cfgProcessRuleList = cfgProcessRuleService.listByProcessId(cfgProcessEntity.getId(), CfgProcessRuleTypeEnum.ERPPROGRESS.getCode());
+        if (CollUtil.isEmpty(cfgProcessRuleList)) {
+            // 业务无已启用的Erp流程配置
+            log.warn("业务无已启用的Erp流程配置, businessKey={}", dto.getBusinessKey());
+            return "";
+        }
+        //查询rule条件设置
+        List<String> ruleIdList = cfgProcessRuleList.stream().map(CfgProcessRuleEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgProcessExpEntity> cfgProcessExpList = cfgProcessExpService.listByRuleIdList(ruleIdList);
+        if (CollUtil.isEmpty(cfgProcessExpList)) {
+            // 业务无已启用的Erp流程配置
+            log.warn("业务无规则对应的条件设置, businessKey={}", dto.getBusinessKey());
+            return "";
+        }
+        Map<String, List<CfgProcessExpEntity>> expMap = cfgProcessExpList.stream().collect(Collectors.groupingBy(CfgProcessExpEntity::getRuleId));
+        //查询传入数据是否有符合条件的流程
+        String processDefinitionId = "";
+        for (CfgProcessRuleEntity cfgProcessRuleEntity : cfgProcessRuleList) {
+            //对应规则
+            List<CfgProcessExpEntity> processExpList = expMap.get(cfgProcessRuleEntity.getId());
+            if (CollUtil.isEmpty(processExpList)) {
+                continue;
+            }
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(processExpList, ConditionElement.class);
+            Boolean matchResult = spElServer.matchDetailExpressionByConditionList(conditionElementList, dto.getVariablesMap());
+            //存在一条以上的规则都匹配数据的时候直接报错
+            if (CharSequenceUtil.isNotBlank(processDefinitionId) && matchResult) {
+                throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
+            }
+            //匹配上则直接赋值
+            if (matchResult) {
+                processDefinitionId = cfgProcessRuleEntity.getProcessDefinitionId();
+            }
+        }
+        return processDefinitionId;
+    }
+
+
+    /**
+     * 启动流程
+     * @author will
+     * @date 2025/5/19 15:20
+     * @param dto
+     * @return StartResultDTO
+     */
+    private ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto,String processDefinitionId) {
         // 判断业务id是否已经存在
         ProcessManagementEntity managementEntity = lambdaQuery()
                 .eq(ProcessManagementEntity::getBusinessId, dto.getBusinessId())
@@ -168,7 +233,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务已经发起流程
             throw new ServiceException(ApiError.PROCESS_ALREADY_START);
         }
-        String processDefinitionId = processBusiness.getProcessDefinitionId();
         // 查询流程定义
         ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId);
         if (null == processDefinition) {
@@ -955,7 +1019,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<ProcessManagementDTO.StartResultDTO> resultList = new ArrayList<>();
         dtoList.stream().forEach(dto -> {
             // 启动流程
-            ProcessManagementDTO.StartResultDTO resultDTO = startProcess(dto);
+            ProcessManagementDTO.StartResultDTO resultDTO = startProcessManagement(dto);
             resultList.add(resultDTO);
         });
         return resultList;

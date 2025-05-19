@@ -38,4 +38,12 @@ public interface ProcessDelegateMapper extends BaseMapper<ProcessDelegateEntity>
      * @return IPage<ListDTO>
      */
     IPage<ProcessDelegateDTO.ListDTO> paging(Page query, @Param("params") ProcessDelegateDTO.PagingParamDTO params);
+    /**
+     * 根据流程定义id查询委托审批信息
+     * @author will
+     * @date 2025/5/19 17:48
+     * @param processDefinitionId
+     * @return ProcessDelegateEntity
+     */
+    ProcessDelegateEntity getByProcessDefinitionId(@Param("processDefinitionId")String processDefinitionId);
 }

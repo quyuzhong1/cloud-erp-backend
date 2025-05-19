@@ -178,7 +178,12 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         downloadTaskFeign.saveDownloadTask("委托审批单导出", EXPORT_PROCESS_DELEGATE.getCode(), param);
     }
 
-   /**
+    @Override
+    public ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId) {
+        return  baseMapper.getByProcessDefinitionId(processDefinitionId);
+    }
+
+    /**
     * 批量新增数据转换
     * @author will
     * @date 2025/5/12 19:17

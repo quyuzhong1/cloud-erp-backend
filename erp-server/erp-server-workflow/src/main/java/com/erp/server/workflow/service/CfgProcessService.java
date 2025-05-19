@@ -6,6 +6,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgProcessDTO;
 
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.util.List;
 
@@ -54,4 +55,6 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
 
 
     List<CfgProcessDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    CfgProcessEntity getByBussinessKey(String businessKey);
 }
