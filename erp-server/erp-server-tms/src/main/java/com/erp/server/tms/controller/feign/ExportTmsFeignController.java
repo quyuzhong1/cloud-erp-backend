@@ -281,6 +281,7 @@ public class ExportTmsFeignController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             shopTableField = "ad.shop_id",
+            warehouseTableField = "ad.warehouse_id",
             menuCode = "tms:initFirstMileAllocation:paging",
             tableAlias = "a"
     )
