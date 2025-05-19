@@ -96,9 +96,9 @@
             <if test="params.permissionSql!=null and params.permissionSql!=''">
                 ${params.permissionSql}
             </if>
-            <if test="params.ids != null and params.ids.size > 0">
-                and a.id in
-                <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+            <if test="params.detailIds != null and params.detailIds.size > 0">
+                and ca.id in
+                <foreach collection="params.detailIds" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
@@ -219,7 +219,7 @@
     <select id="getRecordBySourceIdAndCode"
             resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$DetailDTO">
         select
-            fmca.id,fmca.source_id,fmca.business_code,rpm.month
+            fmca.id,fmca.source_id,fmca.business_code,rpm.month as reportMonth
         from first_mile_cost_allocation fmca
         left join report_period_month rpm on fmca.report_period_id = rpm.id and rpm.is_deleted = false
         where fmca.is_deleted = false

@@ -1214,7 +1214,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
 
     @Override
     public List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> viewChangeList(OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
-        if (Objects.isNull(dto) || CollUtil.isNotEmpty(dto.getRequestIdList()) || Objects.isNull(dto.getRequestIdType()) || CharSequenceUtil.isBlank(dto.getRequestIdType().getCode())){
+        if (Objects.isNull(dto) || CollUtil.isEmpty(dto.getRequestIdList()) || Objects.isNull(dto.getRequestIdType()) || CharSequenceUtil.isBlank(dto.getRequestIdType().getCode())){
             return Collections.emptyList();
         }
         return baseMapper.viewChangeList(dto);
