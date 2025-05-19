@@ -201,17 +201,8 @@ public interface PlmTaskFeign {
      * @param
      * @return 新增结果
      */
-    @PostMapping("feign/plmWorkOption/productChangeApprovalPass")
-    void productChangeApprovalPass(@RequestBody @Validated AuditParamDTO dto);
-
-    /**
-     * change  审核 不通过
-     *
-     * @param
-     * @return 新增结果
-     */
-    @PostMapping("feign/plmWorkOption/productChangeApprovalNoPass")
-    void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto);
+    @PostMapping("feign/plmWorkOption/productChangeApprove")
+    void productChangeApprove(@RequestBody @Validated ApproveOneDTO dto);
 
     /**
      * @param skuIds

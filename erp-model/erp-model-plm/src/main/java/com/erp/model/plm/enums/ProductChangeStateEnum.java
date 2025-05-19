@@ -8,7 +8,7 @@ package com.erp.model.plm.enums;
  */
 public enum ProductChangeStateEnum {
 
-    WAIT_AUDIT(0, "待审核"),
+    WAIT_SUBMIT(0, "待提交"),
     AUDIT_ING(1, "审核中"),
     AUDIT_NO_PASS(2, "审核不通过"),
     AUDIT_PASS(3, "审核通过"),
