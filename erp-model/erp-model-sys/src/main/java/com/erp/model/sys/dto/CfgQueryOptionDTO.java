@@ -269,5 +269,23 @@ public class CfgQueryOptionDTO implements Serializable {
 
     }
 
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class cfgApproveSyncDropDownDTO {
+
+        private String id;
+
+        private String conditionField;
+
+        private String conditionFieldName;
+
+        private String fieldBelongsType;
+
+
+    }
+
 
 }

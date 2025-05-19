@@ -27,6 +27,8 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     */
     List<CfgQueryOptionDTO.ViewDTO> proDropDown(String bussinessKey);
 
+    List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey);
+
     /**
     * 修改
     * @author hcg
