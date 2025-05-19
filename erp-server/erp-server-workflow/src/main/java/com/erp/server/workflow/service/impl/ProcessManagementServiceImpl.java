@@ -244,8 +244,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                     mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
                     mqDto.setProcessManagementId(insertManagementEntity.getId());
+                    mqDto.setBusinessName(insertManagementEntity.getBusinessName());
+                    mqDto.setInstanceId(processInstanceId);
                     mqDto.setTaskId(taskId);
                     mqDto.setCreateUserId(dto.getUserId());
+                    mqDto.setVariablesMap(dto.getVariablesMap());
                     mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
                 }
             }

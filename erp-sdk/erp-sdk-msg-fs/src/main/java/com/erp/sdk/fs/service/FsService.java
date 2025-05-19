@@ -372,18 +372,18 @@ public class FsService {
     public BatchGetIdUserResp getBatchFsUserByMobileOrEmail(FindThirdUserDTO.UserParamsDTO dto) {
         try {
             // 构建client
-            Client client =getClient();
+//            Client client =getClient();
 //            飞书生产
-//            Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
-//                    .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
-//                    .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
-//                    .build();
+            Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
+                    .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+                    .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
+                    .build();
             // 创建请求对象
             BatchGetIdUserReq req = BatchGetIdUserReq.newBuilder()
                     .userIdType(dto.getUserIdType())
                     .batchGetIdUserReqBody(BatchGetIdUserReqBody.newBuilder()
                             .mobiles(dto.getMobiles())
-                            .includeResigned(Boolean.FALSE)
+                            .includeResigned(Boolean.TRUE)
                             .build())
                     .build();
             // 发起请求
@@ -504,21 +504,149 @@ public class FsService {
             // 构建client
             Client client = getClient();
 
-
-
             // 发起请求
             CreateExternalInstanceResp resp = client.approval().v4().externalInstance().create(req);
             // 处理服务端错误
             if (!resp.success()) {
                 String msg = String.format("code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
                 log.error("同步三方审批实例失败>>>>>{}",msg);
-                throw new ServiceException("同步三方审批实例失败>>>>>{}",msg);
             }
             return resp;
         } catch (Exception e) {
             throw new ServiceException("同步三方审批实例出错>>>>>{}", e);
         }
     }
+
+    /**
+     * 校验三方审批实例
+     * https://open.feishu.cn/document/server-docs/approval-v4/external_instance/check
+     * @author jack
+     * @date 2025-05-19
+     */
+    public CheckExternalInstanceResp checkExternalInstance(CheckExternalInstanceReq req) {
+        try {
+            // 构建client
+            Client client = getClient();
+            // 创建请求对象
+            req = CheckExternalInstanceReq.newBuilder()
+                    .checkExternalInstanceReqBody(CheckExternalInstanceReqBody.newBuilder()
+                            .instances(new ExteranlInstanceCheck[]{
+                                    ExteranlInstanceCheck.newBuilder()
+                                            .instanceId("1234234234242423")
+                                            .updateTime("1591603040000")
+                                            .tasks(new ExternalInstanceTask[]{
+                                                    ExternalInstanceTask.newBuilder()
+                                                            .taskId("112253")
+                                                            .updateTime("1591603040000")
+                                                            .build()
+                                            })
+                                            .build()
+                            })
+                            .build())
+                    .build();
+
+            // 发起请求
+            CheckExternalInstanceResp resp = client.approval().v4().externalInstance().check(req);
+
+            // 处理服务端错误
+            if (!resp.success()) {
+                String msg = String.format("code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
+                log.error("校验三方审批实例失败>>>>>{}",msg);
+            }
+            return resp;
+        } catch (Exception e) {
+            throw new ServiceException("校验三方审批实例出错>>>>>{}", e);
+        }
+    }
+
+
+
+    /**
+     * 发送审批 Bot 消息
+     * https://open.feishu.cn/document/server-docs/approval-v4/message/send-bot-messages
+     * @author jack
+     * @date 2025-05-19
+     */
+    public Boolean sendApproveMessage() {
+        //获取飞书的应用token
+        String tenantAccessToken = getFsTenantAccessToken();
+        if (StringUtils.isNotBlank(tenantAccessToken)) {
+            Map<String, String> headerMap = new HashMap<>();
+            String authorization = FS_AUTHORIZATION + tenantAccessToken;
+            headerMap.put(AUTHORIZATION, authorization);
+            headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
+            Map<String, Object> bodyMap = new HashMap<>();
+//            bodyMap.put("template_id", 1008);
+//            bodyMap.put("user_id", );
+//            bodyMap.put("approval_name", "@i18n@approvalName");
+//            bodyMap.put("title_user_id", );
+//            bodyMap.put("title_user_id_type ", UserIdTypeEnum.USERID.getCode());
+//
+//            Map<String, Object> contentMap = new HashMap<>();
+//            List<String> summaries = new ArrayList<>();
+//            contentMap.put("user_id", );
+//            contentMap.put("user_id_type", UserIdTypeEnum.USERID.getCode());
+//            contentMap.put("summaries",summaries);
+//            bodyMap.put("content ",contentMap );
+
+            String resultStr = OkHttpUtils.doPostJson(ThirdConstants.FS_APPROVE_MESSAGE_SEND_URL, bodyMap, headerMap);
+            Map<String, Object> resultMap = JSON.parseObject(resultStr, Map.class);
+            if (resultMap != null && resultMap.containsKey("code")) {
+                Integer code = (Integer) resultMap.get("code");
+                int succeedCode = 0;
+                if (succeedCode == code) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
+
+
+    /**
+     * 更新审批 Bot 消息
+     * https://open.feishu.cn/document/server-docs/approval-v4/message/update-bot-messages
+     * @author jack
+     * @date 2025-05-19
+     */
+    public Boolean updateApproveMessage() {
+        //获取飞书的应用token
+        String tenantAccessToken = getFsTenantAccessToken();
+        if (StringUtils.isNotBlank(tenantAccessToken)) {
+            Map<String, String> headerMap = new HashMap<>();
+            String authorization = FS_AUTHORIZATION + tenantAccessToken;
+            headerMap.put(AUTHORIZATION, authorization);
+            headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
+
+            Map<String, Object> bodyMap = new HashMap<>();
+//            bodyMap.put("template_id", 1008);
+//            bodyMap.put("user_id", );
+//            bodyMap.put("approval_name", "@i18n@approvalName");
+//            bodyMap.put("title_user_id", );
+//            bodyMap.put("title_user_id_type ", UserIdTypeEnum.USERID.getCode());
+//
+//            Map<String, Object> contentMap = new HashMap<>();
+//            List<String> summaries = new ArrayList<>();
+//            contentMap.put("user_id", );
+//            contentMap.put("user_id_type", UserIdTypeEnum.USERID.getCode());
+//            contentMap.put("summaries",summaries);
+//            bodyMap.put("content ",contentMap );
+
+            String resultStr = OkHttpUtils.doPostJson(ThirdConstants.FS_APPROVE_MESSAGE_UPDATE_URL, bodyMap, headerMap);
+            Map<String, Object> resultMap = JSON.parseObject(resultStr, Map.class);
+            if (resultMap != null && resultMap.containsKey("code")) {
+                Integer code = (Integer) resultMap.get("code");
+                int succeedCode = 0;
+                if (succeedCode == code) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
 
     public static void main(String[] args) throws Exception {

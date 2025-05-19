@@ -1718,7 +1718,7 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
             List<List<SysUserInfoEntity>> partitions = splitList(list, 50);
             List<SysUserThirdEntity> result = new ArrayList<>();
             for (List<SysUserInfoEntity> partition : partitions) {
-                List<String> mobiles = partition.stream().map(SysUserInfoEntity::getMobile).collect(Collectors.toList());
+                List<String> mobiles = partition.stream().map(SysUserInfoEntity::getMobile).distinct().collect(Collectors.toList());
                 String[] mobileArray = mobiles.toArray(new String[0]);
 
                 FindThirdUserDTO.UserParamsDTO params = new FindThirdUserDTO.UserParamsDTO();
@@ -1729,9 +1729,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 UserContactInfo[] thirdOpenId = batchGetOpenIdResp.getData().getUserList();
                 Map<String, String> mobileToOpendIdMap = Arrays.stream(thirdOpenId)
                         .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                        .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
                         .collect(Collectors.toMap(
                                 UserContactInfo::getMobile, // Key: mobile
-                                UserContactInfo::getUserId  // Value: userId
+                                UserContactInfo::getUserId,  // Value: userId
+                                (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
                         ));
 
                 //根据手机号码查询userId
@@ -1740,9 +1742,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 UserContactInfo[] thirdUserIdList = batchGetUserIdResp.getData().getUserList();
                 Map<String, String> mobileToUserIdMap = Arrays.stream(thirdUserIdList)
                         .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                        .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
                         .collect(Collectors.toMap(
                                 UserContactInfo::getMobile, // Key: mobile
-                                UserContactInfo::getUserId  // Value: userId
+                                UserContactInfo::getUserId,  // Value: userId
+                                (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
                         ));
 
                 //根据手机号码查询unionId
@@ -1751,9 +1755,11 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                 UserContactInfo[] thirdUnionIdList = batchGetUnionIdResp.getData().getUserList();
                 Map<String, String> mobileToUnionIdMap = Arrays.stream(thirdUnionIdList)
                         .filter(Objects::nonNull) // 过滤掉可能的 null 值
+                        .filter(e -> Objects.nonNull(e.getUserId())) // 过滤掉可能的 null 值
                         .collect(Collectors.toMap(
                                 UserContactInfo::getMobile, // Key: mobile
-                                UserContactInfo::getUserId  // Value: userId
+                                UserContactInfo::getUserId,  // Value: userId
+                                (existing, replacement) -> existing // 遇到重复 key，保留已存在的值
                         ));
 
                 for (SysUserInfoEntity sysUserInfoEntity : partition) {
@@ -1778,7 +1784,9 @@ public class SysUserInfoServiceImpl extends ServiceImpl<SysUserInfoMapper, SysUs
                     if(StringUtils.isNotBlank(userId)){
                         sysUserThirdEntity.setThirdUserId(userId);
                     }
-                    result.add(sysUserThirdEntity);
+                    if(StringUtils.isNotBlank(unionId) || StringUtils.isNotBlank(openId) || StringUtils.isNotBlank(userId)){
+                        result.add(sysUserThirdEntity);
+                    }
                 }
             }
             if(CollectionUtils.isNotEmpty(result)){
