@@ -10,7 +10,6 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
-import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 
 import java.util.List;
@@ -35,8 +34,6 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
     ProductChangeDTO details(String id);
 
     Boolean edit(UpdateChangeDTO dto);
-
-    Boolean restartAudit(String id);
 
     ProductBomChangeDTO getBomDetails(ProductChangeEntity changeEntity);
 
@@ -96,4 +93,21 @@ public interface ProductChangeService  extends IService<ProductChangeEntity> {
      * @return Boolean
      */
     Boolean approveEnd(ApproveOneDTO dto, ProductChangeEntity entity);
+    /**
+     * 取消流程
+     * @author will
+     * @date 2025/5/19 09:20
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO cancelProcess(String id);
+    /**
+     * 提交
+     * @author will
+     * @date 2025/5/19 09:57
+     * @param id
+     * @param isProcess
+     * @return BatchResultDTO
+     */
+    BatchResultDTO submit(String id, Boolean isProcess);
 }

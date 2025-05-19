@@ -17,7 +17,10 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.*;
+import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
@@ -37,12 +40,10 @@ import com.erp.model.plm.enums.ProductChangeStateEnum;
 import com.erp.model.plm.vo.BomVO;
 import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.sys.dto.UserSuperiorDTO;
-import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.InventoryEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
-import com.erp.model.workflow.dto.*;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
@@ -145,8 +146,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (isBom) {
             //检查能否变更 只有归档才可以
             bomInfoService.checkIfChange(sourceId,dto.getDetailsJson());
-            //检查审核人为空不
-            checkBomChangeAuditor(sourceId);
         }
         BeanMapper.copy(dto, change);
         String id = IdWorker.getIdStr();
@@ -168,82 +167,11 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
 
         //启动一个流程
-        startChangeProcess(change);
+        submit(id,Boolean.TRUE);
         return saveResult;
     }
 
 
-    /**
-     * 检查bom 变更审核人是否为空
-     *
-     * @param
-     * @return void
-     * @author yl
-     * @date 2023-02-01 18:45
-     */
-    public void checkBomChangeAuditor(String sourceId) {
-
-        List<BomSkuDTO> skuList = bomSkuService.getByBomId(sourceId);
-        //skuId
-        List<String> skuIdList = skuList.stream().map(BomSkuDTO::getSkuId).collect(Collectors.toList());
-        //产品经理
-        List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-        if (CollectionUtils.isEmpty(productManagerList)) {
-            throw new ServiceException(ApiError.ERROR_9030);
-        }
-        //产品经理上级
-        List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
-        if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
-            throw new ServiceException(ApiError.ERROR_9031);
-        }
-
-        //产品研发中心负责人
-        List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
-        if (CollectionUtils.isEmpty(departmentHeadList)) {
-            throw new ServiceException(ApiError.ERROR_9032);
-        }
-
-    }
-
-
-    /**
-     * 产品负责人
-     *
-     * @param productChargeIdList
-     * @return void
-     * @author yl
-     * @date 2023-02-01 18:47
-     */
-    public void checkSkuChangeAuditor(List<String> productChargeIdList) {
-        //产品经理
-        if (CollectionUtils.isEmpty(productChargeIdList)) {
-            throw new ServiceException(ApiError.ERROR_9030);
-        }
-
-        //产品经理上级
-        List<String> productManagerSupervisorList = getProductManagerSupervisorList(productChargeIdList);
-        if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
-            throw new ServiceException(ApiError.ERROR_9031);
-        }
-        //财务人员检查
-        if (StringUtils.isBlank(financial)) {
-            throw new ServiceException(ApiError.ERROR_9035);
-        }
-        //品质部人员审核
-        List<String> qualityPeople = productDetailService.getApproveLead(SkuApproveConfigureEnum.THIRD_APPROVE.getDesc());
-        if (CollectionUtils.isEmpty(qualityPeople)) {
-            throw new ServiceException(ApiError.ERROR_9034);
-        }
-
-
-        //产品中心部门负责人，供应链中心部门负责人
-        List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc());
-        if (CollectionUtils.isEmpty(departmentHeadList)) {
-            throw new ServiceException(ApiError.ERROR_9033);
-        }
-
-
-    }
 
     /**
      * @param detailsJson
@@ -264,13 +192,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             BeanMapper.copy(purchaseShowDTO, purchaseEntity);
             productPurchaseService.checkProductPurchase(purchaseEntity);
         }
-        //检查sku 审核人
-        List<String> productChargeIdList = new ArrayList<>(1);
-        if (skuDTO.getProductManySpecBaseDTO() != null) {
-            productChargeIdList.add(skuDTO.getProductManySpecBaseDTO().getChargeId());
-        }
-        checkSkuChangeAuditor(productChargeIdList);
-
     }
 
     /**
@@ -416,6 +337,76 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         return Boolean.TRUE;
     }
 
+    @Override
+    public BatchResultDTO cancelProcess(String id) {
+        ProductChangeEntity entity = this.getById(id);
+        if (ObjectUtil.isNotEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_95163);
+        }
+        // 只有审核中的单据允许撤销
+        if (!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING)) {
+            throw new ServiceException(ApiError.ERROR_98007);
+        }
+        updateForApprove(id, ProductChangeStateEnum.WAIT_SUBMIT.getState(),"");
+        //操作日志
+        log.info("撤销 开始记录操作日志，id：【{}】", id);
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据撤销流程操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSourceCode(), "产品变更");
+        bomOperateLogService.saveOperate(entity.getId(), BomOperationTypeEnum.STATE_CHANGE.getType(),msg );
+        ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
+        revokeDTO.setBusinessId(entity.getId());
+        revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
+        revokeDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        workflowFeign.revokeProcess(revokeDTO);
+        return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.CANCEL_PROCESS);
+    }
+
+    @Override
+    public BatchResultDTO submit(String id, Boolean isProcess) {
+        ProductChangeEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException("未找到产品变更单数据");
+        }
+        // 待提交或审核不通过并且未作废允许提交
+        if ((!ProductChangeStateEnum.WAIT_SUBMIT.equals(entity.getState()) && !ProductChangeStateEnum.AUDIT_NO_PASS.equals(entity.getState()))) {
+            throw new ServiceException(ApiError.ERROR_98010);
+        }
+
+        // 更新单据审核状态
+        log.info("提交 开始修改委外发料单状态数据，id：【{}】", id);
+        this.updateForApprove(id, ProductChangeStateEnum.AUDIT_ING.getState(),"");
+
+        log.info("提交 开始启动委外发料单流程，id=：【{}】", entity.getId());
+        if (isProcess) {
+            startProcess(entity);
+        }
+        // 记录操作日志
+        log.info("提交 开始记录委外发料单日志数据，id：【{}】", id);
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSourceCode(), "产品变更单");
+        bomOperateLogService.saveOperate(msg, BomOperationTypeEnum.STATE_CHANGE.getType(),msg);
+        return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    /**
+     * 启动流程
+     * @param entity
+     * @return void
+     * @Date 2025/5/19 10:07
+     **/
+
+    public void startProcess(ProductChangeEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getSourceCode());
+        startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_CHANGE.getCode());
+        startDTO.setBusinessName(entity.getSourceCode());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
+        if (!result.isSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
+    }
+
     /**
      * 审核更新审核信息
      * @param id
@@ -430,216 +421,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
                 .update();
     }
 
-    /**
-     * 启动一个变更流程
-     *
-     * @param
-     * @return void
-     * @author yl
-     * @date 2023-01-31 14:44
-     */
-    public void startChangeProcess(ProductChangeEntity entity) {
-        if (entity != null) {
-            String type = entity.getType();
-            String changeBom = BomConstant.CHANGE_BOM;
-            String changeSku = BomConstant.CHANGE_SKU;
-            String userId = UserContext.getDefaultLoginUser().getUid();
-
-            //如果是Bom 就要启动bom变更流程
-            if (changeBom.equals(type)) {
-                startChangeBomProcess(entity.getId(), userId, entity.getSourceId());
-            }
-            //如果是sku 就要启动sku变更流程
-            if (changeSku.equals(type)) {
-                startChangeSkuProcess(entity.getId(), userId, entity.getSourceId());
-            }
-        }
-
-
-    }
-
-
-    /**
-     * 启动 sku 变更流程
-     *
-     * @param id
-     * @param userId
-     * @return void
-     * @author yl
-     * @date 2023-02-01 16:56
-     */
-    private void startChangeSkuProcess(String id, String userId, String sourceId) {
-        FindProcessDTO findProcess = new FindProcessDTO();
-        String businessType = WorkflowBusinessEnum.SKU_CHANGE.getBusinessType();
-        String platform = WorkflowBusinessEnum.SKU_CHANGE.getPlatform();
-        findProcess.setBusinessType(businessType);
-        findProcess.setPlatform(platform);
-        //获取到业务的信息
-        BusinessInfoDTO business = workflowFeign.getBusiness(findProcess);
-        if (business != null) {
-            StartProcessDTO startProcess = new StartProcessDTO();
-            startProcess.setUserId(userId);
-            startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
-            startProcess.setBusinessKey(business.getBusinessKey());
-            Map<String, Object> parameterMap = new HashMap<>();
-
-            List<String> skuIdList = Arrays.asList(sourceId);
-            //产品经理
-            List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-            if (CollectionUtils.isEmpty(productManagerList)) {
-                throw new ServiceException(ApiError.ERROR_9030);
-            }
-            //产品经理
-            parameterMap.put("productManagerList", productManagerList);
-
-            //获取产品经理上一级
-            List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
-            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
-                throw new ServiceException(ApiError.ERROR_9031);
-            }
-            //产品经理上级
-            parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
-
-
-            //品质部人员审核
-            List<String> qualityPeople = productDetailService.getApproveLead(SkuApproveConfigureEnum.THIRD_APPROVE.getDesc());
-            if (CollectionUtils.isEmpty(qualityPeople)) {
-                throw new ServiceException(ApiError.ERROR_9034);
-            }
-            parameterMap.put("qualityPeopleList", qualityPeople);
-
-            //财务人员
-            if (StringUtils.isBlank(financial)) {
-                throw new ServiceException(ApiError.ERROR_9035);
-            }
-            parameterMap.put("financial", financial);
-
-
-            List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FOURTH_APPROVE.getDesc());
-            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
-                throw new ServiceException(ApiError.ERROR_9033);
-            }
-            //产品中心部门负责人，供应链中心部门负责人
-            parameterMap.put("departmentHeadList", departmentHeadList);
-            startProcess.setParameterMap(parameterMap);
-            //启动流程
-            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
-            //流程id
-            String processId = processResult.getProcessId();
-            if (StringUtils.isNotBlank(processId)) {
-                WorkflowBusinessProcessDTO businessProcess = new WorkflowBusinessProcessDTO();
-                businessProcess.setBusinessId(business.getId());
-                businessProcess.setCreateTime(LocalDateTime.now());
-                businessProcess.setBusinessTableId(id);
-                businessProcess.setCreateUserId(userId);
-                businessProcess.setProcessId(processId);
-                //保存业务与流程的信息
-                workflowFeign.saveBusinessProcess(businessProcess);
-            }
-
-        }
-    }
-
-
-    /**
-     * 启动  bom变更流程
-     *
-     * @param id
-     * @param userId
-     * @return void
-     * @author yl
-     * @date 2023-02-01 16:49
-     */
-    private void startChangeBomProcess(String id, String userId, String sourceId) {
-        FindProcessDTO findProcess = new FindProcessDTO();
-        String businessType = WorkflowBusinessEnum.BOM_CHANGE.getBusinessType();
-        String platform = WorkflowBusinessEnum.BOM_CHANGE.getPlatform();
-        findProcess.setBusinessType(businessType);
-        findProcess.setPlatform(platform);
-        //获取到业务的信息
-        BusinessInfoDTO business = workflowFeign.getBusiness(findProcess);
-        if (business != null) {
-            StartProcessDTO startProcess = new StartProcessDTO();
-            startProcess.setUserId(userId);
-            startProcess.setProcessDefinitionKey(business.getProcessDefinitionKey());
-            startProcess.setBusinessKey(business.getBusinessKey());
-            Map<String, Object> parameterMap = new HashMap<>();
-
-            List<BomSkuDTO> skuList = bomSkuService.getByBomId(sourceId);
-            List<String> skuIdList = bomInfoService.getSkuIdList(skuList);
-
-            //产品经理
-            List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-            if (CollectionUtils.isEmpty(productManagerList)) {
-                throw new ServiceException(ApiError.ERROR_9030);
-            }
-            //产品经理
-            parameterMap.put("productManagerList", productManagerList);
-            //获取产品经理上一级
-            List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
-            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
-                throw new ServiceException(ApiError.ERROR_9031);
-            }
-
-            //产品经理上级
-            parameterMap.put("productManagerSupervisorList", productManagerSupervisorList);
-
-            List<String> departmentHeadList = productDetailService.getApproveLead(SkuApproveConfigureEnum.FIVE_APPROVE.getDesc());
-            if (CollectionUtils.isEmpty(departmentHeadList)) {
-                throw new ServiceException(ApiError.ERROR_9032);
-            }
-            //产品部负责人
-            parameterMap.put("departmentHead", departmentHeadList.get(0));
-            startProcess.setParameterMap(parameterMap);
-            //启动流程
-            ProcessNodeDTO processResult = workflowFeign.startProcess(startProcess);
-            //流程id
-            String processId = processResult.getProcessId();
-            if (com.baomidou.mybatisplus.core.toolkit.StringUtils.isNotBlank(processId)) {
-                WorkflowBusinessProcessDTO businessProcess = new WorkflowBusinessProcessDTO();
-                businessProcess.setBusinessId(business.getId());
-                businessProcess.setCreateTime(LocalDateTime.now());
-                businessProcess.setBusinessTableId(id);
-                businessProcess.setCreateUserId(userId);
-                businessProcess.setProcessId(processId);
-                //保存业务与流程的信息
-                workflowFeign.saveBusinessProcess(businessProcess);
-            }
-
-        }
-    }
-
-    /**
-     * 获取产品经理上一级
-     *
-     * @param productManagerList
-     */
-    private List<String> getProductManagerSupervisorList(List<String> productManagerList) {
-        List<String> productManagerSupervisorList = new ArrayList<>(10);
-
-        //直接部门负责人
-        Integer directDepartmentCharge = ChargeSuperiorEnum.DIRECT_DEPARTMENT_CHARGE.getCode();
-        //二级部门负责人
-        Integer secondDepartmentCharge = ChargeSuperiorEnum.SECOND_DEPARTMENT_CHARGE.getCode();
-        //产品经理所有上级
-        List<UserSuperiorDTO> userSuperiorList = sysUserFeign.listSuperiorByUserIds(productManagerList);
-        for (String item : productManagerList) {
-            List<String> userSuperiorIdList = userSuperiorList.stream().filter(u -> u.getCurrentUserId().equals(item) &&
-                    directDepartmentCharge.equals(u.getLevel())).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(userSuperiorIdList)) {
-                productManagerSupervisorList.addAll(userSuperiorIdList);
-            } else {
-                List<String> secondSuperiorIdList = userSuperiorList.stream().filter(u -> u.getCurrentUserId().equals(item) &&
-                        secondDepartmentCharge.equals(u.getLevel())).map(UserSuperiorDTO::getUserId).collect(Collectors.toList());
-                if (CollectionUtils.isNotEmpty(secondSuperiorIdList)) {
-                    productManagerSupervisorList.addAll(secondSuperiorIdList);
-                }
-            }
-        }
-        productManagerSupervisorList = productManagerSupervisorList.stream().distinct().collect(Collectors.toList());
-        return productManagerSupervisorList;
-
-    }
 
 
     /**
@@ -758,8 +539,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_95105);
         }
         Integer state = entity.getState();
-        //待审核
-        Integer waitAudit = ProductChangeStateEnum.WAIT_AUDIT.getState();
+        //待提交
+        Integer waitAudit = ProductChangeStateEnum.WAIT_SUBMIT.getState();
         //审核不通过
         Integer auditNoPassState = ProductChangeStateEnum.AUDIT_NO_PASS.getState();
         //当不等于他们的时候
@@ -824,8 +605,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_95105);
         }
         Integer state = changeEntity.getState();
-        Integer waitAudit = ProductChangeStateEnum.WAIT_AUDIT.getState();
-        //只有待审核才能编辑
+        Integer waitAudit = ProductChangeStateEnum.WAIT_SUBMIT.getState();
+        //只有待提交才能编辑
         if (!waitAudit.equals(state)) {
             throw new ServiceException(ApiError.ERROR_95109);
         }
@@ -843,48 +624,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
              */
             changeDetailsService.saveChangeDetails(id, dto.getDetailsJson());
 
-        }
-        return result;
-    }
-
-    /**
-     * 重启流程
-     *
-     * @param id
-     * @return java.lang.Boolean
-     * @author yl
-     * @date 2023-02-01 17:03
-     */
-    @Override
-    public Boolean restartAudit(String id) {
-        //获取到变更信息
-        ProductChangeEntity change = this.getById(id);
-        if (Objects.isNull(change)) {
-            throw new ServiceException(ApiError.ERROR_95105);
-        }
-
-        String type = change.getType();
-        String changeBom = BomConstant.CHANGE_BOM;
-        Boolean isBom = changeBom.equals(type);
-        //如果是bom 检查审核人为空不
-        if (isBom) {
-            checkBomChangeAuditor(change.getSourceId());
-        } else {
-            List<String> skuIdList = new ArrayList<>(1);
-            skuIdList.add(change.getSourceId());
-            //产品经理
-            List<String> productManagerList = productDetailService.getManagerBySkuIds(skuIdList);
-            checkSkuChangeAuditor(productManagerList);
-        }
-        Integer state = change.getState();
-        if (!ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(state)) {
-            throw new ServiceException(ApiError.ERROR_95099);
-        }
-        change.setState(ProductChangeStateEnum.WAIT_AUDIT.getState());
-        Boolean result = this.updateById(change);
-        if (result) {
-            //启动流程
-            startChangeProcess(change);
         }
         return result;
     }
@@ -956,7 +695,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (CollectionUtils.isNotEmpty(sourceIds)) {
             List<Integer> stateList = new ArrayList<>(2);
             stateList.add(ProductChangeStateEnum.AUDIT_ING.getState());
-            stateList.add(ProductChangeStateEnum.WAIT_AUDIT.getState());
+            stateList.add(ProductChangeStateEnum.WAIT_SUBMIT.getState());
             LambdaQueryWrapper<ProductChangeEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.select(ProductChangeEntity::getSourceId);
             queryWrapper.in(ProductChangeEntity::getSourceId, sourceIds);

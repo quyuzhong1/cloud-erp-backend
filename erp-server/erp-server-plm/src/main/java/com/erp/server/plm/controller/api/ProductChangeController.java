@@ -14,7 +14,6 @@ import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProductChangeEntity;
 import com.erp.model.plm.vo.ProductChangePagingVO;
-import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.query.ProductChangeHandler;
@@ -171,6 +170,36 @@ public class ProductChangeController extends BaseController {
     }
 
     /**
+     * 提交审核
+     * @author will
+     * @date:  2024-01-08
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/submit")
+    @LogAction(value = LogActionEnum.SUBMIT, desc = "产品变更单提交审核")
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = productChangeService.submit(id,Boolean.TRUE);
+            }catch (Exception e){
+                log.error("产品变更单 提交审核失败",e);
+                ProductChangeEntity entity = productChangeService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "产品变更单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
      * 审核
      * @author will
      * @date 2025/5/16 15:00
@@ -202,16 +231,33 @@ public class ProductChangeController extends BaseController {
     }
 
     /**
-     * 重启流程
-     *
+     * 撤销流程
+     * @author will
+     * @date:  2025-05-16
      * @param dto
-     * @return
+     * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "变更反审核")
-    @PostMapping("/restartAudit")
-    public ApiResult<Object> restartAudit(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = productChangeService.restartAudit(dto.getId());
-        return result == true ? success() : failure();
+    @PostMapping("/cancelProcess")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "变更撤销")
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = productChangeService.cancelProcess(id);
+            }catch (Exception e){
+                log.error("变更信息流程失败",e);
+                ProductChangeEntity entity = productChangeService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "变更信息不存在, 撤回流程失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), e.getMessage());
+            }
+            resultDTOS.add(cancelResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
