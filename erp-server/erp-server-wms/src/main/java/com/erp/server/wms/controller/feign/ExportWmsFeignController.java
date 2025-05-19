@@ -738,6 +738,7 @@ public class ExportWmsFeignController {
     @PostMapping("/transferOut")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "tfo.out_warehouse_id",
             menuCode = "wms:transfer:out:export",
             tableAlias = "tfo"
     )
