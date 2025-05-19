@@ -1,5 +1,6 @@
 package com.sdk.wms.jifeng.service;
 
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.parser.Feature;
@@ -27,12 +28,12 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","23d555750eac4d39a80ec03ea26bfa2a");
+        authMap.put("accessToken","8a96fa62d4df4afeb8c88d73f0912b7c");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
 
-        jiFengService.getProductList(authMap);
+        jiFengService.getInventoryList(authMap,"BR01");
         System.out.println(123);
     }
 //    public static void main(String[] args) {
@@ -222,6 +223,58 @@ public class JiFengService {
         }
 
         JiFengBaseResp<List<JiFengProductResp.RowsDTO>> result = new JiFengBaseResp<>();
+        result.setCode(0);
+        result.setMessage("success");
+        result.setData(allData);
+        return result;
+    }
+
+    /**
+     * 查询库存
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<List<JiFengInventoryResp.RowsDTO>> getInventoryList(Map<String,Object> authMap,String warehouseCode){
+        String path = "/api/inventory/queryInventory";
+        String url = getUrl(authMap.get("domain").toString());
+        List<JiFengInventoryResp.RowsDTO> allData = new ArrayList<>();
+        int pageNo = 1;
+        boolean hasMore = true;
+
+        while (hasMore) {
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("warehouse",warehouseCode);
+            bodyMap.put("pageNo", pageNo);
+            bodyMap.put("pageSize", 50); // 每页大小，可根据实际情况调整
+            Map<String, String> headerMap = buildHearderMap(authMap, path);
+            String bodyStr = OkHttpUtils.doPostJson(url+path, bodyMap, headerMap);
+            JiFengBaseResp<JiFengInventoryResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengInventoryResp.class);
+
+            if (response.getCode() == 0) {
+                JiFengInventoryResp.PageDTO pageData = response.getData().getPage();
+                if (pageData != null && pageData.getPageNo() != null) {
+                    allData.addAll(pageData.getRows());
+
+                    // 判断是否还有下一页
+                    if (pageData.getRows().isEmpty() || pageData.getTotalPage() <= pageNo) {
+                        hasMore = false;
+                    } else {
+                        pageNo++;
+                    }
+                } else {
+                    hasMore = false;
+                }
+            } else {
+                // 如果请求失败，直接返回错误信息
+                JiFengBaseResp<List<JiFengInventoryResp.RowsDTO>> errorResp = new JiFengBaseResp<>();
+                errorResp.setCode(response.getCode());
+                errorResp.setMessage(response.getMessage());
+                errorResp.setRequestId(response.getRequestId());
+                return errorResp;
+            }
+        }
+
+        JiFengBaseResp<List<JiFengInventoryResp.RowsDTO>> result = new JiFengBaseResp<>();
         result.setCode(0);
         result.setMessage("success");
         result.setData(allData);

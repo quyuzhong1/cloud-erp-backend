@@ -40,7 +40,7 @@ public class JiFengProductResp {
         @JSONField(name = "skuCode")
         private String skuCode;
         @JSONField(name = "skuCodeList")
-        private List<?> skuCodeList;
+        private List<String> skuCodeList;
         @JSONField(name = "name")
         private String name;
         @JSONField(name = "imgUrl")

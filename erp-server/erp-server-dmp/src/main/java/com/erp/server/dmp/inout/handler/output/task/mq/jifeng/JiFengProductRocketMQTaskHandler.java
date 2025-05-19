@@ -1,4 +1,4 @@
-package com.erp.server.dmp.inout.handler.output.task.mq.eccang;
+package com.erp.server.dmp.inout.handler.output.task.mq.jifeng;
 
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
