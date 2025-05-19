@@ -245,4 +245,40 @@ public class CfgProcessDTO implements Serializable {
          */
         private Integer count;
     }
+
+    /**
+     * 创建审批
+     */
+    @Data
+    @NoArgsConstructor
+    public static class StartDTO {
+
+        /**
+         * 业务类型
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
+
+        /**
+         * 业务发起人
+         */
+        @NotBlank(message = "发起人不能为空")
+        private String userId;
+
+        /**
+         * 业务表id
+         */
+        @NotBlank(message = "业务表id不能为空")
+        private String businessId;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
+
+        /**
+         * 业务名称 用于流程图显示   任务审核: 产品名称+任务名称  其他申请单: 单据编号
+         */
+        @NotBlank(message = "业务名称不能为空")
+        private String businessName;
+    }
 }

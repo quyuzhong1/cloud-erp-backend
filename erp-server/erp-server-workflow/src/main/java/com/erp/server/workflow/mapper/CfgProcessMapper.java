@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import javax.validation.constraints.NotBlank;
 import java.util.List;
 
 
@@ -39,4 +40,6 @@ public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
     CfgProcessDTO.ViewDTO getViewDTOById(String id);
 
     List<CfgProcessDTO.TabListDTO> tabList(@Param("params") CfgProcessDTO.SearchParamDTO params);
+
+    String getApprovalCode(@NotBlank(message = "业务类型不能为空") String businessKey);
 }
