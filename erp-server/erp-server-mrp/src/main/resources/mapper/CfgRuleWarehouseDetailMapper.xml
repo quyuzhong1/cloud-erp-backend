@@ -32,7 +32,7 @@
         update_time,
         version,
         is_deleted,
-        warehouse_id, virtual_warehouse_id, warehouse_type, channel_type, channel_id_json, inventory_allocate_type, main_id
+        warehouse_id, virtual_warehouse_id, warehouse_type, channel_type, channel_id_json, main_id,dict_platform,partition_id_json
     </sql>
     <select id="listByParams" resultType="com.erp.model.mrp.entity.CfgRuleWarehouseDetailEntity">
         select

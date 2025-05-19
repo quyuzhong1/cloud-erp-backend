@@ -326,10 +326,6 @@
             and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
             and user_id = #{uid})
         </if>
-        <!--权限-->
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
