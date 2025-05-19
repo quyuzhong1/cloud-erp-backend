@@ -393,6 +393,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
             }
         }else {
+            //根据客户查询组装、部门、销售员
+            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, dto.getCustomerId());
+            if (ObjectUtil.isNotEmpty(customerInfo)) {
+                Optional.of(customerInfo).ifPresent(customerInfoEntity -> {
+                    dto.setSalesDeptId(customerInfoEntity.getSalesDeptId());
+                    dto.setSellerId(customerInfoEntity.getSellerId());
+                    dto.setSalesOrgId(customerInfoEntity.getUseOrgId());
+                });
+            }
             if (CharSequenceUtil.isNotBlank(dto.getSourceId())) {
                 SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
                 if(null != soReturnReceiveEntity){
@@ -568,7 +577,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
         viewDTO.setTypeName(BillTypeEnum.getName(viewDTO.getType()));
-        viewDTO.setType(BillTypeEnum.getName(viewDTO.getType()));
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
