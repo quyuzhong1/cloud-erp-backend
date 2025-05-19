@@ -56,10 +56,6 @@
         inner join virtual_trans_flow vtf on vtfd.virtual_trans_flow_id = vtf.id and vtf.is_deleted = false
         inner join virtual_inventory_detail vid on vtfd.virtual_inventory_detail_id = vid.id  and vid.is_deleted = false
         where vtfd.is_deleted = false
-        <!--权限-->
-        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
-            ${params.permissionSql}
-        </if>
         union all
         select
         vid.sku_id as skuId,

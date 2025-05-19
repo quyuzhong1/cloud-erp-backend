@@ -45,7 +45,7 @@ public class VirtualTransFlowDetailController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "vid.warehouse_id",
+            warehouseTableField = "vm.warehouseId",
             menuCode = "wms:virtualTransFlowDetail:paging"
     )
     @WebAdvanceQuery

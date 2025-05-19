@@ -948,7 +948,7 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/virtualTransFlowDetailPaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "vid.warehouse_id",
+            warehouseTableField = "vm.warehouseId",
             menuCode = "wms:virtualTransFlowDetail:paging"
     )
     @WebAdvanceQuery
