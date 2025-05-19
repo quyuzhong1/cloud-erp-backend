@@ -227,6 +227,30 @@
         and fmca.business_code = #{businessCode}
         and rpm.month = #{reportMonth}
     </select>
+    <select id="getRecordBySkuIdAndCode"
+            resultType="com.erp.model.tms.dto.FirstMileCostAllocationDTO$DetailDTO">
+        select
+            fmca.id,fmca.source_id,fmca.business_code,rpm.month
+        from first_mile_cost_allocation fmca
+        left join first_mile_sku_cost_allocation fmsca on fmca.id = fmsca.main_id and fmsca.is_deleted = false
+        left join report_period_month rpm on fmca.report_period_id = rpm.id and rpm.is_deleted = false
+        where fmca.is_deleted = false
+          and fmsca.sku_id = #{skuId}
+          and fmca.business_code = #{businessCode}
+          and rpm.month = #{reportMonth}
+    </select>
+    <select id="listByReportPeriodMonth" resultType="com.erp.model.tms.entity.FirstMileCostAllocationEntity">
+        select
+            a.*,
+            rpm.month as reportPeriodMonth
+        from first_mile_cost_allocation a
+        left join report_period_month rpm on a.report_period_id = rpm.id and rpm.is_deleted = false
+        where a.is_deleted = false
+        and rpm.month = #{reportPeriodMonth}
+        <if test="reportStatus != null and reportStatus!=''">
+            and a.status = #{reportStatus}
+        </if>
+    </select>
 
 
 </mapper>

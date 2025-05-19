@@ -51,4 +51,6 @@ public interface TransferDeclareCostAllocationService extends SuperService<Trans
     BatchResultDTO pushBigTable(String id);
     
     Boolean exportExcel(TransferDeclareCostAllocationDTO.PagingParamDTO dto);
+
+    List<TransferDeclareCostAllocationEntity> listByReportPeriodStr(String reportPeriodStr, String reportStatus);
 }

@@ -7,6 +7,12 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.enums.ConfirmStatusEnum;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -142,9 +148,16 @@ public class SmallBagCostAllocationController extends BaseController {
             tableAlias = "t",
             keyIdName = "id")
     public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated SmallBagCostAllocationDTO.UpdateStatusDTO dto) {
-        List<String> ids = dto.getIds();
-        List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+        List<SmallBagCostAllocationEntity> entityList = null;
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = smallBagCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), null);
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            entityList = smallBagCostAllocationService.listByIds(dto.getIds());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            return failure("批量更新小包分摊状态失败，未查询到小包分摊记录");
+        }
+        List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         for (String id : ids) {
             BatchResultDTO submit;
@@ -180,11 +193,18 @@ public class SmallBagCostAllocationController extends BaseController {
     serviceClass = SmallBagCostAllocationService.class,
     		tableAlias = "t",
     keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-    	List<String> ids = dto.getIds();
-    	List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+        List<SmallBagCostAllocationEntity> entityList = null;
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = smallBagCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), ConfirmStatusEnum.WAIT_CONFIRM.getCode());
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            entityList = smallBagCostAllocationService.listByIds(dto.getIds());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            return failure("批量重算小包分摊失败，未查询到小包分摊记录");
+        }
+    	List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
     	for (String id : ids) {
     		BatchResultDTO submit;
     		try {
@@ -219,10 +239,17 @@ public class SmallBagCostAllocationController extends BaseController {
     serviceClass = SmallBagCostAllocationService.class,
     		tableAlias = "t",
     keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-    	List<String> ids = dto.getIds();
-    	List<SmallBagCostAllocationEntity> listByIds = smallBagCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+        List<SmallBagCostAllocationEntity> entityList = null;
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = smallBagCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), ConfirmStatusEnum.WAIT_CONFIRM.getCode());
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            entityList = smallBagCostAllocationService.listByIds(dto.getIds());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            return failure("批量删除失败，未查询到小包分摊记录");
+        }
+    	List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
     	for (String id : ids) {
     		BatchResultDTO submit;

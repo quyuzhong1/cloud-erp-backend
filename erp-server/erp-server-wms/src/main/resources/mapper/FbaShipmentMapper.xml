@@ -33,7 +33,7 @@
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE
         fs.is_deleted = FALSE
-        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
             AND ${params.sqlMap.default}
         </if>
         <!--数据权限-->

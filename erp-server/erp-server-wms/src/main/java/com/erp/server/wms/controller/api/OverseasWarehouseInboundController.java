@@ -128,6 +128,23 @@ public class OverseasWarehouseInboundController extends BaseController {
     }
 
     /**
+     * 调整详情列表
+     *
+     * @return ApiResult<List < OverseasWarehouseInboundDTO.ViewDTO>>
+     * @author Jim
+     * @date: 2023/11/27
+     */
+    @PostMapping("/viewChangeList")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "wms:overseasWarehouseInbound:view",
+            serviceClass = OverseasTransferWarehouseService.class,
+            keyIdName = "id")
+    public ApiResult<List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO>> viewChangeList(@RequestBody @Validated OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
+        List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> resultList = overseasWarehouseInboundService.viewChangeList(dto);
+        return success(resultList);
+    }
+    /**
      * 列表状态数量统计
      *
      * @param dto dto

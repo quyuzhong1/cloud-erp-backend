@@ -768,12 +768,12 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/warehouseLocationMoveInfo")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "wlmi.warehouse_id",
-            menuCode = "wms:pdaWarehouseLocationMoveInfo:export",
-            serviceClass = WarehouseLocationMoveService.class,
-            keyIdName = "id")
+            warehouseTableField = "wlmd.warehouse_id",
+            menuCode = "wms:pdaWarehouseLocationMoveInfo:pc:paging",
+            tableAlias = "wlmi"
+    )
     @WebAdvanceQuery(handler = MarehouseMoveInfoQueryHandler.class)
     public PagingVO<WarehouseLocationMoveDTO.PdaPcListDTO> exportWarehouseLocationMoveInfo(@RequestBody PagingDTO<WarehouseLocationMoveDTO.ExportDTO> dto) {
         return warehouseLocationMoveService.exportWarehouseLocationMoveInfo(dto);
@@ -948,7 +948,7 @@ public class ExportWmsFeignController {
      */
     @PostMapping("/virtualTransFlowDetailPaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            warehouseTableField = "vtf.warehouse_id",
+            warehouseTableField = "vid.warehouse_id",
             menuCode = "wms:virtualTransFlowDetail:paging"
     )
     @WebAdvanceQuery

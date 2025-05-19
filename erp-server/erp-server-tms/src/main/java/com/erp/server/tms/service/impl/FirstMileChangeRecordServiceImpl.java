@@ -145,7 +145,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         && item.getBoxId().equals(e.getBoxId())
                         && item.getBusinessCode().equals(e.getBusinessCode())
                         && item.getPlatformSkuNo().equals(e.getPlatformSkuNo())
-                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), "当前值存在相同的SKU", false)));
+                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             } else if (FirstMileChangeRecordChangeRangeEnum.BOX.getCode().equals(e.getChangeRange())) {
                 //判断是否同箱同SKU
                 dtoValidList.stream().filter(item -> !Objects.equals(item.getId(), e.getId())
@@ -153,14 +153,14 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         && item.getSourceCode().equals(e.getSourceCode())
                         && item.getBoxId().equals(e.getBoxId())
                         && item.getBusinessCode().equals(e.getBusinessCode())
-                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), "同箱同SKU存在其他相同配置", false)));
+                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             } else if (FirstMileChangeRecordChangeRangeEnum.ORDER.getCode().equals(e.getChangeRange())) {
                 //判断是否同单同SKU
                 dtoValidList.stream().filter(item -> !Objects.equals(item.getId(), e.getId())
                         && item.getSkuId().equals(e.getSkuId())
                         && item.getSourceCode().equals(e.getSourceCode())
                         && item.getBusinessCode().equals(e.getBusinessCode())
-                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), "同单同SKU存在其他相同配置", false)));
+                ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             }
         }
         return resultDTOS;
@@ -211,6 +211,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getSourceId, sourceId)
                 .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode())
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
                 .last(" limit 1 ").one();
         if (Objects.nonNull(entity)){
             return entity;
@@ -226,6 +227,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.BOX.getCode())
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
                 .last(" limit 1 ").one();
         if (Objects.nonNull(entity)){
             return entity;
@@ -240,6 +242,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.ORDER.getCode())
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
                 .last(" limit 1 ").one();
     }
 
@@ -306,6 +309,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getBoxId, boxId)
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
                 .last(" limit 1 ").one();
     }
 
@@ -405,6 +409,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getCategory, category)
                 .eq(FirstMileChangeRecordEntity::getReportPeriodId, reportPeriodId)
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
                 .last(" limit 1 ").one();
     }
 
@@ -414,7 +419,13 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         }
         //添加类型名称
         list.forEach(e -> {
-            e.setCategoryName(FirstMileChangeRecordCategoryEnum.getName(e.getCategory()));
+            if (FirstMileChangeRecordCategoryEnum.BOXNO.getCode().equals(e.getCategory()) && CharSequenceUtil.isNotBlank(e.getChangeRange())){
+                e.setCategoryName(FirstMileChangeRecordCategoryEnum.getName(e.getCategory()) + "-" +  e.getBoxNo() + "-" + FirstMileChangeRecordChangeRangeEnum.getName(e.getChangeRange()));
+            }else if (FirstMileChangeRecordCategoryEnum.BOXNO.getCode().equals(e.getCategory())){
+                e.setCategoryName(FirstMileChangeRecordCategoryEnum.getName(e.getCategory()) + "-" +  e.getBoxNo());
+            }else {
+                e.setCategoryName(FirstMileChangeRecordCategoryEnum.getName(e.getCategory()));
+            }
             e.setCategoryFieldName(FirstMileChangeRecordCategoryFieldEnum.getName(e.getCategoryField()));
             e.setChangeRangeName(FirstMileChangeRecordChangeRangeEnum.getName(e.getChangeRange()));
             e.setSourceTypeName(FirstMileChangeRecordSourceTypeEnum.getName(e.getSourceType()));

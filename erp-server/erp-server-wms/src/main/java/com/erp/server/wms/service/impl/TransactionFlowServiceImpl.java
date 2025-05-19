@@ -265,7 +265,7 @@ public class TransactionFlowServiceImpl extends SuperServiceImpl<TransactionFlow
         PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO> pagingParamDTO = new PagingDTO<InventoryDTO.InOutStockSummarySearchParamDTO>();
         pagingParamDTO.setParams(BeanUtil.copyProperties(param, InventoryDTO.InOutStockSummarySearchParamDTO.class));
         pagingParamDTO.setPageSize(-1);
-
+        pagingParamDTO.setPermissionSql(param.getPermissionSql());
         // 导出
         PagingVO<InOutStockSummaryPagingViewDTO> pagingSummary = this.pagingSummary(pagingParamDTO);
         List<InOutStockSummaryPagingViewDTO> dataList = (List<InOutStockSummaryPagingViewDTO>)pagingSummary.getList();

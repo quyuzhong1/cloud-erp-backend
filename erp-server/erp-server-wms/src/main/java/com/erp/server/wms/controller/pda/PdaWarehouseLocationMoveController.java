@@ -155,7 +155,7 @@ public class PdaWarehouseLocationMoveController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "wlmi.warehouse_id",
+            warehouseTableField = "wlmd.warehouse_id",
             menuCode = "wms:pdaWarehouseLocationMoveInfo:paging",
             tableAlias = "wlmi"
     )
@@ -170,7 +170,7 @@ public class PdaWarehouseLocationMoveController extends BaseController {
     @PostMapping("/pc/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "wlmi.warehouse_id",
+            warehouseTableField = "wlmd.warehouse_id",
             menuCode = "wms:pdaWarehouseLocationMoveInfo:paging",
             tableAlias = "wlmi"
     )
@@ -188,7 +188,7 @@ public class PdaWarehouseLocationMoveController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "wlmi.warehouse_id",
+            warehouseTableField = "wlmd.warehouse_id",
             menuCode = "wms:pdaWarehouseLocationMoveInfo:paging",
             tableAlias = "wlmi"
     )
@@ -205,7 +205,7 @@ public class PdaWarehouseLocationMoveController extends BaseController {
     @PostMapping("/pc/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "wlmi.warehouse_id",
+            warehouseTableField = "wlmd.warehouse_id",
             menuCode = "wms:pdaWarehouseLocationMoveInfo:pc:paging",
             tableAlias = "wlmi"
     )

@@ -371,6 +371,7 @@ public class DeliverySuggestServiceImpl extends SuperServiceImpl<DeliverySuggest
 
     @Override
     public PagingVO<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> listDeliverySuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
+        params.getParams().setPermissionSql(params.getPermissionSql());
         Page<ReplenishmentSuggestionDTO.DeliverySuggestionDTO> pagingVO = baseMapper.pagingExportDeliverySuggestion(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         if (CollectionUtils.isEmpty(pagingVO.getRecords())) {
             throw new ServiceException("未找到发货计划数据");

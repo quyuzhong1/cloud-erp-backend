@@ -408,7 +408,7 @@ public class WmsCartonDTO {
         /**
          * 箱号
          */
-        private String boxNo;
+        private Integer boxNo;
         /**
          * skuId
          */

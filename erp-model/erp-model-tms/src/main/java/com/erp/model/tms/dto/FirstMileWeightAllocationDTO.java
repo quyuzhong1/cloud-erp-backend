@@ -14,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.Digits;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -118,7 +119,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱号【可排序】
         */
-        private String boxNo;
+        private Integer boxNo;
 
         /**
         * 发货量【可排序】
@@ -401,7 +402,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 箱编号
          */
-        private String boxNo;
+        private Integer boxNo;
         /**
          * 箱子重量(出库重量)
          */
@@ -458,7 +459,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 箱号
          */
-        private String boxNo;
+        private Integer boxNo;
 
         private String skuId;
 
@@ -569,7 +570,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
         * 箱号
         */
-        private String boxNo;
+        private Integer boxNo;
 
         /**
         * 发货量
@@ -927,8 +928,8 @@ public class FirstMileWeightAllocationDTO implements Serializable {
         /**
          * 箱号
          */
-        @NotBlank(message = "来源单号不能为空")
-        private String boxNo;
+        @NotNull(message = "来源单号不能为空")
+        private Integer boxNo;
 
         /**
          * 发货量
@@ -993,6 +994,7 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 新的单产品重量
          */
         @NotNull(message = "新的单产品重量不能为空")
+        @Digits(integer = 12, fraction = 4, message = "单产品重量整数位不能超过12位，小数位不能超过4位")
         private BigDecimal newProductWeight;
         /**
          * 修改范围:current=仅修改当前值,box=修改同箱同SKU,order=修改同单同SKU  枚举：FirstMileChangeRecordChangeRangeEnum
@@ -1014,24 +1016,28 @@ public class FirstMileWeightAllocationDTO implements Serializable {
          * 箱长
          */
         @NotNull(message = "新的箱长不能为空")
+        @Digits(integer = 12, fraction = 4, message = "箱长整数位不能超过12位，小数位不能超过4位")
         private BigDecimal newBoxLength;
 
         /**
          * 箱宽
          */
         @NotNull(message = "新的箱宽不能为空")
+        @Digits(integer = 12, fraction = 4, message = "箱宽整数位不能超过12位，小数位不能超过4位")
         private BigDecimal newBoxWidth;
 
         /**
          * 箱高
          */
         @NotNull(message = "新的箱高不能为空")
+        @Digits(integer = 12, fraction = 4, message = "箱高整数位不能超过12位，小数位不能超过4位")
         private BigDecimal newBoxHeight;
 
         /**
          * 出库重量
          */
         @NotNull(message = "新的出库重量不能为空")
+        @Digits(integer = 12, fraction = 4, message = "出库重量整数位不能超过12位，小数位不能超过4位")
         private BigDecimal newOutStockWeight;
     }
 }
