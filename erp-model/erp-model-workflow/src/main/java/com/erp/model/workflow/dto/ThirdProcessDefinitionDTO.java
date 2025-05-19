@@ -44,7 +44,7 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         /**
         * 状态
         */
-        private Boolean status;
+        private String status;
 
         /**
         * 单据名称
@@ -114,7 +114,7 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         * 状态
         */
         @NotBlank(message = "状态不能为空")
-        private Boolean status;
+        private String status;
 
         /**
         * 单据名称

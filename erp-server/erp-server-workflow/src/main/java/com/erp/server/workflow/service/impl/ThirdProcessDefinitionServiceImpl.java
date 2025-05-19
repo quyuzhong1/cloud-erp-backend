@@ -5,13 +5,13 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.workflow.service.OperateLogService;
-import com.erp.server.workflow.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,7 +94,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     public List<ThirdProcessDefinitionDTO.DropDownDTO> dropDown() {
         //1、定时拉取获取定义状态
         //2、保存启动条件时验证定义状态
-        List<ThirdProcessDefinitionEntity> thirdProcessDefinitionEntities = this.list(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, true)
+        List<ThirdProcessDefinitionEntity> thirdProcessDefinitionEntities = this.list(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode())
                 .eq(ThirdProcessDefinitionEntity::getType, ThirdProcessDefinitionTypeEnum.PUSH.getCode()).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         //stream遍历thirdProcessDefinitionEntities 处理entity
         List<ThirdProcessDefinitionDTO.DropDownDTO> dropDownDTOS = thirdProcessDefinitionEntities.stream().map(thirdProcessDefinitionEntity -> {
