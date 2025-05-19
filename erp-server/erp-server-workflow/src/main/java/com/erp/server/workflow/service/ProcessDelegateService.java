@@ -75,4 +75,12 @@ public interface ProcessDelegateService extends SuperService<ProcessDelegateEnti
      * @return void
      */
     void exportList(ProcessDelegateDTO.PagingParamDTO dto);
+    /**
+     * 根据流程定义id查询委托审批信息
+     * @author will
+     * @date 2025/5/19 17:47
+     * @param processDefinitionId
+     * @return ProcessDelegateEntity
+     */
+    ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId);
 }

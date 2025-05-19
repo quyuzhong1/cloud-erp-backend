@@ -25,12 +25,8 @@ import java.util.Map;
  */
 public interface ProcessManagementService extends SuperService<ProcessManagementEntity> {
 
-    /**
-     * 启动流程
-     * @param dto
-     * @return
-     */
-    ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto);
+
+    ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto);
 
     /**
      * 流程审核

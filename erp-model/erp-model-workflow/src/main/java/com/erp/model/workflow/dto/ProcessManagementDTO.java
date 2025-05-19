@@ -90,6 +90,7 @@ public class ProcessManagementDTO {
         /**
          * 流程参数map
          */
+        @NotNull(message = "流程参数Map不能为空")
         private Map<String,Object> variablesMap;
     }
 

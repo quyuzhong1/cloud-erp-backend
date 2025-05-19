@@ -66,7 +66,7 @@ public class ProcessManagementController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启动流程,业务名称={businessName},业务表id={businessId}")
     @PostMapping("/start")
     public ApiResult<ProcessManagementDTO.StartResultDTO> startProcess(@RequestBody @Valid ProcessManagementDTO.StartDTO dto) {
-        ProcessManagementDTO.StartResultDTO result =  processManagementService.startProcess(dto);
+        ProcessManagementDTO.StartResultDTO result =  processManagementService.startProcessManagement(dto);
         return success(result);
     }
 

@@ -218,6 +218,14 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         return lambdaQuery().eq(CfgProcessRuleEntity::getProcessDefinitionId,id).last("limit 1").one();
     }
 
+    @Override
+    public List<CfgProcessRuleEntity> listByProcessId(String id,String type) {
+        return this.lambdaQuery().eq(CfgProcessRuleEntity::getCfgProcessId,id)
+                .eq(CfgProcessRuleEntity::getType,type)
+                .eq(CfgProcessRuleEntity::getDisabled, Boolean.FALSE)
+                .list();
+    }
+
     /**
      * 新增修改处理数据
      */

@@ -7,28 +7,24 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.vo.LoginUser;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.workflow.dto.CfgProcessDTO;
-import com.erp.model.workflow.entity.CfgProcessExpEntity;
-import com.erp.model.workflow.entity.CfgProcessRuleEntity;
-import com.erp.server.workflow.mapper.CfgProcessExpMapper;
-import com.erp.server.workflow.service.CfgProcessExpService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.workflow.service.OperateLogService;
-import com.common.core.exception.ServiceException;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
+import com.common.business.vo.LoginUser;
+import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessExpDTO;
+import com.erp.model.workflow.entity.CfgProcessExpEntity;
+import com.erp.server.workflow.mapper.CfgProcessExpMapper;
+import com.erp.server.workflow.service.CfgProcessExpService;
+import com.erp.server.workflow.service.OperateLogService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
 
 /**
  * <p>
@@ -156,6 +152,14 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
             BeanMapperUtils.copy(item, viewDTO);
             return viewDTO;
         }).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CfgProcessExpEntity> listByRuleIdList(List<String> ruleIdList) {
+        if (CollUtil.isEmpty(ruleIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(CfgProcessExpEntity::getRuleId,ruleIdList).list();
     }
 
 
