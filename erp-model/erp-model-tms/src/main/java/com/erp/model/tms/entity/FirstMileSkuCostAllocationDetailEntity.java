@@ -107,6 +107,11 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
      */
     @TableField(exist = false)
     private Integer deliveryQty;
+    /**
+     * 是否重算期末在途费用
+     */
+    @TableField(exist = false)
+    private Boolean isReCalculateEndPeriodTransitCost;
 
     public static final String MAIN_ID = "main_id";
 
