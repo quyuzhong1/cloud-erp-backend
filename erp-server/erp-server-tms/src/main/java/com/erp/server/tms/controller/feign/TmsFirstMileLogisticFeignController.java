@@ -58,7 +58,7 @@ public class TmsFirstMileLogisticFeignController {
      * @param detailDTO
      * @return
      */
-    @GetMapping("/getRecordBySkuIdAndCode")
+    @PostMapping("/getRecordBySkuIdAndCode")
     List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO){
         return firstMileCostAllocationService.getRecordBySkuIdAndCode(detailDTO.getSkuId(),detailDTO.getBusinessCode(),detailDTO.getReportMonth());
     }
