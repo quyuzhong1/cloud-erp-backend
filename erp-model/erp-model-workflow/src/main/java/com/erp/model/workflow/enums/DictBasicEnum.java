@@ -61,6 +61,7 @@ public enum DictBasicEnum {
     ESCALATE("escalate","assigneeEmpty","转上级","审批人为空时"),
     REJECT_APPLICANT("rejectApplicant","assigneeEmpty","驳回申请人","审批人为空时"),
     SOMEBODY("somebody","assigneeOption","指定人","审批人选项"),
+    SOMEBODY_EXP("somebody_exp","assigneeOption","指定人(表达式)","审批人选项"),
     ROLE("role","assigneeOption","角色","审批人选项"),
     SUPERIOR("superior","assigneeOption","上级","审批人选项"),
     INITIATOR("initiator","assigneeOption","发起人","审批人选项"),

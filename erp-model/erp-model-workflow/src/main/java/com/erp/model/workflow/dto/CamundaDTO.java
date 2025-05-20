@@ -3,6 +3,8 @@ package com.erp.model.workflow.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 /**
  * 流程管理参数类
  *
@@ -54,23 +56,35 @@ public class CamundaDTO {
          * 抄送人
          */
         private String copyUser;
+
+        /**
+         * 指定人表达式
+         */
+        private String somebody_exp;
     }
 
     @Data
     @NoArgsConstructor
     public static class StrategyParamDTO{
         /**
-         * 审批人选项值
-         */
-        private String assignee;
-        /**
          * 流程启动人
          */
         private String startUserId;
 
-        public StrategyParamDTO(String value, String startUserId) {
-            this.assignee = value;
+        /**
+         * 流程变量
+         */
+        private Map<String, Object> variablesMap;
+
+        /**
+         * 流程属性
+         */
+        private CamundaDTO.PropertiesDTO propertiesDTO;
+
+        public StrategyParamDTO(CamundaDTO.PropertiesDTO propertiesDTO, String startUserId, Map<String, Object> variablesMap) {
+            this.propertiesDTO = propertiesDTO;
             this.startUserId = startUserId;
+            this.variablesMap = variablesMap;
         }
 
         /**

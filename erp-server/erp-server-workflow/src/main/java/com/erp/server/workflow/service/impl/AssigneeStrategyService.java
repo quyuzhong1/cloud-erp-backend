@@ -5,6 +5,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import org.apache.commons.collections4.CollectionUtils;
+import org.camunda.bpm.engine.delegate.DelegateExecution;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -34,23 +35,25 @@ public class AssigneeStrategyService {
     @PostConstruct
     public void init() {
         // 添加审批选项
-        // role
+        // 角色
         assigneeStrategyMap.put("role", value -> assigneeStrategyTypeService.roleAssignee(value));
-        //superior
+        //上级
         assigneeStrategyMap.put("superior", value -> assigneeStrategyTypeService.superiorAssignee(value));
-        //initiator
+        //初始化默认值
         assigneeStrategyMap.put("initiator", value -> assigneeStrategyTypeService.initiatorAssignee(value));
-        //somebody
+        //指定人
         assigneeStrategyMap.put("somebody", value -> assigneeStrategyTypeService.somebodyAssignee(value));
+        //指定人-表达式
+        assigneeStrategyMap.put("somebody_exp", value -> assigneeStrategyTypeService.somebodyExpAssignee(value));
     }
-    public List<String> getResult(String resourceType, String value, String startUserId, String candidateUsers) {
-        //Controller根据 优惠券类型resourceType、编码resourceId 去查询 发放方式grantType
-        Function<CamundaDTO.StrategyParamDTO,List<String>> result = assigneeStrategyMap.get(resourceType);
+    public List<String> getResult(CamundaDTO.PropertiesDTO propertiesDTO, String startUserId, String candidateUsers, Map<String, Object> variables) {
+        //Controller根据 类型resourceType、编码resourceId 去查询 发放方式grantType
+        Function<CamundaDTO.StrategyParamDTO,List<String>> result = assigneeStrategyMap.get(propertiesDTO.getAssigneeOption());
         List<String> candidateUserList = CharSequenceUtil.isNotBlank(candidateUsers) ? Arrays.asList(candidateUsers.split(",")) : Collections.emptyList();
         if(null == result){
             return candidateUserList;
         }
-        List<String> assignees = result.apply(new CamundaDTO.StrategyParamDTO(value, startUserId));
+        List<String> assignees = result.apply(new CamundaDTO.StrategyParamDTO(propertiesDTO, startUserId, variables));
         if(CollectionUtils.isEmpty(assignees)){
             return candidateUserList;
         }
