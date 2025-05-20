@@ -1443,6 +1443,7 @@ public class InventoryDTO implements Serializable {
          * 是否零库存
          */
         private boolean zeroInventory;
+        private String permissionSql;
     }
 
     @Data

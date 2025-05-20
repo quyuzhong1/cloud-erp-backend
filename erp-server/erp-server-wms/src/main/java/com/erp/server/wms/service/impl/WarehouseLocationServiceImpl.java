@@ -342,10 +342,10 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public List<PdaWarehouseLocationDTO.WarehouseAreaDTO> listWarehouseArea() {
-        List<WarehouseEntity> list = warehouseService.list();
+        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(true);
         List<WarehouseLocationEntity> warehouseAreaList = lambdaQuery().eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.AREA.getCode()).list();
         List<PdaWarehouseLocationDTO.WarehouseAreaDTO> warehouseAreaDTOList = new ArrayList<>();
-        for (WarehouseEntity warehouseEntity : list) {
+        for (WarehouseDTO.ListDTO warehouseEntity : list) {
             PdaWarehouseLocationDTO.WarehouseAreaDTO warehouseAreaDTO = new PdaWarehouseLocationDTO.WarehouseAreaDTO();
             warehouseAreaDTO.setWarehouseId(warehouseEntity.getId());
             warehouseAreaDTO.setWarehouseName(warehouseEntity.getName());

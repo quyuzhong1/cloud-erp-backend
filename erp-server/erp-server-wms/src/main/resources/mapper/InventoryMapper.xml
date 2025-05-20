@@ -606,6 +606,9 @@
         <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
             and it.warehouse_location = #{params.warehouseLocation}
         </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         GROUP BY it.warehouse_id, it.sku_id
         ) t
         <if test="params.zeroInventory">

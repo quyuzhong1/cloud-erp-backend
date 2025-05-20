@@ -158,11 +158,12 @@
             sri.code,
             sri.source_type,
             sri.approve_status,
-            sri.warehouse_name,
+            srid.warehouse_name,
             sri.seller_name,
             sri.create_time
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND srid.is_deleted = FALSE
+        left join so_b2c sb on sb.id = sri.so_id and sb.is_deleted=FALSE
         WHERE sri.is_deleted = FALSE
         AND sri.invalid_status = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">

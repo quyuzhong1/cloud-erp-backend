@@ -1702,7 +1702,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     public PagingVO<TransferInfoDTO.PdaListDTO> pdaPaging(PagingDTO<TransferInfoDTO.PdaSearchParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         TransferInfoDTO.PdaSearchParamDTO params = pagingParamDTO.getParams();
         List<String> approveStatusList = params.getApproveStatusList();
@@ -1713,7 +1712,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             dateList.add(now);
             params.setBillDateList(dateList);
         }
-        IPage<TransferInfoDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        params.setPermissionSql(pagingParamDTO.getPermissionSql());
+        IPage<TransferInfoDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }
