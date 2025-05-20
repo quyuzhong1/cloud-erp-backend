@@ -6,7 +6,9 @@ import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -151,4 +153,8 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     List<FirstMileCostAllocationEntity> listByReportPeriodStr(String reportPeriodStr, String reportStatus);
+
+    void downloadTemplate(HttpServletResponse response);
+
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 }

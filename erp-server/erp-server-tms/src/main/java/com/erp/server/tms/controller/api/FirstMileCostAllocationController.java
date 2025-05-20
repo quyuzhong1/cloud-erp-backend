@@ -33,12 +33,11 @@ import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import com.erp.server.tms.service.ReportPeriodMonthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.util.CollectionUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -332,5 +331,25 @@ public class FirstMileCostAllocationController extends BaseController {
             batchResultDTOS.addAll(listApiResult.getData());
         }
         return batchResultDTOS.stream().allMatch(BatchResultDTO::getSuccess)? success(batchResultDTOS) : failure(batchResultDTOS);
+    }
+    /**
+     * 下载费用分摊调整导入模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载费用分摊调整导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        firstMileCostAllocationService.downloadTemplate(response);
+        return success();
+    }
+    /**
+     * 导入费用分摊调整
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入费用分摊调整")
+    @PostMapping("/importExcel")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = firstMileCostAllocationService.importExcel(excelFile, response);
+        return result?success():failure();
     }
 }

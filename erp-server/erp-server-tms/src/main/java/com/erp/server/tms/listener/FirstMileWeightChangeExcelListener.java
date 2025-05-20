@@ -111,7 +111,9 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
             if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {notEmptyCount++;}
             if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())) {notEmptyCount++;}
             //校验数据
-            List<FirstMileWeightAllocationEntity> entityList = weightAllocationEntityList.stream().filter(v -> {
+            List<FirstMileWeightAllocationEntity> entityList = weightAllocationEntityList.stream()
+                    .filter(e -> Objects.equals(e.getBoxNo(), excelDTO.getBoxNo()) && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()))
+                    .filter(v -> {
                 //同时不为空时，匹配来源单号和业务单号
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
                     if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
@@ -154,7 +156,9 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
                 continue;
             }
             //校验两个参数及以上都存在时。是否存在关联的多条重量分摊记录
-            List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream().filter(v -> {
+            List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream()
+                    .filter(e -> Objects.equals(e.getBoxNo(), excelDTO.getBoxNo()) && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()))
+                    .filter(v -> {
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
                     if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
                 }

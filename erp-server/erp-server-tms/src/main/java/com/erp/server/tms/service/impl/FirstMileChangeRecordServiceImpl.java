@@ -181,6 +181,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void saveProductWeightByEntity(List<FirstMileChangeRecordEntity> list) {
         //新增记录前修改原来的记录为非最新记录
         list.forEach(e -> {
@@ -294,6 +295,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
 
     }
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void savePackageByEntity(List<FirstMileChangeRecordEntity> entityList) {
         //新增记录前修改原来的记录为非最新记录
         entityList.forEach(e -> this.lambdaUpdate()

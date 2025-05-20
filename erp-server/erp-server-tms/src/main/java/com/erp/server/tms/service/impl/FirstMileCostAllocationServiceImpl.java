@@ -6,6 +6,8 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -21,15 +23,18 @@ import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.DateUtil;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.*;
+import com.erp.model.tms.dto.excel.FirstMileWeightChangeExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -42,20 +47,31 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
+import com.erp.server.tms.listener.FirstMileWeightChangeExcelListener;
 import com.erp.server.tms.mapper.FirstMileCostAllocationMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -1799,5 +1815,32 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         reportPeriodStr = reportPeriodStr + "-01";
         LocalDate reportPeriodMonth = LocalDate.parse(reportPeriodStr);
         return baseMapper.listByReportPeriodMonth(reportPeriodMonth, reportStatus);
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/firstMileWeightChangeTemplate.xlsx";
+        String excelName = "头程重量分摊调整导入.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.DEFAULT);
+        }
+    }
+
+    @Override
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        return null;
     }
 }

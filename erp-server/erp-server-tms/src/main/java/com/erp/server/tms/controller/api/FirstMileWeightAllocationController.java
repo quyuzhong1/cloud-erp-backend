@@ -179,7 +179,18 @@ public class FirstMileWeightAllocationController extends BaseController {
         return batchResultDTOS.stream().allMatch(BatchResultDTO::getSuccess)? success(batchResultDTOS) : failure(batchResultDTOS);
     }
     /**
-     * 批量导入修改
+     * 下载重量分摊调整导入模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载重量分摊调整导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        firstMileWeightAllocationService.downloadTemplate(response);
+        return success();
+    }
+    /**
+     * 导入重量分摊调整
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入重量分摊调整")
     @PostMapping("/importExcel")
