@@ -247,7 +247,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             List<String> skuIds = entity.getDetailEntityList().stream().map(OtherInstockDetailEntity::getSkuId).collect(Collectors.toList());
             plmTaskFeign.updateOccupyStatus(skuIds);
             //提交
-            this.submit(Collections.singletonList(id));
+            this.submit(id,Boolean.FALSE);
             //审核
             BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
             baseApproveParamDTO.setIds(Collections.singletonList(id));
@@ -303,7 +303,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Collections.singletonList(id));
+        this.submit(id,Boolean.TRUE);
         return id;
     }
 
@@ -337,30 +337,58 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //修改
         this.update(dto);
         //提交
-        return this.submit(Collections.singletonList(dto.getId()));
+        BatchResultDTO submit = this.submit(dto.getId(), Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
+    public BatchResultDTO submit(String id,Boolean isProcess) {
         //根据ids查询
-        List<OtherInstockEntity> list = getList(ids);
-        //待提交或审核不通过并且未作废允许提交
-        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
-        if (count > 0) {
+        OtherInstockEntity entity = getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99059);
+        }
+        // 待提交或审核不通过并且未作废允许提交
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        log.info("其他入库单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
-
-        //启动流程 TODO
-
+        log.info("提交 开始修改其他入库单状态数据，id：【{}】", id);
         //更新审核状态
-        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
-        //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("提交了一个其他入库单【%s】", ModuleTypeEnum.OTHER_INSTOCK.getCode(), pairList, "提交操作");
-        return Boolean.TRUE;
+        updateApproveStatus(id, ApproveStatusEnum.APPROVE_ING.getStatus());
+        
+        log.info("提交 开始启动其他入库单流程，id=：【{}】", entity.getId());
+        if (isProcess) {
+            startProcess(entity);
+        }
+        // 记录操作日志
+        log.info("提交 开始记录其他入库单日志数据，id：【{}】", id);
+        String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "其他入库单");
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
+
+    /**
+     * 启动流程
+     * @param entity
+     * @return void
+     * @Date 2023/7/4 10:07
+     **/
+
+    public void startProcess(OtherInstockEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.OTHER_INSTOCK.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
+        if (!result.isSuccess()) {
+            throw new ServiceException(result.getMsg());
+        }
+    }
+
 
     @Override
     public OtherInstockDTO.ViewDTO view(String id) {
@@ -756,9 +784,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
     /**
      * 更新审核状态
      */
-    private void updateApproveStatus(List<String> ids, String approveStatus) {
+    private void updateApproveStatus(String id, String approveStatus) {
         //更新审核状态
-        lambdaUpdate().in(OtherInstockEntity::getId, ids)
+        lambdaUpdate().eq(OtherInstockEntity::getId, id)
                 .set(OtherInstockEntity::getApproveStatus, approveStatus)
                 .update();
     }
@@ -870,7 +898,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_1019);
         }
         //提交
-        this.submit(Collections.singletonList(id));
+        this.submit(id,Boolean.FALSE);
         //审核
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setIds(Collections.singletonList(id));

@@ -82,10 +82,10 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
      * @description: 提交
      * @author Will
      * @date: 2023/5/17 16:15
-     * @param ids
+     * @param id
      * @return Boolean
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(String id,Boolean isProcess);
     /**
      * @description: 查看详情
      * @author Will

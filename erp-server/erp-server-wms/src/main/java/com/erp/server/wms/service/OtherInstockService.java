@@ -81,10 +81,10 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * @description: 提交
      * @author Will
      * @date: 2023/5/17 15:15
-     * @param ids
+     * @param id
      * @return Boolean
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(String id,Boolean isProcess);
     /**
      * @description: 查询详情
      * @author Will
