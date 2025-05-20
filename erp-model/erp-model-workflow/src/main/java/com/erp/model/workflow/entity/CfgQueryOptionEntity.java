@@ -65,11 +65,6 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     @TableField("search_key_field")
     private String searchKeyField;
     /**
-    * 前端props参数
-    */
-    @TableField("props")
-    private String props;
-    /**
     * 接口类型
     */
     @TableField("api_type")
@@ -125,7 +120,6 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
 
     public static final String SEARCH_KEY_FIELD = "search_key_field";
 
-    public static final String PROPS = "props";
 
     public static final String API_TYPE = "api_type";
 

@@ -72,11 +72,6 @@ public class CfgQueryOptionDTO implements Serializable {
          */
         private String searchKeyField;
 
-        /**
-         * 前端请求体
-         */
-        private String props;
-
         private String apiType;
 
         /**
@@ -174,12 +169,6 @@ public class CfgQueryOptionDTO implements Serializable {
         @NotBlank(message = "查询绑定属性不能为空")
         @Size(max = 30, message = "查询绑定属性最大长度不能超过30位")
         private String searchKeyField;
-
-        /**
-         * 前端props参数
-         */
-        @NotBlank(message = "前端props参数不能为空")
-        private String props;
 
         /**
          * 接口类型
