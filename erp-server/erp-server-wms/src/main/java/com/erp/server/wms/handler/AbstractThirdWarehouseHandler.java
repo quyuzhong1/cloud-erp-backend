@@ -170,7 +170,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         } catch (Exception e){
             log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
             ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
-            pushOperateLog(businessType,2000,erpBusinessCode, true);
+            pushOperateLog(businessType,2000,erpBusinessCode, false);
             return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
             // remove thread-local
