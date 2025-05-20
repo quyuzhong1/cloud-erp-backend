@@ -7,7 +7,6 @@ package com.erp.rpc.sys.feign;
  */
 
 import com.common.business.config.FeignErrorDecoder;
-import com.erp.model.sys.dto.SysUserThirdDTO;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  *@Description:
  *@Version: 1.0
  */
-@FeignClient(name = "sys-service", path = "/sysUserThird",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys",configuration = {FeignErrorDecoder.class})
 public interface SysUserThirdFeign {
 
     @GetMapping("feign/sysUserThird/findByUserId")
