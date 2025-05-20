@@ -1,8 +1,11 @@
 package com.erp.server.workflow.mapper;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface CfgQueryOptionMapper extends BaseMapper<CfgQueryOptionEntity> {
 
+    List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey);
 }

@@ -628,7 +628,7 @@ public class BomCombinationServiceImpl implements BomCombinationService {
         if (ObjectUtils.isEmpty(bomInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_95163);
         }
-        if (!BomStateEnum.AUDIT_PASS.getState().equals(bomInfoEntity.getState()) && !BomStateEnum.WAIT_AUDIT.getState().equals(bomInfoEntity.getState())) {
+        if (!BomStateEnum.AUDIT_PASS.getState().equals(bomInfoEntity.getState()) && !BomStateEnum.AUDIT_ING.getState().equals(bomInfoEntity.getState())) {
             throw new ServiceException(ApiError.ERROR_BOM_COMBINATION_STATE);
         }
         //解除归档

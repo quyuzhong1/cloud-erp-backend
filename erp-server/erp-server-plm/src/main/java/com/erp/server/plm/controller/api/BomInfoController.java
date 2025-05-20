@@ -327,17 +327,6 @@ public class BomInfoController extends BaseController {
 
 
     /**
-     * 发起变更
-     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "发起变更:id={id}")
-    @PostMapping("/startChange")
-    public ApiResult<Object> startChange(@RequestBody @Validated UpdateBomDTO dto) {
-        Boolean result = bomInfoService.startChange(dto);
-        return result == true ? success() : failure();
-    }
-
-
-    /**
      * 导出bom 数据
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出bom")

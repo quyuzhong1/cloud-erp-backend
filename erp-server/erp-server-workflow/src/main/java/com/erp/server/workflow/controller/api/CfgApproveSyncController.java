@@ -8,7 +8,9 @@ import com.common.core.anno.LogViewService;
 import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.AfterSaleEntity;
 import com.erp.model.workflow.entity.CfgApproveSyncEntity;
+import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.query.CfgApproveSyncQueryHandler;
+import com.lark.oapi.service.approval.v4.model.GetExternalApprovalResp;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
@@ -46,6 +48,8 @@ public class CfgApproveSyncController extends BaseController {
 
     @Resource
     private CfgApproveSyncService cfgApproveSyncService;
+    @Resource
+    private FsService fsService;
 
     /**
     * 新增
@@ -225,6 +229,17 @@ public class CfgApproveSyncController extends BaseController {
     public ApiResult<Object> exportList(@RequestBody @Validated CfgApproveSyncDTO.PagingParamDTO dto, HttpServletResponse response) {
         cfgApproveSyncService.exportList(dto, response);
         return success();
+    }
+
+
+    /**
+     * 查看飞书指定审批
+     * @author jack
+     * @date:  2025-05-14
+     */
+    @GetMapping("/getExternalApprovalResp")
+    public ApiResult<GetExternalApprovalResp> getExternalApprovalResp(@RequestParam("approveCode") String approveCode) {
+        return success(fsService.getExternalApprovalResp(approveCode));
     }
 
 

@@ -92,8 +92,8 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     /**
      * 第三方字段所属明细控件id
      */
-    @TableField("third_field_fieldList_id")
-    private String thirdFieldFieldListId;
+    @TableField("parent_id")
+    private String parentId;
 
     public static final String THIRD_FIELD = "third_field";
 
@@ -123,7 +123,7 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
 
     public static final String IS_DETAIL_FIELD = "is_detail_field";
 
-    public static final String THIRD_FIELD_FIELD_LIST_ID = "third_field_fieldList_id";
+    public static final String PARENT_ID = "parent_id";
 
     @Override
     public Serializable pkVal() {

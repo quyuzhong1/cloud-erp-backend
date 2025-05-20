@@ -6,9 +6,11 @@ package com.erp.server.sys.controller.feign;
  * @date: 2025/5/19 18:39
  */
 
+import com.common.core.controller.BaseController;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.server.sys.service.SysUserThirdService;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
@@ -21,12 +23,12 @@ import javax.annotation.Resource;
  */
 @RestController
 @RequestMapping("feign/sysUserThird")
-public class SysUserThirdFeignController {
+public class SysUserThirdFeignController extends BaseController{
     @Resource
     private SysUserThirdService sysUserThirdService;
 
     @RequestMapping("/findByUserId")
-    public SysUserThirdEntity findByUserId(String userId){
+    public SysUserThirdEntity findByUserId(@RequestParam("userId") String userId){
         return sysUserThirdService.findByUserId(userId);
     }
 }

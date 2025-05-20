@@ -1,6 +1,5 @@
 package com.erp.server.workflow.service;
-import com.erp.model.oms.dto.CfgConditionDTO;
-import com.erp.model.sys.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.common.business.service.SuperService;
@@ -26,7 +25,7 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     * @param
     * @return
     */
-    List<CfgQueryOptionDTO.ViewDTO> proDropDown(String bussinessKey);
+    List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey);
 
     List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey);
 

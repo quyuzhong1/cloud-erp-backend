@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.pda;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -10,13 +11,12 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
-import com.common.core.enums.LogActionEnum;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.OtherOutstockDTO;
 import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.server.wms.service.OtherOutstockService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -171,9 +171,25 @@ public class PdaOtherOutstockController extends BaseController {
             menuCode = "wms:pdaOtherOutstock:submit",
             serviceClass = OtherOutstockService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = otherOutstockService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = otherOutstockService.submit(id,Boolean.TRUE);
+            }catch (Exception e){
+                log.error("其他出库单 提交审核失败",e);
+                OtherOutstockEntity entity = otherOutstockService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "其他出库单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

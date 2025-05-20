@@ -322,7 +322,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         //待审核查询分配给自己的数据
         if (MathUtil.ONE.toString().equals(pagingDTO.getParams().getType())) {
             //待审核，审核中
-            pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.WAIT_CONFIRM.getCode(), ProductDetailStatusEnum.APPROVAL_ING.getCode()));
+            pagingDTO.getParams().setStatusList(Arrays.asList(ProductDetailStatusEnum.APPROVAL_ING.getCode()));
         }
         if (MathUtil.TWO.toString().equals(pagingDTO.getParams().getType())) {
             //已审核
@@ -3962,11 +3962,11 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
         entity.setStatus(ProductDetailStatusEnum.APPROVAL_ING.getCode());
         Boolean result = this.updateById(entity);
-        if (result) {
+        if (!result) {
           throw new ServiceException(ApiError.ERROR_1042,"产品信息");
         }
         //操作日志
-        String operateContent = String.format(BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_SUBMIT_AUDIT.getName(), BomStateEnum.WAIT_AUDIT.getName());
+        String operateContent = String.format(BomOperateContent.STATE_CHANGE, ProductDetailStatusEnum.WAIT_COMMIT.getName(), ProductDetailStatusEnum.APPROVAL_ING.getName());
         sysLogService.addSysLogBySave(operateContent,BomOperationTypeEnum.STATE_CHANGE.getType(),entity.getId(),entity.getProductId());
         return BatchResultDTO.success(entity.getId(), entity.getSkuNo(), OperationTypeEnum.SUBMIT);
     }
@@ -3996,8 +3996,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(ApproveOneDTO dto,Boolean isPushWdt) {
         ProductDetailEntity entity = this.getById(dto.getId());
-        if (!(entity.getStatus().equals(ProductDetailStatusEnum.WAIT_CONFIRM.getCode())
-                || entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode()))) {
+        if (!entity.getStatus().equals(ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
             return BatchResultDTO.fail(entity.getId(),entity.getSkuNo(),ApiError.ERROR_95038.msg);
         }
         // 调用流程审核
@@ -4033,6 +4032,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
+            dto.setVariablesMap(BeanUtil.beanToMap(entity));
             approveEnd(dto, entity);
         }
     }
@@ -4130,12 +4130,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         if (!Objects.equals(entity.getStatus(), ProductDetailStatusEnum.APPROVAL_ING.getCode())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
-        updateApproveStatusForApprove(id, BomStateEnum.WAIT_AUDIT.getState());
+        updateApproveStatusForApprove(id, ProductDetailStatusEnum.WAIT_COMMIT.getCode());
         //操作日志
         log.info("撤销 开始记录操作日志，id：【{}】", id);
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(entity.getProductId())
-                .setBusinessId(entity.getId()).setOperation("状态变更").setContent("取消流程SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.WAIT_CONFIRM.getName() + "]"));
+                .setBusinessId(entity.getId()).setOperation("状态变更").setContent("取消流程SKU[" + entity.getSkuNo() + "],操作[" + ProductDetailStatusEnum.getName(entity.getStatus()) + "]为[" + ProductDetailStatusEnum.WAIT_COMMIT.getName() + "]"));
         ProcessManagementDTO.RevokeDTO revokeDTO = new ProcessManagementDTO.RevokeDTO();
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PRODUCT_DETAIL.getCode());
@@ -4788,8 +4788,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             }
 
             if(importType.equals(ImportTypeEnum.IMPORT_NOT_APPROVAL.getCode())){
-                if (ProductDetailStatusEnum.WAIT_CONFIRM.getCode().equals(productBy.getStatus())
-                        || ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
+                if (ProductDetailStatusEnum.APPROVAL_ING.getCode().equals(productBy.getStatus())
                         || ProductDetailStatusEnum.APPROVAL_PASS.getCode().equals(productBy.getStatus())) {
                     errorMsgList.add("仅{待提交，审核不通过}的状态下可导入修改");
                     dto.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
