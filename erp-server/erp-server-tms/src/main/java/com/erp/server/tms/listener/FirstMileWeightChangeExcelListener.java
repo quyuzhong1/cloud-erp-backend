@@ -2,59 +2,32 @@ package com.erp.server.tms.listener;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ConfirmStatusEnum;
-import com.common.core.constant.EnumMessage;
-import com.common.core.entity.BaseEntity;
 import com.common.core.utils.FieldValidUtil;
-import com.erp.model.scm.dto.SupplierDTO;
-import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.excel.FirstMileWeightChangeExcelDTO;
-import com.erp.model.tms.entity.*;
-import com.erp.model.tms.enums.DetailReconciliationTypeEnum;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
-import com.erp.model.tms.enums.ReconciliationStatusEnum;
-import com.erp.model.wms.entity.FirstMileDeliveryEntity;
-import com.erp.model.wms.enums.LogisticsMethodEnum;
-import com.erp.rpc.scm.feign.SupplierFeign;
-import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
-import com.erp.server.tms.service.*;
+import com.erp.model.tms.entity.FirstMileChangeRecordEntity;
+import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
+import com.erp.model.tms.enums.CostAllocationStatusEnum;
+import com.erp.server.tms.convert.FirstMileChangeRecordConverter;
+import com.erp.server.tms.service.FirstMileChangeRecordService;
+import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<FirstMileWeightChangeExcelDTO> {
 
 
-    private final TmsFirstMileLogisticService tmsFirstMileLogisticService = SpringUtil.getBean(TmsFirstMileLogisticService.class);
+    private final FirstMileChangeRecordService firstMileChangeRecordService = SpringUtil.getBean(FirstMileChangeRecordService.class);
 
-    private final LogisticsBillDetailService logisticsBillDetailService = SpringUtil.getBean(LogisticsBillDetailService.class);
-
-    private final LogisticsSupplierService logisticsSupplierService = SpringUtil.getBean(LogisticsSupplierService.class);
-
-    private final LogisticsChannelService logisticsChannelService = SpringUtil.getBean(LogisticsChannelService.class);
-
-    private final LogisticsBillCostService logisticsBillCostService = SpringUtil.getBean(LogisticsBillCostService.class);
-
-    private final WmsFirstMileDeliveryFeign wmsFirstMileDeliveryFeign = SpringUtil.getBean(WmsFirstMileDeliveryFeign.class);
-    private final FirstMileEstimatedBillService firstMileEstimatedBillService = SpringUtil.getBean(FirstMileEstimatedBillService.class);
-    private final TmsFirstMileReconciliationDetailService tmsFirstMileReconciliationDetailService = SpringUtil.getBean(TmsFirstMileReconciliationDetailService.class);
-    private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-    private final SupplierFeign supplierFeign = SpringUtil.getBean(SupplierFeign.class);
+    private final FirstMileWeightAllocationService firstMileWeightAllocationService = SpringUtil.getBean(FirstMileWeightAllocationService.class);
 
     @Getter
     private List<FirstMileWeightChangeExcelDTO> dataList = new ArrayList<>();
@@ -71,7 +44,7 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        if (CharSequenceUtil.isAllBlank(excelDTO.getBusinessCode(),excelDTO.getOutstockCode(),excelDTO.getTransportNo())){
+        if (CharSequenceUtil.isAllBlank(excelDTO.getBusinessCode(),excelDTO.getSourceCode(),excelDTO.getTransportNo())){
             errorMsgList.add("来源单号、业务单号和物流运单号不能同时为空");
         }
         if (CharSequenceUtil.isAllBlank(excelDTO.getProductWeightStr(),excelDTO.getOutStockWeightStr(),excelDTO.getOutStockSizeStr())){
@@ -98,6 +71,19 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
                 errorMsgList.add("出库重量格式错误");
             }
         }
+        if (CharSequenceUtil.isNotBlank(excelDTO.getOutStockSizeStr())){
+            String[] split = excelDTO.getOutStockSizeStr().split("/*");
+            if (split.length != 3){
+                errorMsgList.add("出库尺寸格式错误");
+            }
+            try {
+                excelDTO.setLength(new BigDecimal(split[0]));
+                excelDTO.setWidth(new BigDecimal(split[1]));
+                excelDTO.setHeight(new BigDecimal(split[2]));
+            }catch (Exception e){
+                errorMsgList.add("出库尺寸格式错误");
+            }
+        }
         //存在错误数据则直接返回
         if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
@@ -109,285 +95,174 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-//        if(CollectionUtils.isEmpty(dataList)){
-//            return;
-//        }
-//        List<String> outstockCodeList = dataList.stream().map(FirstMileWeightChangeExcelDTO::getOutstockCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-//        List<String> businessCodeList = dataList.stream().map(FirstMileWeightChangeExcelDTO::getBusinessCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
-//        List<String> supplierNameList = dataList.stream().map(FirstMileWeightChangeExcelDTO::getSupplierName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-//        List<String> channelNameList = dataList.stream().map(FirstMileWeightChangeExcelDTO::getChannelName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
-//        List<LogisticsBillEntity> logisticsBillEntityList = tmsFirstMileLogisticService.listBySourceCodeList(businessCodeList, outstockCodeList, null);
-//        List<String> mainIdList = logisticsBillEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-//        List<LogisticsBillDetailEntity> logisticsBillDetailEntityList = logisticsBillDetailService.listByMainIds(mainIdList);
-//        //暂估账单
-//        List<FirstMileEstimatedBillDTO.View> estimatedBillList = firstMileEstimatedBillService.listByLogisticsBillIds(mainIdList, ConfirmStatusEnum.CONFIRM.getCode());
-//        //对账单明细
-//        List<TmsFirstMileReconciliationDetailEntity> reconciliationDetailEntityList = tmsFirstMileReconciliationDetailService.listBySourceIdsAndStatus(mainIdList, null, DetailReconciliationTypeEnum.ACTUAL.getCode());
-//
-//        List<LogisticsSupplierEntity> logisticsSupplierEntityList = logisticsSupplierService.listByShortName(supplierNameList);
-//        List<String> supplierIds = logisticsSupplierEntityList.stream().map(v->v.getSupplierId()).collect(Collectors.toList());
-//        List<SupplierDTO.SupplierDefaultDTO> supplierDefaultDTOList = supplierFeign.listDefaultBySupplierIdList(supplierIds);
-//
-//        List<LogisticsChannelEntity> logisticsChannelEntityList = logisticsChannelService.listByName(channelNameList);
-//        List<LogisticsBillCostEntity> logisticsBillCostEntityList = logisticsBillCostService.listByLogisticsBillIdList(mainIdList);
-//        List<String> outIds = logisticsBillEntityList.stream().map(LogisticsBillEntity::getOutstockId).collect(Collectors.toList());
-//        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(outIds);
-//        List<LogisticsBillEntity> updateList = new ArrayList<>();
-//        List<LogisticsBillDetailEntity> updateDetailList = new ArrayList<>();
-//        List<LogisticsBillCostEntity> updateCostList = new ArrayList<>();
-//        List<LogisticsTrackEntity> addTrackList = new ArrayList<>();
-//        for (FirstMileWeightChangeExcelDTO excelDTO : dataList) {
-//            int notEmptyCount = 0;
-//            if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())) {notEmptyCount++;}
-//            if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {notEmptyCount++;}
-//            //校验数据
-//            List<LogisticsBillEntity> entityList = logisticsBillEntityList.stream().filter(v -> {
-//                //同时不为空时，匹配来源单号和业务单号
-//                if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode())) {
-//                    if (v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}else {return false;}
-//                }
-//                //来源单号不为空时，匹配来源单号
-//                if (CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())) {if (v.getOutstockCode().equals(excelDTO.getOutstockCode())) return true;else {return false;}}
-//                //业务单号不为空时，匹配业务单号
-//                if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {if (v.getBusinessCode().equals(excelDTO.getBusinessCode())) return true;else {return false;}}
-//                return false;
-//            }).collect(Collectors.toList());
-//            if (CollUtil.isEmpty(entityList)) {
-//                StringBuilder msg = new StringBuilder();
-//                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
-//                    msg.append("发货单号【").append(excelDTO.getOutstockCode()).append("】");
-//                }
-//                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
-//                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
-//                }
-//                msg.append("未匹配到物流单");
-//                excelDTO.setErrorMsg(msg.toString());
-//                errorList.add(excelDTO);
-//                continue;
-//            }
-//            //校验两个参数及以上都存在时。是否存在关联的多条物流单
-//            List<LogisticsBillEntity> logisticsBillEntityList1 = logisticsBillEntityList.stream().filter(v -> {
-//                if (CharSequenceUtil.isAllNotBlank(excelDTO.getOutstockCode(), excelDTO.getBusinessCode())) {
-//                    return v.getOutstockCode().equals(excelDTO.getOutstockCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode());
-//                }
-//                return false;
-//            }).collect(Collectors.toList());
-//            if (CollUtil.isEmpty(logisticsBillEntityList1) && notEmptyCount > 1) {
-//                StringBuilder msg = new StringBuilder();
-//                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
-//                    msg.append("来源单号【").append(excelDTO.getOutstockCode()).append("】");
-//                }
-//                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
-//                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
-//                }
-//                msg.append("匹配不到物流单");
-//                excelDTO.setErrorMsg(msg.toString());
-//                errorList.add(excelDTO);
-//                continue;
-//
-//            }
-//            if (entityList.size() > 1) {
-//                StringBuilder msg = new StringBuilder();
-//                if(CharSequenceUtil.isNotBlank(excelDTO.getOutstockCode())){
-//                    msg.append("发货单号【").append(excelDTO.getOutstockCode()).append("】");
-//                }
-//                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
-//                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
-//                }
-//                msg.append("存在多条物流单");
-//                excelDTO.setErrorMsg(msg.toString());
-//                errorList.add(excelDTO);
-//                continue;
-//            }
-//            LogisticsBillEntity entity = entityList.get(0);
-//            if(Objects.isNull(entity)){
-//                excelDTO.setErrorMsg("来源单号不存在或未生成物流单");
-//                errorList.add(excelDTO);
-//                continue;
-//            }
-//            estimatedBillList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().ifPresent(v->{
-//                excelDTO.setErrorMsg("暂估账单已确认，不能更新信息");
-//                errorList.add(excelDTO);
-//            });
-//            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
-//                continue;
-//            }
-//            reconciliationDetailEntityList.stream().filter(v->v.getSourceId().equals(entity.getId()) && !v.getStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode())).findFirst().ifPresent(v->{
-//                excelDTO.setErrorMsg("实际账单状态{已生成/已确认/已对账/差异确认}，不能更新信息");
-//                errorList.add(excelDTO);
-//            });
-//            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
-//                continue;
-//            }
-//            LogisticsBillDetailEntity detailEntity = logisticsBillDetailEntityList.stream().filter(v->v.getMainId().equals(entity.getId())).findFirst().orElse(null);
-//            if(Objects.isNull(detailEntity)){
-//                excelDTO.setErrorMsg("物流单明细不存在");
-//                errorList.add(excelDTO);
-//                continue;
-//            }
-//            LogisticsBillCostEntity logisticsBillCostEntity = logisticsBillCostEntityList.stream().filter(v->v.getLogisticsBillId().equals(entity.getId())).findFirst().orElse(null);
-//            if(Objects.isNull(logisticsBillCostEntity)){
-//                excelDTO.setErrorMsg("物流单费用不存在");
-//                errorList.add(excelDTO);
-//                continue;
-//            }
-//
-//            if(!(logisticsBillCostEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.INVALID.getCode()) ||logisticsBillCostEntity.getReconciliationStatus().equals(ReconciliationStatusEnum.TO_BE_GENERATED.getCode()))){
-//                excelDTO.setErrorMsg("已生成对账单，不能更新信息");
-//                errorList.add(excelDTO);
-//                continue;
-//            }
-//            //校验供应商和渠道
-//            List<String> errorMsgList = new ArrayList<>();
-//            LogisticsSupplierEntity logisticsSupplierEntity;
-//            if(StringUtils.isNotBlank(excelDTO.getSupplierName())){
-//                logisticsSupplierEntity = logisticsSupplierEntityList.stream().filter(v->v.getShortName().equals(excelDTO.getSupplierName())).findFirst().orElse(null);
-//                if(Objects.isNull(logisticsSupplierEntity)){
-//                    errorMsgList.add("供应商不存在");
-//                }else{
-//                    SupplierDTO.SupplierDefaultDTO supplierDefaultDTO = supplierDefaultDTOList.stream().filter(v->v.getSupplierId().equals(logisticsSupplierEntity.getSupplierId())).findFirst().orElse(null);
-//                    if(Objects.nonNull(supplierDefaultDTO)){
-//                        logisticsBillCostEntity.setCurrency(supplierDefaultDTO.getSupplierEntity().getPayCurrency());
-//                        updateCostList.add(logisticsBillCostEntity);
-//                    }
-//                    entity.setLogisticsSupplierId(logisticsSupplierEntity.getId());
-//                }
-//            } else {
-//                logisticsSupplierEntity = null;
-//            }
-//            if(StringUtils.isNotBlank(excelDTO.getChannelName())){
-//                List<LogisticsChannelEntity> currentlogisticsChannelEntityList = logisticsChannelEntityList.stream().filter(v->v.getName().equals(excelDTO.getChannelName())).collect(Collectors.toList());
-//                if(CollectionUtils.isEmpty(currentlogisticsChannelEntityList)){
-//                    errorMsgList.add("渠道不存在");
-//                }else{
-//                    if(currentlogisticsChannelEntityList.size() > 1 && Objects.isNull(logisticsSupplierEntity)){
-//                        errorMsgList.add("渠道存在多条，请选择对应的物流商");
-//                    }else if (currentlogisticsChannelEntityList.size() > 1){
-//                        LogisticsChannelEntity logisticsChannel = currentlogisticsChannelEntityList.stream().filter(v->v.getMainId().equals(entity.getLogisticsSupplierId())).findFirst().orElse(null);
-//                        if(Objects.isNull(logisticsChannel)) {
-//                            errorMsgList.add("渠道与物流商不匹配");
-//                        }else{
-//                            entity.setChannelId(logisticsChannel.getId());
-//                            if(StringUtils.isBlank(entity.getLogisticsSupplierId())){
-//                                entity.setLogisticsSupplierId(logisticsChannel.getMainId());
-//                            }
-//                        }
-//                    }else{
-//                        LogisticsChannelEntity logisticsChannel = currentlogisticsChannelEntityList.get(0);
-//                        if(Objects.nonNull(logisticsSupplierEntity) && !logisticsSupplierEntity.getId().equals(logisticsChannel.getMainId())){
-//                            errorMsgList.add("渠道与物流商不匹配");
-//                        }else{
-//                            entity.setChannelId(logisticsChannel.getId());
-//                            if(StringUtils.isBlank(entity.getLogisticsSupplierId())){
-//                                entity.setLogisticsSupplierId(logisticsChannel.getMainId());
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//
-//            if(StringUtils.isNotBlank(excelDTO.getLogisticStatusName())){
-//                //校验物流状态
-//                FmLogisticTrackStatusEnum statusEnum = EnumMessage.getByName(FmLogisticTrackStatusEnum.class,(excelDTO.getLogisticStatusName()));
-//                if(statusEnum == FmLogisticTrackStatusEnum.ORDERED && StringUtils.isBlank(entity.getChannelId())){
-//                    errorMsgList.add("已下单但尚未填写渠道信息，请填写后更新");
-//                }
-//                if(statusEnum == FmLogisticTrackStatusEnum.SIGN && StringUtils.isBlank(entity.getTransportNo())){
-//                    errorMsgList.add("已签收但无运单号，请填写后更新");
-//                }
-//                FmLogisticTrackStatusEnum nowStatusEnum = EnumMessage.getByCode(FmLogisticTrackStatusEnum.class,(detailEntity.getTrackStatus()));
-//                if(FmLogisticTrackStatusEnum.WAIT_ORDER == nowStatusEnum && FmLogisticTrackStatusEnum.ORDERED != statusEnum){
-//                    errorMsgList.add("待下单状态只能更新为已下单");
-//                }
-//
-//                if(FmLogisticTrackStatusEnum.WAIT_ORDER != nowStatusEnum && FmLogisticTrackStatusEnum.WAIT_ORDER == statusEnum){
-//                    errorMsgList.add(CharSequenceUtil.format("{}状态不能更新为待下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getName()));
-//                }
-//
-//                if(FmLogisticTrackStatusEnum.ORDERED != nowStatusEnum &&  FmLogisticTrackStatusEnum.WAIT_ORDER != nowStatusEnum && FmLogisticTrackStatusEnum.ORDERED == statusEnum){
-//                    errorMsgList.add(CharSequenceUtil.format(CharSequenceUtil.format("{}状态不能更新为已下单",Objects.isNull(nowStatusEnum)?"":nowStatusEnum.getName())));
-//                }
-//                FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getId().equals(entity.getOutstockId())).findFirst().orElse(null);
-//                if(Objects.isNull(firstMileDeliveryEntity)){
-//                    errorMsgList.add("未找到对应的发货单");
-//                }
-//                if(!firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus()) && (statusEnum == FmLogisticTrackStatusEnum.TRACK_ING || statusEnum == FmLogisticTrackStatusEnum.ARRIVED ||statusEnum == FmLogisticTrackStatusEnum.SIGN ||statusEnum == FmLogisticTrackStatusEnum.INSPECTING )){
-//                    errorMsgList.add(CharSequenceUtil.format("关联单据{}尚未审核通过无法提交",firstMileDeliveryEntity.getCode()));
-//                }
-//
-//            }
-//
-//            if (!errorMsgList.isEmpty()) {
-//                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-//                errorList.add(excelDTO);
-//                continue;
-//            }
-//
-//            if(StringUtils.isNotBlank(excelDTO.getShippingMethodName())){
-//                LogisticsMethodEnum logisticsMethodEnum = LogisticsMethodEnum.getByName(excelDTO.getShippingMethodName());
-//                if(Objects.nonNull(logisticsMethodEnum)){
-//                    entity.setShippingMethod(logisticsMethodEnum.getCode());
-//                }
-//            }
-//
-//
-//            if(StringUtils.isNotBlank(excelDTO.getTransportNo())){
-//                entity.setTransportNo(excelDTO.getTransportNo());
-//            }
-//
-//            if(StringUtils.isNotBlank(excelDTO.getCounterNo())){
-//                entity.setCounterNo(excelDTO.getCounterNo());
-//            }
-//            if(StringUtils.isNotBlank(excelDTO.getLogisticStatusName())){
-//                FmLogisticTrackStatusEnum logisticTrackStatusEnum = FmLogisticTrackStatusEnum.getByName(excelDTO.getLogisticStatusName());
-//                if(Objects.nonNull(logisticTrackStatusEnum)){
-//                    //待下单不用封装轨迹，其他状态需要
-//                    if(logisticTrackStatusEnum == FmLogisticTrackStatusEnum.WAIT_ORDER){
-//                        entity.setOrderTime(null);
-//                    }else if (logisticTrackStatusEnum == FmLogisticTrackStatusEnum.ORDERED){
-//
-//                        entity.setOrderTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
-//
-//                        LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
-//                        trackEntity.setTrackNo(entity.getCounterNo());
-//                        trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
-//                        trackEntity.setStatus(logisticTrackStatusEnum.getCode());
-//                        trackEntity.setContent(StringUtils.isBlank(excelDTO.getCurrencyTrack())?"已下单":excelDTO.getCurrencyTrack());
-//                        trackEntity.setMd5(getDataMd5(trackEntity));
-//                        addTrackList.add(trackEntity);
-//                    }else{
-//                        if(StringUtils.isNotBlank(excelDTO.getCurrencyTrack())){
-//                            LogisticsTrackEntity trackEntity = new LogisticsTrackEntity();
-//                            trackEntity.setTrackNo(entity.getCounterNo());
-//                            trackEntity.setTrackTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
-//                            trackEntity.setStatus(logisticTrackStatusEnum.getCode());
-//                            trackEntity.setContent(excelDTO.getCurrencyTrack());
-//                            trackEntity.setMd5(getDataMd5(trackEntity));
-//                            addTrackList.add(trackEntity);
-//                        }
-//                    }
-//                    if (logisticTrackStatusEnum == FmLogisticTrackStatusEnum.SIGN){
-//                        detailEntity.setSignTime(Objects.isNull(excelDTO.getStatusTime())? LocalDateTime.now():excelDTO.getStatusTime());
-//                    }
-//                    if(StringUtils.isNotBlank(excelDTO.getCounterNo())){
-//                        detailEntity.setTrackNo(excelDTO.getCounterNo());
-//                    }
-//                    detailEntity.setTrackStatus(logisticTrackStatusEnum.getCode());
-//                    updateDetailList.add(detailEntity);
-//                }
-//            }
-//            updateList.add(entity);
-//        }
-//        tmsFirstMileLogisticService.updateImport(updateList,updateDetailList,addTrackList, updateCostList);
-    }
+        if(CollectionUtils.isEmpty(dataList)){
+            return;
+        }
+        List<String> sourceCodeList = dataList.stream().map(FirstMileWeightChangeExcelDTO::getSourceCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> businessCodeList = dataList.stream().map(FirstMileWeightChangeExcelDTO::getBusinessCode).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> transportNoList = dataList.stream().map(FirstMileWeightChangeExcelDTO::getTransportNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<FirstMileWeightAllocationEntity> weightAllocationEntityList = firstMileWeightAllocationService.listBySourceCodeList(businessCodeList, sourceCodeList, transportNoList);
+        List<FirstMileChangeRecordEntity> productWeightList = new ArrayList<>();
+        List<FirstMileChangeRecordEntity> outStockList = new ArrayList<>();
+        Set<String> logisticsBillIds = new LinkedHashSet<>();
+        for (FirstMileWeightChangeExcelDTO excelDTO : dataList) {
+            int notEmptyCount = 0;
+            if (CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())) {notEmptyCount++;}
+            if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())) {notEmptyCount++;}
+            if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())) {notEmptyCount++;}
+            //校验数据
+            List<FirstMileWeightAllocationEntity> entityList = weightAllocationEntityList.stream().filter(v -> {
+                //同时不为空时，匹配来源单号和业务单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
+                    if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                //运单号不为空时，匹配运单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode())) {
+                    if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                }
+                //同时不为空时，匹配来源单号和运单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(),excelDTO.getTransportNo())) {
+                    if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                //同时不为空时，匹配来源单号和业务单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
+                    if (v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                }
+                //来源单号不为空时，匹配来源单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getSourceCode()) && v.getSourceCode().equals(excelDTO.getSourceCode())) {return true;}
+                //业务单号不为空时，匹配业务单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}
+                //运单号不为空时，匹配运单号
+                if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}
+                return false;
+            }).collect(Collectors.toList());
+            if (CollUtil.isEmpty(entityList)) {
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
+                    msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())){
+                    msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
+                }
+                msg.append("未匹配到重量分摊记录");
+                excelDTO.setErrorMsg(msg.toString());
+                errorList.add(excelDTO);
+                continue;
+            }
+            //校验两个参数及以上都存在时。是否存在关联的多条重量分摊记录
+            List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream().filter(v -> {
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
+                    if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
+                }
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode())) {
+                    if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode())) {return true;}else {return false;}
+                }
+                //同时不为空时，匹配来源单号和运单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(),excelDTO.getTransportNo())) {
+                    if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
+                }
+                //同时不为空时，匹配来源单号和业务单号
+                if (CharSequenceUtil.isAllNotBlank(excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
+                    if (v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
+                }
+                return false;
+            }).collect(Collectors.toList());
+            if (CollUtil.isEmpty(weightAllocationEntityList1) && notEmptyCount > 1) {
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
+                    msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())){
+                    msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
+                }
+                msg.append("匹配不到重量分摊记录");
+                excelDTO.setErrorMsg(msg.toString());
+                errorList.add(excelDTO);
+                continue;
 
-    /**
-     * 获取唯一值
-     * @param trackingDetail
-     * @return
-     */
-    private String getDataMd5(LogisticsTrackEntity trackingDetail) {
-        String trackTime = trackingDetail.getTrackTime().format(TIME_FORMAT);
-        return DigestUtil.md5Hex(trackingDetail.getTrackNo() + "-" + trackingDetail.getContent() + "-" + trackTime);
+            }
+            if (entityList.size() > 1) {
+                StringBuilder msg = new StringBuilder();
+                if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
+                    msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
+                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
+                }
+                if(CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())){
+                    msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
+                }
+                msg.append("存在多条重量分摊记录");
+                excelDTO.setErrorMsg(msg.toString());
+                errorList.add(excelDTO);
+                continue;
+            }
+            FirstMileWeightAllocationEntity entity = entityList.get(0);
+            if(Objects.isNull(entity)){
+                excelDTO.setErrorMsg("未找到重量分摊记录");
+                errorList.add(excelDTO);
+                continue;
+            }
+            if(StringUtils.isNotBlank(excelDTO.getTransportNo()) && StringUtils.isNotBlank(excelDTO.getSourceCode())
+                    &&(!entity.getTransportNo().equals(excelDTO.getTransportNo()) || !entity.getSourceCode().equals(excelDTO.getSourceCode()))){
+                excelDTO.setErrorMsg("来源单号与运单号不匹配");
+                errorList.add(excelDTO);
+                continue;
+            }
+            //已下推费用分摊不能变更
+            if(!CostAllocationStatusEnum.NOT.getCode().equals(entity.getCostAllocationStatus())){
+                excelDTO.setErrorMsg("已下推费用分摊，不能变更");
+                errorList.add(excelDTO);
+                continue;
+            }
+            if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
+                continue;
+            }
+            //单产品重量
+            if(CharSequenceUtil.isNotBlank(excelDTO.getProductWeightStr()) && excelDTO.getProductWeight().compareTo(entity.getProductWeight()) != 0){
+                FirstMileChangeRecordEntity productWeightEntity = FirstMileChangeRecordConverter.INSTANCE.excelProductWeightToEntity(excelDTO, entity);
+                productWeightList.add(productWeightEntity);
+                logisticsBillIds.add(entity.getLogisticsBillId());
+            }
+            //出库重量
+            if(CharSequenceUtil.isNotBlank(excelDTO.getOutStockWeightStr()) && excelDTO.getOutStockWeight().compareTo(entity.getOutStockWeight())!= 0){
+                FirstMileChangeRecordEntity outStockEntity = FirstMileChangeRecordConverter.INSTANCE.excelOutStockWeightToEntity(excelDTO, entity);
+                outStockList.add(outStockEntity);
+                logisticsBillIds.add(entity.getLogisticsBillId());
+            }
+            //出库尺寸
+            if(CharSequenceUtil.isNotBlank(excelDTO.getOutStockSizeStr())){
+                if (excelDTO.getLength().compareTo(entity.getBoxLength()) != 0){
+                    FirstMileChangeRecordEntity outStockEntity = FirstMileChangeRecordConverter.INSTANCE.excelOutStockLengthToEntity(excelDTO, entity);
+                    outStockList.add(outStockEntity);
+                    logisticsBillIds.add(entity.getLogisticsBillId());
+                }
+                if (excelDTO.getWidth().compareTo(entity.getBoxWidth())!= 0){
+                    FirstMileChangeRecordEntity outStockEntity = FirstMileChangeRecordConverter.INSTANCE.excelOutStockWidthToEntity(excelDTO, entity);
+                    outStockList.add(outStockEntity);
+                    logisticsBillIds.add(entity.getLogisticsBillId());
+                }
+                if (excelDTO.getHeight().compareTo(entity.getBoxHeight())!= 0){
+                    FirstMileChangeRecordEntity outStockEntity = FirstMileChangeRecordConverter.INSTANCE.excelOutStockHeightToEntity(excelDTO, entity);
+                    outStockList.add(outStockEntity);
+                    logisticsBillIds.add(entity.getLogisticsBillId());
+                }
+            }
+        }
+        if (CollUtil.isNotEmpty(productWeightList)){
+            firstMileChangeRecordService.saveProductWeightByEntity(productWeightList);
+        }
+        if (CollUtil.isNotEmpty(outStockList)){
+            firstMileChangeRecordService.savePackageByEntity(outStockList);
+        }
+        //重新计算重量
+        logisticsBillIds.forEach(firstMileWeightAllocationService::weightReCompute);
     }
 }

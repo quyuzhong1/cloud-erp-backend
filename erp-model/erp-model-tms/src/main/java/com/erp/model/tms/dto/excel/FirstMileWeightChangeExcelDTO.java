@@ -2,17 +2,12 @@ package com.erp.model.tms.dto.excel;
 
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
-import com.alibaba.excel.annotation.write.style.ColumnWidth;
-import com.common.business.utils.LocalDateStringConverter;
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
-import com.erp.model.wms.enums.LogisticsMethodEnum;
 import lombok.Data;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 @Data
 public class FirstMileWeightChangeExcelDTO implements Serializable {
@@ -22,7 +17,7 @@ public class FirstMileWeightChangeExcelDTO implements Serializable {
      */
     @ExcelProperty(value = "来源单号", index = 1)
     @FieldValid(fieldName = "来源单号",maxLength = 32)
-    private String outstockCode;
+    private String sourceCode;
 
     /**
      * 业务单号
@@ -80,7 +75,11 @@ public class FirstMileWeightChangeExcelDTO implements Serializable {
     @FieldValid(fieldName = "出库尺寸")
     private String outStockSizeStr;
     @ExcelIgnore
-    private BigDecimal outStockSize;
+    private BigDecimal length;
+    @ExcelIgnore
+    private BigDecimal width;
+    @ExcelIgnore
+    private BigDecimal height;
 
     /**
      * 错误信息

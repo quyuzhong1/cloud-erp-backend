@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -44,7 +45,6 @@ import com.erp.server.tms.listener.FirstMileWeightChangeExcelListener;
 import com.erp.server.tms.mapper.FirstMileWeightAllocationMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -773,7 +773,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         //校验分摊数据-仅可操作未分摊数据
         for (FirstMileWeightAllocationDTO.ViewProductWeightDTO productWeightDTO : list) {
             if(!productWeightDTO.getCostAllocationStatus().equals(CostAllocationStatusEnum.NOT.getCode())){
-                throw new ServiceException("来源单号【{}】SKU【{}】已分摊，不允许修改",productWeightDTO.getSourceCode(),productWeightDTO.getSkuNo());
+                throw new ServiceException("仅可调整未分摊数据");
             }
         }
         //是修改出库尺寸时，查询装箱信息
@@ -827,6 +827,16 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
         return Boolean.TRUE;
 
+    }
+
+    @Override
+    public List<FirstMileWeightAllocationEntity> listBySourceCodeList(List<String> businessCodeList, List<String> sourceCodeList, List<String> transportNoList) {
+        if (CollUtil.isEmpty(businessCodeList) && CollUtil.isEmpty(sourceCodeList) && CollUtil.isEmpty(transportNoList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().or().in(CollUtil.isNotEmpty(businessCodeList),FirstMileWeightAllocationEntity::getBusinessCode,businessCodeList)
+                .or().in(CollUtil.isNotEmpty(sourceCodeList),FirstMileWeightAllocationEntity::getSourceCode,sourceCodeList)
+                .or().in(CollUtil.isNotEmpty(transportNoList),FirstMileWeightAllocationEntity::getTransportNo,transportNoList).list();
     }
 
     private void handleImportSuccessList(List<FirstMileWeightChangeExcelDTO> dataList, List<FirstMileWeightChangeExcelDTO> errorList) {

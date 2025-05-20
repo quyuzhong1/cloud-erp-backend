@@ -177,6 +177,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
             e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
         });
         List<FirstMileChangeRecordEntity> list = FirstMileChangeRecordConverter.INSTANCE.changeProductWeightDtoToEntityConvert(dtoValidList);
+        saveProductWeightByEntity(list);
+    }
+
+    @Override
+    public void saveProductWeightByEntity(List<FirstMileChangeRecordEntity> list) {
         //新增记录前修改原来的记录为非最新记录
         list.forEach(e -> {
             e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
@@ -282,6 +287,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         if (CollUtil.isEmpty(entityList)){
             return;
         }
+        savePackageByEntity(entityList);
+
+    }
+    @Override
+    public void savePackageByEntity(List<FirstMileChangeRecordEntity> entityList) {
         //新增记录前修改原来的记录为非最新记录
         entityList.forEach(e -> this.lambdaUpdate()
                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
@@ -297,7 +307,6 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         if (!saveBatch){
             throw new ServiceException("头程调整记录保存失败");
         }
-
     }
 
     @Override
