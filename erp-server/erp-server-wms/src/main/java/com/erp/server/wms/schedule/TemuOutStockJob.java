@@ -62,6 +62,7 @@ public class TemuOutStockJob {
         List<SoB2cEntity> soB2cEntityList = FeignQuery.create(SoB2cEntity.class)
                 .eq(SoB2cEntity::getDictPlatform, PlatformDictEnum.TE_MU.getCode())
                 .eq(SoB2cEntity::getBillStatus, SoB2cBillStatusEnum.ENUM_SHIPPED.getCode())
+                .eq(SoB2cEntity::getCode,"XSDD250520000001")
                 .isNull(SoB2cEntity::getSoOutstockDate)
                 .list();
         soB2cEntityList = soB2cEntityList.stream().filter(SoB2cEntity::hasPlatformWarehouseOrder).collect(Collectors.toList());
@@ -230,7 +231,7 @@ public class TemuOutStockJob {
             LocalDateTime outTime = LocalDateTime.ofInstant(instant, zoneId);
             detailMap.forEach((warehouseId,detailEntities)->{
                 //出库
-                soOutstockService.generateOutstockByDetailAndTime(soB2cEntity,detailEntities,outTime);
+                soOutstockService.generateOutstockByDetailAndTime(soB2cEntity,detailEntities,outTime,warehouseId);
             });
         }
         if(CollectionUtils.isNotEmpty(updateLogisticsList)){
