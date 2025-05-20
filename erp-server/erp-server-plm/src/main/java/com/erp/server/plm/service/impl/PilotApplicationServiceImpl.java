@@ -610,7 +610,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         startDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        variablesMap.put("detailList", detailList);
+        startDTO.setVariablesMap(variablesMap);
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());

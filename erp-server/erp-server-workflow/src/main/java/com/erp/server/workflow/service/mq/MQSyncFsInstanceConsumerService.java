@@ -1,14 +1,14 @@
 package com.erp.server.workflow.service.mq;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.dmp.entity.DmpPushMsgEntity;
-import com.erp.model.plm.entity.PlmCfgSettingEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.entity.*;
@@ -57,13 +57,13 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
     public void onMessage(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto) {
         log.info("MQSyncFsInstanceConsumerService 开始");
         CreateExternalInstanceReq req = buildExternalInstanceReq(dto);
-//
-//        CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
-//        //todo 判断是否成功，五无论成功失败都记录推送记录，
-//        if (!resp.success()) {
-//            String msg = String.format("code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
-//            log.error("同步三方审批实例失败>>>>>{}",msg);
-//        }
+        System.out.println(JSONUtil.toJsonStr(req.getExternalInstance()));
+        CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
+        //todo 判断是否成功，无论成功失败都记录推送记录，
+        if (!resp.success()) {
+            String msg = String.format("code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
+            log.error("同步三方审批实例失败>>>>>{}",msg);
+        }
 
         log.info("MQSyncFsInstanceConsumerService 结束");
     }
@@ -104,72 +104,18 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
             //todo 推送记录  失败  创建人未绑定飞书
         }else{
             ThirdUnionDTO thirdUnionDTO = thirdUnionDTOS.get(0);
-            if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenUserId())){
+            if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenId())){
                 //todo 推送记录  失败  创建人未绑定飞书
             }
             thirdUserId = thirdUnionDTO.getThirdUserId();
-            thirdOpenUserId = thirdUnionDTO.getThirdOpenUserId();
+            thirdOpenUserId = thirdUnionDTO.getThirdOpenId();
             values.put("@i18n@userName", thirdUnionDTO.getUserName());
             userName = thirdUnionDTO.getUserName();
         }
 
         //任务标题
-        String taskTitle = StrUtil.format("审核通知：【{}】提交的【审核名称({})抄送给你",userName,businessName);
+        String taskTitle = StrUtil.format("审核通知：【{}】提交的审核名称({})抄送给你",userName,businessName);
         values.put("@i18n@taskTitle",taskTitle);
-
-        //任务
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listTask(processManagementId);
-        //抄送任务
-        List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());
-        List<ProcessTaskCcEntity> processTaskCcEntities = processTaskCcService.listTackCc(taskManagementIds);
-        //任务列表人员和抄送列表人员飞书信息
-        Map<String, ThirdUnionDTO> thirdUnionMap = getThirdUnionDTOMap(processTaskManagementEntities, processTaskCcEntities);
-
-        //任务列表数组  最大长度：300
-        ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
-                .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
-                .map(e -> ExternalInstanceTaskNode.newBuilder()
-                        .taskId(e.getTaskId())
-                        .userId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId())
-                        .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenUserId())
-                        .title("@i18n@taskTitle")
-                        .links(ExternalInstanceLink.newBuilder()
-                                .pcLink(pcLinkByEnv)
-                                .mobileLink(pcLinkByEnv)
-                                .build())
-                        .status(FSApprovalStatusEnum.PENDING.getCode())
-                        .createTime(currentTimeMillis)
-                        .endTime("0")
-                        .updateTime(currentTimeMillis)
-                        .actionConfigs(getActionConfigs())
-                        .displayMethod("BROWSER")
-                        .excludeStatistics(false)
-                        .build()
-                ).toArray(ExternalInstanceTaskNode[]::new);
-
-        //抄送列表数组 最大长度：200
-        String ccTitle = StrUtil.format("抄送通知：【{}】提交的【审核名称({})抄送给你",userName,businessName);
-        CcNode[] ccList = processTaskCcEntities.stream()
-                .filter(e -> isThirdUnionValid(e.getCcUserId(), thirdUnionMap))
-                .map(e ->
-                        CcNode.newBuilder()
-                                .ccId(e.getId())
-                                .userId(thirdUnionMap.get(e.getCcUserId()).getThirdUserId())
-                                .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenUserId())
-                                .title(ccTitle)
-                                .links(ExternalInstanceLink.newBuilder()
-                                        .pcLink(pcLinkByEnv)
-                                        .mobileLink(pcLinkByEnv)
-                                        .build())
-                                .readStatus("UNREAD")
-                                .createTime(currentTimeMillis)
-                                .updateTime(currentTimeMillis)
-                                .displayMethod("BROWSER")
-                                .build()
-                ).toArray(CcNode[]::new);
-
-        //国际化文案数组
-        I18nResource[] i18nResources = configApproveSyncService.mapToI18nResouceArray(values);
 
         ExternalInstance externalInstance = ExternalInstance.newBuilder()
                 .approvalCode(cfgApproveSyncEntity.getApprovalCode())
@@ -188,14 +134,82 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
                 .updateTime(currentTimeMillis)//审批实例最近更新时间
                 .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
                 .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
-                .taskList(taskList)
-                .ccList(ccList)
-                .i18nResources(i18nResources)
                 .build();
 
+        //任务
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listTask(instanceId);
+        //抄送任务
+        List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());
+        List<ProcessTaskCcEntity> processTaskCcEntities = processTaskCcService.listTackCc(taskManagementIds);
+        //任务列表人员和抄送列表人员飞书信息
+        Map<String, ThirdUnionDTO> thirdUnionMap = getThirdUnionDTOMap(processTaskManagementEntities, processTaskCcEntities);
+        //todo 推送记录  失败  未绑定飞书
 
-        //推送消息
-        List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId()));
+        //任务列表数组  最大长度：300
+        if(CollUtil.isEmpty(processTaskManagementEntities)){
+            //todo 推送记录  失败
+        }else {
+            if(processTaskManagementEntities.size() > 300){
+                //todo 推送记录  失败
+            }
+            ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
+                    .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
+                    .map(e -> ExternalInstanceTaskNode.newBuilder()
+                            .taskId(e.getTaskId())
+                            .userId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId())
+                            .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
+                            .title("@i18n@taskTitle")
+                            .links(ExternalInstanceLink.newBuilder()
+                                    .pcLink(pcLinkByEnv)
+                                    .mobileLink(pcLinkByEnv)
+                                    .build())
+                            .status(FSApprovalStatusEnum.PENDING.getCode())
+                            .createTime(currentTimeMillis)
+                            .endTime("0")
+                            .updateTime(currentTimeMillis)
+                            .actionConfigs(getActionConfigs())
+                            .displayMethod("BROWSER")
+                            .excludeStatistics(false)
+                            .build()
+                    ).toArray(ExternalInstanceTaskNode[]::new);
+
+            externalInstance.setTaskList(taskList);
+        }
+
+
+        //抄送列表数组 最大长度：200
+        if(CollUtil.isEmpty(processTaskCcEntities)){
+            //todo 推送记录  失败
+        }else {
+            if(processTaskCcEntities.size() > 200){
+                //todo 推送记录  失败
+            }
+            String ccTitle = StrUtil.format("抄送通知：【{}】提交的审核名称({})抄送给你",userName,businessName);
+            CcNode[] ccList = processTaskCcEntities.stream()
+                    .filter(e -> isThirdUnionValid(e.getCcUserId(), thirdUnionMap))
+                    .map(e ->
+                            CcNode.newBuilder()
+                                    .ccId(e.getId())
+                                    .userId(thirdUnionMap.get(e.getCcUserId()).getThirdUserId())
+                                    .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenId())
+                                    .title(ccTitle)
+                                    .links(ExternalInstanceLink.newBuilder()
+                                            .pcLink(pcLinkByEnv)
+                                            .mobileLink(pcLinkByEnv)
+                                            .build())
+                                    .readStatus("UNREAD")
+                                    .createTime(currentTimeMillis)
+                                    .updateTime(currentTimeMillis)
+                                    .displayMethod("BROWSER")
+                                    .build()
+                    ).toArray(CcNode[]::new);
+            externalInstance.setCcList(ccList);
+        }
+
+        //推送消息 (快接审批)
+        List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId())).stream()
+                .filter(e -> e.getIsQuick().equals(Boolean.TRUE))
+                .collect(Collectors.toList());
         fieldMapEntities.sort(Comparator.comparingInt(CfgApproveSyncFieldMapEntity::getSort));
         if(CollUtil.isNotEmpty(fieldMapEntities)){
             //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
@@ -207,23 +221,51 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
                     .toArray(ExternalInstanceForm[]::new);
 
             for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
-
                 values.put("@i18n@"+entry.getId(),entry.getFieldName());
 
-                Object fieldSourceValue = variablesMap.getOrDefault(entry.getFieldSource(),null);
-                if(Objects.nonNull(fieldSourceValue)){
-                    String fieldSourceValueStr = getFieldSourceValueStr(fieldSourceValue);
-                    values.put("@i18n@"+entry.getFieldSource(),fieldSourceValueStr);
+                String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
+                if(StringUtils.isNotBlank(fieldSourceValueStr)){
+                    values.put("@i18n@"+ entry.getFieldSource(),fieldSourceValueStr);
+                }else {
+                    if(variablesMap.containsKey("detailList")){
+                        List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
+                        if(CollUtil.isNotEmpty(detailList)){
+                            StringBuffer sb = new StringBuffer();
+                            for (Object object : detailList) {
+                                Map<String, Object> map = BeanUtil.beanToMap(object);
+                                String str = getFieldSourceValueStr(entry.getFieldSource(), map);
+                                if(StringUtils.isNotBlank(str)){
+                                    sb.append(str);
+                                    sb.append(";");
+                                }
+                            }
+                            String fieldSourceDetailValueStr = sb.toString();
+                            if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
+                                values.put("@i18n@"+entry.getFieldSource(),fieldSourceDetailValueStr);
+                            }
+                        }
+                    }
                 }
             }
-
             externalInstance.setForm(externalInstanceForm);
         }
+
+        //国际化文案数组
+        I18nResource[] i18nResources = configApproveSyncService.mapToI18nResouceArray(values);
+        externalInstance.setI18nResources(i18nResources);
 
         // 创建请求对象
         return CreateExternalInstanceReq.newBuilder()
                 .externalInstance(externalInstance)
                 .build();
+    }
+
+    private String getFieldSourceValueStr(String fieldSource, Map<String, Object> variablesMap) {
+        Object fieldSourceValue = variablesMap.getOrDefault(fieldSource,null);
+        if(Objects.nonNull(fieldSourceValue)){
+            return getFieldSourceValueStr(fieldSourceValue);
+        }
+        return "";
     }
 
     //根据环境配置返回不同的PC链接
@@ -312,7 +354,7 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
         if (null == dto) {
             return false;
         }
-        if (StringUtils.isBlank(dto.getThirdUserId()) && StringUtils.isBlank(dto.getThirdOpenUserId())) {
+        if (StringUtils.isBlank(dto.getThirdUserId()) && StringUtils.isBlank(dto.getThirdOpenId())) {
             return false;
         }
         return true;

@@ -354,7 +354,7 @@ public class FsService {
      */
     public Client getClient() {
         // 构建client
-        Client client = Client.newBuilder(fsProperties.getAppId(), fsProperties.getAppSecret())
+        Client client = Client.newBuilder(fsProperties.getClientId(), fsProperties.getClientSecret())
                 .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
                 .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
                 .build();
