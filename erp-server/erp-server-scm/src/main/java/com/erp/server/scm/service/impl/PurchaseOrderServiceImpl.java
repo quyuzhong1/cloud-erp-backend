@@ -805,8 +805,8 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         exportPdfDTO.setDeliveryWarehouseAddress(warehouseDTO.getAddress());
         exportPdfDTO.setDeliveryWarehouseTel(warehouseDTO.getContactTelNumber());
         exportPdfDTO.setDeliveryWarehouseContract(warehouseDTO.getContacts());
-        DecimalFormat df2 = new DecimalFormat("#,###.00");
-        DecimalFormat df4 = new DecimalFormat("#,###.0000");
+        DecimalFormat df2 = new DecimalFormat("#,##0.00");
+        DecimalFormat df4 = new DecimalFormat("#,##0.0000");
         //明细物料信息
         List<PurchaseOrderDetailDTO.ExportPdfDTO> details = new ArrayList<>();
         for (PurchaseOrderDetailEntity purchaseOrderDetailEntity : list) {
