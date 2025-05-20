@@ -2,6 +2,7 @@ package com.erp.server.workflow.mapper;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -36,4 +37,14 @@ public interface ProcessDefinitionMapper extends BaseMapper<ProcessDefinitionEnt
      */
     List<ProcessDefinitionDTO.ExportDTO> query(@Param("params") ProcessDefinitionDTO.QueryExportDTO dto);
     Page<ProcessDefinitionDTO.ExportDTO> query(@Param("page") Page<ProcessDefinitionDTO.ExportDTO> page, @Param("params") ProcessDefinitionDTO.QueryExportDTO dto);
+
+    List<ProcessDefinitionDTO.DropDTO> getProcessDefinition(String businessKey);
+    /**
+     * 查询tab数据
+     * @author will
+     * @date 2025/5/15 16:06
+     * @param params
+     * @return List<TabListDTO>
+     */
+    List<ProcessDefinitionDTO.TabListDTO> tabList(@Param("params")PermissionsDTO params);
 }

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.workflow.mapper.CfgQueryOptionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.workflow.entity.CfgQueryOptionEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="condition_field_name" property="conditionFieldName" />
+       <result column="api_url" property="apiUrl" />
+       <result column="request_method" property="requestMethod" />
+       <result column="param" property="param" />
+       <result column="select_label" property="selectLabel" />
+       <result column="select_value" property="selectValue" />
+       <result column="select_disabled" property="selectDisabled" />
+       <result column="search_key_field" property="searchKeyField" />
+       <result column="props" property="props" />
+       <result column="api_type" property="apiType" />
+       <result column="field_type" property="fieldType" />
+       <result column="is_required" property="isRequired" />
+       <result column="bussiness_key" property="bussinessKey" />
+       <result column="condition_field" property="conditionField" />
+       <result column="field_belongs_type" property="fieldBelongsType" />
+       <result column="logic" property="logic" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, props, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic
+    </sql>
+
+
+</mapper>

@@ -3,6 +3,7 @@ package com.erp.server.plm.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.ExcelImportFsDTO;
+import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -253,22 +254,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
     List<ProductDetailEntity> getByIdList(List<String> skuIdList);
 
     List<BaseIdDTO> getNotFinish(List<String> skuIdList);
-    /**
-     * @description: 审核通过
-     * @author Will
-     * @date: 2022/11/28 14:51
-     * @param dto
-     * @return Boolean
-     */
-    Boolean approvalPass(ProductDetailOperateDTO dto,Boolean isCheck);
-    /**
-     * @description: 审核不通过
-     * @author Will
-     * @date: 2022/11/28 14:51
-     * @param dto
-     * @return Boolean
-     */
-    Boolean approvalReject(ProductDetailOperateDTO dto);
+
     /**
      * @description: 设置审批人
      * @author Will
@@ -277,14 +263,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean updateApprover(ProductDetailApproveParamDTO dto);
-    /**
-     * @description: 审核完成
-     * @author Will
-     * @date: 2022/11/30 17:22
-     * @param processId
 
-     */
-    Boolean productDetailProcessPass(String processId);
     /**
      * @description: 申请变更
      * @author Will
@@ -293,22 +272,7 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @return Boolean
      */
     Boolean applyChange(String id);
-    /**
-     * @description: 反审核
-     * @author Will
-     * @date: 2022/12/1 16:56
-     * @param id
-     * @return Boolean
-     */
-    Boolean deApprove(String id);
-    /**
-     * @description: 重启审核流程
-     * @author Will
-     * @date: 2022/12/7 16:30
-     * @param dto
-     * @return Boolean
-     */
-    Boolean restartProcessPass(ProductDetailOperateDTO dto);
+
     /**
      * @description: 根据sku参数查询
      * @author Will
@@ -396,22 +360,6 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      */
     void updateProductStateByProductId(String productId, Integer state);
     /**
-     * @description: 提交
-     * @author Will
-     * @date: 2023/2/9 13:34
-     * @param id
-     * @return Boolean
-     */
-    Boolean commit(String id);
-    /**
-     * @description: 取消流程
-     * @author Will
-     * @date: 2023/2/9 14:37
-     * @param id
-     * @return Boolean
-     */
-    Boolean unCommit(String id);
-    /**
      * @description: 发送金蝶数据
      * @author Will
      * @date: 2023/2/13 13:27
@@ -487,20 +435,25 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * @param ids
      * @return java.lang.Boolean
      **/
-    Boolean submit(List<String> ids,Boolean isCheck);
+    BatchResultDTO submit(String ids,Boolean isStartProcess);
 
     /**
      * 批量审核
      * @Author Luo_WG
      * @Date 2023/6/14 16:38
-     * @param entity
-     * @param type
-     * @param comment
-     * @param isNeedProcess
+     * @param dto
      * @return java.lang.Boolean
      **/
-    BatchResultDTO approve(ProductDetailEntity entity, String type, String comment, Boolean isNeedProcess);
-
+    BatchResultDTO approve(ApproveOneDTO dto,Boolean isPushWdt);
+    /**
+     * 结束审核
+     * @author will
+     * @date 2025/5/16 10:28
+     * @param dto
+     * @param entity
+     * @return Boolean
+     */
+    Boolean approveEnd(ApproveOneDTO dto, ProductDetailEntity entity);
     /**
      * 批量反审核
      * @Author Luo_WG
@@ -514,10 +467,10 @@ public interface ProductDetailService extends IService<ProductDetailEntity> {
      * 取消流程
      * @Author Luo_WG
      * @Date 2023/6/14 17:28
-     * @param ids
+     * @param id
      * @return java.lang.Boolean
      **/
-    Boolean cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(String id);
 
     /**
      * 批量删除

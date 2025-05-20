@@ -10,6 +10,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.Map;
 
 /**
  * @author Will
@@ -56,6 +57,11 @@ public class ApproveOneDTO extends PermissionsDTO {
      *发货日期
      */
     private LocalDate deliveryDate;
+
+    /**
+     * 流程参数map
+     */
+    private Map<String,Object> variablesMap;
 
     public ApproveOneDTO (String id,String type,String comment) {
         this.id = id;

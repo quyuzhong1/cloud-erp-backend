@@ -50,4 +50,9 @@ public class ThirdConstants {
      * 飞书发送单条API
      */
     public static final String LARK_SEND_MESSAGE_URL = "https://open.feishu.cn/open-apis/im/v1/messages?receive_id_type=union_id";
+
+    //发送审批 Bot 消息地址
+    public static final String FS_APPROVE_MESSAGE_SEND_URL = "https://open.feishu.cn/open-apis/approval/v1/message/send/";
+    //更新审批 Bot 消息地址
+    public static final String FS_APPROVE_MESSAGE_UPDATE_URL = "https://open.feishu.cn/open-apis/approval/v1/message/update/";
 }

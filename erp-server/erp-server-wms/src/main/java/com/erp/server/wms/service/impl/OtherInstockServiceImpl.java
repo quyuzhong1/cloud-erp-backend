@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -14,6 +15,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -21,6 +23,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -58,6 +61,7 @@ import com.erp.model.wms.enums.InstockTypeEnum;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -463,22 +467,71 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if (!ApproveStatusEnum.APPROVE_ING.getStatus().equals(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-
         log.info("其他入库单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
+        // 调用流程审核
+        ApproveOneDTO dto = new ApproveOneDTO(id, type, comment);
+        entity.setIsPushWdt(isPushWdt);
+        approveProcess(entity, dto);
+
+        //操作日志
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), CharSequenceUtil.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
+
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单审核");
+    }
+
+    /**
+     * 审核流程处理
+     * @param entity
+     * @param dto
+     */
+    private void approveProcess(OtherInstockEntity entity, ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, OtherInstockEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.TRUE;
+        }
+        //查询传入流程数据
+        OtherInstockEntity mapToBean = BeanUtil.toBean(dto.getVariablesMap(), OtherInstockEntity.class);
+
+        ApproveStatusEnum approveStatus;
+        if (dto.getType().equals(ApproveType.PASS)) {
+            //审核通过
+            approveStatus = ApproveStatusEnum.APPROVE;
+        } else {
+            //审核不通过
+            approveStatus = ApproveStatusEnum.REJECT;
+        }
+        //更新单据(后面有流程了调用监听可删)
+        updateApproveStatusForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus(), null);
 
         //审核通过
-        if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
-            log.info("其他入库单【{}】审核通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
-            //审核通过 TODO(判断是否存在流程)
-
-            //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.APPROVE.getStatus(), entity.getApproveTime());
+        if (dto.getType().equals(ApproveType.PASS)) {
             //更新库存
             updateInventoryTransCore(entity);
-
             //审核发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
-            if(isPushWdt){
+            if(mapToBean.getIsPushWdt()){
                 //推送旺店通
                 if("ordinary".equalsIgnoreCase(entity.getInventoryDirection())){
                     syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
@@ -486,17 +539,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                     syncDisApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
                 }
             }
-        } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
-            log.info("其他入库单【{}】审核不通过，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(id));
-            //中止当前审核流程
-
-            //更新单据状态
-            updateApproveStatusForApprove(Collections.singletonList(id), ApproveStatusEnum.REJECT.getStatus(), null);
         }
-        //操作日志
-        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个其他入库单【%s】,【%s】", ApproveTypeEnum.getName(type), entity.getCode(), CharSequenceUtil.isNotBlank(comment) ? String.format("意见：%s", comment) : ""), ModuleTypeEnum.OTHER_INSTOCK.getCode(), entity.getId(), "审核操作");
-
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), "其他入库单审核");
+        return Boolean.TRUE;
     }
 
     @Override
@@ -1250,7 +1294,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         List<OtherInstockDetailEntity> detailList = OtherInStockConverter.INSTANCE.copyDetailList(dbDetailList);
         otherInstockEntity.setDetailEntityList(detailList);
         otherInstockEntity.setRemark(code);
-        service.addAndApprove(otherInstockEntity, false);
+        service. addAndApprove(otherInstockEntity, false);
     }
 
     private OtherInstockEntity buildWdtPreStock(DmpSoPrestockInfoDTO.PrestockDTO dto) {

@@ -1,23 +1,36 @@
 package com.erp.server.workflow.service.impl;
 
-import org.apache.commons.collections4.CollectionUtils;
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DisabledEnum;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
+import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
+import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ProcessDefinitionMapper;
+import com.erp.server.workflow.service.CfgProcessRuleService;
 import com.erp.server.workflow.service.ProcessBusinessService;
 import com.erp.server.workflow.service.ProcessDefinitionService;
+import com.erp.server.workflow.service.ThirdProcessDefinitionService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.camunda.bpm.engine.RepositoryService;
 import org.camunda.bpm.engine.impl.persistence.entity.DeploymentEntity;
 import org.camunda.bpm.engine.repository.Deployment;
@@ -25,7 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_DEFINITION;
@@ -43,12 +56,21 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
 
     @Resource
     private ProcessBusinessService processBusinessService;
+
     @Resource
     private RepositoryService repositoryService;
+
     @Resource
     private RedisService redisService;
+
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private ThirdProcessDefinitionService  thirdProcessDefinitionService;
+
+    @Resource
+    private CfgProcessRuleService cfgProcessRuleService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -169,5 +191,73 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         // 查询数据
         Page<ProcessDefinitionDTO.ExportDTO> page = this.baseMapper.query(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<ProcessDefinitionDTO.DropDTO> getProcessDefinition(String businessKey) {
+        //TODO 启用状态判断，暂未添加
+        List<ProcessDefinitionDTO.DropDTO> reslut = baseMapper.getProcessDefinition(businessKey);
+        return reslut;
+    }
+
+    @Override
+    public BatchResultDTO updateDisabled(String id, Boolean disabled) {
+        // 查询数据是否存在
+        ProcessDefinitionEntity entity = getById(id);
+        if(ObjUtil.isEmpty(entity)){
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+        }
+        //查询配置信息
+        CfgProcessRuleEntity processRuleEntity = cfgProcessRuleService.getByDefinitionId(id);
+        if (ObjUtil.isNotEmpty(processRuleEntity)) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_DISABLED_ERROR);
+        }
+
+        entity.setDisabled(disabled);
+        this.updateById(entity);
+        return BatchResultDTO.success(entity.getId(), entity.getProcessName(), OperationTypeEnum.DISABLED);
+    }
+
+    @Override
+    public List<ProcessDefinitionDTO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<ProcessDefinitionDTO.TabListDTO> tabList = this.baseMapper.tabList(dto);
+        Map<Boolean, Integer> map = CollUtil.isEmpty(tabList) ? new HashMap<>() : tabList.stream().collect(Collectors.toMap(ProcessDefinitionDTO.TabListDTO::getTabFlag, ProcessDefinitionDTO.TabListDTO::getCount));
+        DisabledEnum[] values = DisabledEnum.values();
+        List<ProcessDefinitionDTO.TabListDTO> list = new ArrayList<>();
+        for (DisabledEnum item : values) {
+            ProcessDefinitionDTO.TabListDTO resultDTO = new ProcessDefinitionDTO.TabListDTO();
+            Integer count = map.get(item.getCode());
+            resultDTO.setCount(ObjUtil.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
+    }
+
+    @Override
+    public List<ProcessDefinitionDTO.DropDownDTO> dropDown() {
+        //1、定时拉取获取定义状态
+        List<ProcessDefinitionDTO.DropDownDTO> downDTOList = this.list(new LambdaQueryWrapper<ProcessDefinitionEntity>().eq(ProcessDefinitionEntity::getIsDeploy, true).eq(ProcessDefinitionEntity::getIsDeleted, false)).stream().map(processDefinitionEntity -> {
+            ProcessDefinitionDTO.DropDownDTO dropDownDTO = new ProcessDefinitionDTO.DropDownDTO();
+            dropDownDTO.setCode(processDefinitionEntity.getId());
+            dropDownDTO.setName(processDefinitionEntity.getProcessName());
+            return dropDownDTO;
+        }).collect(Collectors.toList());
+        List<ThirdProcessDefinitionDTO.DropDownDTO> dropDownDTOS = thirdProcessDefinitionService.dropDown();
+        //组合
+        downDTOList.addAll(BeanUtil.copyToList(dropDownDTOS, ProcessDefinitionDTO.DropDownDTO.class));
+        return downDTOList;
+    }
+
+    @Override
+    public List<ProcessDefinitionDTO.DropDownDTO> proDropDown() {
+        List<ProcessDefinitionDTO.DropDownDTO> downDTOList = this.list(new LambdaQueryWrapper<ProcessDefinitionEntity>().eq(ProcessDefinitionEntity::getIsDeploy, true).eq(ProcessDefinitionEntity::getIsDeleted, false)).stream().map(processDefinitionEntity -> {
+            ProcessDefinitionDTO.DropDownDTO dropDownDTO = new ProcessDefinitionDTO.DropDownDTO();
+            dropDownDTO.setCode(processDefinitionEntity.getId());
+            dropDownDTO.setName(processDefinitionEntity.getProcessName());
+            return dropDownDTO;
+        }).collect(Collectors.toList());
+        return downDTOList;
     }
 }

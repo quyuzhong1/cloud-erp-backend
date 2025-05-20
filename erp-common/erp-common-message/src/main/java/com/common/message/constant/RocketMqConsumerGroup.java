@@ -325,9 +325,14 @@ public class RocketMqConsumerGroup {
 
 
     /**
-     * 异步组包发货
+     *
      */
     public static final String DMP_WECHAT_SUBSCRIBE_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-dmp_wechat_subscribe_msg_consumer";
+
+    /**
+     *
+     */
+    public static final String WORKFLOW_SYNC_FS_INSTANCE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_sync_fs_instance_consumer";
 
     //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
     /**

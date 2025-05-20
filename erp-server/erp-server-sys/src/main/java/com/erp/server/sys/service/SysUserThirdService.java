@@ -20,7 +20,7 @@ import java.util.List;
 public interface SysUserThirdService extends IService<SysUserThirdEntity> {
 
 
-    void bindingThirdParty(String uid, String flagId, String bindingPlatform);
+    void bindingThirdParty(String uid, String flagId,String thirdOpenId,String thirdUserId, String bindingPlatform);
 
     SysUserThirdEntity findByUnionId(String flagId);
 

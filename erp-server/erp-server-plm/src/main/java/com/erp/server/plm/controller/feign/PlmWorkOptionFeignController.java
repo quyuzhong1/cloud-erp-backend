@@ -1,10 +1,8 @@
 package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.base.ApproveOneDTO;
-import com.common.business.enums.ApproveTypeEnum;
-import com.erp.model.plm.dto.AuditParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.plm.dto.PilotApplicationDTO;
-import com.erp.model.plm.dto.ProductDetailOperateDTO;
 import com.erp.model.plm.dto.TaskOperateDTO;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.workflow.dto.WorkOptionDTO;
@@ -54,19 +52,10 @@ public class PlmWorkOptionFeignController {
      * @param
      * @return 新增结果
      */
-    @PostMapping("/bomInfoApprovalPass")
-    public void bomInfoApprovalPass(@RequestBody @Validated AuditParamDTO dto) {
-        bomInfoService.approvalPass(dto);
-    }
-
-    /**
-     * bom  审核 不通过
-     * @param
-     * @return 新增结果
-     */
-    @PostMapping("/bomInfoApprovalNoPass")
-    public void bomInfoApprovalNoPass(@RequestBody @Validated AuditParamDTO dto) {
-        bomInfoService.approvalNoPass(dto);
+    @PostMapping("/bomInfoApprove")
+    public Boolean bomInfoApprove(@RequestBody @Validated ApproveOneDTO dto) {
+        BatchResultDTO resultDTO =  bomInfoService.approve(dto);
+        return resultDTO.getSuccess();
     }
 
     /**
@@ -74,21 +63,10 @@ public class PlmWorkOptionFeignController {
      * @param dto
      * @return ApiResult
      */
-    @PostMapping("/productDetailApprovalPass")
-    public Boolean productDetailApprovalPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
-        Boolean result = productDetailService.approvalPass(dto,Boolean.TRUE);
-        return result;
-    }
-
-    /**
-     * 产品信息-状态操作-审核不通过
-     * @param dto
-     * @return ApiResult
-     */
-    @PostMapping("/productDetailApprovalNoPass")
-    public Boolean productDetailApprovalNoPass(@RequestBody @Validated ProductDetailOperateDTO dto) {
-        Boolean result = productDetailService.approvalReject(dto);
-        return result;
+    @PostMapping("/productDetailApprove")
+    public Boolean productDetailApprove(@RequestBody @Validated ApproveOneDTO dto) {
+        BatchResultDTO resultDTO = productDetailService.approve(dto,Boolean.TRUE);
+        return resultDTO.getSuccess();
     }
 
     /**
@@ -127,20 +105,9 @@ public class PlmWorkOptionFeignController {
      * @param
      * @return 新增结果
      */
-    @PostMapping("/productChangeApprovalPass")
-    public void productChangeApprovalPass(@RequestBody @Validated AuditParamDTO dto) {
-        productChangeService.approvalPass(dto);
-    }
-
-    /**
-     * change  审核 不通过
-     *
-     * @param
-     * @return 新增结果
-     */
-    @PostMapping("/productChangeApprovalNoPass")
-    public void productChangeApprovalNoPass(@RequestBody @Validated AuditParamDTO dto) {
-        productChangeService.approvalNoPass(dto);
+    @PostMapping("/productChangeApprove")
+    public void productChangeApprove(@RequestBody @Validated ApproveOneDTO dto) {
+        productChangeService.approve(dto);
     }
 
     /**

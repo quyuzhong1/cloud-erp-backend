@@ -1,7 +1,11 @@
 package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
@@ -11,30 +15,40 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
+import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.server.rule.SpElServer;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.DeduplicationUtil;
 import com.common.core.utils.JsonPathUtil;
+import com.common.core.utils.JsonPathUtil;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.CamundaDTO;
+import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.*;
-import com.erp.model.workflow.enums.DictBasicEnum;
-import com.erp.model.workflow.enums.ProcessStatusEnum;
-import com.erp.model.workflow.enums.TimeoutStatusEnum;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
@@ -71,6 +85,8 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -128,23 +144,96 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Resource
     private ProcessTaskCcService processTaskCcService;
     @Resource
-    private MQProducerService<?> mqProducerService;
+    private MQProducerService mqProducerService;
     @Resource
     private WorkMenuService workMenuService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private CfgApproveSyncService cfgApproveSyncService;
+    @Resource
+    private CfgProcessService cfgProcessService;
+    @Resource
+    private CfgProcessRuleService cfgProcessRuleService;
+    @Resource
+    private CfgProcessExpService cfgProcessExpService;
+    @Resource
+    private SpElServer spElServer;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto) {
-        // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(),"", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
+    public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
+        String processDefinitionId = getProcessDefinitionId(dto);
+        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+            // 业务无已启用的Erp流程配置
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
+        //启动流程
+        return startProcess(dto, processDefinitionId);
+    }
 
+
+    /**
+     * 查询流程定义id
+     * @author will
+     * @date 2025/5/19 16:10
+     * @param dto
+     * @return String
+     */
+    private String getProcessDefinitionId(ProcessManagementDTO.StartDTO dto) {
+        //查询流程配置
+        CfgProcessEntity cfgProcessEntity = cfgProcessService.getByBusinessKey(dto.getBusinessKey());
+        if (ObjectUtil.isEmpty(cfgProcessEntity)) {
+            // 业务无流程配置
+            log.warn("业务无流程配置, businessKey={}", dto.getBusinessKey());
+            return "";
+        }
+        List<CfgProcessRuleEntity> cfgProcessRuleList = cfgProcessRuleService.listByProcessId(cfgProcessEntity.getId(), CfgProcessRuleTypeEnum.ERPPROGRESS.getCode());
+        if (CollUtil.isEmpty(cfgProcessRuleList)) {
+            // 业务无已启用的Erp流程配置
+            log.warn("业务无已启用的Erp流程配置, businessKey={}", dto.getBusinessKey());
+            return "";
+        }
+        //查询rule条件设置
+        List<String> ruleIdList = cfgProcessRuleList.stream().map(CfgProcessRuleEntity::getId).distinct().collect(Collectors.toList());
+        List<CfgProcessExpEntity> cfgProcessExpList = cfgProcessExpService.listByRuleIdList(ruleIdList);
+        if (CollUtil.isEmpty(cfgProcessExpList)) {
+            // 业务无已启用的Erp流程配置
+            log.warn("业务无规则对应的条件设置, businessKey={}", dto.getBusinessKey());
+            return "";
+        }
+        Map<String, List<CfgProcessExpEntity>> expMap = cfgProcessExpList.stream().collect(Collectors.groupingBy(CfgProcessExpEntity::getRuleId));
+        //查询传入数据是否有符合条件的流程
+        String processDefinitionId = "";
+        for (CfgProcessRuleEntity cfgProcessRuleEntity : cfgProcessRuleList) {
+            //对应规则
+            List<CfgProcessExpEntity> processExpList = expMap.get(cfgProcessRuleEntity.getId());
+            if (CollUtil.isEmpty(processExpList)) {
+                continue;
+            }
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(processExpList, ConditionElement.class);
+            Boolean matchResult = spElServer.matchDetailExpressionByConditionList(conditionElementList, dto.getVariablesMap());
+            //存在一条以上的规则都匹配数据的时候直接报错
+            if (CharSequenceUtil.isNotBlank(processDefinitionId) && matchResult) {
+                throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
+            }
+            //匹配上则直接赋值
+            if (matchResult) {
+                processDefinitionId = cfgProcessRuleEntity.getProcessDefinitionId();
+            }
+        }
+        return processDefinitionId;
+    }
+
+
+    /**
+     * 启动流程
+     * @author will
+     * @date 2025/5/19 15:20
+     * @param dto
+     * @return StartResultDTO
+     */
+    private ProcessManagementDTO.StartResultDTO startProcess(ProcessManagementDTO.StartDTO dto,String processDefinitionId) {
         // 判断业务id是否已经存在
         ProcessManagementEntity managementEntity = lambdaQuery()
                 .eq(ProcessManagementEntity::getBusinessId, dto.getBusinessId())
@@ -155,9 +244,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 业务已经发起流程
             throw new ServiceException(ApiError.PROCESS_ALREADY_START);
         }
-        String processDefinitionId = processBusiness.getProcessDefinitionId();
         // 查询流程定义
-        ProcessDefinitionEntity processDefinition= processDefinitionService.getById(processDefinitionId);
+        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId);
         if (null == processDefinition) {
             // 流程定义不存在
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
@@ -184,47 +272,71 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         ActivityImpl activity = executionEntity.getActivity();
         String taskId;
         String activityId;
-        if(ObjectUtil.isEmpty(activity)){
+        if (ObjectUtil.isEmpty(activity)) {
             // 多实例节点 获取当前活动节点方法
             ActivityInstance[] childActivityInstances = activityInstance.getChildActivityInstances();
-            if(ObjectUtil.isEmpty(childActivityInstances) || childActivityInstances.length == 0){
-                log.error("流程实例[{}]没有多实例子节点",processInstance.getId());
+            if (ObjectUtil.isEmpty(childActivityInstances) || childActivityInstances.length == 0) {
+                log.error("流程实例[{}]没有多实例子节点", processInstance.getId());
                 throw new ServiceException(ApiError.ERROR_94004);
             }
             activityId = childActivityInstances[0].getActivityId();
             activityId = activityId.contains("#") ? activityId.substring(0, activityId.indexOf("#")) : activityId;
             List<ExecutionEntity> executions = executionEntity.getExecutions();
             if (CollectionUtils.isEmpty(executions)) {
-                log.error("流程实例[{}]没有多实例执行任务",processInstance.getId());
+                log.error("流程实例[{}]没有多实例执行任务", processInstance.getId());
                 throw new ServiceException(ApiError.ERROR_94004);
             }
-            List<TaskEntity> tasks  = executions.get(0).getTasks();
-            if(CollectionUtils.isEmpty(tasks)){
+            List<TaskEntity> tasks = executions.get(0).getTasks();
+            if (CollectionUtils.isEmpty(tasks)) {
                 List<ExecutionEntity> executionChild = executions.get(0).getExecutions();
                 if (CollectionUtils.isEmpty(executionChild)) {
-                    log.error("流程实例[{}]没有多实例执行子任务",processInstance.getId());
+                    log.error("流程实例[{}]没有多实例执行子任务", processInstance.getId());
                     throw new ServiceException(ApiError.ERROR_94004);
                 }
                 tasks = executionChild.get(0).getTasks();
             }
             if (CollectionUtils.isEmpty(tasks)) {
-                log.error("流程实例[{}]没有多实例执行任务列表为空",processInstance.getId());
+                log.error("流程实例[{}]没有多实例执行任务列表为空", processInstance.getId());
                 throw new ServiceException(ApiError.ERROR_94004);
             }
             taskId = tasks.get(0).getId();
-        }else {
+        } else {
             activityId = activity.getActivityId();
             taskId = executionEntity.getTasks().get(0).getId();
         }
         String processInstanceId = processInstance.getProcessInstanceId();
         // 保存审批节点数据
-        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activityId, processStartTime, processDefinition,processInstance.getProcessDefinitionId());
+        ProcessManagementEntity insertManagementEntity = new ProcessManagementEntity(processInstanceId, dto, activityId, processStartTime, processDefinition, processInstance.getProcessDefinitionId());
         if (!save(insertManagementEntity)) {
             // 保存流程数据失败
             throw new ServiceException(ApiError.ERROR_94004);
         }
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                //判断该单据类型是否有ERP审批同步定义
+                List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(insertManagementEntity.getBusinessKey()))
+                        .stream()
+                        .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
+                        .collect(Collectors.toList());
+                if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
+                    CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
+                    CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                    mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
+                    mqDto.setProcessManagementId(insertManagementEntity.getId());
+                    mqDto.setBusinessName(insertManagementEntity.getBusinessName());
+                    mqDto.setInstanceId(processInstanceId);
+                    mqDto.setTaskId(taskId);
+                    mqDto.setCreateUserId(dto.getUserId());
+                    mqDto.setVariablesMap(dto.getVariablesMap());
+                    mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
+                }
+            }
+        });
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
+
 
     /**
      * 审批任务填充审批信息
@@ -645,9 +757,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
         }
         // 删除本地流程任务数据
-//        removeByProcessInstanceId(processInstance.getProcessInstanceId());
-        //删除流程实例
-        this.removeByProcessInstanceId(processInstance.getProcessInstanceId());
+        processTaskManagementService.removeByProcessInstanceId(processInstance.getProcessInstanceId());
+
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }
 
@@ -683,6 +794,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             if (record.getTaskStatus() != null) {
                 record.setTaskStatusName(record.getTaskStatus().getName());
             }
+            record.setBusinessKeyName(SourceTypeEnum.getName(record.getBusinessKey()));
         });
         return new PagingVO<>(pageData);
     }
@@ -797,9 +909,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             String startUserId = "" + execution.getVariable("creator");
             candidateUsers = addApproveInfo(startUserId, propertiesDTO, execution.getVariables());
         }
-        if (CharSequenceUtil.isNotBlank(propertiesDTO.getSomebody_exp())){
-            candidateUsers = replaceApproveVariables(Arrays.asList(propertiesDTO.getSomebody_exp().split(",")), execution.getVariables());
-        }
+//        if ("somebody_exp".equals(propertiesDTO.getAssigneeOption()) && CharSequenceUtil.isNotBlank(propertiesDTO.getSomebody_exp())){
+//            candidateUsers = replaceApproveVariables(Arrays.asList(propertiesDTO.getSomebody_exp().split(",")), execution.getVariables());
+//        }
 
         return candidateUsers;
     }
@@ -965,7 +1077,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
         LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
         // 流程信息传递给业务系统
-        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate);
+        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate,variables);
         // 获取业务系统feign
         return callFeign(entity.getBusinessKey(), dto);
     }
@@ -986,7 +1098,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         List<ProcessManagementDTO.StartResultDTO> resultList = new ArrayList<>();
         dtoList.forEach(dto -> {
             // 启动流程
-            ProcessManagementDTO.StartResultDTO resultDTO = processManagementService.startProcess(dto);
+            ProcessManagementDTO.StartResultDTO resultDTO = processManagementService.startProcessManagement(dto);
             resultList.add(resultDTO);
         });
         return resultList;
@@ -1113,6 +1225,90 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     .forEach(x -> x.setProcessStatusName(x.getProcessStatus().getName()));
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO processPass(String id) {
+        ProcessManagementEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+        }
+        if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PASS_ERROR);
+        }
+        entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
+        this.updateById(entity);
+
+        //TODO 对接飞书
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.PASS);
+    }
+
+    @Override
+    public BatchResultDTO processReject(String id) {
+        ProcessManagementEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+        }
+        if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_REJECT_ERROR);
+        }
+        entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
+        this.updateById(entity);
+
+        //TODO 对接飞书
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.REJECT);
+    }
+
+    @Override
+    public BatchResultDTO processRestore(String id) {
+        ProcessManagementEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+        }
+        if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_RESTORE_ERROR);
+        }
+        entity.setProcessStatus(ProcessStatusEnum.RUNNING);
+        this.updateById(entity);
+
+        //TODO 对接飞书
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.RESTORE);
+    }
+
+    @Override
+    public BatchResultDTO processSuspend(String id) {
+        ProcessManagementEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_NOT_EXIST);
+        }
+        if (!ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_SUSPEND_ERROR);
+        }
+        entity.setProcessStatus(ProcessStatusEnum.PAUSE);
+        this.updateById(entity);
+        //TODO 对接飞书
+        return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.SUSPEND);
+    }
+
+    @Override
+    public List<ProcessManagementDTO.TabListDTO> tabList(PermissionsDTO param) {
+        List<ProcessManagementDTO.TabListDTO> tabList = this.baseMapper.tabList(param);
+        Map<String, Integer> map = CollUtil.isEmpty(tabList) ? new HashMap<>() : tabList.stream().collect(Collectors.toMap(ProcessManagementDTO.TabListDTO::getTabFlag, ProcessManagementDTO.TabListDTO::getCount));
+        ProcessManagementTabEnum[] values = ProcessManagementTabEnum.values();
+        List<ProcessManagementDTO.TabListDTO> list = new ArrayList<>();
+        for (ProcessManagementTabEnum item : values) {
+            ProcessManagementDTO.TabListDTO resultDTO = new ProcessManagementDTO.TabListDTO();
+            Integer count = map.get(item.getCode());
+            //异常枚举额外处理
+            if (ProcessManagementTabEnum.ABNORMAL.getCode().equals(item.getCode())) {
+                count =  MathUtil.add(map.get(ProcessStatusEnum.PAUSE.getCode()),map.get(ProcessStatusEnum.TERMINATION.getCode()));
+            }
+            resultDTO.setCount(ObjectUtil.isEmpty(count) ? MathUtil.ZERO : count);
+            resultDTO.setTabFlag(item.getCode());
+            resultDTO.setTabFlagName(item.getName());
+            list.add(resultDTO);
+        }
+        return list;
     }
 
     /**

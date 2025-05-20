@@ -1,19 +1,13 @@
 package com.erp.model.workflow.entity;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.LocalDateTime;
-
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.model.workflow.enums.TimeoutStatusEnum;
@@ -21,6 +15,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.time.Duration;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -132,6 +130,17 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     @TableField(exist = false)
     private String businessId;
 
+    /**
+     * 原审批人id（委托审批后存原始值）
+     */
+    @TableField("original_approve_id")
+    private String originalApproveId;
+
+    /**
+     * 标识json
+     */
+    @TableField("label_json")
+    private JSONObject labelJson;
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
 
