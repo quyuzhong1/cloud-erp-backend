@@ -2647,8 +2647,8 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     @Override
     @DistributeLocker(keyName = "entity.id")
-    public Boolean generateOutstockByDetailAndTime(SoB2cEntity entity, List<SoB2cDetailEntity> soB2cDetailEntityList, LocalDateTime outTime) {
-        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutstockInfoById(entity.getId());
+    public Boolean generateOutstockByDetailAndTime(SoB2cEntity entity, List<SoB2cDetailEntity> soB2cDetailEntityList, LocalDateTime outTime,String warehouseId) {
+        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cFeign.getSoOutStockByIdAndWarehouseId(entity.getId(),warehouseId);
         generateB2cDTO.setSourceId(entity.getId());
         generateB2cDTO.setSourceCode(entity.getCode());
         generateB2cDTO.setSourceType(SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode());

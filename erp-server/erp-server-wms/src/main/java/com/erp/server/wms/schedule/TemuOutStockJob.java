@@ -230,7 +230,7 @@ public class TemuOutStockJob {
             LocalDateTime outTime = LocalDateTime.ofInstant(instant, zoneId);
             detailMap.forEach((warehouseId,detailEntities)->{
                 //出库
-                soOutstockService.generateOutstockByDetailAndTime(soB2cEntity,detailEntities,outTime);
+                soOutstockService.generateOutstockByDetailAndTime(soB2cEntity,detailEntities,outTime,warehouseId);
             });
         }
         if(CollectionUtils.isNotEmpty(updateLogisticsList)){
