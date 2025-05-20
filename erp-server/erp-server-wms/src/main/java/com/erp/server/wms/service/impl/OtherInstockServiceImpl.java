@@ -529,6 +529,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
+            dto.setVariablesMap(BeanUtil.beanToMap(entity));
             approveEnd(dto, entity);
         }
     }

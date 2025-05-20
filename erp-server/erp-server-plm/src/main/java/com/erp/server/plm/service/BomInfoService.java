@@ -46,8 +46,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     Boolean recover(String id);
 
-    Boolean startChange(UpdateBomDTO dto);
-
     List<BomVO> getByIds(List<String> bomIdList);
 
     List<ChangeInfoDTO> getBomInfo(String  searchKeyword);
@@ -64,9 +62,6 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     List<ApproveNodeRecordVO> auditInfo(String id);
 
-    void checkAuditor(List<BomSkuDTO> skuList);
-
-    List<String> getSkuIdList(List<BomSkuDTO> skuList);
 
      String getUpdateContent(List<BomSkuDTO> oldBomList, List<BomSkuDTO> newBomList);
     /**
