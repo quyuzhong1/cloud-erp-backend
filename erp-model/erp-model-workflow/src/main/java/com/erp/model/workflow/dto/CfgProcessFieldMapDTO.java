@@ -105,7 +105,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 第三方字段所属明细控件id
          */
-        private String thirdFieldFieldListFid;
+        private String parentId;
 
         private List<CfgProcessValueMapDTO.ViewDTO> processValueMapDTOList;
     }
@@ -244,7 +244,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 第三方字段所属明细控件id
          */
-        private String thirdFieldFieldListFid;
+        private String parentId;
     }
 
 

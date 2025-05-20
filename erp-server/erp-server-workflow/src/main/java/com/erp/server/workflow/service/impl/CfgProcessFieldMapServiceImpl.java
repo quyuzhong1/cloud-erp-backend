@@ -242,7 +242,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                     detailViewDTO.setThirdFieldRequired(detail.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
                     detailViewDTO.setThirdFieldId(detail.getStr(FsRequestBodyAttributesEnum.ID.getCode())); // 父级 fieldList 的 ID
                     detailViewDTO.setIsDetailField(true);
-                    detailViewDTO.setThirdFieldFieldListFid(field.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
+                    detailViewDTO.setParentId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
                     viewDTOList.add(detailViewDTO); // 将子元素直接添加到 viewDTOList
                 }
                 continue; // 跳过当前 viewDTO 的添加
