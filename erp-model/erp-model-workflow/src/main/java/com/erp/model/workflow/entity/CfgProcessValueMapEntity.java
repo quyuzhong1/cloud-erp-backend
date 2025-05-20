@@ -35,17 +35,21 @@ public class CfgProcessValueMapEntity extends BaseEntity<CfgProcessValueMapEntit
     @TableField("third_value")
     private String thirdValue;
     /**
-    * 数大臣r选项值
+    * 数大臣选项值
     */
     @TableField("sys_value")
     private String sysValue;
 
+    @TableField("defalut_value")
+    private String defalutValue;
 
     public static final String FIELD_MAP_ID = "field_map_id";
 
     public static final String THIRD_VALUE = "third_value";
 
     public static final String SYS_VALUE = "sys_value";
+
+    public static final String DEFALUT_VALUE = "defalut_value";
 
     @Override
     public Serializable pkVal() {

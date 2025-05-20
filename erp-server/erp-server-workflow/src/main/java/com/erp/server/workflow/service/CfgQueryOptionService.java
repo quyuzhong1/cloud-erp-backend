@@ -31,4 +31,5 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
 
     List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey);
 
+    List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey);
 }

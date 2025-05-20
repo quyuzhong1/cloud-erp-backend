@@ -33,11 +33,6 @@ public class CfgQueryOptionDTO implements Serializable {
     public static class ViewDTO {
 
         /**
-         * 主键id
-         */
-        private String id;
-
-        /**
          * 字段中文名
          */
         private String conditionFieldName;
@@ -78,10 +73,9 @@ public class CfgQueryOptionDTO implements Serializable {
         private String searchKeyField;
 
         /**
-         * 前端props参数
+         * 前端请求体
          */
         private String props;
-
     }
 
     /**
