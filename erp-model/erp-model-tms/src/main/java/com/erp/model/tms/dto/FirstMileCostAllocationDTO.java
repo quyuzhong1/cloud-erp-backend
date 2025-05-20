@@ -950,6 +950,7 @@ public class FirstMileCostAllocationDTO implements Serializable {
     public static class DetailDTO {
         private String id;
         private String sourceId;
+        private String skuId;
         private String businessCode;
         private LocalDate reportMonth;
     }

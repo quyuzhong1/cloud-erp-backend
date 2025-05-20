@@ -42,11 +42,9 @@ public interface TmsFirstMileLogisticFeign {
 
     /**
      * 根据skuId和业务类型查询头程费用分摊记录
-     * @param skuId
-     * @param businessCode
-     * @param reportMonth
+     * @param detailDTO
      * @return
      */
-    @GetMapping("/feign/tmsFirstMileLogistic/getRecordBySkuIdAndCode")
-    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestParam("skuId")String skuId, @RequestParam("businessCode")String businessCode, @RequestParam("reportMonth")LocalDate reportMonth);
+    @PostMapping("/feign/tmsFirstMileLogistic/getRecordBySkuIdAndCode")
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO);
 }

@@ -1972,8 +1972,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             LocalDate date = dto.getReceiveDate().with(TemporalAdjusters.firstDayOfMonth());
             String skuId = CharSequenceUtil.isNotBlank(detailEntity.getSkuId()) ? detailEntity.getSkuId() : "";//skuId
             String businessCode = CharSequenceUtil.isNotBlank(entity.getCode()) ? entity.getCode() : "";//业务单号
+            FirstMileCostAllocationDTO.DetailDTO detailDTO = new FirstMileCostAllocationDTO.DetailDTO();
+            detailDTO.setSkuId(skuId);
+            detailDTO.setBusinessCode(businessCode);
+            detailDTO.setReportMonth(date);
             //判断是否存在对应的头程分摊
-            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySkuIdAndCode(skuId, businessCode, date);
+            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySkuIdAndCode(detailDTO);
             if (CollUtil.isNotEmpty(detailDTOS)){
                 throw new ServiceException("货件单号【{}】该月【{}】已生成头程分摊，不可修改",entity.getCode(),date);
             }
