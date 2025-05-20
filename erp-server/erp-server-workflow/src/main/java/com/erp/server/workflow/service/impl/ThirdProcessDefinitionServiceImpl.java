@@ -100,6 +100,7 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         List<ThirdProcessDefinitionDTO.DropDownDTO> dropDownDTOS = thirdProcessDefinitionEntities.stream().map(thirdProcessDefinitionEntity -> {
             ThirdProcessDefinitionDTO.DropDownDTO dropDownDTO = new ThirdProcessDefinitionDTO.DropDownDTO();
             BeanMapperUtils.copy(thirdProcessDefinitionEntity, dropDownDTO);
+            dropDownDTO.setCode(thirdProcessDefinitionEntity.getApprovalCode());
             dropDownDTO.setName(thirdProcessDefinitionEntity.getName()+thirdProcessDefinitionEntity.getDictApprovalGroup());
             return dropDownDTO;
         }).collect(Collectors.toList());
