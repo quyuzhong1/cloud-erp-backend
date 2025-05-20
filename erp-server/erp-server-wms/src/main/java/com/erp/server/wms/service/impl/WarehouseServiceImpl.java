@@ -334,7 +334,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListTreeDTO> listTree() {
-        List<WarehouseDTO.ListDTO> list = listApproveWarehouse(Boolean.FALSE);
+        List<WarehouseDTO.ListDTO> list = listApproveWarehouse(Boolean.TRUE);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
