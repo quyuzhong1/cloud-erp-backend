@@ -1998,7 +1998,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             receiverdMap.put(receivedEntity.getDetailId(), receivedEntity.getReceiveQty());
             // 头程调整记录
-            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertFbaToChangeRecord(entity, detailEntity, receivedEntity, date, dto.getDeliveryCode()));
+            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertFbaToChangeRecord(entity, detailEntity, receivedEntity, dto.getDeliveryCode()));
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("单号【{}】SKU【{}】新增了一个调整记录,签收【{}】时间【{}】", entity.getCode(), detailEntity.getSkuNo(),receivedEntity.getReceiveQty(),receivedEntity.getReceiveDate()), ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "调整签收");
         }
         //调整记录新增
         firstMileChangeRecordFeign.batchAdd(changeRecordList);

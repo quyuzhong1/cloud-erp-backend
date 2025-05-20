@@ -115,4 +115,6 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * @return
      */
     List<FirstMileWeightAllocationEntity> listBySourceCodeList(List<String> businessCodeList, List<String> sourceCodeList, List<String> transportNoList);
+
+    void downloadTemplate(HttpServletResponse response);
 }

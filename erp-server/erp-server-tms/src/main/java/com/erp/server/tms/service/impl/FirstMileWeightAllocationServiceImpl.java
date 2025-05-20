@@ -46,6 +46,9 @@ import com.erp.server.tms.mapper.FirstMileWeightAllocationMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -53,9 +56,12 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -837,6 +843,28 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         return this.lambdaQuery().or().in(CollUtil.isNotEmpty(businessCodeList),FirstMileWeightAllocationEntity::getBusinessCode,businessCodeList)
                 .or().in(CollUtil.isNotEmpty(sourceCodeList),FirstMileWeightAllocationEntity::getSourceCode,sourceCodeList)
                 .or().in(CollUtil.isNotEmpty(transportNoList),FirstMileWeightAllocationEntity::getTransportNo,transportNoList).list();
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "classpath:excel/firstMileWeightChangeTemplate.xlsx";
+        String excelName = "头程重量分摊调整导入.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.DEFAULT);
+        }
     }
 
     private void handleImportSuccessList(List<FirstMileWeightChangeExcelDTO> dataList, List<FirstMileWeightChangeExcelDTO> errorList) {

@@ -55,7 +55,7 @@ public class FirstMileWeightChangeExcelDTO implements Serializable {
     /**
      * 单产品重量
      */
-    @ExcelProperty(value = "单产品重量", index = 7)
+    @ExcelProperty(value = "单产品重量(kg)", index = 7)
     @FieldValid(fieldName = "单产品重量")
     private String productWeightStr;
     @ExcelIgnore
@@ -63,15 +63,15 @@ public class FirstMileWeightChangeExcelDTO implements Serializable {
     /**
      * 出库重量
      */
-    @ExcelProperty(value = "出库重量", index = 8)
+    @ExcelProperty(value = "出库重量(kg)", index = 8)
     @FieldValid(fieldName = "出库重量")
     private String outStockWeightStr;
     @ExcelIgnore
     private BigDecimal outStockWeight;
     /**
-     * 出库尺寸
+     * 出库尺寸(cm)
      */
-    @ExcelProperty(value = "出库尺寸", index = 9)
+    @ExcelProperty(value = "出库尺寸(cm)", index = 9)
     @FieldValid(fieldName = "出库尺寸")
     private String outStockSizeStr;
     @ExcelIgnore
