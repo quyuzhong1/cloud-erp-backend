@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
  *@Description:
  *@Version: 1.0
  */
-@FeignClient(name = "erp-sys",configuration = {FeignErrorDecoder.class})
+@FeignClient(name = "erp-sys", contextId = "sysUserThird",configuration = {FeignErrorDecoder.class})
 public interface SysUserThirdFeign {
 
     @GetMapping("feign/sysUserThird/findByUserId")
