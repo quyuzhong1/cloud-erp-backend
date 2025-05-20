@@ -134,6 +134,9 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             throw new ServiceException("推送信息不能为空");
         }else{
             long count = pushMsgList.stream().filter(e -> e.getIsQuick().equals(Boolean.TRUE)).count();
+            if(count < 1 ){
+                throw new ServiceException("请至少勾选一个快捷审批");
+            }
             if(count > 5 ){
                 throw new ServiceException("快捷审批勾选不能超过5个");
             }
@@ -280,6 +283,10 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                             .viewerDepartmentId(deptId)
                             .build())
                     .collect(Collectors.toList());
+        }else {
+            approvalCreateViewersList.add(ApprovalCreateViewers.newBuilder()
+                    .viewerType(viewerType)
+                    .build());
         }
 
         handleApprovalViewers(approvalCreateViewersList, externalApproval, viewerType);
@@ -297,7 +304,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                 || CfgApproveSyncViewerTypeEnum.USER.getCode().equals(viewerType))) {
             throw new ServiceException("指定部门/指定用户时，审批可见人列表不能为空");
         }
-
         if (size > 0) {
             externalApproval.setViewers(viewersList.toArray(new ApprovalCreateViewers[0]));
         }
@@ -369,6 +375,9 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             throw new ServiceException("推送信息不能为空");
         }else{
             long count = pushMsgList.stream().filter(e -> e.getIsQuick().equals(Boolean.TRUE)).count();
+            if(count < 1 ){
+                throw new ServiceException("请至少勾选一个快捷审批");
+            }
             if(count > 5){
                 throw new ServiceException("快捷审批勾选不能超过5个");
             }

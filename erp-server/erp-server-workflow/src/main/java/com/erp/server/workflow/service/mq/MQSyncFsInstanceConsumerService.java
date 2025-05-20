@@ -3,23 +3,19 @@ package com.erp.server.workflow.service.mq;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.dmp.entity.DmpPushMsgEntity;
+import com.erp.model.plm.entity.PlmCfgSettingEntity;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
-import com.erp.model.workflow.entity.CfgApproveSyncEntity;
-import com.erp.model.workflow.entity.CfgApproveSyncFieldMapEntity;
-import com.erp.model.workflow.entity.ProcessTaskCcEntity;
-import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
-import com.erp.server.workflow.service.CfgApproveSyncFieldMapService;
-import com.erp.server.workflow.service.CfgApproveSyncService;
-import com.erp.server.workflow.service.ProcessTaskCcService;
-import com.erp.server.workflow.service.ProcessTaskManagementService;
+import com.erp.server.workflow.service.*;
 import com.lark.oapi.service.approval.v4.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -54,11 +50,13 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
     private ProcessTaskCcService processTaskCcService;
     @Resource
     private FsService fsService;
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Override
     public void onMessage(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto) {
         log.info("MQSyncFsInstanceConsumerService 开始");
-//        CreateExternalInstanceReq req = buildExternalInstanceReq(dto);
+        CreateExternalInstanceReq req = buildExternalInstanceReq(dto);
 //
 //        CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
 //        //todo 判断是否成功，五无论成功失败都记录推送记录，
@@ -71,6 +69,9 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
     }
 
     public CreateExternalInstanceReq buildExternalInstanceReq(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto){
+        //pc地址
+        String pcLinkByEnv = getPcLinkByEnv();
+
         //获取（String类型）当前时间戳
         String currentTimeMillis = String.valueOf(System.currentTimeMillis());
         //erp审批同步配置表
@@ -133,8 +134,8 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
                         .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenUserId())
                         .title("@i18n@taskTitle")
                         .links(ExternalInstanceLink.newBuilder()
-                                .pcLink("")
-                                .mobileLink("")
+                                .pcLink(pcLinkByEnv)
+                                .mobileLink(pcLinkByEnv)
                                 .build())
                         .status(FSApprovalStatusEnum.PENDING.getCode())
                         .createTime(currentTimeMillis)
@@ -157,8 +158,8 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
                                 .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenUserId())
                                 .title(ccTitle)
                                 .links(ExternalInstanceLink.newBuilder()
-                                        .pcLink("")
-                                        .mobileLink("")
+                                        .pcLink(pcLinkByEnv)
+                                        .mobileLink(pcLinkByEnv)
                                         .build())
                                 .readStatus("UNREAD")
                                 .createTime(currentTimeMillis)
@@ -175,8 +176,8 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
                 .status(FSApprovalStatusEnum.PENDING.getCode())
                 .instanceId(processManagementId)
                 .links(ExternalInstanceLink.newBuilder()
-                        .pcLink("")
-                        .mobileLink("")
+                        .pcLink(pcLinkByEnv)
+                        .mobileLink(pcLinkByEnv)
                         .build())
                 .title("@i18n@title")
                 .userId(thirdUserId)
@@ -223,6 +224,29 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
         return CreateExternalInstanceReq.newBuilder()
                 .externalInstance(externalInstance)
                 .build();
+    }
+
+    //根据环境配置返回不同的PC链接
+    private String getPcLinkByEnv() {
+        //初始化消息发送的URL
+        String url ="";
+        //根据不同的环境选择对应的URL
+        CfgSettingEntity cfgSetting =  cfgSettingService.lambdaQuery().eq(CfgSettingEntity::getKey, "envUrl").one();
+        if(null != cfgSetting){
+            Map<String, Object> dataJson = cfgSetting.getDataJson();
+            boolean uat = BusinessCommonConstants.hasProfile("uat");
+            boolean dev = BusinessCommonConstants.hasProfile("dev");
+            boolean test = BusinessCommonConstants.hasProfile("test");
+            boolean prod = BusinessCommonConstants.hasProfile("prod");
+            if(uat){
+                url = String.valueOf(dataJson.get("uat"));
+            }else  if(dev||test){
+                url = String.valueOf(dataJson.get("test"));
+            }else if(prod){
+                url = String.valueOf(dataJson.get("prod"));
+            }
+        }
+        return url;
     }
 
     private static String getFieldSourceValueStr(Object fieldSourceValue) {

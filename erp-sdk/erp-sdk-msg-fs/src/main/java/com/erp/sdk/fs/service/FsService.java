@@ -598,8 +598,37 @@ public class FsService {
         return false;
     }
 
+    /**
+     * 查看指定三方审批定义
+     * https://open.feishu.cn/document/approval-v4/external_approval/get
+     * @author jack
+     * @date 2025-05-20
+     */
+    public GetExternalApprovalResp getExternalApprovalResp(String approveCode) {
+        try {
+            // 构建client
+            Client client = getClient();
 
+            // 创建请求对象
+            GetExternalApprovalReq req = GetExternalApprovalReq.newBuilder()
+                    .approvalCode(approveCode)
+                    .userIdType(UserIdTypeEnum.USERID.getCode())
+                    .build();
 
+            // 发起请求
+            GetExternalApprovalResp resp = client.approval().v4().externalApproval().get(req);
+
+            // 处理服务端错误
+            if (!resp.success()) {
+                String msg = String.format("code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
+                log.error("查看指定三方审批定义失败>>>>>{}", msg);
+                throw new ServiceException("查看指定三方审批定义失败>>>>>{}", msg);
+            }
+            return resp;
+        } catch (Exception e) {
+            throw new ServiceException("查看指定三方审批定义失败>>>>>{}", e);
+        }
+    }
 
     /**
      * 更新审批 Bot 消息
@@ -642,7 +671,6 @@ public class FsService {
         }
         return false;
     }
-
 
 
     public static void main(String[] args) throws Exception {
