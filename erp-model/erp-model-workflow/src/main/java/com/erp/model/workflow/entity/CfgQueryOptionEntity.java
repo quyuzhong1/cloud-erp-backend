@@ -105,6 +105,9 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     @TableField("logic")
     private String logic;
 
+    @TableField("controls")
+    private String controls;
+
 
     public static final String Condition_Field_Name = "condition_field_name";
 
@@ -137,6 +140,8 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     public static final String FIELD_BELONGS_TYPE = "field_belongs_type";
 
     public static final String LOGIC = "logic";
+
+    public static final String CONTROLS = "controls";
 
     @Override
     public Serializable pkVal() {

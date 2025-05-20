@@ -41,8 +41,23 @@
         update_time,
         version,
         is_deleted,
-        condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, props, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic
+        condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, props, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic,controls
     </sql>
+    <select id="proDropDown" resultType="com.erp.model.workflow.dto.CfgQueryOptionDTO$ListDTO">
+        SELECT condition_field,
+               condition_field_name,
+               request_method,
+               controls,
+               api_url,
+               props as param,
+               select_label as label,
+               select_value as value,
+               search_key_field as searchKey,
+               select_value as remoteLabel
+        FROM cfg_query_option
+        WHERE is_deleted = FALSE AND bussiness_key = #{businessKey}
+
+    </select>
 
 
 </mapper>

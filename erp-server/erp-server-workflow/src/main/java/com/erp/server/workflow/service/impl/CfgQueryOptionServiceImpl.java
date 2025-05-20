@@ -4,9 +4,7 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.core.enums.RuleCompareEnum;
-import com.erp.model.oms.dto.CfgConditionDTO;
-import com.erp.model.oms.entity.CfgConditionEntity;
-import com.erp.model.sys.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
 import com.erp.server.workflow.service.CfgQueryOptionService;
@@ -30,9 +28,8 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
 
     @Override
-    public List<CfgQueryOptionDTO.ViewDTO> proDropDown(String bussinessKey) {
-        List<CfgQueryOptionEntity> cfgQueryOptionEntities = this.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
-        return BeanUtil.copyToList(cfgQueryOptionEntities, CfgQueryOptionDTO.ViewDTO.class);
+    public List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey) {
+        return baseMapper.proDropDown(bussinessKey);
     }
 
 
