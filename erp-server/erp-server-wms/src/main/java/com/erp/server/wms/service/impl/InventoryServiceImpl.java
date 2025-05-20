@@ -42,6 +42,7 @@ import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpSyncFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.InventoryMapper;
@@ -107,6 +108,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
     private DictBasicService dictBasicService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     public InventoryEntity findInventory(String orgId, String warehouseId, String skuId, String warehouseLocationId, String status) {
@@ -998,6 +1001,8 @@ public class InventoryServiceImpl extends SuperServiceImpl<InventoryMapper, Inve
         }
         paramDTO.setFilterSelfAddFlag(params.isFilterSelfAddFlag());
         paramDTO.setZeroInventory(params.isZeroInventory());
+        String permissionSql = authDataFeign.getWarehousePermissionSql("it.warehouse_id");
+        paramDTO.setPermissionSql(permissionSql);
         IPage<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOPage = baseMapper.pageInventoryWarehouseByParam(query,paramDTO);
         List<InventoryDTO.PdaInventoryWarehouseLocationDTO> warehouseLocationDTOList = baseMapper.listInventoryWarehouseLocationByParam(paramDTO);
         List<InventoryDTO.PdaInventoryWarehouseDTO> warehouseDTOList = warehouseDTOPage.getRecords();

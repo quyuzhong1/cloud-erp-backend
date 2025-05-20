@@ -57,6 +57,7 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -169,6 +170,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private OmsListingInfoFeign omsListingInfoFeign;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     public void addPackingByB2BDelivery(SoDeliveryNoticeEntity soDeliveryNoticeEntity) {
@@ -2495,7 +2498,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String[] split = outBoxNo.split("-");
         String sourceCode = split[0];
         Integer boxNo = Integer.valueOf(split[1]);
-        List<PackingTaskEntity> taskEntityList = this.listBySourceCodes(Collections.singletonList(sourceCode));
+        String permissionSql = authDataFeign.getWarehousePermissionSql("pt.warehouse_id");
+        List<PackingTaskEntity> taskEntityList = baseMapper.listBySourceCodes(Collections.singletonList(sourceCode),permissionSql);
         if (CollUtil.isEmpty(taskEntityList)){
             throw new ServiceException(ApiError.ERROR_92141);
         }

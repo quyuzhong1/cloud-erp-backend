@@ -55,7 +55,7 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "sri.warehouse_id",
+            warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
@@ -75,7 +75,7 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "sri.warehouse_id",
+            warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )

@@ -315,9 +315,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     public List<SoReturnInstockDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
         SoReturnChangeListTypeEnum[] values = SoReturnChangeListTypeEnum.values();
         List<SoReturnInstockDTO.StatusCountDTO> list = new ArrayList<>();
+        String permissionSql = getPermissionSql(dto.getPermissionSql());
         for (SoReturnChangeListTypeEnum item : values) {
             SoReturnInstockDTO.PagingParam pagingParam = new SoReturnInstockDTO.PagingParam();
-            pagingParam.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
+            pagingParam.setPermissionSql(permissionSql);
             pagingParam.setInvalidStatus(Boolean.FALSE);
             SoReturnInstockDTO.StatusCountDTO resultDTO = new SoReturnInstockDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
@@ -1132,7 +1133,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public PagingVO<SoReturnInstockDTO.PdaPagingView> PdaPaging(PagingDTO<SoReturnInstockDTO.PdaPagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         SoReturnInstockDTO.PdaPagingParam params = pagingParamDTO.getParams();
         List<String> approveStatusList = params.getApproveStatusList();
@@ -1143,6 +1143,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             dateList.add(now);
             params.setBillDateList(dateList);
         }
+        params.setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         IPage<SoReturnInstockDTO.PdaPagingView> pageData = this.baseMapper.pdaPaging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
@@ -1168,9 +1169,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         LocalDate startDate = endDate.minusDays(30);
         PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
         List<SoReturnInstockDTO.PdaSoReturnInstockCountDTO> list = new ArrayList<>();
+        String permissionSql = getPermissionSql(dto.getPermissionSql());
         for (PdaTabFlagEnum item : values) {
             SoReturnInstockDTO.PagingParam pagingParamDTO = new SoReturnInstockDTO.PagingParam();
-            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setPermissionSql(permissionSql);
             pagingParamDTO.setInvalidStatus(Boolean.FALSE);
             SoReturnInstockDTO.PdaSoReturnInstockCountDTO resultDTO = new SoReturnInstockDTO.PdaSoReturnInstockCountDTO();
             Integer count = MathUtil.ZERO;

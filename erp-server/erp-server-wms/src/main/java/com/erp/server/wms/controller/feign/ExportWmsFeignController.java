@@ -629,7 +629,7 @@ public class ExportWmsFeignController {
     @PostMapping("/soReturnInStock")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            warehouseTableField = "sri.warehouse_id",
+            warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
@@ -663,6 +663,12 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/stocktakingProfitLoss")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "spld.warehouse_id",
+            menuCode = "wms:stocktakingProfitLoss:paging",
+            tableAlias = "spl"
+    )
     @WebAdvanceQuery(handler = StocktakingProfitLossQueryHandler.class)
     public PagingVO<StocktakingProfitLossDTO.ExportViewDTO> exportStocktakingProfitLoss(@RequestBody PagingDTO<StocktakingProfitLossDTO.ExportDTO> dto) {
         return stocktakingProfitLossService.exportStocktakingProfitLoss(dto);
@@ -709,6 +715,7 @@ public class ExportWmsFeignController {
     @PostMapping("/transferApplication")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
+            warehouseTableField = "ta.in_warehouse_id,ta.out_warehouse_id",
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
     )

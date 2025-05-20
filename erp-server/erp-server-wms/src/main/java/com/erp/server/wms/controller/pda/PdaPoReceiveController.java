@@ -74,7 +74,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "receive_user_id",
-            warehouseTableField = "pr.delivery_warehouse_id",
+            warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:pdaPoReceive:paging",
             tableAlias = "wr"
     )
