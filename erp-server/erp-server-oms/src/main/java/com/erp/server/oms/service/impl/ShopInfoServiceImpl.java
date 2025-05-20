@@ -632,6 +632,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopInfo.setAuthExpireDate(dto.getAuthExpireDate());
         //设置用户信息
         setCustom(dto.getCustomerId(), shopInfo);
+        //如果token不为空，新增授权表
+        if(StringUtils.isNotBlank(dto.getToken())) {
+            ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(shopInfo.getId());
+            if(Objects.isNull(shopAuthEntity)){
+                shopAuthEntity = new ShopAuthEntity();
+                shopAuthEntity.setShopId(shopInfo.getId());
+                shopAuthEntity.setToken(dto.getToken());
+                shopAuthEntity.setAccessToken(dto.getToken());
+                shopAuthService.saveOrUpdate(shopAuthEntity);
+            }
+        }
         //修改授权信息进行校验
         checkAuthInfo(dto,shopInfo);
         Boolean result = this.updateById(shopInfo);
