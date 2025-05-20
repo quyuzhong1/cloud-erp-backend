@@ -177,6 +177,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
             e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
         });
         List<FirstMileChangeRecordEntity> list = FirstMileChangeRecordConverter.INSTANCE.changeProductWeightDtoToEntityConvert(dtoValidList);
+        saveProductWeightByEntity(list);
+    }
+
+    @Override
+    public void saveProductWeightByEntity(List<FirstMileChangeRecordEntity> list) {
         //新增记录前修改原来的记录为非最新记录
         list.forEach(e -> {
             e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
@@ -186,9 +191,12 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
                 .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
                 .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                .eq(FirstMileChangeRecordEntity::getChangeRange, e.getChangeRange())
                 .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
                 .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
                 .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
                 .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
         });
         //新增记录
@@ -282,22 +290,27 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         if (CollUtil.isEmpty(entityList)){
             return;
         }
+        savePackageByEntity(entityList);
+
+    }
+    @Override
+    public void savePackageByEntity(List<FirstMileChangeRecordEntity> entityList) {
         //新增记录前修改原来的记录为非最新记录
         entityList.forEach(e -> this.lambdaUpdate()
-               .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
-               .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
-              .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
-              .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
-              .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
-              .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
-             .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
              .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
         //新增记录
         boolean saveBatch = this.saveBatch(entityList);
         if (!saveBatch){
             throw new ServiceException("头程调整记录保存失败");
         }
-
     }
 
     @Override
@@ -361,6 +374,19 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostCurrentPeriodAllocatedDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
                 dto.setIsRetry(Boolean.TRUE);
             }
+            //存在本期或冲期初值时，需要把之前的期末在途修改设置未非最新
+            if (Objects.nonNull(dto.getIsRetry()) && dto.getIsRetry()){
+                this.lambdaUpdate()
+                        .eq(FirstMileChangeRecordEntity::getSourceType, FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode())
+                        .eq(FirstMileChangeRecordEntity::getBusinessCode, dto.getBusinessCode())
+                        .eq(FirstMileChangeRecordEntity::getDeliveryCode, dto.getSourceCode())
+                        .eq(FirstMileChangeRecordEntity::getLogisticsBillId, dto.getLogisticsBillId())
+                        .eq(FirstMileChangeRecordEntity::getSkuId, dto.getSkuId())
+                        .eq(FirstMileChangeRecordEntity::getCategory, dto.getFeeType())
+                        .eq(FirstMileChangeRecordEntity::getCategoryField, FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_TRANSIT_COST.getCode())
+                        .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
+                        .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            }
             if (dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) != 0){
                 //新增期末在途费用调整记录
                 entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostEndPeriodTransitDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
@@ -388,6 +414,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getSkuId, e.getSkuId())
                 .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
                 .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
                 .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
         //新增记录
         boolean saveBatch = this.saveBatch(entityList);

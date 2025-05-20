@@ -112,7 +112,7 @@
     <select id="listByReportPeriodStr"
             resultType="com.erp.model.tms.entity.TransferDeclareCostAllocationEntity">
         select
-            <include refid="Base_Column_List"/>
+            tdca.id,tdca.main_id
         from transfer_declare_cost_allocation tdca
         left join transfer_declare_cost_allocation_main tdcam on tdca.main_id = tdcam.id and tdcam.is_deleted = false
         where tdca.is_deleted = false
