@@ -53,9 +53,19 @@ public class CamundaDTO {
          */
         private String timeoutHandling;
         /**
+         * 抄送选项
+         */
+        private String copyOption;
+
+        /**
          * 抄送人
          */
         private String copyUser;
+
+        /**
+         * 抄送角色
+         */
+        private String copyRole;
 
         /**
          * 指定人表达式
