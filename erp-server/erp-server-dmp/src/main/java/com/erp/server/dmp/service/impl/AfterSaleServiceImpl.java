@@ -35,6 +35,7 @@ import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -42,6 +43,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -116,6 +118,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     private MQProducerService mQProducerService;
     @Resource
     private DmpPushMsgService dmpPushMsgService;
+
+    @Resource
+    private OmsDropDownFeign omsDropDownFeign;
 
 
 
@@ -942,6 +947,13 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         //单据状态
         data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
+        if(StringUtils.isNotBlank(data.getDictPlatform())){
+            ApiResult<List<BaseDropDownDTO.CommonDTO>> listApiResult = omsDropDownFeign.listInternalSalesPlatform(DictBasicTypeEnum.MINI_PROGRAM_SALES_PLATFORM_INTERNAL.getType());
+            BaseDropDownDTO.CommonDTO commonDTO = listApiResult.getData().stream().filter(e -> e.getCode().equals(data.getDictPlatform())).findFirst().orElse(null);
+            if(Objects.nonNull(commonDTO)){
+                data.setDictPlatformName(commonDTO.getValue());
+            }
+        }
 
         if(!data.getStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
             data.setApproveTime(null);
