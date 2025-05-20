@@ -33,4 +33,6 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
     Boolean update(CfgSettingDTO.UpdateDTO dto);
 
 
+    //根据环境配置返回不同的PC链接
+    String getPcLinkByEnv();
 }

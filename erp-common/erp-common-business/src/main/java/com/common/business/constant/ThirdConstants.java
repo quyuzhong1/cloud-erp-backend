@@ -55,4 +55,6 @@ public class ThirdConstants {
     public static final String FS_APPROVE_MESSAGE_SEND_URL = "https://open.feishu.cn/open-apis/approval/v1/message/send/";
     //更新审批 Bot 消息地址
     public static final String FS_APPROVE_MESSAGE_UPDATE_URL = "https://open.feishu.cn/open-apis/approval/v1/message/update/";
+    //Bot消息模板
+    public static final String TEMPLATE_ID_1008 = "1008";
 }
