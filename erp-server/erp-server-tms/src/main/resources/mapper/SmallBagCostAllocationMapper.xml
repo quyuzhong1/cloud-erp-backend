@@ -122,7 +122,7 @@
     </select>
     <select id="listByReportPeriodStr" resultType="com.erp.model.tms.entity.SmallBagCostAllocationEntity">
         select
-            <include refid="Base_Column_List" />
+            sbca.id,sbca.main_id
             from small_bag_cost_allocation sbca
         left join small_bag_cost_allocation_main sbcam on sbca.main_id = sbcam.id and sbcam.is_deleted = false
         where sbca.is_deleted = false

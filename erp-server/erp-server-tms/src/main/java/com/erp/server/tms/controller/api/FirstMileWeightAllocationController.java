@@ -2,29 +2,31 @@ package com.erp.server.tms.controller.api;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.server.tms.query.FirstMileWeightAllocationQueryHandler;
 import com.erp.server.tms.service.FirstMileChangeRecordService;
+import com.erp.server.tms.service.FirstMileWeightAllocationService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-
-import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogSystemModule;
-import com.common.business.dto.base.*;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.tms.service.FirstMileWeightAllocationService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -167,5 +169,14 @@ public class FirstMileWeightAllocationController extends BaseController {
             batchResultDTOS.add(resultDTO);
         }
         return batchResultDTOS.stream().allMatch(BatchResultDTO::getSuccess)? success(batchResultDTOS) : failure(batchResultDTOS);
+    }
+    /**
+     * 批量导入修改
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入重量分摊调整")
+    @PostMapping("/importExcel")
+    public ApiResult importExcel(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = firstMileWeightAllocationService.importExcel(excelFile, response);
+        return result?success():failure();
     }
 }

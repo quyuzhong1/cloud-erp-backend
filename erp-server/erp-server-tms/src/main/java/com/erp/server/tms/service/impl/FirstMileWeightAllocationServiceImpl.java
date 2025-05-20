@@ -2,6 +2,8 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -11,6 +13,8 @@ import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
+import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.date.DateUtil;
@@ -21,28 +25,37 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.CfgSettingDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
+import com.erp.model.tms.dto.excel.FirstMileWeightChangeExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsCartonDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
+import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.model.wms.enums.FbaDemandTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.plm.feign.ProductDetailFeign;
 import com.erp.rpc.plm.feign.ProductPackFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.wms.feign.*;
+import com.erp.server.tms.listener.FirstMileWeightChangeExcelListener;
 import com.erp.server.tms.mapper.FirstMileWeightAllocationMapper;
 import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.SocketTimeoutException;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -774,6 +787,49 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             }
         }
         return list;
+    }
+
+    @Override
+    public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
+        FirstMileWeightChangeExcelListener excelListenerUtil = new FirstMileWeightChangeExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), FirstMileWeightChangeExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            //数据验证
+            List<FirstMileWeightChangeExcelDTO> dataList = excelListenerUtil.getDataList();
+            //错误的
+            List<FirstMileWeightChangeExcelDTO> errorList = excelListenerUtil.getErrorList();
+            //处理验证成功数据
+            handleImportSuccessList(dataList, errorList);
+            if (errorList.size() > 0) {
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/firstMileWeightChangeExportError.xlsx";
+                String name = "头程重量分摊调整错误.xlsx";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    throw new ServiceException(ApiError.ERROR_95125);
+                }
+                return Boolean.FALSE;
+            }
+        } catch (SocketTimeoutException e) {
+            log.error("导入超时错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        return Boolean.TRUE;
+
+    }
+
+    private void handleImportSuccessList(List<FirstMileWeightChangeExcelDTO> dataList, List<FirstMileWeightChangeExcelDTO> errorList) {
     }
 
 

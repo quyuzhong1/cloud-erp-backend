@@ -5,7 +5,9 @@ import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -96,4 +98,12 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * @return
      */
     List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> viewProductWeight(FirstMileWeightAllocationDTO.ViewProductWeightParamDTO dto);
+
+    /**
+     * 导入Excel
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 }
