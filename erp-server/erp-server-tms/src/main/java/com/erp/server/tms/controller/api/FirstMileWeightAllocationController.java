@@ -57,7 +57,7 @@ public class FirstMileWeightAllocationController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
             menuCode = "tms:firstMileWeightAllocation:paging",
-            tableAlias = "a"
+            tableAlias = "wa"
     )
     @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
     public ApiResult<PagingVO<FirstMileWeightAllocationDTO.ViewDTO>> paging(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
