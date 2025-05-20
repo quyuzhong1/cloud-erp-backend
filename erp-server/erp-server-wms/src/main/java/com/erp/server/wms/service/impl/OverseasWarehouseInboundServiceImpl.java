@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -250,11 +251,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 String msg = CharSequenceUtil.format("海外仓入库单明细中找不到skuId为【{}】的明细", itemDTO.getSkuId());
                 throw new ServiceException(msg);
             }
-            ThirdWarehouseCreateInboundReq.Item currentItem = ThirdWarehouseCreateInboundReq.Item.builder()
-                    .productSku(firstMileDeliveryDetailEntity.getPlatformSkuNo())
-                    .boxNo(Integer.parseInt(itemDTO.getBoxNo()))
-                    .quantity(itemDTO.getPackQty())
-                    .build();
+            ThirdWarehouseCreateInboundReq.Item currentItem = BeanUtil.copyProperties(itemDTO, ThirdWarehouseCreateInboundReq.Item.class);
+            currentItem.setProductSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
+            currentItem.setQuantity(itemDTO.getPackQty());
+            currentItem.setBoxNo(Integer.parseInt(itemDTO.getBoxNo()));
             itemList.add(currentItem);
         }
         String contactName = shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_FIRST_NAME) + shipperInfo.get(SettingEnum.WMS_OVERSEAS_INBOUND_LAST_NAME);
@@ -289,6 +289,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 .collectingService(collectingService)
                 .deliveryCode(mainEntity.getExpressNo())
                 .declareType(mainEntity.getDeclareType())
+                .remark(mainEntity.getRemark())
                 //发货信息
                 .shiperInfo(ThirdWarehouseCreateInboundReq.ShiperInfo.builder()
                         .contacterName(contactName)
@@ -809,6 +810,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             // 请求第三方
             ThirdWarehouseCancelInboundReq cancelInboundReq = new ThirdWarehouseCancelInboundReq();
             cancelInboundReq.setReceivingCode(mainEntity.getCode());
+            cancelInboundReq.setSourceCode(mainEntity.getSourceCode());
             ThirdWarehouseService handlerService = thirdWarehouseRegistry.getHandlerByAuthId(providerEntity.getId());
             log.info("取消海外入库单推送第三方仓库: dto={}", JSONUtil.toJsonStr(cancelInboundReq));
             ApiResult<String> resultInfo = handlerService.cancelInboundBill(cancelInboundReq, providerEntity.getId());

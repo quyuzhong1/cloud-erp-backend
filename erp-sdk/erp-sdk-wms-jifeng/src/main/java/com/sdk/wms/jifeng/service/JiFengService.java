@@ -7,6 +7,7 @@ import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.parser.ParserConfig;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
+import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
 import com.sdk.wms.jifeng.dto.response.*;
 import com.sdk.wms.jifeng.utils.JiFengUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -28,12 +29,16 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","8a96fa62d4df4afeb8c88d73f0912b7c");
+        authMap.put("accessToken","4a23fe79adb440d6b929e51503464692");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
-
-        jiFengService.getInventoryList(authMap,"BR01");
+        JiFengCreateInboundRequest jiFengCreateInboundRequest = new JiFengCreateInboundRequest();
+        jiFengCreateInboundRequest.setErpNo("FHD123456");
+        jiFengCreateInboundRequest.setTrackingNo("test123456");
+        jiFengCreateInboundRequest.setExpectedTime("2025-06-19 00:00:10");
+//        jiFengCreateInboundRequest
+        jiFengService.getInbound(authMap,"IN5200021");
         System.out.println(123);
     }
 //    public static void main(String[] args) {
@@ -281,6 +286,50 @@ public class JiFengService {
         return result;
     }
 
+    /**
+     * 创建入库单
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<JiFengCreateInboundResp> createInbound(Map<String,Object> authMap, JiFengCreateInboundRequest jiFengCreateInboundRequest){
+        String path = "/api/inbound/create";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        String bodyStr = OkHttpUtils.doPostJson(url+path, JSONUtil.toJsonStr(jiFengCreateInboundRequest), headerMap);
+        JiFengBaseResp<JiFengCreateInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateInboundResp.class);
+        return response;
+    }
+    /**
+     * 取消入库单
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<JiFengCreateInboundResp> cancelInbound(Map<String,Object> authMap, String inboundNo,String erpNo){
+        String path = "/api/inbound/cancel";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("inboundNo",inboundNo);
+        paramMap.put("erpNo",erpNo);
+        String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        JiFengBaseResp<JiFengCreateInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateInboundResp.class);
+        return response;
+    }
+    /**
+     * 查询入库单
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<JiFengCreateInboundResp> getInbound(Map<String,Object> authMap, String inboundNo){
+        String path = "/api/inbound/get";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("inboundNo",inboundNo);
+        String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        JiFengBaseResp<JiFengCreateInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateInboundResp.class);
+        return response;
+    }
     private Map<String, String> buildHearderMap(Map<String, Object> authMap, String path) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("url", path);
