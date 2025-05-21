@@ -199,6 +199,9 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
                         .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
             }else if (FirstMileChangeRecordChangeRangeEnum.BOX.getCode().equals(e.getChangeRange())){
+                List<String> changeRangeList = new ArrayList<>();
+                changeRangeList.add(FirstMileChangeRecordChangeRangeEnum.BOX.getCode());
+                changeRangeList.add(FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode());
                 this.lambdaUpdate()
                         .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
                         .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
@@ -206,6 +209,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
                         .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
                         .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                        .in(FirstMileChangeRecordEntity::getChangeRange, changeRangeList)
                         .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
                         .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
                         .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
@@ -220,6 +224,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
                         .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
                         .eq(FirstMileChangeRecordEntity::getSourceId, e.getSourceId())
+                        .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode())
                         .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
                         .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
                         .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
