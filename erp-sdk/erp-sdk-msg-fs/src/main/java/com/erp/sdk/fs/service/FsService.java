@@ -21,10 +21,14 @@ import com.erp.sdk.fs.enmu.DepartmentIdTypeEnum;
 import com.erp.sdk.fs.enmu.UserIdTypeEnum;
 import com.google.gson.JsonParser;
 import com.lark.oapi.Client;
+import com.lark.oapi.core.request.FormData;
+import com.lark.oapi.core.response.RawResponse;
+import com.lark.oapi.core.token.AccessTokenType;
 import com.lark.oapi.core.utils.Jsons;
 import com.lark.oapi.service.approval.v4.model.*;
 import com.lark.oapi.service.contact.v3.model.*;
 import com.lark.oapi.service.contact.v3.model.User;
+import com.lark.oapi.service.im.v1.model.CreateFileReqBody;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.*;
 import org.apache.commons.lang3.StringUtils;
@@ -33,8 +37,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -42,7 +48,6 @@ import static com.erp.model.sys.vo.FsBatchSendMessageDTO.getTextMessageMap;
 
 /**
  * @Classname FsService
-
  * @Date 2022-08-22 9:22
  * @Created by yl
  */
@@ -54,10 +59,12 @@ public class FsService {
 
     @Value("${third.fs.appUrl}")
     private String fsAppUrl;
+
     @Autowired
     public FsService(FsProperties fsProperties) {
         this.fsProperties = fsProperties;
     }
+
     private static final String FS_AUTHORIZATION = "Bearer ";
 
     private static final String TAG = "tag";
@@ -70,6 +77,7 @@ public class FsService {
     /**
      * 根据code 获取飞书用户信息
      * https://open.feishu.cn/document/server-docs/authentication-management/login-state-management/get?appId=cli_a2c644b09af9500d
+     *
      * @param dto
      * @return java.util.Map<java.lang.String, java.lang.Object>
      * @author yl
@@ -218,6 +226,7 @@ public class FsService {
 
     /**
      * 发送消息
+     *
      * @param unionId
      * @param titleContent
      * @param textContent
@@ -354,6 +363,7 @@ public class FsService {
     /**
      * 获取Client实例的方法
      * 该方法用于构建并返回一个配置了必要参数的Client实例，以便与飞书API进行交互
+     *
      * @return Client 实例，用于发送网络请求
      */
     public Client getClient() {
@@ -370,6 +380,7 @@ public class FsService {
     /**
      * 批量通过手机号或邮箱获取用户
      * https://open.feishu.cn/document/server-docs/contact-v3/user/batch_get_id
+     *
      * @author jack
      * @date 2025-05-13
      */
@@ -404,6 +415,7 @@ public class FsService {
     /**
      * 批量获取用户信息
      * https://open.feishu.cn/document/contact-v3/user/batch
+     *
      * @author jack
      * @date 2025-05-13
      */
@@ -435,6 +447,7 @@ public class FsService {
     /**
      * 创建三方审批定义
      * https://open.feishu.cn/document/server-docs/approval-v4/external_approval/create
+     *
      * @author jack
      * @date 2025-05-14
      */
@@ -460,6 +473,7 @@ public class FsService {
     /**
      * 获取子部门列表
      * https://open.feishu.cn/document/server-docs/contact-v3/department/children
+     *
      * @author jack
      * @date 2025-05-14
      */
@@ -496,6 +510,7 @@ public class FsService {
     /**
      * 同步三方审批实例
      * https://open.feishu.cn/document/server-docs/approval-v4/external_instance/create
+     *
      * @author jack
      * @date 2025-05-16
      */
@@ -503,6 +518,7 @@ public class FsService {
         try {
             // 构建client
             Client client = getClient();
+
 
             // 发起请求
             CreateExternalInstanceResp resp = client.approval().v4().externalInstance().create(req);
@@ -888,4 +904,114 @@ public class FsService {
         return resp;
     }
 
+    /**
+     * 创建飞书审批实例
+     */
+    public void createInstance(CreateInstanceReq req) throws Exception {
+        // 构建client
+        Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+
+        // 发起请求
+        CreateInstanceResp resp = client.approval().v4().instance().create(req);
+
+        // 处理服务端错误
+        if (!resp.success()) {
+            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+            return ;
+        }
+
+        // 业务数据处理
+        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+    }
+
+    /**
+     * 获取飞书审批实例
+     */
+    public GetInstanceResp getInstance(String instanceCode) throws Exception {
+        // 构建client
+        Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+
+        // 创建请求对象
+        GetInstanceReq req = GetInstanceReq.newBuilder()
+                .instanceId("81D31358-93AF-92D6-7425-01A5D67C4E71")
+                .locale("zh-CN")
+                .userId("f7cb567e")
+                .userIdType("user_id")
+                .build();
+
+        // 发起请求
+        GetInstanceResp resp = client.approval().v4().instance().get(req);
+
+        // 处理服务端错误
+        if (!resp.success()) {
+            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+
+        }
+
+        // 业务数据处理
+        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+        return resp;
+    }
+
+    /**
+     * 批量获取审批实例 ID
+     */
+    public ListInstanceResp batchGetInstanceId(String code) throws Exception {
+        // 构建client
+        Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+
+        // 创建请求对象
+        ListInstanceReq req = ListInstanceReq.newBuilder()
+                .pageSize(100)
+                .pageToken("nF1ZXJ5VGhlbkZldGNoCgAAAAAA6PZwFmUzSldvTC1yU")
+                .approvalCode("7C468A54-8745-2245-9675-08B7C63E7A85")
+                .startTime("1567690398020")
+                .endTime("1567690398020")
+                .build();
+
+        // 发起请求
+        ListInstanceResp resp = client.approval().v4().instance().list(req);
+
+        // 处理服务端错误
+        if (!resp.success()) {
+            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+        }
+        return resp;
+    }
+
+    /**
+     * 上传文件
+     * TODO 有问题待处理
+     */
+    public void uploadApprovalFile() {
+        try {
+            // 创建 Client
+            Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+            // 准备文件路径
+            File  file = new File("file_path");
+            // 构建请求
+            com.lark.oapi.service.im.v1.model.CreateFileReq createFileReq = com.lark.oapi.service.im.v1.model.CreateFileReq.newBuilder()
+                    .createFileReqBody(com.lark.oapi.service.im.v1.model.CreateFileReqBody.newBuilder()
+                            .fileType("file_type") // 替换为实际文件类型
+                            .fileName("file_name") // 替换为实际文件名
+                            .file(file)
+                            .build())
+                    .build();
+            // 调用接口
+            com.lark.oapi.service.im.v1.model.CreateFileResp createFileResp = client.im().file().create(createFileReq);
+            // 检查响应
+            if (!createFileResp.success()) {
+                System.out.printf("上传失败，错误码：%d，错误信息：%s，日志 ID：%s%n",
+                        createFileResp.getCode(), createFileResp.getMsg(), createFileResp.getRequestId());
+                return;
+            }
+            // 打印成功信息
+            System.out.println("上传成功，文件 Key：" + createFileResp.getData().getFileKey());
+        } catch (Exception e) {
+            throw new RuntimeException("文件上传失败", e);
+        }
+    }
 }

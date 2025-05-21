@@ -197,7 +197,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.CHECKBOXV2 && sysFieldType != CfgQueryOptionFieldTypeEnum.CHECKBOXV2) {
                 throw new ServiceException("飞书多选项仅可支持生成多选项");
             }
-            if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATETIME && sysFieldType != CfgQueryOptionFieldTypeEnum.DATETIME) {
+            if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATE && sysFieldType != CfgQueryOptionFieldTypeEnum.DATE) {
                 throw new ServiceException("飞书日期仅支持转日期");
             }
             if (dto.getIsDetailField()!=null && !CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode().equals(fieldToEntityMap.get(dto.getSysField()).getFieldBelongsType())){

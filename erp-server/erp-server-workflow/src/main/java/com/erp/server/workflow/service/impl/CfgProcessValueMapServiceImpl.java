@@ -158,7 +158,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
             dropDownDTOS.add(dropDownDTO);
             return dropDownDTOS;
         } catch (Exception e) {
-            throw new ServiceException("飞书选项值列表转换异常");
+            throw new ServiceException("飞书选项值列表转换异常：{}",e.getMessage());
         }
     }
 

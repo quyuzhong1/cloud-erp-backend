@@ -141,7 +141,7 @@ public class CfgProcessExpDTO implements Serializable {
         * 条件包含-右括号
         */
         @NotNull(message = "条件包含不能为空")
-        private Boolean rightBracket;
+        private String rightBracket;
 
         /**
         * 多条件逻辑关系
@@ -159,11 +159,8 @@ public class CfgProcessExpDTO implements Serializable {
         /**
         * 值对应名称
         */
-        @NotBlank(message = "值对应名称不能为空")
         @Size(max = 100,message = "值对应名称最大长度不能超过100位")
         private String name;
-
-
     }
 
 

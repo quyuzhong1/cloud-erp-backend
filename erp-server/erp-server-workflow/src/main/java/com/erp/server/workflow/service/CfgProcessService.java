@@ -64,5 +64,7 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
      * @return CfgProcessEntity
      */
     CfgProcessEntity getByBusinessKey(String businessKey);
+
+    void startThirdProcess(CfgProcessDTO.StartDTO dto);
 }
 

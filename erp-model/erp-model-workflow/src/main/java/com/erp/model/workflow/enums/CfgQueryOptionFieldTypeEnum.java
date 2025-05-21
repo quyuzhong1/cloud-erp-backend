@@ -17,7 +17,7 @@ public enum CfgQueryOptionFieldTypeEnum implements EnumMessage {
 	RADIOV2("radioV2", "单选"),
 	INPUT("input", "单行文本"),
     TEXTAREA("input", "多行文本"),
-	DATETIME("datetime", "日期"),
+	DATE("date", "日期"),
 	NUMBER("number", "数值"),
 	AMOUNT("amount", "金额"),
 	ATTACHMENTV2("attachmentV2", "附件"),
