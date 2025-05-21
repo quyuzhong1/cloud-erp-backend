@@ -183,6 +183,12 @@ public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
     @TableField(exist = false)
     private OtherInStockImportExcelDTO importExcelDTO;
 
+    /**
+     * 是否推送旺店通
+     */
+    @TableField(exist = false)
+    private  Boolean isPushWdt;
+
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String BILL_DATE = "bill_date";

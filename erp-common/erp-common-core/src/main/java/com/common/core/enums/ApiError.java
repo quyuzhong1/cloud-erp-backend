@@ -243,6 +243,20 @@ public enum ApiError implements Serializable {
     PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
     // 流程未完成部署，请先完成流程部署
     PROCESS_NOT_DEPLOY(94032,"流程未完成部署，请先完成流程部署"),
+    PROCESS_DELEGATE_CLOSE(94032,"仅支持运行中/待执行可操作终止"),
+    PROCESS_DELEGATE_CLOSE_ERROR(94033,"委托审批单终止失败"),
+    PROCESS_DELEGATE_UPDATE(94034,"仅待执行可操作编辑"),
+    PROCESS_DELEGATE_TIME_ERROR(94035,"委托失效时间不可小于生效时间"),
+    PROCESS_DELEGATE_BUSINESS_KEY_ERROR(94036,"委托审批单【{}】已存在此流程"),
+    PROCESS_DELEGATE_BUSINESS_KEY_EXIST(94037,"委托流程【{}】已存在"),
+    PROCESS_MANAGEMENT_NOT_EXIST(94038,"流程管理不存在"),
+    PROCESS_MANAGEMENT_PASS_ERROR(94039,"强制通过操作仅针对运行、暂停状态的流程有效"),
+    PROCESS_MANAGEMENT_REJECT_ERROR(94040,"强制驳回操作仅针对运行、暂停状态的流程有效"),
+    PROCESS_MANAGEMENT_RESTORE_ERROR(94041,"恢复操作仅针对暂停状态的流程实例有效"),
+    PROCESS_MANAGEMENT_SUSPEND_ERROR(94042,"暂停操作仅针对状态为“运行中”的流程有效"),
+    PROCESS_DEFINITION_DISABLED_ERROR(94043,"关联流程配置有关联启用流程时，不可操作停用"),
+    PROCESS_RULE_REPEAT_ERROR(94044,"{}流程设置下存在多条符合条件的规则，请检查"),
+
 
     /**
      * PLM 错误

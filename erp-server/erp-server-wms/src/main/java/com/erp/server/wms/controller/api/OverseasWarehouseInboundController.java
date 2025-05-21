@@ -117,11 +117,6 @@ public class OverseasWarehouseInboundController extends BaseController {
      * @date: 2023/11/27
      */
     @PostMapping("/viewList")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:overseasWarehouseInbound:view",
-            serviceClass = OverseasTransferWarehouseService.class,
-            keyIdName = "id")
     public ApiResult<List<OverseasWarehouseInboundDetailDTO.ViewListDTO>> view(@RequestBody @Validated OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
         List<OverseasWarehouseInboundDetailDTO.ViewListDTO> resultList = overseasWarehouseInboundService.viewList(dto);
         return success(resultList);
@@ -269,11 +264,6 @@ public class OverseasWarehouseInboundController extends BaseController {
      */
     @PostMapping("/changeReceived")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "调整签收:{detailId}")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:overseasWarehouseInbound:changeReceived",
-            serviceClass = OverseasWarehouseInboundService.class,
-            keyIdName = "id")
     public ApiResult changeReceived(@RequestBody @Validated List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = overseasWarehouseInboundDetailService.allChangeReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);

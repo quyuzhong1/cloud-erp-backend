@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -10,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.FirstMileSkuCostAllocationDetailDTO;
 import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
+import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.server.tms.mapper.FirstMileSkuCostAllocationDetailMapper;
 import com.erp.server.tms.service.FirstMileSkuCostAllocationDetailService;
 import com.erp.server.tms.service.OperateLogService;
@@ -116,6 +118,14 @@ public class FirstMileSkuCostAllocationDetailServiceImpl extends SuperServiceImp
             return;
         }
         this.lambdaUpdate().set(FirstMileSkuCostAllocationDetailEntity::getEndPeriodEstimatedCost, new BigDecimal(newEndPeriodEstimatedCost)).eq(FirstMileSkuCostAllocationDetailEntity::getId, detailId).update();
+    }
+
+    @Override
+    public List<FirstMileSkuCostAllocationDetailEntity> listBySourceCodeList(List<String> businessCodeList, List<String> sourceCodeList, List<String> transportNoList) {
+        if (CollUtil.isEmpty(businessCodeList) && CollUtil.isEmpty(sourceCodeList) && CollUtil.isEmpty(transportNoList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listBySourceCodeList(businessCodeList,sourceCodeList,transportNoList);
     }
 
 }

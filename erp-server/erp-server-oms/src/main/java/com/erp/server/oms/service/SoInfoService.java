@@ -5,13 +5,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
-import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.scm.dto.SkuCostProfitDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
@@ -42,12 +39,12 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
     /**
      * 提交
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-16 14:41
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SoInfoEntity entity);
 
 
     /**
@@ -138,10 +135,10 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @Author Luo_WG
      * @Date 2023/7/4 10:55
      * @param dto
-     * @param list
+     * @param entity
      * @return java.lang.Boolean
      **/
-    Boolean approveEnd(BaseApproveParamDTO dto,List<SoInfoEntity> list);
+    Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity);
 
     /**
      * 反审核

@@ -145,6 +145,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         && item.getBoxId().equals(e.getBoxId())
                         && item.getBusinessCode().equals(e.getBusinessCode())
                         && item.getPlatformSkuNo().equals(e.getPlatformSkuNo())
+                        && item.getNewProductWeight().compareTo(e.getNewProductWeight()) != 0
                 ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             } else if (FirstMileChangeRecordChangeRangeEnum.BOX.getCode().equals(e.getChangeRange())) {
                 //判断是否同箱同SKU
@@ -153,6 +154,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         && item.getSourceCode().equals(e.getSourceCode())
                         && item.getBoxId().equals(e.getBoxId())
                         && item.getBusinessCode().equals(e.getBusinessCode())
+                        && item.getNewProductWeight().compareTo(e.getNewProductWeight()) != 0
                 ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             } else if (FirstMileChangeRecordChangeRangeEnum.ORDER.getCode().equals(e.getChangeRange())) {
                 //判断是否同单同SKU
@@ -160,6 +162,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         && item.getSkuId().equals(e.getSkuId())
                         && item.getSourceCode().equals(e.getSourceCode())
                         && item.getBusinessCode().equals(e.getBusinessCode())
+                        && item.getNewProductWeight().compareTo(e.getNewProductWeight()) != 0
                 ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             }
         }
@@ -177,19 +180,60 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
             e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
         });
         List<FirstMileChangeRecordEntity> list = FirstMileChangeRecordConverter.INSTANCE.changeProductWeightDtoToEntityConvert(dtoValidList);
+        saveProductWeightByEntity(list);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveProductWeightByEntity(List<FirstMileChangeRecordEntity> list) {
         //新增记录前修改原来的记录为非最新记录
         list.forEach(e -> {
             e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
-            this.lambdaUpdate()
-                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
-                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
-                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
-                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
-                .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
-                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
-                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
-                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
-                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            if (FirstMileChangeRecordChangeRangeEnum.ORDER.getCode().equals(e.getChangeRange())){
+                this.lambdaUpdate()
+                        .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                        .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                        .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                        .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                        .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                        .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                        .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                        .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            }else if (FirstMileChangeRecordChangeRangeEnum.BOX.getCode().equals(e.getChangeRange())){
+                List<String> changeRangeList = new ArrayList<>();
+                changeRangeList.add(FirstMileChangeRecordChangeRangeEnum.BOX.getCode());
+                changeRangeList.add(FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode());
+                this.lambdaUpdate()
+                        .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                        .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                        .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                        .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                        .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                        .in(FirstMileChangeRecordEntity::getChangeRange, changeRangeList)
+                        .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                        .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                        .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                        .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            }else {
+                this.lambdaUpdate()
+                        .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                        .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                        .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                        .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                        .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                        .eq(FirstMileChangeRecordEntity::getSourceId, e.getSourceId())
+                        .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode())
+                        .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                        .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                        .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                        .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            }
         });
         //新增记录
         boolean saveBatch = this.saveBatch(list);
@@ -209,6 +253,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, platformSkuNo)
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getSourceId, sourceId)
+                .eq(FirstMileChangeRecordEntity::getBoxId, boxId)
                 .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode())
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
                 .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
@@ -282,22 +327,28 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         if (CollUtil.isEmpty(entityList)){
             return;
         }
+        savePackageByEntity(entityList);
+
+    }
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void savePackageByEntity(List<FirstMileChangeRecordEntity> entityList) {
         //新增记录前修改原来的记录为非最新记录
         entityList.forEach(e -> this.lambdaUpdate()
-               .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
-               .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
-              .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
-              .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
-              .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
-              .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
-             .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
              .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
         //新增记录
         boolean saveBatch = this.saveBatch(entityList);
         if (!saveBatch){
             throw new ServiceException("头程调整记录保存失败");
         }
-
     }
 
     @Override
@@ -361,6 +412,19 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostCurrentPeriodAllocatedDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
                 dto.setIsRetry(Boolean.TRUE);
             }
+            //存在本期或冲期初值时，需要把之前的期末在途修改设置未非最新
+            if (Objects.nonNull(dto.getIsRetry()) && dto.getIsRetry()){
+                this.lambdaUpdate()
+                        .eq(FirstMileChangeRecordEntity::getSourceType, FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode())
+                        .eq(FirstMileChangeRecordEntity::getBusinessCode, dto.getBusinessCode())
+                        .eq(FirstMileChangeRecordEntity::getDeliveryCode, dto.getSourceCode())
+                        .eq(FirstMileChangeRecordEntity::getLogisticsBillId, dto.getLogisticsBillId())
+                        .eq(FirstMileChangeRecordEntity::getSkuId, dto.getSkuId())
+                        .eq(FirstMileChangeRecordEntity::getCategory, dto.getFeeType())
+                        .eq(FirstMileChangeRecordEntity::getCategoryField, FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_TRANSIT_COST.getCode())
+                        .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
+                        .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            }
             if (dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) != 0){
                 //新增期末在途费用调整记录
                 entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostEndPeriodTransitDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
@@ -376,6 +440,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 }
             }
         }
+        saveCostByEntity(entityList);
+    }
+
+    @Override
+    public void saveCostByEntity(List<FirstMileChangeRecordEntity> entityList) {
         if (CollUtil.isEmpty(entityList)){
             return;
         }
@@ -388,13 +457,13 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getSkuId, e.getSkuId())
                 .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
                 .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
                 .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
         //新增记录
         boolean saveBatch = this.saveBatch(entityList);
         if (!saveBatch){
             throw new ServiceException("头程调整记录保存失败");
         }
-
     }
 
     @Override
@@ -411,6 +480,20 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
                 .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
                 .last(" limit 1 ").one();
+    }
+
+    @Override
+    public void updateCostIsLatest(String sourceType, String businessCode, String sourceCode, String logisticsBillId, String skuId, String feeType, String categoryField) {
+        this.lambdaUpdate()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getDeliveryCode, sourceCode)
+                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, logisticsBillId)
+                .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getCategory, feeType)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
+                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
     }
 
     private void fillPagingDb(List<FirstMileChangeRecordDTO.PagingVO> list) {

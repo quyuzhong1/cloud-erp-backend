@@ -169,11 +169,12 @@ public class ExportOmsFeignController {
         return skuMappingService.customerPaging(dto);
     }
     @PostMapping("/shop")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "oms:shop:export",
-            serviceClass = ShopInfoService.class,
-            keyIdName = "id")
+            shopTableField = "si.id",
+            menuCode = "oms:shop:paging",
+            tableAlias = "si"
+    )
     @WebAdvanceQuery(handler = ShopQueryHandler.class)
     public PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto) {
         return shopInfoService.exportShop(dto);

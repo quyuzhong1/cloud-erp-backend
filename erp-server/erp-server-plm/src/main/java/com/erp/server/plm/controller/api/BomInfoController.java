@@ -1,9 +1,9 @@
 package com.erp.server.plm.controller.api;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -15,14 +15,15 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.vo.BomPagingVO;
 import com.erp.model.plm.vo.BomVersionVO;
-import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.server.plm.query.BomInfoHandler;
 import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.BomSkuService;
 import com.erp.server.plm.service.ProductBomHistoryService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -36,6 +37,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,6 +46,7 @@ import java.util.List;
  * @author yl
  * @since 2023-01-09 11:45:28
  */
+@Slf4j
 @RestController
 @LogSystemModule("BOM管理")
 @RequestMapping("bom")
@@ -132,32 +135,35 @@ public class BomInfoController extends BaseController {
     }
 
     /**
-     * bom  审核 通过
-     *
-     * @param
-     * @return 新增结果
+     * 审核
+     * @author will
+     * @date 2025/5/16 15:00
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "bom审核通过")
-    @PostMapping("/approvalPass")
-    public ApiResult<Object> approvalPass(@RequestBody @Validated AuditParamDTO dto) {
-        bomInfoService.approvalPass(dto);
-        return success();
+    @PostMapping("/approve")
+    @LogAction(value = LogActionEnum.APPROVE, desc = "bom审核")
+    public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : ids) {
+            BatchResultDTO approveResult;
+            try {
+                approveResult = bomInfoService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+            }catch (Exception e){
+                log.error("bom审核失败",e);
+                BomInfoEntity entity = bomInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    approveResult = BatchResultDTO.fail(id, id, "bom不存在, 审核失败");
+                    resultDTOS.add(approveResult);
+                    continue;
+                }
+                approveResult = BatchResultDTO.fail(entity.getId(), entity.getSerialNumber(), e.getMessage());
+            }
+            resultDTOS.add(approveResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
-
-
-    /**
-     * bom  审核 不通过
-     *
-     * @param
-     * @return 新增结果
-     */
-    @LogAction(value = LogActionEnum.APPROVE, desc = "bom审核不通过")
-    @PostMapping("/approvalNoPass")
-    public ApiResult<Object> approvalNoPass(@RequestBody @Validated AuditParamDTO dto) {
-        bomInfoService.approvalNoPass(dto);
-        return success();
-    }
-
 
     /**
      * 提交审核
@@ -167,24 +173,55 @@ public class BomInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.SUBMIT, desc = "bom提交审核")
     @PostMapping("/submitAudit")
-    public ApiResult<Object> submitAudit(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = bomInfoService.submitAudit(dto.getId());
-        return result == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submitAudit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO submit;
+            try {
+                submit = bomInfoService.submitAudit(id,Boolean.TRUE);
+            }catch (Exception e){
+                log.error("bom单 提交审核失败",e);
+                BomInfoEntity entity = bomInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(id, id, "bom单不存在, 提交失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getSerialNumber(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
-
-
     /**
-     * 重启流程
-     *
+     * 撤销
+     * @author will
+     * @date:  2025-05-16
      * @param dto
-     * @return
+     * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.DISAPPROVE, desc = "bom反审核")
-    @PostMapping("/restartAudit")
-    public ApiResult<Object> restartAudit(@RequestBody @Validated BaseIdDTO dto) {
-        Boolean result = bomInfoService.restartAudit(dto.getId());
-        return result == true ? success() : failure();
+    @PostMapping("/cancelProcess")
+    @LogAction(value = LogActionEnum.CANCEL, desc = "BOM撤销")
+    public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO cancelResult;
+            try {
+                cancelResult = bomInfoService.cancelProcess(id);
+            }catch (Exception e){
+                log.error("BOM撤回流程失败",e);
+                BomInfoEntity entity = bomInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    cancelResult = BatchResultDTO.fail(id, id, "BOM不存在, 撤回流程失败");
+                    resultDTOS.add(cancelResult);
+                    continue;
+                }
+                cancelResult = BatchResultDTO.fail(entity.getId(), entity.getSerialNumber(), e.getMessage());
+            }
+            resultDTOS.add(cancelResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -290,17 +327,6 @@ public class BomInfoController extends BaseController {
 
 
     /**
-     * 发起变更
-     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "发起变更:id={id}")
-    @PostMapping("/startChange")
-    public ApiResult<Object> startChange(@RequestBody @Validated UpdateBomDTO dto) {
-        Boolean result = bomInfoService.startChange(dto);
-        return result == true ? success() : failure();
-    }
-
-
-    /**
      * 导出bom 数据
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出bom")
@@ -355,18 +381,6 @@ public class BomInfoController extends BaseController {
         } catch (Exception e) {
             throw new ServiceException(ApiError.ERROR_95131);
         }
-        return success();
-    }
-
-
-
-    /**
-     * bom审核通过后改变 bom 状态
-     */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "bom审核通过后改变 bom 状态:流程id={processId},具体业务表id={businessTableId}")
-    @PostMapping("/workflow/pass")
-    public ApiResult<Object> processPass(@RequestBody ProcessPassDTO dto) {
-        bomInfoService.bomProcessPass(dto);
         return success();
     }
 

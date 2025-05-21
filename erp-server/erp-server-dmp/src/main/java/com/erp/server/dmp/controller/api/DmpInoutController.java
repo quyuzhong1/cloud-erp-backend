@@ -652,6 +652,16 @@ public class DmpInoutController extends BaseController {
 			queryParams.add(new QueryParam(QueryTypeEnum.LT, "return_time", endTime));
 			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
 			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+			
+			if("1858830998851050201".equals(cfgOutputId)) {
+				queryParams = new ArrayList<>();
+				queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", sourceSystem));
+				queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, "return_time"));
+				queryParams.add(new QueryParam(QueryTypeEnum.GE, "platform_create_time", startTime));
+				queryParams.add(new QueryParam(QueryTypeEnum.LT, "platform_create_time", endTime));
+				dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+				dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+			}
 		} catch (Exception e) {
 			log.warn("失败重推数帝云有时间的退货单，系统：" + sourceSystem);
 			throw e;

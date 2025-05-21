@@ -236,11 +236,11 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         if (matcher.find()) {
             secondContent = matcher.group(1); // 获取第二个方括号内部的内容
         }
-        if (!firstContent.equals(request.getLogisticsNo()) || CharSequenceUtil.isBlank(firstContent) || CharSequenceUtil.isBlank(secondContent)){
-            //整合不符合格式则抛出异常
-            log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API更新物流单异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), message);
-            throw new ServiceException(ALI_API_FAIL + serviceException.getMessage());
-        }
+//        if (!firstContent.equals(request.getLogisticsNo()) || CharSequenceUtil.isBlank(firstContent) || CharSequenceUtil.isBlank(secondContent)){
+//            //整合不符合格式则抛出异常
+//            log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API更新物流单异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), message);
+//            throw new ServiceException(ALI_API_FAIL + serviceException.getMessage());
+//        }
         //更新物流记录
         soB2cFeign.updateLogisticsBySoId(mainEntity.getId(), secondContent);
         //重置发货声明订单号

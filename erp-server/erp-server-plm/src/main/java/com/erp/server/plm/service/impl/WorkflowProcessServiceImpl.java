@@ -3,13 +3,9 @@ package com.erp.server.plm.service.impl;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
-import com.erp.model.plm.entity.PilotApplicationEntity;
-import com.erp.model.plm.entity.ProductLogisticsEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.workflow.dto.EndProcessDTO;
-import com.erp.server.plm.service.LogisticsProductService;
-import com.erp.server.plm.service.PilotApplicationService;
-import com.erp.server.plm.service.ProductLogisticsService;
-import com.erp.server.plm.service.WorkflowProcessService;
+import com.erp.server.plm.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -27,8 +23,19 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private ProductLogisticsService productLogisticsService;
+
     @Resource
     private PilotApplicationService pilotApplicationService;
+
+    @Resource
+    private ProductDetailService productDetailService;
+
+    @Resource
+    private BomInfoService bomInfoService;
+
+    @Resource
+    private ProductChangeService productChangeService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -41,12 +48,59 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 //试产量产单
                 pilotApplicationApproveEnd(dto);
                 break;
+            case PRODUCT_DETAIL:
+                //产品信息
+                productDetailApproveEnd(dto);
+                break;
+            case PRODUCT_BOM_INFO:
+                //Bom信息
+                bomInfoApproveEnd(dto);
+                break;
+            case PRODUCT_CHANGE:
+                //Bom信息
+                productChangeApproveEnd(dto);
+                break;
             default:
                 break;
         }
         return Boolean.TRUE;
     }
-
+    /**
+     * Bom信息审核通过
+     * @param dto
+     */
+    private Boolean bomInfoApproveEnd(EndProcessDTO dto) {
+        BomInfoEntity entity = bomInfoService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        approveOne.setVariablesMap(dto.getVariablesMap());
+        return bomInfoService.approveEnd(approveOne,entity);
+    }
+    /**
+     * 产品变更审核通过
+     * @param dto
+     */
+    private Boolean productChangeApproveEnd(EndProcessDTO dto) {
+        ProductChangeEntity entity = productChangeService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        approveOne.setVariablesMap(dto.getVariablesMap());
+        return productChangeService.approveEnd(approveOne,entity);
+    }
+    /**
+     * 产品信息审核通过
+     * @param dto
+     */
+    private Boolean productDetailApproveEnd(EndProcessDTO dto) {
+        ProductDetailEntity entity = productDetailService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        approveOne.setVariablesMap(dto.getVariablesMap());
+        return productDetailService.approveEnd(approveOne,entity);
+    }
     /**
      * 盘盈盘亏单审核通过
      * @param dto

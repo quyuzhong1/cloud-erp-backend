@@ -3,6 +3,8 @@ package com.erp.server.workflow.listeners;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
+import com.erp.model.workflow.entity.ProcessDelegateEntity;
+import com.erp.server.workflow.service.ProcessDelegateService;
 import com.erp.server.workflow.service.ProcessManagementService;
 import lombok.extern.slf4j.Slf4j;
 import org.camunda.bpm.engine.RuntimeService;
@@ -21,6 +23,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +41,8 @@ public class CamundaGlobalListener {
   private ProcessManagementService processManagementService;
   @Resource
   private RuntimeService runtimeService;
+  @Resource
+  private ProcessDelegateService processDelegateService;
 
   /**
    * This event is triggered when a task instance is created, assigned, completed, deleted or
@@ -195,6 +200,13 @@ public class CamundaGlobalListener {
       Boolean isMultiInstance = nextActPropertiesMap.get("isMultiInstance") != null && Boolean.parseBoolean(nextActPropertiesMap.get("isMultiInstance").toString());
       String startUserId = (String) executionDelegate.getVariable("creator");
       List<String> candidateUsers = processManagementService.getCandidateByAct(destination, executionDelegate, startUserId);
+
+      //查询委托审批信息,重新赋值审核人
+      ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(executionDelegate.getProcessDefinitionId());
+      if (ObjectUtil.isNotEmpty(processDelegateEntity)) {
+            candidateUsers = Collections.singletonList(processDelegateEntity.getDelegateUserId());
+      }
+
       if (Boolean.TRUE.equals(isMultiInstance) || CharSequenceUtil.equals(nextActType, "multiInstanceBody")) {
         executionDelegate.setVariable(MUL_USER_LIST, candidateUsers);
       } else {

@@ -3,6 +3,7 @@ package com.erp.server.workflow.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.validator.ValidList;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
@@ -82,9 +83,11 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
     List<ProcessManagementDTO.CurApproveInfoDTO> listApproverByApprover(@Param("list") ValidList<ProcessManagementDTO.ApproveActivityDTO> dtoList);
 
     /**
-     * 根据流程实例查询待
-     * @param processInstanceId
-     * @return
+     * tab数据查询
+     * @author will
+     * @date 2025/5/15 18:03
+     * @param params
+     * @return List<TabListDTO>
      */
-    List<ProcessManagementDTO.ManagementTaskDTO> listTaskByProcessInstanceId(String processInstanceId);
+    List<ProcessManagementDTO.TabListDTO> tabList(@Param("params") PermissionsDTO params);
 }

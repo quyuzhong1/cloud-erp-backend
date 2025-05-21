@@ -32,8 +32,6 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
-import com.erp.model.dmp.dto.DmpPushWdtDTO;
-import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
@@ -71,7 +69,6 @@ import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
-import com.sdk.wangdian.sdk.api.wms.stockout.dto.CommonCreateBillGoodsReq;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -289,8 +286,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
+        TransferInfoEntity entity = this.getById(id);
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
+        }
         //提交
-        this.submit(Collections.singletonList(id), Boolean.FALSE);
+        this.submit(entity, Boolean.FALSE);
         return id;
     }
 
@@ -303,10 +304,13 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CharSequenceUtil.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        //提交
-        this.submit(Collections.singletonList(id), Boolean.FALSE);
-        //审核
         TransferInfoEntity entity = this.getById(id);
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
+        }
+        //提交
+        this.submit(entity, Boolean.FALSE);
+        //审核
         if (Objects.nonNull(entity)){
             this.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
         }
@@ -354,46 +358,42 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
     public Boolean updateAndSubmit(TransferInfoDTO.UpdateDTO dto) {
         //修改
         this.update(dto);
+        TransferInfoEntity entity = this.getById(dto.getId());
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_99047);
+        }
         //提交
-        return this.submit(Collections.singletonList(dto.getId()), Boolean.TRUE);
+        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids, Boolean isStartProcess) {
-        //根据ids查询
-        List<TransferInfoEntity> list = getList(ids);
-        //待提交或审核不通过并且未作废允许提交
-        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
-        if (count > 0) {
+    public BatchResultDTO submit(TransferInfoEntity entity, Boolean isStartProcess) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainIds(ids);
+
+        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
-
         //验证调出入仓库是否相同
         for (TransferInfoDetailEntity detailEntity : detailList) {
-            String code = list.stream().filter(obj -> obj.getId().equals(detailEntity.getMainId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
             if (detailEntity.getInWarehouseId().equals(detailEntity.getOutWarehouseId())) {
-                throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,code)));
+                throw new ServiceException(new ApiResult(ApiError.ERROR_98069.code,String.format(ApiError.ERROR_98069.msg,entity.getCode())));
             }
         }
-
-        log.info("直接调拨单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
-
+        log.info("直接调拨单提交，id=【{}】", entity.getId());
         //提交流程
         if (isStartProcess) {
-            startProcess(list);
+            startProcess(entity);
         }
-
         //更新审核状态
-        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+        updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("提交了一个直接调拨单【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(), pairList, "提交操作");
-        return Boolean.TRUE;
+        operateLogService.addModuleOperateLog("提交了一个直接调拨单【%s】", ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "提交操作");
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @Override
@@ -1702,7 +1702,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     public PagingVO<TransferInfoDTO.PdaListDTO> pdaPaging(PagingDTO<TransferInfoDTO.PdaSearchParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         TransferInfoDTO.PdaSearchParamDTO params = pagingParamDTO.getParams();
         List<String> approveStatusList = params.getApproveStatusList();
@@ -1713,7 +1712,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             dateList.add(now);
             params.setBillDateList(dateList);
         }
-        IPage<TransferInfoDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        params.setPermissionSql(pagingParamDTO.getPermissionSql());
+        IPage<TransferInfoDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }
@@ -2070,58 +2070,38 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         });
     }
 
-    /**
-     * 生成中间表数据
-     */
-    private DmpPushWdtDTO.AddDTO generateWdtInterim(TransferInfoEntity entity, String operateCode, String warehouseId, String outCode, String thirdWarehouseCode, List<? extends CommonCreateBillGoodsReq> outGoods, SourceTypeEnum sourceTypeEnum) {
-        DmpPushWdtDTO.AddDTO pushWdtDTO = new DmpPushWdtDTO.AddDTO();
-        pushWdtDTO.setSourceId(entity.getId());
-        pushWdtDTO.setSourceCode(entity.getCode());
-        pushWdtDTO.setThirdCode(outCode);
-        pushWdtDTO.setWarehouseId(warehouseId);
-        pushWdtDTO.setThirdWarehouseCode(thirdWarehouseCode);
-        pushWdtDTO.setThirdType(sourceTypeEnum.getCode());
-        pushWdtDTO.setOperateType(operateCode);
-        List<DmpPushWdtDetailDTO> detailDTOList = BeanMapper.copyList(outGoods, DmpPushWdtDetailDTO.class);
-        pushWdtDTO.setDetailDTOList(detailDTOList);
-        return pushWdtDTO;
-    }
-
-    private void startProcess(List<TransferInfoEntity> list) {
+    private void startProcess(TransferInfoEntity entity) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
-        List<String> mainIdList = list.stream()
-                .map(TransferInfoEntity::getId)
-                .collect(Collectors.toList());
-        Map<String, List<TransferInfoDetailDTO.ApproveDTO>> approveDTOS = transferInfoDetailService.listApproveByMainIds(mainIdList, Boolean.TRUE);
-        list.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_INFO.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
-            Map<String, Object> approveMap = BeanUtil.beanToMap(obj);
-            approveMap.put("detailList", approveDTOS.get(obj.getId()));
-            startDTO.setVariablesMap(approveMap);
-            resultList.add(startDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.TRANSFER_INFO.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(userInfo.getUid());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
     }
+
     /**
-     * 移除包含服务和费用的sku明细
+     * variablesMap值赋值
      * @author will
-     * @date 2024/7/26 22:52
-     * @param newList
-     * @return List<TransferInfoDetailEntity>
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
      */
-    private List<TransferInfoDetailEntity> removeNoInventorySku (List<TransferInfoDetailEntity> newList) {
-        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> skuIdList = CollectionUtils.isEmpty(noInventorySkuList)
-                ? new ArrayList<>() : noInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        return newList.stream().filter(obj -> !skuIdList.contains(obj.getSkuId())).collect(Collectors.toList());
+    private Map<String,Object> getVariablesMap(TransferInfoEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99048);
+        }
+        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+        //总计数量
+        Integer qtyTotal = detailList.stream().map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("qtyTotal", qtyTotal);
+        return variablesMap;
     }
 }

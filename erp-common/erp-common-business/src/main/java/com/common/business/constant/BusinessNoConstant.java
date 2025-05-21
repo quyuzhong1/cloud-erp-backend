@@ -177,4 +177,12 @@ public interface BusinessNoConstant {
     String SHSQ = "SHSQ";
     String ZJTZ = "ZJTZ";
     String TCTZ = "TCTZ";
+
+    //委托审批
+    String LCWT = "LCWT";
+
+    String SFSP = "SFSP";
+
+    //流程配置
+    String LCPZ = "LCPZ";
 }

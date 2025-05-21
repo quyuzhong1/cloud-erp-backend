@@ -74,7 +74,7 @@ public class PdaPoReceiveController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "receive_user_id",
-            warehouseTableField = "pr.delivery_warehouse_id",
+            warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:pdaPoReceive:paging",
             tableAlias = "wr"
     )
@@ -357,6 +357,10 @@ public class PdaPoReceiveController extends BaseController {
      * @return com.common.business.vo.PagingVO<java.util.List<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>>
      **/
     @PostMapping("/waitInStockListCount")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "pr.delivery_warehouse_id",
+            menuCode = "wms:pdaPoReceive:waitInStockPaging"
+    )
     public ApiResult<List<WarehouseReceiveDTO.WaitInStockCountDTO>> waitInStockListCount(@RequestBody PermissionsDTO dto) {
         List<WarehouseReceiveDTO.WaitInStockCountDTO> waitInStockCountDTOS = warehouseReceiveService.waitInStockListCount(dto);
         return success(waitInStockCountDTOS);

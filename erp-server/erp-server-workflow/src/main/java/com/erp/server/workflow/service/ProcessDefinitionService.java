@@ -1,11 +1,13 @@
 package com.erp.server.workflow.service;
 
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.ProcessDTO;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
-import com.common.business.service.SuperService;
 
 import java.util.List;
 
@@ -62,4 +64,27 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
     boolean deleteByIds(List<String> ids);
 
     PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
+
+    List<ProcessDefinitionDTO.DropDTO> getProcessDefinition(String businessKey);
+    /**
+     * 更新启禁用状态
+     * @author will
+     * @date 2025/5/15 15:56
+     * @param id
+     * @param disabled
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateDisabled(String id,Boolean disabled);
+    /**
+     * 查询tab数量
+     * @author will
+     * @date 2025/5/15 16:03
+     * @param dto
+     * @return List<TabListDTO>
+     */
+    List<ProcessDefinitionDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    List<ProcessDefinitionDTO.DropDownDTO> dropDown();
+
+    List<ProcessDefinitionDTO.DropDownDTO> proDropDown();
 }

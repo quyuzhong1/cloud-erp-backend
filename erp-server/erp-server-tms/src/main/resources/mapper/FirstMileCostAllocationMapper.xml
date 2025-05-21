@@ -97,7 +97,7 @@
                 ${params.permissionSql}
             </if>
             <if test="params.detailIds != null and params.detailIds.size > 0">
-                and ca.id in
+                and cad.id in
                 <foreach collection="params.detailIds" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>

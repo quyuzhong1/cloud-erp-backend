@@ -35,6 +35,7 @@ import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
@@ -42,6 +43,7 @@ import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.OmsDropDownFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -117,6 +119,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     @Resource
     private DmpPushMsgService dmpPushMsgService;
 
+    @Resource
+    private OmsDropDownFeign omsDropDownFeign;
+
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -170,9 +175,8 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     if(Objects.isNull(detail.getPrice())){
                         AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
                         detail.setPrice(downDTO.getPrice());
-                        //计算总货值
-                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
-                    }else{
+                    }
+                    if(Objects.nonNull(detail.getPrice())){
                         //计算总货值
                         totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
                     }
@@ -183,8 +187,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                     ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
                     detail.setSkuNo(productDetail.getSkuNo());
                     detail.setProductName(productDetail.getName());
-                    //计算总货值
-                    totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                    if(Objects.nonNull(detail.getPrice())){
+                        //计算总货值
+                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                    }
                 }
             }
         }
@@ -369,25 +375,36 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
                 List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
                 Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
                 List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
-                Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-
-                checkDetailQty(detailByPlatformCode, detailList, downDTOMap);
-
-                for (AfterSaleDetailEntity detail : detailList) {
-                    detail.setMainId(afterSaleEntity.getId());
-                    ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-                    detail.setSkuNo(productDetail.getSkuNo());
-                    detail.setProductName(productDetail.getName());
-                    if(Objects.isNull(detail.getPrice())){
-                        AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                        detail.setPrice(downDTO.getPrice());
-                        //计算总货值
-                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
-                    }else{
-                        //计算总货值
-                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                if(CollUtil.isNotEmpty(detailByPlatformCode)){
+                    Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
+                    checkDetailQty(detailByPlatformCode, detailList, downDTOMap);
+                    for (AfterSaleDetailEntity detail : detailList) {
+                        detail.setMainId(afterSaleEntity.getId());
+                        ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
+                        detail.setSkuNo(productDetail.getSkuNo());
+                        detail.setProductName(productDetail.getName());
+                        if(Objects.isNull(detail.getPrice())){
+                            AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                            detail.setPrice(downDTO.getPrice());
+                        }
+                        if(Objects.nonNull(detail.getPrice())){
+                            //计算总货值
+                            totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                        }
+                    }
+                }else {
+                    for (AfterSaleDetailEntity detail : detailList) {
+                        detail.setMainId(afterSaleEntity.getId());
+                        ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
+                        detail.setSkuNo(productDetail.getSkuNo());
+                        detail.setProductName(productDetail.getName());
+                        if(Objects.nonNull(detail.getPrice())){
+                            //计算总货值
+                            totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                        }
                     }
                 }
+
                 //删除明细
                 List<String> ids = detailList.stream().map(AfterSaleDetailEntity::getId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
                 List<AfterSaleDetailEntity> removeList = oldDetailList.stream().filter(item -> !ids.contains(item.getId())).collect(Collectors.toList());
@@ -942,8 +959,15 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
         //单据状态
         data.setStatusName(AfterSaleStatusEnum.getNode(data.getStatus()));
+        if(StringUtils.isNotBlank(data.getDictPlatform())){
+            ApiResult<List<BaseDropDownDTO.CommonDTO>> listApiResult = omsDropDownFeign.listInternalSalesPlatform(DictBasicTypeEnum.MINI_PROGRAM_SALES_PLATFORM_INTERNAL.getType());
+            BaseDropDownDTO.CommonDTO commonDTO = listApiResult.getData().stream().filter(e -> e.getCode().equals(data.getDictPlatform())).findFirst().orElse(null);
+            if(Objects.nonNull(commonDTO)){
+                data.setDictPlatformName(commonDTO.getValue());
+            }
+        }
 
-        if(!data.getStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+        if(!data.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
             data.setApproveTime(null);
         }
     }

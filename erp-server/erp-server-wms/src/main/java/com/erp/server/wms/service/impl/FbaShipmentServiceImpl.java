@@ -5,10 +5,10 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,7 +17,10 @@ import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -41,8 +44,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
-import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
@@ -335,14 +338,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     public List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(String id) {
         List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(Collections.singletonList(id));
-        List<FbaShipmentDTO.ReceiveRecordView> list = new ArrayList<>();
-        for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : fbaShipmentReceiveEntities) {
-            //映射字段
-            FbaShipmentDTO.ReceiveRecordView receiveRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentReceiveEntityToView(fbaShipmentReceiveEntity);
-            list.add(receiveRecordView);
-        }
-        return list.stream()
-                .sorted(Comparator.comparing(FbaShipmentDTO.ReceiveRecordView::getReceiveTime))
+        return fbaShipmentReceiveEntities.stream()
+                .map(FbaShipmentConverter.INSTANCE::fbaShipmentReceiveEntityToView)
                 .collect(Collectors.toList());
     }
 
@@ -1671,11 +1668,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     return;
                 }
             }
+            TransferInfoEntity entity1 = transferInfoService.getById(transferOutId);
+            if (ObjUtil.isEmpty(entity1)) {
+                throw new ServiceException(ApiError.ERROR_99047);
+            }
             //提交
-            transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
+            transferInfoService.submit(entity1, Boolean.FALSE);
 
             //审核
-            TransferInfoEntity entity1 = transferInfoService.getById(transferOutId);
             if (Objects.nonNull(entity1)){
                 transferInfoService.approve(entity1,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
             }
@@ -1973,8 +1973,12 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             LocalDate date = dto.getReceiveDate().with(TemporalAdjusters.firstDayOfMonth());
             String skuId = CharSequenceUtil.isNotBlank(detailEntity.getSkuId()) ? detailEntity.getSkuId() : "";//skuId
             String businessCode = CharSequenceUtil.isNotBlank(entity.getCode()) ? entity.getCode() : "";//业务单号
+            FirstMileCostAllocationDTO.DetailDTO detailDTO = new FirstMileCostAllocationDTO.DetailDTO();
+            detailDTO.setSkuId(skuId);
+            detailDTO.setBusinessCode(businessCode);
+            detailDTO.setReportMonth(date);
             //判断是否存在对应的头程分摊
-            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySkuIdAndCode(skuId, businessCode, date);
+            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySkuIdAndCode(detailDTO);
             if (CollUtil.isNotEmpty(detailDTOS)){
                 throw new ServiceException("货件单号【{}】该月【{}】已生成头程分摊，不可修改",entity.getCode(),date);
             }
@@ -1999,7 +2003,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             }
             receiverdMap.put(receivedEntity.getDetailId(), receivedEntity.getReceiveQty());
             // 头程调整记录
-            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertFbaToChangeRecord(entity, detailEntity, receivedEntity, date, dto.getDeliveryCode()));
+            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertFbaToChangeRecord(entity, detailEntity, receivedEntity, dto.getDeliveryCode()));
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("单号【{}】SKU【{}】新增了一个调整记录,签收【{}】时间【{}】", entity.getCode(), detailEntity.getSkuNo(),receivedEntity.getReceiveQty(),receivedEntity.getReceiveDate()), ModuleTypeEnum.FBA_SHIPMENT.getCode(), entity.getId(), "调整签收");
         }
         //调整记录新增
         firstMileChangeRecordFeign.batchAdd(changeRecordList);

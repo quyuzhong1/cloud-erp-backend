@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.common.business.constant.ApproveType;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -13,6 +14,7 @@ import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
@@ -267,10 +269,13 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             // 生成直接调拨单
             String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entry.getValue(), receiverdMap);
             if (CharSequenceUtil.isNotBlank(transferOutId)) {
-                //提交
-                transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
-                //审核
                 TransferInfoEntity entity = transferInfoService.getById(transferOutId);
+                if (ObjUtil.isEmpty(entity)) {
+                    throw new ServiceException(ApiError.ERROR_99047);
+                }
+                //提交
+                transferInfoService.submit(entity, Boolean.FALSE);
+                //审核
                 if (Objects.nonNull(entity)){
                     try {
                         transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
@@ -379,7 +384,8 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             }
             receiverdMap.put(receivedEntity.getDetailId(), receivedEntity.getReceiveQty());
             // 头程调整记录
-            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertOverseasToChangeRecord(entity, detailEntity, receivedEntity, date));
+            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertOverseasToChangeRecord(entity, detailEntity, receivedEntity));
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("单号【{}】SKU【{}】新增了一个调整记录,签收【{}】时间【{}】", code, detailEntity.getSkuNo(),receivedEntity.getReceiveQty(),receivedEntity.getReceiveTime()), ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), entity.getId(), "调整签收");
         }
         //调整记录新增
         firstMileChangeRecordFeign.batchAdd(changeRecordList);

@@ -227,5 +227,14 @@ public class SysUserInfoController extends BaseController {
         return success(pagingVO);
     }
 
-
+    /**
+     * 飞书人员同步
+     * @author jack
+     * @date:  2025-05-15
+     * @return ApiResult
+     */
+    @PostMapping("/syncFsUser")
+    public void syncFsUser() {
+        sysUserInfoService.syncFsUser();
+    }
 }

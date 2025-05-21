@@ -49,6 +49,12 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
     @Resource
     private TransferOutService transferOutService;
 
+    @Resource
+    private OtherInstockService otherInstockService;
+
+    @Resource
+    private OtherOutstockService otherOutstockService;
+
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
         String businessKey = dto.getBusinessKey();
@@ -97,10 +103,43 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
                 //要货申请变更单
                 requisitionApplicationChangeEnd(dto);
                 break;
+            case OTHER_INSTOCK:
+                //其他入库单
+                otherInstockApproveEnd(dto);
+                break;
+            case OTHER_OUTSTOCK:
+                //其他出库单
+                otherOutstockApproveEnd(dto);
+                break;
             default:
                 break;
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 其他入库单审核通过
+     * @param dto
+     */
+    private Boolean otherInstockApproveEnd(EndProcessDTO dto) {
+        OtherInstockEntity entity = otherInstockService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        approveOne.setVariablesMap(dto.getVariablesMap());
+        return otherInstockService.approveEnd(approveOne,entity);
+    }
+
+    /**
+     * 其他入库单审核通过
+     * @param dto
+     */
+    private Boolean otherOutstockApproveEnd(EndProcessDTO dto) {
+        OtherOutstockEntity entity = otherOutstockService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOne = new ApproveOneDTO();
+        approveOne.setType(dto.getApproveStatus().getStatus());
+        approveOne.setId(dto.getBusinessId());
+        return otherOutstockService.approveEnd(approveOne,entity);
     }
 
     /**

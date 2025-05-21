@@ -371,6 +371,14 @@ public class SysUserFeignController extends BaseController {
     public List<ThirdUnionDTO> getThirdUnionIdsByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds) {
         return sysUserThirdService.getUnionByPlatformAndUserIds(platform, userIds);
     }
+    /**
+     * 根据第三方平台和用户id获取对应的第三方信息
+     * @return
+     */
+    @PostMapping("/getThirdByUserIds")
+    public List<ThirdUnionDTO> getThirdByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds) {
+        return sysUserThirdService.getThirdByUserIds(platform, userIds);
+    }
 
     /**
      * 批量获取用户基本信息，如手机号码，名字，邮箱（过滤掉禁用的用户）

@@ -63,6 +63,7 @@
     <sql id="List_Process_Management">
         SELECT
             ptm.id,
+            pm.id as managementId,
             pm.process_instance_id,
             pm.process_definition_id,
             pm.process_version ,
@@ -71,6 +72,7 @@
             pm.business_id ,
             pm.business_code ,
             pm.business_name ,
+            pm.business_key,
             pm.act_process_definition_id ,
             ptm.cur_approve_id ,
             ptm.cur_activity_id,
@@ -80,7 +82,9 @@
             ptm.cur_approve_name AS cur_approve_name,
             concat(wm.detail_url,pm.business_id) as detail_url,
             pm.create_time as createTime,
-            pm.update_time as updateTime
+            pm.update_time as updateTime,
+            ptm.label_json,
+            pm.end_time
         FROM process_task_management AS ptm
                  LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
                  LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
@@ -215,6 +219,19 @@
         <foreach collection="list" item="item" open="(" separator="," close=")">
             (#{item.curApproveId}, #{item.businessKey})
         </foreach>
+    </select>
+
+    <!-- tab数据查询 -->
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$TabListDTO">
+        SELECT
+        pm.process_status as tabFlag,
+        count(pm.id) as count
+        FROM  process_management pm
+        WHERE pm.is_deleted = FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        group by pm.process_status
     </select>
 
 </mapper>

@@ -7,6 +7,7 @@ import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.model.workflow.enums.DictBasicEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -69,6 +70,31 @@ public class ProcessDefinitionDTO {
          */
         @NotBlank(message = "业务类型不能为空")
         private String businessKey;
+
+    }
+
+    /**
+     * 状态统计
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+
+        /**
+         * 类型
+         */
+        private Boolean tabFlag;
+
+        /**
+         * 类型
+         */
+        private String tabFlagName;
+
+        /**
+         * 数量
+         */
+        private Integer count;
 
     }
 
@@ -203,6 +229,11 @@ public class ProcessDefinitionDTO {
          * 流程单据名称
          */
         private String businessName;
+
+        /**
+         * 启禁用
+         */
+        private Boolean disabled;
 
         /**
          * 创建人
@@ -380,5 +411,51 @@ public class ProcessDefinitionDTO {
         @ExcelProperty(value = "创建时间", index = 8)
         private LocalDateTime createTime;
 
+    }
+    @Data
+    @NoArgsConstructor
+    public static class DropDTO {
+
+        private String id;
+
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 是否已发布
+         */
+        private Boolean isDeploy;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DisableDTO {
+        /**
+         * ids不能为空
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 是否禁用
+         */
+        @NotNull(message = "是否禁用不能为空")
+        private Boolean disabled;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO {
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 单据名称
+         */
+        private String name;
     }
 }
