@@ -955,7 +955,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             }
         }
 
-        if(!data.getStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
+        if(!data.getApproveStatus().equals(ApproveStatusEnum.APPROVE)){
             data.setApproveTime(null);
         }
     }
