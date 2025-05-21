@@ -8,7 +8,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -17,7 +16,10 @@ import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -41,8 +43,8 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
 import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
-import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
@@ -335,14 +337,8 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
     @Override
     public List<FbaShipmentDTO.ReceiveRecordView> listReceiveRecord(String id) {
         List<FbaShipmentReceiveEntity> fbaShipmentReceiveEntities = fbaShipmentReceiveService.listByDetailIds(Collections.singletonList(id));
-        List<FbaShipmentDTO.ReceiveRecordView> list = new ArrayList<>();
-        for (FbaShipmentReceiveEntity fbaShipmentReceiveEntity : fbaShipmentReceiveEntities) {
-            //映射字段
-            FbaShipmentDTO.ReceiveRecordView receiveRecordView = FbaShipmentConverter.INSTANCE.fbaShipmentReceiveEntityToView(fbaShipmentReceiveEntity);
-            list.add(receiveRecordView);
-        }
-        return list.stream()
-                .sorted(Comparator.comparing(FbaShipmentDTO.ReceiveRecordView::getReceiveTime))
+        return fbaShipmentReceiveEntities.stream()
+                .map(FbaShipmentConverter.INSTANCE::fbaShipmentReceiveEntityToView)
                 .collect(Collectors.toList());
     }
 
