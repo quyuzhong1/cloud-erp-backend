@@ -475,23 +475,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 .update();
     }
 
-    /**
-     * 获取到skuId
-     *
-     * @param item
-     * @return void
-     * @author yl
-     * @date 2023-02-03 12:18
-     */
-    private void getSkuIdList(List<String> skuIdList, BomSkuDTO item) {
-        skuIdList.add(item.getSkuId());
-        List<BomChildrenSkuDTO> childrenList = item.getChildren();
-        if (CollectionUtils.isNotEmpty(childrenList)) {
-            List<String> childrenSkuIds = childrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
-            skuIdList.addAll(childrenSkuIds);
-        }
-    }
-
 
     /**
      * 分页获取bom 列表

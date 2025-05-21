@@ -3978,7 +3978,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_DETAIL.getCode());
         startDTO.setBusinessName(entity.getSkuNo());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -4017,7 +4017,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -4029,6 +4029,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             dto.setVariablesMap(BeanUtil.beanToMap(entity));
             approveEnd(dto, entity);
         }
+    }
+
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(ProductDetailEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+
+        ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
+        if (ObjectUtil.isEmpty(productInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        Map<String, Object> productMap = BeanUtil.beanToMap(productInfoEntity);
+        variablesMap.putAll(productMap);
+        return variablesMap;
     }
 
     @Override
