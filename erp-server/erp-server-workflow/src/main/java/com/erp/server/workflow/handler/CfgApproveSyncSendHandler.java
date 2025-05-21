@@ -40,6 +40,37 @@ public class CfgApproveSyncSendHandler {
     @Resource
     private FsService fsService;
 
+
+
+    public void updateNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
+                           List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
+                           ProcessManagementEntity processManagementEntity,
+                           CfgApproveSyncEntity cfgApproveSyncEntity,
+                           String createUserId,
+                           List<String> approveIds,
+                           List<String> ccIds,
+                           Map<String, ThirdUnionDTO> thirdUnionMap,
+                           List<ProcessTaskManagementEntity> processTaskManagementEntities) {
+        //pc地址
+        String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
+        //参数map
+        Map<String, Object> variablesMap = dto.getVariablesMap();
+        List<String> summaries = cfgApproveSyncBuildHandler.getSummaries(fieldMapEntities, variablesMap);
+
+        //审批状态
+        String approveType = dto.getApproveType();
+        if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())){//审核通过
+            //更新审批结果通知
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.APPROVED.getCode());
+        } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())) {//审核不通过
+            //更新审批结果通知
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.REJECTED.getCode());
+        } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
+            //更新审批结果通知
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.CANCELLED.getCode());
+        }
+    }
+
     public void sendNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
                            List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
                            ProcessManagementEntity processManagementEntity,
@@ -70,19 +101,13 @@ public class CfgApproveSyncSendHandler {
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
             //发送审批结果通知
             commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
-            //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.APPROVED.getCode());
         } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {//审核不通过并且流程已经完成
             //发送审批结果通知
             commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
-            //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.REJECTED.getCode());
         } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
             //发送撤销通知
             commonSendNotice(NoticeTemplateEnum.RECALL,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
-            //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.CANCELLED.getCode());
         }
     }
 
@@ -182,7 +207,7 @@ public class CfgApproveSyncSendHandler {
      * @date 2025-05-21
      */
     public void sendApproveNotice(NoticeTemplateEnum noticeTemplateEnum, List<String> summaries, List<ProcessTaskManagementEntity> processTaskManagementEntities, Map<String, ThirdUnionDTO> thirdUnionMap, CfgApproveSyncEntity cfgApproveSyncEntity,String pcLinkByEnv) {
-        if(CollUtil.isEmpty(processTaskManagementEntities)){
+        if(CollUtil.isNotEmpty(processTaskManagementEntities)){
             List<FsBotParamsDTO.SendParamsDTO> sendParams = new ArrayList<>();
             for (ProcessTaskManagementEntity e : processTaskManagementEntities) {
                 if(thirdUnionMap.containsKey(e.getCreateUserId())){
