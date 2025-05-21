@@ -805,19 +805,25 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollectionUtils.isEmpty(poIds)) {
             return;
         }
-
-        //提交
-        Boolean submit = purchaseOrderService.submit(poIds, Boolean.FALSE);
-        if (!submit) {
-            throw new ServiceException(ApiError.ERROR_98076);
-        }
-        //审核
-        BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
-        baseApproveParamDTO.setIds(poIds);
-        baseApproveParamDTO.setType(ApproveType.PASS);
-        Boolean approve = purchaseOrderService.autoBatchApprove(baseApproveParamDTO);
-        if (!approve) {
-            throw new ServiceException(ApiError.ERROR_98077);
+        Map<String, PurchaseOrderEntity> entityMap = purchaseOrderService.mapByIds(poIds);
+        for (String poId : poIds) {
+            PurchaseOrderEntity entity = entityMap.get(poId);
+            if (ObjectUtil.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_98025);
+            }
+            //提交
+            BatchResultDTO submit = purchaseOrderService.submit(entity, Boolean.FALSE);
+            if (!submit.getSuccess()) {
+                throw new ServiceException(ApiError.ERROR_98076);
+            }
+            //审核
+            ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+            approveOneDTO.setId(poId);
+            approveOneDTO.setType(ApproveType.PASS);
+            BatchResultDTO approve = purchaseOrderService.approve(approveOneDTO);
+            if (!approve.getSuccess()) {
+                throw new ServiceException(ApiError.ERROR_98077);
+            }
         }
     }
 

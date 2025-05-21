@@ -60,7 +60,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 删除
      * @author Will
      * @date: 2023/3/16 11:23
-     * @param ids
+     * @param entity
      * @return Boolean
      */
     BatchResultDTO delete(PurchaseOrderEntity entity);
@@ -72,14 +72,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     BatchResultDTO approve(ApproveOneDTO approveOneDTO);
 
-    /**
-     * 自动批量审核
-     * @author will
-     * @date 2024/12/4 15:23
-     * @param baseApproveParamDTO
-     * @return Boolean
-     */
-    Boolean autoBatchApprove(BaseApproveParamDTO baseApproveParamDTO);
     /**
      * @description: 结束审核
      * @author Will
@@ -102,7 +94,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @description: 取消流程
      * @author Will
      * @date: 2023/3/16 11:27
-     * @param ids
+     * @param entity
      * @return Boolean
      */
     BatchResultDTO cancelProcess(PurchaseOrderEntity entity);
@@ -138,13 +130,13 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      */
     Boolean exportExcel(PurchaseOrderDTO.SearchParamDTO dto);
     /**
+     * @param entity
+     * @return Boolean
      * @description: 提交
      * @author Will
      * @date: 2023/3/16 16:11
-     * @param ids
-     * @return Boolean
      */
-    Boolean submit(List<String> ids,Boolean isStartProcess);
+    BatchResultDTO submit(PurchaseOrderEntity entity, Boolean isStartProcess);
     /**
      * @description: 新增并提交
      * @author Will
@@ -499,12 +491,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param purchaseCalcQtyParamsDTO 参数
      */
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
-
-
-    /**
-     * 单提交
-     */
-    BatchResultDTO submitEntity(PurchaseOrderEntity entity, Boolean isStartProcess);
     /**
      * 合同状态更新
      * @author jack
