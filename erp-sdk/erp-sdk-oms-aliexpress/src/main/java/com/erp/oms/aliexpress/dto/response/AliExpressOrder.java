@@ -206,7 +206,7 @@ public class AliExpressOrder implements Serializable {
      * @author yl
      * @date 2023-11-29 16:10
      */
-    public String convertBillStatus(Boolean isPlatformWarehouseOrder) {
+    public String convertBillStatus(Boolean isPlatformWarehouseOrder, Object logisticInfoListObj) {
         String orderStatus = this.getOrderStatus();
         if (StringUtils.isBlank(orderStatus)) {
             return SoB2cBillStatusEnum.ENUM_WAIT_SHIPPED.getCode();
@@ -263,7 +263,7 @@ public class AliExpressOrder implements Serializable {
                 || "IN_ISSUE".equals(orderStatus)
                 || "WAIT_SELLER_EXAMINE_MONEY".equals(orderStatus)
                 // 完结已发货
-                || finishShipped()
+                || finishShipped(logisticInfoListObj)
         ) {
             return SoB2cBillStatusEnum.ENUM_SHIPPED.getCode();
         }
@@ -276,9 +276,19 @@ public class AliExpressOrder implements Serializable {
     /**
      * 完结已发货
      */
-    public boolean finishShipped() {
-        return "FINISH".equalsIgnoreCase(orderStatus)
-                && ("buyer_confirm_goods".equalsIgnoreCase(this.endReason) || "buyer_confirm_goods_timeout".equalsIgnoreCase(this.endReason));
+    public boolean finishShipped(Object logisticInfoListObj) {
+        if (null == logisticInfoListObj){
+            return false;
+        }
+        JSONArray logisticInfoArray = JSON.parseArray(JSON.toJSONString(logisticInfoListObj));
+        if (CollectionUtils.isEmpty(logisticInfoArray)){
+            return false;
+        }
+        // 存在签收信息
+        boolean existReceive = logisticInfoArray.stream()
+                .map(e -> JSON.parseObject(JSON.toJSONString(e)))
+                .anyMatch(e -> "received".equalsIgnoreCase(e.getString("receive_status")));
+        return "FINISH".equalsIgnoreCase(orderStatus) && existReceive;
     }
 
     /**
@@ -307,7 +317,7 @@ public class AliExpressOrder implements Serializable {
             return ApproveStatusEnum.WAIT_SUBMIT.getCode();
         }
         // 完结已发货(自动已审核)
-        if (finishShipped()){
+        if (finishShipped(logisticInfoListObj)){
             return ApproveStatusEnum.APPROVE.getCode();
         }
         // 订单取消=待提交

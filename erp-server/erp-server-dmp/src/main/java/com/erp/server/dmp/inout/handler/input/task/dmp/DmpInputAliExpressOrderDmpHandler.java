@@ -222,10 +222,11 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			        }
 			        
 			        dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
-			        dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
 			        dmpDataMap.put("payStatus", sourceOrder.convertPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()));
 					// 订单物流信息
 					logisticInfoListObj = detailData.get("logistic_info_list");
+					// 发货状态
+					dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder, logisticInfoListObj));
 			        // 审核状态状态
 			        // （ApproveStatus字典类型）
 			        dmpDataMap.put("orderStatus", sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder, logisticInfoListObj));
