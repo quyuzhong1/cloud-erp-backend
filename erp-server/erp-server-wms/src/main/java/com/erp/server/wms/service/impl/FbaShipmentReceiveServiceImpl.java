@@ -88,7 +88,7 @@ public class FbaShipmentReceiveServiceImpl extends SuperServiceImpl<FbaShipmentR
         if (CollectionUtils.isEmpty(detailIds)){
             return Collections.emptyList();
         }
-        return lambdaQuery().in(FbaShipmentReceiveEntity::getDetailId, detailIds).list();
+        return lambdaQuery().in(FbaShipmentReceiveEntity::getDetailId, detailIds).orderByDesc(FbaShipmentReceiveEntity::getReceiveDate).list();
     }
 
     @Override
