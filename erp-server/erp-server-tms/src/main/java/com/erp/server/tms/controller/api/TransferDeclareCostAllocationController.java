@@ -142,7 +142,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
             menuCode = "tms:transferDeclareCostAllocation:updateReportStatus",
             serviceClass = SmallBagCostAllocationService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated TransferDeclareCostAllocationDTO.UpdateStatusDTO dto) {
+    public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody TransferDeclareCostAllocationDTO.UpdateStatusDTO dto) {
         List<TransferDeclareCostAllocationEntity> entityList = null;
         if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
             entityList = transferDeclareCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), null);
@@ -152,9 +152,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
         if (CollectionUtils.isEmpty(entityList)){
             return failure("批量更新中转分摊状态失败，未查询到中转分摊记录");
         }
-    	List<String> ids = dto.getIds();
-        List<TransferDeclareCostAllocationEntity> listByIds = transferDeclareCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+    	List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
     	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
             BatchResultDTO submit;

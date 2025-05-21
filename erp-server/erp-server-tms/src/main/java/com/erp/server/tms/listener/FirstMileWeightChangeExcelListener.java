@@ -140,18 +140,7 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(entityList)) {
-                StringBuilder msg = new StringBuilder();
-                if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
-                    msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
-                }
-                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
-                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
-                }
-                if(CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())){
-                    msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
-                }
-                msg.append("未匹配到重量分摊记录");
-                excelDTO.setErrorMsg(msg.toString());
+                excelDTO.setErrorMsg("未匹配到重量分摊记录");
                 errorList.add(excelDTO);
                 continue;
             }
@@ -176,18 +165,7 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
                 return false;
             }).collect(Collectors.toList());
             if (CollUtil.isEmpty(weightAllocationEntityList1) && notEmptyCount > 1) {
-                StringBuilder msg = new StringBuilder();
-                if(CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())){
-                    msg.append("来源单号【").append(excelDTO.getSourceCode()).append("】");
-                }
-                if(CharSequenceUtil.isNotBlank(excelDTO.getBusinessCode())){
-                    msg.append("业务单号【").append(excelDTO.getBusinessCode()).append("】");
-                }
-                if(CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())){
-                    msg.append("运单号【").append(excelDTO.getTransportNo()).append("】");
-                }
-                msg.append("匹配不到重量分摊记录");
-                excelDTO.setErrorMsg(msg.toString());
+                excelDTO.setErrorMsg("匹配不到重量分摊记录");
                 errorList.add(excelDTO);
                 continue;
 
@@ -222,7 +200,7 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
             }
             //已下推费用分摊不能变更
             if(!CostAllocationStatusEnum.NOT.getCode().equals(entity.getCostAllocationStatus())){
-                excelDTO.setErrorMsg("已下推费用分摊，不能变更");
+                excelDTO.setErrorMsg("仅可操作未分摊单据");
                 errorList.add(excelDTO);
                 continue;
             }

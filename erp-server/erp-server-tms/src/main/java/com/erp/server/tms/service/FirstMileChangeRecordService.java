@@ -117,6 +117,9 @@ public interface FirstMileChangeRecordService extends SuperService<FirstMileChan
      * @param dtoValidList
      */
     void saveCostAllocation(ValidList<FirstMileCostAllocationDTO.CostAllocationDTO> dtoValidList);
+
+    void saveCostByEntity(List<FirstMileChangeRecordEntity> entityList);
+
     /**
      * 根据参数获取费用分摊最新调整记录
      *
@@ -131,4 +134,6 @@ public interface FirstMileChangeRecordService extends SuperService<FirstMileChan
      * @return
      */
     FirstMileChangeRecordEntity getCostAllocationByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo, String category, String reportPeriodId);
+
+    void updateCostIsLatest(String sourceType, String businessCode, String sourceCode, String logisticsBillId, String skuId, String feeType, String categoryField);
 }

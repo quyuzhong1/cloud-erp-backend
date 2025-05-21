@@ -34,7 +34,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.tms.dto.*;
-import com.erp.model.tms.dto.excel.FirstMileWeightChangeExcelDTO;
+import com.erp.model.tms.dto.excel.FirstMileCostChangeExcelDTO;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.*;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -47,12 +47,11 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsFirstMileDeliveryFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.server.tms.listener.FirstMileWeightChangeExcelListener;
+import com.erp.server.tms.listener.FirstMileCostChangeExcelListener;
 import com.erp.server.tms.mapper.FirstMileCostAllocationMapper;
 import com.erp.server.tms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Lazy;
@@ -1819,7 +1818,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/firstMileWeightChangeTemplate.xlsx";
+        String path = "classpath:excel/firstMileCostChangeTemplate.xlsx";
         String excelName = "头程重量分摊调整导入.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -1841,6 +1840,44 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     @Override
     public Boolean importExcel(MultipartFile excelFile, HttpServletResponse response) {
-        return null;
+        FirstMileCostChangeExcelListener excelListenerUtil = new FirstMileCostChangeExcelListener();
+        try {
+            EasyExcel.read(excelFile.getInputStream(), FirstMileCostChangeExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+            //数据验证
+            List<FirstMileCostChangeExcelDTO> dataList = excelListenerUtil.getDataList();
+            //错误的
+            List<FirstMileCostChangeExcelDTO> errorList = excelListenerUtil.getErrorList();
+            //处理验证成功数据
+            handleImportSuccessList(dataList, errorList);
+            if (errorList.size() > 0) {
+                StringBuffer sb = new StringBuffer();
+                String excelPath = "excel/firstMileWeightChangeExportError.xlsx";
+                String name = "头程费用分摊调整错误.xlsx";
+                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+                sb.append(date);
+                sb.append(name);
+                try {
+                    new ExcelPrintUtils().patchExport(errorList, response, sb.toString(), excelPath);
+                } catch (IOException e) {
+                    throw new ServiceException(ApiError.ERROR_95125);
+                }
+                return Boolean.FALSE;
+            }
+        } catch (SocketTimeoutException e) {
+            log.error("导入超时错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
+        } catch (IOException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_95124);
+        } catch (ExcelCommonException e) {
+            log.error("导入错误！>>>{}", e);
+            throw new ServiceException(ApiError.ERROR_1016);
+        }
+
+        return Boolean.TRUE;
+
+    }
+
+    private void handleImportSuccessList(List<FirstMileCostChangeExcelDTO> dataList, List<FirstMileCostChangeExcelDTO> errorList) {
     }
 }

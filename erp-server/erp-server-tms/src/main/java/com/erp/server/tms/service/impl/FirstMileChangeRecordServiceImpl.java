@@ -186,19 +186,46 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         //新增记录前修改原来的记录为非最新记录
         list.forEach(e -> {
             e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
-            this.lambdaUpdate()
-                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
-                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
-                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
-                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
-                .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
-                .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
-                .eq(FirstMileChangeRecordEntity::getChangeRange, e.getChangeRange())
-                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
-                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
-                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
-                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
-                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            if (FirstMileChangeRecordChangeRangeEnum.ORDER.getCode().equals(e.getChangeRange())){
+                this.lambdaUpdate()
+                        .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                        .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                        .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                        .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                        .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                        .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                        .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                        .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            }else if (FirstMileChangeRecordChangeRangeEnum.BOX.getCode().equals(e.getChangeRange())){
+                this.lambdaUpdate()
+                        .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                        .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                        .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                        .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                        .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                        .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                        .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                        .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                        .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            }else {
+                this.lambdaUpdate()
+                        .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                        .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                        .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                        .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                        .eq(FirstMileChangeRecordEntity::getSkuNo, e.getSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                        .eq(FirstMileChangeRecordEntity::getSourceId, e.getSourceId())
+                        .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, e.getPlatformSkuNo())
+                        .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                        .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                        .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                        .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+            }
         });
         //新增记录
         boolean saveBatch = this.saveBatch(list);
@@ -218,6 +245,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, platformSkuNo)
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getSourceId, sourceId)
+                .eq(FirstMileChangeRecordEntity::getBoxId, boxId)
                 .eq(FirstMileChangeRecordEntity::getChangeRange, FirstMileChangeRecordChangeRangeEnum.CURRENT.getCode())
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
                 .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
@@ -404,6 +432,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 }
             }
         }
+        saveCostByEntity(entityList);
+    }
+
+    @Override
+    public void saveCostByEntity(List<FirstMileChangeRecordEntity> entityList) {
         if (CollUtil.isEmpty(entityList)){
             return;
         }
@@ -423,7 +456,6 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         if (!saveBatch){
             throw new ServiceException("头程调整记录保存失败");
         }
-
     }
 
     @Override
@@ -440,6 +472,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
                 .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
                 .last(" limit 1 ").one();
+    }
+
+    @Override
+    public void updateCostIsLatest(String sourceType, String businessCode, String sourceCode, String logisticsBillId, String skuId, String feeType, String categoryField) {
+
     }
 
     private void fillPagingDb(List<FirstMileChangeRecordDTO.PagingVO> list) {
