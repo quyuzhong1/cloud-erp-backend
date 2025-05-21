@@ -76,7 +76,7 @@ public class CfgProcessRuleController extends BaseController {
      */
     @PostMapping("/getVersion")
     @LogAction(value = LogActionEnum.INSERT, desc = "执行条件更新默认")
-    public ApiResult<String> getVersion(@RequestBody @Validated String processDefinitionId) {
+    public ApiResult<String> getVersion(@RequestParam(value = "processDefinitionId") String processDefinitionId) {
         return success(cfgProcessRuleService.getVersion(processDefinitionId));
     }
 }

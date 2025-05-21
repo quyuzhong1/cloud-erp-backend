@@ -37,6 +37,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
+import org.springframework.web.servlet.View;
 
 import javax.annotation.Resource;
 
@@ -132,6 +133,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             GetApprovalResp approval = fsService.getApproval(processDefinitionId);
             String formStr = JSONUtil.toJsonStr(approval.getData());
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = parseForm(formStr);
+            viewDTOList.forEach(e->{
+               e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
+            });
             return viewDTOList;
         } catch (Exception e) {
             throw new ServiceException("获取指定飞书审批定义失败");

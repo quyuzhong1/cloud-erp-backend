@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-05-15 12:14:18
  */
 public enum CfgQueryOptionFieldTypeEnum implements EnumMessage {
-	CHECKBOXV2("checkboxV2", "多选"),
-	RADIOV2("radioV2", "单选"),
+	CHECKBOXV2("checkboxV2", "选项-多选"),
+	RADIOV2("radioV2", "选项-单选"),
 	INPUT("input", "单行文本"),
     TEXTAREA("input", "多行文本"),
 	DATE("date", "日期"),
