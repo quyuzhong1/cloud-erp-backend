@@ -421,11 +421,6 @@ public class FbaShipmentController extends BaseController {
      * @date: 2025/05/09
      */
     @PostMapping("/viewList")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:fbaShipment:view",
-            serviceClass = FbaShipmentService.class,
-            keyIdName = "id")
     public ApiResult<List<FbaShipmentDTO.ListDTO>> view(@RequestBody @Validated FbaShipmentDTO.ViewListReqDTO dto) {
         List<FbaShipmentDTO.ListDTO> resultList = fbaShipmentService.viewList(dto);
         return success(resultList);
@@ -439,11 +434,6 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/changeReceived")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "调整签收:{detailId}")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "wms:fbaShipment:changeReceived",
-            serviceClass = FbaShipmentService.class,
-            keyIdName = "id")
     public ApiResult changeReceived(@RequestBody @Validated List<FbaShipmentDTO.ReceivedDTO> dtoList) {
         List<BatchResultDTO> resultDTOS = fbaShipmentService.changeReceived(dtoList);
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
