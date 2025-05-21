@@ -75,8 +75,6 @@ public class CfgApproveSyncBuildHandler {
         Map<String,String> values = new HashMap<>();
         //标题
         values.put("@i18n@title",cfgApproveSyncEntity.getTitle());
-        values.put("@i18n@approve","同意");
-        values.put("@i18n@reject","拒绝");
 
         //查询飞书的用户信息
         String thirdUserId = "";
@@ -211,17 +209,17 @@ public class CfgApproveSyncBuildHandler {
             //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
             int len = fieldMapEntities.size() > 3 ? 3 : fieldMapEntities.size();
             ExternalInstanceForm[] externalInstanceForm = fieldMapEntities.subList(0, len).stream().map(entry -> ExternalInstanceForm.newBuilder()
-                            .name("@i18n@"+entry.getId())
-                            .value("@i18n@"+entry.getFieldSource())
+                            .name("@i18n@name"+entry.getId())
+                            .value("@i18n@value"+entry.getId())
                             .build())
                     .toArray(ExternalInstanceForm[]::new);
 
             for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
-                values.put("@i18n@"+entry.getId(),entry.getFieldName());
+                values.put("@i18n@name"+entry.getId(),entry.getFieldName());
 
                 String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
                 if(StringUtils.isNotBlank(fieldSourceValueStr)){
-                    values.put("@i18n@"+ entry.getFieldSource(),fieldSourceValueStr);
+                    values.put("@i18n@value"+ entry.getId(),fieldSourceValueStr);
                 }else {
                     if(variablesMap.containsKey("detailList")){
                         List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
@@ -237,7 +235,7 @@ public class CfgApproveSyncBuildHandler {
                             }
                             String fieldSourceDetailValueStr = sb.toString();
                             if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
-                                values.put("@i18n@"+entry.getFieldSource(),fieldSourceDetailValueStr);
+                                values.put("@i18n@value"+entry.getId(),fieldSourceDetailValueStr);
                             }
                         }
                     }
@@ -294,14 +292,12 @@ public class CfgApproveSyncBuildHandler {
         return new ActionConfig[]{
                 ActionConfig.newBuilder()
                         .actionType("APPROVE")
-                        .actionName("@i18n@approve")
-                        .isNeedReason(true)
+                        .isNeedReason(false)
                         .isReasonRequired(false)
                         .isNeedAttachment(false)
                         .build(),
                 ActionConfig.newBuilder()
                         .actionType("REJECT")
-                        .actionName("@i18n@reject")
                         .isNeedReason(true)
                         .isReasonRequired(true)
                         .isNeedAttachment(false)
