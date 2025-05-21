@@ -12,6 +12,7 @@ import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.excel.FirstMileCostChangeExcelDTO;
 import com.erp.model.tms.entity.FirstMileChangeRecordEntity;
 import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
+import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum;
 import com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum;
 import com.erp.server.tms.convert.FirstMileChangeRecordConverter;
@@ -61,6 +62,14 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
             excelDTO.setReportMonth(LocalDate.parse(excelDTO.getReportMonthStr()+"-01"));
         }catch (Exception e){
             errorMsgList.add("月份格式错误");
+        }
+        //费用类型
+        if (CharSequenceUtil.isNotBlank(excelDTO.getFeeTypeName())){
+            try {
+                excelDTO.setFeeType(AllocationFeeTypeEnum.getByName(excelDTO.getFeeTypeName()).getCode());
+            }catch (Exception e){
+                errorMsgList.add("费用类型格式错误");
+            }
         }
         //冲期初在途费用
         if (CharSequenceUtil.isNotBlank(excelDTO.getMidPeriodTransitCostStr())){

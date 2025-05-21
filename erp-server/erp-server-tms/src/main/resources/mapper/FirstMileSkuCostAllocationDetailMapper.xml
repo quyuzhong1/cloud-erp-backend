@@ -69,7 +69,7 @@
             fmsca.sku_no,
             fmsca.platform_sku_no,
             rpm.id as reportPeriodId,
-            rpm.month as reportMonth,
+            rpm.month as reportMonth
         from first_mile_sku_cost_allocation_detail fmscad
         left join first_mile_sku_cost_allocation fmsca on fmsca.id = fmscad.cost_main_id and fmsca.is_deleted = false
         left join first_mile_cost_allocation fmca on fmca.id = fmscad.main_id and fmca.is_deleted = false

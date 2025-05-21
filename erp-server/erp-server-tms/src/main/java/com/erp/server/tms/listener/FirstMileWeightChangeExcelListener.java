@@ -72,7 +72,7 @@ public class FirstMileWeightChangeExcelListener extends AnalysisEventListener<Fi
             }
         }
         if (CharSequenceUtil.isNotBlank(excelDTO.getOutStockSizeStr())){
-            String[] split = excelDTO.getOutStockSizeStr().split("/*");
+            String[] split = excelDTO.getOutStockSizeStr().split("\\*");
             if (split.length != 3){
                 errorMsgList.add("出库尺寸格式错误");
             }
