@@ -281,5 +281,11 @@ public class CfgProcessDTO implements Serializable {
          */
         @NotBlank(message = "业务名称不能为空")
         private String businessName;
+
+        /**
+         *
+         */
+        @NotBlank(message = "")
+        private Map<String,Object> variablesMap;
     }
 }
