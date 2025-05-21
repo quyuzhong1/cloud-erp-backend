@@ -54,7 +54,7 @@ public class FirstMileWeightAllocationController extends BaseController {
             shopTableField = "wa.shop_id",
             warehouseTableField = "wa.from_warehouse_id",
             menuCode = "tms:firstMileWeightAllocation:paging",
-            tableAlias = "a"
+            tableAlias = "wa"
     )
     @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
     public ApiResult<PagingVO<FirstMileWeightAllocationDTO.ViewDTO>> paging(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
@@ -80,7 +80,7 @@ public class FirstMileWeightAllocationController extends BaseController {
             shopTableField = "wa.shop_id",
             warehouseTableField = "wa.from_warehouse_id",
             menuCode = "tms:firstMileWeightAllocation:paging",
-            tableAlias = "a"
+            tableAlias = "wa"
     )
     public ApiResult<List<FirstMileWeightAllocationDTO.TabDTO>> tabList(@RequestBody FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO){
         List<FirstMileWeightAllocationDTO.TabDTO> list = firstMileWeightAllocationService.tabList(pagingParamDTO);
