@@ -1094,4 +1094,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param dto
      */
     void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto);
+
+    void clearOutDateBySoIds(List<String> clearOutDateSoIds);
 }

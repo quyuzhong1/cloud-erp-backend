@@ -399,7 +399,7 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * 生成B2C销售出库单
      * 根据传入明细，时间生成
      */
-    Boolean generateOutstockByDetailAndTime(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList , LocalDateTime outTime,String warehouseId);
+    Boolean generateOutstockByDetailAndTime(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList , LocalDateTime outTime,String warehouseId,String trackNo);
 
     /**
      * 生成B2C销售出库单
