@@ -1859,10 +1859,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
         //价税合计
-        BigDecimal taxPriceTotal = detailList.stream().map(PurchaseOrderDetailEntity::getTaxPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
         //不含税合计
-        BigDecimal notTaxPriceTotal = detailList.stream().map(obj -> MathUtil.divide(obj.getTaxPrice(),MathUtil.add(BigDecimal.ONE,obj.getTaxRate()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal notTaxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(MathUtil.divide(obj.getTaxPrice(),MathUtil.add(BigDecimal.ONE,obj.getTaxRate())),obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("notTaxPriceTotal", notTaxPriceTotal);
         //总计采购数量
         Integer purchaseQtyTotal = detailList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);

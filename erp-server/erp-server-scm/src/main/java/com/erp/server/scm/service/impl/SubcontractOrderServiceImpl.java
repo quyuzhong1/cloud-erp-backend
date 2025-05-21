@@ -66,6 +66,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -348,7 +349,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             throw new ServiceException(ApiError.ERROR_98010);
         }
         //提交流程
-        startProcess(Collections.singletonList(entity));
+        startProcess(entity);
 
        // 更新单据审核状态
        log.info("提交 开始修改委外订单状态数据，id集合：【{}】", toJSONString(entity.getId()));
@@ -1226,22 +1227,18 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
      * @description: 启动流程
      * @author Will
      * @date: 2023/7/11 12:19
-     * @param list
+     * @param entity
      */
-    private void startProcess(List<SubcontractOrderEntity> list) {
+    private void startProcess(SubcontractOrderEntity entity) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
-        list.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(startDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ORDER.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(userInfo.getUid());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
@@ -1261,7 +1258,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -1272,6 +1269,32 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SubcontractOrderEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SubcontractOrderDetailEntity> detailList = subcontractOrderDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+        //价税合计
+        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getPrice(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("taxPriceTotal", taxPriceTotal);
+        //不含税合计
+        BigDecimal notTaxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(MathUtil.divide(obj.getPrice(),MathUtil.add(BigDecimal.ONE,obj.getTaxRate())),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("notTaxPriceTotal", notTaxPriceTotal);
+        //总计采购数量
+        Integer qtyTotal = detailList.stream().map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("qtyTotal", qtyTotal);
+        return variablesMap;
     }
 
     /**

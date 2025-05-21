@@ -180,8 +180,22 @@ public class SoInfoController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean result = soInfoService.submit(dto.getIds());
-        return result ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SoInfoEntity> entityMap = soInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"销售订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soInfoService.submit(entity));
+            }catch (Exception e){
+                log.error("采购订单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -94,12 +94,12 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     /**
      * 批量提交审核
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-20 19:07
      */
-    Boolean submit(List<String> ids);
+    BatchResultDTO submit(SupplierEntity entity);
 
 
     /**

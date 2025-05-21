@@ -134,11 +134,11 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      * @return java.lang.Boolean
      **/
     private Boolean soInfoApproveEnd(EndProcessDTO dto) {
-        List<SoInfoEntity> list = soInfoService.listByIds(Arrays.asList(dto.getBusinessId()));
+        SoInfoEntity entity = soInfoService.getById(dto.getBusinessId());
         BaseApproveParamDTO baseApproveParamDTO = new BaseApproveParamDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setIds(Arrays.asList(dto.getBusinessId()));
-        return soInfoService.approveEnd(baseApproveParamDTO,list);
+        return soInfoService.approveEnd(baseApproveParamDTO,entity);
     }
 
     /**

@@ -25,7 +25,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.JasperHelperUtil;
 import com.common.business.utils.PdfUtil;
-import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
@@ -60,10 +59,10 @@ import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.tms.dto.InventorySkuCostDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
-import com.erp.model.wms.entity.*;
 import com.erp.model.wms.entity.CfgSettingEntity;
-import com.erp.model.wms.enums.*;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.CfgSettingEnum;
+import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
@@ -410,7 +409,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     /**
      * 提交
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-05-16 14:41
@@ -418,45 +417,27 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<SoInfoEntity> list = this.listByIds(ids);
-        long invalidCount = list.stream().filter(s -> s.getInvalidStatus()).count();
-        if (invalidCount > 0) {
+    public BatchResultDTO submit(SoInfoEntity entity) {
+        if(entity.getInvalidStatus()) {
             throw new ServiceException(ApiError.ERROR_INVALID_TO_SUBMIT);
         }
-
         //售后订单
         String afterSaleOrder = BillTypeEnum.AFTER_SALES.getCode();
-        //检查的销售订单
-        List<SoInfoEntity> checkSoList = list.stream().filter(s -> !afterSaleOrder.equals(s.getOrderType())).collect(Collectors.toList());
-        //收款日期为空的
-        List<String> isNullReceiveDateList = checkSoList.stream().filter(s -> Objects.isNull(s.getReceiveDate())).map(SoInfoEntity::getCode).
-                collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(isNullReceiveDateList)) {
-            String isNullReceiveDateCode = isNullReceiveDateList.stream().collect(Collectors.joining(","));
-            throw new ServiceException(isNullReceiveDateCode + " 销售订单 收款日期不能为空");
+        boolean isNotSales = !afterSaleOrder.equals(entity.getOrderType());
+        if (isNotSales && Objects.isNull(entity.getReceiveDate()) ) {
+            throw new ServiceException(entity.getCode() + " 销售订单 收款日期不能为空");
         }
         BigDecimal zeroFlag = BigDecimal.ZERO;
-
-        //收款金额为空的
-        List<String> isNullReceiveAmountList = checkSoList.stream().filter(s -> Objects.isNull(s.getReceiveAmount()) || zeroFlag.compareTo(s.getReceiveAmount()) == 0).map(SoInfoEntity::getCode).
-                collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(isNullReceiveAmountList)) {
-            String isNullReceiveAmountCode = isNullReceiveAmountList.stream().collect(Collectors.joining(","));
-            throw new ServiceException(isNullReceiveAmountCode + " 销售订单 收款金额不能为空或者为零");
+        if (isNotSales && ( Objects.isNull(entity.getReceiveAmount()) || zeroFlag.compareTo(entity.getReceiveAmount()) == 0)) {
+            throw new ServiceException(entity.getCode() + " 销售订单 收款金额不能为空或者为零");
         }
-        List<String> checkSoIdList = checkSoList.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
-        List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(checkSoIdList);
-        //这个是 单价为空的集合
-        List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> !s.getIsGift() && !s.getIsReissue() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
-        if (CollectionUtils.isNotEmpty(isNullPriceList)) {
-            List<String> soIdList = isNullPriceList.stream().map(SoDetailEntity::getMainId).collect(Collectors.toList());
-            String isNullPriceCode = list.stream().filter(s -> soIdList.contains(s.getId())).
-                    map(SoInfoEntity::getCode).distinct().collect(Collectors.joining(","));
-            throw new ServiceException(isNullPriceCode + " 销售订单 销售单价不能为空或者为零");
+        if (isNotSales) {
+            List<SoDetailEntity> soDetailList = soDetailService.listBaseByMainIdList(Collections.singletonList(entity.getId()));
+            //这个是 单价为空的集合
+            List<SoDetailEntity> isNullPriceList = soDetailList.stream().filter(s -> !s.getIsGift() && !s.getIsReissue() && zeroFlag.compareTo(s.getPrice()) == 0).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(isNullPriceList)) {
+                throw new ServiceException(entity.getCode() + " 销售订单 销售单价不能为空或者为零");
+            }
         }
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
@@ -467,58 +448,75 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> statusList = new ArrayList<>(2);
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
-        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
+        if (!statusList.contains(entity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
-
         //启动审核流程
-        startProcess(list);
+        startProcess(entity);
 
-        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(rejectStatus)).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
-        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(ingStatus), "");
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(ingStatus), "");
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", BillApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), pairList, "状态变更");
+            operateLogService.addModuleOperateLog(content, ModuleTypeEnum.SO.getCode(), entity.getId(), "状态变更");
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            operateLogService.batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.SO.getCode(), rejectPairList, "状态变更");
+            operateLogService.addModuleOperateLog(rejectContent, ModuleTypeEnum.SO.getCode(),  entity.getId(), "状态变更");
         }
-        return result;
+        return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
 
     }
 
     /**
      * 启动流程
      *
-     * @param list list
+     * @param entity
      * @return void
      * @Author Luo_WG
      * @Date 2023/7/4 10:07
      **/
 
-    public void startProcess(List<SoInfoEntity> list) {
-        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
-        list.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(obj.getSellerId());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(startDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+    public void startProcess(SoInfoEntity entity) {
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(entity.getSellerId());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SoInfoEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SoDetailEntity> detailList = soDetailService.listBaseByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+        }
+        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+        //价税合计
+        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("taxPriceTotal", taxPriceTotal);
+        //总销售额(折后)
+        BigDecimal taxAmountTotal = detailList.stream().map(SoDetailEntity::getTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("taxAmountTotal", taxAmountTotal);
+        //总计数量
+        Integer qtyTotal = detailList.stream().map(SoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("qtyTotal", qtyTotal);
+        //总销售毛利率
+        BigDecimal saleProfitRateTotal = detailList.stream().map(SoDetailEntity::getSaleProfitRate).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("saleProfitRateTotal", saleProfitRateTotal);
+        return variablesMap;
     }
 
     /**
@@ -537,8 +535,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submit(Arrays.asList(id));
-        return result;
+        SoInfoEntity soInfoEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        BatchResultDTO submit = this.submit(soInfoEntity);
+        return submit.getSuccess();
     }
 
 
@@ -1373,7 +1375,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         if (StringUtils.isBlank(id)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(id));
+        SoInfoEntity soInfoEntity = this.getById(id);
+        if (ObjectUtil.isEmpty(soInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_92016);
+        }
+        BatchResultDTO submit = this.submit(soInfoEntity);
+        return submit.getSuccess();
     }
 
     /**
@@ -1389,55 +1396,44 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(BaseApproveParamDTO dto, SoInfoEntity entity) {
-        List<SoInfoEntity> list = Arrays.asList(entity);
         String ingStatus = ApproveStatusEnum.APPROVE_ING.getStatus();
         if(!ingStatus.equals(entity.getApproveStatus().getStatus())){
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         //审核流程
-        approveProcess(list, dto);
-        //添加日志
-        List<Pair<String, String>> pairList = list.stream().
-                map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), pairList, "审核操作");
+        approveProcess(entity, dto);
+
+        operateLogService.addModuleOperateLog(String.format("审核【%s】了一个销售订单", ApproveTypeEnum.getName(dto.getType())).concat("【%s】").concat(StringUtils.isNotBlank(dto.getComment()) ? String.format(",意见：%s", dto.getComment()) : ""), ModuleTypeEnum.SO.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
     }
 
     /**
      * 流程审核
      *
-     * @param list
+     * @param entity
      * @param dto
      * @return void
      * @Author Luo_WG
      * @Date 2023/7/4 10:18
      **/
-    private void approveProcess(List<SoInfoEntity> list, BaseApproveParamDTO dto) {
-        ValidList<ProcessManagementDTO.ApproveDTO> resultList = new ValidList<>();
+    private void approveProcess(SoInfoEntity entity, BaseApproveParamDTO dto) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        list.forEach(obj -> {
-            ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-            approveDTO.setBusinessId(obj.getId());
-            approveDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
-            approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
-            approveDTO.setComment(dto.getComment());
-            approveDTO.setUserId(userInfo.getUid());
-            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(approveDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
-        if (!listApiResult.isSuccess()) {
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.SO_INFO.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> listApiResult = workflowFeign.approve(approveDTO);
+        Integer code = listApiResult.getCode();
+        if (200 != code) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
-        List<ProcessManagementDTO.ApproveResultDTO> data = listApiResult.getData();
-        List<String> businessIdList = data.stream()
-                .filter(obj -> ObjectUtils.isEmpty(obj.getIsExistProcess()) || !obj.getIsExistProcess())
-                .map(ProcessManagementDTO.ApproveResultDTO::getBusinessId)
-                .collect(Collectors.toList());
-
-        if (CollectionUtils.isNotEmpty(businessIdList)) {
-            List<SoInfoEntity> businessSoInfoList = list.stream().filter(obj -> businessIdList.contains(obj.getId())).collect(Collectors.toList());
-            approveEnd(dto, businessSoInfoList);
+        ProcessManagementDTO.ApproveResultDTO data = listApiResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
         }
     }
 
@@ -1445,7 +1441,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * 结束审核
      *
      * @param dto
-     * @param list
+     * @param entity
      * @return java.lang.Boolean
      * @Author Luo_WG
      * @Date 2023/7/4 10:55
@@ -1453,41 +1449,33 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class, timeoutMills = 180000)
-    public Boolean approveEnd(BaseApproveParamDTO dto, List<SoInfoEntity> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        List<String> ids = list.stream().map(SoInfoEntity::getId).collect(Collectors.toList());
+    public Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity) {
         //意见
         String userName = UserContext.getDefaultLoginUser().getUserName();
         String approveStatus = "";
-        List<DmpPushTaskEntity> pushTaskList = new ArrayList<>();
         if (dto.getType().equals(ApproveType.PASS)) {
             //审核通过
             approveStatus = ApproveStatusEnum.APPROVE.getStatus();
 
             //推送同步中台dmp任务
-            list.forEach(obj -> syncKingdeeSoService.syncOrderToDmp(obj, SyncOperateEnum.OPERATE_APPROVE.getCode()));
-
+            syncKingdeeSoService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
 
             //同步数帝云
-            for (SoInfoEntity soInfoEntity : list) {
-                SoInfoDTO.ViewDTO view = this.view(soInfoEntity.getId());
-                List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
-                syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode());
-            }
+            SoInfoDTO.ViewDTO view = this.view(entity.getId());
+            List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
+            syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         } else {
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT.getStatus();
         }
-        Boolean result = this.updateApproveStatus(list, BillApproveStatusEnum.getByStatus(approveStatus), userName);
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(approveStatus), userName);
 
         if (dto.getType().equals(ApproveType.PASS)) {
             // 填入首批上市时间
-            setFirstListingTime(ids);
+            setFirstListingTime(Collections.singletonList(entity.getId()));
         }
         return result;
     }
