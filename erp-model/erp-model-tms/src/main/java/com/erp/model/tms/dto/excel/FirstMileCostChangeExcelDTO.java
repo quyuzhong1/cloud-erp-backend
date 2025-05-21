@@ -92,6 +92,8 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     private String endPeriodEstimatedCostStr;
     @ExcelIgnore
     private BigDecimal endPeriodEstimatedCost;
+    @ExcelIgnore
+    private String mainId;
     /**
      * 错误信息
      */

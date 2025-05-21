@@ -16,7 +16,6 @@ import com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum;
 import com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum;
 import com.erp.server.tms.convert.FirstMileChangeRecordConverter;
 import com.erp.server.tms.service.FirstMileChangeRecordService;
-import com.erp.server.tms.service.FirstMileCostAllocationService;
 import com.erp.server.tms.service.FirstMileSkuCostAllocationDetailService;
 import lombok.Getter;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,10 +27,7 @@ import java.util.stream.Collectors;
 
 public class FirstMileCostChangeExcelListener extends AnalysisEventListener<FirstMileCostChangeExcelDTO> {
 
-
     private final FirstMileChangeRecordService firstMileChangeRecordService = SpringUtil.getBean(FirstMileChangeRecordService.class);
-    private final FirstMileCostAllocationService firstMileCostAllocationService = SpringUtil.getBean(FirstMileCostAllocationService.class);
-
     private final FirstMileSkuCostAllocationDetailService firstMileSkuCostAllocationDetailService = SpringUtil.getBean(FirstMileSkuCostAllocationDetailService.class);
 
     @Getter
@@ -39,6 +35,11 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
 
     @Getter
     private List<FirstMileCostChangeExcelDTO> errorList = new ArrayList<>();
+    /**
+     * 重新分摊的主键id
+     */
+    @Getter
+    private Set<String> mainIdList = new LinkedHashSet<>();;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -112,7 +113,6 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
         List<String> transportNoList = dataList.stream().map(FirstMileCostChangeExcelDTO::getTransportNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList = firstMileSkuCostAllocationDetailService.listBySourceCodeList(businessCodeList, sourceCodeList, transportNoList);
         List<FirstMileChangeRecordEntity> productWeightList = new ArrayList<>();
-        Set<String> mainIdList = new LinkedHashSet<>();
         for (FirstMileCostChangeExcelDTO excelDTO : dataList) {
             int notEmptyCount = 0;
             if (CharSequenceUtil.isNotBlank(excelDTO.getSourceCode())) {notEmptyCount++;}
@@ -189,6 +189,7 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
                 errorList.add(excelDTO);
                 continue;
             }
+            excelDTO.setMainId(entity.getMainId());
             if(StringUtils.isNotBlank(excelDTO.getTransportNo()) && StringUtils.isNotBlank(excelDTO.getSourceCode())
                     &&(!entity.getTransportNo().equals(excelDTO.getTransportNo()) || !entity.getSourceCode().equals(excelDTO.getSourceCode()))){
                 excelDTO.setErrorMsg("来源单号与运单号不匹配");
@@ -239,10 +240,9 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
                 }
             }
         }
+        //保存分摊记录
         if (CollUtil.isNotEmpty(productWeightList)){
             firstMileChangeRecordService.saveCostByEntity(productWeightList);
         }
-//        重新计算重量
-//        mainIdList.forEach(firstMileCostAllocationService::calcAllocatedCost);
     }
 }

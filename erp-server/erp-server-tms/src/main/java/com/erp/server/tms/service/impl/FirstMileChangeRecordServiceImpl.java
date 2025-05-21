@@ -476,7 +476,16 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
 
     @Override
     public void updateCostIsLatest(String sourceType, String businessCode, String sourceCode, String logisticsBillId, String skuId, String feeType, String categoryField) {
-
+        this.lambdaUpdate()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getDeliveryCode, sourceCode)
+                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, logisticsBillId)
+                .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getCategory, feeType)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
+                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
     }
 
     private void fillPagingDb(List<FirstMileChangeRecordDTO.PagingVO> list) {
