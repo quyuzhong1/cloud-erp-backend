@@ -203,7 +203,7 @@ public class SmallBagCostAllocationController extends BaseController {
             return failure("批量重算小包分摊失败，未查询到待确认小包分摊记录");
         }
     	List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
     		BatchResultDTO submit;
     		try {
@@ -249,7 +249,7 @@ public class SmallBagCostAllocationController extends BaseController {
             return failure("批量删除失败，未查询到待确认小包分摊记录");
         }
     	List<String> ids = entityList.stream().map(SmallBagCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
     		BatchResultDTO submit;
     		try {
