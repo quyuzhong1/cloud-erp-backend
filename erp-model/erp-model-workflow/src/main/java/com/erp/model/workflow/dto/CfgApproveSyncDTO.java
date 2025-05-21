@@ -3,6 +3,7 @@ package com.erp.model.workflow.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.workflow.entity.CfgApproveSyncEntity;
+import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -420,8 +421,11 @@ public class CfgApproveSyncDTO implements Serializable {
         //流程类型
         private String businessKey;
 
-        //操作动作（发起流程，审批通过，审批不通过，撤销）
+        //erp的操作动作（发起流程，审批通过，审批不通过，撤销）
         private String approveType;
+
+        //飞书的流程状态
+        private FSApprovalStatusEnum fSApprovalStatusEnum;
 
         /**
          * 流程参数map

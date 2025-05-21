@@ -3,6 +3,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
@@ -80,12 +81,13 @@ public class CfgApproveSyncBuildHandler {
         //查询飞书的用户信息
         String thirdUserId = "";
         String thirdOpenUserId = "";
-        String userName ="";
-        List<ThirdUnionDTO> thirdUnionDTOS = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode(), Arrays.asList(createUserId));
-        if(CollUtil.isEmpty(thirdUnionDTOS)){
+        String userName;
+        ThirdUnionDTO thirdUnionDTO = thirdUnionMap.getOrDefault(createUserId, null);
+        if(Objects.isNull(thirdUnionDTO)){
+            userName = "";
             //todo 推送记录  失败  创建人未绑定飞书
+            return null;
         }else{
-            ThirdUnionDTO thirdUnionDTO = thirdUnionDTOS.get(0);
             if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenId())){
                 //todo 推送记录  失败  创建人未绑定飞书
             }
@@ -101,14 +103,18 @@ public class CfgApproveSyncBuildHandler {
         // 转换为毫秒时间戳
         String createTimeMillis = String.valueOf(createTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
         String updateTimeMillis = String.valueOf(updateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+        String endTimeMillis;
+        if(!mqDto.getFSApprovalStatusEnum().equals(FSApprovalStatusEnum.PENDING)){
+            endTimeMillis = updateTimeMillis;
+        } else {
+            endTimeMillis = "0";
+        }
 
-        //任务标题
-        String taskTitle = StrUtil.format("审核通知：【{}】提交的审核名称({})抄送给你",userName,businessName);
-        values.put("@i18n@taskTitle",taskTitle);
+
 
         ExternalInstance externalInstance = ExternalInstance.newBuilder()
                 .approvalCode(cfgApproveSyncEntity.getApprovalCode())
-                .status(FSApprovalStatusEnum.PENDING.getCode())
+                .status(mqDto.getFSApprovalStatusEnum().getCode())
                 .instanceId(processManagementId)
                 .links(ExternalInstanceLink.newBuilder()
                         .pcLink(pcLinkByEnv)
@@ -119,7 +125,7 @@ public class CfgApproveSyncBuildHandler {
                 .userName("@i18n@userName")
                 .openId(thirdOpenUserId)
                 .startTime(createTimeMillis)//审批发起时间
-                .endTime("0") //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
+                .endTime(endTimeMillis) //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
                 .updateTime(updateTimeMillis)//审批实例最近更新时间
                 .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
                 .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
@@ -132,25 +138,39 @@ public class CfgApproveSyncBuildHandler {
             if(processTaskManagementEntities.size() > 300){
                 //todo 推送记录  失败
             }
+
             ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
                     .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
-                    .map(e -> ExternalInstanceTaskNode.newBuilder()
-                            .taskId(e.getTaskId())
-                            .userId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId())
-                            .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
-                            .title("@i18n@taskTitle")
-                            .links(ExternalInstanceLink.newBuilder()
-                                    .pcLink(pcLinkByEnv)
-                                    .mobileLink(pcLinkByEnv)
-                                    .build())
-                            .status(FSApprovalStatusEnum.PENDING.getCode())
-                            .createTime(createTimeMillis)
-                            .endTime("0")
-                            .updateTime(updateTimeMillis)
-                            .actionConfigs(getActionConfigs())
-                            .displayMethod("BROWSER")
-                            .excludeStatistics(false)
-                            .build()
+                    .map(e -> {
+                                //任务标题
+                                String taskTitle = StrUtil.format("审核通知：【{}】提交的审核名称({})抄送给你", userName, cfgApproveSyncEntity.getTitle());
+                                values.put("@i18n@taskTitle:"+e.getId(), taskTitle);
+                                String status = FSApprovalStatusEnum.PENDING.getCode();
+                                if (e.getTaskStatus().equals(ApproveStatusEnum.REJECT)) {
+                                    status = FSApprovalStatusEnum.REJECTED.getCode();
+                                    values.put("@i18n@taskTitle:"+e.getId(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已通过", userName, cfgApproveSyncEntity.getTitle()));
+                                } else if (e.getTaskStatus().equals(ApproveStatusEnum.APPROVE)) {
+                                    status = FSApprovalStatusEnum.APPROVED.getCode();
+                                    values.put("@i18n@taskTitle:"+e.getId(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已拒绝", userName, cfgApproveSyncEntity.getTitle()));
+                                }
+                                return ExternalInstanceTaskNode.newBuilder()
+                                        .taskId(e.getTaskId())
+                                        .userId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId())
+                                        .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
+                                        .title("@i18n@taskTitle:"+e.getId())
+                                        .links(ExternalInstanceLink.newBuilder()
+                                                .pcLink(pcLinkByEnv)
+                                                .mobileLink(pcLinkByEnv)
+                                                .build())
+                                        .status(status)
+                                        .createTime(createTimeMillis)
+                                        .endTime(endTimeMillis)
+                                        .updateTime(updateTimeMillis)
+                                        .actionConfigs(getActionConfigs())
+                                        .displayMethod("BROWSER")
+                                        .excludeStatistics(false)
+                                        .build();
+                            }
                     ).toArray(ExternalInstanceTaskNode[]::new);
 
             externalInstance.setTaskList(taskList);
@@ -177,7 +197,7 @@ public class CfgApproveSyncBuildHandler {
                                             .pcLink(pcLinkByEnv)
                                             .mobileLink(pcLinkByEnv)
                                             .build())
-                                    .readStatus("UNREAD")
+//                                    .readStatus("UNREAD")
                                     .createTime(createTimeMillis)
                                     .updateTime(updateTimeMillis)
                                     .displayMethod("BROWSER")
