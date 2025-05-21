@@ -107,6 +107,16 @@ public class CfgProcessFieldMapDTO implements Serializable {
          */
         private String parentId;
 
+        /**
+         * thirdFieldTypeName
+         */
+        private String thirdFieldTypeName;
+
+        /**
+         * sysFieldTypeName
+         */
+        private String sysFieldTypeName;
+
         private List<CfgProcessValueMapDTO.ViewDTO> processValueMapDTOList;
     }
 

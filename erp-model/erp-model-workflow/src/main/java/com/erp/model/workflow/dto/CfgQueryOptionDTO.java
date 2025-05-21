@@ -78,6 +78,12 @@ public class CfgQueryOptionDTO implements Serializable {
          * 字段类型：checkboxV2=多选,radioV2=单选,input=文本,datetime=日期,number=数值,amount=金额,attachmentV2=附件,fieldList=明细
          */
         private String fieldType;
+
+        /**
+         * fieldTypeName
+         */
+        private String fieldTypeName;
+
         /**
          * 是否必填
          */

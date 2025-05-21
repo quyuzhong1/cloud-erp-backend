@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
 /**
@@ -280,5 +281,11 @@ public class CfgProcessDTO implements Serializable {
          */
         @NotBlank(message = "业务名称不能为空")
         private String businessName;
+
+        /**
+         *
+         */
+        @NotBlank(message = "")
+        private Map<String,Object> variablesMap;
     }
 }

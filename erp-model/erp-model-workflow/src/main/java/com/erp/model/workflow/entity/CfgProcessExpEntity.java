@@ -53,12 +53,12 @@ public class CfgProcessExpEntity extends BaseEntity<CfgProcessExpEntity> {
     * 条件包含-右括号
     */
     @TableField("right_bracket")
-    private Boolean rightBracket;
+    private String rightBracket;
     /**
     * 多条件逻辑关系
     */
     @TableField("logic")
-    private Boolean logic;
+    private String logic;
     /**
     * 序号
     */

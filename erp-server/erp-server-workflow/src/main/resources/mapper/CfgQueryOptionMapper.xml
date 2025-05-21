@@ -57,6 +57,28 @@
         WHERE is_deleted = FALSE AND bussiness_key = #{businessKey}
 
     </select>
+    <select id="getSystemfield" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
+        SELECT condition_field,
+               concat(case when field_belongs_type = 'table' then '单据头-' else '单据明细-' end,
+                      condition_field_name) AS condition_field_name,
+               request_method,
+               controls,
+               api_url,
+               param,
+               api_type,
+               select_label,
+               select_value,
+               search_key_field,
+               select_value,
+               field_type,
+               is_required,
+               logic,
+               field_belongs_type,
+               bussiness_key
+        FROM cfg_query_option
+        WHERE is_deleted = FALSE
+          AND bussiness_key = #{businessKey}
+    </select>
 
 
 </mapper>

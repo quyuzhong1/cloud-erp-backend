@@ -202,4 +202,14 @@ public class CfgProcessController extends BaseController {
     public ApiResult<List<CfgProcessDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(cfgProcessService.tabList(dto));
     }
+
+    /**
+     * 获取状态统计
+     * @return
+     */
+    @PostMapping("/startThirdProcess")
+    public ApiResult<List<CfgProcessDTO.TabListDTO>> startThirdProcess(@RequestBody CfgProcessDTO.StartDTO dto) {
+        cfgProcessService.startThirdProcess(dto);
+        return success();
+    }
 }

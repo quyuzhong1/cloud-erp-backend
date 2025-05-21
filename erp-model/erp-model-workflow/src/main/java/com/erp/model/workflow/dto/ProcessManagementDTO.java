@@ -640,6 +640,11 @@ public class ProcessManagementDTO {
          * 备注
          */
         private String remark;
+
+        /**
+         * 流程参数map
+         */
+        private Map<String,Object> variablesMap;
     }
 
     @Data

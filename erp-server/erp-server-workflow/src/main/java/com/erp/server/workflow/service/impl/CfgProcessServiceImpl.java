@@ -14,6 +14,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
+import com.common.business.enums.ProcessFormEvent;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
@@ -21,18 +22,16 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessDTO;
-import com.erp.model.workflow.entity.CfgProcessEntity;
-import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserThirdFeign;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.context.FsProcessFormFactory;
+import com.erp.server.workflow.handler.ProcessFormHandler;
 import com.erp.server.workflow.mapper.CfgProcessMapper;
-import com.erp.server.workflow.service.CfgProcessRuleService;
-import com.erp.server.workflow.service.CfgProcessService;
-import com.erp.server.workflow.service.OperateLogService;
-import com.erp.server.workflow.service.ThirdProcessDefinitionService;
+import com.erp.server.workflow.service.*;
 import com.lark.oapi.service.approval.v4.model.CreateInstanceReq;
 import com.lark.oapi.service.approval.v4.model.InstanceCreate;
 import lombok.extern.slf4j.Slf4j;
@@ -78,6 +77,15 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Resource
     private ThirdProcessDefinitionService thirdProcessDefinitionService;
+
+    @Resource
+    private CfgProcessFieldMapService cfgProcessFieldMapService;
+
+    @Resource
+    private CfgProcessValueMapService cfgProcessValueMapService;
+
+    @Resource
+    private FsProcessFormFactory fsProcessFormFactory;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -228,25 +236,38 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     /**
      * 创建飞书审批实例
      */
-    public void startThirdProcess(CfgProcessDTO.StartDTO dto) throws Exception {
+    @Override
+    public void startThirdProcess(CfgProcessDTO.StartDTO dto) {
         //查询approvalCode
-        String approvalCode = baseMapper.getApprovalCode(dto.getBusinessKey());
+        CfgProcessRuleEntity cfgProcessRuleEntity = cfgProcessRuleService.getById(dto.getBusinessId());
+//        String code = cfgProcessRuleEntity.getProcessDefinitionId();
+        //
         //查询userid
-        String userId = sysUserThirdFeign.findByUserId(dto.getUserId()).getThirdUserId();
-        //组装form
-//        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, approvalCode).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+//        String userId = sysUserThirdFeign.findByUserId(dto.getUserId()).getThirdUserId();
+        //查询字段映射表
+        List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, dto.getBusinessId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
+        List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
+        //查询值映射表
+        List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
+        //组装form，1、实时获取 2、查询流程定义表
         ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "7DCF7A99-6E25-4A24-8386-5E2639712983").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
-        //解析body
-        JSONArray formArray = JSONUtil.parseArray(body);
+        JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
+        //组装Json
+        ProcessFormHandler handler = fsProcessFormFactory.getFileHandler(ProcessFormEvent.FS_PROCESS_FORM.getCode());
+        formArray = handler.assemble(formArray, dto.getVariablesMap(),fieldMapList, valueMapList);
         // 创建请求对象（创建样式）
-        CreateInstanceReq req = CreateInstanceReq.newBuilder()
-                .instanceCreate(InstanceCreate.newBuilder()
-                        .approvalCode(approvalCode)
-                        .userId(userId)
-                        .form("[{\"id\":\"111\",\"type\":\"input\",\"value\":\"11111\"},{\"id\":\"222\",\"required\":true,\"type\":\"dateInterval\",\"value\":{\"end\":\"2019-10-02T08:12:01+08:00\",\"interval\":2,\"start\":\"2019-10-01T08:12:01+08:00\"}},{\"id\":\"333\",\"type\":\"radioV2\",\"value\":\"1\"},{\"id\":\"444\",\"type\":\"number\",\"value\":\"4\"},{\"id\":\"555\",\"type\":\"textarea\",\"value\":\"fsafs\"}]")
-                        .build())
-                .build();
-//        fsService.createInstance(req);
+//        CreateInstanceReq req = CreateInstanceReq.newBuilder()
+//                .instanceCreate(InstanceCreate.newBuilder()
+//                        .approvalCode(approvalCode)
+//                        .userId(userId)
+//                        .form("[{\"id\":\"111\",\"type\":\"input\",\"value\":\"11111\"},{\"id\":\"222\",\"required\":true,\"type\":\"dateInterval\",\"value\":{\"end\":\"2019-10-02T08:12:01+08:00\",\"interval\":2,\"start\":\"2019-10-01T08:12:01+08:00\"}},{\"id\":\"333\",\"type\":\"radioV2\",\"value\":\"1\"},{\"id\":\"444\",\"type\":\"number\",\"value\":\"4\"},{\"id\":\"555\",\"type\":\"textarea\",\"value\":\"fsafs\"}]")
+//                        .build())
+//                .build();
+        try {
+//            fsService.createInstance(req);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

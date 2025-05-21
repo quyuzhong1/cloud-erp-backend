@@ -260,7 +260,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         List<ApprovalCreateViewers> approvalCreateViewersList = new ArrayList<>();
 
         if (CfgApproveSyncViewerTypeEnum.USER.getCode().equals(viewerType)) {
-            List<ThirdUnionDTO> thirdUnionList = sysUserFeign.getThirdUnionIdsByUserIds(ThirdpartyPlatformEnum.FS.getCode(), viewerList);
+            List<ThirdUnionDTO> thirdUnionList = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode(), viewerList);
             if (CollUtil.isEmpty(thirdUnionList)) {
                 throw new ServiceException("审批可见人列表人员未关联第三方用户信息");
             }

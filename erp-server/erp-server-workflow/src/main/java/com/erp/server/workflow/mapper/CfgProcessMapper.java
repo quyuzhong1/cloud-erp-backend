@@ -41,5 +41,4 @@ public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
 
     List<CfgProcessDTO.TabListDTO> tabList(@Param("params") CfgProcessDTO.SearchParamDTO params);
 
-    String getApprovalCode(@NotBlank(message = "业务类型不能为空") String businessKey);
 }
