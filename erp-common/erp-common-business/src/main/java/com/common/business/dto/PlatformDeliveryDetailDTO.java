@@ -105,9 +105,4 @@ public class PlatformDeliveryDetailDTO {
      * 速卖通=中台明细ID
      */
     private String uniqueId;
-
-    /**
-     * 备注
-     */
-    private String remark = "";
 }

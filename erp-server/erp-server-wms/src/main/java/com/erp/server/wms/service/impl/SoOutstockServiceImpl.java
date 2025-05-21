@@ -2768,9 +2768,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 if (soOutstockService.checkClosedAndUpdateRemark(dto, id)){
                     return true;
                 }
-                if (dto.isHasAutoApprove()){
-                    soOutstockService.submitAndApprove(id);
-                }
+                soOutstockService.submitAndApprove(id);
             } catch (Exception e) {
                 log.error("B2C订单生成销售出库单提交或审核失败：error={}", ExceptionUtil.stacktraceToString(e));
                 // 记录明细(事务分开)
@@ -3353,11 +3351,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 return Boolean.TRUE;
             }
             //待提交
-            if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus) && generateB2cDTO.isHasAutoApprove()) {
+            if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)) {
                 soOutstockService.submit(Collections.singletonList(id));
             }
             //审核中
-            if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus) && generateB2cDTO.isHasAutoApprove()) {
+            if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus)) {
                 soOutstockService.approve(new ApproveOneDTO(id, ApproveTypeEnum.PASS.getStatus(), ""));
             }
         }

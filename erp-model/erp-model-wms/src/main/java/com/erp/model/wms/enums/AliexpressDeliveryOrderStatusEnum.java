@@ -89,31 +89,6 @@ public enum AliexpressDeliveryOrderStatusEnum implements EnumMessage {
         // 已发货
         // 分拨中心出库
         // 交航成功
-        // 仓配交接成功
-        // 配送失败
-        return Stream.of(
-                        AliexpressDeliveryOrderStatusEnum.SHIPPED,
-                        AliexpressDeliveryOrderStatusEnum.SIGNED,
-                        AliexpressDeliveryOrderStatusEnum.TO_COUNTRY_CLEARANCE,
-                        AliexpressDeliveryOrderStatusEnum.DISTRIBUTION_CENTER_DELIVERY,
-                        AliexpressDeliveryOrderStatusEnum.SUCCESS_DELIVERY,
-                        AliexpressDeliveryOrderStatusEnum.WAREHOUSE_HANDOVER_SUCCESS,
-                        AliexpressDeliveryOrderStatusEnum.DELIVERY_FAILED
-                )
-                .map(AliexpressDeliveryOrderStatusEnum::getName)
-                .collect(Collectors.toList());
-    }
-
-
-    /**
-     * 速卖通发货单已出库需自动审核状态
-     */
-    public static List<String> hasApproveOutStockStatusList() {
-        // 已签收
-        // 目的国清关完成
-        // 已发货
-        // 分拨中心出库
-        // 交航成功
         // 配送失败
         return Stream.of(
                         AliexpressDeliveryOrderStatusEnum.SHIPPED,
