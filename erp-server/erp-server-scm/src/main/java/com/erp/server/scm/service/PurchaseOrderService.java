@@ -77,10 +77,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @author Will
      * @date: 2023/7/11 14:21
      * @param dto
-     * @param list
+     * @param entity
      * @return Boolean
      */
-    Boolean approveEnd(ApproveOneDTO dto, List<PurchaseOrderEntity> list);
+    Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity);
 
     /**
      * @description: 批量反审核

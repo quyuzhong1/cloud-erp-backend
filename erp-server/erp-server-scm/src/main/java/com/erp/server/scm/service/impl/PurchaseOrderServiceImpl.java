@@ -531,7 +531,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(dto.getId()));
 
         //调用审核流程
-        approveProcess(Collections.singletonList(entity), dto);
+        approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "采购订单", approveType.getName(), dto.getComment());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "审核操作");
@@ -542,11 +542,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, List<PurchaseOrderEntity> list) {
-        if (CollUtil.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        List<String> ids = list.stream().map(PurchaseOrderEntity::getId).distinct().collect(Collectors.toList());
+    public Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity) {
 
         ApproveStatusEnum approveStatus;
         if (dto.getType().equals(ApproveType.PASS)) {
@@ -556,17 +552,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
         }
-        Boolean result = this.updateApproveStatusForApprove(ids, approveStatus.getStatus());
+        Boolean result = this.updateApproveStatusForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             // 更新库存信息（生成入库预报）
-            updateInventoryTransCore(list);
+            updateInventoryTransCore(Collections.singletonList(entity));
             // 填入首批下单时间
-            setFirstPlaceOrder(ids);
+            setFirstPlaceOrder(Collections.singletonList(entity.getId()));
             //发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -1810,7 +1806,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         startDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(userInfo.getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
@@ -1821,21 +1817,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @description: 结束深审核
      * @author Will
      * @date: 2023/7/11 14:22
-     * @param list
+     * @param entity
      * @param dto
      */
-    private void approveProcess(List<PurchaseOrderEntity> list, ApproveOneDTO dto) {
+    private void approveProcess(PurchaseOrderEntity entity, ApproveOneDTO dto) {
         /**
          * 目前代码里面批量审核的都是内部审核，不走流程，赋值可取第一条
          */
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-        approveDTO.setBusinessId(list.get(0).getId());
+        approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(list.get(0)));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -1844,10 +1840,35 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, list);
+            approveEnd(dto, entity);
         }
     }
 
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(PurchaseOrderEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+        //价税合计
+        BigDecimal taxPriceTotal = detailList.stream().map(PurchaseOrderDetailEntity::getTaxPrice).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("taxPriceTotal", taxPriceTotal);
+        //不含税合计
+        BigDecimal notTaxPriceTotal = detailList.stream().map(obj -> MathUtil.divide(obj.getTaxPrice(),MathUtil.add(BigDecimal.ONE,obj.getTaxRate()))).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("notTaxPriceTotal", notTaxPriceTotal);
+        //总计采购数量
+        Integer purchaseQtyTotal = detailList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("purchaseQtyTotal", purchaseQtyTotal);
+        return variablesMap;
+    }
 
     /**
      * 处理数据id

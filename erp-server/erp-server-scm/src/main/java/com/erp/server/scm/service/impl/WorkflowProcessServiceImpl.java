@@ -9,7 +9,6 @@ import com.erp.server.scm.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
 
 /**
  * @author Will
@@ -118,7 +117,7 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         ApproveOneDTO baseApproveParamDTO = new ApproveOneDTO();
         baseApproveParamDTO.setType(dto.getApproveStatus().getStatus());
         baseApproveParamDTO.setId(dto.getBusinessId());
-        return purchaseOrderService.approveEnd(baseApproveParamDTO, Collections.singletonList(entity));
+        return purchaseOrderService.approveEnd(baseApproveParamDTO, entity);
     }
 
     /**
