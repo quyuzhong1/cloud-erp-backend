@@ -1843,14 +1843,15 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         FirstMileCostChangeExcelListener excelListenerUtil = new FirstMileCostChangeExcelListener();
         try {
             EasyExcel.read(excelFile.getInputStream(), FirstMileCostChangeExcelDTO.class, excelListenerUtil).sheet(0).doRead();
-            //数据验证
             List<FirstMileCostChangeExcelDTO> dataList = excelListenerUtil.getDataList();
             //错误的
             List<FirstMileCostChangeExcelDTO> errorList = excelListenerUtil.getErrorList();
-            //处理验证成功数据
-            handleImportSuccessList(dataList, errorList);
-            if (errorList.size() > 0) {
-                StringBuffer sb = new StringBuffer();
+            //分摊id
+            Set<String> mainIdList = excelListenerUtil.getMainIdList();
+            //处理成功的数据
+            handleImportSuccessList(mainIdList,dataList,errorList);
+            if (!errorList.isEmpty()) {
+                StringBuilder sb = new StringBuilder();
                 String excelPath = "excel/firstMileWeightChangeExportError.xlsx";
                 String name = "头程费用分摊调整错误.xlsx";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
@@ -1864,20 +1865,48 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 return Boolean.FALSE;
             }
         } catch (SocketTimeoutException e) {
-            log.error("导入超时错误！>>>{}", e);
+            log.error("导入超时错误！>>>{}", JSONUtil.toJsonStr(e));
             throw new ServiceException(ApiError.ERROR_IMPORT_TIMEOUT);
         } catch (IOException e) {
-            log.error("导入错误！>>>{}", e);
+            log.error("导入错误！>>>{}", JSONUtil.toJsonStr(e));
             throw new ServiceException(ApiError.ERROR_95124);
         } catch (ExcelCommonException e) {
-            log.error("导入错误！>>>{}", e);
+            log.error("导入错误！>>>{}", JSONUtil.toJsonStr(e));
             throw new ServiceException(ApiError.ERROR_1016);
         }
-
         return Boolean.TRUE;
-
     }
 
-    private void handleImportSuccessList(List<FirstMileCostChangeExcelDTO> dataList, List<FirstMileCostChangeExcelDTO> errorList) {
+    private void handleImportSuccessList(Set<String> mainIdList, List<FirstMileCostChangeExcelDTO> dataList, List<FirstMileCostChangeExcelDTO> errorList) {
+        if (CollUtil.isEmpty(mainIdList)){
+            return;
+        }
+        List<FirstMileCostAllocationEntity> entityList = this.listByIds(mainIdList);
+        if (CollectionUtils.isEmpty(entityList)){
+            return;
+        }
+
+        List<String> sourceIds = entityList.stream().filter(e -> ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(e.getStatus())).map(FirstMileCostAllocationEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = wmsFirstMileDeliveryFeign.listByIds(sourceIds);
+        List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList = wmsFirstMileDeliveryFeign.listDetailByMainIds(sourceIds);
+        for (FirstMileCostAllocationEntity entity : entityList) {
+            if (ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())){
+                continue;
+            }
+            String sourceId = entity.getSourceId();
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                continue;
+            }
+            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
+                continue;
+            }
+            try {
+                this.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
+            }catch (Exception e){
+                log.error("重新费用分摊异常：{}",JSONUtil.toJsonStr(e));
+            }
+        }
     }
 }
