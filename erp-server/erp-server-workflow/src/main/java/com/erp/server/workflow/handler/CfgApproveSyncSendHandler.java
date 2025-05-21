@@ -57,7 +57,16 @@ public class CfgApproveSyncSendHandler {
 
         //审批状态
         String approveType = dto.getApproveType();
-        if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())//审核通过并且流程已经完成
+        if(StringUtils.isBlank(approveType)){//创建流程
+            //发送审核通知
+            CfgApproveNoticeEntity approveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode(), Boolean.TRUE);
+            if (Objects.nonNull(approveNoticeEntity)) {
+                //默认发送审核人
+                sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv);
+            }
+            //发送抄送通知
+            commonSendNotice(NoticeTemplateEnum.CC,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+        }if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())//审核通过并且流程已经完成
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
             //发送审批结果通知
             commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
@@ -74,15 +83,6 @@ public class CfgApproveSyncSendHandler {
             commonSendNotice(NoticeTemplateEnum.RECALL,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
             //更新审批结果通知
             commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.CANCELLED.getCode());
-        } else {//创建流程
-            //发送审核通知
-            CfgApproveNoticeEntity approveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode(), Boolean.TRUE);
-            if (Objects.nonNull(approveNoticeEntity)) {
-                //默认发送审核人
-                sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv);
-            }
-            //发送抄送通知
-            commonSendNotice(NoticeTemplateEnum.CC,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
         }
     }
 
