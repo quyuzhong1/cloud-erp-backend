@@ -63,6 +63,7 @@
     <sql id="List_Process_Management">
         SELECT
             ptm.id,
+            pm.id as managementId,
             pm.process_instance_id,
             pm.process_definition_id,
             pm.process_version ,

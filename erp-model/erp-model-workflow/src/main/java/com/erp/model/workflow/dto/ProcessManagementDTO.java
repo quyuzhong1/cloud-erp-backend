@@ -742,6 +742,10 @@ public class ProcessManagementDTO {
     public static class PagingResultDTO {
 
         private String id;
+        /**
+         * 流程节点id
+         */
+        private String managementId;
 
         /**
          * 流程实例ID
