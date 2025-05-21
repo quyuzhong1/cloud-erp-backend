@@ -89,14 +89,13 @@
 
         -- Expression
         e.index AS exp_index,
-        CONCAT(
+        CONCAT_WS(' ',
         COALESCE(e.left_bracket, ''),
         COALESCE(e.field, ''),
         COALESCE(drc.value, ''),
-        COALESCE(e.value, ''),
+        COALESCE(e.name, ''),
         COALESCE(e.right_bracket, ''),
-        COALESCE(e.logic, ''),
-        COALESCE(e.name, '')
+        COALESCE(e.logic, '')
         ) AS exp_desc
 
         FROM public.cfg_process p

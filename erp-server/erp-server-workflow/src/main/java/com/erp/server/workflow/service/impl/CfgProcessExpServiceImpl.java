@@ -100,7 +100,7 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
             return cfgProcessExpEntity;
         }).collect(Collectors.toList());
         log.info("开始新增流程设置审核条件");
-        this.saveBatch(updateEntitys);
+        this.saveOrUpdateBatch(updateEntitys);
 
         Map<String, CfgProcessExpEntity> expEntityMap = updateEntitys.stream()
                 .collect(Collectors.toMap(CfgProcessExpEntity::getId, entity -> entity));
@@ -108,7 +108,7 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
         existingEntities.forEach(existingEntity -> {
             CfgProcessExpEntity updateEntity = expEntityMap.get(existingEntity.getId());
             if (ObjectUtil.isNotEmpty(updateEntity)) {
-                operateLogService.addModuleOperateLogByObj(existingEntities, updateEntitys, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
+//                operateLogService.addModuleOperateLogByObj(existingEntity, updateEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
             }
         });
 
