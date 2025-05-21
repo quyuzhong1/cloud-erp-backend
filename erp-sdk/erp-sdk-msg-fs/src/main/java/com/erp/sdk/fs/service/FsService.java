@@ -574,8 +574,49 @@ public class FsService {
         }
     }
 
+
     /**
-     * 发送ERP审批同步的 Bot 消息
+     * 更新审批 Bot 消息
+     * https://open.feishu.cn/document/server-docs/approval-v4/message/update-bot-messages
+     * @author jack
+     * @date 2025-05-19
+     */
+    public Boolean updateApproveMessage(String messageId,String status) {
+        //获取飞书的应用token
+        String tenantAccessToken = getFsTenantAccessToken();
+        if (StringUtils.isNotBlank(tenantAccessToken)) {
+            Map<String, String> headerMap = new HashMap<>();
+            String authorization = FS_AUTHORIZATION + tenantAccessToken;
+            headerMap.put(AUTHORIZATION, authorization);
+            headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
+
+            //国际化
+            List<Map<String,Object>> i18nResources = new ArrayList<>();
+            Map<String,Object> i18nResourcesMap = new HashMap<>();
+            i18nResourcesMap.put("locale", LocaleEnum.LOCALE_ZH_CN.getCode());
+            i18nResourcesMap.put("is_default", true);
+            i18nResources.add(i18nResourcesMap);
+
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("message_id",messageId);
+            bodyMap.put("status",status);
+            bodyMap.put("i18n_resources",i18nResources);
+
+            String resultStr = OkHttpUtils.doPostJson(ThirdConstants.FS_APPROVE_MESSAGE_UPDATE_URL, bodyMap, headerMap);
+            Map<String, Object> resultMap = JSON.parseObject(resultStr, Map.class);
+            if (resultMap != null && resultMap.containsKey("code")) {
+                Integer code = (Integer) resultMap.get("code");
+                int succeedCode = 0;
+                if (succeedCode == code) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 发送审批 Bot 消息
      * https://open.feishu.cn/document/server-docs/approval-v4/message/send-bot-messages
      * @author jack
      * @date 2025-05-19
@@ -628,49 +669,6 @@ public class FsService {
      * @date 2025-05-20
      */
     public Map<String, Object> buildCcBodyMap(FsBotParamsDTO.SendParamsDTO dto){
-        Map<String, Object> bodyMap = new HashMap<>();
-        Map<String,String> i18nResourcesTextMap = new HashMap<>();
-        buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
-        buildSummaries(dto,bodyMap,i18nResourcesTextMap);
-        buildActions(dto,bodyMap);
-        buildI18nResources(bodyMap,i18nResourcesTextMap);
-        return bodyMap;
-    }
-    /**
-     * 构建撤回通知的请求体
-     * @author jack
-     * @date 2025-05-20
-     */
-    public Map<String, Object> buildRecallBodyMap(FsBotParamsDTO.SendParamsDTO dto){
-        Map<String, Object> bodyMap = new HashMap<>();
-        Map<String,String> i18nResourcesTextMap = new HashMap<>();
-        buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
-        buildSummaries(dto,bodyMap,i18nResourcesTextMap);
-        buildActions(dto,bodyMap);
-        buildI18nResources(bodyMap,i18nResourcesTextMap);
-        return bodyMap;
-    }
-
-    /**
-     * 构建拒绝通知的请求体
-     * @author jack
-     * @date 2025-05-20
-     */
-    public Map<String, Object> buildRejectBodyMap(FsBotParamsDTO.SendParamsDTO dto){
-        Map<String, Object> bodyMap = new HashMap<>();
-        Map<String,String> i18nResourcesTextMap = new HashMap<>();
-        buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
-        buildSummaries(dto,bodyMap,i18nResourcesTextMap);
-        buildActions(dto,bodyMap);
-        buildI18nResources(bodyMap,i18nResourcesTextMap);
-        return bodyMap;
-    }
-    /**
-     * 构建通过通知的请求体
-     * @author jack
-     * @date 2025-05-20
-     */
-    public Map<String, Object> buildPassBodyMap(FsBotParamsDTO.SendParamsDTO dto){
         Map<String, Object> bodyMap = new HashMap<>();
         Map<String,String> i18nResourcesTextMap = new HashMap<>();
         buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
@@ -815,47 +813,6 @@ public class FsService {
         }
     }
 
-    /**
-     * 更新审批 Bot 消息
-     * https://open.feishu.cn/document/server-docs/approval-v4/message/update-bot-messages
-     * @author jack
-     * @date 2025-05-19
-     */
-    public Boolean updateApproveMessage() {
-        //获取飞书的应用token
-        String tenantAccessToken = getFsTenantAccessToken();
-        if (StringUtils.isNotBlank(tenantAccessToken)) {
-            Map<String, String> headerMap = new HashMap<>();
-            String authorization = FS_AUTHORIZATION + tenantAccessToken;
-            headerMap.put(AUTHORIZATION, authorization);
-            headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
-
-            Map<String, Object> bodyMap = new HashMap<>();
-//            bodyMap.put("template_id", 1008);
-//            bodyMap.put("user_id", );
-//            bodyMap.put("approval_name", "@i18n@approvalName");
-//            bodyMap.put("title_user_id", );
-//            bodyMap.put("title_user_id_type ", UserIdTypeEnum.USERID.getCode());
-//
-//            Map<String, Object> contentMap = new HashMap<>();
-//            List<String> summaries = new ArrayList<>();
-//            contentMap.put("user_id", );
-//            contentMap.put("user_id_type", UserIdTypeEnum.USERID.getCode());
-//            contentMap.put("summaries",summaries);
-//            bodyMap.put("content ",contentMap );
-
-            String resultStr = OkHttpUtils.doPostJson(ThirdConstants.FS_APPROVE_MESSAGE_UPDATE_URL, bodyMap, headerMap);
-            Map<String, Object> resultMap = JSON.parseObject(resultStr, Map.class);
-            if (resultMap != null && resultMap.containsKey("code")) {
-                Integer code = (Integer) resultMap.get("code");
-                int succeedCode = 0;
-                if (succeedCode == code) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
 
 
     public static void main(String[] args) throws Exception {
