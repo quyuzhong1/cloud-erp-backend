@@ -119,7 +119,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static cn.hutool.json.XMLTokener.entity;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER;
 
 /**
@@ -532,7 +531,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(dto.getId()));
 
         //调用审核流程
-        approveProcess(Collections.singletonList(entity), dto);
+        approveProcess(entity, dto);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "采购订单", approveType.getName(), dto.getComment());
         moduleOperateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PURCHASE_ORDER.getCode(), entity.getId(), "审核操作");
@@ -541,38 +540,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     }
 
     @Override
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
-    public Boolean  autoBatchApprove(BaseApproveParamDTO baseApproveParamDTO) {
-        List<String> ids = baseApproveParamDTO.getIds();
-        //根据ids查询
-        List<PurchaseOrderEntity> list = getList(ids);
-        //审核中允许审核
-        long count = list.stream().filter(obj -> !ApproveStatusEnum.APPROVE_ING.getStatus().equals(obj.getApproveStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98006);
-        }
-        String type = baseApproveParamDTO.getType();
-
-        log.info("采购订单【{}】，ids=【{}】", ApproveTypeEnum.getName(type), JSONUtil.toJsonStr(ids));
-
-        //调用审核流程
-        approveProcess(list, new ApproveOneDTO(ids.get(0),baseApproveParamDTO.getType(),baseApproveParamDTO.getComment()));
-
-        //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog(String.format("审核【%s】了一个采购订单", ApproveTypeEnum.getName(type)).concat("【%s】").concat(StringUtils.isNotBlank(baseApproveParamDTO.getComment()) ? String.format(",意见：%s", baseApproveParamDTO.getComment()) : ""), ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "审核操作");
-        return Boolean.TRUE;
-    }
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean approveEnd(ApproveOneDTO dto, List<PurchaseOrderEntity> list) {
-        if (CollUtil.isEmpty(list)) {
-            return Boolean.TRUE;
-        }
-        List<String> ids = list.stream().map(PurchaseOrderEntity::getId).distinct().collect(Collectors.toList());
+    public Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity) {
 
         ApproveStatusEnum approveStatus;
         if (dto.getType().equals(ApproveType.PASS)) {
@@ -582,17 +552,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
             //审核不通过
             approveStatus = ApproveStatusEnum.REJECT;
         }
-        Boolean result = this.updateApproveStatusForApprove(ids, approveStatus.getStatus());
+        Boolean result = this.updateApproveStatusForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             // 更新库存信息（生成入库预报）
-            updateInventoryTransCore(list);
+            updateInventoryTransCore(Collections.singletonList(entity));
             // 填入首批下单时间
-            setFirstPlaceOrder(ids);
+            setFirstPlaceOrder(Collections.singletonList(entity.getId()));
             //发送金蝶
-            sendPushTask(list,SyncOperateEnum.OPERATE_APPROVE.getCode());
+            sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
         }
         return Boolean.TRUE;
     }
@@ -902,31 +872,26 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids,Boolean isStartProcess) {
-        //根据ids查询
-        List<PurchaseOrderEntity> list = getList(ids);
+    public BatchResultDTO submit(PurchaseOrderEntity entity, Boolean isStartProcess) {
         //待提交或审核不通过并且未作废允许提交
-        long count = list.stream().filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
-        if (count > 0) {
+        if ((!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(entity.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(entity.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(entity.getInvalidStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        //校验必填信息
-        checkRequiredData(list,ids);
 
-        log.info("采购订单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
+        //校验必填信息
+        checkRequiredData(Collections.singletonList(entity),Collections.singletonList(entity.getId()));
+
+        log.info("采购订单提交，id=【{}】", JSONUtil.toJsonStr(entity.getId()));
         if (isStartProcess) {
             //提交流程
-            startProcess(list);
+            startProcess(entity);
         }
         //更新审核状态
-        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
+        updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.APPROVE_ING.getStatus());
         //操作日志
-        List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
+        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购订单【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "提交操作");
-        //同步到WMS
-//        List<PurchaseOrderEntity> toWmsList = this.getList(ids);
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_SCM_TO_WMS_PURCHASE_TOPIC, RocketMqTagEnum.SYNC_WMS_PURCHASE_ORDER_TAG.getName(), toWmsList, IdUtil.simpleUUID());
-        return Boolean.TRUE;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
     }
 
     @Override
@@ -939,7 +904,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         purchaseOrderEntity = this.getById(purchaseOrderEntity.getId());
         //提交
-        return this.submitEntity(purchaseOrderEntity, Boolean.TRUE);
+        return this.submit(purchaseOrderEntity, Boolean.TRUE);
     }
 
     @Override
@@ -948,7 +913,9 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //修改
         this.update(dto);
         //提交
-        return this.submit(Arrays.asList(dto.getId()),Boolean.TRUE);
+        PurchaseOrderEntity entity = this.getById(dto.getId());
+        BatchResultDTO submit = this.submit(entity, Boolean.TRUE);
+        return submit.getSuccess();
     }
 
     @Override
@@ -1829,22 +1796,18 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @description: 启动审核流程
      * @author Will
      * @date: 2023/7/11 14:11
-     * @param list
+     * @param entity
      */
-    private void startProcess(List<PurchaseOrderEntity> list) {
+    private void startProcess(PurchaseOrderEntity entity) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
-        list.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(startDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(userInfo.getUid());
+        startDTO.setVariablesMap(getVariablesMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
@@ -1854,21 +1817,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
      * @description: 结束深审核
      * @author Will
      * @date: 2023/7/11 14:22
-     * @param list
+     * @param entity
      * @param dto
      */
-    private void approveProcess(List<PurchaseOrderEntity> list, ApproveOneDTO dto) {
+    private void approveProcess(PurchaseOrderEntity entity, ApproveOneDTO dto) {
         /**
          * 目前代码里面批量审核的都是内部审核，不走流程，赋值可取第一条
          */
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
-        approveDTO.setBusinessId(list.get(0).getId());
+        approveDTO.setBusinessId(entity.getId());
         approveDTO.setBusinessKey(SourceTypeEnum.PURCHASE_ORDER.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(list.get(0)));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -1877,10 +1840,35 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
         if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
             // 无需走流程的数据则直接更新状态
-            approveEnd(dto, list);
+            approveEnd(dto, entity);
         }
     }
 
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(PurchaseOrderEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<PurchaseOrderDetailEntity> detailList = purchaseOrderDetailService.listByPurchaseOrderId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98026);
+        }
+        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+        //价税合计
+        BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("taxPriceTotal", taxPriceTotal);
+        //不含税合计
+        BigDecimal notTaxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(MathUtil.divide(obj.getTaxPrice(),MathUtil.add(BigDecimal.ONE,obj.getTaxRate())),obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+        variablesMap.put("notTaxPriceTotal", notTaxPriceTotal);
+        //总计采购数量
+        Integer purchaseQtyTotal = detailList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("purchaseQtyTotal", purchaseQtyTotal);
+        return variablesMap;
+    }
 
     /**
      * 处理数据id
@@ -3341,32 +3329,6 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         });
     }
 
-    @Override
-    @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO submitEntity(PurchaseOrderEntity entity, Boolean isStartProcess) {
-        //待提交或审核不通过并且未作废允许提交
-        long count = Stream.of(entity).filter(obj -> (!ApproveStatusEnum.WAIT_SUBMIT.getStatus().equals(obj.getApproveStatus()) && !ApproveStatusEnum.REJECT.getStatus().equals(obj.getApproveStatus())) || !InvalidStatusEnum.NOT_VOIDED.getStatus().equals(obj.getInvalidStatus())).count();
-        if (count > 0) {
-            throw new ServiceException(ApiError.ERROR_98010);
-        }
-
-        List<PurchaseOrderEntity> list = Collections.singletonList(entity);
-        //校验必填信息
-        checkRequiredData(list, Collections.singletonList(entity.getId()));
-
-        List<String> ids = Collections.singletonList(entity.getId());
-        log.info("采购订单提交，ids=【{}】", JSONUtil.toJsonStr(ids));
-        if (isStartProcess) {
-            //提交流程
-            startProcess(list);
-        }
-        //更新审核状态
-        updateApproveStatus(ids, ApproveStatusEnum.APPROVE_ING.getStatus());
-        //操作日志
-        List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
-        moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购订单【%s】", ModuleTypeEnum.PURCHASE_ORDER.getCode(), pairList, "提交操作");
-        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
-    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)

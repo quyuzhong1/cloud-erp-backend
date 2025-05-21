@@ -65,4 +65,6 @@ public interface CfgProcessRuleService extends SuperService<CfgProcessRuleEntity
      * @return CfgProcessRuleEntity
      */
     List<CfgProcessRuleEntity> listByProcessId(String id,String type);
+
+    String getVersion(String processDefinitionId);
 }

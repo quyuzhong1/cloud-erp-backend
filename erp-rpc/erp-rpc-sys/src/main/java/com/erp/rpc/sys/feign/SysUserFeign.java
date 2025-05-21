@@ -349,6 +349,15 @@ public interface SysUserFeign {
     List<ThirdUnionDTO> getThirdUnionIdsByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds);
 
     /**
+     * 批量根据用户id获取第三方平台账号信息
+     * @param platform
+     * @param userIds
+     * @return
+     */
+    @PostMapping("feign/user/getThirdByUserIds")
+    List<ThirdUnionDTO> getThirdByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "userIds") List<String> userIds);
+
+    /**
      * 根据主键获取消息配置信息
      *
      * @param id

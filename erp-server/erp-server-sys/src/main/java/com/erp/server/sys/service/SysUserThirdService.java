@@ -52,6 +52,8 @@ public interface SysUserThirdService extends IService<SysUserThirdEntity> {
      */
     List<ThirdUnionDTO> getUnionByPlatformAndUserIds(String platform, List<String> userIds);
 
+    List<ThirdUnionDTO> getThirdByUserIds(String platform, List<String> userIds);
+
     /**
      * 获取第三方绑定的用户
      * @author yl

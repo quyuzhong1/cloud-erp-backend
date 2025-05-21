@@ -182,7 +182,7 @@ public class ProcessDefinitionController extends BaseController {
     }
 
     /**
-     * 下拉ERP审评定义
+     * 下拉ERP审批定义
      * @return
      */
     @GetMapping("/processDefinition/drop/down")

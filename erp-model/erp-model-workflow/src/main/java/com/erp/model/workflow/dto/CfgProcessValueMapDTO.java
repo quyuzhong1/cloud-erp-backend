@@ -48,7 +48,7 @@ public class CfgProcessValueMapDTO implements Serializable {
         */
         private String sysValue;
 
-
+        private String defaultValue;
     }
 
     /**
@@ -100,10 +100,13 @@ public class CfgProcessValueMapDTO implements Serializable {
         /**
         * 数大臣r选项值
         */
-        @NotBlank(message = "数大臣r选项值不能为空")
-        @Size(max = 30,message = "数大臣r选项值最大长度不能超过30位")
+        @NotBlank(message = "数大臣选项值不能为空")
+        @Size(max = 30,message = "数大臣选项值最大长度不能超过30位")
         private String sysValue;
 
+
+        @Size(max = 30,message = "数大臣选项值最大长度不能超过30位")
+        private String defaultValue;
     }
 
     @Data

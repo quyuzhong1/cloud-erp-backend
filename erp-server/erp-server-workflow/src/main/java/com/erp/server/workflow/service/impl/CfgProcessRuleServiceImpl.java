@@ -17,6 +17,7 @@ import com.erp.model.workflow.dto.CfgProcessExpDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.CfgProcessRuleDTO;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
+import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.model.workflow.entity.ThirdProcessInstanceEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
@@ -54,6 +55,8 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     ProcessManagementService processManagementService;
     @Resource
     ThirdProcessInstanceService thirdProcessInstanceService;
+    @Resource
+    ProcessDefinitionService processDefinitionService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -224,6 +227,12 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                 .eq(CfgProcessRuleEntity::getType,type)
                 .eq(CfgProcessRuleEntity::getDisabled, Boolean.FALSE)
                 .list();
+    }
+
+    @Override
+    public String getVersion(String processDefinitionId) {
+        ProcessDefinitionEntity entity = processDefinitionService.getById(processDefinitionId);
+        return entity.getProcessVersion().toString();
     }
 
     /**

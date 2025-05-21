@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -475,9 +476,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        Map<String, Object> map = BeanUtil.beanToMap(entity);
-        map.put("attachmentList", baseApproveDTO.getAttachmentList());
-        approveDTO.setVariablesMap(map);
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        variablesMap.put("attachmentList", baseApproveDTO.getAttachmentList());
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        if(CollUtil.isNotEmpty(detailList)){
+            variablesMap.put(ThirdConstants.DETAIL_LIST, detailList);
+        }
+        approveDTO.setVariablesMap(variablesMap);
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -574,6 +579,13 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         revokeDTO.setBusinessId(entity.getId());
         revokeDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         revokeDTO.setUserId(UserContext.getNonLoginUser().getUid());
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        if (CollUtil.isNotEmpty(detailList)) {
+            variablesMap.put(ThirdConstants.DETAIL_LIST, detailList);
+        }
+        revokeDTO.setVariablesMap(variablesMap);
+
         workflowFeign.revokeProcess(revokeDTO);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.CANCEL_PROCESS);
     }
@@ -612,7 +624,12 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         startDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        if(CollUtil.isNotEmpty(detailList)){
+            variablesMap.put(ThirdConstants.DETAIL_LIST, detailList);
+        }
+        startDTO.setVariablesMap(variablesMap);
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());

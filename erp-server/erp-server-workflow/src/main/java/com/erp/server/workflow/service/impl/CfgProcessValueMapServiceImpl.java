@@ -152,9 +152,13 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                 dropDownDTO.setValue(entry.getKey());
                 dropDownDTOS.add(dropDownDTO);
             }
+            CfgProcessValueMapDTO.DropDownDTO dropDownDTO = new CfgProcessValueMapDTO.DropDownDTO();
+            dropDownDTO.setName("默认值");
+            dropDownDTO.setValue(stringMap.get("default"));
+            dropDownDTOS.add(dropDownDTO);
             return dropDownDTOS;
         } catch (Exception e) {
-            throw new ServiceException("飞书选项值列表转换异常");
+            throw new ServiceException("飞书选项值列表转换异常：{}",e.getMessage());
         }
     }
 

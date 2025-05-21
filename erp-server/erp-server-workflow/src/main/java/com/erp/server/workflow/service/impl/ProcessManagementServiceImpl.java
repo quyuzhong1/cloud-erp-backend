@@ -41,6 +41,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
+import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.workflow.dto.CamundaDTO;
@@ -85,8 +86,6 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -163,6 +162,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
+//        // 查询业务数据和关联流程定义
+//        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
+//        if (null == processBusiness) {
+//            // 业务未绑定流程定义
+//            return new ProcessManagementDTO.StartResultDTO(dto);
+//        }
+//        return startProcess(dto, processBusiness.getProcessDefinitionId());
         String processDefinitionId = getProcessDefinitionId(dto);
         if (CharSequenceUtil.isBlank(processDefinitionId)) {
             // 业务无已启用的Erp流程配置
@@ -312,28 +318,17 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.ERROR_94004);
         }
 
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                //判断该单据类型是否有ERP审批同步定义
-                List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(insertManagementEntity.getBusinessKey()))
-                        .stream()
-                        .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
-                        .collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
-                    CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
-                    CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
-                    mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
-                    mqDto.setProcessManagementId(insertManagementEntity.getId());
-                    mqDto.setBusinessName(insertManagementEntity.getBusinessName());
-                    mqDto.setInstanceId(processInstanceId);
-                    mqDto.setTaskId(taskId);
-                    mqDto.setCreateUserId(dto.getUserId());
-                    mqDto.setVariablesMap(dto.getVariablesMap());
-                    mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
-                }
-            }
-        });
+        //判断该单据类型是否有ERP审批同步定义
+        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+        mqDto.setProcessManagementId(insertManagementEntity.getId());
+        mqDto.setBusinessName(insertManagementEntity.getBusinessName());
+        mqDto.setInstanceId(processInstanceId);
+        mqDto.setTaskId(taskId);
+        mqDto.setOperator(dto.getUserId());
+        mqDto.setVariablesMap(dto.getVariablesMap());
+        mqDto.setBusinessKey(dto.getBusinessKey());
+        syncFsExternalInstance(mqDto);
+
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
@@ -437,11 +432,42 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(Boolean.TRUE.equals(isFirst)){
             sameApproverAutoPass(dto, processManagementList.get(0).getProcessDefinitionId(),currentTask.getProcessInstanceId());
         }
+
+        //判断该单据类型是否有ERP审批同步定义
+        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+        mqDto.setProcessManagementId(managementTask.getManagementId());
+        mqDto.setBusinessName(managementTask.getBusinessName());
+        mqDto.setInstanceId(processInstanceId);
+        mqDto.setTaskId(managementTask.getTaskId());
+        mqDto.setOperator(dto.getUserId());
+        mqDto.setVariablesMap(dto.getVariablesMap());
+        mqDto.setBusinessKey(dto.getBusinessKey());
+        mqDto.setApproveType(dto.getApproveType().getStatus());
+        syncFsExternalInstance(mqDto);
+
         // 返回结果
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
 
-//    @Transactional(rollbackFor = Exception.class)
+    /**
+     * 飞书三方审批实例同步
+     * @author jack
+     * @date 2025-05-21
+     */
+    private void syncFsExternalInstance(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto) {
+        //判断该单据类型是否有ERP审批同步定义
+        List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(mqDto.getBusinessKey()))
+                .stream()
+                .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
+            CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
+            mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
+            mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
+        }
+    }
+
+    //    @Transactional(rollbackFor = Exception.class)
     public void sameApproveHandler(ProcessManagementDTO.ApproveDTO dto, ProcessManagementDTO.ManagementTaskDTO managementTask, DictBasicEnum reviewSetting) {
         String userId = dto.getUserId();
         String processInstanceId = managementTask.getProcessInstanceId();
@@ -759,6 +785,18 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 删除本地流程任务数据
         processTaskManagementService.removeByProcessInstanceId(processInstance.getProcessInstanceId());
 
+        //判断该单据类型是否有ERP审批同步定义
+        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+        mqDto.setProcessManagementId(managementTask.getManagementId());
+        mqDto.setBusinessName(managementTask.getBusinessName());
+        mqDto.setInstanceId(processInstanceId);
+        mqDto.setTaskId(managementTask.getTaskId());
+        mqDto.setOperator(dto.getUserId());
+        mqDto.setVariablesMap(dto.getVariablesMap());
+        mqDto.setBusinessKey(dto.getBusinessKey());
+        mqDto.setApproveType(ApproveTypeEnum.CANCEL.getStatus());//撤销
+        syncFsExternalInstance(mqDto);
+
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }
 
@@ -929,7 +967,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param userMap 审批人信息
      */
     private void saveTaskManagementEntities(DelegateTask task, String processInstanceId, String activityId, LocalDateTime processStartTime, CamundaDTO.PropertiesDTO propertiesDTO, String executionId, String activityName, List<String> candidateUsers, Map<String, FindUserDTO> userMap) {
-        String copyUser = propertiesDTO.getCopyUser();
+        List<FindUserDTO> copyUserList = getCopyUserList(propertiesDTO);
         candidateUsers.forEach(userId -> {
             FindUserDTO findUserDTO = userMap.get(userId);
             if (null == findUserDTO) {
@@ -938,12 +976,28 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, findUserDTO, executionId, activityName);
             ProcessTaskManagementEntity taskManagementEntity = processTaskManagementService.saveProcessTask(insertTask);
-            if (CharSequenceUtil.isNotBlank(copyUser)) {
-                List<String> ccUserIds = Arrays.asList(copyUser.split(","));
-                List<FindUserDTO> ccUserList = sysUserFeign.getUserListByUserIds(ccUserIds);
-                processTaskCcService.saveCcUser(task.getId(), ccUserList, taskManagementEntity.getId());
+            if (CollUtil.isNotEmpty(copyUserList)) {
+                processTaskCcService.saveCcUser(task.getId(), copyUserList, taskManagementEntity.getId());
             }
         });
+    }
+    
+    /**
+     * 获取抄送人信息
+     * @author will 
+     * @date 2025/5/20 16:01
+     * @param propertiesDTO 
+     * @return List<FindUserDTO>
+     */
+    private List<FindUserDTO> getCopyUserList(CamundaDTO.PropertiesDTO propertiesDTO) {
+       if (ProcessCopyOptionEnum.ROLE.getCode().equals(propertiesDTO.getCopyOption())) {
+           List<String> ccRoleIds = Arrays.asList(propertiesDTO.getCopyRole().split(","));
+           return sysUserFeign.getUserListByRoleIds(new SysFeignDTO.ListByRoleIdsDTO(ccRoleIds,""));
+       } else if (ProcessCopyOptionEnum.USER.getCode().equals(propertiesDTO.getCopyOption())) {
+           List<String> ccUserIds = Arrays.asList(propertiesDTO.getCopyUser().split(","));
+           return sysUserFeign.getUserListByUserIds(ccUserIds);
+       }
+        return Collections.emptyList();
     }
 
     @Override

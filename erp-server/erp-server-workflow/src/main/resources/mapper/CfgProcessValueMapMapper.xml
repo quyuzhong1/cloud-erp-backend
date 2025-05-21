@@ -15,6 +15,7 @@
        <result column="field_map_id" property="fieldMapId" />
        <result column="third_value" property="thirdValue" />
        <result column="sys_value" property="sysValue" />
+        <result column="defalut_value" property="defalutValue" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -28,7 +29,7 @@
         update_time,
         version,
         is_deleted,
-        field_map_id, third_value, sys_value
+        field_map_id, third_value, sys_value, defalut_value
     </sql>
 
 

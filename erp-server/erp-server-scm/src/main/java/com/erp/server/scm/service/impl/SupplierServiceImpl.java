@@ -3,6 +3,7 @@ package com.erp.server.scm.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -267,8 +268,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (StringUtils.isBlank(supplierId)) {
             throw new ServiceException(ApiError.ERROR_1019);
         }
-        Boolean result = this.submit(Arrays.asList(supplierId));
-        return result;
+        SupplierEntity entity = this.getById(supplierId);
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98031);
+        }
+        BatchResultDTO submit = this.submit(entity);
+        return submit.getSuccess();
     }
 
 
@@ -605,7 +610,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     /**
      * 批量提交审核
      *
-     * @param ids
+     * @param entity
      * @return java.lang.Boolean
      * @author yl
      * @date 2023-03-20 19:07
@@ -613,11 +618,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
-    public Boolean submit(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return false;
-        }
-        List<SupplierEntity> list = this.getByIds(ids);
+    public BatchResultDTO submit(SupplierEntity entity) {
         //待审核
         String waitSubmitStatus = ApproveStatusEnum.WAIT_SUBMIT.getStatus();
         //审核不通过
@@ -627,28 +628,21 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         List<String> statusList = new ArrayList<>(2);
         statusList.add(rejectStatus);
         statusList.add(waitSubmitStatus);
-        long count = list.stream().filter(s -> !statusList.contains(s.getApproveStatus().getStatus())).count();
-        if (count > 0) {
+        if (!statusList.contains(entity.getApproveStatus().getStatus())) {
             throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
         //提交流程
-        startProcess(list);
-        List<Pair<String, String>> pairList = list.stream().filter(s -> s.getApproveStatus().getStatus().equals(waitSubmitStatus)).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
-        List<Pair<String, String>> rejectPairList = list.stream().filter(s -> s.getApproveStatus().equals(ApproveStatusEnum.getByStatus(rejectStatus))).
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-
-        Boolean result = this.updateApproveStatus(list, ApproveStatusEnum.getByStatus(ingStatus));
+        startProcess(entity);
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(ingStatus));
         if (result) {
             //添加日志
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.WAIT_SUBMIT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            batchAddModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), pairList, "状态变更");
+            addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
             //审核不通过
             String rejectContent = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.REJECT.getName(), ApproveStatusEnum.APPROVE_ING.getName());
-            batchAddModuleOperateLog(rejectContent, ModuleTypeEnum.SUPPLIER.getCode(), rejectPairList, "状态变更");
+            addModuleOperateLog(rejectContent, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");
         }
-        return result;
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
     }
 
 
@@ -928,7 +922,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (StringUtils.isBlank(supplierId)) {
             throw new ServiceException(ApiError.ERROR_1020);
         }
-        return this.submit(Arrays.asList(supplierId));
+        SupplierEntity entity = this.getById(supplierId);
+        if (ObjUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_98031);
+        }
+        BatchResultDTO submit = this.submit(entity);
+        return submit.getSuccess();
     }
 
 
@@ -1567,25 +1566,21 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     /**
-     * @param list
+     * @param entity
      * @description: 提交流程
      * @author Will
      * @date: 2023/7/3 14:39
      */
-    private void startProcess(List<SupplierEntity> list) {
+    private void startProcess(SupplierEntity entity) {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ValidList<ProcessManagementDTO.StartDTO> resultList = new ValidList<>();
-        list.forEach(obj -> {
-            ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
-            startDTO.setBusinessId(obj.getId());
-            startDTO.setBusinessCode(obj.getCode());
-            startDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
-            startDTO.setBusinessName(obj.getCode());
-            startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
-            resultList.add(startDTO);
-        });
-        ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
+        ProcessManagementDTO.StartDTO startDTO = new ProcessManagementDTO.StartDTO();
+        startDTO.setBusinessId(entity.getId());
+        startDTO.setBusinessCode(entity.getCode());
+        startDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
+        startDTO.setBusinessName(entity.getCode());
+        startDTO.setUserId(userInfo.getUid());
+        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
@@ -1614,18 +1609,6 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return true;
 
     }
-
-
-    private List<SupplierEntity> getByIds(List<String> ids) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return Collections.emptyList();
-        }
-        LambdaQueryWrapper<SupplierEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.in(SupplierEntity::getId, ids);
-        return this.list(queryWrapper);
-
-    }
-
 
     /**
      * 检查名称不能重复

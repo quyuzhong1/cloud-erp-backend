@@ -342,7 +342,7 @@ public class PurchaseOrderController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(purchaseOrderService.submitEntity(entity, Boolean.TRUE));
+                resultDTOS.add(purchaseOrderService.submit(entity, Boolean.TRUE));
             }catch (Exception e){
                 log.error("采购订单提交失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));

@@ -20,4 +20,6 @@ import java.util.List;
 public interface CfgQueryOptionMapper extends BaseMapper<CfgQueryOptionEntity> {
 
     List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey);
+
+    List<CfgQueryOptionEntity> getSystemfield(String bussinessKey);
 }

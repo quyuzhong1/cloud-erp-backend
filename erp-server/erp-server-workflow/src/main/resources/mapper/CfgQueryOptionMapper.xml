@@ -20,7 +20,6 @@
        <result column="select_value" property="selectValue" />
        <result column="select_disabled" property="selectDisabled" />
        <result column="search_key_field" property="searchKeyField" />
-       <result column="props" property="props" />
        <result column="api_type" property="apiType" />
        <result column="field_type" property="fieldType" />
        <result column="is_required" property="isRequired" />
@@ -41,7 +40,7 @@
         update_time,
         version,
         is_deleted,
-        condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, props, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic,controls
+        condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic,controls
     </sql>
     <select id="proDropDown" resultType="com.erp.model.workflow.dto.CfgQueryOptionDTO$ListDTO">
         SELECT condition_field,
@@ -49,7 +48,7 @@
                request_method,
                controls,
                api_url,
-               props as param,
+               param,
                select_label as label,
                select_value as value,
                search_key_field as searchKey,
@@ -57,6 +56,28 @@
         FROM cfg_query_option
         WHERE is_deleted = FALSE AND bussiness_key = #{businessKey}
 
+    </select>
+    <select id="getSystemfield" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
+        SELECT condition_field,
+               concat(case when field_belongs_type = 'table' then '单据头-' else '单据明细-' end,
+                      condition_field_name) AS condition_field_name,
+               request_method,
+               controls,
+               api_url,
+               param,
+               api_type,
+               select_label,
+               select_value,
+               search_key_field,
+               select_value,
+               field_type,
+               is_required,
+               logic,
+               field_belongs_type,
+               bussiness_key
+        FROM cfg_query_option
+        WHERE is_deleted = FALSE
+          AND bussiness_key = #{businessKey}
     </select>
 
 

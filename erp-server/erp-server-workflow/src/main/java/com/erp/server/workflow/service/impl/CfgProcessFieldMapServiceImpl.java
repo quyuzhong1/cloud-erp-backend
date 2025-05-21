@@ -15,6 +15,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.sdk.fs.service.FsService;
@@ -36,6 +37,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
+import org.springframework.web.servlet.View;
 
 import javax.annotation.Resource;
 
@@ -131,6 +133,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             GetApprovalResp approval = fsService.getApproval(processDefinitionId);
             String formStr = JSONUtil.toJsonStr(approval.getData());
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = parseForm(formStr);
+            viewDTOList.forEach(e->{
+               e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
+            });
             return viewDTOList;
         } catch (Exception e) {
             throw new ServiceException("获取指定飞书审批定义失败");
@@ -167,7 +172,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
      * 新增修改处理数据
      */
     private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
-        List<String> fieldList = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false)).stream().map(CfgQueryOptionEntity::getConditionField).collect(Collectors.toList());
+        List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
+        List<String> fieldList = cfgQueryOptionEntities.stream().map(CfgQueryOptionEntity::getConditionField).collect(Collectors.toList());
+        Map<String, CfgQueryOptionEntity> fieldToEntityMap = cfgQueryOptionEntities.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, e -> e));
         // 遍历 addDTO，id 为空的保存，id 不为空的更新
         // 先校验所有 DTO，收集需要新增和更新的实体
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = new ArrayList<>();
@@ -194,10 +201,13 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.CHECKBOXV2 && sysFieldType != CfgQueryOptionFieldTypeEnum.CHECKBOXV2) {
                 throw new ServiceException("飞书多选项仅可支持生成多选项");
             }
-            if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATETIME && sysFieldType != CfgQueryOptionFieldTypeEnum.DATETIME) {
+            if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATE && sysFieldType != CfgQueryOptionFieldTypeEnum.DATE) {
                 throw new ServiceException("飞书日期仅支持转日期");
             }
-            // 判断 dto 的 field 是否存在于 fieldList，是则从 fieldList 中去除
+            if (dto.getIsDetailField()!=null && !CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode().equals(fieldToEntityMap.get(dto.getSysField()).getFieldBelongsType())){
+                throw new ServiceException("明细只能对应明细");
+            }
+            // 判断必填是不是已配置
             if (fieldList.contains(dto.getSysField())) {
                 fieldList.remove(dto.getSysField());
             }

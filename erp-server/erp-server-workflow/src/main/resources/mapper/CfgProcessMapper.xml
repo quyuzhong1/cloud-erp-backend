@@ -260,13 +260,4 @@
         </if>
         GROUP BY cpr.disabled
     </select>
-    <select id="getApprovalCode" resultType="java.lang.String">
-        SELECT
-        cpr.code
-        FROM cfg_process as cp
-        left join cfg_process_rule cpr on cp.id = cpr.cfg_process_id
-        WHERE cp.is_deleted=FALSE
-        AND cpr.disabled = FALSE
-        AND cpr.type = 'erpProcess'
-    </select>
 </mapper>

@@ -15,7 +15,6 @@ import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.scm.dto.PurchaseOrderSupplierDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.dto.SupplierTabCountDTO;
 import com.erp.model.scm.entity.SupplierEntity;
@@ -24,7 +23,6 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.scm.mapper.PurchaseOrderDetailMapper;
 import com.erp.server.scm.query.SupplierQueryHandler;
 import com.erp.server.scm.service.PurchaseOrderSupplierService;
-import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +35,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -257,8 +256,22 @@ public class SupplierController extends BaseController {
             keyIdName = "ids"
     )
     public ApiResult submit(@RequestBody BaseIdsDTO.IdsDTO dto) {
-        Boolean result = supplierService.submit(dto.getIds());
-        return result == true ? success() : failure();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, SupplierEntity> entityMap = supplierService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SupplierEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"供应商不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(supplierService.submit(entity));
+            }catch (Exception e){
+                log.error("采购订单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

@@ -83,7 +83,7 @@
             pm.create_time as createTime,
             pm.update_time as updateTime,
             ptm.label_json,
-            ptm.end_time
+            pm.end_time
         FROM process_task_management AS ptm
                  LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
                  LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false

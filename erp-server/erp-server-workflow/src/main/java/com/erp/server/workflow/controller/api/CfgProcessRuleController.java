@@ -53,7 +53,7 @@ public class CfgProcessRuleController extends BaseController {
 //        return success(cfgProcessRuleService.addOrUpdate(dto));
 //    }
     /**
-     * 新增/更新
+     * 执行条件更新默认
      *
      * @param dto
      * @return ApiResult<String>
@@ -61,8 +61,21 @@ public class CfgProcessRuleController extends BaseController {
      * @date: 2025-05-12
      */
     @PostMapping("/updateDefault")
-    @LogAction(value = LogActionEnum.INSERT, desc = "流程配置新增/删除")
+    @LogAction(value = LogActionEnum.INSERT, desc = "执行条件更新默认")
     public ApiResult<BaseResultDTO.UpdateDTO> updateDefault(@RequestBody @Validated CfgProcessRuleDTO.UpdateStateDTO dto) {
         return success(cfgProcessRuleService.updateDefault(dto));
+    }
+
+    /**
+     * 查询流程设计版本号
+     *
+     * @param
+     * @return ApiResult<String>
+     * @author hcg
+     * @date: 2025-05-12
+     */
+    @GetMapping("/getVersion")
+    public ApiResult<String> getVersion(@RequestParam(value = "processDefinitionId") String processDefinitionId) {
+        return success(cfgProcessRuleService.getVersion(processDefinitionId));
     }
 }

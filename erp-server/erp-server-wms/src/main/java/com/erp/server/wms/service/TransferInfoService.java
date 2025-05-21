@@ -78,11 +78,11 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @description: 提交
      * @author Will
      * @date: 2023/5/15 11:25
-     * @param ids
+     * @param entity
      * @param isStartProcess 是否启用审核流程（系统自动审核的不需要启动审核流）
      * @return Boolean
      */
-    Boolean submit(List<String> ids, Boolean isStartProcess);
+    BatchResultDTO submit(TransferInfoEntity entity, Boolean isStartProcess);
     /**
      * @description: 查看详情
      * @author Will
