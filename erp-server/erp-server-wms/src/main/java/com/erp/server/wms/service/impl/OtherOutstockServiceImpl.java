@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -366,7 +367,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         startDTO.setBusinessKey(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -531,7 +532,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -542,6 +543,35 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(OtherOutstockEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<OtherOutstockDetailEntity> detailList = otherOutstockDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99048);
+        }
+        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+
+        //出库客户信息
+        OtherOutstockCustomerEntity otherOutstockCustomerEntity = otherOutstockCustomerService.getByMainId(entity.getId());
+        if (ObjectUtil.isEmpty(otherOutstockCustomerEntity)) {
+            throw new ServiceException(ApiError.ERROR_99063);
+        }
+        Map<String, Object> customerMap = BeanUtil.beanToMap(otherOutstockCustomerEntity);
+        variablesMap.putAll(customerMap);
+
+        //总计数量
+        Integer actualQtyTotal = detailList.stream().map(OtherOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("actualQtyTotal", actualQtyTotal);
+        return variablesMap;
     }
 
     @Override

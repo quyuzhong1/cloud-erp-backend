@@ -49,6 +49,7 @@ import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
@@ -61,6 +62,7 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -134,6 +136,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private SysUserFeign sysUserFeign;
 
     /**
      * 添加bom
@@ -379,7 +383,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -390,6 +394,23 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             // 无需走流程的数据则直接更新状态
             approveEnd(dto, entity);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(BomInfoEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getCreateUserId());
+        if (ObjectUtil.isNotEmpty(findUserDTO)) {
+            //总计数量
+            variablesMap.put("createDeptId", findUserDTO.getDepartmentId());
+        }
+        return variablesMap;
     }
 
     @Override
@@ -751,7 +772,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_BOM_INFO.getCode());
         startDTO.setBusinessName(entity.getSerialNumber());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());

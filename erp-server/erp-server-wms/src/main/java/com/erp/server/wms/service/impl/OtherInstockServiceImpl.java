@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -382,7 +383,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         startDTO.setBusinessKey(SourceTypeEnum.OTHER_INSTOCK.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -520,7 +521,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -533,6 +534,28 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             approveEnd(dto, entity);
         }
     }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(OtherInstockEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<OtherInstockDetailEntity> detailList = otherInstockDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_99059);
+        }
+        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+
+        //总计数量
+        Integer actualQtyTotal = detailList.stream().map(OtherInstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
+        variablesMap.put("actualQtyTotal", actualQtyTotal);
+        return variablesMap;
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
