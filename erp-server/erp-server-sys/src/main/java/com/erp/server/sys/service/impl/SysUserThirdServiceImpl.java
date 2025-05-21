@@ -188,6 +188,26 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         return thirdUnionDTOs;
     }
 
+    @Override
+    public List<ThirdUnionDTO> getThirdByUserIds(String platform, List<String> userIds) {
+        List<SysUserThirdEntity> list = lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
+                .in(SysUserThirdEntity::getUserId, userIds)
+                .ne(SysUserThirdEntity::getThirdOpenId, "")
+                .ne(SysUserThirdEntity::getThirdUserId, "")
+                .ne(SysUserThirdEntity::getThirdUnionId, "")
+                .list();
+        List<ThirdUnionDTO> thirdUnionDTOs = BeanMapperUtils.copyList(ThirdUnionDTO.class,list);
+        if(CollUtil.isEmpty(thirdUnionDTOs)){
+            return Collections.emptyList();
+        }
+        List<FindUserDTO> userList = sysUserInfoService.getUserListByUserIds(thirdUnionDTOs.stream().map(ThirdUnionDTO::getUserId).collect(Collectors.toList()));
+        Map<String, String> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+        thirdUnionDTOs.forEach(thirdUnionDTO -> {
+            thirdUnionDTO.setUserName(userMap.get(thirdUnionDTO.getUserId()));
+        });
+        return thirdUnionDTOs;
+    }
+
     /**
      * 获取第三方绑定的用户
      * @author yl

@@ -36,4 +36,6 @@ public interface CfgApproveNoticeService extends SuperService<CfgApproveNoticeEn
 
 
     List<CfgApproveNoticeEntity> listByMainIds(List<String> list);
+
+    CfgApproveNoticeEntity getByNoticeTypeAndMainId(String mainId, String noticeType, Boolean enableStatus);
 }

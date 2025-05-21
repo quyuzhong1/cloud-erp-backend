@@ -82,8 +82,6 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Nullable;
@@ -309,25 +307,16 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.ERROR_94004);
         }
 
-
         //判断该单据类型是否有ERP审批同步定义
-        List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(insertManagementEntity.getBusinessKey()))
-                .stream()
-                .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
-                .collect(Collectors.toList());
-        if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
-            CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
-            CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
-            mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
-            mqDto.setProcessManagementId(insertManagementEntity.getId());
-            mqDto.setBusinessName(insertManagementEntity.getBusinessName());
-            mqDto.setInstanceId(processInstanceId);
-            mqDto.setTaskId(taskId);
-            mqDto.setCreateUserId(dto.getUserId());
-            mqDto.setVariablesMap(dto.getVariablesMap());
-            mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
-        }
-
+        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+        mqDto.setProcessManagementId(insertManagementEntity.getId());
+        mqDto.setBusinessName(insertManagementEntity.getBusinessName());
+        mqDto.setInstanceId(processInstanceId);
+        mqDto.setTaskId(taskId);
+        mqDto.setOperator(dto.getUserId());
+        mqDto.setVariablesMap(dto.getVariablesMap());
+        mqDto.setBusinessKey(dto.getBusinessKey());
+        syncFsExternalInstance(mqDto);
 
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
@@ -432,11 +421,42 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(Boolean.TRUE.equals(isFirst)){
             sameApproverAutoPass(dto, processManagementList.get(0).getProcessDefinitionId(),currentTask.getProcessInstanceId());
         }
+
+        //判断该单据类型是否有ERP审批同步定义
+        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+        mqDto.setProcessManagementId(managementTask.getManagementId());
+        mqDto.setBusinessName(managementTask.getBusinessName());
+        mqDto.setInstanceId(processInstanceId);
+        mqDto.setTaskId(managementTask.getTaskId());
+        mqDto.setOperator(dto.getUserId());
+        mqDto.setVariablesMap(dto.getVariablesMap());
+        mqDto.setBusinessKey(dto.getBusinessKey());
+        mqDto.setApproveType(dto.getApproveType().getStatus());
+        syncFsExternalInstance(mqDto);
+
         // 返回结果
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
 
-//    @Transactional(rollbackFor = Exception.class)
+    /**
+     * 飞书三方审批实例同步
+     * @author jack
+     * @date 2025-05-21
+     */
+    private void syncFsExternalInstance(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto) {
+        //判断该单据类型是否有ERP审批同步定义
+        List<CfgApproveSyncEntity> cfgApproveSyncEntities = cfgApproveSyncService.getByBusinessType(Arrays.asList(mqDto.getBusinessKey()))
+                .stream()
+                .filter(e -> e.getEnableStatus().equals(Boolean.TRUE))
+                .collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
+            CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
+            mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
+            mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
+        }
+    }
+
+    //    @Transactional(rollbackFor = Exception.class)
     public void sameApproveHandler(ProcessManagementDTO.ApproveDTO dto, ProcessManagementDTO.ManagementTaskDTO managementTask, DictBasicEnum reviewSetting) {
         String userId = dto.getUserId();
         String processInstanceId = managementTask.getProcessInstanceId();
@@ -753,6 +773,18 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 删除本地流程任务数据
         processTaskManagementService.removeByProcessInstanceId(processInstance.getProcessInstanceId());
+
+        //判断该单据类型是否有ERP审批同步定义
+        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+        mqDto.setProcessManagementId(managementTask.getManagementId());
+        mqDto.setBusinessName(managementTask.getBusinessName());
+        mqDto.setInstanceId(processInstanceId);
+        mqDto.setTaskId(managementTask.getTaskId());
+        mqDto.setOperator(dto.getUserId());
+        mqDto.setVariablesMap(dto.getVariablesMap());
+        mqDto.setBusinessKey(dto.getBusinessKey());
+        mqDto.setApproveType(ApproveTypeEnum.CANCEL.getStatus());//撤销
+        syncFsExternalInstance(mqDto);
 
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }

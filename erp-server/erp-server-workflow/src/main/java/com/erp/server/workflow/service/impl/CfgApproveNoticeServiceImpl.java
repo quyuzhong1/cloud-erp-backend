@@ -10,8 +10,8 @@ import com.erp.server.workflow.service.CfgApproveNoticeService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.workflow.service.OperateLogService;
-import com.erp.server.workflow.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -88,11 +88,24 @@ public class CfgApproveNoticeServiceImpl extends SuperServiceImpl<CfgApproveNoti
     }
 
     @Override
-    public List<CfgApproveNoticeEntity> listByMainIds(List<String> ids) {
-        if(CollUtil.isNotEmpty(ids)){
-            return lambdaQuery().in(CfgApproveNoticeEntity::getMainId, ids).list();
+    public List<CfgApproveNoticeEntity> listByMainIds(List<String> mainIds) {
+        if(CollUtil.isNotEmpty(mainIds)){
+            return lambdaQuery().in(CfgApproveNoticeEntity::getMainId, mainIds).list();
         }
         return Collections.emptyList();
+    }
+
+
+    @Override
+    public CfgApproveNoticeEntity getByNoticeTypeAndMainId(String mainId, String noticeType, Boolean enableStatus) {
+        if(StringUtils.isNotBlank(mainId) && StringUtils.isNotBlank(noticeType)){
+            return lambdaQuery().eq(CfgApproveNoticeEntity::getMainId, mainId)
+                    .eq(CfgApproveNoticeEntity::getNoticeType, noticeType)
+                    .eq(CfgApproveNoticeEntity::getEnableStatus, enableStatus)
+                    .last(" limit 1 ")
+                    .one();
+        }
+        return null;
     }
 
 

@@ -12,7 +12,6 @@ import com.common.core.utils.OkHttpUtils;
 import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.workflow.dto.FsBotParamsDTO;
-import com.erp.model.workflow.enums.CfgApproveSyncViewerTypeEnum;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.model.workflow.enums.LocaleEnum;
 import com.erp.sdk.fs.config.FsProperties;
@@ -576,12 +575,12 @@ public class FsService {
     }
 
     /**
-     * 发送审批 Bot 消息
+     * 发送ERP审批同步的 Bot 消息
      * https://open.feishu.cn/document/server-docs/approval-v4/message/send-bot-messages
      * @author jack
      * @date 2025-05-19
      */
-    public String sendApproveMessage(FsBotParamsDTO.SendParamsDTO dto) {
+    public String sendErpApproveSyncMessage(Map<String, Object> bodyMap) {
         String messageId = "";
         //获取飞书的应用token
         String tenantAccessToken = getFsTenantAccessToken();
@@ -590,13 +589,6 @@ public class FsService {
             String authorization = FS_AUTHORIZATION + tenantAccessToken;
             headerMap.put(AUTHORIZATION, authorization);
             headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
-
-            Map<String, Object> bodyMap = buildBosBodyMap(dto);
-
-            //7506438417787551772
-            String jsonString = JSONObject.toJSONString(bodyMap);
-            System.out.println("bodyMap ===" + jsonString);
-
             String resultStr = OkHttpUtils.doPostJson(ThirdConstants.FS_APPROVE_MESSAGE_SEND_URL, bodyMap, headerMap);
             Map<String, Object> resultMap = JSON.parseObject(resultStr, Map.class);
             if (resultMap != null && resultMap.containsKey("code")) {
@@ -612,8 +604,84 @@ public class FsService {
         return messageId;
     }
 
-    public Map<String, Object> buildBosBodyMap(FsBotParamsDTO.SendParamsDTO dto) {
+
+    /**
+     * 构建审核通知的请求体
+     * @author jack
+     * @date 2025-05-20
+     */
+    public Map<String, Object> buildApproveBodyMap(FsBotParamsDTO.SendParamsDTO dto){
         Map<String, Object> bodyMap = new HashMap<>();
+        Map<String,String> i18nResourcesTextMap = new HashMap<>();
+        buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
+        buildSummaries(dto,bodyMap,i18nResourcesTextMap);
+        buildActions(dto,bodyMap);
+        buildActionConfigs(bodyMap,i18nResourcesTextMap);
+        buildActionCallbackMap(dto,bodyMap);
+        buildI18nResources(bodyMap,i18nResourcesTextMap);
+        return bodyMap;
+    }
+
+    /**
+     * 构建抄送通知的请求体
+     * @author jack
+     * @date 2025-05-20
+     */
+    public Map<String, Object> buildCcBodyMap(FsBotParamsDTO.SendParamsDTO dto){
+        Map<String, Object> bodyMap = new HashMap<>();
+        Map<String,String> i18nResourcesTextMap = new HashMap<>();
+        buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
+        buildSummaries(dto,bodyMap,i18nResourcesTextMap);
+        buildActions(dto,bodyMap);
+        buildI18nResources(bodyMap,i18nResourcesTextMap);
+        return bodyMap;
+    }
+    /**
+     * 构建撤回通知的请求体
+     * @author jack
+     * @date 2025-05-20
+     */
+    public Map<String, Object> buildRecallBodyMap(FsBotParamsDTO.SendParamsDTO dto){
+        Map<String, Object> bodyMap = new HashMap<>();
+        Map<String,String> i18nResourcesTextMap = new HashMap<>();
+        buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
+        buildSummaries(dto,bodyMap,i18nResourcesTextMap);
+        buildActions(dto,bodyMap);
+        buildI18nResources(bodyMap,i18nResourcesTextMap);
+        return bodyMap;
+    }
+
+    /**
+     * 构建拒绝通知的请求体
+     * @author jack
+     * @date 2025-05-20
+     */
+    public Map<String, Object> buildRejectBodyMap(FsBotParamsDTO.SendParamsDTO dto){
+        Map<String, Object> bodyMap = new HashMap<>();
+        Map<String,String> i18nResourcesTextMap = new HashMap<>();
+        buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
+        buildSummaries(dto,bodyMap,i18nResourcesTextMap);
+        buildActions(dto,bodyMap);
+        buildI18nResources(bodyMap,i18nResourcesTextMap);
+        return bodyMap;
+    }
+    /**
+     * 构建通过通知的请求体
+     * @author jack
+     * @date 2025-05-20
+     */
+    public Map<String, Object> buildPassBodyMap(FsBotParamsDTO.SendParamsDTO dto){
+        Map<String, Object> bodyMap = new HashMap<>();
+        Map<String,String> i18nResourcesTextMap = new HashMap<>();
+        buildBosBodyMap(dto,bodyMap,i18nResourcesTextMap);
+        buildSummaries(dto,bodyMap,i18nResourcesTextMap);
+        buildActions(dto,bodyMap);
+        buildI18nResources(bodyMap,i18nResourcesTextMap);
+        return bodyMap;
+    }
+
+    //构建主体
+    public void buildBosBodyMap(FsBotParamsDTO.SendParamsDTO dto,Map<String, Object> bodyMap,Map<String,String> i18nResourcesTextMap) {
         //模板id
         bodyMap.put("template_id", dto.getTemplateId());
         //
@@ -629,10 +697,11 @@ public class FsService {
         bodyMap.put("title_user_id_type ", dto.getTitleUserIdType());
 
         //国际化文案
-        Map<String,String> i18nResourcesTextMap = new HashMap<>();
         i18nResourcesTextMap.put("@i18n@approvalName",dto.getApprovalName());
-        i18nResourcesTextMap.put("@i18n@actionRejectName","拒绝");
+    }
 
+    //构建审批 Bot 消息的内容
+    public void buildSummaries(FsBotParamsDTO.SendParamsDTO dto,Map<String, Object> bodyMap,Map<String,String> i18nResourcesTextMap){
         //审批 Bot 消息的内容
         Map<String, Object> contentMap = new HashMap<>();
         List<Map<String,String>> resultSummaries = new ArrayList<>();
@@ -647,8 +716,11 @@ public class FsService {
             i18nResourcesTextMap.put("@i18n@summary"+i,summaries.get(i));
         }
         contentMap.put("summaries",resultSummaries);
-        bodyMap.put("content",contentMap );
+        bodyMap.put("content",contentMap);
+    }
 
+    //构建操作区
+    public void buildActions(FsBotParamsDTO.SendParamsDTO dto,Map<String, Object> bodyMap){
         //操作区，最多可设置 2 个操作按钮。 详情必传。
         List<Map<String,Object>> actions = new ArrayList<>();
         Map<String,Object> actionsMap = new HashMap<>();
@@ -659,8 +731,12 @@ public class FsService {
         actionsMap.put("pc_url",dto.getActionDetailUrl());
         actions.add(actionsMap);
         bodyMap.put("actions",actions);
+    }
 
-        //快捷审批的操作配置。 我们默认传同意和拒绝
+    //构建快捷审批的操作配置。 我们默认传同意和拒绝
+    public void buildActionConfigs(Map<String, Object> bodyMap,Map<String,String> i18nResourcesTextMap){
+        i18nResourcesTextMap.put("@i18n@actionRejectName","拒绝");
+
         List<Map<String,Object>> actionConfigs = new ArrayList<>();
         Map<String,Object> actionConfigMap1 = new HashMap<>();
         actionConfigMap1.put("action_type","APPROVE");
@@ -678,8 +754,10 @@ public class FsService {
         actionConfigMap2.put("next_status", FSApprovalStatusEnum.REJECTED.getCode());
         actionConfigs.add(actionConfigMap2);
         bodyMap.put("action_configs",actionConfigs);
+    }
 
-        //快捷审批的回调配置。
+    //构建快捷审批的回调配置。
+    public void buildActionCallbackMap(FsBotParamsDTO.SendParamsDTO dto,Map<String, Object> bodyMap){
         Map<String,Object> actionCallbackMap = new HashMap<>();
         //三方系统的操作回调 URL。待审批列表的任务审批人点击同意或者拒绝后，审批中心调用该地址通知三方系统。
         actionCallbackMap.put("action_callback_url",dto.getActionCallbackUrl());
@@ -690,7 +768,10 @@ public class FsService {
         //操作上下文，回调的时候会把该参数回传
         actionCallbackMap.put("action_context",dto.getActionContext());
         bodyMap.put("action_callback",actionCallbackMap);
+    }
 
+    //构建国际化
+    public void buildI18nResources(Map<String, Object> bodyMap,Map<String,String> i18nResourcesTextMap){
         //国际化
         List<Map<String,Object>> i18nResources = new ArrayList<>();
         Map<String,Object> i18nResourcesMap = new HashMap<>();
@@ -699,8 +780,8 @@ public class FsService {
         i18nResourcesMap.put("texts",i18nResourcesTextMap);
         i18nResources.add(i18nResourcesMap);
         bodyMap.put("i18n_resources",i18nResources);
-        return bodyMap;
     }
+
 
     /**
      * 查看指定三方审批定义
