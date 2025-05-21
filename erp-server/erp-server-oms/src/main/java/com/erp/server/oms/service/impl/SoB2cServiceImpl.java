@@ -2280,7 +2280,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (isApi) {
             try {
                 //下出库单命令
-                thirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsChannelId, overseasWarehouseList.get(0), list, channelId);
+                thirdWarehouseCreateOutStock(entity, warehouseId, warehouseManageType, logisticsEntity, overseasWarehouseList.get(0), list, channelId);
             } catch (Exception e) {
                 log.error("B2C订单【{}】下出库单异常>>>{}", entity.getCode(), e.getMessage());
                 SoB2cErrorEntity soB2cErrorEntity = soB2cErrorService.getByMainIdAndType(entity.getId(),SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
@@ -2680,9 +2680,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
      * @param overseasProviderWarehouse
      * @param newChannelId
      */
-    public void thirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId, String warehouseManageType, String logisticsChannelId, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList, String newChannelId) {
+    public void thirdWarehouseCreateOutStock(SoB2cEntity entity, String warehouseId, String warehouseManageType, SoB2cLogisticsEntity logisticsEntity, OverseasProviderWarehouseDTO.ViewDTO overseasProviderWarehouse, List<SoB2cDetailEntity> detailList, String newChannelId) {
         //判断渠道是否是海外仓的渠道，否的话判断新的渠道是否是海外仓渠道，否则报错
         Boolean isCheckNewChannel = false;
+        String logisticsChannelId = logisticsEntity.getLogisticsChannelId();
         LogisticsSupplierDTO.AuthDTO authDTO = logisticsAuthFeign.getAuthByChannelId(logisticsChannelId);
         if(Objects.isNull(authDTO) || !authDTO.getLogisticsPlatform().equals(overseasProviderWarehouse.getProviderCode())){
             if(StringUtils.isBlank(newChannelId)){
@@ -2699,6 +2700,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if(isCheckNewChannel){
             //校验新选择的渠道是否符合店铺管理配置的渠道
             shopChannelRefService.checkChannel(entity.getShopId(),newChannelId);
+        }
+        LogisticsSaleChannelEntity saleChannelEntity = null;
+        if(StringUtils.isNotBlank(channelEntity.getSyncSourceId())){
+            saleChannelEntity = FeignQuery.getById(LogisticsSaleChannelEntity.class,channelEntity.getSyncSourceId());
         }
         SoB2cLabelEntity soB2cLabelEntity = new SoB2cLabelEntity();
         if(Objects.nonNull(channelEntity.getIsPushLabel()) && channelEntity.getIsPushLabel()){
@@ -2740,7 +2745,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         ThirdWarehouseCreateOutboundReq.ReceiverInfo receiverInfo = B2cOrderConverter.INSTANCE.convertThirdWarehouseReceiver(receiver);
         receiverInfo.setAddress2(address2);
         //速派通地址3赋值
-        if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())) {
+        if (PlatformDictEnum.SPT.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())
+         ||PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode()) ) {
             receiverInfo.setAddress2(receiver.getSecondAddress());
             receiverInfo.setAddress3(receiver.getFullAddress());
         }
@@ -2776,6 +2782,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             itemList.add(outboundReqItem);
         }
         String platformWarehouseCode = overseasProviderWarehouse.getPlatformWarehouseCode();
+        createOutboundReq.setPlatform(entity.getDictPlatform());
         createOutboundReq.setWarehouseCode(platformWarehouseCode);
         createOutboundReq.setVerify(MathUtil.ONE);
         createOutboundReq.setReferenceNo(entity.getCode());
@@ -2783,7 +2790,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         createOutboundReq.setThirdWarehouseProvideCode(overseasProviderWarehouse.getProviderCode());
         createOutboundReq.setAuthId(overseasProviderWarehouse.getMainId());
         createOutboundReq.setShippingMethod(Objects.isNull(channelEntity) ? "" : channelEntity.getCode());
+        createOutboundReq.setShippingMethodName(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getCnName());
+        createOutboundReq.setShippingMethodId(Objects.isNull(saleChannelEntity) ? "" : saleChannelEntity.getPlatformChannelId());
         createOutboundReq.setItems(itemList);
+        createOutboundReq.setTrackingNo(logisticsEntity.getCode());
         //通过订单处理规则处理参数
         Map<String, Object> map = this.getRuleOrderHandleMap(entity, logisticsChannelId, receiver);
         createOutboundReq = cfgRuleOrderHandleService.handleRuleOrderThirdWarehouse(createOutboundReq, map);
@@ -2806,6 +2816,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             attach.setFileType(FileTypeEnum.PDF.getCode());
             attach.setAttachId(uploadFileResponse.getData().getAttachId());
             createOutboundReq.setAttach(Collections.singletonList(attach));
+            createOutboundReq.setOnlineFlag(true);
+            //极风需要在线url
+            if(PlatformDictEnum.JIFENG.getCode().equalsIgnoreCase(overseasProviderWarehouse.getProviderCode())){
+                String path = FastDFSClientUtil.uploadFile(Base64.getDecoder().decode(logisticsLabelBase64),entity.getCode(),new HashMap<>());
+                String domain = dictBasicService.getByTypeAndValue("fastDfsDomain",BusinessCommonConstants.getEnvironment()+"-fastDfsDomain").getName();
+                createOutboundReq.setLabelUrl(domain+path);
+            }
         }
 
         //上传发票

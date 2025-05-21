@@ -1,15 +1,19 @@
 package com.erp.server.wms.service.impl;
 
+import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.OmsPlatformEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.UnitEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
+import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.handler.AbstractThirdWarehouseHandler;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
+import com.sdk.wms.jifeng.dto.request.JiFengCreateOutboundRequest;
 import com.sdk.wms.jifeng.dto.response.JiFengBaseResp;
 import com.sdk.wms.jifeng.dto.response.JiFengCreateInboundResp;
 import com.sdk.wms.jifeng.dto.response.JiFengTokenResp;
@@ -140,7 +144,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(ThirdWarehouseUploadFileReq uploadFileReq) {
-        return null;
+        return success(new ThirdWarehouseUploadFileResponse());
     }
 
     @Override
@@ -150,12 +154,57 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
 
     @Override
     protected ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq) {
-        return null;
+        JiFengCreateOutboundRequest jiFengCreateOutboundRequest = this.buildOutboundDto(createOutboundReq);
+        JiFengBaseResp<String> resp = jiFengService.createOutbound(ThirdWarehouseContext.getAuthMap(),jiFengCreateOutboundRequest);
+        if(!isSuccess(resp)){
+            return failure(resp.getMessage());
+        }
+        return success(createOutboundReq.getReferenceNo());
+    }
+
+    private JiFengCreateOutboundRequest buildOutboundDto(ThirdWarehouseCreateOutboundReq createOutboundReq) {
+        JiFengCreateOutboundRequest jiFengCreateOutboundRequest = new JiFengCreateOutboundRequest();
+        jiFengCreateOutboundRequest.setWarehouse(createOutboundReq.getWarehouseCode());
+        jiFengCreateOutboundRequest.setErpNo(createOutboundReq.getReferenceNo());
+        jiFengCreateOutboundRequest.setPlatform(PlatformDictEnum.getNameByCode(createOutboundReq.getPlatform()));
+        jiFengCreateOutboundRequest.setPlatformOrderNo(createOutboundReq.getPlatformCode());
+        jiFengCreateOutboundRequest.setBuyerName(createOutboundReq.getReceiverInfo().getBuyerName());
+        jiFengCreateOutboundRequest.setBuyerPhone(createOutboundReq.getReceiverInfo().getPhone());
+        jiFengCreateOutboundRequest.setRecipientCountry(createOutboundReq.getReceiverInfo().getCountryCode());
+        jiFengCreateOutboundRequest.setRecipientProvince(createOutboundReq.getReceiverInfo().getProvince());
+        jiFengCreateOutboundRequest.setRecipientCity(createOutboundReq.getReceiverInfo().getCity());
+        jiFengCreateOutboundRequest.setRecipientArea(createOutboundReq.getReceiverInfo().getDistrict());
+        jiFengCreateOutboundRequest.setRecipientAddress(createOutboundReq.getReceiverInfo().getAddress1());
+        jiFengCreateOutboundRequest.setRecipientAddress2(createOutboundReq.getReceiverInfo().getAddress2() + (StringUtils.isBlank(createOutboundReq.getReceiverInfo().getAddress3())?"":createOutboundReq.getReceiverInfo().getAddress3()));
+        jiFengCreateOutboundRequest.setRecipientEmail(createOutboundReq.getReceiverInfo().getEmail());
+        jiFengCreateOutboundRequest.setZipCode(createOutboundReq.getReceiverInfo().getZipCode());
+        jiFengCreateOutboundRequest.setTaxId(createOutboundReq.getReceiverInfo().getTaxNumber());
+        jiFengCreateOutboundRequest.setType(createOutboundReq.isOnlineFlag()?1:2);
+        jiFengCreateOutboundRequest.setLogisticsId(Integer.valueOf(createOutboundReq.getShippingMethodId()));
+        jiFengCreateOutboundRequest.setLogisticsName(createOutboundReq.getShippingMethodName());
+        jiFengCreateOutboundRequest.setTrackingNo(createOutboundReq.getTrackingNo());
+        jiFengCreateOutboundRequest.setPackageType(3);
+        List<JiFengCreateOutboundRequest.SkuListDTO> skuListDTOS = new ArrayList<>();
+        createOutboundReq.getItems().forEach(item -> {
+            JiFengCreateOutboundRequest.SkuListDTO skuListDTO = new JiFengCreateOutboundRequest.SkuListDTO();
+            skuListDTO.setSku(item.getProductSku());
+            skuListDTO.setNum(item.getQuantity());
+            skuListDTOS.add(skuListDTO);
+        });
+        jiFengCreateOutboundRequest.setSkuList(skuListDTOS);
+        return jiFengCreateOutboundRequest;
     }
 
     @Override
     protected ApiResult<String> cancelOutboundBill(ThirdWarehouseCancelOutboundReq cancelOutboundReq) {
-        return null;
+        JiFengBaseResp<String> resp = jiFengService.cancelOutbound(ThirdWarehouseContext.getAuthMap(), cancelOutboundReq.getOrderCode());
+        if(!isSuccess(resp)){
+            if(StringUtils.isNotBlank(resp.getMessage()) && resp.getMessage().contains("Order canceled")){
+                return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
+            }
+            return failure(resp.getMessage());
+        }
+        return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
     @Override
@@ -218,10 +267,4 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         return resp.getCode()==0;
     }
 
-    public static void main(String[] args) {
-        LocalDateTime localDateTime = Instant.ofEpochMilli(1778310710517l)
-                .atZone(ZoneId.systemDefault())
-                .toLocalDateTime();
-        System.out.println(localDateTime);
-    }
 }

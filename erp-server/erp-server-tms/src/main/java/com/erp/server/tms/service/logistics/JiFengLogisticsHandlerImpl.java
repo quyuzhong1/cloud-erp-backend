@@ -75,6 +75,7 @@ public class JiFengLogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<JiFengOnlineChannelResp.RowsDTO> rowsDTOS = onlineChannel.getData();
         for (JiFengOnlineChannelResp.RowsDTO rowsDTO : rowsDTOS) {
             LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity();
+            logisticsSaleChannelEntity.setPlatformChannelId(rowsDTO.getId().toString());
             logisticsSaleChannelEntity.setCode(rowsDTO.getId().toString());
             logisticsSaleChannelEntity.setCnName(rowsDTO.getName());
             logisticsSaleChannelEntity.setLogisticsPlatform(OmsPlatformEnum.JIFENG.getCode());
@@ -92,6 +93,7 @@ public class JiFengLogisticsHandlerImpl extends AbstractLogisticsHandler {
             List<JiFengOfflineChannelResp.RowsDTO> rowsDTOList = offlineResp.getData().getPage().getRows();
             for (JiFengOfflineChannelResp.RowsDTO rowsDTO : rowsDTOList) {
                 LogisticsSaleChannelEntity logisticsSaleChannelEntity = new LogisticsSaleChannelEntity();
+                logisticsSaleChannelEntity.setPlatformChannelId(rowsDTO.getId().toString());
                 logisticsSaleChannelEntity.setCode(rowsDTO.getCode());
                 logisticsSaleChannelEntity.setCnName(rowsDTO.getName());
                 logisticsSaleChannelEntity.setLogisticsPlatform(OmsPlatformEnum.JIFENG.getCode());
