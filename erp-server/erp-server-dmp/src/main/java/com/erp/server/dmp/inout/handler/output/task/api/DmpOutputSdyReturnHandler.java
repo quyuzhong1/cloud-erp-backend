@@ -119,8 +119,12 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 }
             }
 
-            if (dmpSoReturnEntity.getReturnTime() != null) {
-                sdyDTO.setBiz_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
+            LocalDateTime returnTime = dmpSoReturnEntity.getReturnTime();
+            if("WDT".equals(dmpSoReturnEntity.getSourceSystem()) && returnTime == null) {
+            	returnTime = dmpSoReturnEntity.getPlatformCreateTime();
+            }
+			if (returnTime != null) {
+                sdyDTO.setBiz_time(localDateTime.format(returnTime));
             } else {
                 return result;
             }
@@ -353,8 +357,8 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                 sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformCode());
             }
 
-            if (dmpSoReturnEntity.getReturnTime() != null) {
-                sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
+            if (returnTime != null) {
+                sdyDTO.setRoot_node_create_time(localDateTime.format(returnTime));
             }
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoReturnEntity.getPlatformUpdateTime()));
 
