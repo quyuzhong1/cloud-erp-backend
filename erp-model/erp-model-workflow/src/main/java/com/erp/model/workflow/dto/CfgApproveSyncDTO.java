@@ -405,17 +405,23 @@ public class CfgApproveSyncDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class SyncFsProcessToMqDTO {
+        //审批同步定义
         private CfgApproveSyncEntity cfgApproveSyncEntity;
-
+        //流程管理id
         private String processManagementId;
-
+        //流程名称
         private String businessName;
-
+        //实例id
         private String instanceId;
-
+        //任务id
         private String taskId;
+        //流程操作人（创建人、审批人）
+        private String operator;
+        //流程类型
+        private String businessKey;
 
-        private String createUserId;
+        //操作动作（发起流程，审批通过，审批不通过，撤销）
+        private String approveType;
 
         /**
          * 流程参数map

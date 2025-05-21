@@ -55,6 +55,19 @@ public class ThirdConstants {
     public static final String FS_APPROVE_MESSAGE_SEND_URL = "https://open.feishu.cn/open-apis/approval/v1/message/send/";
     //更新审批 Bot 消息地址
     public static final String FS_APPROVE_MESSAGE_UPDATE_URL = "https://open.feishu.cn/open-apis/approval/v1/message/update/";
-    //Bot消息模板
+
+    public static final String DETAIL_LIST = "detailList";
+    //Bot消息模板 收到审批待办
     public static final String TEMPLATE_ID_1008 = "1008";
+    //Bot消息模板 被抄送
+    public static final String TEMPLATE_ID_1016 = "1016";
+    //Bot消息模板 审批已通过
+    public static final String TEMPLATE_ID_1004 = "1004";
+    //Bot消息模板 审批已拒绝
+    public static final String TEMPLATE_ID_1003 = "1003";
+    //Bot消息模板 自定义模板(超时告警)
+    public static final String TEMPLATE_ID_1021 = "1021";
+    //Bot消息模板 被撤回
+    public static final String TEMPLATE_ID_1015 = "1015";
+
 }
