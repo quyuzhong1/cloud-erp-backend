@@ -38,7 +38,7 @@ public class JiFengService {
         jiFengCreateInboundRequest.setTrackingNo("test123456");
         jiFengCreateInboundRequest.setExpectedTime("2025-06-19 00:00:10");
 //        jiFengCreateInboundRequest
-        jiFengService.getInbound(authMap,"IN5200021");
+        jiFengService.getInbound(authMap,"IN5200034");
         System.out.println(123);
     }
 //    public static void main(String[] args) {
@@ -320,16 +320,17 @@ public class JiFengService {
      * @param authMap
      * @return
      */
-    public JiFengBaseResp<JiFengCreateInboundResp> getInbound(Map<String,Object> authMap, String inboundNo){
+    public JiFengBaseResp<JiFengInboundResp> getInbound(Map<String,Object> authMap, String inboundNo){
         String path = "/api/inbound/get";
         String url = getUrl(authMap.get("domain").toString());
         Map<String, String> headerMap = buildHearderMap(authMap, path);
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("inboundNo",inboundNo);
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
-        JiFengBaseResp<JiFengCreateInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateInboundResp.class);
+        JiFengBaseResp<JiFengInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengInboundResp.class);
         return response;
     }
+
     private Map<String, String> buildHearderMap(Map<String, Object> authMap, String path) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("url", path);
