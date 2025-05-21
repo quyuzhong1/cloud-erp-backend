@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/firstMileCostAllocation")
 public class FirstMileCostAllocationController extends BaseController {
 
-    public static final String MSG = "费用分摊记录不存在";
+    public static final String MSG = "待确认费用分摊记录不存在";
     public static final String ERROR_MSG = "费用分摊记录删除失败";
     @Resource
     private FirstMileCostAllocationService firstMileCostAllocationService;
@@ -155,7 +155,7 @@ public class FirstMileCostAllocationController extends BaseController {
             entityList = firstMileCostAllocationService.listByIds(dto.getIds());
         }
         if (CollectionUtils.isEmpty(entityList)){
-            return failure("批量删除记录失败，未查询到费用分摊记录");
+            return failure("批量删除记录失败，未查询到待确认费用分摊记录");
         }
         List<BatchResultDTO> resultDTOS = new ArrayList<>(entityList.size());
         for (FirstMileCostAllocationEntity entity : entityList) {
