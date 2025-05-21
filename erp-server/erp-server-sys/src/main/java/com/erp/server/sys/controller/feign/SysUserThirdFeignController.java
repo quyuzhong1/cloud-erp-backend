@@ -9,6 +9,7 @@ package com.erp.server.sys.controller.feign;
 import com.common.core.controller.BaseController;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.server.sys.service.SysUserThirdService;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,7 +28,7 @@ public class SysUserThirdFeignController extends BaseController{
     @Resource
     private SysUserThirdService sysUserThirdService;
 
-    @RequestMapping("/findByUserId")
+    @GetMapping("/findByUserId")
     public SysUserThirdEntity findByUserId(@RequestParam("userId") String userId){
         return sysUserThirdService.findByUserId(userId);
     }

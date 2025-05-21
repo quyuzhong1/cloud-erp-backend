@@ -159,12 +159,14 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         //取value中的default_value
         if (rawValue == null || StrUtil.isBlank(rawValue.toString())) {
             String mappedDefault = null;
-            for (CfgProcessValueMapEntity vm : valueMappings) {
-                if ("defalut".equals(vm.getSysValue())) {
-                    mappedDefault = vm.getDefalutValue();
-                    break;
+            if (valueMappings != null) {
+                for (CfgProcessValueMapEntity vm : valueMappings) {
+                    if ("defalut".equals(vm.getSysValue())) {
+                        mappedDefault = vm.getDefalutValue();
+                        break;
+                    }
+                    mappedDefault = vm.getThirdValue();
                 }
-                mappedDefault = vm.getThirdValue();
             }
             rawValue = mappedDefault;
         }
