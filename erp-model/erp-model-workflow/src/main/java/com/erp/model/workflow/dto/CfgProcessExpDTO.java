@@ -64,12 +64,12 @@ public class CfgProcessExpDTO implements Serializable {
         /**
         * 条件包含-右括号
         */
-        private Boolean rightBracket;
+        private String rightBracket;
 
         /**
         * 多条件逻辑关系
         */
-        private Boolean logic;
+        private String logic;
 
         /**
         * 序号
@@ -147,7 +147,7 @@ public class CfgProcessExpDTO implements Serializable {
         * 多条件逻辑关系
         */
         @NotNull(message = "多条件逻辑关系不能为空")
-        private Boolean logic;
+        private String logic;
 
         /**
         * 序号
