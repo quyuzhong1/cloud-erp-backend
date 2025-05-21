@@ -3253,6 +3253,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BeanMapperUtils.copy(list.get(0), addDTO);
         BigDecimal totalAmount = list.stream().map(SoB2cEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         addDTO.setAmount(totalAmount);
+        // 税后金额合并
+        BigDecimal afterTaxAmount = list.stream().map(SoB2cEntity::getAfterTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        addDTO.setAfterTaxAmount(afterTaxAmount);
         //合并后取最小单据日期
         LocalDate billDate = list.stream().map(SoB2cEntity::getBillDate).min((x, y) -> x.compareTo(y)).orElse(null);
         addDTO.setBillDate(billDate);
@@ -10281,6 +10284,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cEntity.setAmount(MathUtil.getBigDecimalByStr(mainInfo.getAmount()));
             }else {
                 errorMsgList.add("订单金额包含非数字字符");
+            }
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
+                // 速卖通手工订单税后金额=订单金额
+                soB2cEntity.setAfterTaxAmount(soB2cEntity.getAmount());
+            } else {
+                // 其他平台=无
+                soB2cEntity.setAfterTaxAmount(BigDecimal.ZERO);
             }
             //币别
             String currencyStr = mainInfo.getCurrency();

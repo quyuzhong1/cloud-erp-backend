@@ -142,6 +142,8 @@ public class SoB2cController extends BaseController {
          * 4.创建物流运单
          * 5.创建发货单
          */
+        // 速卖通手工订单首次添加税后金额=订单金额(其他平台=0)
+        dto.checkAndSetAfterTaxAmount();
         SoB2cEntity add = soB2cService.add(dto, null);
         String id = add.getId();
         //检查是否备案并修改状态
