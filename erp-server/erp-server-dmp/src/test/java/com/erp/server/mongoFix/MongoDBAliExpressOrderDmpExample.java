@@ -63,7 +63,7 @@ public class MongoDBAliExpressOrderDmpExample {
                 String order_status = aliExpressOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder, logisticInfoListObj);
 
                 boolean invalidStatus = false;
-                set.add("update dmp_so_info set update_time = now(), delivery_status = '" + delivery_status + "',order_status = '" + order_status + "',is_cancel = " + isCancel + ",invalid_status = " + invalidStatus + "  where third_code = '" + orderId + "';");
+                set.add("update dmp_so_info set update_time = now(), delivery_status = '" + delivery_status + "',order_status = '" + order_status + "',is_cancel = " + isCancel + ",invalid_status = " + invalidStatus + "  where third_code = '" + orderId + "' and source_system = 'AliExpress';");
             }
 
 
