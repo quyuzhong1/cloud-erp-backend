@@ -6,14 +6,18 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
+import com.erp.model.workflow.dto.FsBotParamsDTO;
 import com.erp.model.workflow.entity.*;
+import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.sdk.fs.enmu.UserIdTypeEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.service.*;
 import com.lark.oapi.service.approval.v4.model.*;
@@ -52,25 +56,116 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
     private FsService fsService;
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private ProcessTaskManagementExtService processTaskManagementExtService;
 
     @Override
     public void onMessage(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto) {
         log.info("MQSyncFsInstanceConsumerService 开始");
-        CreateExternalInstanceReq req = buildExternalInstanceReq(dto);
+        CfgApproveSyncEntity cfgApproveSyncEntity = dto.getCfgApproveSyncEntity();
+        //任务
+        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listTask(dto.getInstanceId());
+        //抄送任务
+        List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());
+        List<ProcessTaskCcEntity> processTaskCcEntities = processTaskCcService.listTackCc(taskManagementIds);
+        //任务列表人员和抄送列表人员飞书信息
+        Map<String, ThirdUnionDTO> thirdUnionMap = getThirdUnionDTOMap(processTaskManagementEntities, processTaskCcEntities);
+        //推送消息 (快接审批)
+        List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId())).stream()
+                .filter(e -> e.getIsQuick().equals(Boolean.TRUE))
+                .collect(Collectors.toList());
+        fieldMapEntities.sort(Comparator.comparingInt(CfgApproveSyncFieldMapEntity::getSort));
+
+        CreateExternalInstanceReq req = buildExternalInstanceReq(dto,processTaskManagementEntities,processTaskCcEntities,fieldMapEntities ,thirdUnionMap);
         System.out.println(JSONUtil.toJsonStr(req.getExternalInstance()));
         CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
         //todo 判断是否成功，无论成功失败都记录推送记录，
         if (!resp.success()) {
             String msg = String.format("code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
             log.error("同步三方审批实例失败>>>>>{}",msg);
-        }
+        }else {
+            //发送消息
+            //pc地址
+            String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
+            //参数map
+            Map<String, Object> variablesMap = dto.getVariablesMap();
 
+            int len = fieldMapEntities.size() > 5 ? 5 : fieldMapEntities.size();
+            List<String> summaries = new ArrayList<>();
+            for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
+                StringBuffer sb = new StringBuffer();
+                sb.append(entry.getFieldName());
+                sb.append(":");
+                String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
+                if(StringUtils.isNotBlank(fieldSourceValueStr)){
+                    sb.append(fieldSourceValueStr);
+                }else {
+                    if(variablesMap.containsKey("detailList")){
+                        List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
+                        if(CollUtil.isNotEmpty(detailList)){
+                            StringBuffer dsb = new StringBuffer();
+                            for (Object object : detailList) {
+                                Map<String, Object> map = BeanUtil.beanToMap(object);
+                                String str = getFieldSourceValueStr(entry.getFieldSource(), map);
+                                if(StringUtils.isNotBlank(str)){
+                                    dsb.append(str);
+                                    dsb.append(";");
+                                }
+                            }
+                            String fieldSourceDetailValueStr = dsb.toString();
+                            if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
+                                sb.append(fieldSourceDetailValueStr);
+                            }
+                        }
+                    }
+                }
+                summaries.add(sb.toString());
+            }
+
+            List<FsBotParamsDTO.SendParamsDTO> sendParams = new ArrayList<>();
+            for (ProcessTaskManagementEntity e : processTaskManagementEntities) {
+                FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
+                params.setTemplateId(ThirdConstants.TEMPLATE_ID_1008);
+                params.setUserId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId());
+                params.setUuid(e.getId());
+                params.setApprovalName(cfgApproveSyncEntity.getTitle());
+                params.setTitleUserId(thirdUnionMap.get(e.getCreateUserId()).getThirdUserId());
+                params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
+                params.setActionDetailUrl(pcLinkByEnv);
+                params.setActionCallbackUrl("");
+                params.setActionCallbackToken("");
+                params.setActionCallbackKey("");
+                params.setActionContext("");
+                params.setSummaries(summaries);
+                sendParams.add(params);
+            }
+
+            if(CollUtil.isNotEmpty(sendParams)){
+                for (FsBotParamsDTO.SendParamsDTO sendParam : sendParams) {
+                    String messageId = fsService.sendApproveMessage(sendParam);
+                    if(StringUtils.isBlank(messageId)){//发送失败
+                        //todo 记录错误信息
+                    }else{
+                        //保持messageId 用于后续更新接口
+                        ProcessTaskManagementExtEntity entity = new ProcessTaskManagementExtEntity();
+                        entity.setProcessTaskManagementId(sendParam.getUuid());
+                        entity.setMessageId(messageId);
+                        entity.setSoucePlatform(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+                        processTaskManagementExtService.save(entity);
+                    }
+                }
+            }
+        }
         log.info("MQSyncFsInstanceConsumerService 结束");
     }
 
-    public CreateExternalInstanceReq buildExternalInstanceReq(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto){
+    public CreateExternalInstanceReq buildExternalInstanceReq(CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto,
+                                                              List<ProcessTaskManagementEntity> processTaskManagementEntities,
+                                                              List<ProcessTaskCcEntity> processTaskCcEntities,
+                                                              List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
+                                                              Map<String, ThirdUnionDTO> thirdUnionMap){
         //pc地址
-        String pcLinkByEnv = getPcLinkByEnv();
+        String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
 
         //获取（String类型）当前时间戳
         String currentTimeMillis = String.valueOf(System.currentTimeMillis());
@@ -136,15 +231,6 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
                 .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
                 .build();
 
-        //任务
-        List<ProcessTaskManagementEntity> processTaskManagementEntities = processTaskManagementService.listTask(instanceId);
-        //抄送任务
-        List<String> taskManagementIds = processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList());
-        List<ProcessTaskCcEntity> processTaskCcEntities = processTaskCcService.listTackCc(taskManagementIds);
-        //任务列表人员和抄送列表人员飞书信息
-        Map<String, ThirdUnionDTO> thirdUnionMap = getThirdUnionDTOMap(processTaskManagementEntities, processTaskCcEntities);
-        //todo 推送记录  失败  未绑定飞书
-
         //任务列表数组  最大长度：300
         if(CollUtil.isEmpty(processTaskManagementEntities)){
             //todo 推送记录  失败
@@ -207,10 +293,6 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
         }
 
         //推送消息 (快接审批)
-        List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId())).stream()
-                .filter(e -> e.getIsQuick().equals(Boolean.TRUE))
-                .collect(Collectors.toList());
-        fieldMapEntities.sort(Comparator.comparingInt(CfgApproveSyncFieldMapEntity::getSort));
         if(CollUtil.isNotEmpty(fieldMapEntities)){
             //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
             int len = fieldMapEntities.size() > 3 ? 3 : fieldMapEntities.size();
@@ -266,29 +348,6 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
             return getFieldSourceValueStr(fieldSourceValue);
         }
         return "";
-    }
-
-    //根据环境配置返回不同的PC链接
-    private String getPcLinkByEnv() {
-        //初始化消息发送的URL
-        String url ="";
-        //根据不同的环境选择对应的URL
-        CfgSettingEntity cfgSetting =  cfgSettingService.lambdaQuery().eq(CfgSettingEntity::getKey, "envUrl").one();
-        if(null != cfgSetting){
-            Map<String, Object> dataJson = cfgSetting.getDataJson();
-            boolean uat = BusinessCommonConstants.hasProfile("uat");
-            boolean dev = BusinessCommonConstants.hasProfile("dev");
-            boolean test = BusinessCommonConstants.hasProfile("test");
-            boolean prod = BusinessCommonConstants.hasProfile("prod");
-            if(uat){
-                url = String.valueOf(dataJson.get("uat"));
-            }else  if(dev||test){
-                url = String.valueOf(dataJson.get("test"));
-            }else if(prod){
-                url = String.valueOf(dataJson.get("prod"));
-            }
-        }
-        return url;
     }
 
     private static String getFieldSourceValueStr(Object fieldSourceValue) {

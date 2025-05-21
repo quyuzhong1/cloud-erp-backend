@@ -40,6 +40,15 @@ public class CfgQueryOptionController extends BaseController {
     }
 
     /**
+     * 字段配置系统字段下拉
+     * @return
+     */
+    @GetMapping("/processDefinition/drop/down/sysField")
+    public ApiResult<List<CfgQueryOptionDTO.ViewDTO>> getSystenfield(@RequestParam(value = "bussinessKey") String bussinessKey) {
+        return success(cfgQueryOptionService.getSystemfield(bussinessKey));
+    }
+
+    /**
      *
      * @return
      */

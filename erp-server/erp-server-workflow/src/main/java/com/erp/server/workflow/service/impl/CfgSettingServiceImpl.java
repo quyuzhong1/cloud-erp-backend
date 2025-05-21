@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.workflow.entity.CfgSettingEntity;
 import com.erp.server.workflow.mapper.CfgSettingMapper;
@@ -9,7 +10,6 @@ import com.erp.server.workflow.service.CfgSettingService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.workflow.service.OperateLogService;
-import com.erp.server.workflow.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,5 +92,30 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
     */
     private void handleData(CfgSettingEntity cfgSettingEntity) {
     // TODO 验证数据 & 数据赋值
+    }
+
+
+    //根据环境配置返回不同的PC链接
+    @Override
+    public String getPcLinkByEnv() {
+        //初始化消息发送的URL
+        String url ="";
+        //根据不同的环境选择对应的URL
+        CfgSettingEntity cfgSetting =  lambdaQuery().eq(CfgSettingEntity::getKey, "envUrl").one();
+        if(null != cfgSetting){
+            Map<String, Object> dataJson = cfgSetting.getDataJson();
+            boolean uat = BusinessCommonConstants.hasProfile("uat");
+            boolean dev = BusinessCommonConstants.hasProfile("dev");
+            boolean test = BusinessCommonConstants.hasProfile("test");
+            boolean prod = BusinessCommonConstants.hasProfile("prod");
+            if(uat){
+                url = String.valueOf(dataJson.get("uat"));
+            }else  if(dev||test){
+                url = String.valueOf(dataJson.get("test"));
+            }else if(prod){
+                url = String.valueOf(dataJson.get("prod"));
+            }
+        }
+        return url;
     }
 }

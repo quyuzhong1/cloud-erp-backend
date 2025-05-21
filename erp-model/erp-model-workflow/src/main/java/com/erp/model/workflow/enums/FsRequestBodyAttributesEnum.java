@@ -18,7 +18,7 @@ public enum FsRequestBodyAttributesEnum {
     NAME("name", "控件名"),
     CHILDREN("children", "fieldList的子控件集合信息"),
     TEXT("text", "选项值"),
-    VALUE("value", "审批被删除"),
+    VALUE("value", "值"),
     OPTION("option", "选项列表"),
     FIELDLIST("fieldList", "明细控件类型"),
     ID("id", "控件唯一标识"),

@@ -159,20 +159,20 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-        // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
-            return new ProcessManagementDTO.StartResultDTO(dto);
-        }
-        return startProcess(dto, processBusiness.getProcessDefinitionId());
-//        String processDefinitionId = getProcessDefinitionId(dto);
-//        if (CharSequenceUtil.isBlank(processDefinitionId)) {
-//            // 业务无已启用的Erp流程配置
+//        // 查询业务数据和关联流程定义
+//        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
+//        if (null == processBusiness) {
+//            // 业务未绑定流程定义
 //            return new ProcessManagementDTO.StartResultDTO(dto);
 //        }
-//        //启动流程
-//        return startProcess(dto, processDefinitionId);
+//        return startProcess(dto, processBusiness.getProcessDefinitionId());
+        String processDefinitionId = getProcessDefinitionId(dto);
+        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+            // 业务无已启用的Erp流程配置
+            return new ProcessManagementDTO.StartResultDTO(dto);
+        }
+        //启动流程
+        return startProcess(dto, processDefinitionId);
     }
 
 
@@ -328,12 +328,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
         }
 
-//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-//            @Override
-//            public void afterCommit() {
-//
-//            }
-//        });
+
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
