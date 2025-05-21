@@ -15,7 +15,7 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     /**
      * *月份(yyyy-MM)
      */
-    @ExcelProperty(value = "*月份(yyyy-MM)", index = 1)
+    @ExcelProperty(value = "*月份(yyyy-MM)", index = 0)
     @FieldValid(fieldName = "月份",isNotBlank = true,maxLength = 32)
     private String reportMonthStr;
     @ExcelIgnore
@@ -23,39 +23,39 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     /**
      * 来源单
      */
-    @ExcelProperty(value = "来源单号", index = 2)
+    @ExcelProperty(value = "来源单号", index = 1)
     @FieldValid(fieldName = "来源单号",maxLength = 32)
     private String sourceCode;
 
     /**
      * 业务单号
      */
-    @ExcelProperty(value = "业务单号", index = 3)
+    @ExcelProperty(value = "业务单号", index = 2)
     @FieldValid(fieldName = "业务单号",maxLength = 32)
     private String businessCode;
 
     /**
      * 物流运单号
      */
-    @ExcelProperty(value = "物流运单号", index = 4)
+    @ExcelProperty(value = "物流运单号", index = 3)
     @FieldValid(fieldName = "物流运单号",maxLength = 50)
     private String transportNo;
     /**
      * 平台SKU
      */
-    @ExcelProperty(value = "*平台SKU", index = 5)
+    @ExcelProperty(value = "*平台SKU", index = 4)
     @FieldValid(fieldName = "平台SKU）",isNotBlank = true,maxLength = 200)
     private String  platformSkuNo;
     /**
      * SKU 编号
      */
-    @ExcelProperty(value = "*SKU", index = 6)
+    @ExcelProperty(value = "*SKU", index = 5)
     @FieldValid(fieldName = "SKU",isNotBlank = true, maxLength =64 )
     private String skuNo;
     /**
      * *费用分类
      */
-    @ExcelProperty(value = "*费用分类", index = 7)
+    @ExcelProperty(value = "*费用分类", index = 6)
     @FieldValid(fieldName = "费用分类",isNotBlank = true,enumClass = AllocationFeeTypeEnum.class)
     private String feeTypeName;
     @ExcelIgnore
@@ -63,7 +63,7 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     /**
      * 冲期初在途费用
      */
-    @ExcelProperty(value = "冲期初在途费用(¥)", index = 8)
+    @ExcelProperty(value = "冲期初在途费用(¥)", index = 7)
     @FieldValid(fieldName = "冲期初在途费用")
     private String midPeriodTransitCostStr;
     @ExcelIgnore
@@ -71,7 +71,7 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     /**
      * 本期分摊费用
      */
-    @ExcelProperty(value = "本期分摊费用(¥)", index = 9)
+    @ExcelProperty(value = "本期分摊费用(¥)", index = 8)
     @FieldValid(fieldName = "本期分摊费用")
     private String currentPeriodAllocatedCostStr;
     @ExcelIgnore
@@ -79,7 +79,7 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     /**
      * 期末在途费用(¥)
      */
-    @ExcelProperty(value = "期末在途费用(¥)", index = 10)
+    @ExcelProperty(value = "期末在途费用(¥)", index = 9)
     @FieldValid(fieldName = "期末在途费用")
     private String endPeriodTransitCostStr;
     @ExcelIgnore
@@ -87,7 +87,7 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     /**
      * 期末暂估费用(¥)
      */
-    @ExcelProperty(value = "期末暂估费用(¥)", index = 11)
+    @ExcelProperty(value = "期末暂估费用(¥)", index = 10)
     @FieldValid(fieldName = "期末暂估费用")
     private String endPeriodEstimatedCostStr;
     @ExcelIgnore

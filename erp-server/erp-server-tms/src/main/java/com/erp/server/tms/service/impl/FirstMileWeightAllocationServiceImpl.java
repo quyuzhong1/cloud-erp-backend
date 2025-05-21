@@ -805,7 +805,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
             List<FirstMileWeightChangeExcelDTO> errorList = excelListenerUtil.getErrorList();
             //处理验证成功数据
             handleImportSuccessList(dataList, errorList);
-            if (errorList.size() > 0) {
+            if (!errorList.isEmpty()) {
                 StringBuffer sb = new StringBuffer();
                 String excelPath = "excel/firstMileWeightChangeExportError.xlsx";
                 String name = "头程重量分摊调整错误.xlsx";
