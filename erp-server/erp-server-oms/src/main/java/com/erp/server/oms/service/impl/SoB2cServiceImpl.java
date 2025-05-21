@@ -10078,6 +10078,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         this.lambdaUpdate().set(SoB2cEntity::getAmount,amount).eq(SoB2cEntity::getId,id).update();
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void clearOutDateBySoIds(List<String> clearOutDateSoIds) {
+        if(CollectionUtils.isEmpty(clearOutDateSoIds) ){
+            return ;
+        }
+        lambdaUpdate()
+                .set(SoB2cEntity::getSoOutstockDate,null)
+                .in(SoB2cEntity::getId,clearOutDateSoIds)
+                .update();
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
