@@ -274,7 +274,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                         .build())
                 .build();
         try {
-            fsService.createInstance(req);
+            String instanceCode = fsService.createInstance(req);
+            //生成三方查询记录
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

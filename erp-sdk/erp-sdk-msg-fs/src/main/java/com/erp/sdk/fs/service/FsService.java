@@ -988,22 +988,20 @@ public class FsService {
     /**
      * 创建飞书审批实例
      */
-    public void createInstance(CreateInstanceReq req) throws Exception {
+    public String createInstance(CreateInstanceReq req) throws Exception {
         // 构建client
-        Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+        Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
 
         // 发起请求
         CreateInstanceResp resp = client.approval().v4().instance().create(req);
 
         // 处理服务端错误
-        if (!resp.success()) {
+        if (resp.getMsg()!=null) {
             System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
                     resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-            return ;
+            throw new ServiceException(resp.getMsg());
         }
-
-        // 业务数据处理
-        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+        return resp.getData().getInstanceCode();
     }
 
     /**

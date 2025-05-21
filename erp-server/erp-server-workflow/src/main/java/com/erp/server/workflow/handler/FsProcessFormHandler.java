@@ -6,6 +6,9 @@ package com.erp.server.workflow.handler;
  * @date: 2025/5/20 12:04
  */
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
@@ -16,6 +19,10 @@ import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -148,6 +155,24 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         // 执行值映射处理
         Object finalValue = mapFieldValue(thirdFieldId, type, rawValue, defaultValue, tidToIdMap, valueMapListMap);
+        //处理映射后数据格式
+        if ("attachmentV2".equals(type)){
+            //finalValue
+            formField.set("value", Arrays.asList(finalValue));
+            return;
+        }
+        if ("date".equals(type)){
+            // 1. 解析原始时间字符串
+            DateTime hutoolDate = DateUtil.parse(finalValue.toString(), "yyyy-MM-dd HH:mm:ss.SSS");
+            // 2. 使用系统默认时区转换为 ZonedDateTime
+            ZonedDateTime zonedDateTime = hutoolDate.toInstant().atZone(ZoneId.systemDefault());
+            // 3. 转换为 OffsetDateTime（带偏移量）
+            OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
+            // 4. 格式化为 RFC3339 格式
+            String rfc3339 = offsetDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            formField.set("value", rfc3339);
+            return ;
+        }
         formField.set("value", finalValue);
     }
 
