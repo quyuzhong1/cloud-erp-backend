@@ -145,6 +145,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         && item.getBoxId().equals(e.getBoxId())
                         && item.getBusinessCode().equals(e.getBusinessCode())
                         && item.getPlatformSkuNo().equals(e.getPlatformSkuNo())
+                        && item.getNewProductWeight().compareTo(e.getNewProductWeight()) != 0
                 ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             } else if (FirstMileChangeRecordChangeRangeEnum.BOX.getCode().equals(e.getChangeRange())) {
                 //判断是否同箱同SKU
@@ -153,6 +154,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         && item.getSourceCode().equals(e.getSourceCode())
                         && item.getBoxId().equals(e.getBoxId())
                         && item.getBusinessCode().equals(e.getBusinessCode())
+                        && item.getNewProductWeight().compareTo(e.getNewProductWeight()) != 0
                 ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             } else if (FirstMileChangeRecordChangeRangeEnum.ORDER.getCode().equals(e.getChangeRange())) {
                 //判断是否同单同SKU
@@ -160,6 +162,7 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                         && item.getSkuId().equals(e.getSkuId())
                         && item.getSourceCode().equals(e.getSourceCode())
                         && item.getBusinessCode().equals(e.getBusinessCode())
+                        && item.getNewProductWeight().compareTo(e.getNewProductWeight()) != 0
                 ).findFirst().ifPresent(item -> resultDTOS.add(new BatchResultDTO(item.getId(), item.getSourceCode(), CharSequenceUtil.format("【{}】修改值不一致，请重新修改",item.getSkuNo()), false)));
             }
         }
