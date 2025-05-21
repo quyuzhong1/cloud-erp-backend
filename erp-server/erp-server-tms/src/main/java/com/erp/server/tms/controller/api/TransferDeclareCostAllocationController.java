@@ -157,7 +157,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
     	List<String> ids = dto.getIds();
         List<TransferDeclareCostAllocationEntity> listByIds = transferDeclareCostAllocationService.listByIds(ids);
         ids = listByIds.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
             BatchResultDTO submit;
             try {
@@ -202,7 +202,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
             return failure("批量更新中转分摊状态失败，未查询到待确认中转分摊记录");
         }
     	List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
     		BatchResultDTO submit;
     		try {
@@ -247,7 +247,7 @@ public class TransferDeclareCostAllocationController extends BaseController {
             return failure("批量更新中转分摊状态失败，未查询到待确认中转分摊记录");
         }
         List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
     		BatchResultDTO submit;
     		try {
