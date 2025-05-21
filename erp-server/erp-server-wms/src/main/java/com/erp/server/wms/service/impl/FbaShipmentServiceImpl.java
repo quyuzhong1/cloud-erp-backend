@@ -5,26 +5,27 @@ import cn.hutool.core.bean.copier.CopyOptions;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.DictKindgeeConstant;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
-import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -41,9 +42,8 @@ import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.DictKingdeeDTO;
-import com.erp.model.sys.dto.UserSuperiorDTO;
-import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.DictBasicDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.rpc.dmp.feign.DmpAmazonFeign;
@@ -1665,11 +1665,14 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
                     return;
                 }
             }
+            TransferInfoEntity entity1 = transferInfoService.getById(transferOutId);
+            if (ObjUtil.isEmpty(entity1)) {
+                throw new ServiceException(ApiError.ERROR_99047);
+            }
             //提交
-            transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
+            transferInfoService.submit(entity1, Boolean.FALSE);
 
             //审核
-            TransferInfoEntity entity1 = transferInfoService.getById(transferOutId);
             if (Objects.nonNull(entity1)){
                 transferInfoService.approve(entity1,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
             }

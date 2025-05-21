@@ -26,6 +26,7 @@ import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -171,9 +172,23 @@ public class TransferInfoController extends BaseController {
             menuCode = "wms:transferInfo:submit",
             serviceClass = TransferInfoService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = transferInfoService.submit(dto.getIds(), Boolean.TRUE);
-        return flag == true ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, TransferInfoEntity> entityMap = transferInfoService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            TransferInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"直接调拨单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInfoService.submit(entity,Boolean.TRUE));
+            }catch (Exception e){
+                log.error("直接调拨单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**

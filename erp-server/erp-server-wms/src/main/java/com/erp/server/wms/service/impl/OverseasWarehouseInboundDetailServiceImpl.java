@@ -2,9 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.common.business.constant.ApproveType;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OverseasInstockStatusEnum;
@@ -14,7 +13,6 @@ import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.*;
@@ -29,12 +27,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static cn.hutool.json.XMLTokener.entity;
 
 /**
  * <p>
@@ -247,10 +241,13 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             // 生成直接调拨单
             String transferOutId = overseasWarehouseInboundService.generateTransferOut(mainEntity, entry.getValue(), receiverdMap);
             if (CharSequenceUtil.isNotBlank(transferOutId)) {
-                //提交
-                transferInfoService.submit(Collections.singletonList(transferOutId), Boolean.FALSE);
-                //审核
                 TransferInfoEntity entity = transferInfoService.getById(transferOutId);
+                if (ObjUtil.isEmpty(entity)) {
+                    throw new ServiceException(ApiError.ERROR_99047);
+                }
+                //提交
+                transferInfoService.submit(entity, Boolean.FALSE);
+                //审核
                 if (Objects.nonNull(entity)){
                     try {
                         transferInfoService.approve(entity,ApproveType.PASS,"", null , Boolean.TRUE, Boolean.FALSE);
