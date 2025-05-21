@@ -90,7 +90,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 流程定义code
         */
-        private String processDefintionId;
+        private String processDefinitionId;
 
         /**
          * 第三方字段id，唯一标识
@@ -236,7 +236,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         */
         @NotBlank(message = "流程定义code不能为空")
         @Size(max = 19,message = "流程定义code最大长度不能超过19位")
-        private String processDefintionId;
+        private String processDefinitionId;
 
         /**
          * 第三方字段id，唯一标识

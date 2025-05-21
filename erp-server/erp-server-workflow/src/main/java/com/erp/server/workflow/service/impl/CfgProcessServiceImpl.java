@@ -22,8 +22,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessDTO;
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
+import com.erp.model.workflow.dto.CfgProcessRuleDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserThirdFeign;
@@ -167,7 +170,15 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         if (ObjectUtil.isEmpty(viewDTO)) {
             throw new ServiceException("此流程配置不存在！,id{}", settingId);
         }
-
+        //处理fieldDto
+        for (CfgProcessRuleDTO.ViewDTO dto : viewDTO.getProcessRuleDTOList()) {
+            for (CfgProcessFieldMapDTO.ViewDTO viewDTO1 : dto.getProcessFieldMapDTOList()) {
+                if (viewDTO1.getThirdFieldType() != null) {
+                    viewDTO1.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(viewDTO1.getThirdFieldType().toUpperCase()).getName());
+                    viewDTO1.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(viewDTO1.getSysFieldType().toUpperCase()).getName());
+                }
+            }
+        }
         return viewDTO;
     }
 
@@ -239,7 +250,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     public void startThirdProcess(CfgProcessDTO.StartDTO dto) {
         //查询approvalCode
-        CfgProcessRuleEntity cfgProcessRuleEntity = cfgProcessRuleService.getById(dto.getBusinessId());
+//        CfgProcessRuleEntity cfgProcessRuleEntity = cfgProcessRuleService.getById(dto.getBusinessId());
 //        String code = cfgProcessRuleEntity.getProcessDefinitionId();
         //
         //查询userid
@@ -254,17 +265,16 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
         ProcessFormHandler handler = fsProcessFormFactory.getFileHandler(ProcessFormEvent.FS_PROCESS_FORM.getCode());
-        formArray = handler.assemble(formArray, dto.getVariablesMap(),fieldMapList, valueMapList);
-        // 创建请求对象（创建样式）
-//        CreateInstanceReq req = CreateInstanceReq.newBuilder()
-//                .instanceCreate(InstanceCreate.newBuilder()
-//                        .approvalCode(approvalCode)
-//                        .userId(userId)
-//                        .form("[{\"id\":\"111\",\"type\":\"input\",\"value\":\"11111\"},{\"id\":\"222\",\"required\":true,\"type\":\"dateInterval\",\"value\":{\"end\":\"2019-10-02T08:12:01+08:00\",\"interval\":2,\"start\":\"2019-10-01T08:12:01+08:00\"}},{\"id\":\"333\",\"type\":\"radioV2\",\"value\":\"1\"},{\"id\":\"444\",\"type\":\"number\",\"value\":\"4\"},{\"id\":\"555\",\"type\":\"textarea\",\"value\":\"fsafs\"}]")
-//                        .build())
-//                .build();
+        formArray = handler.assemble(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
+        CreateInstanceReq req = CreateInstanceReq.newBuilder()
+                .instanceCreate(InstanceCreate.newBuilder()
+                        .approvalCode("7DCF7A99-6E25-4A24-8386-5E2639712983")
+                        .userId("af4eg757")
+                        .form(JSONUtil.toJsonStr(formArray))
+                        .build())
+                .build();
         try {
-//            fsService.createInstance(req);
+            fsService.createInstance(req);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

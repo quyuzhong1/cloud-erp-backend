@@ -133,7 +133,7 @@
         <id property="id" column="rule_id"/>
         <result property="type" column="rule_type"/>
         <result property="cfgProcessId" column="cfg_process_id"/>
-        <result property="processDefinitionId" column="process_definition_id"/>
+        <result property="processDefinitionId" column="r_process_definition_id"/>
         <result property="processDefinitionVersion" column="process_definition_version"/>
         <result property="isDefault" column="is_default"/>
         <result property="disabled" column="disabled"/>
@@ -170,10 +170,10 @@
         <result property="defaultValue" column="default_value"/>
         <result property="isUnique" column="is_unique"/>
         <result property="cfgType" column="cfg_type"/>
-        <result property="processDefintionId" column="process_definition_id"/>
+        <result property="processDefinitionId" column="fm_process_definition_id"/>
         <result property="thirdFieldId" column="third_field_id"/>
         <result property="isDetailField" column="is_detail_field"/>
-        <result property="thirdFieldFieldListFid" column="third_field_field_list_fid"/>
+        <result property="parentId" column="parntId"/>
 
         <!-- 映射嵌套的 valueList -->
         <collection property="processValueMapDTOList" ofType="com.erp.model.workflow.dto.CfgProcessValueMapDTO$ViewDTO"
@@ -187,59 +187,59 @@
     </resultMap>
 
     <select id="getViewDTOById" resultMap="viewDTOResultMap">
-        SELECT p.id                                                                         AS process_id,
-               p.code                                                                       AS process_code,
-               p.name                                                                       AS process_name,
-               p.bussiness_key                                                              AS process_bussiness_key,
+        SELECT p.id                                                                       AS process_id,
+               p.code                                                                     AS process_code,
+               p.name                                                                     AS process_name,
+               p.bussiness_key                                                            AS process_bussiness_key,
 
-               r.id                                                                         AS rule_id,
-               r.type                                                                       AS rule_type,
-               r.cfg_process_id                                                             AS cfg_process_id,
-               r.process_definition_id                                                      AS process_definition_id,
-               r.process_definition_version                                                 AS process_definition_version,
-               r.is_default                                                                 AS is_default,
-               r.disabled                                                                   AS disabled,
+               r.id                                                                       AS rule_id,
+               r.type                                                                     AS rule_type,
+               r.cfg_process_id                                                           AS cfg_process_id,
+               r.process_definition_id                                                    AS r_process_definition_id,
+               r.process_definition_version                                               AS process_definition_version,
+               r.is_default                                                               AS is_default,
+               r.disabled                                                                 AS disabled,
                CONCAT(e.left_bracket, e.field, e.value, e.right_bracket, e.logic, e.name) AS expDesc,
 
                -- Rule Expression Fields
-               e.id                                                                         AS exp_id,
-               e.rule_id                                                                    AS rule_id_for_exp,
-               e.left_bracket                                                               AS left_bracket,
-               e.field                                                                      AS field,
-               e.compare                                                                    AS compare,
-               e.value                                                                      AS value,
-               e.right_bracket                                                              AS right_bracket,
-               e.logic                                                                      AS logic,
-               e.index                                                                      AS exp_index,
-               e.name                                                                       AS exp_name,
+               e.id                                                                       AS exp_id,
+               e.rule_id                                                                  AS rule_id_for_exp,
+               e.left_bracket                                                             AS left_bracket,
+               e.field                                                                    AS field,
+               e.compare                                                                  AS compare,
+               e.value                                                                    AS value,
+               e.right_bracket                                                            AS right_bracket,
+               e.logic                                                                    AS logic,
+               e.index                                                                    AS exp_index,
+               e.name                                                                     AS exp_name,
 
                -- Field Map Fields
-               fm.id                                                                        AS field_map_id,
-               fm.third_field                                                               AS third_field,
-               fm.third_field_type                                                          AS third_field_type,
-               fm.third_field_required                                                      AS third_field_required,
-               fm.sys_field                                                                 AS sys_field,
-               fm.sys_field_type                                                            AS sys_field_type,
-               fm.sys_field_required                                                        AS sys_field_required,
-               fm.cfg_id                                                                    AS cfg_id,
-               fm.default_value                                                             AS default_value,
-               fm.is_unique                                                                 AS is_unique,
-               fm.cfg_type                                                                  AS cfg_type,
-               fm.process_definition_id                                                     AS process_definition_id,
-               fm.third_field_id                                                            AS third_field_id,
-               fm.is_detail_field                                                           AS is_detail_field,
-               fm.third_field_field_list_fid                                                AS third_field_field_list_fid,
+               fm.id                                                                      AS field_map_id,
+               fm.third_field                                                             AS third_field,
+               fm.third_field_type                                                        AS third_field_type,
+               fm.third_field_required                                                    AS third_field_required,
+               fm.sys_field                                                               AS sys_field,
+               fm.sys_field_type                                                          AS sys_field_type,
+               fm.sys_field_required                                                      AS sys_field_required,
+               fm.cfg_id                                                                  AS cfg_id,
+               fm.default_value                                                           AS default_value,
+               fm.is_unique                                                               AS is_unique,
+               fm.cfg_type                                                                AS cfg_type,
+               fm.process_definition_id                                                   AS fm_process_definition_id,
+               fm.third_field_id                                                          AS third_field_id,
+               fm.is_detail_field                                                         AS is_detail_field,
+               fm.parent_id                                                               AS parent_id,
 
                -- Value Map Fields
-               vm.id                                                                        AS value_map_id,
-               vm.field_map_id                                                              AS value_field_map_id,
-               vm.third_value                                                               AS third_value,
-               vm.sys_value                                                                 AS sys_value
+               vm.id                                                                      AS value_map_id,
+               vm.field_map_id                                                            AS value_field_map_id,
+               vm.third_value                                                             AS third_value,
+               vm.sys_value                                                               AS sys_value
 
         FROM public.cfg_process p
                  LEFT JOIN public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
                  LEFT JOIN public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
-                 LEFT JOIN public.cfg_process_field_map fm ON r.id = fm.cfg_process_rule_id AND fm.is_deleted = false
+                 LEFT JOIN public.cfg_process_field_map fm ON r.id = fm.cfg_id AND fm.is_deleted = false
                  LEFT JOIN public.cfg_process_value_map vm ON fm.id = vm.field_map_id AND vm.is_deleted = false
 
         WHERE p.id = #{id}
