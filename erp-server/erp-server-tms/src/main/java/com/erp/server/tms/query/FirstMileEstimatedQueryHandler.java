@@ -30,11 +30,13 @@ public class FirstMileEstimatedQueryHandler extends AbstractQueryHandler {
             return this.getQueryAllSql();
         }
         if(Objects.equals("waitConfirm", value)){
-            this.buildDefaultDTO("eb.status", "waitConfirm");
-            this.buildDefaultDTO("lbc.reconciliation_status", "toBeConfirm");
+//            this.buildDefaultDTO("eb.status", "waitConfirm");
+//            this.buildDefaultDTO("lbc.reconciliation_status", "toBeConfirm");
+            return "eb.status = 'waitConfirm' AND EXISTS (select 1 from logistics_bill_cost lbc  left join tms_first_mile_reconciliation_detail tfmrd on lbc.reconciliation_id = tfmrd.main_id and tfmrd.is_deleted = false and tfmrd.\"type\" = 'actual' and tfmrd.reconciliation_count = 1 where lbc.is_deleted = false and eb.logistics_bill_id = lbc.logistics_bill_id and lbc.reconciliation_status = 'toBeConfirm' ) ";
         }
         if(Objects.equals("confirm", value)){
-            this.buildDefaultDTO("lbc.reconciliation_status", "confirmed");
+//            this.buildDefaultDTO("lbc.reconciliation_status", "confirmed");
+            return "EXISTS (select 1 from logistics_bill_cost lbc  left join tms_first_mile_reconciliation_detail tfmrd on lbc.reconciliation_id = tfmrd.main_id and tfmrd.is_deleted = false and tfmrd.\"type\" = 'actual' and tfmrd.reconciliation_count = 1 where lbc.is_deleted = false and eb.logistics_bill_id = lbc.logistics_bill_id and lbc.reconciliation_status = 'confirmed' ) ";
         }
 
         return super.getSplicingSQL();
