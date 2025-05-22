@@ -860,10 +860,12 @@ public class FirstMileCostAllocationDTO implements Serializable {
     public static class JudgeReconciliationDTO {
         //本月开始有实际账单
         private boolean currencyMonthReconciliation = false;
-        //上月开始有账单
+        //上月之前有账单
         private boolean lastMonthReconciliation = false;
         //上月有实际账单
         private boolean lastReconciliation = false;
+        //上月有费用分摊记录
+        private boolean lastHasCostAllocation = false;
         //本月有实际账单
         private boolean currencyReconciliation = false;
         //同一个核算期间内是否有其他对账月份的对账单
