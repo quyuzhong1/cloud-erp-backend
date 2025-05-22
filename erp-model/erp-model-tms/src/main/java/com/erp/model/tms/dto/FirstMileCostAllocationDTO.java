@@ -6,17 +6,13 @@ import java.time.LocalDate;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -436,6 +432,20 @@ public class FirstMileCostAllocationDTO implements Serializable {
     }
     @Data
     @NoArgsConstructor
+    public static class ResetIdsDTO extends PermissionsDTO {
+        /**
+         * 核算期间 yyyy-mm
+         */
+        private String reportPeriodStr;
+
+        /**
+         * 表 ids
+         */
+        private List<String> ids;
+
+    }
+    @Data
+    @NoArgsConstructor
     public static class UpdateStatusDTO extends PermissionsDTO {
         /**
          * 会计期间
@@ -450,8 +460,11 @@ public class FirstMileCostAllocationDTO implements Serializable {
         /**
          * 表 ids
          */
-        @NotEmpty(message = "ids不能为空")
         private List<String> ids;
+        /**
+         * 核算期间 yyyy-mm
+         */
+        private String reportPeriodStr;
 
     }
 
@@ -471,6 +484,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+        /**
+         * 分摊明细记录id
+         */
+        private List<String> detailIds;
     }
 
     @Data
@@ -887,5 +904,54 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 最新核算状态
          */
         private String status;
+    }
+
+    @EqualsAndHashCode(callSuper = true)
+    @Data
+    @NoArgsConstructor
+    public static class CostAllocationDTO extends PagingVO {
+
+        /**
+         * 冲期初在途费用
+         */
+        @NotNull(message = "新的冲期初在途费用不能为空")
+        @Digits(integer = 12, fraction = 2, message = "冲期初在途费用整数位不能超过12位，小数位不能超过2位")
+        private String newMidPeriodTransitCost;
+
+        /**
+         * 本期分摊费用
+         */
+        @NotNull(message = "新的本期分摊费用不能为空")
+        @Digits(integer = 12, fraction = 2, message = "本期分摊费用整数位不能超过12位，小数位不能超过2位")
+        private String newCurrentPeriodAllocatedCost;
+
+        /**
+         * 期末在途费用
+         */
+        @NotNull(message = "新的期末在途费用不能为空")
+        @Digits(integer = 12, fraction = 2, message = "期末在途费用整数位不能超过12位，小数位不能超过2位")
+        private String newEndPeriodTransitCost;
+
+        /**
+         * 期末暂估费用
+         */
+        @NotNull(message = "新的期末暂估费用不能为空")
+        @Digits(integer = 12, fraction = 2, message = "期末暂估费用整数位不能超过12位，小数位不能超过2位")
+        private String newEndPeriodEstimatedCost;
+
+        /**
+         * 是否需要重算【后端使用】
+         */
+        private Boolean isRetry = Boolean.FALSE;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailDTO {
+        private String id;
+        private String sourceId;
+        private String skuId;
+        private String businessCode;
+        private LocalDate reportMonth;
     }
 }
