@@ -859,10 +859,29 @@ public class FsService {
 //                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
 //                .build();
         //生产
-//        Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
-//                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
-//                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
-//                .build();
+        Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
+                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
+                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
+                .build();
+
+        // 创建请求对象
+        GetExternalApprovalReq req = GetExternalApprovalReq.newBuilder()
+                .approvalCode("0F625108-DBA7-4B25-B85D-0BBE76CD8ABC")
+                .userIdType("open_id")
+                .build();
+
+        // 发起请求
+        GetExternalApprovalResp resp = client.approval().v4().externalApproval().get(req);
+
+        // 处理服务端错误
+        if (!resp.success()) {
+            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+            return;
+        }
+
+        // 业务数据处理
+        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
 
 
         //获取飞书的应用token

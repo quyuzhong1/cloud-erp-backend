@@ -566,14 +566,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         //查询传入流程数据
         OtherInstockEntity mapToBean = BeanUtil.toBean(dto.getVariablesMap(), OtherInstockEntity.class);
 
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         //更新单据(后面有流程了调用监听可删)
         updateApproveStatusForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus(), null);
 

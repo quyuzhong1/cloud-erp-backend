@@ -1,5 +1,6 @@
 package com.common.business.dto.base;
 
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -34,7 +35,7 @@ public class ApproveOneDTO extends PermissionsDTO {
      * 类型（pass、审核通过，reject、审核不通过）
      */
     @NotBlank(message = "审核类型不能为空")
-    @StateEnumValue(strValues = {"pass","reject","reject_appoint","revoke"}, message = "审核类型有误")
+    @StateEnumValue(strValues = {"pass","reject","reject_appoint","revoke","cancel"}, message = "审核类型有误")
     private String type;
 
     /**
@@ -81,5 +82,19 @@ public class ApproveOneDTO extends PermissionsDTO {
         this.type = type;
         this.comment = comment;
         this.isNeedProcess = isNeedProcess;
+    }
+
+    /**
+     * 获取审核状态
+     */
+    public String getApproveStatus () {
+        if ("pass".equals(type)) {
+            return ApproveStatusEnum.APPROVE.getStatus();
+        } else if ("reject".equals(type)) {
+            return ApproveStatusEnum.REJECT.getStatus();
+        }  else if ("cancel".equals(type)) {
+            return ApproveStatusEnum.WAIT_SUBMIT.getStatus();
+        }
+        return null;
     }
 }
