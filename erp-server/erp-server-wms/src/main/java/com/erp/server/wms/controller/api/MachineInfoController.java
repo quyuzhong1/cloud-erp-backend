@@ -249,6 +249,14 @@ public class MachineInfoController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 批量通过SKU查询BOM子集
+     */
+    @PostMapping("/batchViewBomSubComponents")
+    public ApiResult<List<List<MachineSubComponentsDTO.ViewDTO>>> batchViewBomSubComponents(@RequestBody @Validated MachineSubComponentsDTO.BatchViewBomParamDTO dto) {
+        List<List<MachineSubComponentsDTO.ViewDTO>> list = machineInfoService.batchViewBomSubComponents(dto);
+        return success(list);
+    }
 
     /**
      * 删除

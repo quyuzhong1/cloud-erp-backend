@@ -967,7 +967,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 this.updateById(add);
             }
             //用于同步到TikTok拆分数据的入参
-            List<String> sourceDetailIds = detailList.stream().map(req -> req.getPlatformLineNumber()).collect(Collectors.toList());
+            List<String> sourceDetailIds = detailList.stream()
+                    .map(SoB2cDetailDTO.AddDTO::getPlatformLineNumber)
+                    .flatMap(numbers -> Arrays.stream(numbers.split(",")))
+                    .collect(Collectors.toList());
             groupsBean.setOrderLineItemIds(sourceDetailIds);
             groupsBean.setId(add.getId());
             splittableGroups.add(groupsBean);

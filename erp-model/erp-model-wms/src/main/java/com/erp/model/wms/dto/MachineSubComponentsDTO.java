@@ -175,4 +175,15 @@ public class MachineSubComponentsDTO implements Serializable {
          */
         private String bomVersion;
     }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchViewBomParamDTO {
+
+        /**
+         * skuId 集合
+         */
+        @NotEmpty(message = "SKU不能为空")
+        private List<String> skuIdList;
+    }
 }

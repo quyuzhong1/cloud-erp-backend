@@ -813,7 +813,7 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
             String thirdName = null;
             switch (ThirdSysTypeEnum.getByCode(type)) {
                 case WAREHOUSE:
-                    if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType())) {
+                    if (PlatformDictEnum.WDT.getCode().equals(thirdAddDTO.getSysType()) || PlatformDictEnum.TE_MU.getCode().equals(thirdAddDTO.getSysType())) {
                         //校验第三方仓库是否存在
                         ThirdWarehouseEntity thirdWarehouseEntity = Optional.ofNullable(thirdWarehouseService.getByWarehouseId(thirdAddDTO.getThirdId(), ThirdSysTypeEnum.WAREHOUSE.getCode()))
                                 .orElseThrow(() -> new ServiceException(ApiError.ERROR_THIRD_WAREHOUSE_NOTFOUND));
@@ -898,9 +898,6 @@ public class ThirdMappingServiceImpl extends SuperServiceImpl<ThirdMappingMapper
 
     @Override
     public List<ThirdMappingDTO.WarehouseMappingDTO> listMappingBySysIds(List<String> warehouseIdList, String sysType) {
-        if(warehouseIdList.isEmpty()){
-           return Collections.emptyList();
-        }
         return this.baseMapper.listMappingBySysIds(warehouseIdList, sysType);
     }
 

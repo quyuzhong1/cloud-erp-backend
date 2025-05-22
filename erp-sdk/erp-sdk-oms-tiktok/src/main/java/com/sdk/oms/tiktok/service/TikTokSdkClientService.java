@@ -919,7 +919,7 @@ public class TikTokSdkClientService {
         //拉取数据
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(sb.toString(), body, null, headerMap, RequestMethod.POST);
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {
-            log.error("调用url={},入参params={}, TikTok订单拆分失败，返回值 responseMap={}", sb.toString(), params.toString(), JSONUtil.toJsonStr(apiResult));
+            log.error("调用url={},入参params={}, TikTok订单拆分失败，返回值 responseMap={}", sb.toString(), body, JSONUtil.toJsonStr(apiResult));
             throw new RuntimeException(StrUtil.format("调用url={},入参params={}, TikTok订单拆分失败，返回值 responseMap={}",
                     sb.toString(), headerMap.toString(), JSONUtil.toJsonStr(apiResult)));
         }

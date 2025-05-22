@@ -67,4 +67,14 @@ public enum ReturnReasonEnum implements EnumMessage {
         }
         return OTHER;
     }
+
+    public static String getCodeByName(String name) {
+        ReturnReasonEnum[] returnReasonEnums = values();
+        for (ReturnReasonEnum returnReasonEnum : returnReasonEnums) {
+            if (returnReasonEnum.getName().equals(name)) {
+                return returnReasonEnum.getCode();
+            }
+        }
+        return null;
+    }
 }

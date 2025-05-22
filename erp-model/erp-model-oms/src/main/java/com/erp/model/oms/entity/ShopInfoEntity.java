@@ -1,5 +1,6 @@
 package com.erp.model.oms.entity;
 
+import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
@@ -9,6 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Map;
 
@@ -226,6 +228,17 @@ public class ShopInfoEntity extends BaseEntity<ShopInfoEntity> {
      */
      @TableField("business_model")
      private String businessModel;
+
+    /**
+     * 授权过期时间
+     */
+    @TableField(value = "auth_expire_date",fill = FieldFill.INSERT_UPDATE)
+    private LocalDate authExpireDate;
+    /**
+     * token
+     */
+    @TableField(exist = false)
+    private String accessToken;
 
     public static final String PLATFORM_DICT = "platform_dict";
 

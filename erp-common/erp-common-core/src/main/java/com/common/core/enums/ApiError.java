@@ -240,7 +240,8 @@ public enum ApiError implements Serializable {
     PROCESS_NOT_START_USER(94030,"非流程发起人无法撤销"),
     // 下级节点无审核人，无法提交
     PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
-
+    // 流程未完成部署，请先完成流程部署
+    PROCESS_NOT_DEPLOY(94032,"流程未完成部署，请先完成流程部署"),
 
     /**
      * PLM 错误
@@ -412,6 +413,7 @@ public enum ApiError implements Serializable {
     ERROR_95160(95160,"文件不可超过{}m"),
     REJECT_COMMENT_NOT_EMPTY(95161, "审核不通过必须填写审核意见"),
     ERROR_95162(95162, "SKU【{}】记录不存在"),
+    SO_B2C_DETAIL_PRICE_NOT_EXIST(95162, "销售订单【{}】SKU【{}】单价不能为0"),
 
 
 
@@ -1214,6 +1216,18 @@ public enum ApiError implements Serializable {
     WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
     WAREHOUSE_AREA_USED(92253, "库区被使用后，库存类型禁止修改"),
     WAREHOUSE_NOT_EDIT(92253, "所属仓库禁止修改"),
+    ERROR_92268(92268, "【{}】库存不足,质检通知数量{}，可用库存{}"),
+    ERROR_92269(92269, "【{}】已质检完成，不允许操作反审核"),
+    ERROR_92270(92270, "请先审核通过质检通知单"),
+    ERROR_92271(92271, "请至少选择一条明细"),
+    ERROR_92272(92272, "【{}】包装信息不存在"),
+    ERROR_92273(92273, "SKU库存不足,质检通知数量{}，可用库存{}，请确认是否继续创建"),
+    ERROR_92274(92274, "【{}】良品和不良品不能都为0"),
+
+    ERROR_92275(92275, "【{}】质检单没有下推的分步式调出单"),
+    ERROR_92276(92276, "【{}】质检单【{}】调出单已生成分步式调出单审核，不允许撤销质检"),
+    ERROR_92277(92277, "【{}】质检单【{}】未质检不能撤销"),
+    ERROR_92278(92278, "【{}】质检单【{}】调出单下sku未全部勾选"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1602,6 +1616,10 @@ public enum ApiError implements Serializable {
     ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于等于包装宽度"),
     ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于等于包装高度"),
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于等于净重"),
+
+    ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"【{}】箱规长度必须大于等于包装长度"),
+    ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"【{}】箱规宽度必须大于等于包装宽度"),
+    ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"【{}】箱规高度必须大于等于包装高度"),
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 

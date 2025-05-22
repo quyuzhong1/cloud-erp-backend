@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 
@@ -395,6 +396,12 @@ public class SoB2cEntity extends BaseEntity<SoB2cEntity> {
      */
     @TableField("after_tax_amount")
     private BigDecimal afterTaxAmount;
+
+    @TableField(exist = false)
+    private List<SoB2cDetailEntity> detailEntityList;
+
+    @TableField(exist = false)
+    private boolean coverOutDate;
 
     public static final String CODE = "code";
 

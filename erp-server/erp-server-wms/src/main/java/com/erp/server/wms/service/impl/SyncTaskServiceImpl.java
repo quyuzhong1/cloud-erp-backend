@@ -15,17 +15,13 @@ import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
-import com.erp.model.oms.entity.*;
-import com.erp.model.oms.entity.CfgConditionEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.oms.dto.SoInfoDTO;
-import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.CurrencyDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.entity.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
@@ -116,6 +112,24 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private TransferInfoService transferInfoService;
+
+    @Resource
+    private TransferInService transferInService;
+
+    @Resource
+    private TransferInDetailService transferInDetailService;
+
+    @Resource
+    private SyncKingdeeTransferInService syncKingdeeTransferInService;
+
+    @Resource
+    private TransferOutService transferOutService;
+
+    @Resource
+    private TransferOutDetailService transferOutDetailService;
+
+    @Resource
+    private SyncKingdeeTransferOutService syncKingdeeTransferOutService;
 
     @Resource
     private SyncKingdeeTransferInfoService syncKingdeeTransferInfoService;
@@ -708,6 +722,12 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SDY_SO_RETURN_INSTOCK:
             	resultList = newSdySyncSoReturnInstock(sourceDetailList);
             	break;
+            case TRANSFER_IN:
+                resultList = newSyncTransferIn(sourceDetailList);
+                break;
+            case TRANSFER_OUT:
+                resultList = newSyncTransferOut(sourceDetailList);
+                break;
             default:
                 break;
         }
@@ -993,7 +1013,83 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         }
         return resultList;
     }
-    
+
+    /**
+     * 分步式调入
+     * @param sourceDetailList
+     */
+    private Map<String , Map<String, Object>> newSyncTransferIn(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<TransferInEntity> list = transferInService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncTransferInfo >>>> 未找到数据！");
+            return resultList;
+        }
+        List<String> ids = list.stream().map(TransferInEntity::getId).distinct().collect(Collectors.toList());
+        //直接调拨单明细
+        List<TransferInDetailEntity> transferInDetailEntityList = transferInDetailService.listByMainIdList(ids);
+        Map<String, List<TransferInDetailEntity>> transferDetailMap = transferInDetailEntityList.stream().collect(Collectors.groupingBy(TransferInDetailEntity::getMainId));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            TransferInEntity entity = list.stream().filter(obj -> {
+                return obj.getId().equals(sourceId);
+            }).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            List<TransferInDetailEntity> transferInDetailEntityList1 = transferDetailMap.get(entity.getId());
+            transferInDetailEntityList1 = CollUtil.isNotEmpty(transferInDetailEntityList1) ? transferInDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+            if (CollUtil.isEmpty(transferInDetailEntityList1)){
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeTransferInService.newSyncDataToKingdee(entity, transferInDetailEntityList1,syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
+    /**
+     * 分步式调出
+     * @param sourceDetailList
+     */
+    private Map<String , Map<String, Object>> newSyncTransferOut(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<TransferOutEntity> list = transferOutService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncTransferInfo >>>> 未找到数据！");
+            return resultList;
+        }
+        List<String> ids = list.stream().map(TransferOutEntity::getId).distinct().collect(Collectors.toList());
+        //直接调拨单明细
+        List<TransferOutDetailEntity> transferOutDetailEntityList = transferOutDetailService.listByMainIds(ids);
+        Map<String, List<TransferOutDetailEntity>> transferDetailMap = transferOutDetailEntityList.stream().collect(Collectors.groupingBy(TransferOutDetailEntity::getMainId));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            TransferOutEntity entity = list.stream().filter(obj -> {
+                return obj.getId().equals(sourceId);
+            }).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            List<TransferOutDetailEntity> transferOutDetailEntityList1 = transferDetailMap.get(entity.getId());
+            transferOutDetailEntityList1 = CollUtil.isNotEmpty(transferOutDetailEntityList1) ? transferOutDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+            if (CollUtil.isEmpty(transferOutDetailEntityList1)){
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeTransferOutService.newSyncDataToKingdee(entity, transferOutDetailEntityList1,syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
     /**
      * 仓库
      * @param sourceDetailList

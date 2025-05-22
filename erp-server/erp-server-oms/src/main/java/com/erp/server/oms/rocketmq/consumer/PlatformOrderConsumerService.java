@@ -74,6 +74,8 @@ public class PlatformOrderConsumerService<T extends DmpSyncTaskIdDTO> extends Ab
         //TIKTOK判断是否拆单或取消拆单，需要作废原单并且根据包裹号重新生成订单
         if(PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dto.getDictPlatform())){
             Boolean continueFlag = platformOrderConsumerHandleService.tiktokSplit(dto);
+            //更新包裹号为空的明细数据
+            platformOrderConsumerHandleService.updateTikTokDetail(dto);
             if(continueFlag){
                 platformOrderConsumerHandleService.handleAll(dto);
             }

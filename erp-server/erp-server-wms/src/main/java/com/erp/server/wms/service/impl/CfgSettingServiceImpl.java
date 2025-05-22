@@ -257,6 +257,9 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case FS_WAREHOUSE_LOCATION_REPLENISH_NOTICE:
                 jsonObject = JSONUtil.parseObj(addDTO.getFsWlrNoticeDTO());
                 break;
+            case SHOP_EXPIRE_NOTICE:
+                jsonObject = JSONUtil.parseObj(addDTO.getShopAuthExpireNoticeDTO());
+                break;
             default:
                 break;
         }
@@ -368,6 +371,10 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             case FS_REQUISITION_CHANGE_APPROVE_NOTICE:
                 CfgSettingValueDTO.FsRequisitionNoticeDTO fsRequisitionChangeApproveHandleNotice = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.FsRequisitionNoticeDTO.class);
                 viewDTO.setFsRequisitionChangeApproveNoticeDTO(fsRequisitionChangeApproveHandleNotice);
+                break;
+            case SHOP_EXPIRE_NOTICE:
+                CfgSettingValueDTO.ShopAuthExpireNoticeDTO shopAuthExpireNoticeDTO = BeanUtil.toBean(cfgSetting.getDataJson(), CfgSettingValueDTO.ShopAuthExpireNoticeDTO.class);
+                viewDTO.setShopAuthExpireNoticeDTO(shopAuthExpireNoticeDTO);
                 break;
             default:
                 break;

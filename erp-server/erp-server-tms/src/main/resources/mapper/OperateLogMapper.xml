@@ -39,6 +39,13 @@
             <if test="params.pid !=null and params.pid!=''">
                 AND ol.pid = #{params.pid}
             </if>
+            <if test="params.searchKey !=null and params.searchKey!=''">
+                and (
+                ol.content ILIKE concat('%',#{params.searchKey}::text,'%') or
+                ol.operation ILIKE concat('%',#{params.searchKey}::text,'%') or
+                ol.create_user_name ILIKE concat('%',#{params.searchKey}::text,'%')
+                )
+            </if>
         </where>
         group by ol.module_type,ol.business_id,ol.create_time
         order by ol.create_time desc

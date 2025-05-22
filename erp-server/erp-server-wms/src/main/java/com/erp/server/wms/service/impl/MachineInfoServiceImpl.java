@@ -1273,6 +1273,64 @@ public class MachineInfoServiceImpl extends SuperServiceImpl<MachineInfoMapper, 
     }
 
     @Override
+    public List<List<MachineSubComponentsDTO.ViewDTO>> batchViewBomSubComponents(MachineSubComponentsDTO.BatchViewBomParamDTO dto) {
+        List<List<MachineSubComponentsDTO.ViewDTO>> resultList = new ArrayList<>();
+        List<String> skuIdList = dto.getSkuIdList();
+        //查询BOM中SKU子集
+        List<BomChildrenSkuDTO> childrenList = plmTaskFeign.listHistoryBomChildBySkuIds(skuIdList);
+        if (CollectionUtils.isEmpty(childrenList)) {
+            return resultList;
+        }
+        Map<String,List<BomChildrenSkuDTO>> childrenMap = childrenList.stream().collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuId));
+        //查询sku
+        List<String> allSkuIdList = childrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
+        List<SkuVO> skuList = plmTaskFeign.listSkuPurchaseByIds(allSkuIdList);
+
+        for (String skuId : skuIdList) {
+            List<BomChildrenSkuDTO> childrenSkuList = childrenMap.get(skuId);
+            if(CollectionUtils.isEmpty(childrenSkuList)) {
+                resultList.add(new ArrayList<>());
+                continue;
+            }
+            //bom版本取最新
+            String bomVersion = childrenSkuList.stream().max(Comparator.comparingDouble(obj -> Double.valueOf(obj.getBomVersion()))).map(BomChildrenSkuDTO::getBomVersion).get();
+            String combinationType = BomTypeEnum.COMBINATION.getType();
+            List<BomChildrenSkuDTO> versionChildList = childrenSkuList.stream().
+                    filter(obj -> obj.getBomVersion().equals(bomVersion) &&( combinationType.equals(obj.getType()) || BomTypeEnum.SINGLE.getType().equals(obj.getType()))).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(versionChildList)) {
+                resultList.add(new ArrayList<>());
+                continue;
+            }
+            Boolean childHidden = Boolean.FALSE;
+            List<MachineSubComponentsDTO.ViewDTO> viewDTOS = new ArrayList<>();
+            for (BomChildrenSkuDTO bomChildrenSkuDTO : versionChildList) {
+                //sku信息
+                SkuVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(bomChildrenSkuDTO.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(skuVO)) {
+                    throw new ServiceException(ApiError.ERROR_95084);
+                }
+                MachineSubComponentsDTO.ViewDTO viewDTO = new MachineSubComponentsDTO.ViewDTO();
+                if (!childHidden) {
+                    childHidden = Boolean.TRUE;
+                    viewDTO.setChildHidden(Boolean.TRUE);
+                }
+                viewDTO.setSkuId(bomChildrenSkuDTO.getSkuId());
+                viewDTO.setSkuNo(bomChildrenSkuDTO.getSkuNo());
+                viewDTO.setProductName(bomChildrenSkuDTO.getSkuName());
+                viewDTO.setChildSupplierId(skuVO.getSupplierId());
+                viewDTO.setUnit(bomChildrenSkuDTO.getUnitName());
+                viewDTO.setItemQty(bomChildrenSkuDTO.getQuantity());
+                viewDTO.setQty(bomChildrenSkuDTO.getQuantity());
+                viewDTO.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+                viewDTO.setChildLength(versionChildList.size());
+                viewDTOS.add(viewDTO);
+            }
+            resultList.add(viewDTOS);
+        }
+        return resultList;
+    }
+
+    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO invalid(String id, String reason) {

@@ -298,6 +298,15 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     List<WarehouseLocationEntity> listByWarehouseIdsAndCodeList(List<String> warehouseIds, List<String> warehouseLocationList);
 
     /**
+     * 根据仓库和仓位名称查询
+     * @author will
+     * @date 2025/4/25 19:18
+     * @param warehouseIds
+     * @param warehouseLocationNameList
+     * @return List<WarehouseLocationEntity>
+     */
+    List<WarehouseLocationEntity> listByWarehouseIdsAndNameList(List<String> warehouseIds, List<String> warehouseLocationNameList);
+    /**
      * 查询库区
      * @param warehouseId 仓库ID
      * @param areaTypeCode 库区类型
