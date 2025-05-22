@@ -1,15 +1,20 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.anno.ParamData;
+import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.DmpInputTaskStatusEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
+import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import com.sdk.oms.temu.dto.TemuCommonDTO;
@@ -25,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * dmp处理下一个扩展handler，如何订单收货人信息单独一张表，使用此handler即可，因有成员变量，最终实现类由spring管理需要是多例@Scope("prototype")
@@ -35,13 +41,6 @@ import java.util.*;
 @Service
 @Scope("prototype")
 public class DmpInputLxOrderReceiverNextDmpHandler extends DmpInputDoNextDmpHandler {
-
-    @Resource
-    private TemuClient temuClient;
-    @Resource
-    private ThirdShopService thirdShopService;
-    @Resource
-    private ThirdMappingService thirdMappingService;
 
     @Override
     protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
@@ -65,39 +64,30 @@ public class DmpInputLxOrderReceiverNextDmpHandler extends DmpInputDoNextDmpHand
                 isTemu = platformCodeStr.equals("10024");
             }
         }
-        // 店铺ID
-        String storeId = dmpInputMongoEntity.getOrDefault("store_id", "").toString();
-        // 店铺和映射
-        List<ThirdShopEntity> shopList = thirdShopService.lambdaQuery()
-                .eq(ThirdShopEntity::getSysType, DmpBasicSystemCodeEnum.LING_XING.getCode())
-                .list();
-        List<ThirdMappingEntity> mappingList = thirdMappingService.lambdaQuery()
-                .eq(ThirdMappingEntity::getType, "shop")
-                .eq(ThirdMappingEntity::getThirdSysType, DmpBasicSystemCodeEnum.LING_XING.getCode())
-                .list();
         // 校验和获取ERP店铺
-        ThirdMappingEntity mappingEntity = checkAndGetErpShopId(shopList, mappingList, storeId);
-        String shopId = mappingEntity.getSysId();
         if(isTemu&&!isPlatformWarehouseOrder && StringUtils.isNotBlank(platformCode)){
-            TemuCommonDTO temuCommonDTO = temuClient.getAuthInfo(shopId);
-            if(Objects.isNull(temuCommonDTO)){
-                ServiceException.runError("temu半托管店铺未授权，ID=" + shopId);
-            }
-            TemuShippingInfoReq temuShippingInfoReq = BeanUtil.copyProperties(temuCommonDTO,TemuShippingInfoReq.class);
-            temuShippingInfoReq.setParentOrderSn(platformCode);
-            TemuResp<TemuShippingDTO> temuResp = temuClient.getShippingInfo(temuShippingInfoReq);
-            if (Objects.isNull(temuResp) || !temuResp.getSuccess() || Objects.isNull(temuResp.getResult())) {
-                log.error("temu半托管查询地址失败，返回值 responseMap={}", JSON.toJSONString(temuResp));
+            List<ParamData> paramDataList = new ArrayList<>();
+            List<Map<String, Object>> shipmentMongoData = new ArrayList<>();
+            paramDataList.add(new ParamData("orderId", "orderId", PannoEnum.EQ, platformCode));
+            shipmentMongoData = mongoService.findMongoData(paramDataList,"lingxing_orderAddress_data" );
+            if (CollectionUtils.isEmpty(shipmentMongoData)) {
                 //如果已发货，不更新订单异常
                 Map<String, Object> map = new HashMap<>();
-                if(StringUtils.isNotBlank(temuResp.getErrorMsg()) && temuResp.getErrorMsg().contains("It has been signed")){
-                    map.put("is_update_error",false);
-                }else{
-                    map.put("is_update_error",true);
-                }
+                map.put("is_update_error",true);
                 return Collections.singletonList(map);
             }
-            TemuShippingDTO temuShippingDTO = temuResp.getResult();
+            Map<String, Object> map = shipmentMongoData.get(0);
+            if(!map.containsKey("orderId") || Objects.isNull(map.get("orderId"))){
+                Map<String, Object> map1 = new HashMap<>();
+                if(map.containsKey("is_update_error") && Objects.nonNull(map.get("is_update_error")) && !(Boolean) map.get("is_update_error")){
+                    map.put("is_update_error",false);
+                }else{
+                    //如果已发货，不更新订单异常
+                    map1.put("is_update_error",true);
+                }
+                return Collections.singletonList(map1);
+            }
+            TemuShippingDTO temuShippingDTO = JSON.parseObject(JSON.toJSONString(shipmentMongoData.get(0)), TemuShippingDTO.class);
             Map<String, Object> addressMap = new HashMap<>();
             addressMap.put("address_line1",temuShippingDTO.getAddressLine1());
             addressMap.put("address_line2",temuShippingDTO.getAddressLine2());
