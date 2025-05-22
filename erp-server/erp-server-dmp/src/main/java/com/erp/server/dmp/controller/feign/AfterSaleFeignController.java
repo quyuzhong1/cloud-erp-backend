@@ -2,6 +2,7 @@ package com.erp.server.dmp.controller.feign;
 
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.AfterSaleDTO;
@@ -119,6 +120,18 @@ public class AfterSaleFeignController extends BaseController {
     @GetMapping("/invalidByCode")
     public ApiResult<BatchResultDTO> invalidByCode(@RequestParam("code") String code){
         return success(afterSaleService.invalidByCode(code));
+    }
+
+    /**
+     * 详情
+     * @author jack
+     * @date:  2025-04-06
+     * @param id
+     * @return ApiResult<AfterSaleDTO.ViewDTO>>
+     */
+    @GetMapping("/view")
+    public ApiResult<AfterSaleDTO.ViewDTO> view(@RequestParam("id") String id) {
+        return success(afterSaleService.view(id));
     }
 
 }
