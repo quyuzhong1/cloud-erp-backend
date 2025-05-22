@@ -1,5 +1,6 @@
 package com.erp.server.tms.query;
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.query.AbstractQueryHandler;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +18,9 @@ public class FirstMileEstimatedQueryHandler extends AbstractQueryHandler {
         //tab列表
         if ("tab".equals(field)) {
             return getTabSql(value);
+        }
+        if ("lbc.reconciliation_status".equals(field) && ObjectUtil.isNotEmpty(value)) {
+            return "EXISTS (select 1 from logistics_bill_cost lbc  left join tms_first_mile_reconciliation_detail tfmrd on lbc.reconciliation_id = tfmrd.main_id and tfmrd.is_deleted = false and tfmrd.\"type\" = 'actual' and tfmrd.reconciliation_count = 1 where lbc.is_deleted = false and eb.logistics_bill_id = lbc.logistics_bill_id and lbc.reconciliation_status "+ compareCodeSplicingValueSql +" ) ";
         }
         return null;
     }
