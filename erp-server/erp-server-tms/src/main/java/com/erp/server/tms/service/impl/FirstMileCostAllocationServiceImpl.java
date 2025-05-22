@@ -1075,7 +1075,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private void setInitCost(FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.PagingVO beforeVO, List<FirstMileSkuCostAllocationDetailEntity> beforeSkuDetailList, InitFirstMileAllocationDetailEntity initEntity) {
         if (Objects.nonNull(beforeVO) && !CollectionUtils.isEmpty(beforeSkuDetailList)) {
             //上期记录
-            FirstMileSkuCostAllocationDetailEntity beforeDetailEntity = beforeSkuDetailList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId())
+            FirstMileSkuCostAllocationDetailEntity beforeDetailEntity = beforeSkuDetailList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId()) && Objects.equals(e.getPlatformSkuNo(), detailEntity.getPlatformSkuNo())
                     && Objects.equals(detailEntity.getFeeType(), e.getFeeType())).findFirst().orElse(null);
             if (Objects.nonNull(beforeDetailEntity)) {
                 //期初在途
