@@ -57,6 +57,7 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
@@ -957,13 +958,22 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                 //期初在途费用-冲期初-本期分摊费用
                 detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
             }else {
-                if (Objects.isNull(initEntity)){
+                //初始分摊（实际+暂估）可以判断期初费用分摊
+                if (judgeReconciliationDTO.isLastHasCostAllocation()){
+                    if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
+                        //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
+                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
+                    }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
+                        //期初不等于0时，期初在途费用-冲期初-本期分摊费用
+                        detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
+                    }
+                }else if (Objects.isNull(initEntity)){
                     //期初数据不存在时 期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
                 }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitEstimatedCost()) != 0) {
                     //期初=0时，期初在途费用(0)+头程分摊金额-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(allocatedAmount, mid));
-                }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) == 0){
+                }else if (BigDecimal.ZERO.compareTo(detailEntity.getInitTransitCost()) != 0){
                     //期初不等于0时，期初在途费用-冲期初-本期分摊费用
                     detailEntity.setEndPeriodTransitCost(MathUtil.subtract(detailEntity.getInitTransitCost(), mid));
                 }
@@ -1075,7 +1085,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
     private void setInitCost(FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.PagingVO beforeVO, List<FirstMileSkuCostAllocationDetailEntity> beforeSkuDetailList, InitFirstMileAllocationDetailEntity initEntity) {
         if (Objects.nonNull(beforeVO) && !CollectionUtils.isEmpty(beforeSkuDetailList)) {
             //上期记录
-            FirstMileSkuCostAllocationDetailEntity beforeDetailEntity = beforeSkuDetailList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId())
+            FirstMileSkuCostAllocationDetailEntity beforeDetailEntity = beforeSkuDetailList.stream().filter(e -> Objects.equals(e.getSkuId(), detailEntity.getSkuId()) && Objects.equals(e.getPlatformSkuNo(), detailEntity.getPlatformSkuNo())
                     && Objects.equals(detailEntity.getFeeType(), e.getFeeType())).findFirst().orElse(null);
             if (Objects.nonNull(beforeDetailEntity)) {
                 //期初在途
@@ -1164,6 +1174,12 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             lastReconciliation = true;
         }
         judgeReconciliationDTO.setLastReconciliation(lastReconciliation);
+        //上月有没有费用分摊记录
+        FirstMileCostAllocationDTO.PagingVO pagingVO4 = voList.stream().filter(e -> Objects.nonNull(e)
+                && Objects.equals(lastMonth, e.getReportPeriodMonth())).findFirst().orElse(null);
+        if (Objects.nonNull(pagingVO4)) {
+            judgeReconciliationDTO.setLastHasCostAllocation(Boolean.TRUE);
+        }
         //本月为实际账单 上月为实际账单 上上个月为预估账单 则上月开始有账单
         //上上月时间
         LocalDate beforeLastMonth = reportPeriodMonth.minusMonths(2).withDayOfMonth(1);
@@ -1176,7 +1192,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
         if (!lastReconciliation && currencyReconciliation) {
             judgeReconciliationDTO.setCurrencyMonthReconciliation(Boolean.TRUE);
         }
-        if (!beforeLastReconciliation && lastReconciliation && currencyReconciliation) {
+        if (lastReconciliation && currencyReconciliation) {
             judgeReconciliationDTO.setLastMonthReconciliation(Boolean.TRUE);
         }
         //本月有实际账单
@@ -1875,6 +1891,30 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             throw new ServiceException(ApiError.ERROR_1016);
         }
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Async("tmsExecutor")
+    public void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList) {
+        for (FirstMileCostAllocationEntity entity : entityList) {
+            if (com.erp.model.srm.enums.ConfirmStatusEnum.CONFIRM.getCode().equals(entity.getStatus())){
+                continue;
+            }
+            String sourceId = entity.getSourceId();
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(e -> e.getId().equals(sourceId)).findFirst().orElse(null);
+            if(Objects.isNull(firstMileDeliveryEntity)){
+                continue;
+            }
+            List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = deliveryDetailEntityList.stream().filter(e -> e.getMainId().equals(sourceId)).collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(firstMileDeliveryDetailEntityList)){
+                continue;
+            }
+            try {
+                this.calcAllocatedCost(entity,firstMileDeliveryEntity, firstMileDeliveryDetailEntityList);
+            }catch (Exception e){
+                log.error("费用分摊异常：",e);
+            }
+        }
     }
 
     private void handleImportSuccessList(Set<String> mainIdList, List<FirstMileCostChangeExcelDTO> dataList, List<FirstMileCostChangeExcelDTO> errorList) {
