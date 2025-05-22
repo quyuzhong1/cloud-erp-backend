@@ -161,6 +161,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //创建一个IpageData 并设置数据listDTOs
         IPage<CfgProcessDTO.ProcessViewDTO> newPageData = new Page<>(dto.getCurrPage(), dto.getPageSize());
         newPageData.setRecords(viewDTOList);
+        newPageData.setTotal(pageData.getTotal());
         return new PagingVO(newPageData);
     }
 
@@ -218,7 +219,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         });
 
         // 设置状态中文名称
-        list.forEach(item -> item.setTabFlagName(Objects.equals(item.getTabFlag(), "f") ? "停用" : "启用"));
+        list.forEach(item -> item.setTabFlagName(Objects.equals(item.getTabFlag(), "t") ? "停用" : "启用"));
 
         // 计算总数并添加“全部”条目
         int totalCount = list.stream()
