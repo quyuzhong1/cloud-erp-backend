@@ -210,7 +210,7 @@ public class CfgApproveSyncSendHandler {
         if(CollUtil.isNotEmpty(processTaskManagementEntities)){
             List<FsBotParamsDTO.SendParamsDTO> sendParams = new ArrayList<>();
             for (ProcessTaskManagementEntity e : processTaskManagementEntities) {
-                if(thirdUnionMap.containsKey(e.getCreateUserId())){
+                if(thirdUnionMap.containsKey(e.getCurApproveId())){
                     FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
                     params.setTemplateId(noticeTemplateEnum.getName());
                     params.setUserId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId());

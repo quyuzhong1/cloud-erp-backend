@@ -13,6 +13,7 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.service.CfgApproveSyncService;
 import com.erp.server.workflow.service.CfgSettingService;
 import com.erp.server.workflow.service.ProcessManagementService;
+import com.erp.server.workflow.service.ProcessTaskManagementService;
 import com.lark.oapi.service.approval.v4.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -43,6 +44,8 @@ public class CfgApproveSyncBuildHandler {
 
     @Resource
     private ProcessManagementService processManagementService;
+    @Resource
+    private ProcessTaskManagementService processTaskManagementService;
 
     /**
      * 构建三方审批同步
@@ -216,7 +219,7 @@ public class CfgApproveSyncBuildHandler {
 
             for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
                 values.put("@i18n@name"+entry.getId(),entry.getFieldName());
-
+                values.put("@i18n@value"+entry.getId(),"");
                 String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
                 if(StringUtils.isNotBlank(fieldSourceValueStr)){
                     values.put("@i18n@value"+ entry.getId(),fieldSourceValueStr);
@@ -360,6 +363,39 @@ public class CfgApproveSyncBuildHandler {
             summaries.add(sb.toString());
         }
         return summaries;
+    }
+
+
+    /**
+     * 构建三方审批同步
+     * @author jack
+     * @date 2025-05-21
+     */
+    public CheckExternalInstanceReq buildExternalInstanceReq(ProcessManagementEntity processManagementEntity,List<ProcessTaskManagementEntity> processTaskManagementEntities){
+        LocalDateTime updateTime = processManagementEntity.getUpdateTime();
+        String updateTimeMillis = String.valueOf(updateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+
+        ExteranlInstanceCheck exteranlInstanceCheck = ExteranlInstanceCheck.newBuilder()
+                .instanceId(processManagementEntity.getId())
+                .updateTime(updateTimeMillis)
+                .build();
+
+        if(CollUtil.isNotEmpty(processTaskManagementEntities)){
+            ExternalInstanceTask[] tasks = processTaskManagementEntities.stream().map(e -> {
+                String taskUpdateTimeMillis = String.valueOf(e.getUpdateTime().atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+                return ExternalInstanceTask.newBuilder()
+                        .taskId(e.getId())
+                        .updateTime(taskUpdateTimeMillis)
+                        .build();
+            }).toArray(ExternalInstanceTask[]::new);
+            exteranlInstanceCheck.setTasks(tasks);
+        }
+
+        return CheckExternalInstanceReq.newBuilder()
+                .checkExternalInstanceReqBody(CheckExternalInstanceReqBody.newBuilder()
+                        .instances( new ExteranlInstanceCheck[]{exteranlInstanceCheck})
+                        .build())
+                .build();
     }
 
 }

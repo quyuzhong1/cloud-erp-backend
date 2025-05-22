@@ -547,24 +547,6 @@ public class FsService {
         try {
             // 构建client
             Client client = getClient();
-            // 创建请求对象
-            req = CheckExternalInstanceReq.newBuilder()
-                    .checkExternalInstanceReqBody(CheckExternalInstanceReqBody.newBuilder()
-                            .instances(new ExteranlInstanceCheck[]{
-                                    ExteranlInstanceCheck.newBuilder()
-                                            .instanceId("1234234234242423")
-                                            .updateTime("1591603040000")
-                                            .tasks(new ExternalInstanceTask[]{
-                                                    ExternalInstanceTask.newBuilder()
-                                                            .taskId("112253")
-                                                            .updateTime("1591603040000")
-                                                            .build()
-                                            })
-                                            .build()
-                            })
-                            .build())
-                    .build();
-
             // 发起请求
             CheckExternalInstanceResp resp = client.approval().v4().externalInstance().check(req);
 
@@ -784,22 +766,20 @@ public class FsService {
 
     //构建快捷审批的操作配置。 我们默认传同意和拒绝
     public void buildActionConfigs(Map<String, Object> bodyMap, Map<String, String> i18nResourcesTextMap) {
-        i18nResourcesTextMap.put("@i18n@actionRejectName", "拒绝");
-
         List<Map<String, Object>> actionConfigs = new ArrayList<>();
         Map<String, Object> actionConfigMap1 = new HashMap<>();
         actionConfigMap1.put("action_type", "APPROVE");
-        actionConfigMap1.put("is_need_reason", true);
+        actionConfigMap1.put("is_need_reason", false);
         actionConfigMap1.put("is_reason_required", false);
         actionConfigMap1.put("is_need_attachment", false);
         actionConfigMap1.put("next_status", FSApprovalStatusEnum.APPROVED.getCode());
         actionConfigs.add(actionConfigMap1);
+
         Map<String, Object> actionConfigMap2 = new HashMap<>();
         actionConfigMap2.put("action_type", "REJECT");
-        actionConfigMap1.put("is_need_reason", true);
-        actionConfigMap1.put("is_reason_required", true);
-        actionConfigMap1.put("is_need_attachment", false);
-        actionConfigMap2.put("action_name", "@i18n@actionRejectName");
+        actionConfigMap2.put("is_need_reason", true);
+        actionConfigMap2.put("is_reason_required", true);
+        actionConfigMap2.put("is_need_attachment", false);
         actionConfigMap2.put("next_status", FSApprovalStatusEnum.REJECTED.getCode());
         actionConfigs.add(actionConfigMap2);
         bodyMap.put("action_configs", actionConfigs);
@@ -863,48 +843,6 @@ public class FsService {
         } catch (Exception e) {
             throw new ServiceException("查看指定三方审批定义失败>>>>>{}", e);
         }
-    }
-
-    /**
-     * 更新审批 Bot 消息
-     * https://open.feishu.cn/document/server-docs/approval-v4/message/update-bot-messages
-     * @author jack
-     * @date 2025-05-19
-     */
-    public Boolean updateApproveMessage() {
-        //获取飞书的应用token
-        String tenantAccessToken = getFsTenantAccessToken();
-        if (StringUtils.isNotBlank(tenantAccessToken)) {
-            Map<String, String> headerMap = new HashMap<>();
-            String authorization = FS_AUTHORIZATION + tenantAccessToken;
-            headerMap.put(AUTHORIZATION, authorization);
-            headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
-
-            Map<String, Object> bodyMap = new HashMap<>();
-//            bodyMap.put("template_id", 1008);
-//            bodyMap.put("user_id", );
-//            bodyMap.put("approval_name", "@i18n@approvalName");
-//            bodyMap.put("title_user_id", );
-//            bodyMap.put("title_user_id_type ", UserIdTypeEnum.USERID.getCode());
-//
-//            Map<String, Object> contentMap = new HashMap<>();
-//            List<String> summaries = new ArrayList<>();
-//            contentMap.put("user_id", );
-//            contentMap.put("user_id_type", UserIdTypeEnum.USERID.getCode());
-//            contentMap.put("summaries",summaries);
-//            bodyMap.put("content ",contentMap );
-
-            String resultStr = OkHttpUtils.doPostJson(ThirdConstants.FS_APPROVE_MESSAGE_UPDATE_URL, bodyMap, headerMap);
-            Map<String, Object> resultMap = JSON.parseObject(resultStr, Map.class);
-            if (resultMap != null && resultMap.containsKey("code")) {
-                Integer code = (Integer) resultMap.get("code");
-                int succeedCode = 0;
-                if (succeedCode == code) {
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
 

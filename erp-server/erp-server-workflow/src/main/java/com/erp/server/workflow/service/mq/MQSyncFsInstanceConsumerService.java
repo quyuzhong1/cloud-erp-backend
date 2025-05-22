@@ -20,6 +20,7 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
 import com.erp.server.workflow.handler.CfgApproveSyncSendHandler;
 import com.erp.server.workflow.service.*;
+import com.google.gson.Gson;
 import com.lark.oapi.service.approval.v4.model.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,6 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  *
@@ -109,7 +109,7 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
         if(Objects.isNull(req)){
             return ;
         }
-        log.info("MQSyncFsInstanceConsumerService request参数: {}" , JSONUtil.toJsonStr(req.getExternalInstance()));
+        log.info("MQSyncFsInstanceConsumerService request参数: {}" ,  new Gson().toJson(req.getExternalInstance()));
         //三方审批同步
         CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
 
@@ -122,6 +122,9 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
             cfgApproveSyncSendHandler.updateNotice(dto, fieldMapEntities, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities);
             //消息推送
             cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities);
+
+            //校验三方审批实例
+            CheckExternalInstanceReq checkExternalInstanceReq = cfgApproveSyncBuildHandler.buildExternalInstanceReq(processManagementEntity, processTaskManagementEntities);
             log.info("MQSyncFsInstanceConsumerService 结束");
         }
     }
