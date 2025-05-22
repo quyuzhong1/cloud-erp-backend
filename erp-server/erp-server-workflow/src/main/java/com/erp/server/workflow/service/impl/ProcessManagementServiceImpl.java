@@ -11,7 +11,6 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -21,7 +20,9 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
 import com.common.core.entity.ConditionElement;
@@ -36,8 +37,6 @@ import com.common.core.utils.date.LocalDateUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.dmp.entity.DmpPushTaskHistoryEntity;
-import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.sys.dto.SysFeignDTO;
@@ -1296,6 +1295,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
+    @Transactional(rollbackFor =  Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO processPass(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1305,13 +1306,46 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PASS_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
-        this.updateById(entity);
+        processManagementService.updateById(entity);
 
-        //TODO 对接飞书
+        //强制通过终止流程
+        try {
+            runtimeService.deleteProcessInstance(entity.getProcessInstanceId(), "强制通过终止");
+        } catch (ProcessEngineException e) {
+            throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
+        }
+        //更新业务状态
+        processManagementService.updateBusinessStatus(entity,ApproveTypeEnum.PASS,"强制通过终止");
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.PASS);
     }
 
+    /**
+     * 更新业务单据状态
+     * @author will
+     * @date 2025/5/22 11:06
+     * @param entity
+     * @param typeEnum
+     * @param comment
+     * @return Boolean
+     */
     @Override
+    public Boolean updateBusinessStatus(ProcessManagementEntity entity,ApproveTypeEnum typeEnum,String comment) {
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+
+        Map<String, Object> variables = runtimeService.getVariables(entity.getProcessInstanceId());
+        String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
+        LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
+        // 流程信息传递给业务系统
+        EndProcessDTO dto = new EndProcessDTO(entity, typeEnum.getStatus(),LocalDateTime.now(),userInfo.getUid(),comment, deliveryDate,variables);
+        // 获取业务系统feign
+        return callFeign(entity.getBusinessKey(), dto);
+
+    }
+
+    @Override
+    @Transactional(rollbackFor =  Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO processReject(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1321,13 +1355,22 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_REJECT_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
-        this.updateById(entity);
+        processManagementService.updateById(entity);
 
-        //TODO 对接飞书
+        //强制驳回终止流程
+        try {
+            runtimeService.deleteProcessInstance(entity.getProcessInstanceId(), "强制驳回终止");
+        } catch (ProcessEngineException e) {
+            throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
+        }
+        //更新业务状态
+        processManagementService.updateBusinessStatus(entity,ApproveTypeEnum.REJECT,"强制驳回终止");
+
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.REJECT);
     }
 
     @Override
+    @Transactional(rollbackFor =  Exception.class)
     public BatchResultDTO processRestore(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1337,13 +1380,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_RESTORE_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.RUNNING);
-        this.updateById(entity);
+        processManagementService.updateById(entity);
 
-        //TODO 对接飞书
+        // 检查流程实例是否处于暂停状态
+        ProcessInstance instance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(entity.getProcessInstanceId())
+                .singleResult();
+        if (instance == null) {
+            throw new IllegalArgumentException("流程实例不存在");
+        }
+        if (!instance.isSuspended()) {
+            throw new IllegalStateException("流程实例未处于暂停状态");
+        }
+        //恢复
+        runtimeService.activateProcessInstanceById(entity.getProcessInstanceId());
+
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.RESTORE);
     }
 
     @Override
+    @Transactional(rollbackFor =  Exception.class)
     public BatchResultDTO processSuspend(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1353,8 +1409,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_SUSPEND_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.PAUSE);
-        this.updateById(entity);
-        //TODO 对接飞书
+        processManagementService.updateById(entity);
+        //暂停
+        runtimeService.suspendProcessInstanceById(entity.getProcessInstanceId());
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.SUSPEND);
     }
 
