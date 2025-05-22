@@ -23,8 +23,8 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * 构建ERP审批同步的请求体
@@ -80,7 +80,7 @@ public class CfgApproveSyncBuildHandler {
         values.put("@i18n@title",cfgApproveSyncEntity.getTitle());
 
         //查询飞书的用户信息
-        String thirdUserId = "";
+//        String thirdUserId = "";
         String thirdOpenUserId = "";
         String userName;
         ThirdUnionDTO thirdUnionDTO = thirdUnionMap.getOrDefault(createUserId, null);
@@ -92,7 +92,7 @@ public class CfgApproveSyncBuildHandler {
             if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenId())){
                 //todo 推送记录  失败  创建人未绑定飞书
             }
-            thirdUserId = thirdUnionDTO.getThirdUserId();
+//            thirdUserId = thirdUnionDTO.getThirdUserId();
             thirdOpenUserId = thirdUnionDTO.getThirdOpenId();
             values.put("@i18n@userName", thirdUnionDTO.getUserName());
             userName = thirdUnionDTO.getUserName();
@@ -122,7 +122,7 @@ public class CfgApproveSyncBuildHandler {
                         .mobileLink(pcLinkByEnv)
                         .build())
                 .title("@i18n@title")
-                .userId(thirdUserId)
+//                .userId(thirdUserId)
                 .userName("@i18n@userName")
                 .openId(thirdOpenUserId)
                 .startTime(createTimeMillis)//审批发起时间
@@ -140,25 +140,26 @@ public class CfgApproveSyncBuildHandler {
                 //todo 推送记录  失败
             }
 
+            AtomicReference<Integer> num = new AtomicReference<>(0);
             ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
                     .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
                     .map(e -> {
+                                num.updateAndGet(v -> v + 1);
                                 //任务标题
                                 String taskTitle = StrUtil.format("审核通知：【{}】提交的审核名称({})抄送给你", userName, cfgApproveSyncEntity.getTitle());
-                                values.put("@i18n@taskTitle:"+e.getId(), taskTitle);
+                                values.put("@i18n@taskTitle:"+num.get(), taskTitle);
                                 String status = FSApprovalStatusEnum.PENDING.getCode();
                                 if (e.getTaskStatus().equals(ApproveStatusEnum.REJECT)) {
                                     status = FSApprovalStatusEnum.REJECTED.getCode();
-                                    values.put("@i18n@taskTitle:"+e.getId(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已通过", userName, cfgApproveSyncEntity.getTitle()));
+                                    values.put("@i18n@taskTitle:"+num.get(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已通过", userName, cfgApproveSyncEntity.getTitle()));
                                 } else if (e.getTaskStatus().equals(ApproveStatusEnum.APPROVE)) {
                                     status = FSApprovalStatusEnum.APPROVED.getCode();
-                                    values.put("@i18n@taskTitle:"+e.getId(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已拒绝", userName, cfgApproveSyncEntity.getTitle()));
+                                    values.put("@i18n@taskTitle:"+num.get(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已拒绝", userName, cfgApproveSyncEntity.getTitle()));
                                 }
                                 return ExternalInstanceTaskNode.newBuilder()
-                                        .taskId(e.getTaskId())
-                                        .userId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId())
+                                        .taskId(e.getId())
                                         .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
-                                        .title("@i18n@taskTitle:"+e.getId())
+                                        .title("@i18n@taskTitle:"+num)
                                         .links(ExternalInstanceLink.newBuilder()
                                                 .pcLink(pcLinkByEnv)
                                                 .mobileLink(pcLinkByEnv)
@@ -191,7 +192,6 @@ public class CfgApproveSyncBuildHandler {
                     .map(e ->
                             CcNode.newBuilder()
                                     .ccId(e.getId())
-                                    .userId(thirdUnionMap.get(e.getCcUserId()).getThirdUserId())
                                     .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenId())
                                     .title(ccTitle)
                                     .links(ExternalInstanceLink.newBuilder()
@@ -209,20 +209,24 @@ public class CfgApproveSyncBuildHandler {
 
         //推送消息 (快接审批)
         if(CollUtil.isNotEmpty(fieldMapEntities)){
+            AtomicReference<Integer> num = new AtomicReference<>(0);
             //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
             int len = fieldMapEntities.size() > 3 ? 3 : fieldMapEntities.size();
-            ExternalInstanceForm[] externalInstanceForm = fieldMapEntities.subList(0, len).stream().map(entry -> ExternalInstanceForm.newBuilder()
-                            .name("@i18n@name"+entry.getId())
-                            .value("@i18n@value"+entry.getId())
-                            .build())
-                    .toArray(ExternalInstanceForm[]::new);
-
+            ExternalInstanceForm[] externalInstanceForm = fieldMapEntities.subList(0, len).stream().map(entry -> {
+                num.updateAndGet(v -> v + 1);
+                return ExternalInstanceForm.newBuilder()
+                        .name("@i18n@name" + num.get())
+                        .value("@i18n@val" + num.get())
+                        .build();
+            }).toArray(ExternalInstanceForm[]::new);
+            num.set(0);
             for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
-                values.put("@i18n@name"+entry.getId(),entry.getFieldName());
-                values.put("@i18n@value"+entry.getId(),"");
+                num.updateAndGet(v -> v + 1);
+                values.put("@i18n@name"+num.get(),entry.getFieldName());
+                values.put("@i18n@val"+num.get(),"");
                 String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
                 if(StringUtils.isNotBlank(fieldSourceValueStr)){
-                    values.put("@i18n@value"+ entry.getId(),fieldSourceValueStr);
+                    values.put("@i18n@val"+ num.get(),fieldSourceValueStr);
                 }else {
                     if(variablesMap.containsKey("detailList")){
                         List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
@@ -238,7 +242,7 @@ public class CfgApproveSyncBuildHandler {
                             }
                             String fieldSourceDetailValueStr = sb.toString();
                             if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
-                                values.put("@i18n@value"+entry.getId(),fieldSourceDetailValueStr);
+                                values.put("@i18n@val"+num.get(),fieldSourceDetailValueStr);
                             }
                         }
                     }
