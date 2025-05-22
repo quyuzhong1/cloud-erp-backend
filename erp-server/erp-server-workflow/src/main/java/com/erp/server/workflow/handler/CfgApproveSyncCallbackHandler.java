@@ -253,4 +253,36 @@ public class CfgApproveSyncCallbackHandler {
         return null;
     }
 
+    public static void main(String[] args) {
+        try {
+            String key = "9527";
+            String source ="{\n" +
+                    "  \"action_type\": \"APPROVE\",\n" +
+                    "  \"user_id\": \"1319c76g\",\n" +
+                    "  \"approval_code\": \"0F625108-DBA7-4B25-B85D-0BBE76CD8ABC\",\n" +
+                    "  \"message_id\": \"7507215736248090627\",\n" +
+                    "  \"reason\": \"ok\"\n" +
+                    "}";
+            MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+            messageDigest.reset();
+            messageDigest.update(key.getBytes());
+            SecretKeySpec skeySpec = new SecretKeySpec(messageDigest.digest(), "AES");
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");//"算法/模式/补码方式"
+            byte[] sSrcBytes = source.getBytes();
+            byte[] newSrc =  new byte[sSrcBytes.length + 16];
+            byte[] cSrc = new byte[16];
+            System.arraycopy(cSrc, 0, newSrc, 0, cSrc.length);
+            System.arraycopy(sSrcBytes, 0, newSrc, 16, sSrcBytes.length);
+            IvParameterSpec iv = new IvParameterSpec(cSrc);//使用CBC模式，需要一个向量iv，可增加加密算法的强度
+            cipher.init(Cipher.ENCRYPT_MODE, skeySpec, iv);
+            byte[] encrypted = cipher.doFinal(newSrc);
+            String str = Base64.getEncoder().encodeToString(encrypted);//此处使用BASE64做转码功能，同时能起到2次加密的作用。
+            System.out.println("encrypted====="+str);
+        } catch (Exception e) {
+            //handle Exception
+        }
+
+
+    }
+
 }
