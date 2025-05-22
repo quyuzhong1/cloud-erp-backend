@@ -90,9 +90,18 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Resource
     private FsProcessFormFactory fsProcessFormFactory;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
+        //TODO 校验流程单据是否唯一
+//        int count = this.count(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
+//        Map<String, String> nameMap = dictBasicService.getByType("processType").stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+//        if (count>1){
+//            throw new ServiceException("{}已配置流程，不可重复配置",nameMap.get(dto.getBussinessKey()));
+//        }
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
         // 生成单号
