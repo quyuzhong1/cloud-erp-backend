@@ -188,6 +188,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                 CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
                 BeanMapperUtils.copy(dto, entity);
                 entity.setCfgId(ruleId); // 设置关联的 ruleId
+                entity.setCfgType("sysCfg"); //TODO 缺少枚举
                 entitiesToAddOrUpdate.add(entity);
                 continue;
             }
@@ -230,6 +231,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             BeanMapperUtils.copy(dto, entity);
             entity.setCfgId(ruleId); // 设置关联的 ruleId
             entity.setCfgType("sysCfg"); //TODO 缺少枚举
+            //TODO 默认值赋值？
             entitiesToAddOrUpdate.add(entity);
         }
         if (ObjectUtil.isNotEmpty(fieldList) && fieldList.size() > 0) {

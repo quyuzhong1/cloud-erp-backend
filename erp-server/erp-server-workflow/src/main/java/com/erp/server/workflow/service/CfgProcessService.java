@@ -52,7 +52,7 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
 
     void delete(@NotEmpty(message = "ids不能为空") List<String> ids);
 
-    void exportList(PagingDTO<CfgProcessDTO.SearchParamDTO> dto);
+    void exportList(CfgProcessDTO.SearchParamDTO dto);
 
 
     List<CfgProcessDTO.TabListDTO> tabList(PermissionsDTO dto);

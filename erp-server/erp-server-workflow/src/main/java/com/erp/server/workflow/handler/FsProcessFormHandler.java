@@ -126,11 +126,55 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     String childSysField = fieldMap != null ? fieldMap.getSysField() : null;
                     String childDefault = fieldMap != null ? fieldMap.getDefaultValue() : "";
 
+                    //TODO:无字段对应，默认值，就不进行下面的映射了，用defalut_value字段 childDefault
+                    if (childSysField == ""){
+                        //TODO:无字段对应，默认值，就不进行下面的映射了，用defalut_value字段
+                    }
                     Object childValue = (childSysField == null || detailRow.get(childSysField) == null) ?
                             childDefault : detailRow.get(childSysField);
-
                     // 执行值映射处理
                     childValue = mapFieldValue(childId, childType, childValue, childDefault, tidToIdMap, valueMapListMap);
+                    if ("attachmentV2".equals(childType)){
+                        //finalValue转为List
+                        //构建飞书上传文件接口参数
+                        List<Map<String,String>> nameToUrlMap = (List<Map<String,String>>) childValue;
+                        List<String> codeList = new ArrayList<>();
+                        nameToUrlMap.forEach(map -> {
+                            map.keySet().forEach(fileName -> {
+                                String url = map.get(fileName);
+                                byte[] fileByte = FastDFSClientUtil.getFileByte(url);
+                                File file = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+                                try (FileOutputStream fos = new FileOutputStream(file)) {
+                                    fos.write(fileByte);
+                                    fos.flush();
+                                    String fileCode = fsService.uploadApprovalFile(file, fileName);
+                                    codeList.add(fileCode);
+                                } catch (FileNotFoundException e) {
+                                    throw new RuntimeException(e);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                } finally {
+                                    if (file.exists()) {
+                                        file.delete();
+                                    }
+                                }
+                            });
+                        });
+                        formField.set("value", codeList);
+                        return;
+                    }
+                    if ("date".equals(childType)){
+                        // 1. 解析原始时间字符串
+                        DateTime hutoolDate = DateUtil.parse(childValue.toString(), "yyyy-MM-dd HH:mm:ss.SSS");
+                        // 2. 使用系统默认时区转换为 ZonedDateTime
+                        ZonedDateTime zonedDateTime = hutoolDate.toInstant().atZone(ZoneId.systemDefault());
+                        // 3. 转换为 OffsetDateTime（带偏移量）
+                        OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
+                        // 4. 格式化为 RFC3339 格式
+                        String rfc3339 = offsetDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                        formField.set("value", rfc3339);
+                        return ;
+                    }
 
                     JSONObject detailItem = new JSONObject();
                     detailItem.set("id", childId);
@@ -172,6 +216,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             //finalValue转为List
             //构建飞书上传文件接口参数
             List<Map<String,String>> nameToUrlMap = (List<Map<String,String>>) finalValue;
+            List<String> codeList = new ArrayList<>();
             nameToUrlMap.forEach(map -> {
                 map.keySet().forEach(fileName -> {
                     String url = map.get(fileName);
@@ -180,19 +225,20 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     try (FileOutputStream fos = new FileOutputStream(file)) {
                         fos.write(fileByte);
                         fos.flush();
-                        fsService.uploadApprovalFile(file,fileName);
+                        String fileCode = fsService.uploadApprovalFile(file, fileName);
+                        codeList.add(fileCode);
                     } catch (FileNotFoundException e) {
                         throw new RuntimeException(e);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
-                    }finally {
-                    if (file.exists()) {
-                        file.delete();
+                    } finally {
+                        if (file.exists()) {
+                            file.delete();
+                        }
                     }
-                }
                 });
             });
-            formField.set("value", Arrays.asList(finalValue));
+            formField.set("value", codeList);
             return;
         }
         if ("date".equals(type)){

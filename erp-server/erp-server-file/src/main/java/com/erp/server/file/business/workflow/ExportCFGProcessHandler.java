@@ -3,9 +3,7 @@ package com.erp.server.file.business.workflow;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.oms.dto.CfgInvoiceInvalidDTO;
 import com.erp.model.workflow.dto.CfgProcessDTO;
-import com.erp.rpc.oms.feign.ExportOmsFeign;
 import com.erp.rpc.workflow.ExportWorkflowFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
 import com.erp.server.file.entity.FileTask;
@@ -17,7 +15,6 @@ import javax.annotation.Resource;
 import java.util.List;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_CFG_PROCESS;
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_INVOICE_INVALID;
 
 /**
  * @description: 流程配置导出Handler
@@ -46,8 +43,10 @@ public class ExportCFGProcessHandler extends AbstractPageFileEventHandler<CfgPro
     public FileTaskEventEnum getEvent() {
         return EXPORT_CFG_PROCESS;
     }
+
     @Override
     protected String getExcelPath() {
         return "excel/workflow/CFGProcess.xlsx";
     }
+
 }

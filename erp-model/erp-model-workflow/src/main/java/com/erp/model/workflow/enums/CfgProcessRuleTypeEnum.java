@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-05-13 09:43:58
  */
 public enum CfgProcessRuleTypeEnum implements EnumMessage {
-	ERPPROGRESS("erpProgress", "ERP流程"),
-	FSPROGRESS("fsProgress", "飞书流程"),
+	ERPPROGRESS("erpProcess", "ERP流程"),
+	FSPROGRESS("fsProcess", "飞书流程"),
     ;
     /**
      * 类型

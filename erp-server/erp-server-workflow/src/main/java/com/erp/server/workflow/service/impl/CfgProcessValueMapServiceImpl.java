@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -57,7 +58,8 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         List<CfgProcessValueMapEntity> entities = addDTO.stream()
                 .map(dto -> {
                     CfgProcessValueMapEntity entity = new CfgProcessValueMapEntity();
-                    BeanMapperUtils.copy(dto, entity);
+                    BeanUtil.copyProperties(dto, entity);
+                    entity.setDefalutValue(dto.getDefaultValue());
                     entity.setFieldMapId(fieldMapId);
                     return entity;
                 })
@@ -112,6 +114,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                     CfgProcessValueMapEntity entity = new CfgProcessValueMapEntity();
                     BeanMapperUtils.copy(dto, entity);
                     entity.setFieldMapId(fieldMapId);
+                    entity.setDefalutValue(dto.getDefaultValue());
                     return entity;
                 })
                 .collect(Collectors.toList());
