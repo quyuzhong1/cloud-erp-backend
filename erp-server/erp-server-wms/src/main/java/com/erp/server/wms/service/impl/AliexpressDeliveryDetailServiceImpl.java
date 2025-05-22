@@ -2,6 +2,7 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import com.common.business.dto.PlatformDeliveryDTO;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
@@ -49,7 +50,7 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO, AliexpressDeliveryEntity mainEntity, List<PlatformDeliveryDetailDTO> sourceAllDetailList) {
+    public Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO, AliexpressDeliveryEntity mainEntity, List<PlatformDeliveryDTO> sourceAllDeliveryList) {
         if(CollectionUtils.isEmpty(addDTO)){
             return true;
         }
@@ -62,7 +63,7 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
         //先删除后新增
 //        this.removeByMainId(addDTO.get(0).getMainId());
         // 补充明细ID
-        List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = fillData(addDTO, mainEntity, sourceAllDetailList);
+        List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = fillData(addDTO, mainEntity, sourceAllDeliveryList);
 
         log.info("开始新增/更新速卖通发货单详情");
         boolean save = super.saveOrUpdateBatch(aliexpressDeliveryDetailEntityList);
@@ -77,7 +78,7 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
      */
     private List<AliexpressDeliveryDetailEntity> fillData(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO,
                                                           AliexpressDeliveryEntity mainEntity,
-                                                          List<PlatformDeliveryDetailDTO> sourceAllDetailList) {
+                                                          List<PlatformDeliveryDTO> sourceAllDeliveryList) {
         List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = BeanUtil.copyToList(addDTO,AliexpressDeliveryDetailEntity.class);
         String mainId = mainEntity.getId();
         String platformCode = mainEntity.getPlatformCode();
@@ -117,9 +118,8 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
         //产品信息
         List<String> skuNos = aliexpressDeliveryDetailEntityList.stream().map(AliexpressDeliveryDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         skuNos.addAll(soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuNo).distinct().collect(Collectors.toList()));
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         // 重新分摊价格
-        return convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, skuVOList, sourceAllDetailList, mainEntity);
+        return convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, sourceAllDeliveryList, mainEntity);
     }
 
 
@@ -132,19 +132,19 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
      *
      * @param deliveryDetailList    速卖通发货单明细
      * @param soB2cDetailEntityList 速卖通销售订单明细
-     * @param skuVOList             sku列表
-     * @param sourceAllDetailList
+     * @param sourceAllDeliveryList
      * @param mainEntity
      * @return Map<速卖通明细ID, Pair < 发货明细sku单价, 发货明细sku总价>
      */
     public List<AliexpressDeliveryDetailEntity> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
                                                                                         List<SoB2cDetailEntity> soB2cDetailEntityList,
-                                                                                        List<SkuVO> skuVOList,
-                                                                                        List<PlatformDeliveryDetailDTO> sourceAllDetailList,
+                                                                                        List<PlatformDeliveryDTO> sourceAllDeliveryList,
                                                                                         AliexpressDeliveryEntity mainEntity) {
         List<AliexpressDeliveryDetailEntity> deliveryDetailResultList = new LinkedList<>();
 
-        Map<String, SkuVO> skuVoMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, e -> e));
+        // 所有发货明细
+        List<PlatformDeliveryDetailDTO> allSourceDeliveryDetailList = sourceAllDeliveryList.stream().map(PlatformDeliveryDTO::getDetailDTOList).flatMap(List::stream).collect(Collectors.toList());
+
 
         // 平台产品ID 分组
         Map<String, List<AliexpressDeliveryDetailEntity>> deliveryMap = deliveryDetailList
@@ -156,7 +156,7 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
             if (1 == entry.getValue().size()){
                 String platformSkuId = entry.getValue().get(0).getPlatformSkuId();
                 // 所有发货明细只有一个平台skuID
-                if (1 == sourceAllDetailList.stream().filter(e-> e.getPlatformSkuId().equals(platformSkuId)).count()){
+                if (1 == allSourceDeliveryDetailList.stream().filter(e-> e.getPlatformSkuId().equals(platformSkuId)).count()){
                     for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
                         SoB2cDetailEntity detailEntity = checkAndGetSoB2cDetailEntity(soB2cDetailEntityList, aliExpressDetailEntity);
                         // 根据发货数量和订单明细数量判断单价和发货明细总价
@@ -172,7 +172,7 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
             }
             // 平台库存产品ID一样 = 未拆分
             // TODO
-            if (1 == sourceAllDetailList.stream().map(PlatformDeliveryDetailDTO::getScItemId).distinct().count()){
+            if (1 == allSourceDeliveryDetailList.stream().map(PlatformDeliveryDetailDTO::getScItemId).distinct().count()){
                 for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
                     SoB2cDetailEntity detailEntity = checkAndGetSoB2cDetailEntity(soB2cDetailEntityList, aliExpressDetailEntity);
                     // 根据发货数量和订单明细数量判断单价和发货明细总价

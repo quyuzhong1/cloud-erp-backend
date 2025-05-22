@@ -1,7 +1,7 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.PlatformDeliveryDTO;
 import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
@@ -101,7 +101,7 @@ public class AliexpressDeliveryDTO implements Serializable {
 
         private List<AliexpressDeliveryDetailDTO.AddDTO> detailList;
 
-        private List<PlatformDeliveryDetailDTO> allSourceDeliveryDetailList;
+        private List<PlatformDeliveryDTO> allSourceDeliveryList;
     }
 
     @Data
@@ -193,7 +193,15 @@ public class AliexpressDeliveryDTO implements Serializable {
          */
         private String actualCurrency;
 
+        /**
+         *  平台订单整单金额
+         */
+        private BigDecimal orderAmount;
 
+        /**
+         * 平台订单整单税后金额
+         */
+        private BigDecimal orderAfterTaxAmount;
     }
 
     /**

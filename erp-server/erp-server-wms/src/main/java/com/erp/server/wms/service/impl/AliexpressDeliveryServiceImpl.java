@@ -5,18 +5,19 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.PlatformDeliveryDTO;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
-import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
-import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
+import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopSysUserAuthFeign;
@@ -28,10 +29,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.TreeMap;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_ALIEXPRESS_DELIVERY_EXPORT;
 
@@ -74,15 +77,71 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
                 return new BaseResultDTO.AddDTO(entity1.getId(),entity1.getPlatformCode());
             }
         }
+        fillData(aliexpressDeliveryEntity, addDTO);
         log.info("开始新增速卖通发货单");
         boolean save = super.saveOrUpdate(aliexpressDeliveryEntity);
         if(!save) {
             throw new ServiceException("速卖通发货单保存失败");
         }
-        addDTO.getDetailList().forEach(v->v.setMainId(aliexpressDeliveryEntity.getId()));
-        detailService.addOrUpdate(addDTO.getDetailList(), aliexpressDeliveryEntity, addDTO.getAllSourceDeliveryDetailList());
+        addDTO.getDetailList().forEach(v -> v.setMainId(aliexpressDeliveryEntity.getId()));
+        detailService.addOrUpdate(addDTO.getDetailList(), aliexpressDeliveryEntity, addDTO.getAllSourceDeliveryList());
         return new BaseResultDTO.AddDTO(aliexpressDeliveryEntity.getId(), aliexpressDeliveryEntity.getPlatformCode());
     }
+
+    /**
+     * 填充数据
+     */
+    private void fillData(AliexpressDeliveryEntity aliexpressDeliveryEntity, AliexpressDeliveryDTO.AddDTO addDTO) {
+        if (null == addDTO.getOrderAfterTaxAmount()) {
+            ServiceException.runError("速卖通发货单税后金额不能为空");
+        }
+        if (aliexpressDeliveryEntity.getAfterTaxAmount().compareTo(BigDecimal.ZERO) > 0) {
+            // 所有已发货明细实付金额
+            BigDecimal allDeliveryPayAmount = addDTO.getAllSourceDeliveryList().stream().map(PlatformDeliveryDTO::getDetailDTOList)
+                    .flatMap(List::stream)
+                    .map(PlatformDeliveryDetailDTO::getPayAmount)
+                    .reduce(BigDecimal::add)
+                    .orElse(BigDecimal.ZERO);
+            // 已发货完毕
+            boolean allDeliveryFinish = aliexpressDeliveryEntity.getActualAmount().compareTo(allDeliveryPayAmount) <= 0;
+            // 记录税后金额
+            BigDecimal deliveryAfterTaxAmount;
+            if (allDeliveryFinish) {
+                Map<String, BigDecimal> proratedAmountMap = deliveryFinishProatedAmountMap(addDTO, aliexpressDeliveryEntity.getAfterTaxAmount());
+                deliveryAfterTaxAmount = proratedAmountMap.getOrDefault(aliexpressDeliveryEntity.getTrackNo(), BigDecimal.ZERO);
+            } else {
+                // 部分发货
+                BigDecimal curPayAmount = addDTO.getDetailList().stream().map(AliexpressDeliveryDetailDTO.CommonDTO::getPayAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                // 分摊税后金额
+                deliveryAfterTaxAmount = AliexpressDeliveryEntity.calculateDeliveryProratedAmount(addDTO.getOrderAfterTaxAmount(), addDTO.getActualAmount(), curPayAmount);
+            }
+            aliexpressDeliveryEntity.setAfterTaxAmount(deliveryAfterTaxAmount);
+        }
+
+    }
+
+    public static Map<String, BigDecimal> deliveryFinishProatedAmountMap(AliexpressDeliveryDTO.AddDTO addDTO, BigDecimal targetProratedAmount) {
+        // 只有一个发货单
+        Map<String, BigDecimal> proratedAmountMap = new TreeMap<>();
+        // 最后剩余金额
+        BigDecimal lastAmount = targetProratedAmount;
+        for (int i = 0; i < addDTO.getAllSourceDeliveryList().size(); i++) {
+            PlatformDeliveryDTO platformDeliveryDTO = addDTO.getAllSourceDeliveryList().get(i);
+            // 判断最后一个发货单
+            if (i == addDTO.getAllSourceDeliveryList().size() - 1) {
+                // 最后一个发货单
+                proratedAmountMap.put(platformDeliveryDTO.getTrackNo(), lastAmount);
+                break;
+            }
+            BigDecimal curPayAmount = platformDeliveryDTO.getDetailDTOList().stream().map(PlatformDeliveryDetailDTO::getPayAmount).reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+            BigDecimal curAfterTaxAmount = AliexpressDeliveryEntity.calculateDeliveryProratedAmount(targetProratedAmount, addDTO.getActualAmount(), curPayAmount);
+            proratedAmountMap.put(platformDeliveryDTO.getTrackNo(), curAfterTaxAmount);
+            // 最后剩余税后金额 = 当前发货单税后金额 - 当前发货单税后金额
+            lastAmount = lastAmount.subtract(curAfterTaxAmount);
+        }
+        return proratedAmountMap;
+    }
+
 
     @Override
     public PagingVO<AliexpressDeliveryDTO.ListDTO> paging(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto) {
@@ -111,13 +170,13 @@ public class AliexpressDeliveryServiceImpl extends SuperServiceImpl<AliexpressDe
 
     @Override
     public PagingVO<AliexpressDeliveryDTO.ListDTO> exportAliexpressDelivery(PagingDTO<AliexpressDeliveryDTO.SearchParamDTO> dto) {
-        Page<AliexpressDeliveryDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
+        Page<AliexpressDeliveryDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(page);
     }
 
     @Override
     public void updateAliexpressOustock(AliexpressDeliveryDTO.StatusDTO statusDTO) {
-        if (Objects.nonNull(statusDTO) && CharSequenceUtil.isNotBlank(statusDTO.getPlatformDeliveryCode()) && CharSequenceUtil.isNotBlank(statusDTO.getSoId()) && Objects.nonNull(statusDTO.getIsOutstock())){
+        if (Objects.nonNull(statusDTO) && CharSequenceUtil.isNotBlank(statusDTO.getPlatformDeliveryCode()) && CharSequenceUtil.isNotBlank(statusDTO.getSoId()) && Objects.nonNull(statusDTO.getIsOutstock())) {
             this.lambdaUpdate().eq(AliexpressDeliveryEntity::getSoId, statusDTO.getSoId()).eq(AliexpressDeliveryEntity::getPlatformDeliveryCode, statusDTO.getPlatformDeliveryCode())
                     .set(AliexpressDeliveryEntity::getIsOutstock, statusDTO.getIsOutstock()).update();
         }

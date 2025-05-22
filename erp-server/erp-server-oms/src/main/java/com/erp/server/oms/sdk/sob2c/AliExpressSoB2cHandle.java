@@ -22,7 +22,6 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.enums.AliexpressDeliveryOrderStatusEnum;
@@ -110,7 +109,10 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             return Boolean.TRUE;
         }
         List<String> deliveryStatusNameList = AliexpressDeliveryOrderStatusEnum.getOutStockStatusList();
-        deliveryDTOList = deliveryDTOList.stream().filter(e -> deliveryStatusNameList.contains(e.getOrderStatus())).collect(Collectors.toList());
+        deliveryDTOList = deliveryDTOList.stream()
+                .filter(e -> deliveryStatusNameList.contains(e.getOrderStatus()) && null != e.getDeliveryWarehouseTime() )
+                .sorted(Comparator.comparing(PlatformDeliveryDTO::getDeliveryWarehouseTime))
+                .collect(Collectors.toList());
         if (CollUtil.isEmpty(deliveryDTOList)){
             return Boolean.TRUE;//不需要生成销售出库单
         }
@@ -162,8 +164,6 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }
         List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingFeign.listMappingViewByDictPlatform(mainEntity.getDictPlatform());
         List<PlatformDeliveryDTO> deliveryDTOList = dto.getDeliveryDTOList();
-        // 所有发货明细(包含已发货和未发货)
-        List<PlatformDeliveryDetailDTO> allSourceDeliveryDetailList = dto.getDeliveryDTOList().stream().map(PlatformDeliveryDTO::getDetailDTOList).flatMap(List::stream).collect(Collectors.toList());
         for (PlatformDeliveryDTO deliveryDTO : deliveryDTOList){
             LocalDateTime deliveryWarehouseTime = deliveryDTO.getDeliveryWarehouseTime();
             if (Objects.isNull(deliveryWarehouseTime)){
@@ -184,6 +184,9 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             addDTO.setPlatformDeliveryCode(deliveryDTO.getSourceCode());
             addDTO.setIsOutstock(Boolean.FALSE);
             addDTO.setActualAmount(deliveryDTO.getActualAmount());
+            addDTO.setOrderAmount(deliveryDTO.getOrderAmount());
+            addDTO.setOrderAfterTaxAmount(deliveryDTO.getOrderAfterTaxAmount());
+
             addDTO.setActualCurrency(deliveryDTO.getActualCurrency());
             List<PlatformDeliveryDetailDTO> detailDTOList = deliveryDTO.getDetailDTOList();
             List<AliexpressDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
@@ -220,7 +223,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                 }
             }
             addDTO.setDetailList(detailAddList);
-            addDTO.setAllSourceDeliveryDetailList(allSourceDeliveryDetailList);
+            addDTO.setAllSourceDeliveryList(deliveryDTOList);
             aliexpressDeliveryFeign.addOrUpdate(addDTO);
         }
 

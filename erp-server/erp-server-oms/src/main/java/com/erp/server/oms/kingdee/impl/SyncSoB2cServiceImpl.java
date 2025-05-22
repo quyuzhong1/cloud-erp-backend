@@ -128,6 +128,12 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             shudiyunB2cOrderDTO.setIs_gift(0);
         }
 
+        if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
+        } else {
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
+        }
+
         // 公共处理
         commonHandle(soB2cEntity,
                 soB2cDetailEntityList,
@@ -237,11 +243,6 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             }
         }
 
-        if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
-            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
-        } else {
-            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
-        }
         shudiyunB2cOrderDTO.setTaxation(soB2cEntity.getTotalTaxFee());
 
         shudiyunB2cOrderDTO.setTotal_freight(soB2cEntity.getShippingFee());
@@ -700,6 +701,11 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         } else {
             shudiyunB2cOrderDTO.setIs_gift(0);
         }
+        if (soB2cEntity.getDictPlatform().equalsIgnoreCase(PlatformDictEnum.ALI_EXPRESS.getCode())){
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAfterTaxAmount());
+        } else {
+            shudiyunB2cOrderDTO.setBuyer_actual_payment(soB2cEntity.getAmount());
+        }
 
         // 公共处理
         commonHandle(soB2cEntity,
@@ -789,6 +795,9 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
         } else {
             shudiyunB2cOrderDTO.setIs_gift(0);
         }
+
+        // 当前发货单税后金额
+        shudiyunB2cOrderDTO.setBuyer_actual_payment(aliexpressDeliveryEntity.getAfterTaxAmount());
 
         // 公共处理
         commonHandle(soB2cEntity,

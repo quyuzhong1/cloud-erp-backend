@@ -510,6 +510,8 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 		deliveryDTO.setOrderAmount(orderAmount);
 		// 订单明细结算币种
 		deliveryDTO.setOrderCurrency(dmpSoInfoEntity.getCurrencyCode());
+		// 订单税后总金额
+		deliveryDTO.setOrderAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
 
 		String platformWarehouseName = "";
 		List<PlatformDeliveryDetailDTO> detailDTOList = new LinkedList<>();

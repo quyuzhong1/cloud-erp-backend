@@ -1,6 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -78,6 +77,11 @@ public class PlatformDeliveryDTO {
      * (速卖通)订单明细结算币种
      */
     private String orderCurrency = "";
+
+    /**
+     * (速卖通)订单整单税后金额
+     */
+    private BigDecimal orderAfterTaxAmount = BigDecimal.ZERO;
 
     /**
      * 发货单明细
