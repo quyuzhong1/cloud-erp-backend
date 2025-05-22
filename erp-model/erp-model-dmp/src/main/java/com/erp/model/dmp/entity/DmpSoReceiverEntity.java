@@ -141,6 +141,11 @@ public class DmpSoReceiverEntity extends BaseEntity<DmpSoReceiverEntity> {
      */
     @TableField("data_encrypt")
     private String dataEncrypt;
+    /**
+     * 是否更新订单异常
+     */
+    @TableField("is_update_error")
+    private Boolean isUpdateError;
 
     public static final String MAIN_ID = "main_id";
 

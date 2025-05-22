@@ -393,6 +393,15 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 }
             }
         }else {
+            //根据客户查询组装、部门、销售员
+            CustomerInfoEntity customerInfo = FeignQuery.getById(CustomerInfoEntity.class, dto.getCustomerId());
+            if (ObjectUtil.isNotEmpty(customerInfo)) {
+                Optional.of(customerInfo).ifPresent(customerInfoEntity -> {
+                    dto.setSalesDeptId(customerInfoEntity.getSalesDeptId());
+                    dto.setSellerId(customerInfoEntity.getSellerId());
+                    dto.setSalesOrgId(customerInfoEntity.getUseOrgId());
+                });
+            }
             if (CharSequenceUtil.isNotBlank(dto.getSourceId())) {
                 SoReturnReceiveEntity soReturnReceiveEntity = soReturnReceiveService.getById(dto.getSourceId());
                 if(null != soReturnReceiveEntity){
@@ -412,8 +421,8 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //获取部门信息
         List<SysDepartmentEntity> departmentList = sysUserFeign.listDeptByIds(Collections.singletonList(dto.getSalesDeptId()));
         //获取核算公司
-        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(dto.getWarehouseId()));
-        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
+        List<WarehouseDTO.UpdateDTO> warehouseList = warehouseService.listWarehouseByIds(Collections.singletonList(dto.getDetailList().get(0).getWarehouseId()));
+        WarehouseDTO.UpdateDTO updateDTO = warehouseList.stream().filter(w -> w.getId().equals(dto.getDetailList().get(0).getWarehouseId())).findFirst().orElse(new WarehouseDTO.UpdateDTO());
         //获取组织信息
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getSalesOrgId(), updateDTO.getOrgId()));
         entity.setType(dto.getType());
@@ -568,7 +577,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         viewDTO.setApproveStatusName(ApproveStatusEnum.getName(viewDTO.getApproveStatus()));
         viewDTO.setInvalidStatusName(InvalidStatusEnum.getName(viewDTO.getInvalidStatus()));
         viewDTO.setTypeName(BillTypeEnum.getName(viewDTO.getType()));
-        viewDTO.setType(BillTypeEnum.getName(viewDTO.getType()));
         List<CustomerInfoEntity> customerInfoEntities = customerFeign.listCustomer();
         CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(entity.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
         viewDTO.setCustomerName(customerInfoEntity.getName());
@@ -1935,7 +1943,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CollUtil.isEmpty(successList)) {
             return;
         }
-        Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName()).concat(obj.getBillDateStr()).concat(obj.getTypeName())));
+        Map<String, List<SoReturnStockImportExcelDTO>> map = successList.stream().collect(Collectors.groupingBy(obj -> obj.getCustomerName().concat(obj.getWarehouseName()).concat(obj.getBillDateStr()).concat(obj.getTypeName()).concat(CharSequenceUtil.isNotBlank(obj.getReturnLogisticCode()) ? obj.getReturnLogisticCode() : "")));
 
         List<String> customerNameList = successList.stream().map(SoReturnStockImportExcelDTO::getCustomerName).distinct().collect(Collectors.toList());
         List<CustomerInfoEntity> customerInfoList = FeignQuery.create(CustomerInfoEntity.class).in(CustomerInfoEntity::getName, customerNameList).eq(CustomerInfoEntity::getDisabled,Boolean.FALSE).eq(CustomerInfoEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus()).list();
@@ -1982,7 +1990,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             }
             add.setBillDate(LocalDateUtil.stringToLocalDate(excelDTO.getBillDateStr()));
             add.setType(OrderTypeEnum.getCodeByName(excelDTO.getTypeName()));
-
+            add.setReturnLogisticCode(excelDTO.getReturnLogisticCode());
             List<SoReturnInstockDetailDTO.Add> detailList = new ArrayList<>();
             for (SoReturnStockImportExcelDTO soReturnStockImportExcelDTO : value) {
                 SoReturnInstockDetailDTO.Add addDetail = new SoReturnInstockDetailDTO.Add();

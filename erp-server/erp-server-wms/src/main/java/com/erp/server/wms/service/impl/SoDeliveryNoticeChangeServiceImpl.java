@@ -108,6 +108,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(SoDeliveryNoticeChangeDTO.ViewDTO addDTO) {
+        //校验soDetailId是否重复
+        List<String> soDetailIds = addDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSoDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        boolean hasDuplicates = soDetailIds.stream().distinct().count() != soDetailIds.size();
+        if (hasDuplicates) {
+            throw new ServiceException("存在相同sku");
+        }
         List<String> sourceDetailIds = addDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         this.checkExist(sourceDetailIds,addDTO.getNoticeId(), addDTO.getId());
         SoDeliveryNoticeChangeEntity soDeliveryNoticeChangeEntity = this.buildEntity(addDTO);
@@ -144,6 +150,12 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(SoDeliveryNoticeChangeDTO.ViewDTO updateDTO) {
+        //校验soDetailId是否重复
+        List<String> soDetailIds = updateDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSoDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        boolean hasDuplicates = soDetailIds.stream().distinct().count() != soDetailIds.size();
+        if (hasDuplicates) {
+            throw new ServiceException("存在相同sku");
+        }
         SoDeliveryNoticeChangeEntity old = super.getById(updateDTO.getId());
         List<String> sourceDetailIds = updateDTO.getViewDetailList().stream().map(SoDeliveryNoticeChangeDTO.ViewDetail::getSourceDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
         if (Objects.isNull(old)){
@@ -756,11 +768,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
             throw new ServiceException(ApiError.ERROR_92015);
         }
         //销售订单参数
-        List<VirtualInventoryStockDTO.OutInStockDTO> soParamList = new ArrayList<>();
-
-        //销售订单参数
         List<VirtualInventoryStockDTO.OutInStockDTO> subParamList = new ArrayList<>();
-
         //发货通知单参数
         List<VirtualInventoryStockDTO.OutInStockDTO> addNoticeParamList = new ArrayList<>();
         //发货通知单参数
@@ -812,9 +820,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
 
             //差异数量
             Integer diffQty = newQty -  changeDetailEntity.getOriginQty();
-            //销售订单追加冻结
-            handleSoParam(soInfoEntity, soDetailEntity,soParamList,diffQty);
-            //销售订单扣减冻结
+            //销售订单释放库存
             handleSubSoParam(soInfoEntity, soDetailEntity,subParamList,diffQty);
             //发货通知单参数
             handleSoDeliveryNoticeAddParam(soDeliveryNoticeEntity, detailEntity,addNoticeParamList,subNoticeParamList,diffQty);
@@ -832,36 +838,27 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
                 updateList.add(updateFrozenQtyDTO);
             }
         }
-        //销售订单扣减库存
-        if (CollectionUtils.isNotEmpty(soParamList)) {
-            //添加冻结，扣减可用
-            VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
-            dto.setParamList(soParamList);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode());
-            //更新库存
-            virtualInventoryTransCoreService.approve(dto);
-        }
-        //销售订单减冻结
+        //销售订单释放库存
         if (CollectionUtils.isNotEmpty(subParamList)) {
-            //减冻结
+            //减冻结、加可用
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(subParamList);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_SUBTRACT_FREEZE.getCode());
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_LESS.getCode());
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
         }
-        //发货通知单添加冻结
+        //发货通知单添加库存
         if (CollectionUtils.isNotEmpty(addNoticeParamList)) {
-            //添加冻结
+            //加冻结、减可用
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(addNoticeParamList);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_ADD.getCode());
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_HANDLE.getCode());
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
         }
-        //发货通知单减少冻结
+        //发货通知单释放库存
         if (CollectionUtils.isNotEmpty(subNoticeParamList)) {
-            //添加冻结
+            //减冻结、加可用
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(subNoticeParamList);
             dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_APPROVE.getCode());
@@ -905,7 +902,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
     }
 
     /**
-     * 销售订单扣减冻结
+     * 销售订单释放冻结库存
      * @author will
      * @date 2024/10/30 11:25
      * @param soInfoEntity
@@ -925,7 +922,7 @@ public class SoDeliveryNoticeChangeServiceImpl extends SuperServiceImpl<SoDelive
         outInStockDTO.setBillDate(LocalDate.now());
         outInStockDTO.setSkuId(soDetailEntity.getSkuId());
         outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
-        outInStockDTO.setQty(diffQty);
+        outInStockDTO.setQty(MathUtil.compareTo(soDetailEntity.getFrozenQty(),diffQty) > MathUtil.ZERO ? diffQty : soDetailEntity.getFrozenQty());
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
         //库存数量为0不添加

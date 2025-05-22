@@ -48,7 +48,8 @@
     </select>
     <select id="listMappingBySysIds" resultType="com.erp.model.dmp.dto.ThirdMappingDTO$WarehouseMappingDTO">
         select m.sys_id as sysWarehouseId,
-               w.code as thirdWarehouseCode
+               w.code as thirdWarehouseCode,
+               w.warehouse_id as thirdWarehouseId
         from third_mapping m
                  left join third_warehouse w on m.third_id = w.warehouse_id and m.type = w.category
         where m.disabled = false and w.disabled = false

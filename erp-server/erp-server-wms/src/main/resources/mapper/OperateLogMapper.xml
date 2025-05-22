@@ -20,9 +20,9 @@
             </if>
             <if test="params.searchKey !=null and params.searchKey!=''">
                 and (
-                ol.content ILIKE concat('%',#{params.searchKey}::text,'%') or
-                ol.operation ILIKE concat('%',#{params.searchKey}::text,'%') or
-                ol.create_user_name ILIKE concat('%',#{params.searchKey}::text,'%')
+                sol.content ILIKE concat('%',#{params.searchKey}::text,'%') or
+                sol.operation ILIKE concat('%',#{params.searchKey}::text,'%') or
+                sol.create_user_name ILIKE concat('%',#{params.searchKey}::text,'%')
                 )
             </if>
         </where>

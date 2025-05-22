@@ -710,4 +710,11 @@ public interface SoB2cFeign {
      **/
     @PostMapping("feign/soB2c/getSplitCombination")
     SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId);
+
+
+    @PostMapping("feign/soB2c/updateDetail")
+    Boolean updateDetail(@RequestBody List<SoB2cDetailEntity> soB2cDetailEntityList);
+
+    @PostMapping("feign/soB2c/clearOutDateBySoIds")
+    void clearOutDateBySoIds(@RequestBody List<String> clearOutDateSoIds);
 }
