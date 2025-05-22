@@ -131,6 +131,32 @@ public class CfgApproveSyncCallbackHandler {
                         //todo 记录失败 返回失败
                         return Boolean.FALSE;
                     }
+                    //调用各个系统的approveEnd方法
+                    EndProcessDTO endProcessDTO = new EndProcessDTO();
+                    endProcessDTO.setBusinessId(processManagementEntity.getBusinessId());
+                    endProcessDTO.setBusinessKey(processManagementEntity.getBusinessKey());
+                    endProcessDTO.setApproveStatus(actionType.equals("APPROVE")  ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
+                    WorkMenuEntity workMenuEntity = workMenuService.getByModuleCode(processManagementEntity.getBusinessKey());
+                    String sysClassify = workMenuEntity.getSysClassify();
+                    Map<String, Object> variablesMap = new HashMap<>();
+                            switch (SysClassifyEnum.getEnumByCode(sysClassify)) {
+                        case PLM:
+                            variablesMap = plmWorkflowFeign.getVariablesMap(endProcessDTO);
+                            break;
+                        case SCM:
+//                            scmWorkflowFeign.approveEnd(endProcessDTO);
+                            break;
+                        case WMS:
+//                            wmsWorkflowFeign.approveEnd(endProcessDTO);
+                            break;
+                        case OMS:
+//                            omsWorkflowFeign.approveEnd(endProcessDTO);
+                            break;
+                        case FM:
+                            break;
+                        default:
+                            break;
+                    }
 
                     ProcessManagementDTO.ApproveDTO dto = new ProcessManagementDTO.ApproveDTO();
                     dto.setBusinessId(processManagementEntity.getBusinessId());
@@ -138,17 +164,10 @@ public class CfgApproveSyncCallbackHandler {
                     dto.setApproveType(actionType.equals("APPROVE")  ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
                     dto.setComment(reason);
                     dto.setUserId(sysUserThirdEntity.getUserId());
+                    dto.setVariablesMap(variablesMap);
                     log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
                     ProcessManagementDTO.ApproveResultDTO data = processManagementService.approveProcess(dto, Boolean.TRUE);
                     if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-                        //调用各个系统的approveEnd方法
-                        EndProcessDTO endProcessDTO = new EndProcessDTO();
-                        endProcessDTO.setBusinessId(processManagementEntity.getBusinessId());
-                        endProcessDTO.setBusinessKey(processManagementEntity.getBusinessKey());
-                        endProcessDTO.setApproveStatus(actionType.equals("APPROVE")  ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
-
-                        WorkMenuEntity workMenuEntity = workMenuService.getByModuleCode(processManagementEntity.getBusinessKey());
-                        String sysClassify = workMenuEntity.getSysClassify();
                         switch (SysClassifyEnum.getEnumByCode(sysClassify)) {
                             case PLM:
                                 plmWorkflowFeign.approveEnd(endProcessDTO);
@@ -175,7 +194,6 @@ public class CfgApproveSyncCallbackHandler {
                 }
             }
         }
-
         return Boolean.TRUE;
     }
 
