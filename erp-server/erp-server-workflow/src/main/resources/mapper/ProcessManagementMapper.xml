@@ -84,6 +84,7 @@
             pm.create_time as createTime,
             pm.update_time as updateTime,
             ptm.label_json,
+            ptm.approve_time,
             pm.end_time
         FROM process_task_management AS ptm
                  LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
@@ -226,8 +227,9 @@
         SELECT
         pm.process_status as tabFlag,
         count(pm.id) as count
-        FROM  process_management pm
-        WHERE pm.is_deleted = FALSE
+        FROM process_task_management AS ptm
+        LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
+        WHERE ptm.is_deleted = FALSE   and ptm.task_status = 'approveIng'
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

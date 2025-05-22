@@ -22,8 +22,11 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessDTO;
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
+import com.erp.model.workflow.dto.CfgProcessRuleDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserThirdFeign;
@@ -87,9 +90,18 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Resource
     private FsProcessFormFactory fsProcessFormFactory;
 
+    @Resource
+    private DictBasicService dictBasicService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
+        //TODO 校验流程单据是否唯一
+//        int count = this.count(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
+//        Map<String, String> nameMap = dictBasicService.getByType("processType").stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
+//        if (count>1){
+//            throw new ServiceException("{}已配置流程，不可重复配置",nameMap.get(dto.getBussinessKey()));
+//        }
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
         // 生成单号
@@ -158,6 +170,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //创建一个IpageData 并设置数据listDTOs
         IPage<CfgProcessDTO.ProcessViewDTO> newPageData = new Page<>(dto.getCurrPage(), dto.getPageSize());
         newPageData.setRecords(viewDTOList);
+        newPageData.setTotal(pageData.getTotal());
         return new PagingVO(newPageData);
     }
 
@@ -167,7 +180,17 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         if (ObjectUtil.isEmpty(viewDTO)) {
             throw new ServiceException("此流程配置不存在！,id{}", settingId);
         }
-
+        //处理fieldDto
+        for (CfgProcessRuleDTO.ViewDTO dto : viewDTO.getProcessRuleDTOList()) {
+            for (CfgProcessFieldMapDTO.ViewDTO viewDTO1 : dto.getProcessFieldMapDTOList()) {
+                if (StrUtil.isNotBlank(viewDTO1.getThirdFieldType())) {
+                    viewDTO1.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(viewDTO1.getThirdFieldType().toUpperCase()).getName());
+                }
+                if (StrUtil.isNotBlank(viewDTO1.getSysFieldType())){
+                    viewDTO1.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(viewDTO1.getSysFieldType().toUpperCase()).getName());
+                }
+            }
+        }
         return viewDTO;
     }
 
@@ -178,7 +201,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     }
 
     @Override
-    public void exportList(PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
+    public void exportList(CfgProcessDTO.SearchParamDTO dto) {
         downloadTaskFeign.saveDownloadTask("流程配置导出", EXPORT_CFG_PROCESS.getCode(), dto);
     }
 
@@ -205,7 +228,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         });
 
         // 设置状态中文名称
-        list.forEach(item -> item.setTabFlagName(Objects.equals(item.getTabFlag(), "f") ? "停用" : "启用"));
+        list.forEach(item -> item.setTabFlagName(Objects.equals(item.getTabFlag(), "t") ? "停用" : "启用"));
 
         // 计算总数并添加“全部”条目
         int totalCount = list.stream()
@@ -226,12 +249,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     }
 
 
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(CfgProcessEntity cfgProcessEntity) {
-        // TODO 验证数据 & 数据赋值
-    }
 
     /**
      * 创建飞书审批实例
@@ -239,7 +256,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     public void startThirdProcess(CfgProcessDTO.StartDTO dto) {
         //查询approvalCode
-        CfgProcessRuleEntity cfgProcessRuleEntity = cfgProcessRuleService.getById(dto.getBusinessId());
+//        CfgProcessRuleEntity cfgProcessRuleEntity = cfgProcessRuleService.getById(dto.getBusinessId());
 //        String code = cfgProcessRuleEntity.getProcessDefinitionId();
         //
         //查询userid
@@ -254,17 +271,18 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
         ProcessFormHandler handler = fsProcessFormFactory.getFileHandler(ProcessFormEvent.FS_PROCESS_FORM.getCode());
-        formArray = handler.assemble(formArray, dto.getVariablesMap(),fieldMapList, valueMapList);
-        // 创建请求对象（创建样式）
-//        CreateInstanceReq req = CreateInstanceReq.newBuilder()
-//                .instanceCreate(InstanceCreate.newBuilder()
-//                        .approvalCode(approvalCode)
-//                        .userId(userId)
-//                        .form("[{\"id\":\"111\",\"type\":\"input\",\"value\":\"11111\"},{\"id\":\"222\",\"required\":true,\"type\":\"dateInterval\",\"value\":{\"end\":\"2019-10-02T08:12:01+08:00\",\"interval\":2,\"start\":\"2019-10-01T08:12:01+08:00\"}},{\"id\":\"333\",\"type\":\"radioV2\",\"value\":\"1\"},{\"id\":\"444\",\"type\":\"number\",\"value\":\"4\"},{\"id\":\"555\",\"type\":\"textarea\",\"value\":\"fsafs\"}]")
-//                        .build())
-//                .build();
+        formArray = handler.assemble(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
+        CreateInstanceReq req = CreateInstanceReq.newBuilder()
+                .instanceCreate(InstanceCreate.newBuilder()
+                        .approvalCode("7DCF7A99-6E25-4A24-8386-5E2639712983")
+                        .userId("af4eg757")
+                        .form(JSONUtil.toJsonStr(formArray))
+                        .build())
+                .build();
         try {
-//            fsService.createInstance(req);
+            String instanceCode = fsService.createInstance(req);
+            //生成三方查询记录
+
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

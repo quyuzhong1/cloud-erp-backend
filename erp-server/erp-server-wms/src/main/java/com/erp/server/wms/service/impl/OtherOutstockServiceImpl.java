@@ -585,14 +585,8 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         //更新单据状态
         updateApproveStatusForApprove(Collections.singletonList(entity.getId()), approveStatus.getStatus());
 

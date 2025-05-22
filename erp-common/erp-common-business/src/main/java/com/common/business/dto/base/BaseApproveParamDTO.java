@@ -34,7 +34,7 @@ public class BaseApproveParamDTO extends PermissionsDTO {
      * 类型（pass、审核通过，reject、审核不通过）
      */
     @NotBlank(message = "审核类型不能为空")
-    @StateEnumValue(strValues = {"pass","reject","reject_appoint","revoke"}, message = "审核类型有误")
+    @StateEnumValue(strValues = {"pass","reject","reject_appoint","revoke","cancel"}, message = "审核类型有误")
     private String type;
 
     /**

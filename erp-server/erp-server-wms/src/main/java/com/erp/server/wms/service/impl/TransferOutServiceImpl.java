@@ -56,7 +56,6 @@ import com.google.common.collect.Maps;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
-import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
@@ -348,15 +347,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.FALSE;
         }
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
-         this.updateForApprove(Collections.singletonList(entity.getId()), approveStatus.getCode());
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        this.updateForApprove(Collections.singletonList(entity.getId()), approveStatus.getCode());
 
         if (!dto.getType().equals(ApproveType.PASS)) {
             return Boolean.TRUE;

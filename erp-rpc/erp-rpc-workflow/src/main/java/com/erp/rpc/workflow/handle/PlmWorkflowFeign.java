@@ -4,6 +4,8 @@ import com.erp.model.workflow.dto.EndProcessDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 
+import java.util.Map;
+
 /**
  * @description: plm服务结束审核feign
  * @author Will
@@ -19,6 +21,15 @@ public interface PlmWorkflowFeign extends BaseWorkflowService{
      */
     @PostMapping("/feign/plmWorkflow/approveEnd")
     Boolean approveEnd(EndProcessDTO dto);
+
+    /**
+     * @description: 获取流程的单据头和明细的数据
+     * @author jack
+     * @date: 2025-05-22
+     * @return Map<String, Object>
+     */
+    @PostMapping("/feign/plmWorkflow/getVariablesMap")
+    Map<String, Object> getVariablesMap(EndProcessDTO dto);
 
 }
 

@@ -46,6 +46,9 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
         log.info("开始新增流程设置审核条件");
         // 遍历 addDTO
         List<CfgProcessExpEntity> processExpEntities = BeanUtil.copyToList(addDTO, CfgProcessExpEntity.class);
+        //过滤CfgProcessExpEntity的field为空的entiy,并将ruleId赋值为ruleId
+        processExpEntities.removeIf(entity -> StrUtil.isBlank(entity.getField()));
+        processExpEntities.forEach(entity -> entity.setRuleId(ruleId));
         this.saveBatch(processExpEntities);
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "流程设置审核条件", "");
@@ -100,7 +103,7 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
             return cfgProcessExpEntity;
         }).collect(Collectors.toList());
         log.info("开始新增流程设置审核条件");
-        this.saveBatch(updateEntitys);
+        this.saveOrUpdateBatch(updateEntitys);
 
         Map<String, CfgProcessExpEntity> expEntityMap = updateEntitys.stream()
                 .collect(Collectors.toMap(CfgProcessExpEntity::getId, entity -> entity));
@@ -108,7 +111,7 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
         existingEntities.forEach(existingEntity -> {
             CfgProcessExpEntity updateEntity = expEntityMap.get(existingEntity.getId());
             if (ObjectUtil.isNotEmpty(updateEntity)) {
-                operateLogService.addModuleOperateLogByObj(existingEntities, updateEntitys, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
+//                operateLogService.addModuleOperateLogByObj(existingEntity, updateEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "新增操作");
             }
         });
 
@@ -168,6 +171,7 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
      */
     private void handleData(CfgProcessExpEntity cfgProcessExpEntity) {
         // TODO 验证数据 & 数据赋值
+
     }
 
 }

@@ -6,16 +6,29 @@ package com.erp.server.workflow.handler;
  * @date: 2025/5/20 12:04
  */
 
+import cn.hutool.core.date.DateTime;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.common.business.enums.ProcessFormEvent;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
+import com.erp.sdk.fs.service.FsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -31,6 +44,12 @@ import static com.common.business.enums.ProcessFormEvent.FS_PROCESS_FORM;
 @Component
 @Slf4j
 public class FsProcessFormHandler implements ProcessFormHandler {
+    private final FsService fsService;
+
+    public FsProcessFormHandler(FsService fsService) {
+        this.fsService = fsService;
+    }
+
     @Override
     public JSONArray assemble(JSONArray formArray, Map<String, Object> variablesMap,
                               List<CfgProcessFieldMapEntity> fieldMapList,
@@ -107,11 +126,55 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     String childSysField = fieldMap != null ? fieldMap.getSysField() : null;
                     String childDefault = fieldMap != null ? fieldMap.getDefaultValue() : "";
 
+                    //TODO:无字段对应，默认值，就不进行下面的映射了，用defalut_value字段 childDefault
+                    if (childSysField == ""){
+                        //TODO:无字段对应，默认值，就不进行下面的映射了，用defalut_value字段
+                    }
                     Object childValue = (childSysField == null || detailRow.get(childSysField) == null) ?
                             childDefault : detailRow.get(childSysField);
-
                     // 执行值映射处理
                     childValue = mapFieldValue(childId, childType, childValue, childDefault, tidToIdMap, valueMapListMap);
+                    if ("attachmentV2".equals(childType)){
+                        //finalValue转为List
+                        //构建飞书上传文件接口参数
+                        List<Map<String,String>> nameToUrlMap = (List<Map<String,String>>) childValue;
+                        List<String> codeList = new ArrayList<>();
+                        nameToUrlMap.forEach(map -> {
+                            map.keySet().forEach(fileName -> {
+                                String url = map.get(fileName);
+                                byte[] fileByte = FastDFSClientUtil.getFileByte(url);
+                                File file = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+                                try (FileOutputStream fos = new FileOutputStream(file)) {
+                                    fos.write(fileByte);
+                                    fos.flush();
+                                    String fileCode = fsService.uploadApprovalFile(file, fileName);
+                                    codeList.add(fileCode);
+                                } catch (FileNotFoundException e) {
+                                    throw new RuntimeException(e);
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                } finally {
+                                    if (file.exists()) {
+                                        file.delete();
+                                    }
+                                }
+                            });
+                        });
+                        formField.set("value", codeList);
+                        return;
+                    }
+                    if ("date".equals(childType)){
+                        // 1. 解析原始时间字符串
+                        DateTime hutoolDate = DateUtil.parse(childValue.toString(), "yyyy-MM-dd HH:mm:ss.SSS");
+                        // 2. 使用系统默认时区转换为 ZonedDateTime
+                        ZonedDateTime zonedDateTime = hutoolDate.toInstant().atZone(ZoneId.systemDefault());
+                        // 3. 转换为 OffsetDateTime（带偏移量）
+                        OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
+                        // 4. 格式化为 RFC3339 格式
+                        String rfc3339 = offsetDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+                        formField.set("value", rfc3339);
+                        return ;
+                    }
 
                     JSONObject detailItem = new JSONObject();
                     detailItem.set("id", childId);
@@ -148,6 +211,48 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         // 执行值映射处理
         Object finalValue = mapFieldValue(thirdFieldId, type, rawValue, defaultValue, tidToIdMap, valueMapListMap);
+        //处理映射后数据格式
+        if ("attachmentV2".equals(type)){
+            //finalValue转为List
+            //构建飞书上传文件接口参数
+            List<Map<String,String>> nameToUrlMap = (List<Map<String,String>>) finalValue;
+            List<String> codeList = new ArrayList<>();
+            nameToUrlMap.forEach(map -> {
+                map.keySet().forEach(fileName -> {
+                    String url = map.get(fileName);
+                    byte[] fileByte = FastDFSClientUtil.getFileByte(url);
+                    File file = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+                    try (FileOutputStream fos = new FileOutputStream(file)) {
+                        fos.write(fileByte);
+                        fos.flush();
+                        String fileCode = fsService.uploadApprovalFile(file, fileName);
+                        codeList.add(fileCode);
+                    } catch (FileNotFoundException e) {
+                        throw new RuntimeException(e);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    } finally {
+                        if (file.exists()) {
+                            file.delete();
+                        }
+                    }
+                });
+            });
+            formField.set("value", codeList);
+            return;
+        }
+        if ("date".equals(type)){
+            // 1. 解析原始时间字符串
+            DateTime hutoolDate = DateUtil.parse(finalValue.toString(), "yyyy-MM-dd HH:mm:ss.SSS");
+            // 2. 使用系统默认时区转换为 ZonedDateTime
+            ZonedDateTime zonedDateTime = hutoolDate.toInstant().atZone(ZoneId.systemDefault());
+            // 3. 转换为 OffsetDateTime（带偏移量）
+            OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
+            // 4. 格式化为 RFC3339 格式
+            String rfc3339 = offsetDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+            formField.set("value", rfc3339);
+            return ;
+        }
         formField.set("value", finalValue);
     }
 

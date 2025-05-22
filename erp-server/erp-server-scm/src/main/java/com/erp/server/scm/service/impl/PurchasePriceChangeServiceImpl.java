@@ -649,16 +649,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (ObjectUtils.isEmpty(entity)) {
             return BatchResultDTO.success();
         }
-        Boolean result;
-        if (type.equals(ScmConstant.PASS)) {
-            //审核通过
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(approveStatus));
-        } else {
-            //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(rejectStatus));
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
+        Boolean  result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
+
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);
         }

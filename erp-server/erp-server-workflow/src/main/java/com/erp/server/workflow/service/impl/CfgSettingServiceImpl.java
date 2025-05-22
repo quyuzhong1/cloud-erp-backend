@@ -118,4 +118,19 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         }
         return url;
     }
+
+
+    /**
+     *
+     */
+    @Override
+    public Map<String, Object>  getFsActionCallback() {
+        Map<String, Object> dataJson = null;
+        CfgSettingEntity cfgSettingEntity = lambdaQuery().eq(CfgSettingEntity::getKey, "fsActionCallback").last("limit 1").one();
+        if(Objects.nonNull(cfgSettingEntity)){
+            dataJson = cfgSettingEntity.getDataJson();
+
+        }
+        return dataJson;
+    }
 }

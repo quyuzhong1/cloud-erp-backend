@@ -7,7 +7,6 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.server.workflow.handler.CfgProcessQueryHandler;
@@ -78,7 +77,12 @@ public class CfgProcessController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel")
     @PostMapping("/export")
-    public ApiResult<Boolean> export(@RequestBody @Validated PagingDTO<CfgProcessDTO.SearchParamDTO> dto) {
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgProcess:paging",
+            tableAlias = "p")
+    @WebAdvanceQuery(handler = CfgProcessQueryHandler.class)
+    public ApiResult<Boolean> export(@RequestBody @Validated CfgProcessDTO.SearchParamDTO dto) {
         cfgProcessService.exportList(dto);
         return success(true);
     }

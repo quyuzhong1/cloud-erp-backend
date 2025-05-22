@@ -256,6 +256,7 @@ public enum ApiError implements Serializable {
     PROCESS_MANAGEMENT_SUSPEND_ERROR(94042,"暂停操作仅针对状态为“运行中”的流程有效"),
     PROCESS_DEFINITION_DISABLED_ERROR(94043,"关联流程配置有关联启用流程时，不可操作停用"),
     PROCESS_RULE_REPEAT_ERROR(94044,"{}流程设置下存在多条符合条件的规则，请检查"),
+    PROCESS_MANAGEMENT_PROCESS_STATUS_ERROR(94045,"流程状态为【{}】不支持审核"),
 
 
     /**

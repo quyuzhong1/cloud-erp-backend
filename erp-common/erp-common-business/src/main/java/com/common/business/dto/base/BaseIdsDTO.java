@@ -27,7 +27,7 @@ public class BaseIdsDTO implements Serializable {
     public static class IdsDTO extends PermissionsDTO {
 
         /**
-         * 表 ids
+         * 执行条件id：ruleId
          */
         @NotEmpty(message = "ids不能为空")
         private List<String> ids;

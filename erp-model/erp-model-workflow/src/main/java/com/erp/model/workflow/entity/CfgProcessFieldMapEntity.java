@@ -77,8 +77,8 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     /**
     * 流程定义code
     */
-    @TableField("process_defintion_id")
-    private String processDefintionId;
+    @TableField("process_definition_id")
+    private String processDefinitionId;
     /**
      * 第三方字段id，唯一标识
      */
@@ -117,7 +117,7 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
 
     public static final String CFG_TYPE = "cfg_type";
 
-    public static final String PROCESS_DEFINTION_ID = "process_defintion_id";
+    public static final String PROCESS_DEFINITION_ID = "process_definition_id";
 
     public static final String THIRD_FIELD_ID = "third_field_id";
 

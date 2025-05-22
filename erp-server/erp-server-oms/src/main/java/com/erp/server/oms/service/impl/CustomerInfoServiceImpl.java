@@ -34,8 +34,6 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.CustomerDTO.PagingViewDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.AddressTypeEnum;
 import com.erp.model.oms.enums.CustomerAddressTypeEnum;
@@ -45,11 +43,6 @@ import com.erp.model.oms.vo.CustomerInfoVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
-import com.erp.model.sys.entity.DictCityEntity;
-import com.erp.model.sys.entity.DictCountryEntity;
-import com.erp.model.sys.entity.DictCurrencyEntity;
-import com.erp.model.sys.entity.DictGlobalAreaEntity;
-import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
@@ -862,14 +855,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             return Boolean.TRUE;
         }
         LoginUser user = UserContext.getDefaultLoginUser();
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatus(list, approveStatus, user.getUserName());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);

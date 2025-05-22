@@ -133,8 +133,8 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             GetApprovalResp approval = fsService.getApproval(processDefinitionId);
             String formStr = JSONUtil.toJsonStr(approval.getData());
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = parseForm(formStr);
-            viewDTOList.forEach(e->{
-               e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
+            viewDTOList.forEach(e -> {
+                e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
             });
             return viewDTOList;
         } catch (Exception e) {
@@ -172,7 +172,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
      * 新增修改处理数据
      */
     private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
-        List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
+        List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false).eq(CfgQueryOptionEntity::getIsRequired, true));
         List<String> fieldList = cfgQueryOptionEntities.stream().map(CfgQueryOptionEntity::getConditionField).collect(Collectors.toList());
         Map<String, CfgQueryOptionEntity> fieldToEntityMap = cfgQueryOptionEntities.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, e -> e));
         // 遍历 addDTO，id 为空的保存，id 不为空的更新
@@ -180,6 +180,18 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = new ArrayList<>();
 
         for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
+            if (dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.DEFAULT.getCode()) || dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.NULLVALUE.getCode())) {
+                // 校验通过后，进行保存或更新操作
+                if (StrUtil.isEmpty(dto.getId())) {
+                    dto.setId(IdWorker.getIdStr());
+                }
+                CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
+                BeanMapperUtils.copy(dto, entity);
+                entity.setCfgId(ruleId); // 设置关联的 ruleId
+                entity.setCfgType("sysCfg"); //TODO 缺少枚举
+                entitiesToAddOrUpdate.add(entity);
+                continue;
+            }
             // 校验 dto 的 third_field_type 和 sys_field_type
             CfgQueryOptionFieldTypeEnum thirdFieldType = CfgQueryOptionFieldTypeEnum.valueOf(dto.getThirdFieldType().toUpperCase());
             CfgQueryOptionFieldTypeEnum sysFieldType = CfgQueryOptionFieldTypeEnum.valueOf(dto.getSysFieldType().toUpperCase());
@@ -204,7 +216,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATE && sysFieldType != CfgQueryOptionFieldTypeEnum.DATE) {
                 throw new ServiceException("飞书日期仅支持转日期");
             }
-            if (dto.getIsDetailField()!=null && !CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode().equals(fieldToEntityMap.get(dto.getSysField()).getFieldBelongsType())){
+            if (ObjectUtil.isNotEmpty(dto.getIsDetailField()) && dto.getIsDetailField() && !CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode().equals(fieldToEntityMap.get(dto.getSysField()).getFieldBelongsType())) {
                 throw new ServiceException("明细只能对应明细");
             }
             // 判断必填是不是已配置
@@ -218,6 +230,8 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
             BeanMapperUtils.copy(dto, entity);
             entity.setCfgId(ruleId); // 设置关联的 ruleId
+            entity.setCfgType("sysCfg"); //TODO 缺少枚举
+            //TODO 默认值赋值？
             entitiesToAddOrUpdate.add(entity);
         }
         if (ObjectUtil.isNotEmpty(fieldList) && fieldList.size() > 0) {
@@ -236,18 +250,18 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = new ArrayList<>();
         for (cn.hutool.json.JSONObject field : formArray.jsonIter()) {
             CfgProcessFieldMapDTO.ViewDTO viewDTO = new CfgProcessFieldMapDTO.ViewDTO();
-            viewDTO.setThirdField(field.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
+            viewDTO.setThirdField("单据头-" + field.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
             viewDTO.setThirdFieldType(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()));
             viewDTO.setThirdFieldRequired(field.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
             viewDTO.setThirdFieldId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode())); // 父级 fieldList 的 ID
-
-            if ("fieldList".equals(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()))) {
+            viewDTO.setIsDetailField(false);
+            if (CfgQueryOptionFieldTypeEnum.FIELDLIST.getCode().equals(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()))) {
                 viewDTO.setIsDetailField(true);
                 JSONArray detailFields = field.getJSONArray(FsRequestBodyAttributesEnum.CHILDREN.getCode());
 
                 for (JSONObject detail : detailFields.jsonIter()) {
                     CfgProcessFieldMapDTO.ViewDTO detailViewDTO = new CfgProcessFieldMapDTO.ViewDTO();
-                    detailViewDTO.setThirdField(detail.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
+                    detailViewDTO.setThirdField("单据明细-" + detail.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
                     detailViewDTO.setThirdFieldType(detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()));
                     detailViewDTO.setThirdFieldRequired(detail.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
                     detailViewDTO.setThirdFieldId(detail.getStr(FsRequestBodyAttributesEnum.ID.getCode())); // 父级 fieldList 的 ID

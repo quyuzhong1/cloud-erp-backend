@@ -75,7 +75,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         List<CfgQueryOptionDTO.ViewDTO> viewDTOS = BeanUtil.copyToList(cfgQueryOptionEntities, CfgQueryOptionDTO.ViewDTO.class);
         viewDTOS.forEach(item -> {
             if (StrUtil.isNotBlank(item.getFieldType())) {
-                item.setFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(item.getFieldType().toUpperCase()).getCode());
+                item.setFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(item.getFieldType().toUpperCase()).getName());
             }
         });
         return viewDTOS;

@@ -26,10 +26,10 @@ public class CfgProcessQueryHandler extends AbstractQueryHandler {
                 return "";
             }
             if ("t".equals(value)) {
-                return "cas.enable_status ="+ Boolean.TRUE;
+                return "r.disabled ="+ Boolean.TRUE;
             }
             if ("f".equals(value)) {
-                return "cas.enable_status ="+ Boolean.FALSE;
+                return "r.disabled ="+ Boolean.FALSE;
             }
             return "";
         }

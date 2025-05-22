@@ -420,9 +420,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             return Boolean.TRUE;
         }
         Integer approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
+        if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
             //审核通过
             approveStatus = BomStateEnum.AUDIT_PASS.getState();
+        } else if (dto.getType().equals(ApproveTypeEnum.CANCEL.getStatus())) {
+            //待提交
+            approveStatus = BomStateEnum.WAIT_SUBMIT_AUDIT.getState();
         } else {
             //审核不通过
             approveStatus = BomStateEnum.AUDIT_NO_PASS.getState();
@@ -473,23 +476,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
                 .set(BomInfoEntity::getState, approveStatus)
                 .set(BomInfoEntity::getRemark, comment)
                 .update();
-    }
-
-    /**
-     * 获取到skuId
-     *
-     * @param item
-     * @return void
-     * @author yl
-     * @date 2023-02-03 12:18
-     */
-    private void getSkuIdList(List<String> skuIdList, BomSkuDTO item) {
-        skuIdList.add(item.getSkuId());
-        List<BomChildrenSkuDTO> childrenList = item.getChildren();
-        if (CollectionUtils.isNotEmpty(childrenList)) {
-            List<String> childrenSkuIds = childrenList.stream().map(BomChildrenSkuDTO::getSkuId).collect(Collectors.toList());
-            skuIdList.addAll(childrenSkuIds);
-        }
     }
 
 

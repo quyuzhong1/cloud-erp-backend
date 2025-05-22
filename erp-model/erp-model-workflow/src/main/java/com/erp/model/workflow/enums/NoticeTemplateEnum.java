@@ -1,33 +1,25 @@
 package com.erp.model.workflow.enums;
+
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * <p>
- * 流程设置执行条件 流程类型 枚举
- * </p>
- *
- * @author hcg
- * @since 2025-05-13 09:43:58
- */
-public enum CfgProcessRuleTypeEnum implements EnumMessage {
-	ERPPROGRESS("erpProcess", "ERP流程"),
-	FSPROGRESS("fsProcess", "飞书流程"),
+public enum NoticeTemplateEnum implements EnumMessage {
+    APPROVE("approve","1008" ),
+    APPROVE_RESULT_PASS("approveResult","1004" ),
+    APPROVE_RESULT_REJECT("approveResult","1003" ),
+    RECALL("recall","1015" ),
+    CC("cc","1016"),
+    TIMEOUTWARNING("timeoutWarning","1021"),
     ;
-    /**
-     * 类型
-     */
+
     @EnumValue
     @JsonValue
     private String code;
-    /**
-     * 名称
-     */
     private String name;
 
-    CfgProcessRuleTypeEnum(String code, String name) {
+    NoticeTemplateEnum(String code, String name){
         this.code = code;
         this.name = name;
     }
@@ -46,7 +38,7 @@ public enum CfgProcessRuleTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (CfgProcessRuleTypeEnum statusEnum : CfgProcessRuleTypeEnum.values()) {
+        for (CfgApproveNoticeNoticeTypeEnum statusEnum : CfgApproveNoticeNoticeTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }

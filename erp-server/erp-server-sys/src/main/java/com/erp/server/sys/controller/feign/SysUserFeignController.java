@@ -16,6 +16,7 @@ import com.common.core.enums.ApiError;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
+import com.erp.model.sys.entity.SysUserThirdEntity;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
@@ -568,5 +569,14 @@ public class SysUserFeignController extends BaseController {
     @GetMapping("/getUserDatePermissionByMenuCode")
     public Boolean getUserDatePermissionByMenuCode(@RequestParam("menuCode") String menuCode) {
         return userDatePermissionService.getUserDatePermissionByMenuCode( menuCode);
+    }
+
+
+    /**
+     * 根据第三方平台和id查询用户
+     **/
+    @PostMapping("/getUserByThird")
+    public SysUserThirdEntity getUserByThird(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdId")String thirdId)  {
+        return sysUserThirdService.getUserByThird( platform,thirdId);
     }
 }

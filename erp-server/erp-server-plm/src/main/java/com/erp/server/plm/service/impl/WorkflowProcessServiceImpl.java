@@ -1,5 +1,8 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -9,6 +12,10 @@ import com.erp.server.plm.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -26,6 +33,9 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private PilotApplicationService pilotApplicationService;
+
+    @Resource
+    private PilotApplicationDetailService pilotApplicationDetailService;
 
     @Resource
     private ProductDetailService productDetailService;
@@ -65,6 +75,47 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         }
         return Boolean.TRUE;
     }
+
+    @Override
+    public Map<String, Object> getVariablesMap(EndProcessDTO dto) {
+        Map<String, Object> variablesMap = new HashMap<>();
+        String businessKey = dto.getBusinessKey();
+        switch (SourceTypeEnum.getByCode(businessKey)) {
+            case PRODUCT_LOGISTICS:
+                //产品物流
+
+                break;
+            case PILOT_APPLICATION:
+                //试产量产单
+                variablesMap = getPilotApplicationMap(dto);
+                break;
+            case PRODUCT_DETAIL:
+                //产品信息
+                break;
+            case PRODUCT_BOM_INFO:
+                //Bom信息
+                break;
+            case PRODUCT_CHANGE:
+                //Bom信息
+                break;
+            default:
+                break;
+        }
+
+        return variablesMap;
+    }
+
+    private Map<String, Object> getPilotApplicationMap(EndProcessDTO dto) {
+        Map<String, Object> variablesMap;
+        PilotApplicationEntity entity = pilotApplicationService.getById(dto.getBusinessId());
+        variablesMap = BeanUtil.beanToMap(entity);
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        if(CollUtil.isNotEmpty(detailList)){
+            variablesMap.put(ThirdConstants.DETAIL_LIST, detailList);
+        }
+        return variablesMap;
+    }
+
     /**
      * Bom信息审核通过
      * @param dto

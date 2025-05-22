@@ -64,12 +64,12 @@ public class CfgProcessExpDTO implements Serializable {
         /**
         * 条件包含-右括号
         */
-        private Boolean rightBracket;
+        private String rightBracket;
 
         /**
         * 多条件逻辑关系
         */
-        private Boolean logic;
+        private String logic;
 
         /**
         * 序号
@@ -105,49 +105,44 @@ public class CfgProcessExpDTO implements Serializable {
         /**
         * 流程设置ID
         */
-        @NotBlank(message = "流程设置ID不能为空")
         @Size(max = 100,message = "流程设置ID最大长度不能超过100位")
         private String ruleId;
 
         /**
         * 条件包含-左括号
         */
-        @NotBlank(message = "条件包含不能为空")
         @Size(max = 100,message = "条件包含最大长度不能超过100位")
         private String leftBracket;
 
         /**
         * 选择条件字段
         */
-        @NotBlank(message = "选择条件字段不能为空")
         @Size(max = 30,message = "选择条件字段最大长度不能超过30位")
         private String field;
 
         /**
         * 条件符号
         */
-        @NotBlank(message = "条件符号不能为空")
         @Size(max = 100,message = "条件符号最大长度不能超过100位")
         private String compare;
 
         /**
         * 条件值
         */
-        @NotBlank(message = "条件值不能为空")
         @Size(max = 100,message = "条件值最大长度不能超过100位")
         private String value;
 
         /**
         * 条件包含-右括号
         */
-        @NotNull(message = "条件包含不能为空")
+        @Size(max = 100,message = "条件值最大长度不能超过30位")
         private String rightBracket;
 
         /**
         * 多条件逻辑关系
         */
         @NotNull(message = "多条件逻辑关系不能为空")
-        private Boolean logic;
+        private String logic;
 
         /**
         * 序号

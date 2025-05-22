@@ -23,7 +23,9 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.constant.SqlConstants;
 import com.common.core.entity.ConditionElement;
@@ -86,6 +88,8 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperties;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
@@ -162,20 +166,20 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-//        // 查询业务数据和关联流程定义
-//        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
-//        if (null == processBusiness) {
-//            // 业务未绑定流程定义
-//            return new ProcessManagementDTO.StartResultDTO(dto);
-//        }
-//        return startProcess(dto, processBusiness.getProcessDefinitionId());
-        String processDefinitionId = getProcessDefinitionId(dto);
-        if (CharSequenceUtil.isBlank(processDefinitionId)) {
-            // 业务无已启用的Erp流程配置
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
-        //启动流程
-        return startProcess(dto, processDefinitionId);
+        return startProcess(dto, processBusiness.getProcessDefinitionId());
+//        String processDefinitionId = getProcessDefinitionId(dto);
+//        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+//            // 业务无已启用的Erp流程配置
+//            return new ProcessManagementDTO.StartResultDTO(dto);
+//        }
+//        //启动流程
+//        return startProcess(dto, processDefinitionId);
     }
 
 
@@ -318,16 +322,25 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.ERROR_94004);
         }
 
-        //判断该单据类型是否有ERP审批同步定义
-        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
-        mqDto.setProcessManagementId(insertManagementEntity.getId());
-        mqDto.setBusinessName(insertManagementEntity.getBusinessName());
-        mqDto.setInstanceId(processInstanceId);
-        mqDto.setTaskId(taskId);
-        mqDto.setOperator(dto.getUserId());
-        mqDto.setVariablesMap(dto.getVariablesMap());
-        mqDto.setBusinessKey(dto.getBusinessKey());
-        syncFsExternalInstance(mqDto);
+
+
+
+        // 完成新增数据事务提交之后,发送MQ消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                //判断该单据类型是否有ERP审批同步定义
+                CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                mqDto.setProcessManagementId(insertManagementEntity.getId());
+                mqDto.setBusinessName(insertManagementEntity.getBusinessName());
+                mqDto.setInstanceId(processInstanceId);
+                mqDto.setTaskId(taskId);
+                mqDto.setOperator(dto.getUserId());
+                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setBusinessKey(dto.getBusinessKey());
+                syncFsExternalInstance(mqDto);
+            }
+        });
 
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
@@ -395,6 +408,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
         // 查询流程数据 , dto.getUserId()
         ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
+        if (!ProcessStatusEnum.RUNNING.equals(managementTask.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PROCESS_STATUS_ERROR,managementTask.getProcessStatus().getName());
+        }
+
         // 审核操作
         // 获取当前任务
         Task currentTask = taskService.createTaskQuery().taskId(managementTask.getTaskId()).singleResult();
@@ -433,18 +450,23 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             sameApproverAutoPass(dto, processManagementList.get(0).getProcessDefinitionId(),currentTask.getProcessInstanceId());
         }
 
-        //判断该单据类型是否有ERP审批同步定义
-        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
-        mqDto.setProcessManagementId(managementTask.getManagementId());
-        mqDto.setBusinessName(managementTask.getBusinessName());
-        mqDto.setInstanceId(processInstanceId);
-        mqDto.setTaskId(managementTask.getTaskId());
-        mqDto.setOperator(dto.getUserId());
-        mqDto.setVariablesMap(dto.getVariablesMap());
-        mqDto.setBusinessKey(dto.getBusinessKey());
-        mqDto.setApproveType(dto.getApproveType().getStatus());
-        syncFsExternalInstance(mqDto);
-
+        // 完成新增数据事务提交之后,发送MQ消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                //判断该单据类型是否有ERP审批同步定义
+                CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                mqDto.setProcessManagementId(managementTask.getManagementId());
+                mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setInstanceId(processInstanceId);
+                mqDto.setTaskId(managementTask.getTaskId());
+                mqDto.setOperator(dto.getUserId());
+                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setBusinessKey(dto.getBusinessKey());
+                mqDto.setApproveType(dto.getApproveType().getStatus());
+                syncFsExternalInstance(mqDto);
+            }
+        });
         // 返回结果
         return new ProcessManagementDTO.ApproveResultDTO(currentTask.getProcessDefinitionId(), currentTask.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName(),currentTask.getId(),currentTask.getName(), currentTask.getTaskDefinitionKey());
     }
@@ -463,7 +485,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollUtil.isNotEmpty(cfgApproveSyncEntities)) {
             CfgApproveSyncEntity cfgApproveSyncEntity = cfgApproveSyncEntities.get(0);
             mqDto.setCfgApproveSyncEntity(cfgApproveSyncEntity);
-            mqProducerService.asyncClassMsg(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID());
+            mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.WORKFLOW_SYNC_FS_INSTANCE_TOPIC, RocketMqTagEnum.WORKFLOW_SYNC_FS_INSTANCE_TAG.getName(),mqDto , IdUtil.simpleUUID(),2);
         }
     }
 
@@ -785,17 +807,23 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 删除本地流程任务数据
         processTaskManagementService.removeByProcessInstanceId(processInstance.getProcessInstanceId());
 
-        //判断该单据类型是否有ERP审批同步定义
-        CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
-        mqDto.setProcessManagementId(managementTask.getManagementId());
-        mqDto.setBusinessName(managementTask.getBusinessName());
-        mqDto.setInstanceId(processInstanceId);
-        mqDto.setTaskId(managementTask.getTaskId());
-        mqDto.setOperator(dto.getUserId());
-        mqDto.setVariablesMap(dto.getVariablesMap());
-        mqDto.setBusinessKey(dto.getBusinessKey());
-        mqDto.setApproveType(ApproveTypeEnum.CANCEL.getStatus());//撤销
-        syncFsExternalInstance(mqDto);
+        // 完成新增数据事务提交之后,发送MQ消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                //判断该单据类型是否有ERP审批同步定义
+                CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                mqDto.setProcessManagementId(managementTask.getManagementId());
+                mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setInstanceId(processInstanceId);
+                mqDto.setTaskId(managementTask.getTaskId());
+                mqDto.setOperator(dto.getUserId());
+                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setBusinessKey(dto.getBusinessKey());
+                mqDto.setApproveType(ApproveTypeEnum.CANCEL.getStatus());//撤销
+                syncFsExternalInstance(mqDto);
+            }
+        });
 
         return new ProcessManagementDTO.RevokeResultDTO(processInstance.getProcessDefinitionId(), processInstance.getProcessInstanceId(), managementTask.getBusinessId(), managementTask.getBusinessName());
     }
@@ -1124,6 +1152,48 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+
+        EndProcessDTO dto;
+        if (ProcessManagementOptionEnum.PASS.getCode().equals(entity.getOption())) {
+            //强制通过
+            dto =  getPassOrRejectEndProcessDTO(variables,entity,ApproveTypeEnum.PASS,ProcessManagementOptionEnum.PASS);
+        } else if (ProcessManagementOptionEnum.REJECT.getCode().equals(entity.getOption())) {
+            //强制驳回、状态更新致待提交
+            dto =  getPassOrRejectEndProcessDTO(variables,entity,ApproveTypeEnum.CANCEL,ProcessManagementOptionEnum.REJECT);
+        } else {
+            dto = getDefaultEndProcessDTO(variables,entity);
+        }
+        // 获取业务系统feign
+        return callFeign(entity.getBusinessKey(), dto);
+    }
+
+    /**
+     * 强制通过或驳回数据
+     * @author will
+     * @date 2025/5/22 15:33
+     * @param variables
+     * @param entity
+     * @param typeEnum
+     * @param optionEnum
+     * @return EndProcessDTO
+     */
+    private EndProcessDTO getPassOrRejectEndProcessDTO (Map<String, Object> variables,ProcessManagementEntity entity,ApproveTypeEnum typeEnum, ProcessManagementOptionEnum optionEnum) {
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
+        LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
+        // 流程信息传递给业务系统
+        return new EndProcessDTO(entity, typeEnum.getStatus(),LocalDateTime.now(),userInfo.getUid(),optionEnum.getName(), deliveryDate,variables);
+    }
+    /**
+     * 默认审核结束数据
+     * @author will
+     * @date 2025/5/22 15:32
+     * @param variables
+     * @param entity
+     * @return EndProcessDTO
+     */
+    private EndProcessDTO getDefaultEndProcessDTO (Map<String, Object> variables,ProcessManagementEntity entity) {
         String lastApproveType = (String)variables.getOrDefault(LAST_APPROVE_TYPE, "");
         LocalDateTime lastApproveTime = (LocalDateTime) variables.get(LAST_APPROVE_TIME);
         String lastComment = (String) variables.getOrDefault(LAST_COMMENT, "");
@@ -1131,11 +1201,16 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
         LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
         // 流程信息传递给业务系统
-        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate,variables);
-        // 获取业务系统feign
-        return callFeign(entity.getBusinessKey(), dto);
+        return new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate,variables);
     }
-
+    /**
+     * 回调更新状态
+     * @author will
+     * @date 2025/5/22 15:33
+     * @param businessKey
+     * @param dto
+     * @return Boolean
+     */
     private Boolean callFeign(String businessKey, EndProcessDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(businessKey);
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1282,6 +1357,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     }
 
     @Override
+    @Transactional(rollbackFor =  Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO processPass(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1291,13 +1368,47 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PASS_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
-        this.updateById(entity);
+        entity.setOption(ProcessManagementOptionEnum.PASS.getCode());
+        entity.setApproveStatus(ApproveStatusEnum.APPROVE);
+        entity.setEndTime(LocalDateTime.now());
+        processManagementService.updateById(entity);
 
-        //TODO 对接飞书
+        //强制通过终止流程
+        try {
+            runtimeService.deleteProcessInstance(entity.getProcessInstanceId(), "强制通过终止");
+        } catch (ProcessEngineException e) {
+            throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
+        }
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.PASS);
     }
 
+    /**
+     * 更新业务单据状态
+     * @author will
+     * @date 2025/5/22 11:06
+     * @param entity
+     * @param typeEnum
+     * @param comment
+     * @return Boolean
+     */
     @Override
+    public Boolean updateBusinessStatus(ProcessManagementEntity entity,ApproveTypeEnum typeEnum,String comment) {
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+
+        Map<String, Object> variables = runtimeService.getVariables(entity.getProcessInstanceId());
+        String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
+        LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
+        // 流程信息传递给业务系统
+        EndProcessDTO dto = new EndProcessDTO(entity, typeEnum.getStatus(),LocalDateTime.now(),userInfo.getUid(),comment, deliveryDate,variables);
+        // 获取业务系统feign
+        return callFeign(entity.getBusinessKey(), dto);
+
+    }
+
+    @Override
+    @Transactional(rollbackFor =  Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO processReject(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1307,13 +1418,22 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_REJECT_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
-        this.updateById(entity);
+        entity.setOption(ProcessManagementOptionEnum.REJECT.getCode());
+        entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        entity.setEndTime(LocalDateTime.now());
+        processManagementService.updateById(entity);
 
-        //TODO 对接飞书
+        //强制驳回终止流程
+        try {
+            runtimeService.deleteProcessInstance(entity.getProcessInstanceId(), "强制驳回终止");
+        } catch (ProcessEngineException e) {
+            throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
+        }
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.REJECT);
     }
 
     @Override
+    @Transactional(rollbackFor =  Exception.class)
     public BatchResultDTO processRestore(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1323,13 +1443,27 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_RESTORE_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.RUNNING);
-        this.updateById(entity);
+        entity.setOption(ProcessManagementOptionEnum.RESTORE.getCode());
+        processManagementService.updateById(entity);
 
-        //TODO 对接飞书
+        // 检查流程实例是否处于暂停状态
+        ProcessInstance instance = runtimeService.createProcessInstanceQuery()
+                .processInstanceId(entity.getProcessInstanceId())
+                .singleResult();
+        if (instance == null) {
+            throw new IllegalArgumentException("流程实例不存在");
+        }
+        if (!instance.isSuspended()) {
+            throw new IllegalStateException("流程实例未处于暂停状态");
+        }
+        //恢复
+        runtimeService.activateProcessInstanceById(entity.getProcessInstanceId());
+
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.RESTORE);
     }
 
     @Override
+    @Transactional(rollbackFor =  Exception.class)
     public BatchResultDTO processSuspend(String id) {
         ProcessManagementEntity entity = this.getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -1339,8 +1473,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_SUSPEND_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.PAUSE);
-        this.updateById(entity);
-        //TODO 对接飞书
+        entity.setOption(ProcessManagementOptionEnum.PAUSE.getCode());
+        processManagementService.updateById(entity);
+        //暂停
+        runtimeService.suspendProcessInstanceById(entity.getProcessInstanceId());
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.SUSPEND);
     }
 

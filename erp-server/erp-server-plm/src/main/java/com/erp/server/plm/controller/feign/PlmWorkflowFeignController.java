@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import java.util.Map;
 
 /**
  * @description: 工作流feign
@@ -31,5 +32,16 @@ public class PlmWorkflowFeignController {
     @PostMapping("/approveEnd")
     public Boolean approveEnd(@RequestBody EndProcessDTO dto) {
       return workflowProcessService.approveEnd(dto);
+    }
+
+    /**
+     * @description: 获取流程的单据头和明细的数据
+     * @author jack
+     * @date: 2025-05-22
+     * @return Map<String, Object>
+     */
+    @PostMapping("/getVariablesMap")
+    public Map<String, Object> getVariablesMap(EndProcessDTO dto) {
+        return workflowProcessService.getVariablesMap(dto);
     }
 }

@@ -57,7 +57,7 @@ public class ExportWorkflowFeignController {
         return cfgApproveSyncService.paging(dto);
     }
 
-    @PostMapping("/cfgProcess")
+    @PostMapping("/exportCfgProcess")
     public PagingVO<CfgProcessDTO.ProcessViewDTO> exportCfgProcess(@RequestBody PagingDTO<CfgProcessDTO.SearchParamDTO> dto){
         return cfgProcessService.paging(dto);
     }

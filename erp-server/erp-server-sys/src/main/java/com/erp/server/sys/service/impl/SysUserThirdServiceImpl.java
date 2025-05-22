@@ -208,6 +208,17 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
         return thirdUnionDTOs;
     }
 
+
+    @Override
+    public SysUserThirdEntity getUserByThird(String platform, String thirdId) {
+        return lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
+                .or(queryWrapper -> queryWrapper.eq(SysUserThirdEntity::getThirdOpenId, thirdId))
+                .or(queryWrapper -> queryWrapper.eq(SysUserThirdEntity::getThirdUserId, thirdId))
+                .or(queryWrapper -> queryWrapper.eq(SysUserThirdEntity::getThirdUnionId, thirdId))
+                .last("limit 1")
+                .one();
+    }
+
     /**
      * 获取第三方绑定的用户
      * @author yl

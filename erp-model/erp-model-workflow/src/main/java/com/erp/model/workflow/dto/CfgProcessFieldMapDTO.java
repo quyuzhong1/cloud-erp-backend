@@ -90,7 +90,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 流程定义code
         */
-        private String processDefintionId;
+        private String processDefinitionId;
 
         /**
          * 第三方字段id，唯一标识
@@ -160,8 +160,8 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 第三方字段(英文：控件name)
         */
-        @NotBlank(message = "第三方字段(英文：控件name)不能为空")
-        @Size(max = 19,message = "第三方字段(英文：控件name)最大长度不能超过19位")
+        @NotBlank(message = "第三方字段(中文：控件name)不能为空")
+        @Size(max = 19,message = "第三方字段(中文：控件name)最大长度不能超过19位")
         private String thirdField;
 
         /**
@@ -214,7 +214,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 默认值
         */
-        @NotBlank(message = "默认值不能为空")
         @Size(max = 30,message = "默认值最大长度不能超过30位")
         private String defaultValue;
 
@@ -227,7 +226,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置
         */
-        @NotBlank(message = "配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置不能为空")
         @Size(max = 30,message = "配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置最大长度不能超过30位")
         private String cfgType;
 
@@ -236,7 +234,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         */
         @NotBlank(message = "流程定义code不能为空")
         @Size(max = 19,message = "流程定义code最大长度不能超过19位")
-        private String processDefintionId;
+        private String processDefinitionId;
 
         /**
          * 第三方字段id，唯一标识
@@ -254,6 +252,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 第三方字段所属明细控件id
          */
+        @Size(max = 255,message = "父控件id最大长度不能超过255位")
         private String parentId;
     }
 

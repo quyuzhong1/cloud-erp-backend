@@ -93,8 +93,8 @@ public class CfgProcessDTO implements Serializable {
         /**
          * 配置单据
          */
-        @NotBlank(message = "配置单据不能为空")
-        @Size(max = 30, message = "配置单据最大长度不能超过30位")
+        @NotBlank(message = "流程单据不能为空")
+        @Size(max = 30, message = "流程单据最大长度不能超过30位")
         private String bussinessKey;
 
         /**
@@ -110,7 +110,7 @@ public class CfgProcessDTO implements Serializable {
 
         /**
          * 页面高级查询
-         * tabFlag,(waitSubmit待提交,toBeApprove待审批,toBeConfirm待确认,confirm已确认,reject已拒绝,delivery送货中,finish已完成,closed已关闭,approveReject不通过)
+         *
          */
         private List<AdvanceQueryDTO> advanceQueryDTOList;
 

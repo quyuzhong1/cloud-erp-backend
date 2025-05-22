@@ -870,9 +870,13 @@ public class ProcessManagementDTO {
          */
         private LocalDateTime updateTime;
         /**
-         * 审核完成时间
+         * 流程节点结束时间
          */
         private LocalDateTime endTime;
+        /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
     }
 
 

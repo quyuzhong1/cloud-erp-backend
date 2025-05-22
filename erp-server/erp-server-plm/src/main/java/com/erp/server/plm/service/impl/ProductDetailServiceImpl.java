@@ -26,10 +26,7 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.OperationTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
-import com.common.business.enums.SyncOperateEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
@@ -49,6 +46,7 @@ import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
+import com.erp.model.plm.enums.ProductTypeEnum;
 import com.erp.model.plm.vo.ProductRefLabelVO;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.plm.vo.SkuSimpleVO;
@@ -3984,7 +3982,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         startDTO.setBusinessKey(SourceTypeEnum.PRODUCT_DETAIL.getCode());
         startDTO.setBusinessName(entity.getSkuNo());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
@@ -4023,7 +4021,7 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -4037,6 +4035,26 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
     }
 
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(ProductDetailEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+
+        ProductInfoEntity productInfoEntity = productInfoService.getById(entity.getProductId());
+        if (ObjectUtil.isEmpty(productInfoEntity)) {
+            throw new ServiceException(ApiError.ERROR_95084);
+        }
+        Map<String, Object> productMap = BeanUtil.beanToMap(productInfoEntity);
+        variablesMap.putAll(productMap);
+        return variablesMap;
+    }
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean approveEnd(ApproveOneDTO dto, ProductDetailEntity entity) {
@@ -4047,9 +4065,12 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             entity.setEnableTime(LocalDateTime.now());
         }
         Integer approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
+        if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
             //审核通过
             approveStatus = ProductDetailStatusEnum.APPROVAL_PASS.getCode();
+        } else if (dto.getType().equals(ApproveTypeEnum.CANCEL.getStatus())){
+            //待提交
+            approveStatus = ProductDetailStatusEnum.WAIT_COMMIT.getCode();
         } else {
             //审核不通过
             approveStatus = ProductDetailStatusEnum.APPROVAL_NO_PASS.getCode();

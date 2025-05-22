@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -440,16 +439,8 @@ public class SoPriceServiceImpl extends SuperServiceImpl<SoPriceMapper, SoPriceE
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.TRUE;
         }
-        Boolean result;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(approveStatus));
-        } else {
-            //审核不通过
-            String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-            result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.getByStatus(rejectStatus));
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), approveStatus);
         if (Boolean.FALSE.equals(result)) {
             throw new ServiceException(ApiError.ERROR_94006);
         }
