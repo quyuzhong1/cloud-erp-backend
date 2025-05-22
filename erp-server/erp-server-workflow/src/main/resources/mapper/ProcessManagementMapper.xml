@@ -84,6 +84,7 @@
             pm.create_time as createTime,
             pm.update_time as updateTime,
             ptm.label_json,
+            ptm.approve_time,
             pm.end_time
         FROM process_task_management AS ptm
                  LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false

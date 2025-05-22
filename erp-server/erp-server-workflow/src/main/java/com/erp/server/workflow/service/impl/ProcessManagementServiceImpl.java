@@ -397,6 +397,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
 
         // 查询流程数据 , dto.getUserId()
         ProcessManagementDTO.ManagementTaskDTO managementTask = getCurApproveTask(dto.getBusinessId(), dto.getBusinessKey(), dto.getUserId());
+        if (!ProcessStatusEnum.RUNNING.equals(managementTask.getProcessStatus())) {
+            throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PROCESS_STATUS_ERROR,managementTask.getProcessStatus().getName());
+        }
+
         // 审核操作
         // 获取当前任务
         Task currentTask = taskService.createTaskQuery().taskId(managementTask.getTaskId()).singleResult();
@@ -1355,6 +1359,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
         entity.setOption(ProcessManagementOptionEnum.PASS.getCode());
         entity.setApproveStatus(ApproveStatusEnum.APPROVE);
+        entity.setEndTime(LocalDateTime.now());
         processManagementService.updateById(entity);
 
         //强制通过终止流程
@@ -1404,6 +1409,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
         entity.setOption(ProcessManagementOptionEnum.REJECT.getCode());
         entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        entity.setEndTime(LocalDateTime.now());
         processManagementService.updateById(entity);
 
         //强制驳回终止流程
