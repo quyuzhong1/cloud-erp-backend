@@ -173,8 +173,10 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //处理fieldDto
         for (CfgProcessRuleDTO.ViewDTO dto : viewDTO.getProcessRuleDTOList()) {
             for (CfgProcessFieldMapDTO.ViewDTO viewDTO1 : dto.getProcessFieldMapDTOList()) {
-                if (viewDTO1.getThirdFieldType() != null) {
+                if (StrUtil.isNotBlank(viewDTO1.getThirdFieldType())) {
                     viewDTO1.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(viewDTO1.getThirdFieldType().toUpperCase()).getName());
+                }
+                if (StrUtil.isNotBlank(viewDTO1.getSysFieldType())){
                     viewDTO1.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(viewDTO1.getSysFieldType().toUpperCase()).getName());
                 }
             }
@@ -237,12 +239,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     }
 
 
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(CfgProcessEntity cfgProcessEntity) {
-        // TODO 验证数据 & 数据赋值
-    }
 
     /**
      * 创建飞书审批实例

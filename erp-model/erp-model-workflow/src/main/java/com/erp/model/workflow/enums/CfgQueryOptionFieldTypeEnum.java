@@ -22,6 +22,8 @@ public enum CfgQueryOptionFieldTypeEnum implements EnumMessage {
 	AMOUNT("amount", "金额"),
 	ATTACHMENTV2("attachmentV2", "附件"),
 	FIELDLIST("fieldList", "明细"),
+    DEFAULT("default","默认值"),
+    NULLVALUE("nullValue","设置为空"),
     ;
     /**
      * 类型

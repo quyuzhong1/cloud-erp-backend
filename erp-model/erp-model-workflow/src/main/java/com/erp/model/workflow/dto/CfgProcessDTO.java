@@ -93,8 +93,8 @@ public class CfgProcessDTO implements Serializable {
         /**
          * 配置单据
          */
-        @NotBlank(message = "配置单据不能为空")
-        @Size(max = 30, message = "配置单据最大长度不能超过30位")
+        @NotBlank(message = "流程单据不能为空")
+        @Size(max = 30, message = "流程单据最大长度不能超过30位")
         private String bussinessKey;
 
         /**

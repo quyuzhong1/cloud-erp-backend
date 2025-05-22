@@ -253,7 +253,7 @@
         count(1) AS count
         FROM cfg_process as cp
         left join cfg_process_rule cpr on cp.id = cpr.cfg_process_id
-        WHERE cp.is_deleted=FALSE
+        WHERE cpr.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
