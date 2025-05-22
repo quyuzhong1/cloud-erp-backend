@@ -157,4 +157,6 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
     void downloadTemplate(HttpServletResponse response);
 
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList);
 }
