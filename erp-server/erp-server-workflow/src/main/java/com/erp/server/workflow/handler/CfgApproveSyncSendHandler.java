@@ -208,6 +208,7 @@ public class CfgApproveSyncSendHandler {
      */
     public void sendApproveNotice(NoticeTemplateEnum noticeTemplateEnum, List<String> summaries, List<ProcessTaskManagementEntity> processTaskManagementEntities, Map<String, ThirdUnionDTO> thirdUnionMap, CfgApproveSyncEntity cfgApproveSyncEntity,String pcLinkByEnv) {
         if(CollUtil.isNotEmpty(processTaskManagementEntities)){
+            Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
             List<FsBotParamsDTO.SendParamsDTO> sendParams = new ArrayList<>();
             for (ProcessTaskManagementEntity e : processTaskManagementEntities) {
                 if(thirdUnionMap.containsKey(e.getCurApproveId())){
@@ -219,9 +220,9 @@ public class CfgApproveSyncSendHandler {
                     params.setTitleUserId(thirdUnionMap.get(e.getCreateUserId()).getThirdUserId());
                     params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
                     params.setActionDetailUrl(pcLinkByEnv);
-                    params.setActionCallbackUrl("");
-                    params.setActionCallbackToken("");
-                    params.setActionCallbackKey("");
+                    params.setActionCallbackUrl(String.valueOf(dataJson.get("actionCallbackUrl")));
+                    params.setActionCallbackToken(String.valueOf(dataJson.get("actionCallbackToken")));
+                    params.setActionCallbackKey(String.valueOf(dataJson.get("actionCallbackKey")));
                     params.setActionContext("");
                     params.setSummaries(summaries);
                     sendParams.add(params);

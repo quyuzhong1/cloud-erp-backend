@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.CfgSettingDTO;
 
+import java.util.Map;
+
 /**
  * <p>
  * 系统配置管理 服务类
@@ -35,4 +37,6 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
 
     //根据环境配置返回不同的PC链接
     String getPcLinkByEnv();
+
+    Map<String, Object> getFsActionCallback();
 }
