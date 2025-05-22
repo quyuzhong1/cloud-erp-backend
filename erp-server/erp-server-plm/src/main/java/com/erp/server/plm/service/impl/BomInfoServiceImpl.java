@@ -420,9 +420,12 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             return Boolean.TRUE;
         }
         Integer approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
+        if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
             //审核通过
             approveStatus = BomStateEnum.AUDIT_PASS.getState();
+        } else if (dto.getType().equals(ApproveTypeEnum.CANCEL.getStatus())) {
+            //待提交
+            approveStatus = BomStateEnum.WAIT_SUBMIT_AUDIT.getState();
         } else {
             //审核不通过
             approveStatus = BomStateEnum.AUDIT_NO_PASS.getState();

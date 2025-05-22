@@ -389,17 +389,7 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         if (ObjectUtil.isEmpty(entity)) {
             return Boolean.FALSE;
         }
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-
-            //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
-            this.updateQcNoticePutaway(entity,Boolean.TRUE);
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         LoginUser user = UserContext.getDefaultLoginUser();
         Boolean result = this.updateApproveInfo(Arrays.asList(entity), approveStatus,user.getUserName());
         if (!result) {
@@ -407,6 +397,8 @@ public class TransferInServiceImpl extends SuperServiceImpl<TransferInMapper, Tr
         }
         if (dto.getType().equals(ApproveType.PASS)) {
             handleData(entity);
+            //如果来源是质检通知单的，则回填质检通知单的上架数量和上架状态
+            this.updateQcNoticePutaway(entity,Boolean.TRUE);
         }
         return Boolean.TRUE;
     }

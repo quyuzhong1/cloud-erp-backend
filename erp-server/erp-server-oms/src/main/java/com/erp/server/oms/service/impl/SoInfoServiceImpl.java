@@ -1452,11 +1452,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     public Boolean approveEnd(BaseApproveParamDTO dto, SoInfoEntity entity) {
         //意见
         String userName = UserContext.getDefaultLoginUser().getUserName();
-        String approveStatus = "";
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE.getStatus();
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
+        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(approveStatus.getStatus()), userName);
 
+        if (dto.getType().equals(ApproveType.PASS)) {
+            // 填入首批上市时间
+            setFirstListingTime(Collections.singletonList(entity.getId()));
             //推送同步中台dmp任务
             syncKingdeeSoService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
             //发送金蝶
@@ -1466,16 +1467,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             SoInfoDTO.ViewDTO view = this.view(entity.getId());
             List<SoDetailEntity> soDetailEntities = soDetailService.listBaseByMainId(view.getId());
             syncKingdeeSoService.syncDataToSdy(view, soDetailEntities, SyncOperateEnum.OPERATE_APPROVE.getCode());
-
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT.getStatus();
-        }
-        Boolean result = this.updateApproveStatus(Collections.singletonList(entity), BillApproveStatusEnum.getByStatus(approveStatus), userName);
-
-        if (dto.getType().equals(ApproveType.PASS)) {
-            // 填入首批上市时间
-            setFirstListingTime(Collections.singletonList(entity.getId()));
         }
         return result;
     }

@@ -10,7 +10,6 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
-import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
@@ -661,14 +660,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             return Boolean.TRUE;
         }
         LoginUser user = UserContext.getDefaultLoginUser();
-        ApproveStatusEnum approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
-            //审核通过
-            approveStatus = ApproveStatusEnum.APPROVE;
-        } else {
-            //审核不通过
-            approveStatus = ApproveStatusEnum.REJECT;
-        }
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         Boolean result = this.updateApproveStatus(list, approveStatus, user.getUserName());
         if (!result) {
             throw new ServiceException(ApiError.ERROR_94006);

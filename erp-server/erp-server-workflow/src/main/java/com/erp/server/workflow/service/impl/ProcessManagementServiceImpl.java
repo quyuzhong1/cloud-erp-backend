@@ -1137,6 +1137,48 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
                 .oneOpt().orElseThrow(() -> new ServiceException(ApiError.ERROR_PROCESS_NOT_EXIST));
         Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
+
+        EndProcessDTO dto;
+        if (ProcessManagementOptionEnum.PASS.getCode().equals(entity.getOption())) {
+            //强制通过
+            dto =  getPassOrRejectEndProcessDTO(variables,entity,ApproveTypeEnum.PASS,ProcessManagementOptionEnum.PASS);
+        } else if (ProcessManagementOptionEnum.REJECT.getCode().equals(entity.getOption())) {
+            //强制驳回、状态更新致待提交
+            dto =  getPassOrRejectEndProcessDTO(variables,entity,ApproveTypeEnum.CANCEL,ProcessManagementOptionEnum.REJECT);
+        } else {
+            dto = getDefaultEndProcessDTO(variables,entity);
+        }
+        // 获取业务系统feign
+        return callFeign(entity.getBusinessKey(), dto);
+    }
+
+    /**
+     * 强制通过或驳回数据
+     * @author will
+     * @date 2025/5/22 15:33
+     * @param variables
+     * @param entity
+     * @param typeEnum
+     * @param optionEnum
+     * @return EndProcessDTO
+     */
+    private EndProcessDTO getPassOrRejectEndProcessDTO (Map<String, Object> variables,ProcessManagementEntity entity,ApproveTypeEnum typeEnum, ProcessManagementOptionEnum optionEnum) {
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
+        LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
+        // 流程信息传递给业务系统
+        return new EndProcessDTO(entity, typeEnum.getStatus(),LocalDateTime.now(),userInfo.getUid(),optionEnum.getName(), deliveryDate,variables);
+    }
+    /**
+     * 默认审核结束数据
+     * @author will
+     * @date 2025/5/22 15:32
+     * @param variables
+     * @param entity
+     * @return EndProcessDTO
+     */
+    private EndProcessDTO getDefaultEndProcessDTO (Map<String, Object> variables,ProcessManagementEntity entity) {
         String lastApproveType = (String)variables.getOrDefault(LAST_APPROVE_TYPE, "");
         LocalDateTime lastApproveTime = (LocalDateTime) variables.get(LAST_APPROVE_TIME);
         String lastComment = (String) variables.getOrDefault(LAST_COMMENT, "");
@@ -1144,11 +1186,16 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String deliveryDateStr = (String) variables.getOrDefault(DELIVERY_DATE, "");
         LocalDate deliveryDate = CharSequenceUtil.isNotBlank(deliveryDateStr) ? LocalDate.parse(deliveryDateStr) : LocalDate.now();
         // 流程信息传递给业务系统
-        EndProcessDTO dto = new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate,variables);
-        // 获取业务系统feign
-        return callFeign(entity.getBusinessKey(), dto);
+        return new EndProcessDTO(entity, lastApproveType,lastApproveTime,lastApprover,lastComment, deliveryDate,variables);
     }
-
+    /**
+     * 回调更新状态
+     * @author will
+     * @date 2025/5/22 15:33
+     * @param businessKey
+     * @param dto
+     * @return Boolean
+     */
     private Boolean callFeign(String businessKey, EndProcessDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(businessKey);
         String feignBeanName = menuEntity.getFeignBeanName();
@@ -1306,6 +1353,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PASS_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
+        entity.setOption(ProcessManagementOptionEnum.PASS.getCode());
+        entity.setApproveStatus(ApproveStatusEnum.APPROVE);
         processManagementService.updateById(entity);
 
         //强制通过终止流程
@@ -1314,8 +1363,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         } catch (ProcessEngineException e) {
             throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
         }
-        //更新业务状态
-        processManagementService.updateBusinessStatus(entity,ApproveTypeEnum.PASS,"强制通过终止");
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.PASS);
     }
 
@@ -1355,6 +1402,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_REJECT_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
+        entity.setOption(ProcessManagementOptionEnum.REJECT.getCode());
+        entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
         processManagementService.updateById(entity);
 
         //强制驳回终止流程
@@ -1363,9 +1412,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         } catch (ProcessEngineException e) {
             throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
         }
-        //更新业务状态
-        processManagementService.updateBusinessStatus(entity,ApproveTypeEnum.REJECT,"强制驳回终止");
-
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.REJECT);
     }
 
@@ -1380,6 +1426,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_RESTORE_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.RUNNING);
+        entity.setOption(ProcessManagementOptionEnum.RESTORE.getCode());
         processManagementService.updateById(entity);
 
         // 检查流程实例是否处于暂停状态
@@ -1409,6 +1456,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_SUSPEND_ERROR);
         }
         entity.setProcessStatus(ProcessStatusEnum.PAUSE);
+        entity.setOption(ProcessManagementOptionEnum.PAUSE.getCode());
         processManagementService.updateById(entity);
         //暂停
         runtimeService.suspendProcessInstanceById(entity.getProcessInstanceId());

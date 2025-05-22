@@ -305,9 +305,12 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             return Boolean.TRUE;
         }
         Integer approveStatus;
-        if (dto.getType().equals(ApproveType.PASS)) {
+        if (dto.getType().equals(ApproveTypeEnum.PASS.getStatus())) {
             //审核通过
             approveStatus = ProductChangeStateEnum.AUDIT_PASS.getState();
+        } else if (dto.getType().equals(ApproveTypeEnum.CANCEL.getStatus())){
+            //待提交
+            approveStatus = ProductChangeStateEnum.WAIT_SUBMIT.getState();
         } else {
             //审核不通过
             approveStatus = ProductChangeStateEnum.AUDIT_NO_PASS.getState();

@@ -640,12 +640,12 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
         List<TransferInfoEntity> list = Collections.singletonList(entity);
         log.info("直接调拨单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
+        //更新状态
+        ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(type);
+        updateApproveStatusForApprove(entity.getId(), approveStatus.getCode());
         //审核通过
         if (ApproveTypeEnum.PASS.getStatus().equals(type)) {
             log.info("直接调拨单【{}】审核通过，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
-
-            //更新单据(后面有流程了调用监听可删)
-            updateApproveStatusForApprove(entity.getId(), ApproveStatusEnum.APPROVE.getStatus());
             //直接调拨单明细
             List<TransferInfoDetailEntity> detailList = transferInfoDetailService.listByMainIds(Collections.singletonList(entity.getId()));
             if (CollectionUtils.isEmpty(detailList)) {
@@ -672,12 +672,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
                     syncMabangTransferService.syncDataToMabang(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
                 }
             }
-        } else if (ApproveTypeEnum.REJECT.getStatus().equals(type)) {
-            log.info("直接调拨单【{}】审核不通过，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
-            //中止当前审核流程
-
-            //更新单据状态
-            updateApproveStatusForApprove(entity.getId(), ApproveStatusEnum.REJECT.getStatus());
         }
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个直接调拨单【%s】", ApproveTypeEnum.getName(type),entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.TRANSFER_INFO.getCode(), entity.getId(), "审核操作");
