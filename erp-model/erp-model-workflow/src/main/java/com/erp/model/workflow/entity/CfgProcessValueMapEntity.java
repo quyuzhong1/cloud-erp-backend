@@ -40,8 +40,8 @@ public class CfgProcessValueMapEntity extends BaseEntity<CfgProcessValueMapEntit
     @TableField("sys_value")
     private String sysValue;
 
-    @TableField("defalut_value")
-    private String defalutValue;
+    @TableField("default_value")
+    private String defaultValue;
 
     public static final String FIELD_MAP_ID = "field_map_id";
 
@@ -49,7 +49,7 @@ public class CfgProcessValueMapEntity extends BaseEntity<CfgProcessValueMapEntit
 
     public static final String SYS_VALUE = "sys_value";
 
-    public static final String DEFALUT_VALUE = "defalut_value";
+    public static final String DEFAULT_VALUE = "default_value";
 
     @Override
     public Serializable pkVal() {

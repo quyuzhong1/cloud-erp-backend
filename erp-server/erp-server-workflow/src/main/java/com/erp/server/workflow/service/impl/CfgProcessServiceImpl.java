@@ -144,51 +144,49 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         CfgProcessDTO.SearchParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
-        IPage<CfgProcessDTO.ProcessDTO> pageData = baseMapper.getProcessWithRulesAndExps(query, params);
-        //处理processResultMap
-        List<CfgProcessDTO.ProcessViewDTO> viewDTOList = pageData.getRecords().stream()
-                .flatMap(processDTO -> processDTO.getRuleList().stream().map(rule -> {
-                    CfgProcessDTO.ProcessViewDTO viewDTO = BeanUtil.copyProperties(rule, CfgProcessDTO.ProcessViewDTO.class);
-                    // 从 ProcessDTO 中获取字段
-                    viewDTO.setId(processDTO.getId());
-                    viewDTO.setCode(processDTO.getCode());
-                    viewDTO.setName(processDTO.getName());
-                    viewDTO.setBussinessKey(SourceTypeEnum.getName(processDTO.getBussinessKey()));
-                    // 从 ProcessRuleDTO 中获取字段
-                    viewDTO.setType(CfgProcessRuleTypeEnum.getName(rule.getType()));
-                    viewDTO.setRuleId(rule.getId());
-                    // 拼接 expList 中的 expDesc 按 index 排序
-                    String ruleDesc = rule.getExpList().stream()
-                            .sorted(Comparator.comparing(CfgProcessDTO.ProcessExpDTO::getIndex))
-                            .map(CfgProcessDTO.ProcessExpDTO::getExpDesc)
-                            .collect(Collectors.joining(" "));
-                    viewDTO.setRuleDesc(ruleDesc);
-
-                    return viewDTO;
-                }))
-                .collect(Collectors.toList());
-        //创建一个IpageData 并设置数据listDTOs
-        IPage<CfgProcessDTO.ProcessViewDTO> newPageData = new Page<>(dto.getCurrPage(), dto.getPageSize());
-        newPageData.setRecords(viewDTOList);
-        newPageData.setTotal(pageData.getTotal());
-        return new PagingVO(newPageData);
+        IPage<CfgProcessDTO.ProcessViewDTO> pageData = baseMapper.getProcessWithRuleAndAggregatedExps(query, params);
+        return new PagingVO(pageData);
     }
 
     @Override
     public CfgProcessDTO.ViewDTO view(String settingId) {
         CfgProcessDTO.ViewDTO viewDTO = baseMapper.getViewDTOById(settingId);
+
         if (ObjectUtil.isEmpty(viewDTO)) {
-            throw new ServiceException("此流程配置不存在！,id{}", settingId);
+            // 使用占位符，SLF4J等日志框架会自动替换，或者使用 String.format
+            throw new ServiceException(String.format("此流程配置不存在！id: %s", settingId));
         }
-        //处理fieldDto
-        for (CfgProcessRuleDTO.ViewDTO dto : viewDTO.getProcessRuleDTOList()) {
-            for (CfgProcessFieldMapDTO.ViewDTO viewDTO1 : dto.getProcessFieldMapDTOList()) {
-                if (StrUtil.isNotBlank(viewDTO1.getThirdFieldType())) {
-                    viewDTO1.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(viewDTO1.getThirdFieldType().toUpperCase()).getName());
+
+        // 确保 processRuleDTOList 不为 null，避免 NullPointerException
+        if (ObjectUtil.isEmpty(viewDTO.getProcessRuleDTOList())) {
+            return viewDTO;
+        }
+        for (CfgProcessRuleDTO.ViewDTO ruleDto : viewDTO.getProcessRuleDTOList()) {
+            if (ObjectUtil.isEmpty(ruleDto.getProcessFieldMapDTOList())) {
+                continue;
+            }
+            for (CfgProcessFieldMapDTO.ViewDTO fieldMapDto : ruleDto.getProcessFieldMapDTOList()) {
+                if (StrUtil.isBlank(fieldMapDto.getThirdFieldType())) {
+                    continue;
                 }
-                if (StrUtil.isNotBlank(viewDTO1.getSysFieldType())){
-                    viewDTO1.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(viewDTO1.getSysFieldType().toUpperCase()).getName());
+                try {
+                    // 转换为大写以匹配枚举名称的约定 (通常枚举常量是大写的)
+                    fieldMapDto.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(fieldMapDto.getThirdFieldType().toUpperCase()).getName());
+                } catch (IllegalArgumentException e) {
+                    // 处理枚举值不存在的情况，例如记录日志或设置一个默认名称
+                    // log.warn("未知的 thirdFieldType: {}", fieldMapDto.getThirdFieldType());
+                    throw new ServiceException("流程配置详情接口飞书字段类型转换异常");
                 }
+                if (StrUtil.isBlank(fieldMapDto.getSysFieldType())) {
+                    continue;
+                }
+                try {
+                    fieldMapDto.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(fieldMapDto.getSysFieldType().toUpperCase()).getName());
+                } catch (IllegalArgumentException e) {
+                    // log.warn("未知的 sysFieldType: {}", fieldMapDto.getSysFieldType());
+                    throw new ServiceException("流程配置详情接口数大臣字段类型转换异常");
+                }
+
             }
         }
         return viewDTO;
@@ -247,7 +245,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     public CfgProcessEntity getByBusinessKey(String businessKey) {
         return null;
     }
-
 
 
     /**

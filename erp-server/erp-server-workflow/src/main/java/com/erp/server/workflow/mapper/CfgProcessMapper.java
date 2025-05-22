@@ -29,7 +29,7 @@ public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
        * @param: query, params
        * @return: CfgProcessDTO.ListDTO
        **/
-    IPage<CfgProcessDTO.ProcessDTO> getProcessWithRulesAndExps(Page query, @Param("params") CfgProcessDTO.SearchParamDTO params);
+    IPage<CfgProcessDTO.ProcessViewDTO> getProcessWithRuleAndAggregatedExps(Page query, @Param("params") CfgProcessDTO.SearchParamDTO params);
     /**
      * @description: view
      * @author: hcg

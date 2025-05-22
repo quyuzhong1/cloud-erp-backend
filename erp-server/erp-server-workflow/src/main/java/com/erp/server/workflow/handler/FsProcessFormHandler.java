@@ -55,30 +55,38 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                               List<CfgProcessFieldMapEntity> fieldMapList,
                               List<CfgProcessValueMapEntity> valueMapList) {
 
-        // Map<thirdFieldId,FieldMapId>
-        Map<String, String> tidToIdMap = fieldMapList.stream().collect(Collectors.toMap(
-                CfgProcessFieldMapEntity::getThirdFieldId,
-                CfgProcessFieldMapEntity::getId
-        ));
+        // 构建必要的映射关系
+        Map<String, String> tidToIdMap = buildThirdFieldIdToMapIdMap(fieldMapList);
+        Map<String, List<CfgProcessValueMapEntity>> valueMapListMap = buildValueMapGroupByFieldId(valueMapList);
+        Map<String, CfgProcessFieldMapEntity> fieldMapByThirdId = buildFieldMapByThirdId(fieldMapList);
 
-        // Map<FieldMapId,List<valueMap>>
-        Map<String, List<CfgProcessValueMapEntity>> valueMapListMap = valueMapList.stream().collect(Collectors.groupingBy(
-                CfgProcessValueMapEntity::getFieldMapId
-        ));
-
-        // Map<thirdFieldId,CfgProcessFieldMapEntity>
-        Map<String, CfgProcessFieldMapEntity> fieldMapByThirdId = fieldMapList.stream().collect(Collectors.toMap(
-                CfgProcessFieldMapEntity::getThirdFieldId,
-                Function.identity()
-        ));
-
-        // 明细数据（变量名 detailList）
+        // 获取明细数据
         List<Map<String, Object>> detailList = (List<Map<String, Object>>) variablesMap.get("detailList");
 
         // 递归处理表单
         processFormArray(formArray, variablesMap, fieldMapByThirdId, tidToIdMap, valueMapListMap, detailList);
 
         return formArray;
+    }
+
+    private Map<String, String> buildThirdFieldIdToMapIdMap(List<CfgProcessFieldMapEntity> fieldMapList) {
+        return fieldMapList.stream().collect(Collectors.toMap(
+                CfgProcessFieldMapEntity::getThirdFieldId,
+                CfgProcessFieldMapEntity::getId
+        ));
+    }
+
+    private Map<String, List<CfgProcessValueMapEntity>> buildValueMapGroupByFieldId(List<CfgProcessValueMapEntity> valueMapList) {
+        return valueMapList.stream().collect(Collectors.groupingBy(
+                CfgProcessValueMapEntity::getFieldMapId
+        ));
+    }
+
+    private Map<String, CfgProcessFieldMapEntity> buildFieldMapByThirdId(List<CfgProcessFieldMapEntity> fieldMapList) {
+        return fieldMapList.stream().collect(Collectors.toMap(
+                CfgProcessFieldMapEntity::getThirdFieldId,
+                Function.identity()
+        ));
     }
 
     private void processFormArray(JSONArray formArray, Map<String, Object> variablesMap,
@@ -91,11 +99,10 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             JSONObject formField = formArray.getJSONObject(i);
             String type = formField.getStr("type");
 
-            // 如果是 FieldList 类型，处理明细表
+            // 根据字段类型分别处理
             if ("fieldList".equals(type)) {
                 processDetailTable(formField, fieldMapByThirdId, tidToIdMap, valueMapListMap, detailList);
             } else {
-                // 处理普通字段
                 processSimpleField(formField, variablesMap, fieldMapByThirdId, tidToIdMap, valueMapListMap);
             }
 
@@ -114,7 +121,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         }
 
         JSONArray detailValue = new JSONArray();
-        if (detailList != null) {
+        if (detailList != null && !detailList.isEmpty()) {
             for (Map<String, Object> detailRow : detailList) {
                 JSONArray row = new JSONArray();
                 for (Object childObj : children) {
@@ -122,65 +129,42 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     String childId = child.getStr("id");
                     String childType = child.getStr("type");
 
+                    // 获取字段映射信息
                     CfgProcessFieldMapEntity fieldMap = fieldMapByThirdId.get(childId);
-                    String childSysField = fieldMap != null ? fieldMap.getSysField() : null;
-                    String childDefault = fieldMap != null ? fieldMap.getDefaultValue() : "";
-
-                    //TODO:无字段对应，默认值，就不进行下面的映射了，用defalut_value字段 childDefault
-                    if (childSysField == ""){
-                        //TODO:无字段对应，默认值，就不进行下面的映射了，用defalut_value字段
+                    if (fieldMap == null) {
+                        continue;
                     }
-                    Object childValue = (childSysField == null || detailRow.get(childSysField) == null) ?
-                            childDefault : detailRow.get(childSysField);
+
+                    String childSysField = fieldMap.getSysField();
+                    String childDefault = fieldMap.getDefaultValue();
+
+                    // 跳过无字段对应的情况
+                    if (StrUtil.isEmpty(childSysField)) {
+                        continue;
+                    }
+
+                    // 获取字段值
+                    Object childValue = detailRow.get(childSysField);
+                    if (childValue == null) {
+                        childValue = childDefault;
+                    }
+
                     // 执行值映射处理
                     childValue = mapFieldValue(childId, childType, childValue, childDefault, tidToIdMap, valueMapListMap);
-                    if ("attachmentV2".equals(childType)){
-                        //finalValue转为List
-                        //构建飞书上传文件接口参数
-                        List<Map<String,String>> nameToUrlMap = (List<Map<String,String>>) childValue;
-                        List<String> codeList = new ArrayList<>();
-                        nameToUrlMap.forEach(map -> {
-                            map.keySet().forEach(fileName -> {
-                                String url = map.get(fileName);
-                                byte[] fileByte = FastDFSClientUtil.getFileByte(url);
-                                File file = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
-                                try (FileOutputStream fos = new FileOutputStream(file)) {
-                                    fos.write(fileByte);
-                                    fos.flush();
-                                    String fileCode = fsService.uploadApprovalFile(file, fileName);
-                                    codeList.add(fileCode);
-                                } catch (FileNotFoundException e) {
-                                    throw new RuntimeException(e);
-                                } catch (IOException e) {
-                                    throw new RuntimeException(e);
-                                } finally {
-                                    if (file.exists()) {
-                                        file.delete();
-                                    }
-                                }
-                            });
-                        });
-                        formField.set("value", codeList);
-                        return;
-                    }
-                    if ("date".equals(childType)){
-                        // 1. 解析原始时间字符串
-                        DateTime hutoolDate = DateUtil.parse(childValue.toString(), "yyyy-MM-dd HH:mm:ss.SSS");
-                        // 2. 使用系统默认时区转换为 ZonedDateTime
-                        ZonedDateTime zonedDateTime = hutoolDate.toInstant().atZone(ZoneId.systemDefault());
-                        // 3. 转换为 OffsetDateTime（带偏移量）
-                        OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
-                        // 4. 格式化为 RFC3339 格式
-                        String rfc3339 = offsetDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-                        formField.set("value", rfc3339);
-                        return ;
-                    }
 
-                    JSONObject detailItem = new JSONObject();
-                    detailItem.set("id", childId);
-                    detailItem.set("type", childType);
-                    detailItem.set("value", childValue);
-                    row.add(detailItem);
+                    // 特殊类型处理
+                    if ("attachmentV2".equals(childType)) {
+                        List<String> fileCodeList = processAttachment(childValue);
+                        JSONObject detailItem = createDetailItem(childId, childType, fileCodeList);
+                        row.add(detailItem);
+                    } else if ("date".equals(childType)) {
+                        String formattedDate = formatToRFC3339(childValue);
+                        JSONObject detailItem = createDetailItem(childId, childType, formattedDate);
+                        row.add(detailItem);
+                    } else {
+                        JSONObject detailItem = createDetailItem(childId, childType, childValue);
+                        row.add(detailItem);
+                    }
                 }
                 detailValue.add(row);
             }
@@ -188,6 +172,14 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         formField.set("value", detailValue);
         formField.remove("children"); // 移除 children 字段
+    }
+
+    private JSONObject createDetailItem(String id, String type, Object value) {
+        JSONObject detailItem = new JSONObject();
+        detailItem.set("id", id);
+        detailItem.set("type", type);
+        detailItem.set("value", value);
+        return detailItem;
     }
 
     private void processSimpleField(JSONObject formField, Map<String, Object> variablesMap,
@@ -203,97 +195,146 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         }
 
         String sysField = entity.getSysField();
-        if (sysField == ""){
-            //TODO:无字段对应，默认值，就不进行下面的映射了，用defalut_value字段
+        if (StrUtil.isEmpty(sysField)) {
+            return; // 无字段对应，跳过处理
         }
+
         String defaultValue = entity.getDefaultValue();
         Object rawValue = variablesMap.get(sysField);
 
         // 执行值映射处理
         Object finalValue = mapFieldValue(thirdFieldId, type, rawValue, defaultValue, tidToIdMap, valueMapListMap);
-        //处理映射后数据格式
-        if ("attachmentV2".equals(type)){
-            //finalValue转为List
-            //构建飞书上传文件接口参数
-            List<Map<String,String>> nameToUrlMap = (List<Map<String,String>>) finalValue;
-            List<String> codeList = new ArrayList<>();
-            nameToUrlMap.forEach(map -> {
-                map.keySet().forEach(fileName -> {
-                    String url = map.get(fileName);
+
+        // 特殊类型处理
+        if ("attachmentV2".equals(type)) {
+            List<String> fileCodeList = processAttachment(finalValue);
+            formField.set("value", fileCodeList);
+        } else if ("date".equals(type)) {
+            String formattedDate = formatToRFC3339(finalValue);
+            formField.set("value", formattedDate);
+        } else {
+            formField.set("value", finalValue);
+        }
+    }
+
+    private List<String> processAttachment(Object value) {
+        if (value == null) {
+            return Collections.emptyList();
+        }
+
+        List<Map<String, String>> nameToUrlMap = (List<Map<String, String>>) value;
+        List<String> codeList = new ArrayList<>();
+
+        for (Map<String, String> map : nameToUrlMap) {
+            for (String fileName : map.keySet()) {
+                String url = map.get(fileName);
+                File tempFile = null;
+                try {
+                    // 获取文件内容
                     byte[] fileByte = FastDFSClientUtil.getFileByte(url);
-                    File file = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
-                    try (FileOutputStream fos = new FileOutputStream(file)) {
+
+                    // 创建临时文件
+                    tempFile = new File(System.getProperty("java.io.tmpdir") + File.separator + fileName);
+                    try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                         fos.write(fileByte);
                         fos.flush();
-                        String fileCode = fsService.uploadApprovalFile(file, fileName);
-                        codeList.add(fileCode);
-                    } catch (FileNotFoundException e) {
-                        throw new RuntimeException(e);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    } finally {
-                        if (file.exists()) {
-                            file.delete();
-                        }
                     }
-                });
-            });
-            formField.set("value", codeList);
-            return;
+
+                    // 上传到飞书
+                    String fileCode = fsService.uploadApprovalFile(tempFile, fileName);
+                    codeList.add(fileCode);
+                } catch (Exception e) {
+                    log.error("处理附件失败: {}", fileName, e);
+                } finally {
+                    // 清理临时文件
+                    if (tempFile != null && tempFile.exists()) {
+                        tempFile.delete();
+                    }
+                }
+            }
         }
-        if ("date".equals(type)){
-            // 1. 解析原始时间字符串
-            DateTime hutoolDate = DateUtil.parse(finalValue.toString(), "yyyy-MM-dd HH:mm:ss.SSS");
-            // 2. 使用系统默认时区转换为 ZonedDateTime
+
+        return codeList;
+    }
+
+    private String formatToRFC3339(Object dateValue) {
+        if (dateValue == null) {
+            return null;
+        }
+
+        try {
+            // 解析原始时间字符串
+            DateTime hutoolDate = DateUtil.parse(dateValue.toString(), "yyyy-MM-dd HH:mm:ss.SSS");
+
+            // 转换为带时区的时间格式
             ZonedDateTime zonedDateTime = hutoolDate.toInstant().atZone(ZoneId.systemDefault());
-            // 3. 转换为 OffsetDateTime（带偏移量）
             OffsetDateTime offsetDateTime = zonedDateTime.toOffsetDateTime();
-            // 4. 格式化为 RFC3339 格式
-            String rfc3339 = offsetDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-            formField.set("value", rfc3339);
-            return ;
+
+            // 格式化为 RFC3339 格式
+            return offsetDateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        } catch (Exception e) {
+            log.error("日期格式转换失败: {}", dateValue, e);
+            return dateValue.toString();
         }
-        formField.set("value", finalValue);
     }
 
     private Object mapFieldValue(String fieldId, String fieldType, Object rawValue, String defaultValue,
                                  Map<String, String> tidToIdMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap) {
-        // 仅针对 radioV2 和 checkboxV2 类型需要值映射
-        String fieldMapId = tidToIdMap.get(fieldId);
-        List<CfgProcessValueMapEntity> valueMappings = valueMapListMap.get(fieldMapId);
-        //取value中的default_value
+        // 处理空值情况
         if (rawValue == null || StrUtil.isBlank(rawValue.toString())) {
-            String mappedDefault = null;
+            String fieldMapId = tidToIdMap.get(fieldId);
+            List<CfgProcessValueMapEntity> valueMappings = valueMapListMap.get(fieldMapId);
+
+            // 查找默认值映射
             if (valueMappings != null) {
-                for (CfgProcessValueMapEntity vm : valueMappings) {
-                    if ("defalut".equals(vm.getSysValue())) {
-                        mappedDefault = vm.getDefalutValue();
-                        break;
-                    }
-                    mappedDefault = vm.getThirdValue();
+                Optional<String> mappedDefault = valueMappings.stream()
+                        .filter(vm -> "defalut".equals(vm.getSysValue()))
+                        .map(CfgProcessValueMapEntity::getDefaultValue)
+                        .findFirst();
+
+                if (mappedDefault.isPresent()) {
+                    return mappedDefault.get();
+                }
+
+                // 如果没有找到默认值映射，尝试使用第一个映射值
+                if (!valueMappings.isEmpty()) {
+                    return valueMappings.get(0).getThirdValue();
                 }
             }
-            rawValue = mappedDefault;
+
+            // 如果没有任何映射，返回原始默认值
+            return defaultValue;
         }
-        //开始映射，两种结构不一样，所以需要进行判断type
-        if (valueMappings != null && !valueMappings.isEmpty()) {
-            if ("checkboxV2".equals(fieldType)) {
-                return Arrays.stream(rawValue.toString().split(","))
-                        .map(String::trim)
-                        .map(val -> valueMappings.stream()
-                                .filter(vm -> vm.getSysValue().equals(val))
-                                .map(CfgProcessValueMapEntity::getThirdValue)
-                                .findFirst().orElse(val))
-                        .collect(Collectors.toList());
-            } else if ("radioV2".equals(fieldType)) {
-                final Object fRawValue = rawValue;
-                return valueMappings.stream()
-                        .filter(vm -> vm.getSysValue().equals(fRawValue))
-                        .map(CfgProcessValueMapEntity::getThirdValue)
-                        .findFirst().orElse(rawValue.toString());
-            }
+
+        // 获取字段的值映射配置
+        String fieldMapId = tidToIdMap.get(fieldId);
+        List<CfgProcessValueMapEntity> valueMappings = valueMapListMap.get(fieldMapId);
+
+        // 如果没有映射配置，直接返回原值
+        if (valueMappings == null || valueMappings.isEmpty()) {
+            return rawValue;
         }
-        // 非映射类型或无映射结果时直接返回原始值（已处理空情况）
+
+        // 根据字段类型进行不同处理
+        if ("checkboxV2".equals(fieldType)) {
+            // 多选处理
+            return Arrays.stream(rawValue.toString().split(","))
+                    .map(String::trim)
+                    .map(val -> valueMappings.stream()
+                            .filter(vm -> vm.getSysValue().equals(val))
+                            .map(CfgProcessValueMapEntity::getThirdValue)
+                            .findFirst().orElse(val))
+                    .collect(Collectors.toList());
+        } else if ("radioV2".equals(fieldType)) {
+            // 单选处理
+            final String rawValueStr = rawValue.toString();
+            return valueMappings.stream()
+                    .filter(vm -> vm.getSysValue().equals(rawValueStr))
+                    .map(CfgProcessValueMapEntity::getThirdValue)
+                    .findFirst().orElse(rawValueStr);
+        }
+
+        // 非映射类型直接返回原始值
         return rawValue;
     }
 
@@ -302,15 +343,10 @@ public class FsProcessFormHandler implements ProcessFormHandler {
      */
     private void retainOnlyIdTypeValue(JSONObject formField) {
         Set<String> keepKeys = new HashSet<>(Arrays.asList("id", "type", "value"));
-        List<String> keysToRemove = new ArrayList<>();
-        for (String key : formField.keySet()) {
-            if (!keepKeys.contains(key)) {
-                keysToRemove.add(key);
-            }
-        }
-        for (String key : keysToRemove) {
-            formField.remove(key);
-        }
+        formField.keySet().stream()
+                .filter(key -> !keepKeys.contains(key))
+                .collect(Collectors.toList())
+                .forEach(formField::remove);
     }
 
     @Override

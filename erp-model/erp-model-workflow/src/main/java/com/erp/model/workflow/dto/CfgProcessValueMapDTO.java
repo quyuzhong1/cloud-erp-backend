@@ -44,7 +44,7 @@ public class CfgProcessValueMapDTO implements Serializable {
         private String thirdValue;
 
         /**
-        * 数大臣r选项值
+        * 数大臣选项值
         */
         private String sysValue;
 

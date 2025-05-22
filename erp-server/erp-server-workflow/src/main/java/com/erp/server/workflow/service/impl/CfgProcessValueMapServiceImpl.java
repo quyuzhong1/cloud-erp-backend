@@ -10,6 +10,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.RedisService;
 import com.common.business.vo.LoginUser;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
@@ -30,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import com.common.core.utils.*;
 
@@ -52,6 +54,9 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
     @Resource
     private FsService fsService;
 
+    @Resource
+    private RedisService redisService;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(String cfgProcessId,String fieldMapId,List<CfgProcessValueMapDTO.AddOrUpdateDTO> addDTO) {
@@ -59,7 +64,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                 .map(dto -> {
                     CfgProcessValueMapEntity entity = new CfgProcessValueMapEntity();
                     BeanUtil.copyProperties(dto, entity);
-                    entity.setDefalutValue(dto.getDefaultValue());
+                    entity.setDefaultValue(dto.getDefaultValue());
                     entity.setFieldMapId(fieldMapId);
                     return entity;
                 })
@@ -67,7 +72,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         if (entities.isEmpty()) {
             return new BaseResultDTO.AddDTO();
         }
-        boolean b = this.saveOrUpdateBatch(entities);
+        boolean b = this.saveBatch(entities);
         if(!b){
             throw new ServiceException("保存值映射失败");
         };
@@ -114,7 +119,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                     CfgProcessValueMapEntity entity = new CfgProcessValueMapEntity();
                     BeanMapperUtils.copy(dto, entity);
                     entity.setFieldMapId(fieldMapId);
-                    entity.setDefalutValue(dto.getDefaultValue());
+                    entity.setDefaultValue(dto.getDefaultValue());
                     return entity;
                 })
                 .collect(Collectors.toList());
@@ -125,7 +130,7 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
             return new BaseResultDTO.AddDTO();
         }
         //保存
-        boolean b = this.saveOrUpdateBatch(entities);
+        boolean b = this.updateBatchById(entities);
         if(!b){
             throw new ServiceException("保存值映射失败");
         };
@@ -145,6 +150,9 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         try {
             GetApprovalResp approval = fsService.getApproval(approvalCode);
             String jsonStr = JSONUtil.toJsonStr(approval.getData());
+//            if (ObjectUtil.isNotEmpty(redisService.getCacheObject(fieldId))){
+//                return redisService.getCacheObject(fieldId);
+//            }
             Map<String, Map<String, String>> stringMapMap = parseFormValue(jsonStr);
             Map<String, String> stringMap = stringMapMap.get(fieldId);
             //遍历map，key作为DropDownDTO的value，value作为DropDownDTO的name
@@ -154,11 +162,9 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
                 dropDownDTO.setName(entry.getValue());
                 dropDownDTO.setValue(entry.getKey());
                 dropDownDTOS.add(dropDownDTO);
+//                redisService.setNx(entry.getKey(), entry.getValue(),10*60,  TimeUnit.SECONDS);
             }
-            CfgProcessValueMapDTO.DropDownDTO dropDownDTO = new CfgProcessValueMapDTO.DropDownDTO();
-            dropDownDTO.setName("默认值");
-            dropDownDTO.setValue(stringMap.get("default"));
-            dropDownDTOS.add(dropDownDTO);
+
             return dropDownDTOS;
         } catch (Exception e) {
             throw new ServiceException("飞书选项值列表转换异常：{}",e.getMessage());
