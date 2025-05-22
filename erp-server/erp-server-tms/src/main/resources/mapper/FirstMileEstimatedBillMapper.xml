@@ -174,7 +174,7 @@
         group by fmeb.logistics_bill_id, tcc.dict_cost_attribution, tcc.dict_cost_category;
     </select>
     <select id="countByParam" resultType="java.lang.Integer">
-        select count(1)
+        select count(distinct eb.id)
         from first_mile_estimated_bill eb
             left join logistics_bill_cost lbc on lbc.logistics_bill_id = eb.logistics_bill_id and lbc.is_deleted = false
         <where>
