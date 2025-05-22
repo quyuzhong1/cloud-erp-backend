@@ -27,7 +27,8 @@ public enum CfgSettingEnum implements EnumMessage {
     FS_REQUISITION_CHANGE_SUBMIT_NOTICE("fsRequisitionChangeSubmitHandleNotice","飞书要货申请提交通知配置"),
     FS_REQUISITION_CHANGE_APPROVE_NOTICE("fsRequisitionChangeApproveHandleNotice","飞书要货申请审核通知配置"),
     WAREHOUSE_BY_SO_RETURN("warehouseBySoReturn","东莞售后仓库配置"),
-    QC_USER("qcUser","质检员")
+    QC_USER("qcUser","质检员"),
+    SHOP_EXPIRE_NOTICE("shopExpireNotice","店铺过期通知"),
     ;
 
     /**

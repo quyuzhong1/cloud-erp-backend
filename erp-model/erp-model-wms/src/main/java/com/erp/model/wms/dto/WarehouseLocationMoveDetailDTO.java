@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -197,7 +198,12 @@ public class WarehouseLocationMoveDetailDTO implements Serializable {
          */
         private String sourceDetailId;
 
-        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo, String outWarehouseLocation, String inWarehouseLocation, Integer qty, String warehouseId, String sourceDetailId) {
+        public static WarehouseLocationMoveDetailDTO.AddDTO getLocationMoveDTO(String skuId, String skuNo,
+                                                                               String outWarehouseLocation,
+                                                                               String inWarehouseLocation,
+                                                                               Integer qty,
+                                                                               String warehouseId,
+                                                                               String sourceDetailId) {
             WarehouseLocationMoveDetailDTO.AddDTO addDTO = new WarehouseLocationMoveDetailDTO.AddDTO();
             addDTO.setSkuId(skuId);
             addDTO.setSkuNo(skuNo);

@@ -96,7 +96,7 @@ public class OverseasWarehouseInboundReceivedServiceImpl extends SuperServiceImp
     public List<OverseasWarehouseInboundReceivedEntity> listByDetailIds(List<String> detailIds) {
         return lambdaQuery()
                 .in(OverseasWarehouseInboundReceivedEntity::getDetailId, detailIds)
-                .orderByDesc(OverseasWarehouseInboundReceivedEntity::getCreateTime)
+                .orderByDesc(OverseasWarehouseInboundReceivedEntity::getReceiveTime)
                 .list();
     }
 
