@@ -2,7 +2,7 @@ package com.erp.server.workflow.handler;
 
 /**
  * @description: 飞书解析form类
- * TODO：未支持金额、图片、部门、联系人控件类型
+ *
  * @author: hcg
  * @date: 2025/5/20 12:04
  */
@@ -10,35 +10,28 @@ package com.erp.server.workflow.handler;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import com.common.business.enums.ProcessFormEvent;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
+import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.sdk.fs.service.FsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.ProcessFormEvent.FS_PROCESS_FORM;
 
 /**
  * @Author: hcg
@@ -176,12 +169,14 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                         detailItem.set("currency", childValue);
                         row.add(detailItem);
                     } else if ("department".equals(childType)) {
+                        //查询用户关系表->飞书id TODO未实现
                         JSONObject detailItem = new JSONObject();
                         detailItem.set("id", childId);
                         detailItem.set("type", childType);
                         detailItem.set("value", Arrays.asList(childValue));
                         row.add(detailItem);
                     } else if ("contact".equals(childType)) {
+                        //查询部门关系表->飞书id
                         JSONObject detailItem = new JSONObject();
                         detailItem.set("id", childId);
                         detailItem.set("type", childType);
@@ -252,8 +247,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             formField.set("value", variablesMap.get(amountEntity.getSysField()));
             formField.set("currency", finalValue);
         } else if ("department".equals(type)) {
-            formField.set("value", Arrays.asList(finalValue));
+            //查询部门关系表->飞书id
         } else if ("contact".equals(type)) {
+            //查询用户关系表->飞书id
             formField.set("value", Arrays.asList(finalValue));
         } else {
             formField.set("value", finalValue);
@@ -398,7 +394,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     }
 
     @Override
-    public ProcessFormEvent getEvent() {
-        return FS_PROCESS_FORM;
+    public CfgProcessRuleTypeEnum getEvent() {
+        return CfgProcessRuleTypeEnum.FSPROCESS;
     }
 }

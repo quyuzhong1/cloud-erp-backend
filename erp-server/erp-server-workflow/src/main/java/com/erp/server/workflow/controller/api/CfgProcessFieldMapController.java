@@ -32,38 +32,6 @@ public class CfgProcessFieldMapController extends BaseController {
     private CfgProcessFieldMapService cfgProcessFieldMapService;
 
     /**
-     * 新增
-     * @author hcg
-     * @date: 2025-05-12
-     * @param dto
-     * @return ApiResult<String>
-     */
-//    @PostMapping("/add")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "流程设置字段配置新增")
-//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto) {
-//        return success(cfgProcessFieldMapService.addOrUpdate(dto));
-//    }
-
-    /**
-     * 修改
-     * @author hcg
-     * @date: 2025-05-12
-     * @param dto
-     * @return ApiResult
-     */
-//    @PostMapping("/update")
-//    @LogAction(value = LogActionEnum.UPDATE, desc = "流程设置字段配置修改")
-//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//        tableField = "create_user_id",
-//        menuCode = "workflow:cfgProcessFieldMap:update",
-//        serviceClass = CfgProcessFieldMapService.class,
-//        keyIdName = "id")
-//    public ApiResult<?> update(@RequestBody @Validated CfgProcessFieldMapDTO.UpdateDTO dto) {
-//        cfgProcessFieldMapService.update(dto);
-//        return success();
-//    }
-
-    /**
      * 字段配置详情
      *
      * @description:

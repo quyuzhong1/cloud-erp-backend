@@ -1,7 +1,6 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -14,8 +13,6 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.ProcessFormEvent;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
@@ -135,7 +132,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //保存执行条件
         cfgProcessRuleService.update(cfgProcessEntity.getBussinessKey(), cfgProcessEntity.getId(), dto.getProcessRuleDTOList());
         // 操作日志
-        operateLogService.addModuleOperateLogByObj(old, cfgProcessEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "更新操作");
+        operateLogService.addModuleOperateLogByObj(old, cfgProcessEntity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "编辑信息");
         return new BaseResultDTO.AddDTO(cfgProcessEntity.getId(), dto.getCode());
     }
 
@@ -175,7 +172,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                 } catch (IllegalArgumentException e) {
                     // 处理枚举值不存在的情况，例如记录日志或设置一个默认名称
                     // log.warn("未知的 thirdFieldType: {}", fieldMapDto.getThirdFieldType());
-                    throw new ServiceException("流程配置详情接口飞书字段类型转换异常");
+                    throw new ServiceException("流程配置详情接口飞，书字段类型Name转换异常");
                 }
                 if (StrUtil.isBlank(fieldMapDto.getSysFieldType())) {
                     continue;
@@ -184,7 +181,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                     fieldMapDto.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(fieldMapDto.getSysFieldType().toUpperCase()).getName());
                 } catch (IllegalArgumentException e) {
                     // log.warn("未知的 sysFieldType: {}", fieldMapDto.getSysFieldType());
-                    throw new ServiceException("流程配置详情接口数大臣字段类型转换异常");
+                    throw new ServiceException("流程配置详情接口,数大臣字段类型Name转换异常");
                 }
 
             }
@@ -195,7 +192,12 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
+        // 操作日志 TODO删除返回主表，然后根据主表id判断下是否存在rule，不存在主表同时删除
         cfgProcessRuleService.delete(ids);
+
+//        String msg = StrUtil.format("新增【{}】配置编码为【{}】", "流程配置", cfgProcessEntity.getCode());
+//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "新增操作");
+
     }
 
     @Override
@@ -267,7 +269,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "E02ECBC5-7BD1-4C11-B23D-1ED678F3806F").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
-        ProcessFormHandler handler = fsProcessFormFactory.getFileHandler(ProcessFormEvent.FS_PROCESS_FORM.getCode());
+        ProcessFormHandler handler = fsProcessFormFactory.getFileHandler(CfgProcessRuleTypeEnum.getName(dto.getRuleType()));
         formArray = handler.assemble(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
         String form = JSONUtil.toJsonStr(formArray);
         CreateInstanceReq req = CreateInstanceReq.newBuilder()

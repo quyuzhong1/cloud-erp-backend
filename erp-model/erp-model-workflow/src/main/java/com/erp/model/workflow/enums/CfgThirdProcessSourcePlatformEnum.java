@@ -1,20 +1,24 @@
 package com.erp.model.workflow.enums;
+
+/**
+ * @description:
+ * @author: hcg
+ * @date: 2025/5/23 21:04
+ */
+
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
 /**
- * <p>
- * 流程设置执行条件 流程类型 枚举
- * </p>
- *
- * @author hcg
- * @since 2025-05-13 09:43:58
+ *@Author: hcg
+ *@CreateTime: 2025-05-23
+ *@Description:
+ *@Version: 1.0
  */
-public enum CfgProcessRuleTypeEnum implements EnumMessage {
-	ERPPROCESS("erpProcess", "ERP流程"),
-	FSPROCESS("fsProcess", "飞书流程"),
+public enum CfgThirdProcessSourcePlatformEnum implements EnumMessage {
+    FS_AUDIT("fsAudit", "飞书审核"),
     ;
     /**
      * 类型
@@ -27,7 +31,7 @@ public enum CfgProcessRuleTypeEnum implements EnumMessage {
      */
     private String name;
 
-    CfgProcessRuleTypeEnum(String code, String name) {
+    CfgThirdProcessSourcePlatformEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -46,23 +50,11 @@ public enum CfgProcessRuleTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (CfgProcessRuleTypeEnum statusEnum : CfgProcessRuleTypeEnum.values()) {
+        for (CfgQueryOptionFieldTypeEnum statusEnum : CfgQueryOptionFieldTypeEnum.values()) {
             if (code.equals(statusEnum.getCode())) {
                 return statusEnum.getName();
             }
         }
         return "";
-    }
-
-    public static CfgProcessRuleTypeEnum getByCode(String code) {
-        if (StringUtils.isBlank(code)) {
-            return null;
-        }
-        for (CfgProcessRuleTypeEnum statusEnum : CfgProcessRuleTypeEnum.values()) {
-            if (code.equals(statusEnum.getCode())) {
-                return statusEnum;
-            }
-        }
-        return null;
     }
 }

@@ -47,6 +47,14 @@ public interface CfgProcessRuleService extends SuperService<CfgProcessRuleEntity
      */
     void delete(List<String> ids);
 
+    /**
+     * 更新默认
+     *
+     * @author hcg
+     * @date: 2025-05-12
+     * @param dto
+     * @return
+     */
     BaseResultDTO.UpdateDTO updateDefault(CfgProcessRuleDTO.UpdateStateDTO dto);
     /**
      * 根据流程定义id查询规则
@@ -66,5 +74,12 @@ public interface CfgProcessRuleService extends SuperService<CfgProcessRuleEntity
      */
     List<CfgProcessRuleEntity> listByProcessId(String id,String type);
 
+    /**
+     * 获取ERP流程定义版本
+     * @author hcg
+     * @date: 2025-05-12
+     * @param processDefinitionId
+     * @return
+     */
     String getVersion(String processDefinitionId);
 }

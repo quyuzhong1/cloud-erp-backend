@@ -39,46 +39,13 @@ public class CfgProcessExpController extends BaseController {
     private CfgProcessExpService cfgProcessExpService;
 
     /**
-    * 新增
-    * @author hcg
-    * @date:  2025-05-12
-    * @param dto
-    * @return ApiResult<String>
-    */
-//    @PostMapping("/add")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "流程设置审核条件新增")
-//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated List<CfgProcessExpDTO.AddOrUpdateDTO> dto) {
-//        return success(cfgProcessExpService.addOrUpdate(dto));
-//    }
-
-    /**
-    * 修改
-    * @author hcg
-    * @date:  2025-05-12
-    * @param dto
-    * @return ApiResult
-    */
-//    @PostMapping("/update")
-//    @LogAction(value = LogActionEnum.UPDATE, desc = "流程设置审核条件修改")
-//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//        tableField = "create_user_id",
-//        menuCode = "workflow:cfgProcessExp:update",
-//        serviceClass = CfgProcessExpService.class,
-//        keyIdName = "id")
-//    public ApiResult<?> update(@RequestBody @Validated CfgProcessExpDTO.AddOrUpdateDTO dto) {
-//        cfgProcessExpService.update(dto);
-//        return success();
-//    }
-
-
-    /**
      * 审核条件详情
      *
      * @description:
      * @author: hcg
      * @date: 2025/4/9 14:40
      * @param: BaseIdDTO
-     * @return: CfgInvoiceSettingDTO.ViewDTO
+     * @return: List<CfgProcessExpDTO.ViewDTO>
      **/
     @GetMapping("/view")
     public ApiResult<List<CfgProcessExpDTO.ViewDTO>> view(@RequestParam(value = "ruleId") String ruleId) {

@@ -37,8 +37,21 @@ public interface CfgProcessFieldMapService extends SuperService<CfgProcessFieldM
      */
     BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
 
-
+    /**
+     * 字段映射详情接口：初次调用解析飞书FormJson
+     * @author hcg
+     * @date: 2025-05-12
+     * @param ruleId
+     * @return
+     */
     List<CfgProcessFieldMapDTO.ViewDTO> view(String ruleId);
 
+    /**
+     * 删除
+     * @author hcg
+     * @date: 2025-05-12
+     * @param ids
+     * @return
+     */
     void delete(List<String> ids);
 }

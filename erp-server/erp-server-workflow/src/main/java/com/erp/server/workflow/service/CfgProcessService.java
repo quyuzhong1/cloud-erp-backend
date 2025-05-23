@@ -48,13 +48,40 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
      */
     PagingVO<CfgProcessDTO.ProcessViewDTO> paging(PagingDTO<CfgProcessDTO.SearchParamDTO> dto);
 
+    /**
+     * 详情接口
+     * @author hcg
+     * @date: 2025-05-12
+     * @param settingId
+     * @return
+     */
     CfgProcessDTO.ViewDTO view(String settingId);
 
+    /**
+     * 删除
+     * @author hcg
+     * @date: 2025-05-12
+     * @param ids
+     * @return
+     */
     void delete(@NotEmpty(message = "ids不能为空") List<String> ids);
 
+    /**
+     * 导出
+     * @author hcg
+     * @date: 2025-05-12
+     * @param dto
+     * @return
+     */
     void exportList(CfgProcessDTO.SearchParamDTO dto);
 
-
+    /**
+     * tab页
+     * @author hcg
+     * @date: 2025-05-12
+     * @param dto
+     * @return
+     */
     List<CfgProcessDTO.TabListDTO> tabList(PermissionsDTO dto);
     /**
      * 查询流程配置
@@ -65,6 +92,13 @@ public interface CfgProcessService extends SuperService<CfgProcessEntity> {
      */
     CfgProcessEntity getByBusinessKey(String businessKey);
 
+    /**
+     * 测试接口，测试发起飞书审批实例
+     * @author hcg
+     * @date: 2025-05-12
+     * @param dto
+     * @return
+     */
     void startThirdProcess(CfgProcessDTO.StartDTO dto);
 }
 
