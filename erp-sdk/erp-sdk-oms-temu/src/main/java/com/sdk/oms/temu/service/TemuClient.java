@@ -66,11 +66,11 @@ public class TemuClient {
         temuCommonDTO.setAppSecret(clientSecret);
         temuCommonDTO.setAppKey(clientId);
         temuCommonDTO.setAreaCode("US");
-        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-17525198915191892"));
-        temuCommonDTO.setParentOrderSn("PO-211-17525198915191892");
-        temuCommonDTO.setOrderSn( "211-17525268383351892");
+        temuCommonDTO.setParentOrderSnList(Arrays.asList("PO-211-07124014387832736","PO-211-05046551020152577","PO-211-05416103352950372","PO-211-05534995799670177"));
+        temuCommonDTO.setParentOrderSn("PO-211-05416103352950372");
+        temuCommonDTO.setOrderSn( "211-05416119081590372");
         TemuClient temuClient = new TemuClient();
-        temuClient.getLogisticsShipment(temuCommonDTO);
+        TemuResp<TemuOrderDTO> resp = temuClient.getOrderList(temuCommonDTO);
         System.out.println(1231);
     }
 
@@ -103,6 +103,7 @@ public class TemuClient {
         Map<String, Object> params = this.buildDefaultParams(temuOrderReq, api);
         Gson gson = new Gson();
         String jsonArray = gson.toJson(temuOrderReq.getParentOrderSnList());
+        params.put("pageSize",20);
         params.put("parentOrderSnList",jsonArray);
         String typeJsonArray = gson.toJson(Arrays.asList("fulfillBySeller","fulfillByCooperativeWarehouse"));
         params.put("fulfillmentTypeList",typeJsonArray);
