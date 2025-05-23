@@ -14,7 +14,7 @@ public interface ExportWorkflowFeign {
     @PostMapping("/feign/export/processDefinition")
     PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
     @PostMapping("/feign/export/processManagement")
-    PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(@RequestBody PagingDTO<ProcessManagementDTO.ExportDTO> dto);
+    PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(@RequestBody PagingDTO<ProcessManagementDTO.SearchDTO> dto);
     /**
      * 委托审批导出
      * @author will 

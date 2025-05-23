@@ -161,20 +161,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-        // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
+        String processDefinitionId = getProcessDefinitionId(dto);
+        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+            // 业务无已启用的Erp流程配置
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
-        return startProcess(dto, processBusiness.getProcessDefinitionId());
-//        String processDefinitionId = getProcessDefinitionId(dto);
-//        if (CharSequenceUtil.isBlank(processDefinitionId)) {
-//            // 业务无已启用的Erp流程配置
-//            return new ProcessManagementDTO.StartResultDTO(dto);
-//        }
-//        //启动流程
-//        return startProcess(dto, processDefinitionId);
+        //启动流程
+        return startProcess(dto, processDefinitionId);
     }
 
 
@@ -794,7 +787,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
         }
         // 删除本地流程任务数据
-        processTaskManagementService.removeByProcessInstanceId(processInstance.getProcessInstanceId());
+        removeByProcessInstanceId(processInstance.getProcessInstanceId());
 
         // 完成新增数据事务提交之后,发送MQ消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -848,6 +841,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             if (record.getTaskStatus() != null) {
                 record.setTaskStatusName(record.getTaskStatus().getName());
+            }
+            if (record.getSourcePlatform() != null) {
+                record.setSourcePlatformName(ProcessSourcePlatformEnum.getName(record.getSourcePlatform()));
             }
             record.setBusinessKeyName(SourceTypeEnum.getName(record.getBusinessKey()));
         });
@@ -1332,17 +1328,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             exitTaskIdList.addAll(curTaskIdList);
         }
-    }
-
-    @Override
-    public PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(PagingDTO<ProcessManagementDTO.ExportDTO> dto) {
-        // 查询流程实例
-        Page<ProcessManagementDTO.PagingResultDTO> page = baseMapper.export(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
-        if (!CollectionUtils.isEmpty(page.getRecords())) {
-            page.getRecords().stream().filter(item -> ObjectUtil.isNotEmpty(item.getProcessStatus()))
-                    .forEach(x -> x.setProcessStatusName(x.getProcessStatus().getName()));
-        }
-        return new PagingVO<>(page);
     }
 
     @Override

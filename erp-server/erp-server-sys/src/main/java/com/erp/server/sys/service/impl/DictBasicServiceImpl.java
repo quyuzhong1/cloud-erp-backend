@@ -1,5 +1,6 @@
 package com.erp.server.sys.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.dto.DictBasicDTO;
@@ -72,5 +73,23 @@ public class DictBasicServiceImpl extends SuperServiceImpl<DictBasicMapper, Dict
             return Collections.emptyList();
         }
         return this.lambdaQuery().in(DictBasicEntity::getValue,itemRoleValueList).list();
+    }
+
+    /**
+     * 根据类型和值获取到对应信息
+     *
+     * @param type
+     * @param value
+     * @return DictBasicEntity
+     * @author yl
+     * @date 2023-06-28 16:25
+     */
+    @Override
+    public DictBasicEntity getByTypeAndValue(String type, String value) {
+        LambdaQueryWrapper<DictBasicEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(DictBasicEntity::getType, type);
+        queryWrapper.eq(DictBasicEntity::getValue, value);
+        queryWrapper.last("LIMIT 1");
+        return this.getOne(queryWrapper);
     }
 }

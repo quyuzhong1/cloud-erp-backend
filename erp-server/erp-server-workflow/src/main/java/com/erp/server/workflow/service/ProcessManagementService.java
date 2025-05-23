@@ -221,7 +221,6 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      */
     void sameApproverAutoPass(ProcessManagementDTO.ApproveDTO dto, String processDefinitionId,String processInstanceId);
 
-    PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(PagingDTO<ProcessManagementDTO.ExportDTO> dto);
     /**
      * 更新业务单据状态
      * @author will
