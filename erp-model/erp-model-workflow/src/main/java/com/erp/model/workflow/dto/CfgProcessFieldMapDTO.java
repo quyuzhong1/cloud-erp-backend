@@ -178,13 +178,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private Boolean thirdFieldRequired;
 
         /**
-        * 第三方字段说明：description
-        */
-        @NotBlank(message = "第三方字段说明：description不能为空")
-        @Size(max = 100,message = "第三方字段说明：description最大长度不能超过100位")
-        private String thirdFieldDescription;
-
-        /**
         * 数大臣字段
         */
         @NotBlank(message = "数大臣字段不能为空")
@@ -214,7 +207,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 默认值
         */
-        @Size(max = 30,message = "默认值最大长度不能超过30位")
+        @Size(max = 255,message = "默认值最大长度不能超过30位")
         private String defaultValue;
 
         /**

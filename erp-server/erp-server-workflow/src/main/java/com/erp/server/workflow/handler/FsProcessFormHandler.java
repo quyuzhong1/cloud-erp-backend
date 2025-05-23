@@ -2,6 +2,7 @@ package com.erp.server.workflow.handler;
 
 /**
  * @description: 飞书解析form类
+ * TODO：未支持金额、图片、部门、联系人控件类型
  * @author: hcg
  * @date: 2025/5/20 12:04
  */
@@ -13,6 +14,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.common.business.enums.ProcessFormEvent;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
@@ -138,19 +140,17 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     String childSysField = fieldMap.getSysField();
                     String childDefault = fieldMap.getDefaultValue();
 
-                    // 跳过无字段对应的情况
-                    if (StrUtil.isEmpty(childSysField)) {
+                    if ("default".equals(childSysField) || "null_Value".equals(childSysField)) {
+                        JSONObject detailItem = createDetailItem(childId, childType, childDefault);
+                        row.add(detailItem);
                         continue;
                     }
 
                     // 获取字段值
                     Object childValue = detailRow.get(childSysField);
-                    if (childValue == null) {
-                        childValue = childDefault;
-                    }
 
                     // 执行值映射处理
-                    childValue = mapFieldValue(childId, childType, childValue, childDefault, tidToIdMap, valueMapListMap);
+                    childValue = mapFieldValue(childId, childType, childValue, tidToIdMap, valueMapListMap);
 
                     // 特殊类型处理
                     if ("attachmentV2".equals(childType)) {
@@ -195,16 +195,19 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         }
 
         String sysField = entity.getSysField();
-        if (StrUtil.isEmpty(sysField)) {
-            return; // 无字段对应，跳过处理
+        String defaultValue = entity.getDefaultValue();
+
+        if ("default".equals(sysField) || "null_Value".equals(sysField)) {
+            formField.set("value", defaultValue);
+            return;
         }
 
-        String defaultValue = entity.getDefaultValue();
         Object rawValue = variablesMap.get(sysField);
-
         // 执行值映射处理
-        Object finalValue = mapFieldValue(thirdFieldId, type, rawValue, defaultValue, tidToIdMap, valueMapListMap);
-
+        Object finalValue = mapFieldValue(thirdFieldId, type, rawValue, tidToIdMap, valueMapListMap);
+        if (finalValue == null){
+            throw new ServiceException("字段映射错误,未获取到{}对应的值，请检查单据数据是否有缺陷",entity.getSysField());
+        }
         // 特殊类型处理
         if ("attachmentV2".equals(type)) {
             List<String> fileCodeList = processAttachment(finalValue);
@@ -278,39 +281,26 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         }
     }
 
-    private Object mapFieldValue(String fieldId, String fieldType, Object rawValue, String defaultValue,
+    private Object mapFieldValue(String fieldId, String fieldType, Object rawValue,
                                  Map<String, String> tidToIdMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap) {
-        // 处理空值情况
-        if (rawValue == null || StrUtil.isBlank(rawValue.toString())) {
-            String fieldMapId = tidToIdMap.get(fieldId);
-            List<CfgProcessValueMapEntity> valueMappings = valueMapListMap.get(fieldMapId);
 
-            // 查找默认值映射
-            if (valueMappings != null) {
-                Optional<String> mappedDefault = valueMappings.stream()
-                        .filter(vm -> "defalut".equals(vm.getSysValue()))
-                        .map(CfgProcessValueMapEntity::getDefaultValue)
-                        .findFirst();
-
-                if (mappedDefault.isPresent()) {
-                    return mappedDefault.get();
-                }
-
-                // 如果没有找到默认值映射，尝试使用第一个映射值
-                if (!valueMappings.isEmpty()) {
-                    return valueMappings.get(0).getThirdValue();
-                }
-            }
-
-            // 如果没有任何映射，返回原始默认值
-            return defaultValue;
-        }
-
-        // 获取字段的值映射配置
         String fieldMapId = tidToIdMap.get(fieldId);
         List<CfgProcessValueMapEntity> valueMappings = valueMapListMap.get(fieldMapId);
 
-        // 如果没有映射配置，直接返回原值
+        // 当rawValue为空时，获取对应值映射中sysValue为default记录的default_value字段作为rawValue
+        if (rawValue == null || StrUtil.isBlank(rawValue.toString())) {
+            if (valueMappings != null) {
+                Optional<String> mappedDefault = valueMappings.stream()
+                        .filter(vm -> "default".equals(vm.getSysValue()))
+                        .map(CfgProcessValueMapEntity::getDefaultValue)
+                        .findFirst();
+                if (mappedDefault.isPresent()) {
+                    rawValue = mappedDefault.get();
+                }
+            }
+        }
+
+        // 如果没有映射配置，直接返回rawValue
         if (valueMappings == null || valueMappings.isEmpty()) {
             return rawValue;
         }

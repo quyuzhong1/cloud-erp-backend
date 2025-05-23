@@ -129,7 +129,7 @@ public class CfgProcessExpDTO implements Serializable {
         /**
         * 条件值
         */
-        @Size(max = 100,message = "条件值最大长度不能超过100位")
+        @Size(max = 255,message = "条件值最大长度不能超过100位")
         private String value;
 
         /**
@@ -154,7 +154,7 @@ public class CfgProcessExpDTO implements Serializable {
         /**
         * 值对应名称
         */
-        @Size(max = 100,message = "值对应名称最大长度不能超过100位")
+        @Size(max = 255,message = "值对应名称最大长度不能超过100位")
         private String name;
     }
 

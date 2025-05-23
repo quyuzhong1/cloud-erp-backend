@@ -54,10 +54,10 @@
         p.id AS process_id,
         p.code AS process_code,
         p.name AS process_name,
-        p.bussiness_key AS process_bussiness_key,
+        wm.module_classify AS process_bussiness_key,
 
         r.id AS rule_id,
-        r.type AS rule_type,
+        db.name AS rule_type,
         r.disabled AS rule_disabled,
         r.create_time AS rule_create_time,
         r.create_user_name AS rule_create_user_name,
@@ -90,6 +90,8 @@
         LEFT JOIN public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
         LEFT JOIN public.dict_rule_condition drc ON e.compare = drc.key AND drc.is_deleted = false
         LEFT JOIN public.cfg_query_option cqo ON p.bussiness_key = cqo.bussiness_key AND e.field = cqo.condition_field AND cqo.is_deleted = false
+        LEFT JOIN public.dict_basic db ON r.type = db.value AND db.is_deleted = false
+        LEFT JOIN public.work_menu wm ON wm.module_code = p.bussiness_key AND wm.is_deleted = false
 
         WHERE
         ${params.sqlMap.default}
@@ -112,7 +114,9 @@
         r.update_time,
         r.update_user_name,
         tpd.name,
-        pd.process_name
+        pd.process_name,
+        wm.module_classify,
+        db.name
 
         ORDER BY p.code DESC, r.create_time ASC
     </select>
