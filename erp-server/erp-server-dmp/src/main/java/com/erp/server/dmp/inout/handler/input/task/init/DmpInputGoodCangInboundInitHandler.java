@@ -57,12 +57,15 @@ public class DmpInputGoodCangInboundInitHandler extends DmpInputInitHandler{
                 ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
                 ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_GOOD_CANG.getCode());
         List<GoodCangReceiptBatchResp> allResult = new ArrayList<>();
-        
+        if (receiveCodeList.contains("RVG1149-250519-0015")){
+			receiveCodeList = Arrays.asList("RVG1149-250519-0015");
+		}
+
         if(CollUtil.isNotEmpty(receiveCodeList)) {
         	String typeId = dmpCfgInputEntity.getTypeId();
             DmpCfgApiEntity dmpCfgApiEntity = dmpCfgApiService.getById(typeId);
             String apiType = dmpCfgApiEntity.getApiType();
-            
+
             List<OverseasProviderEntity> overseasProviderEntityList = dmpHandlerCache.getOverseasProviderEntityList(d -> d.getCode().equals(DmpBasicSystemCodeEnum.GOODCANG.getCode()));
             if(CollUtil.isEmpty(overseasProviderEntityList)) {
             	throw new ServiceException("谷仓授权信息不存在");
@@ -76,7 +79,7 @@ public class DmpInputGoodCangInboundInitHandler extends DmpInputInitHandler{
 				throw new ServiceException("谷仓对应授权ID信息不存在");
 			}
             ThirdWarehouseContext.setAuthMap(overseasProviderEntity.getAuthJson());
-            
+
             for(String receiveCode : receiveCodeList) {
             	Map<String,Object> paramsMap = new HashMap<>();
                 paramsMap.put("receiving_code",receiveCode);
