@@ -2,7 +2,9 @@ package com.sdk.wms.jifeng.enums;
 
 
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
+import io.seata.common.util.StringUtils;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -96,6 +98,53 @@ public enum JiFengEnums {
                     .findFirst()
                     .map(InterceptStatusEnum::getName)
                     .orElse(null);
+        }
+    }
+
+
+    /**
+     * 退件类型
+     */
+    @Getter
+    public enum ReturnInstockTypeEnum {
+        RETURNS_FROM_SERVICE_PROVIDERS(1,"服务商退件", SoB2cReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        CUSTOMER_RETURNS(2,"客户退件", SoB2cReturnTypeEnum.CUSTOMER_RETURNS),
+        ;
+        private final Integer code;
+        private final String name;
+        private final SoB2cReturnTypeEnum erpEnum;
+
+        ReturnInstockTypeEnum(Integer code, String name, SoB2cReturnTypeEnum erpEnum) {
+            this.code = code;
+            this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static Integer getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(ReturnInstockTypeEnum::getCode)
+                    .orElse(null);
+        }
+
+        public static ReturnInstockTypeEnum getByCode(Integer code) {
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(e -> e.getCode().equals(code))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        public static String getErpStatus(String code){
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(item -> item.getCode().toString().equalsIgnoreCase(code))
+                    .findFirst()
+                    .map(ReturnInstockTypeEnum::getErpEnum)
+                    .map(SoB2cReturnTypeEnum::getCode)
+                    .orElse("");
         }
     }
 }

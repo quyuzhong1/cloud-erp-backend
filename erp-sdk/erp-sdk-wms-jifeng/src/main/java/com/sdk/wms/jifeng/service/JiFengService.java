@@ -10,9 +10,11 @@ import com.common.core.utils.OkHttpUtils;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateOutboundRequest;
+import com.sdk.wms.jifeng.dto.request.JiFengReturnOrderRequest;
 import com.sdk.wms.jifeng.dto.response.*;
 import com.sdk.wms.jifeng.utils.JiFengUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
@@ -28,7 +30,7 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","d8056a7e41b94b519c649343859286f4");
+        authMap.put("accessToken","a8d18b3d86f14e7cafa2c00de500ed03");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
@@ -36,8 +38,10 @@ public class JiFengService {
         jiFengCreateInboundRequest.setErpNo("FHD123456");
         jiFengCreateInboundRequest.setTrackingNo("test123456");
         jiFengCreateInboundRequest.setExpectedTime("2025-06-19 00:00:10");
-//        jiFengCreateInboundRequest
-        jiFengService.getOrder(authMap,Arrays.asList("XSDS250522000001","XSDS250521000002","14123"));
+        JiFengReturnOrderRequest request = new JiFengReturnOrderRequest();
+        request.setBeginTime("2025-05-23 05:00:10");
+        request.setEndTime("2025-05-23 10:00:10");
+        jiFengService.getReturnOrder(authMap,request);
         System.out.println(123);
     }
 //    public static void main(String[] args) {
@@ -376,6 +380,60 @@ public class JiFengService {
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
         JiFengBaseResp<List<JiFengOutboundResp>> response = JiFengUtils.parseToJiFengResp(bodyStr,new TypeReference<JiFengBaseResp<List<JiFengOutboundResp>>>() {});
         return response;
+    }
+
+
+    /**
+     * 查询退货订单
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<List<JiFengReturnOrderResp.RowsDTO>> getReturnOrder(Map<String,Object> authMap, JiFengReturnOrderRequest request){
+        String path = "/api/inbound/return/getByPage";
+        String url = getUrl(authMap.get("domain").toString());
+        List<JiFengReturnOrderResp.RowsDTO> allData = new ArrayList<>();
+        int pageNo = 1;
+        boolean hasMore = true;
+
+        while (hasMore) {
+            Map<String, Object> bodyMap = new HashMap<>();
+            bodyMap.put("beginTime",request.getBeginTime());
+            bodyMap.put("endTime",request.getEndTime());
+            bodyMap.put("pageNo", pageNo);
+            bodyMap.put("pageSize", 50); // 每页大小，可根据实际情况调整
+            Map<String, String> headerMap = buildHearderMap(authMap, path);
+            String bodyStr = OkHttpUtils.doPostJson(url+path, bodyMap, headerMap);
+            JiFengBaseResp<JiFengReturnOrderResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengReturnOrderResp.class);
+
+            if (response.getCode() == 0) {
+                JiFengReturnOrderResp pageData = response.getData();
+                if (pageData != null && pageData.getPageNo() != null && CollectionUtils.isNotEmpty(pageData.getRows())) {
+                    allData.addAll(pageData.getRows());
+
+                    // 判断是否还有下一页
+                    if (pageData.getRows().isEmpty() || pageData.getTotalPage() <= pageNo) {
+                        hasMore = false;
+                    } else {
+                        pageNo++;
+                    }
+                } else {
+                    hasMore = false;
+                }
+            } else {
+                // 如果请求失败，直接返回错误信息
+                JiFengBaseResp<List<JiFengReturnOrderResp.RowsDTO>> errorResp = new JiFengBaseResp<>();
+                errorResp.setCode(response.getCode());
+                errorResp.setMessage(response.getMessage());
+                errorResp.setRequestId(response.getRequestId());
+                return errorResp;
+            }
+        }
+
+        JiFengBaseResp<List<JiFengReturnOrderResp.RowsDTO>> result = new JiFengBaseResp<>();
+        result.setCode(0);
+        result.setMessage("success");
+        result.setData(allData);
+        return result;
     }
 
     private Map<String, String> buildHearderMap(Map<String, Object> authMap, String path) {
