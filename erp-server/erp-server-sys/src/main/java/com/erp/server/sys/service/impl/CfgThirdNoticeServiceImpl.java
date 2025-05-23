@@ -1,13 +1,18 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.entity.CfgThirdNoticeEntity;
+import com.erp.model.workflow.dto.CfgApproveSyncDTO;
+import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.server.sys.mapper.CfgThirdNoticeMapper;
 import com.erp.server.sys.service.CfgThirdNoticeService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -21,9 +26,12 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
 /**
@@ -37,8 +45,10 @@ import javax.servlet.http.HttpServletResponse;
 @Slf4j
 @Service
 public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMapper, CfgThirdNoticeEntity> implements CfgThirdNoticeService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
+
+
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -93,13 +103,38 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     }
 
     @Override
-    public List<CfgThirdNoticeDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        return Collections.emptyList();
+    public List<CfgThirdNoticeDTO.TabListDTO> tabList(PermissionsDTO param) {
+        CfgThirdNoticeDTO.PagingParamDTO searchParam = new CfgThirdNoticeDTO.PagingParamDTO();
+        searchParam.setPermissionSql(param.getPermissionSql());
+        List<CfgThirdNoticeDTO.TabListDTO> list = baseMapper.tabList(searchParam);
+        List<CfgThirdNoticeDTO.TabListDTO> result = new ArrayList<>();
+        CfgThirdNoticeDTO.TabListDTO enable = list.stream().filter(e -> e.getTabFlag().equals("t")).findFirst().orElse(null);
+        CfgThirdNoticeDTO.TabListDTO disable = list.stream().filter(e -> e.getTabFlag().equals("f")).findFirst().orElse(null);
+        result.add(new CfgThirdNoticeDTO.TabListDTO("all", "全部" , 0));
+        result.add(new CfgThirdNoticeDTO.TabListDTO("true", "启用" , null == enable ? 0 : enable.getCount()));
+        result.add(new CfgThirdNoticeDTO.TabListDTO("false", "停用" ,null == disable ? 0 : disable.getCount()));
+        return result;
     }
 
     @Override
-    public PagingVO<CfgThirdNoticeDTO.ListDTO> paging(PagingDTO<CfgThirdNoticeDTO.PagingParamDTO> dto) {
-        return null;
+    public PagingVO<CfgThirdNoticeDTO.ListDTO> paging(PagingDTO<CfgThirdNoticeDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<CfgThirdNoticeDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
+        if(CollUtil.isEmpty(pageData.getRecords())) {
+            return new PagingVO(pageData);
+        }
+        // 数据处理
+        fillList(pageData.getRecords());
+        return new PagingVO(pageData);
+    }
+
+    private void fillList(List<CfgThirdNoticeDTO.ListDTO> records) {
+        //飞书
+        for (CfgThirdNoticeDTO.ListDTO record : records) {
+
+
+        }
     }
 
     @Override

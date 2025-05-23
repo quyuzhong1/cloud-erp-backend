@@ -288,6 +288,16 @@ public class CfgThirdNoticeDTO implements Serializable {
          */
         private String specificPerson;
         private String specificPersonName;
+
+        /**
+         * 通知标题
+         */
+        private String title;
+
+        /**
+         * 通知时间类型
+         */
+        private String cronType;
     }
 
     @Data
