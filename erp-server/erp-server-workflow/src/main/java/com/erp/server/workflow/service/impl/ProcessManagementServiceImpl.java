@@ -794,7 +794,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
         }
         // 删除本地流程任务数据
-        processTaskManagementService.removeByProcessInstanceId(processInstance.getProcessInstanceId());
+        removeByProcessInstanceId(processInstance.getProcessInstanceId());
 
         // 完成新增数据事务提交之后,发送MQ消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
@@ -848,6 +848,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             }
             if (record.getTaskStatus() != null) {
                 record.setTaskStatusName(record.getTaskStatus().getName());
+            }
+            if (record.getSourcePlatform() != null) {
+                record.setSourcePlatformName(ProcessSourcePlatformEnum.getName(record.getSourcePlatform()));
             }
             record.setBusinessKeyName(SourceTypeEnum.getName(record.getBusinessKey()));
         });

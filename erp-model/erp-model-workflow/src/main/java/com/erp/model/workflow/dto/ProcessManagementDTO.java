@@ -692,15 +692,6 @@ public class ProcessManagementDTO {
     @Data
     @NoArgsConstructor
     public static class SearchDTO extends SortDTO {
-
-        private List<String> businessNames;
-
-        private List<ProcessStatusEnum> processStatus;
-
-        private Integer processVersion;
-
-        private String processName;
-
         /**
          * 页面高级查询
          */
@@ -797,7 +788,7 @@ public class ProcessManagementDTO {
          */
         private String sourcePlatformName;
         /**
-         * 标签标识
+         * 标签标识,isDelegate委托
          */
         private JSONObject labelJson;
         /**
