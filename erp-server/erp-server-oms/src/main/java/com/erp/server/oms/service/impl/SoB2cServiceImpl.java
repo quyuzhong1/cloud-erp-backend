@@ -390,8 +390,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private SoPriceService soPriceService;
-    @Resource
-    private SyncSoB2cService syncSoB2cService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
