@@ -1,10 +1,8 @@
 package com.erp.server.workflow.controller.feign;
 
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.*;
-import com.erp.server.workflow.query.CfgApproveSyncQueryHandler;
 import com.erp.server.workflow.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,8 +35,8 @@ public class ExportWorkflowFeignController {
         return processDefinitionService.exportProcessDefinition(dto);
     }
     @PostMapping("/processManagement")
-    public PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(@RequestBody PagingDTO<ProcessManagementDTO.ExportDTO> dto){
-        return processManagementService.exportProcessManagement(dto);
+    public PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(@RequestBody PagingDTO<ProcessManagementDTO.SearchDTO> dto){
+        return processManagementService.paging(dto);
     }
     /**
      * 委托审批导出
