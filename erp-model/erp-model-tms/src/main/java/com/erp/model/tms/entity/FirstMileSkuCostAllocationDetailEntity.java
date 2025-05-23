@@ -134,6 +134,13 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
     @TableField(exist = false)
     private String platformSkuNo;
     /**
+     * 账单来源：estimated=预估账单，actual=实际账单
+     * ReconciliationBillTypeEnum
+     *
+     */
+    @TableField(exist = false)
+    private String billSourceType;
+    /**
      * 费用分摊状态
      * AllocationStatusEnum
      */
