@@ -184,46 +184,6 @@ public class CfgProcessDTO implements Serializable {
         private String updateUserName;
     }
 
-    @Data
-    @NoArgsConstructor
-    public static class ProcessDTO {
-        private String id;
-        private String code;
-        private String name;
-        private String bussinessKey;
-        private List<ProcessRuleDTO> ruleList;
-    }
-
-    /**
-     * 详情
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ProcessRuleDTO {
-        private String id;
-        private String ruleDesc;
-        private String type;
-        private String processDefinitionName;
-        private String processDefinitionVersion;
-        private Boolean disabled;
-        private Boolean isDefault;
-        private LocalDateTime createTime;
-        private String createUserName;
-        private LocalDateTime updateTime;
-        private String updateUserName;
-        private List<ProcessExpDTO> expList;
-    }
-
-    /**
-     * 详情
-     */
-    @Data
-    @NoArgsConstructor
-    public static class ProcessExpDTO {
-        private String index;
-        private String expDesc;
-    }
-
     /**
      * 状态统计
      */

@@ -62,7 +62,6 @@ public class ProcessDefinitionDTO {
         /**
          * 业务类型关联id
          */
-        @NotNull(message = "业务类型关联id不能为空")
         private String businessId;
 
         /**

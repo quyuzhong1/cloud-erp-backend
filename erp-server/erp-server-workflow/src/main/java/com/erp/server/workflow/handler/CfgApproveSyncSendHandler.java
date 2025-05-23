@@ -1,6 +1,7 @@
 package com.erp.server.workflow.handler;
 import cn.hutool.core.collection.CollUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
@@ -88,7 +89,7 @@ public class CfgApproveSyncSendHandler {
 
         //审批状态
         String approveType = dto.getApproveType();
-        if(StringUtils.isBlank(approveType)){//创建流程
+        if(StringUtils.isBlank(approveType) || (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus()) && !Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH))){//创建流程
             //发送审核通知
             CfgApproveNoticeEntity approveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode(), Boolean.TRUE);
             if (Objects.nonNull(approveNoticeEntity)) {
@@ -122,13 +123,16 @@ public class CfgApproveSyncSendHandler {
 
     //更新审批 Bot 消息
     private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status) {
-        List<String> messsageIds = processTaskManagementExtService.listByProcessTaskManagementIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
-        if(CollUtil.isNotEmpty(messsageIds)){
-            for (String messsageId : messsageIds) {
-                Boolean b = fsService.updateApproveMessage(messsageId, status);
-                if(!b){
-                    //todo , 记录失败
+        processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE )).collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(processTaskManagementEntities)){
+            List<String> messsageIds = processTaskManagementExtService.listByProcessTaskManagementIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
+            if(CollUtil.isNotEmpty(messsageIds)){
+                for (String messsageId : messsageIds) {
+                    Boolean b = fsService.updateApproveMessage(messsageId, status);
+                    if(!b){
+                        //todo , 记录失败
 
+                    }
                 }
             }
         }
@@ -176,6 +180,9 @@ public class CfgApproveSyncSendHandler {
 //                    params.setUuid(e.getId());
                     params.setApprovalName(cfgApproveSyncEntity.getTitle());
                     params.setTitleUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
+                    if(thirdUnionMap.containsKey(titleUserId)){
+                        params.setTitleUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
+                    }
                     params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
                     params.setActionDetailUrl(pcLinkByEnv);
                     params.setActionCallbackUrl("");
@@ -207,6 +214,7 @@ public class CfgApproveSyncSendHandler {
      * @date 2025-05-21
      */
     public void sendApproveNotice(NoticeTemplateEnum noticeTemplateEnum, List<String> summaries, List<ProcessTaskManagementEntity> processTaskManagementEntities, Map<String, ThirdUnionDTO> thirdUnionMap, CfgApproveSyncEntity cfgApproveSyncEntity,String pcLinkByEnv) {
+        processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE_ING )).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(processTaskManagementEntities)){
             Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
             List<FsBotParamsDTO.SendParamsDTO> sendParams = new ArrayList<>();
@@ -217,7 +225,9 @@ public class CfgApproveSyncSendHandler {
                     params.setUserId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId());
                     params.setUuid(e.getId());
                     params.setApprovalName(cfgApproveSyncEntity.getTitle());
-                    params.setTitleUserId(thirdUnionMap.get(e.getCreateUserId()).getThirdUserId());
+                    if(thirdUnionMap.containsKey(e.getCreateUserId())){
+                        params.setTitleUserId(thirdUnionMap.get(e.getCreateUserId()).getThirdUserId());
+                    }
                     params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
                     params.setActionDetailUrl(pcLinkByEnv);
                     params.setActionCallbackUrl(String.valueOf(dataJson.get("actionCallbackUrl")));

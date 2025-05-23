@@ -1367,11 +1367,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PASS_ERROR);
         }
-        entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
+        entity.setProcessStatus(ProcessStatusEnum.FINISH);
         entity.setOption(ProcessManagementOptionEnum.PASS.getCode());
         entity.setApproveStatus(ApproveStatusEnum.APPROVE);
         entity.setEndTime(LocalDateTime.now());
         processManagementService.updateById(entity);
+
+        //更新节点下任务状态为已审核
+        processTaskManagementService.updateTaskStatus(entity.getProcessInstanceId(), ApproveStatusEnum.APPROVE);
 
         //强制通过终止流程
         try {
@@ -1422,6 +1425,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
         entity.setEndTime(LocalDateTime.now());
         processManagementService.updateById(entity);
+
+        //更新节点下任务状态为审核不通过
+        processTaskManagementService.updateTaskStatus(entity.getProcessInstanceId(), ApproveStatusEnum.REJECT);
 
         //强制驳回终止流程
         try {

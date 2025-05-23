@@ -257,4 +257,11 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
         return Collections.emptyList();
     }
 
+    @Override
+    public Boolean updateTaskStatus(String processInstanceId, ApproveStatusEnum approveStatusEnum) {
+        return lambdaUpdate().eq(ProcessTaskManagementEntity::getProcessInstanceId,processInstanceId)
+                .set(ProcessTaskManagementEntity::getTaskStatus,approveStatusEnum.getCode())
+                .update();
+    }
+
 }

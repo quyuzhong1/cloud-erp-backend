@@ -41,7 +41,7 @@ public class PlmWorkflowFeignController {
      * @return Map<String, Object>
      */
     @PostMapping("/getVariablesMap")
-    public Map<String, Object> getVariablesMap(EndProcessDTO dto) {
+    public Map<String, Object> getVariablesMap(@RequestBody EndProcessDTO dto) {
         return workflowProcessService.getVariablesMap(dto);
     }
 }

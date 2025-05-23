@@ -103,10 +103,6 @@
           <if test="null != param and null != param.processVersion">
               and pm.process_version = #{param.processVersion}
           </if>
-          <if test="null != param and null == param.processStatus or param.processStatus.size() == 0">
-              and ptm.task_status = 'approveIng'
-          </if>
-
           <if test="null != param and null != param.processStatus and param.processStatus.size() > 0">
           and pm.process_status in
             <foreach collection="param.processStatus" item="processStatus" open="(" separator="," close=")">
@@ -229,7 +225,7 @@
         count(pm.id) as count
         FROM process_task_management AS ptm
         LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
-        WHERE ptm.is_deleted = FALSE   and ptm.task_status = 'approveIng'
+        WHERE ptm.is_deleted = FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

@@ -44,7 +44,11 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
     @Override
     public BaseResultDTO.AddDTO add( String cfgProcessId, String ruleId,List<CfgProcessExpDTO.AddOrUpdateDTO> addDTO) {
         log.info("开始新增流程设置审核条件");
-        // 遍历 addDTO
+        //遍历addDTO,按照顺序赋值index
+        for (int i = 0; i < addDTO.size(); i++) {
+            CfgProcessExpDTO.AddOrUpdateDTO dto = addDTO.get(i);
+            dto.setIndex(String.valueOf(i + 1));
+        }
         List<CfgProcessExpEntity> processExpEntities = BeanUtil.copyToList(addDTO, CfgProcessExpEntity.class);
         //过滤CfgProcessExpEntity的field为空的entiy,并将ruleId赋值为ruleId
         processExpEntities.removeIf(entity -> StrUtil.isBlank(entity.getField()));

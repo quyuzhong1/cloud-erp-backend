@@ -110,9 +110,6 @@ public class CfgApproveSyncBuildHandler {
         } else {
             endTimeMillis = "0";
         }
-
-
-
         ExternalInstance externalInstance = ExternalInstance.newBuilder()
                 .approvalCode(cfgApproveSyncEntity.getApprovalCode())
                 .status(mqDto.getFSApprovalStatusEnum().getCode())
@@ -146,14 +143,14 @@ public class CfgApproveSyncBuildHandler {
                     .map(e -> {
                                 num.updateAndGet(v -> v + 1);
                                 //任务标题
-                                String taskTitle = StrUtil.format("审核通知：【{}】提交的审核名称({})抄送给你", userName, cfgApproveSyncEntity.getTitle());
+                                String taskTitle = StrUtil.format("审核通知：【{}】提交的审核名称({})待你审核", userName, cfgApproveSyncEntity.getTitle());
                                 values.put("@i18n@taskTitle:"+num.get(), taskTitle);
                                 String status = FSApprovalStatusEnum.PENDING.getCode();
-                                if (e.getTaskStatus().equals(ApproveStatusEnum.REJECT)) {
-                                    status = FSApprovalStatusEnum.REJECTED.getCode();
-                                    values.put("@i18n@taskTitle:"+num.get(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已通过", userName, cfgApproveSyncEntity.getTitle()));
-                                } else if (e.getTaskStatus().equals(ApproveStatusEnum.APPROVE)) {
+                                if (e.getTaskStatus().equals(ApproveStatusEnum.APPROVE)) {
                                     status = FSApprovalStatusEnum.APPROVED.getCode();
+                                    values.put("@i18n@taskTitle:"+num.get(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已通过", userName, cfgApproveSyncEntity.getTitle()));
+                                } else if (e.getTaskStatus().equals(ApproveStatusEnum.REJECT)) {
+                                    status = FSApprovalStatusEnum.REJECTED.getCode();
                                     values.put("@i18n@taskTitle:"+num.get(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已拒绝", userName, cfgApproveSyncEntity.getTitle()));
                                 }
                                 return ExternalInstanceTaskNode.newBuilder()
