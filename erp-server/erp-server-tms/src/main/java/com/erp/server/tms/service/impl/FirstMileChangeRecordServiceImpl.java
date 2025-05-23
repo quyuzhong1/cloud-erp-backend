@@ -188,7 +188,9 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     public void saveProductWeightByEntity(List<FirstMileChangeRecordEntity> list) {
         //新增记录前修改原来的记录为非最新记录
         list.forEach(e -> {
-            e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            if (CharSequenceUtil.isBlank(e.getCode())){
+                e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            }
             if (FirstMileChangeRecordChangeRangeEnum.ORDER.getCode().equals(e.getChangeRange())){
                 this.lambdaUpdate()
                         .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
@@ -334,16 +336,21 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     @Transactional(rollbackFor = Exception.class)
     public void savePackageByEntity(List<FirstMileChangeRecordEntity> entityList) {
         //新增记录前修改原来的记录为非最新记录
-        entityList.forEach(e -> this.lambdaUpdate()
-                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
-                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
-                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
-                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
-                .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
-                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
-                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
-                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
-             .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
+        entityList.forEach(e -> {
+            if (CharSequenceUtil.isBlank(e.getCode())){
+                e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            }
+            this.lambdaUpdate()
+                    .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                    .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                    .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                    .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                    .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                    .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                    .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                    .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
+                    .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+        });
         //新增记录
         boolean saveBatch = this.saveBatch(entityList);
         if (!saveBatch){
@@ -449,16 +456,21 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
             return;
         }
         //新增记录前修改原来的记录为非最新记录
-        entityList.forEach(e -> this.lambdaUpdate()
-                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
-                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
-                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
-                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
-                .eq(FirstMileChangeRecordEntity::getSkuId, e.getSkuId())
-                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
-                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
-                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
-                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
+        entityList.forEach(e -> {
+            if (CharSequenceUtil.isBlank(e.getCode())){
+                e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            }
+            this.lambdaUpdate()
+                    .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                    .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                    .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                    .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                    .eq(FirstMileChangeRecordEntity::getSkuId, e.getSkuId())
+                    .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                    .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                    .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
+                    .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+        });
         //新增记录
         boolean saveBatch = this.saveBatch(entityList);
         if (!saveBatch){
