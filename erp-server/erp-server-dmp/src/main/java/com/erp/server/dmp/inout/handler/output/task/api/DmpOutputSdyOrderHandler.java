@@ -189,6 +189,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 }
             }
 
+            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
+
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
             	if(StringUtils.isBlank(dmpSoDetailEntity.getPlatformSku())) {
@@ -230,7 +232,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
             	shudiyunB2cOrderDTO.setStatus("已创建");
             }
 
-            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
             //总优惠金额
