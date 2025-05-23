@@ -94,6 +94,11 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
      */
     @TableField("parent_id")
     private String parentId;
+    /**
+     * 排序字段
+     */
+    @TableField("index")
+    private int index;
 
     public static final String THIRD_FIELD = "third_field";
 
@@ -124,6 +129,8 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     public static final String IS_DETAIL_FIELD = "is_detail_field";
 
     public static final String PARENT_ID = "parent_id";
+
+    public static final String INDEX = "index";
 
     @Override
     public Serializable pkVal() {

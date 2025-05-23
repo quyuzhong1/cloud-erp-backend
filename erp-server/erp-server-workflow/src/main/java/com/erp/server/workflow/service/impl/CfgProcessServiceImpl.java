@@ -264,20 +264,21 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
         //组装form，1、实时获取 2、查询流程定义表
-        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "7DCF7A99-6E25-4A24-8386-5E2639712983").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "E02ECBC5-7BD1-4C11-B23D-1ED678F3806F").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
         ProcessFormHandler handler = fsProcessFormFactory.getFileHandler(ProcessFormEvent.FS_PROCESS_FORM.getCode());
         formArray = handler.assemble(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
+        String form = JSONUtil.toJsonStr(formArray);
         CreateInstanceReq req = CreateInstanceReq.newBuilder()
                 .instanceCreate(InstanceCreate.newBuilder()
                         .approvalCode("7DCF7A99-6E25-4A24-8386-5E2639712983")
                         .userId("af4eg757")
-                        .form(JSONUtil.toJsonStr(formArray))
+                        .form(form)
                         .build())
                 .build();
         try {
-            String instanceCode = fsService.createInstance(req);
+//            String instanceCode = fsService.createInstance(req);
             //生成三方查询记录
 
         } catch (Exception e) {

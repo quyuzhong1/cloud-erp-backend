@@ -108,6 +108,11 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private String parentId;
 
         /**
+         * 排序字段
+         */
+        private int index;
+
+        /**
          * thirdFieldTypeName
          */
         private String thirdFieldTypeName;
@@ -247,6 +252,12 @@ public class CfgProcessFieldMapDTO implements Serializable {
          */
         @Size(max = 255,message = "父控件id最大长度不能超过255位")
         private String parentId;
+
+        /**
+         * 排序
+         */
+        @Size(max = 255,message = "排序最大长度不能超过255位")
+        private int index;
     }
 
 

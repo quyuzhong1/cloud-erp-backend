@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -130,7 +131,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     @Override
     public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId) {
         try {
-            GetApprovalResp approval = fsService.getApproval(processDefinitionId);
+            GetApprovalResp approval = fsService.getApproval("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F");
             String formStr = JSONUtil.toJsonStr(approval.getData());
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = parseForm(formStr);
             viewDTOList.forEach(e -> {
@@ -267,9 +268,31 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                     detailViewDTO.setThirdFieldId(detail.getStr(FsRequestBodyAttributesEnum.ID.getCode())); // 父级 fieldList 的 ID
                     detailViewDTO.setIsDetailField(true);
                     detailViewDTO.setParentId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
+                    //如果是金额类型，则添加一个币种的子元素
+                    if (detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())){
+                        viewDTO.setIndex(1);
+                        //克隆一个对象
+                        CfgProcessFieldMapDTO.ViewDTO detailViewDTO2 = new CfgProcessFieldMapDTO.ViewDTO();
+                        BeanUtil.copyProperties(detailViewDTO, detailViewDTO2);
+                        detailViewDTO2.setThirdField(detailViewDTO2.getThirdField()+"币种");
+                        detailViewDTO2.setIndex(0);
+                        detailViewDTO2.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
+                        viewDTOList.add(detailViewDTO2);
+                    }
                     viewDTOList.add(detailViewDTO); // 将子元素直接添加到 viewDTOList
                 }
                 continue; // 跳过当前 viewDTO 的添加
+            }
+            // 如果当前 field 是金额类型，则添加一个币种的子元素
+            if (field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())){
+                viewDTO.setIndex(1);
+                //克隆一个对象
+                CfgProcessFieldMapDTO.ViewDTO viewDTO2 = new CfgProcessFieldMapDTO.ViewDTO();
+                BeanUtil.copyProperties(viewDTO, viewDTO2);
+                viewDTO2.setThirdField(viewDTO2.getThirdField()+"币种");
+                viewDTO2.setIndex(0);
+                viewDTO2.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
+                viewDTOList.add(viewDTO2);
             }
             viewDTOList.add(viewDTO);
         }

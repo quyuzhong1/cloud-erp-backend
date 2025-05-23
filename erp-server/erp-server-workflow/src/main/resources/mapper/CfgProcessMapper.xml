@@ -180,6 +180,7 @@
         <result property="thirdFieldId" column="third_field_id"/>
         <result property="isDetailField" column="is_detail_field"/>
         <result property="parentId" column="parent_id"/>
+        <result property="index" column="index"/>
 
         <collection property="processValueMapDTOList"
                     ofType="com.erp.model.workflow.dto.CfgProcessValueMapDTO$ViewDTO"
@@ -262,7 +263,8 @@
             fm.process_definition_id         AS fm_process_definition_id,
             fm.third_field_id                AS third_field_id,
             fm.is_detail_field               AS is_detail_field,
-            fm.parent_id                     AS parent_id
+            fm.parent_id                     AS parent_id,
+            fm.index                         AS index
         FROM public.cfg_process p
                  LEFT JOIN public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
                  LEFT JOIN public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
