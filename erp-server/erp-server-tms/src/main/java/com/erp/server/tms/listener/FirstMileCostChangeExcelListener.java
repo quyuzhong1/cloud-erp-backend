@@ -15,6 +15,7 @@ import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum;
 import com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum;
+import com.erp.model.tms.enums.ReconciliationBillTypeEnum;
 import com.erp.server.tms.convert.FirstMileChangeRecordConverter;
 import com.erp.server.tms.service.FirstMileChangeRecordService;
 import com.erp.server.tms.service.FirstMileSkuCostAllocationDetailService;
@@ -213,6 +214,22 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
             }
             if(CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
                 continue;
+            }
+            if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(entity.getBillSourceType())){
+                if(CharSequenceUtil.isNotBlank(excelDTO.getEndPeriodEstimatedCostStr()) && excelDTO.getEndPeriodEstimatedCost().compareTo(entity.getEndPeriodEstimatedCost())!= 0){
+                    excelDTO.setErrorMsg("实际账单不支持修改期末暂估费用");
+                    errorList.add(excelDTO);
+                    continue;
+                }
+            }
+            if (ReconciliationBillTypeEnum.ESTIMATED.getCode().equals(entity.getBillSourceType())){
+                if((CharSequenceUtil.isNotBlank(excelDTO.getMidPeriodTransitCostStr()) && excelDTO.getMidPeriodTransitCost().compareTo(entity.getMidPeriodTransitCost()) != 0)
+                || (CharSequenceUtil.isNotBlank(excelDTO.getCurrentPeriodAllocatedCostStr()) && excelDTO.getCurrentPeriodAllocatedCost().compareTo(entity.getCurrentPeriodAllocatedCost())!= 0)
+                || (CharSequenceUtil.isNotBlank(excelDTO.getEndPeriodTransitCostStr()) && excelDTO.getEndPeriodTransitCost().compareTo(entity.getEndPeriodTransitCost())!= 0)){
+                    excelDTO.setErrorMsg("暂估账单不支持修改本期/冲期初/期末在途费用");
+                    errorList.add(excelDTO);
+                    continue;
+                }
             }
             Boolean isRetry = Boolean.FALSE;
             //冲期初在途费用

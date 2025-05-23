@@ -68,6 +68,7 @@
             fmsca.sku_id,
             fmsca.sku_no,
             fmsca.platform_sku_no,
+            fmsca.bill_source_type,
             rpm.id as reportPeriodId,
             rpm.month as reportMonth
         from first_mile_sku_cost_allocation_detail fmscad
