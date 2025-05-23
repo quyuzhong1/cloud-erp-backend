@@ -140,7 +140,7 @@ public class CfgThirdNoticeController extends BaseController {
             menuCode = "sys:cfgThirdNotice:delete",
             serviceClass = CfgThirdNoticeService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.DELETE, desc = "ERP审批同步配置删除")
+    @LogAction(value = LogActionEnum.DELETE, desc = "三方通知配置删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -151,10 +151,10 @@ public class CfgThirdNoticeController extends BaseController {
             try {
                 deleteResult = cfgThirdNoticeService.delete(id);
             }catch (Exception e){
-                log.error("ERP审批同步配置删除失败",e);
+                log.error("三方通知配置删除失败",e);
                 CfgThirdNoticeEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "ERP审批同步配置不存在, 删除失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "三方通知配置不存在, 删除失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -179,7 +179,7 @@ public class CfgThirdNoticeController extends BaseController {
             menuCode = "sys:cfgThirdNotice:enable",
             serviceClass = CfgThirdNoticeService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "ERP审批同步配置启用/停用")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "三方通知配置启用/停用")
     public ApiResult<List<BatchResultDTO>> enable(@RequestBody @Validated  CfgThirdNoticeDTO.EnableStatusDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
@@ -190,10 +190,10 @@ public class CfgThirdNoticeController extends BaseController {
             try {
                 deleteResult = cfgThirdNoticeService.enable(id,dto.getNoticeStatus());
             }catch (Exception e){
-                log.error("ERP审批同步配置更新失败",e);
+                log.error("三方通知配置更新失败",e);
                 CfgThirdNoticeEntity entity = idEntityMap.get(id);
                 if (ObjectUtil.isEmpty(entity)) {
-                    deleteResult = BatchResultDTO.fail(id, id, "ERP审批同步配置不存在, 更新失败");
+                    deleteResult = BatchResultDTO.fail(id, id, "三方通知配置不存在, 更新失败");
                     resultDTOS.add(deleteResult);
                     continue;
                 }
@@ -218,7 +218,7 @@ public class CfgThirdNoticeController extends BaseController {
             menuCode = "sys:cfgThirdNotice:export",
             tableAlias = "ctn"
     )
-    @LogAction(value = LogActionEnum.EXPORT, desc = "售后申请表导出Excel数据")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
     @WebAdvanceQuery(handler = CfgThirdNoticeQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated CfgThirdNoticeDTO.PagingParamDTO dto, HttpServletResponse response) {
         cfgThirdNoticeService.exportList(dto, response);

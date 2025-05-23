@@ -1,7 +1,6 @@
 package com.erp.model.sys.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.BaseDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -207,7 +206,7 @@ public class CfgThirdNoticeDTO implements Serializable {
 
 
         /**
-         * 规则条件
+         * 规则条件集合
          */
         @Valid
         @Size(min = 1, message = "至少存在一条规则条件")
@@ -246,7 +245,84 @@ public class CfgThirdNoticeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListDTO extends BaseDTO {
+        /**
+         * 单据类型
+         */
+        private String businessType;
+        /**
+         * 单据名称
+         */
+        private String businessTypeName;
 
+        /**
+         * 通知节点
+         */
+        private String noticeNode;
+        private String noticeNodeName;
+
+        /**
+         * 通知方式：single=单条,summary=汇总
+         */
+        private String method;
+        private String methodName;
+
+        /**
+         * 通知状态
+         */
+        private Boolean noticeStatus;
+
+        /**
+         * 通知类型
+         */
+        private String noticeType;
+        private String noticeTypeName;
+
+        /**
+         * 项目角色
+         */
+        private String roleType;
+        private String roleTypeName;
+
+        /**
+         * 具体人员
+         */
+        private String specificPerson;
+        private String specificPersonName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class BaseDTO {
+
+        /**
+         * 创建人id
+         */
+        private String createUserId;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 修改人id
+         */
+        private String updateUserId;
+
+        /**
+         * 修改人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**
