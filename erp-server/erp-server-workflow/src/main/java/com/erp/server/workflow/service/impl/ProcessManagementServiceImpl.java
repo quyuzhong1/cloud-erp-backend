@@ -186,7 +186,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             log.warn("业务无流程配置, businessKey={}", dto.getBusinessKey());
             return "";
         }
-        List<CfgProcessRuleEntity> cfgProcessRuleList = cfgProcessRuleService.listByProcessId(cfgProcessEntity.getId(), CfgProcessRuleTypeEnum.ERPPROGRESS.getCode());
+        List<CfgProcessRuleEntity> cfgProcessRuleList = cfgProcessRuleService.listByProcessId(cfgProcessEntity.getId(), CfgProcessRuleTypeEnum.ERPPROCESS.getCode());
         if (CollUtil.isEmpty(cfgProcessRuleList)) {
             // 业务无已启用的Erp流程配置
             log.warn("业务无已启用的Erp流程配置, businessKey={}", dto.getBusinessKey());
