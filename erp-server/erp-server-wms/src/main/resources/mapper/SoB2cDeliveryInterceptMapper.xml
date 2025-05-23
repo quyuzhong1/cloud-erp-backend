@@ -9,7 +9,7 @@
         count(distinct sbdid.id) AS count
         FROM so_b2c_delivery_intercept_detail sbdid
         LEFT JOIN so_b2c_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdi.is_deleted = FALSE
-        LEFT JOIN so_b2c_delivery sb ON sb.id = sbdi.so_id AND sb.is_deleted = FALSE
+        LEFT JOIN so_b2c_delivery sbd ON sbd.id = sbdi.delivery_id AND sbd.is_deleted = FALSE
         WHERE sbdid.is_deleted = FALSE
         <!--权限-->
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
@@ -44,11 +44,12 @@
             sbdi.handle_user_name,
             sbdi.create_time,
             sbdi.handle_time,
-            sb.shop_id,
-            sb.platform_code as platformOrderCode
+            sbd.shop_id,
+            sbd.shop_name,
+            sbd.platform_code as platformOrderCode
         FROM so_b2c_delivery_intercept_detail sbdid
         LEFT JOIN so_b2c_delivery_intercept sbdi ON sbdid.main_id = sbdi.id AND sbdi.is_deleted = FALSE
-        LEFT JOIN so_b2c_delivery sb ON sb.id = sbdi.so_id AND sb.is_deleted = FALSE
+        LEFT JOIN so_b2c_delivery sbd ON sbd.id = sbdi.delivery_id AND sbd.is_deleted = FALSE
         WHERE sbdid.is_deleted = FALSE
         <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.defaultl != ''">
             and ${params.sqlMap.default}

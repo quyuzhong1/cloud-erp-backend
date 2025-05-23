@@ -211,9 +211,10 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     public List<SoReturnNoticeDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
         SoReturnChangeListTypeEnum[] values = SoReturnChangeListTypeEnum.values();
         List<SoReturnNoticeDTO.StatusCountDTO> list = new ArrayList<>();
+        String permissionSql = getPermissionSql(dto.getPermissionSql());
         for (SoReturnChangeListTypeEnum item : values) {
             SoReturnNoticeDTO.PagingParam pagingParam = new SoReturnNoticeDTO.PagingParam();
-            pagingParam.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
+            pagingParam.setPermissionSql(permissionSql);
             SoReturnNoticeDTO.StatusCountDTO resultDTO = new SoReturnNoticeDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {

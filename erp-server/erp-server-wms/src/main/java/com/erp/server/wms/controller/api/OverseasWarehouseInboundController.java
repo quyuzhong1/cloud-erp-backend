@@ -137,7 +137,7 @@ public class OverseasWarehouseInboundController extends BaseController {
      **/
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "receive_user_id",
+            tableField = "create_user_id",
             warehouseTableField = "owi.delivery_warehouse_id,owi.to_warehouse_id",
             menuCode = "wms:overseasWarehouseInbound:paging",
             tableAlias = "owi"
