@@ -74,15 +74,15 @@ public class SoReturnNoticeQueryHandler extends AbstractQueryHandler {
     public String getTabSql (Object value) {
         //待审核
         if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
-            super.buildDefaultDTO("sr.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
+            super.buildDefaultDTO("srn.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
         }
         //已审核
         if (SoReturnChangeListTypeEnum.APPROVE.getCode().equals(value)) {
-            super.buildDefaultDTO("sr.approve_status", ApproveStatusEnum.APPROVE.getCode());
+            super.buildDefaultDTO("srn.approve_status", ApproveStatusEnum.APPROVE.getCode());
         }
         //不通过
         if (SoReturnChangeListTypeEnum.REJECT.getCode().equals(value)) {
-            super.buildDefaultDTO("sr.approve_status", ApproveStatusEnum.REJECT.getCode());
+            super.buildDefaultDTO("srn.approve_status", ApproveStatusEnum.REJECT.getCode());
         }
         return super.getSplicingSQL();
     }
