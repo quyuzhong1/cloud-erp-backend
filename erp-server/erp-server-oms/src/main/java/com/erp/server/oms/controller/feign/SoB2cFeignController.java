@@ -943,4 +943,12 @@ public class SoB2cFeignController extends BaseController {
     public SoB2cRefDTO.SplitCombinationDTO getSplitCombination(@RequestBody String soId) {
         return soB2cRefService.getSplitCombination(soId);
     }
+
+    /**
+     * 查询仓库下待发货的订单
+     * */
+    @PostMapping("/listWaitShipByWarehouseIds")
+    public List<SoB2cEntity> listWaitShipByWarehouseIds(@RequestBody List<String> warehouseId){
+        return soB2cService.listWaitShipByWarehouseIds(warehouseId);
+    }
 }

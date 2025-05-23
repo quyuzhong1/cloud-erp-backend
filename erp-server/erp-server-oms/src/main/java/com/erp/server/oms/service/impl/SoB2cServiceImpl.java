@@ -10102,6 +10102,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
     }
 
+    @Override
+    public List<SoB2cEntity> listWaitShipByWarehouseIds(List<String> warehouseIds) {
+        if (CollUtil.isEmpty(warehouseIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listWaitShipByWarehouseIds(warehouseIds);
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

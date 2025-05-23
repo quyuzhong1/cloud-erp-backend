@@ -16,10 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 
@@ -31,7 +28,7 @@ public class JiFengService {
         JiFengService jiFengService = new JiFengService();
         Map<String,Object> authMap = new HashMap<>();
         authMap.put("domain","sureparcel");
-        authMap.put("accessToken","a0c9844212dc4bde9299bc261ee7a053");
+        authMap.put("accessToken","d8056a7e41b94b519c649343859286f4");
         authMap.put("appKey","a03b35bf7f0c4c4f8e23e0599b5be649");
         authMap.put("userId","7471");
         authMap.put("appToken","f9af8dc7afea488991a216485987746c");
@@ -40,7 +37,7 @@ public class JiFengService {
         jiFengCreateInboundRequest.setTrackingNo("test123456");
         jiFengCreateInboundRequest.setExpectedTime("2025-06-19 00:00:10");
 //        jiFengCreateInboundRequest
-        jiFengService.getOfflineChannel(authMap,"BR01");
+        jiFengService.getOrder(authMap,Arrays.asList("XSDS250522000001","XSDS250521000002","14123"));
         System.out.println(123);
     }
 //    public static void main(String[] args) {
@@ -364,6 +361,23 @@ public class JiFengService {
         JiFengBaseResp<String> response = JiFengUtils.parseToJiFengResp(bodyStr,String.class);
         return response;
     }
+
+    /**
+     * 查询订单
+     * @param authMap
+     * @return
+     */
+    public JiFengBaseResp<List<JiFengOutboundResp>> getOrder(Map<String,Object> authMap, List<String> erpNo){
+        String path = "/api/order/batchGet";
+        String url = getUrl(authMap.get("domain").toString());
+        Map<String, String> headerMap = buildHearderMap(authMap, path);
+        Map<String,Object> paramMap = new HashMap<>();
+        paramMap.put("erpNoList", erpNo);
+        String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        JiFengBaseResp<List<JiFengOutboundResp>> response = JiFengUtils.parseToJiFengResp(bodyStr,new TypeReference<JiFengBaseResp<List<JiFengOutboundResp>>>() {});
+        return response;
+    }
+
     private Map<String, String> buildHearderMap(Map<String, Object> authMap, String path) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("url", path);
