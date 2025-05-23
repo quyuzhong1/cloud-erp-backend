@@ -52,7 +52,8 @@
         trade_currency,
         enable_time,
         down_time,
-        return_warehouse
+        return_warehouse,
+        auth_expire_date
         FROM shop_info si
         WHERE ${params.sqlMap.default}
         and si.is_deleted=FALSE

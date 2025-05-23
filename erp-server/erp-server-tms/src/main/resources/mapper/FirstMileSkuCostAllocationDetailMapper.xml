@@ -55,6 +55,47 @@
             </foreach>
         </if>
     </select>
+    <select id="listBySourceCodeList"
+            resultType="com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity">
+        select
+            fmscad.*,
+            fmca.business_code,
+            fmca.source_id,
+            fmca.source_code,
+            fmca.transport_no,
+            fmca.logistics_bill_id,
+            fmca.status,
+            fmsca.sku_id,
+            fmsca.sku_no,
+            fmsca.platform_sku_no,
+            rpm.id as reportPeriodId,
+            rpm.month as reportMonth
+        from first_mile_sku_cost_allocation_detail fmscad
+        left join first_mile_sku_cost_allocation fmsca on fmsca.id = fmscad.cost_main_id and fmsca.is_deleted = false
+        left join first_mile_cost_allocation fmca on fmca.id = fmscad.main_id and fmca.is_deleted = false
+        left join report_period_month rpm on rpm.id = fmca.report_period_id and rpm.is_deleted = false
+        where fmscad.is_deleted = false
+        <if test="businessCodeList != null and businessCodeList.size > 0">
+            and fmca.business_code in
+            <foreach collection="businessCodeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="sourceCodeList != null and sourceCodeList.size > 0">
+            and fmca.source_code in
+            <foreach collection="sourceCodeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="transportNoList != null and transportNoList.size > 0">
+            and fmca.transport_no in
+            <foreach collection="transportNoList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+
+
+    </select>
 
 
 </mapper>

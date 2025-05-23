@@ -2,13 +2,13 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.dto.SupplierAccountDTO;
 import com.erp.model.scm.entity.SupplierAccountEntity;
-import com.erp.model.scm.entity.SupplierContactEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.mapper.SupplierAccountMapper;
@@ -123,6 +123,7 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         for (SupplierAccountEntity item : saveOrUpdateList) {
             String bankName = bankList.stream().filter(b -> b.getId().equals(item.getBankId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setBankId(ObjectUtil.isEmpty(item.getBankId()) ? "" : item.getBankId());
             item.setSupplierId(supplierId);
             item.setBankName(bankName);
         }

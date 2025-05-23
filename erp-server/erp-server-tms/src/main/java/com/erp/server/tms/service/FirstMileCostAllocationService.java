@@ -6,6 +6,7 @@ import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
@@ -120,4 +121,42 @@ public interface FirstMileCostAllocationService extends SuperService<FirstMileCo
      * @return
      */
     List<FirstMileCostAllocationEntity> listByLogisticsBillIds(List<String> logisticsBillIds);
+
+    /**
+     * 查看费用分摊详情
+     * @param dto
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.PagingVO> viewCostAllocation(List<String> ids);
+
+    /**
+     * 根据业务信息查询分摊记录
+     * @param sourceId
+     * @param businessCode
+     * @param reportMonth
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySourceIdAndCode(String sourceId, String businessCode, LocalDate reportMonth);
+    /**
+     * 根据skuId和业务类型查询头程费用分摊记录
+     * @param skuId
+     * @param businessCode
+     * @param reportMonth
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(String skuId, String businessCode, LocalDate reportMonth);
+
+    /**
+     * 根据账期查询头程费用分摊记录
+     * @param reportPeriodStr
+     * @param reportStatus
+     * @return
+     */
+    List<FirstMileCostAllocationEntity> listByReportPeriodStr(String reportPeriodStr, String reportStatus);
+
+    void downloadTemplate(HttpServletResponse response);
+
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+
+    void asyncResetAllocatedCost(List<FirstMileCostAllocationEntity> entityList, List<FirstMileDeliveryEntity> firstMileDeliveryEntityList, List<FirstMileDeliveryDetailEntity> deliveryDetailEntityList);
 }

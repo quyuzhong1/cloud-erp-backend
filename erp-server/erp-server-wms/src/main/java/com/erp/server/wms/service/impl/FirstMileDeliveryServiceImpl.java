@@ -2267,12 +2267,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return new ArrayList<>();
         }
         List<String> sourceIds = result.stream().map(TmsDeclareBillDTO.DeliveryDTO::getSourceId).collect(Collectors.toList());
+
         List<FirstMileDeliveryDetailEntity> allDetailEntityList = firstMileDeliveryDetailService.listByMainIds(sourceIds);
         //查询物流产品信息
         List<String> skuIds = allDetailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailDTO.ProductLogisticDTO> allProductLogisticDTOList = plmTaskFeign.listProductLogisticsByIds(skuIds);
         //装箱信息
+        List<String> requisitionIds = result.stream().map(TmsDeclareBillDTO.DeliveryDTO::getRequisitionId).collect(Collectors.toList());
         List<String> ids = result.stream().map(TmsDeclareBillDTO.DeliveryDTO::getSourceId).collect(Collectors.toList());
+        ids.addAll(requisitionIds);
         //箱子明细信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
         Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
@@ -2316,6 +2319,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
             //设置装箱信息
             List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.getOrDefault(deliveryDTO.getSourceId(),new ArrayList<>());
+            if(CollectionUtils.isEmpty(list)){
+                list = packingDetailMap.getOrDefault(deliveryDTO.getRequisitionId(),new ArrayList<>());
+            }
             if(CollectionUtils.isNotEmpty(list)){
                 List<TmsDeclareBillDTO.PackingDTO> packingDTOList = BeanUtil.copyToList(list,TmsDeclareBillDTO.PackingDTO.class);
                 packingDTOList.forEach(t->t.setCode(deliveryDTO.getSourceCode()));

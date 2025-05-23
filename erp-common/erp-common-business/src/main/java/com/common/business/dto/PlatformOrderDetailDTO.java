@@ -64,6 +64,10 @@ public class PlatformOrderDetailDTO {
      */
     private BigDecimal price;
     /**
+     * 税率
+     */
+    private BigDecimal taxRate;
+    /**
      * 金额
      */
     private BigDecimal amount;

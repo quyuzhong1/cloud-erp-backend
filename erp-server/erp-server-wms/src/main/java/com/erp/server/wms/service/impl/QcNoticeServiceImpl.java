@@ -532,7 +532,7 @@ public class QcNoticeServiceImpl extends SuperServiceImpl<QcNoticeMapper, QcNoti
         for (QcNoticeDTO.QcInfoView qcInfoView : dto) {
             StringBuffer sb = new StringBuffer();
             if(!productPactMap.containsKey(qcInfoView.getSkuId())){
-                sb.append("qcInfoView.getSkuNo()");
+                sb.append(qcInfoView.getSkuNo());
                 sb.append(";");
             }
             String str = sb.toString();

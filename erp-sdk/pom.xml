@@ -47,6 +47,7 @@
         <module>erp-sdk-third-tf</module>
         <module>erp-sdk-wx-miniapp</module>
         <module>erp-sdk-wms-jifeng</module>
+        <module>erp-sdk-oms-temu</module>
     </modules>
 
     <dependencies>

@@ -367,4 +367,27 @@ public class OverseasWarehouseInboundDetailDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewChangeDTO {
+
+        private String id;
+
+        private String sourceId;
+        private String sourceCode;
+        /**
+         * 业务单号
+         */
+        private String code;
+        private String toWarehouseId;
+        private String toWarehouseName;
+        private String detailId;
+        private String platformSkuNo;
+        private String skuNo;
+        private String skuId;
+        private String productName;
+        private Integer deliveryQty;
+        private Integer receiveQty;
+        private LocalDateTime receiveTime;
+    }
 }

@@ -713,4 +713,11 @@ public interface SoB2cFeign {
 
     @PostMapping("feign/soB2c/listWaitShipByWarehouseIds")
     List<SoB2cEntity> listWaitShipByWarehouseIds(@RequestBody List<String> warehouseId);
+
+
+    @PostMapping("feign/soB2c/updateDetail")
+    Boolean updateDetail(@RequestBody List<SoB2cDetailEntity> soB2cDetailEntityList);
+
+    @PostMapping("feign/soB2c/clearOutDateBySoIds")
+    void clearOutDateBySoIds(@RequestBody List<String> clearOutDateSoIds);
 }

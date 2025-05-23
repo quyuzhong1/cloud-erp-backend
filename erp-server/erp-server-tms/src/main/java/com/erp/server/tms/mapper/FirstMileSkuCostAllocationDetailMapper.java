@@ -25,4 +25,6 @@ public interface FirstMileSkuCostAllocationDetailMapper extends BaseMapper<First
      * @return
      */
     List<FirstMileSkuCostAllocationDetailEntity> listByMainIds(@Param("mainIds") List<String> mainIds);
+
+    List<FirstMileSkuCostAllocationDetailEntity> listBySourceCodeList(@Param("businessCodeList") List<String> businessCodeList, @Param("sourceCodeList") List<String> sourceCodeList, @Param("transportNoList") List<String> transportNoList);
 }

@@ -41,4 +41,11 @@ public interface FirstMileWeightAllocationMapper extends BaseMapper<FirstMileWei
     FirstMileWeightAllocationDTO.LogisticsBillInfoDTO getLogisticsBillInfo(@Param("logisticsBillId") String logisticsBillId);
 
     List<FirstMileWeightAllocationDTO.CostAllocationDTO> listCostAllocation(@Param("logisticsBillId") String logisticsBillId);
+
+    /**
+     * 查看商品重量
+     * @param params
+     * @return
+     */
+    List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> viewProductWeight(@Param("params") FirstMileWeightAllocationDTO.ViewProductWeightParamDTO params);
 }

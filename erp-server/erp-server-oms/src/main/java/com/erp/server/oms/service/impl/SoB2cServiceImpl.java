@@ -372,6 +372,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private InvoiceInfoService invoiceInfoService;
+    @Lazy
+    @Resource
+    private SoPriceService soPriceService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -1220,7 +1223,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!Objects.equals(entity.getApproveStatus(), ApproveStatusEnum.APPROVE_ING)) {
             throw new ServiceException(ApiError.ERROR_98006);
         }
-
         //校验是否被冻结
         if (entity.getIsFrozen()) {
             throw new ServiceException(ApiError.ORDER_IS_INTERCEPT_NOT_UPDATE, entity.getCode());
@@ -4510,7 +4512,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
         }
-
+        if (isFullyManagedOrder(entity.getDictPlatform())){
+            List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainId(entity.getId());
+            //产品单价，非赠品时，校验必填
+            for (SoB2cDetailEntity detailEntity : soB2cDetailEntityList){
+                if (Objects.equals(detailEntity.getIsGift(), Boolean.FALSE) && (Objects.isNull(detailEntity.getPrice()) || detailEntity.getPrice().compareTo(BigDecimal.ZERO) <= 0)){
+                    throw new ServiceException(ApiError.SO_B2C_DETAIL_PRICE_NOT_EXIST, entity.getCode(), detailEntity.getSkuNo());
+                }
+            }
+        }
 
         return;
     }
@@ -6144,7 +6154,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
         try {
-            oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform(), dto.getShopId(), SourceTypeEnum.SO_B2C.getCode());
+            if(StringUtils.isNotBlank(dto.getThirdSystem())){
+                oldEntity = this.getByThirdInfo(dto.getThirdCode(), dto.getDictPlatform(), dto.getShopId(), SourceTypeEnum.SO_B2C.getCode());
+            }else{
+                oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform(), dto.getShopId(), SourceTypeEnum.SO_B2C.getCode());
+            }
         } catch (Exception e) {
             log.error("查询订单异常：{}", e.getMessage());
         }
@@ -6371,6 +6385,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .one();
     }
 
+    public SoB2cEntity getByThirdInfo(String thirdCode, String dictPlatform, String shopId, String sourceType) {
+        return lambdaQuery()
+                .eq(SoB2cEntity::getThirdCode, thirdCode)
+                .eq(SoB2cEntity::getDictPlatform, dictPlatform)
+                .eq(SoB2cEntity::getShopId, shopId)
+                .eq(SoB2cEntity::getSourceType, sourceType)
+                .last(SqlConstants.LIMIT_1)
+                .one();
+    }
     @Override
     public Map<String, Object> getJson(String id) {
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
@@ -10108,6 +10131,26 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return Collections.emptyList();
         }
         return baseMapper.listWaitShipByWarehouseIds(warehouseIds);
+    }
+
+    @Override
+    public void updateAmount(String id, BigDecimal amount) {
+        if (CharSequenceUtil.isBlank(id) || Objects.isNull(amount)){
+            return;
+        }
+        this.lambdaUpdate().set(SoB2cEntity::getAmount,amount).eq(SoB2cEntity::getId,id).update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void clearOutDateBySoIds(List<String> clearOutDateSoIds) {
+        if(CollectionUtils.isEmpty(clearOutDateSoIds) ){
+            return ;
+        }
+        lambdaUpdate()
+                .set(SoB2cEntity::getSoOutstockDate,null)
+                .in(SoB2cEntity::getId,clearOutDateSoIds)
+                .update();
     }
 
 

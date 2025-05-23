@@ -149,15 +149,15 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
         // 店铺ID
         orderDTO.setShopId(dto.getShopId());
         // 平台取消
-        boolean isCancel = sourceOrder.convertCancel();
+//        boolean isCancel = sourceOrder.convertCancel();
         // 平台冻结
         boolean isFrozen = sourceOrder.convertFrozen();
 
         // 作废状态（false未作废，true已作废）
         // 平台取消 并且 非冻结 作废
-        orderDTO.setInvalidStatus(isCancel && !isFrozen);
+//        orderDTO.setInvalidStatus(isCancel && !isFrozen);
         // 平台取消状态
-        orderDTO.setIsCancel(isCancel);
+//        orderDTO.setIsCancel(isCancel);
 
         // 作废类型（manual手动作废，automatic自动作废）
         orderDTO.setInvalidType("");
@@ -260,14 +260,14 @@ public class PlatformAliExpressOrderDTO extends CleanBaseDTO {
 
         // 订单状态
         // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
+        orderDTO.setBillStatus(sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder, null));
 
         // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(sourceOrder.getOrderStatus());
 
         // 审核状态状态
         // （ApproveStatus字典类型）
-        orderDTO.setApproveStatusStr(sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));
+        orderDTO.setApproveStatusStr(sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder, null));
 
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）

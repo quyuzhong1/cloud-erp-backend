@@ -218,6 +218,43 @@
         </if>
         GROUP BY businessCode,owid.sku_id,owid.platform_sku_no
     </select>
+    <select id="viewChangeList"
+            resultType="com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO$ViewChangeDTO">
+        select
+            owi.id,
+            owi.source_id,
+            owi.source_code,
+            owi.code,
+            owi.to_warehouse_id,
+            owi.to_warehouse_name,
+            owid.id as detailId,
+            owid.platform_sku_no,
+            owid.sku_no,
+            owid.sku_id,
+            owid.product_name,
+            owid.pack_qty as deliveryQty,
+            owid.receive_qty as receiveQty,
+            owid.receive_time as receiveTime
+        from overseas_warehouse_inbound owi
+        LEFT JOIN overseas_warehouse_inbound_detail owid on owi.id = owid.main_id and owid.is_deleted = false
+        where owi.is_deleted = false
+        <if test="params.requestIdType!= null and params.requestIdType.code != '' and params.requestIdType.code == 'mainId'">
+          <if test="params.requestIdList != null and params.requestIdList.size > 0">
+            and owi.id in
+            <foreach collection="params.requestIdList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+          </if>
+        </if>
+        <if test="params.requestIdType!= null and params.requestIdType.code != '' and params.requestIdType.code == 'detailId'">
+            <if test="params.requestIdList != null and params.requestIdList.size > 0">
+                and owid.id in
+                <foreach collection="params.requestIdList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
+            </if>
+        </if>
+    </select>
 
     <sql id="OverDataCompareByCondition">
     	where T.is_deleted = 'f' 
