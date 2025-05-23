@@ -22,7 +22,6 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.AliexpressDeliveryDTO;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
-import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.WarehouseMappingDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.model.wms.enums.AliexpressDeliveryOrderStatusEnum;
@@ -114,7 +113,10 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             return Boolean.TRUE;
         }
         List<String> deliveryStatusNameList = AliexpressDeliveryOrderStatusEnum.getOutStockStatusList();
-        deliveryDTOList = deliveryDTOList.stream().filter(e -> deliveryStatusNameList.contains(e.getOrderStatus())).collect(Collectors.toList());
+        deliveryDTOList = deliveryDTOList.stream()
+                .filter(e -> deliveryStatusNameList.contains(e.getOrderStatus()) && null != e.getDeliveryWarehouseTime() )
+                .sorted(Comparator.comparing(PlatformDeliveryDTO::getDeliveryWarehouseTime))
+                .collect(Collectors.toList());
         if (CollUtil.isEmpty(deliveryDTOList)){
             return Boolean.FALSE;//不需要生成销售出库单
         }
@@ -185,6 +187,11 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             addDTO.setPlatformDeliveryStatus(AliexpressDeliveryOrderStatusEnum.getCode(deliveryDTO.getOrderStatus()));
             addDTO.setPlatformDeliveryCode(deliveryDTO.getSourceCode());
             addDTO.setIsOutstock(Boolean.FALSE);
+            addDTO.setActualAmount(deliveryDTO.getActualAmount());
+            addDTO.setOrderAmount(deliveryDTO.getOrderAmount());
+            addDTO.setOrderAfterTaxAmount(deliveryDTO.getOrderAfterTaxAmount());
+
+            addDTO.setActualCurrency(deliveryDTO.getActualCurrency());
             List<PlatformDeliveryDetailDTO> detailDTOList = deliveryDTO.getDetailDTOList();
             List<AliexpressDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             if (CollUtil.isNotEmpty(detailDTOList)){
@@ -220,6 +227,7 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                 }
             }
             addDTO.setDetailList(detailAddList);
+            addDTO.setAllSourceDeliveryList(deliveryDTOList);
             aliexpressDeliveryFeign.addOrUpdate(addDTO);
         }
 
@@ -296,11 +304,6 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         List<PlatformDeliveryDetailDTO> detailDTOList = deliveryDTO.getDetailDTOList();
         List<String> platformSkuIdList = detailDTOList.stream().map(PlatformDeliveryDetailDTO::getScItemId).distinct().collect(Collectors.toList());
         List<SkuMappingDTO.WarehouseSkuDTO> warehouseSkuDTOList = skuMappingService.listByWarehouseAndPlatformSku(mappingViewDTO.getWarehouseId(), platformSkuIdList);
-        String remark = "";
-        boolean hasAutoApprove = AliexpressDeliveryOrderStatusEnum.hasApproveOutStockStatusList().contains(deliveryDTO.getOrderStatus());
-        if (!hasAutoApprove) {
-            remark = CharSequenceUtil.format("因发货单状态【{}】不能确定已出库，不自动审核通过", deliveryDTO.getOrderStatus());
-        }
         List<String> notMatchSkuNoList = new ArrayList<>();
         for (PlatformDeliveryDetailDTO deliveryDetailDTO : detailDTOList) {
             SkuMappingDTO.WarehouseSkuDTO warehouseSkuDTO = warehouseSkuDTOList.stream().filter(v -> v.getPlatformSkuNo().equals(deliveryDetailDTO.getScItemId())).findFirst().orElse(new SkuMappingDTO.WarehouseSkuDTO());
@@ -314,7 +317,6 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             deliveryDetailDTO.setWarehouseName(mappingViewDTO.getWarehouseName());
             deliveryDetailDTO.setWarehouseOrgId(mappingViewDTO.getWarehouseOrgId());
             deliveryDetailDTO.setWarehouseOrgName(mappingViewDTO.getWarehouseOrgName());
-            deliveryDetailDTO.setRemark(remark);
         }
         if (CollectionUtils.isNotEmpty(notMatchSkuNoList)) {
             String msg = CharSequenceUtil.format("自动生成销售出库单失败：存在速卖通货品id未映射sku，货品id:【{}】", notMatchSkuNoList);
@@ -322,11 +324,9 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
         }
         detailDTOList = detailDTOList.stream().filter(v -> StringUtils.isNotBlank(v.getSkuId())).collect(Collectors.toList());
         List<String> skuIdList = detailDTOList.stream().map(PlatformDeliveryDetailDTO::getSkuId).distinct().collect(Collectors.toList());
-        SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockByIdAndWarehouseId(mainEntity.getId(), mappingViewDTO.getWarehouseId());
-        generateB2cDTO.setHasAutoApprove(hasAutoApprove);
         PlatformGenerateSoOutstockDTO platformGenerateSoOutstockDTO = PlatformGenerateSoOutstockDTO.builder()
                 .platformDeliveryDetailDTOList(detailDTOList)
-                .generateB2cDTO(generateB2cDTO)
+                .generateB2cDTO(soB2cService.getSoOutstockByIdAndWarehouseId(mainEntity.getId(), mappingViewDTO.getWarehouseId()))
                 .thirdCode(deliveryDTO.getSourceCode())
                 .deliveryTime(deliveryDTO.getDeliveryWarehouseTime())
                 .trackNo(deliveryDTO.getTrackNo())

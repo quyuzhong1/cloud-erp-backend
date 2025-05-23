@@ -390,6 +390,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Lazy
     @Resource
     private SoPriceService soPriceService;
+    @Resource
+    private SyncSoB2cService syncSoB2cService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -3247,6 +3249,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         BeanMapperUtils.copy(list.get(0), addDTO);
         BigDecimal totalAmount = list.stream().map(SoB2cEntity::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
         addDTO.setAmount(totalAmount);
+        // 税后金额合并
+        BigDecimal afterTaxAmount = list.stream().map(SoB2cEntity::getAfterTaxAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        addDTO.setAfterTaxAmount(afterTaxAmount);
         //合并后取最小单据日期
         LocalDate billDate = list.stream().map(SoB2cEntity::getBillDate).min((x, y) -> x.compareTo(y)).orElse(null);
         addDTO.setBillDate(billDate);
@@ -9221,6 +9226,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         List<SoB2cLogisticsEntity> soB2cLogisticsEntityList = soB2cLogisticsService.listByMainIds(dto.getIds());
         List<SoB2cDetailEntity> soB2cDetailEntityList = soB2cDetailService.listByMainIds(dto.getIds());
         List<WarehouseDTO.UpdateDTO> updateDTOS = wmsTaskFeign.listWarehouseByIds(Collections.singletonList(dto.getWarehouseId()));
+        List<String> noInventorySkuIdList = plmTaskFeign.getNoInventorySku()
+                .stream()
+                .map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         if (CollectionUtils.isEmpty(updateDTOS)) {
             resultDTOList.add(BatchResultDTO.fail(dto.getWarehouseId(), dto.getWarehouseId(), "平台仓库未找到"));
@@ -9287,6 +9295,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                     e.setWarehouseName(updateDTOS.get(0).getName());
                 });
                 updateDetailList.addAll(detailEntityList);
+            }
+            // 不出库发货虚拟商品同步数帝云
+            List<SoB2cDetailEntity> noInventorySkuDetailList = soB2cDetailEntityList.stream().filter(e -> noInventorySkuIdList.contains(e.getSkuId())).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(noInventorySkuDetailList)) {
+                syncSoB2cService.syncDataToSdy(soB2cEntity, noInventorySkuDetailList, SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
         }
         if (CollectionUtils.isNotEmpty(updateList)) {
@@ -10321,6 +10334,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 soB2cEntity.setAmount(MathUtil.getBigDecimalByStr(mainInfo.getAmount()));
             }else {
                 errorMsgList.add("订单金额包含非数字字符");
+            }
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(soB2cEntity.getDictPlatform())){
+                // 速卖通手工订单税后金额=订单金额
+                soB2cEntity.setAfterTaxAmount(soB2cEntity.getAmount());
+            } else {
+                // 其他平台=无
+                soB2cEntity.setAfterTaxAmount(BigDecimal.ZERO);
             }
             //币别
             String currencyStr = mainInfo.getCurrency();

@@ -89,10 +89,11 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 								c.put("currencyCode", currency_code_obj);
 							}
 						}
+
 						Map<String, Object> lableMap = new HashMap<>();
 						lableMap.put("alreadyTaxed", c.get("already_taxed"));
-						lableMap.put("logisticsWarehouseType", c.get("logistics_warehouse_type"));
-						lableMap.put("tagList", c.get("tags"));
+				        lableMap.put("logisticsWarehouseType", c.get("logistics_warehouse_type"));
+				        lableMap.put("tagList", c.get("tags"));
 						c.put("extendData", JSON.toJSONString(lableMap));
 
 						//属性
@@ -114,7 +115,6 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 						c.put(DmpInputMongoHandler.MONGO_BASE_ID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_ID));
 						c.put(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID, dmpInputMongoChild.get(DmpInputMongoHandler.MONGO_BASE_NEXTLEVELID));
 					}
-
 					dmpInputMongoChildEntityList.addAll(child_order_map_list);
 				}
 			}

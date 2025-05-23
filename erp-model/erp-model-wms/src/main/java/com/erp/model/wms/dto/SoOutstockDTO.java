@@ -1636,11 +1636,6 @@ public class SoOutstockDTO implements Serializable {
          */
         private boolean checkSkuHistory = true;
 
-        /**
-         * 是否自动审核出库单
-         */
-        private boolean hasAutoApprove = true;
-
     }
 
 

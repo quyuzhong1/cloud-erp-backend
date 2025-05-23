@@ -33,6 +33,7 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
+import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.ThirdMappingService;
 import com.erp.server.dmp.service.ThirdShopService;
 import lombok.extern.slf4j.Slf4j;
@@ -68,6 +69,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     private SysUserFeign sysUserFeign;
     @Resource
     private DmpOutputCreateFactory dmpOutputCreateFactory;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
@@ -109,6 +112,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
         if (dmpSoInfoEntity.getPayStatus() == null || !dmpSoInfoEntity.getPayStatus()) {
             return result;
         }
+        Map<String, List<com.erp.model.dmp.entity.DictBasicEntity>> dictBasticMap = dictBasicService.lambdaQuery()
+                .in(com.erp.model.dmp.entity.DictBasicEntity::getType, Arrays.asList("wdtSdyTransType", "wdtSdyTransSubType"))
+                .list()
+                .stream()
+                .collect(Collectors.groupingBy(com.erp.model.dmp.entity.DictBasicEntity::getType));
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1;
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -139,6 +147,8 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 }
             }
 
+            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
+
             //如果是旺店通中台表的订单属于配货单，其他的都是线上原始订单
             if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(dmpSoInfoEntity.getSourceSystem())) {
             	if(StringUtils.isBlank(dmpSoDetailEntity.getPlatformSku())) {
@@ -149,7 +159,20 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
-
+                List<com.erp.model.dmp.entity.DictBasicEntity> wdtSdyTransTypeList = dictBasticMap.get("wdtSdyTransType");
+                if (CollectionUtils.isNotEmpty(wdtSdyTransTypeList)) {
+                    com.erp.model.dmp.entity.DictBasicEntity dictBasicEntity = wdtSdyTransTypeList.stream().filter(e -> e.getValue().equals(dmpSoInfoEntity.getOrderType())).findFirst().orElse(null);
+                    if (null != dictBasicEntity){
+                        shudiyunB2cOrderDTO.setTransaction_type(dictBasicEntity.getName());
+                    }
+                }
+                List<com.erp.model.dmp.entity.DictBasicEntity> wdtSdyTransSubTypeList = dictBasticMap.get("wdtSdyTransSubType");
+                if (CollectionUtils.isNotEmpty(wdtSdyTransSubTypeList)) {
+                    com.erp.model.dmp.entity.DictBasicEntity dictBasicEntity = wdtSdyTransSubTypeList.stream().filter(e -> e.getValue().equals(dmpSoInfoEntity.getOrderType())).findFirst().orElse(null);
+                    if (null != dictBasicEntity){
+                        shudiyunB2cOrderDTO.setTransaction_sub_type(dictBasicEntity.getName());
+                    }
+                }
             } else {
                 shudiyunB2cOrderDTO.setBiz_no(dmpSoInfoEntity.getPlatformCode());
                 //线上订单
@@ -167,7 +190,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
             	shudiyunB2cOrderDTO.setStatus("已创建");
             }
 
-            shudiyunB2cOrderDTO.setTransaction_sub_type(OrderSubTypeEnum.ONLINE_ORDER.getName());
 
             shudiyunB2cOrderDTO.setTotal_goods_transaction_amount(dmpSoInfoEntity.getAllAmount());
             //总优惠金额

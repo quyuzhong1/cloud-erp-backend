@@ -120,17 +120,6 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
     @TableField("platform_detail_id")
     private String platformDetailId;
 
-    /**
-     * 当前计算含税成本单价
-     */
-    @TableField("cost_price")
-    private BigDecimal costPrice;
-
-    /**
-     * 计算后的bom数量(非组合品默认1)
-     */
-    @TableField("bom_qty")
-    private Integer bomQty;
 
     /**
      * 计算后的发货明细单价

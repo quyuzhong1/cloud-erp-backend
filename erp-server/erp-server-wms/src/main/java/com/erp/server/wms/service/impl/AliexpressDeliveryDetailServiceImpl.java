@@ -2,7 +2,8 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.dto.PlatformDeliveryDTO;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
@@ -12,6 +13,7 @@ import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
+import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.AliexpressDeliveryDetailMapper;
 import com.erp.server.wms.service.AliexpressDeliveryDetailService;
@@ -48,23 +50,20 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO, String platformCode) {
+    public Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO, AliexpressDeliveryEntity mainEntity, List<PlatformDeliveryDTO> sourceAllDeliveryList) {
         if(CollectionUtils.isEmpty(addDTO)){
             return true;
         }
         if (addDTO.stream().anyMatch(e-> StringUtils.isBlank(e.getUniqueId()))){
-            ServiceException.runError("速卖通发货明细唯一ID为空,平台单号【{}】", platformCode);
+            ServiceException.runError("速卖通发货明细唯一ID为空,平台单号【{}】", mainEntity.getPlatformCode());
         }
         if (addDTO.stream().anyMatch(e-> StringUtils.isBlank(e.getPlatformSpuNo()))){
-            ServiceException.runError("速卖通发货明细产品ID为空,平台单号【{}】", platformCode);
+            ServiceException.runError("速卖通发货明细产品ID为空,平台单号【{}】", mainEntity.getPlatformCode());
         }
-
         //先删除后新增
 //        this.removeByMainId(addDTO.get(0).getMainId());
-        List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = BeanUtil.copyToList(addDTO,AliexpressDeliveryDetailEntity.class);
-
         // 补充明细ID
-        aliexpressDeliveryDetailEntityList = fillData(addDTO, aliexpressDeliveryDetailEntityList, platformCode);
+        List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = fillData(addDTO, mainEntity, sourceAllDeliveryList);
 
         log.info("开始新增/更新速卖通发货单详情");
         boolean save = super.saveOrUpdateBatch(aliexpressDeliveryDetailEntityList);
@@ -77,8 +76,12 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
     /**
      * 补充信息
      */
-    private List<AliexpressDeliveryDetailEntity> fillData(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO, List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList, String platformCode) {
-        String mainId = addDTO.get(0).getMainId();
+    private List<AliexpressDeliveryDetailEntity> fillData(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO,
+                                                          AliexpressDeliveryEntity mainEntity,
+                                                          List<PlatformDeliveryDTO> sourceAllDeliveryList) {
+        List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = BeanUtil.copyToList(addDTO,AliexpressDeliveryDetailEntity.class);
+        String mainId = mainEntity.getId();
+        String platformCode = mainEntity.getPlatformCode();
         // 查询历史已存在明细
         List<String> detailUniqueIds = addDTO.stream().map(AliexpressDeliveryDetailDTO.AddDTO::getUniqueId).distinct().collect(Collectors.toList());
         Map<String, AliexpressDeliveryDetailEntity> existDetailMap = lambdaQuery()
@@ -115,9 +118,8 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
         //产品信息
         List<String> skuNos = aliexpressDeliveryDetailEntityList.stream().map(AliexpressDeliveryDetailEntity::getSkuNo).distinct().collect(Collectors.toList());
         skuNos.addAll(soB2cDetailEntityList.stream().map(SoB2cDetailEntity::getSkuNo).distinct().collect(Collectors.toList()));
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
         // 重新分摊价格
-        return convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, skuVOList);
+        return convertAllAliExpressDeliveryDetailPrice(aliexpressDeliveryDetailEntityList, soB2cDetailEntityList, sourceAllDeliveryList, mainEntity);
     }
 
 
@@ -130,16 +132,19 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
      *
      * @param deliveryDetailList    速卖通发货单明细
      * @param soB2cDetailEntityList 速卖通销售订单明细
-     * @param skuVOList             sku列表
-     * @return Map<速卖通明细ID, Pair<发货明细sku单价, 发货明细sku总价>
+     * @param sourceAllDeliveryList
+     * @param mainEntity
+     * @return Map<速卖通明细ID, Pair < 发货明细sku单价, 发货明细sku总价>
      */
     public List<AliexpressDeliveryDetailEntity> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
-                                                                                             List<SoB2cDetailEntity> soB2cDetailEntityList,
-                                                                                             List<SkuVO> skuVOList
-    ) {
+                                                                                        List<SoB2cDetailEntity> soB2cDetailEntityList,
+                                                                                        List<PlatformDeliveryDTO> sourceAllDeliveryList,
+                                                                                        AliexpressDeliveryEntity mainEntity) {
         List<AliexpressDeliveryDetailEntity> deliveryDetailResultList = new LinkedList<>();
 
-        Map<String, SkuVO> skuVoMap = skuVOList.stream().collect(Collectors.toMap(SkuVO::getSkuId, e -> e));
+        // 所有发货明细
+        List<PlatformDeliveryDetailDTO> allSourceDeliveryDetailList = sourceAllDeliveryList.stream().map(PlatformDeliveryDTO::getDetailDTOList).flatMap(List::stream).collect(Collectors.toList());
+
 
         // 平台产品ID 分组
         Map<String, List<AliexpressDeliveryDetailEntity>> deliveryMap = deliveryDetailList
@@ -149,153 +154,74 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
         for (Map.Entry<String, List<AliexpressDeliveryDetailEntity>> entry : deliveryMap.entrySet()) {
             // 未拆分
             if (1 == entry.getValue().size()){
-                for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
-                    SoB2cDetailEntity detailEntity = checkAndGetSoB2cDetailEntity(soB2cDetailEntityList, entry);
-                    // 根据发货数量和订单明细数量判断单价和发货明细总价
-                    // Map<速卖通明细ID, Pair<发货明细单价, 发货明细总价>>
-                    Pair<BigDecimal, BigDecimal> pircePair = checkQtyGetPrice(aliExpressDetailEntity, detailEntity);
-                    aliExpressDetailEntity.setPlatformDetailId(detailEntity.getSourceDetailId());
-                    aliExpressDetailEntity.setProratedUnitPrice(pircePair.getFirst());
-                    aliExpressDetailEntity.setProratedAmount(pircePair.getSecond());
-                    aliExpressDetailEntity.setBomQty(aliExpressDetailEntity.getOrderLineQty() / detailEntity.getQty());
-                    BigDecimal costPrice = getCostPrice(skuVOList, aliExpressDetailEntity);
-                    aliExpressDetailEntity.setCostPrice(costPrice);
-                    deliveryDetailResultList.add(aliExpressDetailEntity);
+                String platformSkuId = entry.getValue().get(0).getPlatformSkuId();
+                // 所有发货明细只有一个平台skuID
+                if (1 == allSourceDeliveryDetailList.stream().filter(e-> e.getPlatformSkuId().equals(platformSkuId)).count()){
+                    for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
+                        SoB2cDetailEntity detailEntity = checkAndGetSoB2cDetailEntity(soB2cDetailEntityList, aliExpressDetailEntity);
+                        // 根据发货数量和订单明细数量判断单价和发货明细总价
+                        // Map<速卖通明细ID, Pair<发货明细单价, 发货明细总价>>
+                        Pair<BigDecimal, BigDecimal> pircePair = checkQtyGetPrice(aliExpressDetailEntity, detailEntity);
+                        aliExpressDetailEntity.setPlatformDetailId(detailEntity.getSourceDetailId());
+                        aliExpressDetailEntity.setProratedUnitPrice(pircePair.getFirst());
+                        aliExpressDetailEntity.setProratedAmount(pircePair.getSecond());
+                        deliveryDetailResultList.add(aliExpressDetailEntity);
+                    }
+                    continue;
                 }
-                continue;
             }
             // 平台库存产品ID一样 = 未拆分
-            if (1 == entry.getValue().stream().map(AliexpressDeliveryDetailEntity::getScItemId).count()){
+            // TODO
+            if (1 == allSourceDeliveryDetailList.stream().map(PlatformDeliveryDetailDTO::getScItemId).distinct().count()){
                 for (AliexpressDeliveryDetailEntity aliExpressDetailEntity : entry.getValue()) {
-                    SoB2cDetailEntity detailEntity = checkAndGetSoB2cDetailEntity(soB2cDetailEntityList, entry);
+                    SoB2cDetailEntity detailEntity = checkAndGetSoB2cDetailEntity(soB2cDetailEntityList, aliExpressDetailEntity);
                     // 根据发货数量和订单明细数量判断单价和发货明细总价
                     aliExpressDetailEntity.setPlatformDetailId(detailEntity.getSourceDetailId());
                     aliExpressDetailEntity.setProratedUnitPrice(aliExpressDetailEntity.getPrice());
                     aliExpressDetailEntity.setProratedAmount(detailEntity.getAmount());
-                    aliExpressDetailEntity.setBomQty(aliExpressDetailEntity.getOrderLineQty() / detailEntity.getQty());
-                    BigDecimal costPrice = getCostPrice(skuVOList, aliExpressDetailEntity);
-                    aliExpressDetailEntity.setCostPrice(costPrice);
                     deliveryDetailResultList.add(aliExpressDetailEntity);
                 }
                 continue;
             }
 
-            // 总单价
-            BigDecimal price = entry.getValue().get(0).getPrice();
+            // 子件拆分
+            for (AliexpressDeliveryDetailEntity deliveryDetailEntity : entry.getValue()) {
+                // 根据产品ID匹配, 目前速卖通明细产品ID唯一
+                SoB2cDetailEntity detailEntity = checkAndGetSoB2cDetailEntity(soB2cDetailEntityList, deliveryDetailEntity);
+                deliveryDetailEntity.setPlatformDetailId(detailEntity.getSourceDetailId());
+                // 当前明细分摊的金额 = 订单总金额 * 买家视角订单总金额 / 发货明细实际金额
+                BigDecimal prorateAmount = mainEntity.getOrderAmount().multiply(mainEntity.getActualAmount()).divide(deliveryDetailEntity.getPayAmount(), 4, RoundingMode.DOWN);
+                // 当前明细分摊的单价 = 当前明细分摊的金额 / 发货明细数量
+                BigDecimal proratedUnitPrice = prorateAmount.divide(BigDecimal.valueOf(deliveryDetailEntity.getOrderLineQty()), 4, RoundingMode.DOWN);
 
-            // 根据产品ID匹配, 目前速卖通明细产品ID唯一
-            SoB2cDetailEntity detailEntity = checkAndGetSoB2cDetailEntity(soB2cDetailEntityList, entry);
-
-            BigDecimal totalCostAmount = BigDecimal.ZERO;
-            // 计算总成本
-            // sku
-            for (AliexpressDeliveryDetailEntity deliveryDetailEntity : deliveryDetailList) {
-                SkuVO skuVO = skuVoMap.get(deliveryDetailEntity.getSkuId());
-                if (null == skuVO){
-                    ServiceException.runError("未找sku信息:skuId={}", deliveryDetailEntity.getSkuId());
-                }
-                BigDecimal costPrice = ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
-                if (null == costPrice){
-                    ServiceException.runError("未找到成本信息:skuId={}", deliveryDetailEntity.getSkuId());
-                }
-                if (0 == costPrice.compareTo(BigDecimal.ZERO)){
-                    ServiceException.runError("成本信息为0:skuId={}", deliveryDetailEntity.getSkuId());
-                }
-                BigDecimal allItemPrice = costPrice.multiply(BigDecimal.valueOf(deliveryDetailEntity.getOrderLineQty()));
-                totalCostAmount = totalCostAmount.add(allItemPrice);
-            }
-            totalCostAmount = totalCostAmount.divide(BigDecimal.valueOf(detailEntity.getQty()), 4, RoundingMode.DOWN);
-
-            // 汇总
-            Map<String, List<AliexpressDeliveryDetailEntity>> groupMap = entry.getValue()
-                    .stream()
-                    .collect(Collectors.groupingBy(AliexpressDeliveryDetailEntity::getSkuId));
-            List<Map.Entry<String, List<AliexpressDeliveryDetailEntity>>> entryList = groupMap.entrySet()
-                    .stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .collect(Collectors.toList());
-
-            // 剩余价格
-            BigDecimal lastPrice = price;
-            // 平台明细总价
-            BigDecimal lastTotalPrice = detailEntity.getAmount();
-            for (int i = 0; i < entryList.size(); i++) {
-                Map.Entry<String, List<AliexpressDeliveryDetailEntity>> curEntry = entryList.get(i);
-
-                SkuVO skuVO = skuVoMap.get(curEntry.getKey());
-                List<AliexpressDeliveryDetailEntity> value = curEntry.getValue();
-                if (i == entryList.size() - 1){
-                    // 判断当前ERP sku发货数量 是否和 明细数量
-                    int sum = value.stream().mapToInt(AliexpressDeliveryDetailEntity::getOrderLineQty).sum();
-                    BigDecimal targetLastPrice = lastPrice;
-                    if (sum > detailEntity.getQty()){
-                        targetLastPrice = lastPrice.multiply(BigDecimal.valueOf(detailEntity.getQty())).divide(BigDecimal.valueOf(sum), 4, RoundingMode.DOWN);
-                    }
-                    for (AliexpressDeliveryDetailEntity deliveryDetailEntity : value) {
-                        deliveryDetailEntity.setPlatformDetailId(detailEntity.getSourceDetailId());
-                        deliveryDetailEntity.setProratedUnitPrice(targetLastPrice);
-                        deliveryDetailEntity.setProratedAmount(lastTotalPrice);
-                        deliveryDetailEntity.setBomQty(deliveryDetailEntity.getOrderLineQty() / detailEntity.getQty());
-                        deliveryDetailEntity.setCostPrice(skuVO.getActualTaxCost());
-                        deliveryDetailResultList.add(deliveryDetailEntity);
-                        lastTotalPrice = targetLastPrice.multiply(BigDecimal.valueOf(deliveryDetailEntity.getOrderLineQty()));
-                    }
-                } else {
-                    // 当前单价 = 明细单价 * (成本 / 总成本)
-                    BigDecimal curPrice = price.multiply(skuVO.getActualTaxCost())
-                            .divide(totalCostAmount, 4, RoundingMode.DOWN);
-                    for (AliexpressDeliveryDetailEntity deliveryDetailEntity : value) {
-                        deliveryDetailEntity.setPlatformDetailId(detailEntity.getSourceDetailId());
-                        deliveryDetailEntity.setProratedUnitPrice(curPrice);
-                        deliveryDetailEntity.setProratedAmount(curPrice.multiply(BigDecimal.valueOf(deliveryDetailEntity.getOrderLineQty())));
-                        deliveryDetailEntity.setBomQty(deliveryDetailEntity.getOrderLineQty() / detailEntity.getQty());
-                        deliveryDetailEntity.setCostPrice(skuVO.getActualTaxCost());
-                        deliveryDetailResultList.add(deliveryDetailEntity);
-                    }
-                    int sum = value.stream().mapToInt(AliexpressDeliveryDetailEntity::getOrderLineQty).sum();
-                    // 剩余总价 = 单价 * 总sku数量
-                    BigDecimal planBomTotalPrice = curPrice.multiply(BigDecimal.valueOf(sum));
-                    // 剩余单价 = 当前单价 * 发货明细数量 / 明细数量
-                    BigDecimal planBomPrice = planBomTotalPrice
-                            .divide(BigDecimal.valueOf(detailEntity.getQty()), 4, RoundingMode.DOWN);
-                    lastPrice = lastPrice.subtract(planBomPrice);
-                    // 剩余总价 = 当前总价 -（当前sku总价）
-                    lastTotalPrice = lastTotalPrice.subtract(planBomTotalPrice);
-                }
+                deliveryDetailEntity.setProratedUnitPrice(proratedUnitPrice);
+                deliveryDetailEntity.setProratedAmount(prorateAmount);
+                deliveryDetailResultList.add(deliveryDetailEntity);
             }
         }
 
         return deliveryDetailResultList;
     }
 
-    private static BigDecimal getCostPrice(List<SkuVO> skuVOList, AliexpressDeliveryDetailEntity aliExpressDetailEntity) {
-        SkuVO skuVO = skuVOList.stream().filter(e -> e.getSkuId().equalsIgnoreCase(aliExpressDetailEntity.getSkuId())).findFirst().orElse(null);
-        BigDecimal costPrice = BigDecimal.ZERO;
-        if (null != skuVO){
-            costPrice = skuVO.getActualTaxCost();
-        }
-        return costPrice;
-    }
-
     /**
      * 检查匹配订单明细
      */
-    private static SoB2cDetailEntity checkAndGetSoB2cDetailEntity(List<SoB2cDetailEntity> soB2cDetailEntityList, Map.Entry<String, List<AliexpressDeliveryDetailEntity>> entry) {
+    private static SoB2cDetailEntity checkAndGetSoB2cDetailEntity(List<SoB2cDetailEntity> soB2cDetailEntityList, AliexpressDeliveryDetailEntity deliveryDetailEntity) {
         // 平台skuId 优先
         SoB2cDetailEntity detailEntity = soB2cDetailEntityList.stream()
-                .filter(e -> e.getPlatformSkuId().equalsIgnoreCase(entry.getKey()))
+                .filter(e -> e.getPlatformSkuId().equalsIgnoreCase(deliveryDetailEntity.getPlatformSkuId()))
                 .findFirst()
                 .orElse(null);
         if (null == detailEntity){
             // 平台产品ID匹配
-            String platformSpuNo = entry.getValue().stream().map(AliexpressDeliveryDetailEntity::getPlatformSpuNo).findFirst().orElse("");
+            String platformSpuNo = deliveryDetailEntity.getPlatformSpuNo();
             detailEntity= soB2cDetailEntityList.stream()
                     .filter(e -> e.getPlatformSpuNo().equalsIgnoreCase(platformSpuNo))
                     .findFirst()
                     .orElse(null);
         }
         if (null == detailEntity){
-           throw  new ServiceException("未找对应明细:产品sku ID={}", entry.getKey());
+           throw  new ServiceException("未找对应明细:产品sku ID={}", deliveryDetailEntity.getId());
         }
         return detailEntity;
     }
