@@ -85,6 +85,8 @@ public class NfeInvoiceService {
 
     @Resource
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+    @Resource
+    private CfgInvoiceSettingService cfgInvoiceSettingService;
 
     @Resource
     private OmsAttachmentService omsAttachmentService;
@@ -151,12 +153,16 @@ public class NfeInvoiceService {
             log.error("创建发票失败,返回错误信息,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,"未知");
         }
+        //回写序列号和起始编号
+        cfgInvoiceSettingService.updateSerialNoById(invoiceSettingDetail.getMainId(),resultDTO.getSerie(),resultDTO.getNumeroNfe());
         //更新开票状态
         InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
         invoiceInfoEntity.setStatus(invoiceStatus);
         invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
         invoiceInfoEntity.setQueryId(resultDTO.getId());
         invoiceInfoEntity.setPlatformInvoiceNo(resultDTO.getRecibo());
+        invoiceInfoEntity.setNo(resultDTO.getSerie());
+        invoiceInfoEntity.setStartCode(String.valueOf(resultDTO.getNumeroNfe()));
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
 
         //上传xml、pdf
