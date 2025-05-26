@@ -30,6 +30,7 @@ public class ProcessDTO {
          */
         @NotBlank(message = "流程定义ID不能为空")
         private String processDefinitionId;
+
         /**
          * 流程版本
          */

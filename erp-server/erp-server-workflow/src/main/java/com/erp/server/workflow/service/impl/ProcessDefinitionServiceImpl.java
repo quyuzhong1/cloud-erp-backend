@@ -80,12 +80,8 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     public boolean addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
         // 查询数据是否存在
         ProcessDefinitionEntity entity = getProcessVersionEntity(dto.getId(),dto.getProcessVersion());
-        if (ObjUtil.isNotEmpty(entity) && entity.getIsDeploy()) {
+        if (ObjectUtil.isNotEmpty(entity) && Boolean.TRUE.equals(entity.getIsDeploy())) {
             throw new ServiceException(ApiError.PROCESS_DEFINITION_DEPLOY_UPDATE_ERROR);
-        }
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), null, null);
-        if (!CharSequenceUtil.equals(dto.getId(),processBusiness.getProcessDefinitionId())) {
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_ADD_ERROR);
         }
         // dto转换为 processDefinitionEntity 和 processBusinessEntity 两个实体
         ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
