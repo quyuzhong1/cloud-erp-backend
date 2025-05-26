@@ -2,9 +2,11 @@ package com.erp.server.sys.controller.feign;
 
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import com.erp.model.sys.dto.DictCityDTO;
 import com.erp.model.sys.dto.DictCountryDTO;
 import com.erp.model.sys.dto.DictGlobalAreaDTO;
+import com.erp.server.sys.service.CfgThirdNoticeService;
 import com.erp.server.sys.service.DictCityService;
 import com.erp.server.sys.service.DictCountryService;
 import com.erp.server.sys.service.DictGlobalAreaService;
@@ -24,6 +26,8 @@ public class ExportSysFeignController {
     private DictCountryService dictCountryService;
     @Resource
     private DictCityService dictCityService;
+    @Resource
+    private CfgThirdNoticeService cfgThirdNoticeService;
 
     @PostMapping("/city")
     public PagingVO<DictCityDTO.PagingViewDTO> exportCity(@RequestBody PagingDTO<DictCityDTO.ProvincePagingParamDTO> dto) {
@@ -43,5 +47,9 @@ public class ExportSysFeignController {
     @PostMapping("/globalArea")
     public PagingVO<DictGlobalAreaDTO.PagingViewDTO> exportGlobalArea(@RequestBody PagingDTO<DictGlobalAreaDTO.PagingParamDTO> dto) {
         return dictGlobalAreaService.exportGlobalArea(dto);
+    }
+    @PostMapping("/exportCfgThirdNotice")
+    public PagingVO<CfgThirdNoticeDTO.ListDTO> exportCfgThirdNotice(@RequestBody PagingDTO<CfgThirdNoticeDTO.PagingParamDTO> dto){
+        return cfgThirdNoticeService.paging(dto);
     }
 }

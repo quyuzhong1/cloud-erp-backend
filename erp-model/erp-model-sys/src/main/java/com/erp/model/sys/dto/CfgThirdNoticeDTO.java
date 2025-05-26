@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -46,6 +47,7 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 单据类型
         */
         private String businessType;
+        private String businessTypeName;
 
         /**
         * 通知节点
@@ -56,6 +58,7 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 通知方式：single=单条,summary=汇总
         */
         private String method;
+        private String methodName;
 
         /**
         * 通知状态
@@ -71,6 +74,7 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 通知类型
         */
         private String noticeType;
+        private String noticeTypeName;
 
         /**
         * 跳转链接
@@ -86,18 +90,29 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 通知人员
         */
         private String roleType;
+        private List<String> roleTypeList;
+        private List<String> roleTypeNameList;
 
         /**
         * 具体人员
         */
         private String specificPerson;
+        private List<String> specificPersonList;
+        private List<String> specificPersonNameList;
+
 
         /**
         * 推送方式
         */
         private String noticeMethod;
+        private String noticeMethodList;
+        private String noticeMethodNameList;
 
-
+        /**
+         * 规则条件
+         */
+        @Dict
+        private List<CfgRuleConditionDTO.View> conditionList;
     }
 
     /**
@@ -107,7 +122,12 @@ public class CfgThirdNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 规则条件集合
+         */
+        @Valid
+        @Size(min = 1, message = "至少存在一条规则条件")
+        private List<CfgRuleConditionDTO.Add> conditionList;
     }
 
     /**
@@ -122,6 +142,13 @@ public class CfgThirdNoticeDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 规则条件
+         */
+        @Valid
+        @Size(min = 1, message = "至少存在一条规则条件")
+        private List<CfgRuleConditionDTO.Update> conditionList;
 
     }
 
@@ -205,12 +232,7 @@ public class CfgThirdNoticeDTO implements Serializable {
         private List<CfgApproveSyncFieldMapDTO.@Valid NoticeFieldMapDTO> pushMsgList;
 
 
-        /**
-         * 规则条件集合
-         */
-        @Valid
-        @Size(min = 1, message = "至少存在一条规则条件")
-        private List<CfgRuleConditionDTO.Add> conditionList;
+
 
 
     }
@@ -270,6 +292,7 @@ public class CfgThirdNoticeDTO implements Serializable {
          * 通知状态
          */
         private Boolean noticeStatus;
+        private String noticeStatusName;
 
         /**
          * 通知类型
@@ -297,6 +320,7 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
          * 通知时间类型
          */
+        private String cron;
         private String cronType;
     }
 
