@@ -356,7 +356,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
             } else {
                 product.setProductImage("");
             }
-            DmpProductInfoEntity dmpProductInfoEntity = finalDmpProductMap.get(detail.getPlatformDetailId());
+            DmpProductInfoEntity dmpProductInfoEntity = finalDmpProductMap.get(detail.getThirdDetailId());
             if (null != dmpProductInfoEntity) {
                 product.setHandle(dmpProductInfoEntity.getHandle());
             } else {
