@@ -62,5 +62,114 @@
         order by create_time desc
     </select>
 
+    <!-- 主表 resultMap -->
+    <resultMap id="viewDTOResultMap" type="com.erp.model.workflow.dto.CfgThirdProcessDTO$ViewDTO">
+        <id property="id" column="process_id"/>
+        <result property="code" column="process_code"/>
+        <result property="name" column="process_name"/>
+        <result property="bussinessKey" column="process_bussiness_key"/>
+        <result property="operateType" column="process_operate_type"/>
+        <result property="sourcePlatform" column="process_source_platform"/>
+        <result property="enableStatus" column="process_enable_status"/>
+        <result property="enableTime" column="process_enable_time"/>
+
+        <!-- 字段映射 -->
+        <collection property="fieldMapList" ofType="com.erp.model.workflow.dto.CfgProcessFieldMapDTO$ViewDTO"
+                    resultMap="fieldMapViewDTOResultMap"/>
+    </resultMap>
+
+    <!-- 字段映射 resultMap -->
+    <resultMap id="fieldMapViewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessFieldMapDTO$ViewDTO">
+        <id property="id" column="field_map_id"/>
+        <result property="thirdField" column="field_map_third_field"/>
+        <result property="thirdFieldType" column="field_map_third_field_type"/>
+        <result property="thirdFieldRequired" column="field_map_third_field_required"/>
+        <result property="sysField" column="field_map_sys_field"/>
+        <result property="sysFieldType" column="field_map_sys_field_type"/>
+        <result property="sysFieldRequired" column="field_map_sys_field_required"/>
+        <result property="cfgId" column="field_map_cfg_id"/>
+        <result property="defaultValue" column="field_map_default_value"/>
+        <result property="isUnique" column="field_map_is_unique"/>
+        <result property="cfgType" column="field_map_cfg_type"/>
+        <result property="processDefinitionId" column="field_map_process_definition_id"/>
+        <result property="thirdFieldId" column="field_map_third_field_id"/>
+        <result property="isDetailField" column="field_map_is_detail_field"/>
+        <result property="parentId" column="field_map_parent_id"/>
+        <result property="index" column="field_map_index"/>
+        <result property="thirdFieldTypeName" column="thirdFieldTypeName"/>
+        <result property="sysFieldTypeName" column="sysFieldTypeName"/>
+
+        <!-- 值映射 -->
+        <collection property="processValueMapDTOList"
+                    ofType="com.erp.model.workflow.dto.CfgProcessValueMapDTO$ViewDTO"
+                    resultMap="valueMapViewDTOResultMap"/>
+    </resultMap>
+
+    <!-- 值映射 resultMap -->
+    <resultMap id="valueMapViewDTOResultMap" type="com.erp.model.workflow.dto.CfgProcessValueMapDTO$ViewDTO">
+        <id property="id" column="value_map_id"/>
+        <result property="fieldMapId" column="value_map_field_map_id"/>
+        <result property="thirdValue" column="value_map_third_value"/>
+        <result property="sysValue" column="value_map_sys_value"/>
+        <result property="defaultValue" column="value_map_default_value"/>
+    </resultMap>
+
+    <select id="getView" resultType="com.erp.model.workflow.dto.CfgThirdProcessDTO$ViewDTO">
+        SELECT
+            -- 主表字段
+            p.id AS process_id,
+            p.code AS process_code,
+            p.name AS process_name,
+            p.bussiness_key AS process_bussiness_key,
+            p.operate_type AS process_operate_type,
+            p.source_platform AS process_source_platform,
+            p.enable_status AS process_enable_status,
+            p.enable_time AS process_enable_time,
+
+            -- 字段映射表字段
+            fm.id AS field_map_id,
+            fm.third_field AS field_map_third_field,
+            fm.third_field_type AS field_map_third_field_type,
+            fm.third_field_required AS field_map_third_field_required,
+            fm.sys_field AS field_map_sys_field,
+            fm.sys_field_type AS field_map_sys_field_type,
+            fm.sys_field_required AS field_map_sys_field_required,
+            fm.cfg_id AS field_map_cfg_id,
+            fm.default_value AS field_map_default_value,
+            fm.is_unique AS field_map_is_unique,
+            fm.cfg_type AS field_map_cfg_type,
+            fm.process_definition_id AS field_map_process_definition_id,
+            fm.third_field_id AS field_map_third_field_id,
+            fm.is_detail_field AS field_map_is_detail_field,
+            fm.parent_id AS field_map_parent_id,
+            fm.index AS field_map_index,
+            b1.value AS thirdFieldTypeName,
+            b2.value AS sysFieldTypeName,
+
+            -- 值映射表字段
+            vm.id AS value_map_id,
+            vm.field_map_id AS value_map_field_map_id,
+            vm.third_value AS value_map_third_value,
+            vm.sys_value AS value_map_sys_value,
+            vm.default_value AS value_map_default_value
+
+        FROM
+            cfg_third_process p
+                LEFT JOIN
+            cfg_process_field_map fm ON p.id = fm.cfg_id AND fm.is_deleted = FALSE
+                LEFT JOIN
+            cfg_process_value_map vm ON fm.id = vm.field_map_id AND vm.is_deleted = FALSE
+                LEFT JOIN
+            dict_basic  b1 ON b1.type = 'field_type' AND b1.name = fm.third_field_type AND b1.is_deleted = FALSE
+                LEFT JOIN
+            dict_basic  b2 ON b2.type = 'field_type' AND b2.name = fm.sys_field_type AND b2.is_deleted = FALSE
+
+        WHERE
+            p.id = #{id}
+            And p.is_deleted = FALSE
+        ORDER BY
+            fm.create_time ASC
+    </select>
+
 
 </mapper>

@@ -282,7 +282,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     }
 
     @Override
-    public List<ProcessDefinitionDTO.DropDownDTO> dropDown() {
+    public List<ProcessDefinitionDTO.DropDownDTO> dropDown(String type) {
         //1、定时拉取获取定义状态
         List<ProcessDefinitionDTO.DropDownDTO> downDTOList = this.list(new LambdaQueryWrapper<ProcessDefinitionEntity>().eq(ProcessDefinitionEntity::getIsDeploy, true).eq(ProcessDefinitionEntity::getIsDeleted, false)).stream().map(processDefinitionEntity -> {
             ProcessDefinitionDTO.DropDownDTO dropDownDTO = new ProcessDefinitionDTO.DropDownDTO();
@@ -290,7 +290,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             dropDownDTO.setName(processDefinitionEntity.getProcessName());
             return dropDownDTO;
         }).collect(Collectors.toList());
-        List<ThirdProcessDefinitionDTO.DropDownDTO> dropDownDTOS = thirdProcessDefinitionService.dropDown();
+        List<ThirdProcessDefinitionDTO.DropDownDTO> dropDownDTOS = thirdProcessDefinitionService.dropDown(type);
         //组合
         downDTOList.addAll(BeanUtil.copyToList(dropDownDTOS, ProcessDefinitionDTO.DropDownDTO.class));
         return downDTOList;

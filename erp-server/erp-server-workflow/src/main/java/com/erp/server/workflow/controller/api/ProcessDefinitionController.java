@@ -202,11 +202,12 @@ public class ProcessDefinitionController extends BaseController {
 
     /**
      * 高级查询下拉流程名称
+     * type = push
      * @return
      */
     @GetMapping("/drop/down")
-    public ApiResult<List<ProcessDefinitionDTO.DropDownDTO>> dropDown() {
-        return success(processDefinitionService.dropDown());
+    public ApiResult<List<ProcessDefinitionDTO.DropDownDTO>> dropDown(@RequestParam("type") @Validated String type) {
+        return success(processDefinitionService.dropDown(type));
     }
 
     /**

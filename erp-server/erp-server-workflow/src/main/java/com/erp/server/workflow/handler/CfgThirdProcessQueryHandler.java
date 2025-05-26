@@ -1,24 +1,18 @@
 package com.erp.server.workflow.handler;
 
-/**
- * @description: 流程配置高级查询handler
- * @author: hcg
- * @date: 2025/5/12 17:15
- */
 
 import com.common.business.query.AbstractQueryHandler;
 import org.springframework.stereotype.Component;
 
-import java.util.Arrays;
-
 /**
- * @Author: hcg
- * @CreateTime: 2025-05-12
- * @Description:
- * @Version: 1.0
+ *@Author: hcg
+ *@CreateTime: 2025-05-26
+ *@Description:
+ *@Version: 1.0
  */
 @Component
-public class CfgProcessQueryHandler extends AbstractQueryHandler {
+
+public class CfgThirdProcessQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if ("tab".equals(field)) {

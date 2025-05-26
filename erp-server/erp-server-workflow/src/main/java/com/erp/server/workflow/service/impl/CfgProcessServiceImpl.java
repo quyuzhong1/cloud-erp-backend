@@ -93,12 +93,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
-        //TODO 校验流程单据是否唯一
-//        int count = this.count(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
-//        Map<String, String> nameMap = dictBasicService.getByType("processType").stream().collect(Collectors.toMap(DictBasicEntity::getValue, DictBasicEntity::getName));
-//        if (count>1){
-//            throw new ServiceException("{}已配置流程，不可重复配置",nameMap.get(dto.getBussinessKey()));
-//        }
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
         // 生成单号
@@ -147,17 +141,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public CfgProcessDTO.ViewDTO view(String settingId) {
+        cfgProcessRuleService.getByIdOpt(settingId).orElseThrow(() -> new ServiceException("未找到该流程配置数据，{}",settingId));
         CfgProcessDTO.ViewDTO viewDTO = baseMapper.getViewDTOById(settingId);
 
-        if (ObjectUtil.isEmpty(viewDTO)) {
-            // 使用占位符，SLF4J等日志框架会自动替换，或者使用 String.format
-            throw new ServiceException(String.format("此流程配置不存在！id: %s", settingId));
-        }
-
-        // 确保 processRuleDTOList 不为 null，避免 NullPointerException
-        if (ObjectUtil.isEmpty(viewDTO.getProcessRuleDTOList())) {
-            return viewDTO;
-        }
         for (CfgProcessRuleDTO.ViewDTO ruleDto : viewDTO.getProcessRuleDTOList()) {
             if (ObjectUtil.isEmpty(ruleDto.getProcessFieldMapDTOList())) {
                 continue;
@@ -194,10 +180,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     public void delete(List<String> ids) {
         // 操作日志 TODO删除返回主表，然后根据主表id判断下是否存在rule，不存在主表同时删除
         cfgProcessRuleService.delete(ids);
-
-//        String msg = StrUtil.format("新增【{}】配置编码为【{}】", "流程配置", cfgProcessEntity.getCode());
-//        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessEntity.getId(), "新增操作");
-
+        //TODO 删除日志，不知道在哪里加
     }
 
     @Override

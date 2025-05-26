@@ -185,4 +185,6 @@ public interface BusinessNoConstant {
 
     //流程配置
     String LCPZ = "LCPZ";
+    //三方审批生成
+    String SFSC = "SFSC";
 }

@@ -6,6 +6,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
+import com.erp.server.workflow.handler.CfgThirdProcessQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -94,7 +95,7 @@ public class CfgThirdProcessController extends BaseController {
             menuCode = "workflow:cfgThirdProcess:paging",
             tableAlias = "ctp"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = CfgThirdProcessQueryHandler.class)
     public ApiResult<PagingVO<CfgThirdProcessDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgThirdProcessDTO.PagingParamDTO> dto) {
         return success(cfgThirdProcessService.paging(dto));
     }

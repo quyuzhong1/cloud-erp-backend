@@ -83,7 +83,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private Boolean isUnique;
 
         /**
-        * 配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置
+        * 配置类型：sysCfg:系统字段配置、fsCfg:飞书字段配置
         */
         private String cfgType;
 
@@ -222,9 +222,9 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private Boolean isUnique;
 
         /**
-        * 配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置
+        * 配置类型：sysCfg:系统字段配置、fsCfg:飞书字段配置
         */
-        @Size(max = 30,message = "配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置最大长度不能超过30位")
+        @Size(max = 30,message = "配置类型：sysCfg:系统字段配置、fsCfg:飞书字段配置最大长度不能超过30位")
         private String cfgType;
 
         /**

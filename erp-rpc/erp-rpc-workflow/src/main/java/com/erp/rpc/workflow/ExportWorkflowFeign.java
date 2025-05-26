@@ -30,4 +30,7 @@ public interface ExportWorkflowFeign {
 
     @PostMapping("/feign/export/exportCfgProcess")
     PagingVO<CfgProcessDTO.ProcessViewDTO> exportCfgProcess(PagingDTO<CfgProcessDTO.SearchParamDTO> dto);
+
+    @PostMapping("/feign/export/exportCfgThirdProcess")
+    PagingVO<CfgThirdProcessDTO.ListDTO> exportCfgThirdProcess(PagingDTO<CfgThirdProcessDTO.PagingParamDTO> dto);
 }

@@ -30,6 +30,9 @@ public class ExportWorkflowFeignController {
     @Resource
     private CfgProcessService cfgProcessService;
 
+    @Resource
+    private CfgThirdProcessService cfgThirdProcessService;
+
     @PostMapping("/processDefinition")
     public PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto){
         return processDefinitionService.exportProcessDefinition(dto);
@@ -58,5 +61,9 @@ public class ExportWorkflowFeignController {
     @PostMapping("/exportCfgProcess")
     public PagingVO<CfgProcessDTO.ProcessViewDTO> exportCfgProcess(@RequestBody PagingDTO<CfgProcessDTO.SearchParamDTO> dto){
         return cfgProcessService.paging(dto);
+    }
+    @PostMapping("/exportCfgThirdProcess")
+    public PagingVO<CfgThirdProcessDTO.ListDTO> exportCfgThirdProcess(@RequestBody PagingDTO<CfgThirdProcessDTO.PagingParamDTO> dto){
+        return cfgThirdProcessService.paging(dto);
     }
 }

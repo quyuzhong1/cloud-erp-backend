@@ -154,7 +154,7 @@ public class CfgThirdProcessDTO implements Serializable {
         /**
          * 字段映射
          */
-        private List<CfgProcessFieldMapDTO.ViewDTO> fieldMapList;
+        private List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapList;
     }
 
     /**
@@ -197,9 +197,9 @@ public class CfgThirdProcessDTO implements Serializable {
         private String sourcePlatformName;
 
         /**
-         * 启用状态
+         * 字段映射
          */
-        private Boolean enableStatus;
+        private List<CfgProcessFieldMapDTO.ViewDTO> fieldMapList;
     }
 
     /**

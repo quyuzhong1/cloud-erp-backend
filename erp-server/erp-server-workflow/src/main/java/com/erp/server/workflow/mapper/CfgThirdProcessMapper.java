@@ -42,4 +42,6 @@ public interface CfgThirdProcessMapper extends BaseMapper<CfgThirdProcessEntity>
      * @return
      */
     IPage<CfgThirdProcessDTO.ListDTO> paging(Page query, CfgThirdProcessDTO.@NotNull(message = "参数不能为空") @Valid PagingParamDTO params);
+
+    CfgThirdProcessDTO.ViewDTO getView(String id);
 }

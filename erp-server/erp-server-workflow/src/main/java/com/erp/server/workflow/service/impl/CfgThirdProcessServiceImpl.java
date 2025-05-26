@@ -1,16 +1,22 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
+import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.enums.CfgThirdProcessSourcePlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -28,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.CfgThirdProcessDTO;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -56,6 +63,8 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
     private CfgProcessFieldMapService cfgProcessFieldMapService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private CfgProcessValueMapService cfgProcessValueMapService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -63,28 +72,24 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
     public BaseResultDTO.AddDTO add(CfgThirdProcessDTO.AddDTO addDTO) {
         CfgThirdProcessEntity cfgThirdProcessEntity = new CfgThirdProcessEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdProcessEntity);
-        //field->cfg_type、cfg_id thirdCfg
-
+        cfgThirdProcessEntity.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_SFSC));
+        cfgThirdProcessEntity.setId(IdWorker.getIdStr());
         // 数据处理
         handleData(cfgThirdProcessEntity);
-
         log.info("开始新增三方审批生成");
         // 生成单号
         // TODO 此处的null需填写生成单号类型，type查看BusinessNoTypeEnum枚举类 注意需要填写prefix 为单号前缀
-        String code = docNoGenHelper.generateCode(null);
-        cfgThirdProcessEntity.setCode(code);
         boolean save = super.save(cfgThirdProcessEntity);
         if (!save) {
             throw new ServiceException("三方审批生成保存失败");
         }
-
+        //新增明细：field->cfg_type、cfg_id thirdCfg
+        cfgProcessFieldMapService.add(addDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addDTO.getFieldMapList());
         // 操作日志
         String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "三方审批生成", cfgThirdProcessEntity.getCode());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgThirdProcessEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(cfgThirdProcessEntity.getId(), code);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_THIRD_PROCESS.getCode(), cfgThirdProcessEntity.getId(), "新增操作");
+        return new BaseResultDTO.AddDTO(cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getCode());
     }
 
     /**
@@ -96,21 +101,17 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         CfgThirdProcessEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "三方审批生成"));
         CfgThirdProcessEntity cfgThirdProcessEntity = BeanMapperUtils.map(CfgThirdProcessEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(cfgThirdProcessEntity);
         log.info("编辑 开始修改三方审批生成数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(cfgThirdProcessEntity);
         if (!save) {
             throw new ServiceException("三方审批生成保存失败");
         }
         // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
+        cfgProcessFieldMapService.addOrUpdate(addOrUpdateDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addOrUpdateDTO.getFieldMapList());
         // 记录主单操作日志
         log.info("编辑 开始记录三方审批生成日志数据，单号：【{}】", cfgThirdProcessEntity.getCode());
         String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgThirdProcessEntity.getCode(), "三方审批生成");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgThirdProcessEntity, null, cfgThirdProcessEntity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, cfgThirdProcessEntity, ModuleTypeEnum.CFG_THIRD_PROCESS.getCode(), cfgThirdProcessEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -131,15 +132,8 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
     @Override
     public CfgThirdProcessDTO.ViewDTO view(String id) {
         CfgThirdProcessEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到ERP审批同步配置数据"));
-        return fillOne(entity);
-    }
-
-    private CfgThirdProcessDTO.ViewDTO fillOne(CfgThirdProcessEntity entity) {
-        //组装字段映射
-
-        //组装值映射
-
-        return null;
+        CfgThirdProcessDTO.ViewDTO view = baseMapper.getView(id);
+        return view;
     }
 
     @Override

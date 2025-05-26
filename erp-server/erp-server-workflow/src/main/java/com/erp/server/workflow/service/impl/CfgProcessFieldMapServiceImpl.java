@@ -68,12 +68,11 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
-        List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO);
-
-        // 批量插入和更新
-        boolean b = this.saveOrUpdateBatch(entitiesToAddOrUpdate);
-        if (!b) {
-            throw new ServiceException("流程设置字段配置新增失败");
+        try {
+            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO);
+            this.saveOrUpdateBatch(entitiesToAddOrUpdate);
+        } catch (Exception e) {
+            throw new ServiceException("流程设置字段配置新增失败:{}", e.getMessage());
         }
         //插入值映射
         for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
@@ -99,33 +98,33 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                         .eq(CfgProcessFieldMapEntity::getCfgId, ruleId)
                         .eq(CfgProcessFieldMapEntity::getIsDeleted, false)
         );
-
-        //校验更新数据
-        List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO);
-        // 批量插入和更新
-        boolean b = this.saveOrUpdateBatch(entitiesToAddOrUpdate);
-        if (!b) {
-            throw new ServiceException("流程设置字段配置更新失败");
-        }
-        //更新值映射
-        for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
-            String id = dto.getId();
-            List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList = dto.getProcessValueMapDTOList();
-            if (ObjectUtil.isNotEmpty(processValueMapDTOList)) {
-                cfgProcessValueMapService.addOrUpdate(cfgProcessId, id, processValueMapDTOList);
+        try {
+            //校验更新数据
+            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO);
+            // 批量插入和更新
+            this.saveOrUpdateBatch(entitiesToAddOrUpdate);
+            //更新值映射
+            for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
+                String id = dto.getId();
+                List<CfgProcessValueMapDTO.AddOrUpdateDTO> processValueMapDTOList = dto.getProcessValueMapDTOList();
+                if (ObjectUtil.isNotEmpty(processValueMapDTOList)) {
+                    cfgProcessValueMapService.addOrUpdate(cfgProcessId, id, processValueMapDTOList);
+                }
             }
-        }
-        //生成日志
-        Map<String, CfgProcessFieldMapEntity> entityMap = entitiesToAddOrUpdate.stream()
-                .collect(Collectors.toMap(CfgProcessFieldMapEntity::getId, entity -> entity));
-        existingEntities.forEach(old -> {
-            CfgProcessFieldMapEntity entity = entityMap.get(old.getId());
-            if (ObjectUtil.isNotEmpty(old)) {
-                operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "更新操作");
-            }
-        });
+            //生成日志
+            Map<String, CfgProcessFieldMapEntity> entityMap = entitiesToAddOrUpdate.stream()
+                    .collect(Collectors.toMap(CfgProcessFieldMapEntity::getId, entity -> entity));
+            existingEntities.forEach(old -> {
+                CfgProcessFieldMapEntity entity = entityMap.get(old.getId());
+                if (ObjectUtil.isNotEmpty(old)) {
+                    operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.CFG_PROCESS.getCode(), cfgProcessId, "更新操作");
+                }
+            });
 
-        return new BaseResultDTO.AddDTO();
+            return new BaseResultDTO.AddDTO();
+        } catch (Exception e) {
+            throw new ServiceException("流程设置字段配置新增失败:{}", e.getMessage());
+        }
     }
 
     @Override
@@ -231,8 +230,6 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
             BeanMapperUtils.copy(dto, entity);
             entity.setCfgId(ruleId); // 设置关联的 ruleId
-            entity.setCfgType("sysCfg"); //TODO 缺少枚举
-            //TODO 默认值赋值？
             entitiesToAddOrUpdate.add(entity);
         }
         if (ObjectUtil.isNotEmpty(fieldList) && fieldList.size() > 0) {
@@ -269,14 +266,15 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                     detailViewDTO.setIsDetailField(true);
                     detailViewDTO.setParentId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
                     //如果是金额类型，则添加一个币种的子元素
-                    if (detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())){
+                    if (detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())) {
                         viewDTO.setIndex(1);
                         //克隆一个对象
                         CfgProcessFieldMapDTO.ViewDTO detailViewDTO2 = new CfgProcessFieldMapDTO.ViewDTO();
                         BeanUtil.copyProperties(detailViewDTO, detailViewDTO2);
-                        detailViewDTO2.setThirdField(detailViewDTO2.getThirdField()+"币种");
+                        detailViewDTO2.setThirdField(detailViewDTO2.getThirdField() + "币种");
                         detailViewDTO2.setIndex(0);
                         detailViewDTO2.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
+                        detailViewDTO2.setCfgType("sysCfg");
                         viewDTOList.add(detailViewDTO2);
                     }
                     viewDTOList.add(detailViewDTO); // 将子元素直接添加到 viewDTOList
@@ -284,12 +282,12 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                 continue; // 跳过当前 viewDTO 的添加
             }
             // 如果当前 field 是金额类型，则添加一个币种的子元素
-            if (field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())){
+            if (field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())) {
                 viewDTO.setIndex(1);
                 //克隆一个对象
                 CfgProcessFieldMapDTO.ViewDTO viewDTO2 = new CfgProcessFieldMapDTO.ViewDTO();
                 BeanUtil.copyProperties(viewDTO, viewDTO2);
-                viewDTO2.setThirdField(viewDTO2.getThirdField()+"币种");
+                viewDTO2.setThirdField(viewDTO2.getThirdField() + "币种");
                 viewDTO2.setIndex(0);
                 viewDTO2.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
                 viewDTOList.add(viewDTO2);
