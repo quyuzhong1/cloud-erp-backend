@@ -113,6 +113,17 @@ public class CfgConditionController extends BaseController {
         List<CfgConditionDTO.ListDTO> result = cfConditionService.listOrderHandleCondition();
         return success(result);
     }
+    /**
+     * 发票处理规则的条件下拉
+     * @author zdy
+     * @date: 2025/5/26 14:33
+     * @return ApiResult<List<ListDTO>>
+     */
+    @GetMapping("/listInvoiceHandleCondition")
+    public ApiResult<List<CfgConditionDTO.ListDTO>> listInvoiceHandleCondition() {
+        List<CfgConditionDTO.ListDTO> result = cfConditionService.listInvoiceHandleCondition();
+        return success(result);
+    }
 
     /**
      * 条件 树结构

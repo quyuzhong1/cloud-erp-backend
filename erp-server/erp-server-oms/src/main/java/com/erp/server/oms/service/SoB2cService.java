@@ -1120,4 +1120,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     void updateAmount(String id, BigDecimal amount);
 
     void clearOutDateBySoIds(List<String> clearOutDateSoIds);
+
+    SoB2cDTO.RuleResultDTO invoiceRule(SoB2cEntity soB2cEntity);
 }
