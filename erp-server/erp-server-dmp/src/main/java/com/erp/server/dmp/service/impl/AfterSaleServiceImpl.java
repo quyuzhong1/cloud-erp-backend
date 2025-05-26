@@ -162,40 +162,7 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
         BigDecimal totalAmount = BigDecimal.ZERO;
         List<AfterSaleDetailEntity> detailList = BeanMapper.copyList(addDTO.getDetailList(), AfterSaleDetailEntity.class);
         if (CollUtil.isNotEmpty(detailList)) {
-            List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-            List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-            Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-            List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(addDTO.getPlatformCode());
-            if (CollUtil.isNotEmpty(detailByPlatformCode)) {
-                Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-
-                checkDetailQty(detailByPlatformCode, detailList, downDTOMap);
-                for (AfterSaleDetailEntity detail : detailList) {
-                    detail.setMainId(afterSaleEntity.getId());
-                    ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-                    detail.setSkuNo(productDetail.getSkuNo());
-                    detail.setProductName(productDetail.getName());
-                    if (Objects.isNull(detail.getPrice())) {
-                        AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                        detail.setPrice(downDTO.getPrice());
-                    }
-                    if (Objects.nonNull(detail.getPrice())) {
-                        //计算总货值
-                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
-                    }
-                }
-            } else {
-                for (AfterSaleDetailEntity detail : detailList) {
-                    detail.setMainId(afterSaleEntity.getId());
-                    ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-                    detail.setSkuNo(productDetail.getSkuNo());
-                    detail.setProductName(productDetail.getName());
-                    if (Objects.nonNull(detail.getPrice())) {
-                        //计算总货值
-                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
-                    }
-                }
-            }
+            totalAmount = getBigDecimal(detailList, addDTO.getPlatformCode(), afterSaleEntity, totalAmount);
         }
         if (Objects.isNull(afterSaleEntity.getTotalPrice())) {
             afterSaleEntity.setTotalPrice(totalAmount);
@@ -381,40 +348,9 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             BigDecimal totalAmount = BigDecimal.ZERO;
             List<AfterSaleDetailEntity> oldDetailList = afterSaleDetailService.lambdaQuery().eq(AfterSaleDetailEntity::getMainId, afterSaleEntity.getId()).list();
             List<AfterSaleDetailEntity> detailList = BeanMapper.copyList(updateDTO.getDetailList(), AfterSaleDetailEntity.class);
+            String platformCode = updateDTO.getPlatformCode();
             if (CollUtil.isNotEmpty(detailList)) {
-                List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
-                List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
-                Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
-                List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(updateDTO.getPlatformCode());
-                if (CollUtil.isNotEmpty(detailByPlatformCode)) {
-                    Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
-                    checkDetailQty(detailByPlatformCode, detailList, downDTOMap);
-                    for (AfterSaleDetailEntity detail : detailList) {
-                        detail.setMainId(afterSaleEntity.getId());
-                        ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-                        detail.setSkuNo(productDetail.getSkuNo());
-                        detail.setProductName(productDetail.getName());
-                        if (Objects.isNull(detail.getPrice())) {
-                            AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
-                            detail.setPrice(downDTO.getPrice());
-                        }
-                        if (Objects.nonNull(detail.getPrice())) {
-                            //计算总货值
-                            totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
-                        }
-                    }
-                } else {
-                    for (AfterSaleDetailEntity detail : detailList) {
-                        detail.setMainId(afterSaleEntity.getId());
-                        ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), new ProductDetailEntity());
-                        detail.setSkuNo(productDetail.getSkuNo());
-                        detail.setProductName(productDetail.getName());
-                        if (Objects.nonNull(detail.getPrice())) {
-                            //计算总货值
-                            totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
-                        }
-                    }
-                }
+                totalAmount = getBigDecimal(detailList, platformCode, afterSaleEntity, totalAmount);
 
                 //删除明细
                 List<String> ids = detailList.stream().map(AfterSaleDetailEntity::getId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
@@ -525,6 +461,47 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
             operateLogService.addModuleOperateLogByObj(old, afterSaleEntity, ModuleTypeEnum.AFTER_SALE.getCode(), afterSaleEntity.getId(), msg);
         }
         return Boolean.TRUE;
+    }
+
+    private BigDecimal getBigDecimal(List<AfterSaleDetailEntity> detailList, String platformCode, AfterSaleEntity afterSaleEntity, BigDecimal totalAmount) {
+        List<String> skuIds = detailList.stream().map(AfterSaleDetailEntity::getSkuId).filter(StringUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<ProductDetailEntity> productDetailList = plmTaskFeign.getByIdList(skuIds);
+        Map<String, ProductDetailEntity> productDetailMap = productDetailList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, t -> t));
+        List<AfterSaleDTO.DropDownDTO> detailByPlatformCode = getDetailByPlatformCode(platformCode);
+        if (CollUtil.isNotEmpty(detailByPlatformCode)) {
+            Map<String, AfterSaleDTO.DropDownDTO> downDTOMap = detailByPlatformCode.stream().collect(Collectors.toMap(AfterSaleDTO.DropDownDTO::getSkuId, t -> t, (k1, k2) -> k1));
+            checkDetailQty(detailByPlatformCode, detailList, downDTOMap);
+            for (AfterSaleDetailEntity detail : detailList) {
+                detail.setMainId(afterSaleEntity.getId());
+                ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), null);
+                if(Objects.nonNull(productDetail)){
+                    detail.setSkuNo(productDetail.getSkuNo());
+                    detail.setProductName(productDetail.getName());
+                    if (Objects.isNull(detail.getPrice()) && downDTOMap.containsKey(detail.getSkuId())) {
+                        AfterSaleDTO.DropDownDTO downDTO = downDTOMap.get(detail.getSkuId());
+                        detail.setPrice(downDTO.getPrice());
+                    }
+                    if (Objects.nonNull(detail.getPrice())) {
+                        //计算总货值
+                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                    }
+                }
+            }
+        } else {
+            for (AfterSaleDetailEntity detail : detailList) {
+                detail.setMainId(afterSaleEntity.getId());
+                ProductDetailEntity productDetail = productDetailMap.getOrDefault(detail.getSkuId(), null);
+                if(Objects.nonNull(productDetail)){
+                    detail.setSkuNo(productDetail.getSkuNo());
+                    detail.setProductName(productDetail.getName());
+                    if (Objects.nonNull(detail.getPrice())) {
+                        //计算总货值
+                        totalAmount = totalAmount.add(detail.getPrice().multiply(new BigDecimal(detail.getSkuQty())));
+                    }
+                }
+            }
+        }
+        return totalAmount;
     }
 
 
