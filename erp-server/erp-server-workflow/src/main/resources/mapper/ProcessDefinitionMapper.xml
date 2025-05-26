@@ -36,6 +36,9 @@
         <if test="null != params and  null !=  params.isDeploy">
             and pd.is_deploy = #{params.isDeploy}
         </if>
+        <if test="null != params.processVersion ">
+            and pd.process_version = #{params.processVersion}
+        </if>
         order by pd.create_time desc
     </sql>
 

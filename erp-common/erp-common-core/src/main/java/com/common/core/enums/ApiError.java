@@ -117,6 +117,8 @@ public enum ApiError implements Serializable {
     ERROR_EXCEL_IMPORT_HEAD_EXIST(1061,"导入表头不能重复"),
     ERROR_EXCEL_IMPORT_SIZE(1063,"导入明细不能超过5000条"),
     ERROR_COPY_NOTNULL_ERROR(1064,"对象复制异常"),
+    ERROR_DATA_DELETE_ERROR(1065,"数据删除失败"),
+
     /**
      * 警告信息 从800 开始
      */
@@ -254,6 +256,9 @@ public enum ApiError implements Serializable {
     PROCESS_DEFINITION_DISABLED_ERROR(94043,"关联流程配置有关联启用流程时，不可操作停用"),
     PROCESS_RULE_REPEAT_ERROR(94044,"{}流程设置下存在多条符合条件的规则，请检查"),
     PROCESS_MANAGEMENT_PROCESS_STATUS_ERROR(94045,"流程状态为【{}】不支持审核"),
+    PROCESS_DEFINITION_DEPLOY_UPDATE_ERROR(94046,"流程定义已发布不支持编辑"),
+    PROCESS_DEFINITION_CHANGE_ERROR(94047,"流程定义未发布不支持变更"),
+    PROCESS_DEFINITION_ADD_ERROR(94048,"流程定义已存在，不支持新增"),
 
 
     /**

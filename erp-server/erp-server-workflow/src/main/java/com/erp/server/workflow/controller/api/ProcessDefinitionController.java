@@ -81,14 +81,30 @@ public class ProcessDefinitionController extends BaseController {
     /**
      * 删除流程定义
      *
-     * @param dto
+     * @param list
      * @return ApiResult<Boolean>
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除流程定义")
     @PostMapping("/delete")
-    public ApiResult<Boolean> delete(@RequestBody @Valid ProcessDefinitionDTO.DeleteDTO dto) {
-        boolean result = processDefinitionService.deleteByIds(dto.getIds());
-        return result ? success() : failure();
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Valid List<ProcessDefinitionDTO.DeleteDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (ProcessDefinitionDTO.DeleteDTO deleteDTO : list) {
+            BatchResultDTO submit;
+            try {
+                submit = processDefinitionService.deleteByIds(deleteDTO.getId(),deleteDTO.getProcessVersion(),Boolean.FALSE);
+            }catch (Exception e){
+                log.error("流程设计删除失败",e);
+                ProcessDefinitionEntity entity = processDefinitionService.getById(deleteDTO.getId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    submit = BatchResultDTO.fail(deleteDTO.getId(), deleteDTO.getId(), "流程设计单不存在, 删除失败");
+                    resultDTOS.add(submit);
+                    continue;
+                }
+                submit = BatchResultDTO.fail(entity.getId(), entity.getProcessName(), e.getMessage());
+            }
+            resultDTOS.add(submit);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -170,6 +186,18 @@ public class ProcessDefinitionController extends BaseController {
             resultDTOS.add(submit);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 变更流程
+     * @author will
+     * @date 2025/5/15 15:55
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/changeProcess")
+    public ApiResult<Boolean> changeProcess(@RequestBody @Validated ProcessDefinitionDTO.ProcessChangeDTO dto) {
+       return success(processDefinitionService.changeProcess(dto));
     }
 
     /**

@@ -58,10 +58,10 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
 
     /**
      * 删除流程定义
-     * @param ids
+     * @param id
      * @return
      */
-    boolean deleteByIds(List<String> ids);
+    BatchResultDTO deleteByIds(String id,Integer processVersion,Boolean isValidate);
 
     PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
 
@@ -87,4 +87,12 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
     List<ProcessDefinitionDTO.DropDownDTO> dropDown();
 
     List<ProcessDefinitionDTO.DropDownDTO> proDropDown();
+    /**
+     * 变更流程
+     * @author will
+     * @date 2025/5/23 19:04
+     * @param dto
+     * @return Boolean
+     */
+    Boolean changeProcess(ProcessDefinitionDTO.ProcessChangeDTO dto);
 }

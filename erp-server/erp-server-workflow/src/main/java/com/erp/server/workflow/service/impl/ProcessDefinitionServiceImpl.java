@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,6 +15,7 @@ import com.common.business.enums.DisabledEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -72,11 +74,19 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     @Resource
     private CfgProcessRuleService cfgProcessRuleService;
 
+
     @Transactional(rollbackFor = Exception.class)
     @Override
     public boolean addOrUpdate(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
         // 查询数据是否存在
-        ProcessDefinitionEntity entity = getById(dto.getId());
+        ProcessDefinitionEntity entity = getProcessVersionEntity(dto.getId(),dto.getProcessVersion());
+        if (ObjUtil.isNotEmpty(entity) && entity.getIsDeploy()) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_DEPLOY_UPDATE_ERROR);
+        }
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), null, null);
+        if (!CharSequenceUtil.equals(dto.getId(),processBusiness.getProcessDefinitionId())) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_ADD_ERROR);
+        }
         // dto转换为 processDefinitionEntity 和 processBusinessEntity 两个实体
         ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
         // 不存在则新增
@@ -100,6 +110,24 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         return Boolean.TRUE;
     }
 
+    private void getByBusinessKey(String businessKey) {
+        processBusinessService.lambdaQuery().eq(ProcessBusinessEntity::getBusinessKey,businessKey).last("limit 1").one();
+    }
+
+    /**
+     * 查询未发布数据
+     * @author will
+     * @date 2025/5/23 18:17
+     * @param id
+     * @return ProcessDefinitionEntity
+     */
+    private ProcessDefinitionEntity getProcessVersionEntity(String id,Integer processVersion) {
+        return lambdaQuery().eq(ProcessDefinitionEntity::getId,id)
+                .eq(ObjectUtil.isNotNull(processVersion),ProcessDefinitionEntity::getProcessVersion,processVersion)
+                .last("limit 1")
+                .one();
+    }
+
     @Override
     public PagingVO<ProcessDefinitionDTO.ListDTO> paging(PagingDTO<ProcessDefinitionDTO.QueryDTO> dto) {
         // 分页查询
@@ -115,7 +143,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     @Transactional(rollbackFor = Exception.class)
     public ProcessDTO.DeployResultDTO deploy(ProcessDTO.DeployDTO dto) {
         // 获取流程定义信息
-        ProcessDefinitionEntity definitionEntity = getById(dto.getProcessDefinitionId());
+        ProcessDefinitionEntity definitionEntity = getProcessVersionEntity(dto.getProcessDefinitionId(),dto.getProcessVersion());
         if(null == definitionEntity){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
@@ -129,10 +157,25 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
                 .deploy();
         DeploymentEntity deploymentEntity = (DeploymentEntity) deploy;
         org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity entity = (org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity) deploymentEntity.getDeployedArtifacts().get(org.camunda.bpm.engine.impl.persistence.entity.ProcessDefinitionEntity.class).get(0);
+        //删除已发布的定义
+        ApplicationContextUtils.getBean(ProcessDefinitionServiceImpl.class).deleteIsDeployById(dto.getProcessDefinitionId());
         // 保存部署时间和部署id 部署状态
         ProcessDefinitionEntity update = new ProcessDefinitionEntity(dto, deploy.getId(), deploy.getDeploymentTime(),entity.getVersion());
-        updateById(update);
+        ApplicationContextUtils.getBean(ProcessDefinitionServiceImpl.class).updateById(update);
         return new ProcessDTO.DeployResultDTO(definitionEntity, entity.getVersion());
+    }
+
+    /**
+     * 删除已发布的数据
+     * @author will
+     * @date 2025/5/26 09:05
+     * @param processDefinitionId
+     * @return Boolean
+     */
+    private Boolean deleteIsDeployById(String processDefinitionId) {
+        return lambdaUpdate().eq(ProcessDefinitionEntity::getId,processDefinitionId)
+                .eq(ProcessDefinitionEntity::getIsDeploy,Boolean.TRUE)
+                .remove();
     }
 
 
@@ -165,25 +208,32 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public boolean deleteByIds(List<String> ids) {
+    public BatchResultDTO deleteByIds(String id,Integer processVersion,Boolean isValidate) {
         // 查询数据是否存在
-        List<ProcessDefinitionEntity> entityList = listByIds(ids);
-        if(CollectionUtils.isEmpty(entityList)){
+        ProcessDefinitionEntity entity = getProcessVersionEntity(id,processVersion);
+        if(ObjUtil.isEmpty(entity)){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
         // 已发布的流程不能删除
-        List<ProcessDefinitionEntity> deployList = entityList.stream().filter(x -> x.getIsDeploy()).collect(Collectors.toList());
-        if(!CollectionUtils.isEmpty(deployList)){
+        if(entity.getIsDeploy() && isValidate){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_DEPLOY_DELETE);
         }
-        // 删除关联业务数据
-        List<ProcessBusinessEntity> processBusinessList = processBusinessService.getByDefinitionIds(ids);
-        if(!CollectionUtils.isEmpty(processBusinessList)){
-            List<String> businessIds = processBusinessList.stream().map(ProcessBusinessEntity::getId).collect(Collectors.toList());
-            processBusinessService.removeByIds(businessIds);
+        //不存在其他定义数据则删除业务信息
+        List<ProcessDefinitionEntity> processDefinitionList = listByIds(Collections.singletonList(id));
+        if (processDefinitionList.size() == 1) {
+            // 删除关联业务数据
+            List<ProcessBusinessEntity> processBusinessList = processBusinessService.getByDefinitionIds(Collections.singletonList(id));
+            if(!CollectionUtils.isEmpty(processBusinessList)){
+                List<String> businessIds = processBusinessList.stream().map(ProcessBusinessEntity::getId).collect(Collectors.toList());
+                processBusinessService.removeByIds(businessIds);
+            }
         }
         // 删除流程定义
-        return removeByIds(ids);
+        boolean remove = lambdaUpdate().eq(ProcessDefinitionEntity::getId,id).eq(ProcessDefinitionEntity::getProcessVersion,processVersion).remove();
+        if (!remove) {
+            throw new ServiceException(ApiError.ERROR_DATA_DELETE_ERROR);
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getProcessName(), OperationTypeEnum.DELETE);
     }
 
     @Override
@@ -259,5 +309,25 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             return dropDownDTO;
         }).collect(Collectors.toList());
         return downDTOList;
+    }
+
+    @Override
+    public Boolean changeProcess(ProcessDefinitionDTO.ProcessChangeDTO dto) {
+        // 查询数据是否存在
+        ProcessDefinitionEntity entity = getProcessVersionEntity(dto.getId(),dto.getProcessVersion());
+        if(ObjUtil.isEmpty(entity)){
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+        }
+        if (!entity.getIsDeploy()) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_CHANGE_ERROR);
+        }
+        // 实体转换
+        ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
+        boolean save = save(processDefinitionEntity);
+        // 保存 processDefinitionEntity
+        if (!save) {
+            throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
+        }
+        return save;
     }
 }
