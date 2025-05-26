@@ -120,18 +120,16 @@
         r.track_no as returnTrackNo,
         o.track_no as outboundTrackNo
         FROM
-        after_sale_detail  AS afsd
-        left join after_sale AS afs on afs.id = afsd.main_id
-        left join thrid_user_info as tui on afs.thrid_user_id = tui.id
-        left join after_sale_progress as r on r.main_id = afs.id  and r.node = 'toBeReturned'
-        left join after_sale_progress as o on o.main_id = afs.id  and o.node IN( 'toBeShipped' ,'terminated')
+        after_sale AS afs
+        LEFT JOIN after_sale_detail AS afsd ON afs.ID = afsd.main_id 	AND afsd.is_deleted = FALSE
+        LEFT JOIN thrid_user_info AS tui ON afs.thrid_user_id = tui.ID	AND tui.is_deleted = FALSE
+        LEFT JOIN after_sale_progress AS r ON r.main_id = afs.ID
+        AND r.node = 'toBeReturned' AND r.is_deleted = FALSE
+        LEFT JOIN after_sale_progress AS o ON o.main_id = afs.ID
+        AND o.node IN ( 'toBeShipped', 'terminated' )  AND o.is_deleted = FALSE
         where
         ${params.sqlMap.default}
         AND afs.is_deleted = false
-        and afsd.is_deleted =FALSE
-        and tui.is_deleted = FALSE
-        and r.is_deleted = false
-        and o.is_deleted = false
         <if test="params.ids != null and params.ids.size > 0">
             and afs.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
