@@ -2,14 +2,12 @@ package com.erp.server.wms.convert;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.mapper.DateMapperWork;
-import com.erp.model.oms.dto.SkuMappingDTO;
+import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateInboundReq;
 import com.erp.model.wms.dto.third.ThirdWarehouseCreateOutboundReq;
-import com.erp.model.wms.entity.FirstMileDeliveryDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundDetailEntity;
-import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.OverseasInstockTypeEnum;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import com.sdk.wms.antu.dto.request.AntuCreateInboundReq;
@@ -18,13 +16,13 @@ import com.sdk.wms.goodcang.dto.request.GoodCangCreateInboundReq;
 import com.sdk.wms.goodcang.dto.request.GoodCangCreateOutboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateInboundReq;
 import com.sdk.wms.iml.dto.request.ImlCreateOutboundReq;
-import io.seata.common.util.StringUtils;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -279,4 +277,47 @@ public interface OverseasWarehouseInboundConverter {
             @Mapping(target = "quantity",  source = "quantity"),
     })
     AntuCreateInboundReq.Item inboundDtoToAntuItem(ThirdWarehouseCreateInboundReq.Item createInboundReq);
+    @Mappings({
+            @Mapping(target = "category", ignore = true),
+            @Mapping(target = "categoryField", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum.RECEIVE_QTY.getCode())"),
+            @Mapping(target = "deliveryCode", source = "entity.sourceCode"),
+            @Mapping(target = "deliveryId", source = "entity.sourceId"),
+            @Mapping(target = "isLatest", constant = "true"),
+            @Mapping(target = "newValue", source = "receivedEntity.receiveQty"),
+            @Mapping(target = "oldValue", ignore = true),
+            @Mapping(target = "reportPeriod", ignore = true),
+            @Mapping(target = "reportPeriodId", ignore = true),
+            @Mapping(target = "sourceType", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum.THIRDRECEIVE.getCode())"),
+            @Mapping(target = "type", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordTypeEnum.MANUAL.getCode())"),
+            @Mapping(target = "sourceId", source = "entity.id"),
+            @Mapping(target = "changeRange", ignore = true),
+            @Mapping(target = "boxId", ignore = true),
+            @Mapping(target = "businessCode", source = "entity.code"),
+            @Mapping(target = "logisticsBillId", ignore = true),
+            @Mapping(target = "transportNo", ignore = true)
+    })
+    FirstMileChangeRecordDTO.AddDTO convertOverseasToChangeRecord(OverseasWarehouseInboundEntity entity, OverseasWarehouseInboundDetailEntity detailEntity, OverseasWarehouseInboundReceivedEntity receivedEntity);
+    @Mappings({
+            @Mapping(target = "category", ignore = true),
+            @Mapping(target = "categoryField", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum.RECEIVE_QTY.getCode())"),
+            @Mapping(target = "deliveryCode", source = "deliveryCode"),
+            @Mapping(target = "deliveryId", ignore = true),
+            @Mapping(target = "isLatest", constant = "true"),
+            @Mapping(target = "newValue", source = "receivedEntity.receiveQty"),
+            @Mapping(target = "oldValue", ignore = true),
+            @Mapping(target = "reportPeriod", ignore = true),
+            @Mapping(target = "reportPeriodId", ignore = true),
+            @Mapping(target = "sourceType", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum.THIRDRECEIVE.getCode())"),
+            @Mapping(target = "type", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordTypeEnum.MANUAL.getCode())"),
+            @Mapping(target = "sourceId", source = "entity.id"),
+            @Mapping(target = "changeRange", ignore = true),
+            @Mapping(target = "boxId", ignore = true),
+            @Mapping(target = "businessCode", source = "entity.code"),
+            @Mapping(target = "logisticsBillId", ignore = true),
+            @Mapping(target = "transportNo", ignore = true),
+            @Mapping(target = "platformSkuNo", source = "detailEntity.fnSku"),
+            @Mapping(target = "skuId", source = "detailEntity.skuId"),
+            @Mapping(target = "skuNo", source = "detailEntity.skuNo")
+    })
+    FirstMileChangeRecordDTO.AddDTO convertFbaToChangeRecord(FbaShipmentEntity entity, FbaShipmentDetailEntity detailEntity, FbaShipmentReceiveEntity receivedEntity, String deliveryCode);
 }

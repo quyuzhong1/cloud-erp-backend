@@ -408,7 +408,7 @@ public class WmsCartonDTO {
         /**
          * 箱号
          */
-        private String boxNo;
+        private Integer boxNo;
         /**
          * skuId
          */
@@ -417,6 +417,10 @@ public class WmsCartonDTO {
          * skuNo
          */
         private String skuNo;
+        /**
+         * fnSku
+         */
+        private String fnSku;
         /**
          * 装箱数量
          */
@@ -539,5 +543,13 @@ public class WmsCartonDTO {
         private List<WmsCartonSpecDTO.PackingCartonSpecDTO> cartonSpecDTOList;
 
     }
-
+    @Data
+    @NoArgsConstructor
+    public static class CartonSkuDTO {
+        private String boxId;
+        /**
+         * 组合箱子sku明细 按照 sku*qty 组合
+         */
+        private String sku;
+    }
 }

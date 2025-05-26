@@ -74,6 +74,8 @@ public class ExportTmsFeignController {
     private RemotePostcodeService remotePostcodeService;
     @Resource
     private LogisticsLargeService logisticsLargeService;
+    @Resource
+    private FirstMileChangeRecordService firstMileChangeRecordService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -354,5 +356,21 @@ public class ExportTmsFeignController {
     public PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         return tmsDeclareBillService.export(dto);
+    }
+
+    /**
+     * 头程调整记录导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportFirstMileChangeRecord")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:firstMileChangeRecord:paging",
+            tableAlias = "fmcr"
+    )
+    @WebAdvanceQuery(handler = FirstMileChangeRecordQueryHandler.class)
+    public PagingVO<FirstMileChangeRecordDTO.PagingVO> exportFirstMileChangeRecord(@RequestBody PagingDTO<FirstMileChangeRecordDTO.PagingParamDTO> dto){
+        return firstMileChangeRecordService.paging(dto);
     }
 }

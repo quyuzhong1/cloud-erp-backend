@@ -6117,7 +6117,11 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         log.debug("===== start saveOrUpdateEntity:{}", dto);
         SoB2cEntity oldEntity = null;
         try {
-            oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform(), dto.getShopId(), SourceTypeEnum.SO_B2C.getCode());
+            if(StringUtils.isNotBlank(dto.getThirdSystem())){
+                oldEntity = this.getByThirdInfo(dto.getThirdCode(), dto.getDictPlatform(), dto.getShopId(), SourceTypeEnum.SO_B2C.getCode());
+            }else{
+                oldEntity = this.getByPlatformInfo(dto.getPlatformCode(), dto.getDictPlatform(), dto.getShopId(), SourceTypeEnum.SO_B2C.getCode());
+            }
         } catch (Exception e) {
             log.error("查询订单异常：{}", e.getMessage());
         }
@@ -6344,6 +6348,15 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .one();
     }
 
+    public SoB2cEntity getByThirdInfo(String thirdCode, String dictPlatform, String shopId, String sourceType) {
+        return lambdaQuery()
+                .eq(SoB2cEntity::getThirdCode, thirdCode)
+                .eq(SoB2cEntity::getDictPlatform, dictPlatform)
+                .eq(SoB2cEntity::getShopId, shopId)
+                .eq(SoB2cEntity::getSourceType, sourceType)
+                .last(SqlConstants.LIMIT_1)
+                .one();
+    }
     @Override
     public Map<String, Object> getJson(String id) {
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainId(id);
@@ -10050,6 +10063,18 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             return;
         }
         this.lambdaUpdate().set(SoB2cEntity::getAmount,amount).eq(SoB2cEntity::getId,id).update();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void clearOutDateBySoIds(List<String> clearOutDateSoIds) {
+        if(CollectionUtils.isEmpty(clearOutDateSoIds) ){
+            return ;
+        }
+        lambdaUpdate()
+                .set(SoB2cEntity::getSoOutstockDate,null)
+                .in(SoB2cEntity::getId,clearOutDateSoIds)
+                .update();
     }
 
 

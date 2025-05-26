@@ -26,4 +26,6 @@ public interface TransferDeclareCostAllocationMapper extends BaseMapper<Transfer
 	IPage<ListDTO> paging(Page query,@Param("params") PagingParamDTO params);
 	
 	List<TransferDeclareCostAllocationDTO.TabListDTO> tabList(@Param("params") com.common.business.dto.base.PermissionsDTO params);
+
+    List<TransferDeclareCostAllocationEntity> listByReportPeriodStr(@Param("reportPeriodStr") String reportPeriodStr, @Param("reportStatus") String reportStatus);
 }

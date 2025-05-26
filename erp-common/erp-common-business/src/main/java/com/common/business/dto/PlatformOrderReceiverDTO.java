@@ -91,6 +91,11 @@ public class PlatformOrderReceiverDTO implements Serializable {
      */
     private String receiverTaxNo;
 
+    /**
+     * 是否更新订单异常
+     */
+    private Boolean isUpdateError;
+
     public String getCountry() {
         // 全局替换UK为GB
         if ("UK".equalsIgnoreCase(this.country)){

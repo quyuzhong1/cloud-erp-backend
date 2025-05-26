@@ -2295,7 +2295,7 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             //要货申请-- 要货仓库
 //            String warehouseId = application.getRequisitionWarehouseId();
 //            String warehouseName = application.getRequisitionWarehouseName();
-            String inInventoryStatus = InventoryStatusEnum.USABLE.getCode();
+            String inInventoryStatus = InventoryStatusEnum.FROZEN.getCode();
             String outInventoryStatus = InventoryStatusEnum.USABLE.getCode();
 
             List<String> skuNos = errorList.entrySet().stream().map(Map.Entry<String, Integer>::getKey).collect(Collectors.toList());

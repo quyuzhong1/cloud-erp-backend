@@ -59,7 +59,7 @@
         left join product_info pi on pd.product_id = pi.id
         left join product_sale ps on ps.sku_id = pd.id
         WHERE ${params.sqlMap.default}
-        and t.is_deleted = false
+        and t.is_deleted = false and ps.is_deleted = false
         AND t.warehouse_id = #{params.warehouseId}
         AND t.sku_id = #{params.skuId}
         <if test="params.orgId != null and params.orgId != ''">
@@ -95,7 +95,7 @@
             left join product_info pi on pd.product_id = pi.id
             left join product_sale ps on ps.sku_id = pd.id
         WHERE
-            ${params.sqlMap.default} and t.is_deleted = false
+            ${params.sqlMap.default} and t.is_deleted = false and ps.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
         and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30','32','33','34','35','49','50')
         <if test="params.skuNoList != null and params.skuNoList.size != ''">
@@ -180,7 +180,7 @@
         left join product_info pi on pd.product_id = pi.id
         left join product_sale ps on ps.sku_id = pd.id
         WHERE
-            ${params.sqlMap.default} and t.is_deleted = false
+            ${params.sqlMap.default} and t.is_deleted = false and ps.is_deleted = false
         <!--暂时不显示盘盈盘亏的单据-->
         and t.dict_biz_type in ('00','02','03','04','05','07','08','09','11','12','13','14','17','18','19','20','23','24','26','15','16','27','29','30','32','33','34','35')
         <if test="params.ids != null and params.ids.size != ''">
@@ -484,7 +484,7 @@
             left join product_info pi on pd.product_id = pi.id
             left join product_sale ps on ps.sku_id = pd.id
             <where>
-                        ${params.sqlMap.default} and tf.is_deleted = false
+                        ${params.sqlMap.default} and tf.is_deleted = false and ps.is_deleted = false
                        <if test="params.skuNoList != null and params.skuNoList.size != ''">
                             and tf.sku_no in
                             <foreach collection="params.skuNoList" item="item" open="(" close=")" separator=",">
@@ -569,7 +569,7 @@
                 left join product_info pi on pd.product_id = pi.id
                 left join product_sale ps on ps.sku_id = pd.id
                 <where>
-                    ${params.sqlMap.default} and tf.is_deleted = false
+                    ${params.sqlMap.default} and tf.is_deleted = false and ps.is_deleted = false
                     <if test="params.skuIdList != null and params.skuIdList.size != ''">
                         and tf.sku_id in
                         <foreach collection="params.skuIdList" item="item" open="(" close=")" separator=",">

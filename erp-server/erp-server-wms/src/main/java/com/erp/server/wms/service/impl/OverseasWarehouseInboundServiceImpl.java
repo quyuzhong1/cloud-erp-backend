@@ -1094,6 +1094,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 receivedEntity.setDetailId(detailEntity.getId());
                 receivedEntity.setReceiveQty(thisSignNumber);
                 receivedEntity.setReceiveTime(dto.getDownloadTime());
+                receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
@@ -1123,6 +1124,7 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
                 receivedEntity.setDetailId(detailId);
                 receivedEntity.setReceiveQty(receiving.getReceiveQty());
                 receivedEntity.setReceiveTime(receiving.getReceiveTime());
+                receivedEntity.setSourceType(SignSourceTypeEnum.API.getCode());
                 insertReceiveEntityList.add(receivedEntity);
             }
         }
@@ -1205,6 +1207,14 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> viewChangeList(OverseasWarehouseInboundDTO.ViewListReqDTO dto) {
+        if (Objects.isNull(dto) || CollUtil.isEmpty(dto.getRequestIdList()) || Objects.isNull(dto.getRequestIdType()) || CharSequenceUtil.isBlank(dto.getRequestIdType().getCode())){
+            return Collections.emptyList();
+        }
+        return baseMapper.viewChangeList(dto);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
@@ -14,6 +15,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -199,6 +201,11 @@ public class ShopDTO implements Serializable {
          */
          private String returnWarehouse;
          private String returnWarehouseName;
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
         /**
          * 是否存在授权
          */
@@ -241,7 +248,8 @@ public class ShopDTO implements Serializable {
         /**
          * 平台
          */
-        @NotBlank(message = "平台不能为空")
+        @NotBlank(message = "平台不能为空"
+        )
         private String dictPlatform;
 
 
@@ -342,6 +350,24 @@ public class ShopDTO implements Serializable {
          * 平台经营模式
          */
         private String businessModel;
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
+
+        /**
+         * 授权token
+         */
+        private String token;
+        /**
+         * app key
+         */
+        private String clientId;
+        /**
+         * app secret
+         */
+        private String clientSecret;
     }
 
 
@@ -531,6 +557,25 @@ public class ShopDTO implements Serializable {
          * 平台经营模式名称
          */
         private String businessModelName;
+
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
+
+        /**
+         * 授权token
+         */
+        private String token;
+        /**
+         * app key
+         */
+        private String clientId;
+        /**
+         * app secret
+         */
+        private String clientSecret;
     }
 
     @Data
@@ -678,6 +723,29 @@ public class ShopDTO implements Serializable {
          */
         private String businessModel;
 
+
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
+
+        /**
+         * 授权token
+         */
+        private String token;
+        /**
+         * app key
+         */
+        private String clientId;
+        /**
+         * app secret
+         */
+        private String clientSecret;
+        /**
+         * dictAreaCode
+         */
+        private String dictAreaCode;
     }
     @Data
     @NoArgsConstructor

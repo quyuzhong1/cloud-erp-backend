@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -14,6 +15,7 @@ import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.dto.ShopAuthDTO;
 import com.erp.model.oms.dto.ShopAuthorizeUrlDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.oms.mapper.ShopAuthMapper;
@@ -50,6 +52,8 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
     private OperateLogService operateLogService;
     @Resource
     private ShopeeAuthService shopeeAuthService;
+
+    @Resource
     private ShopInfoServiceImpl shopInfoService;
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -129,8 +133,16 @@ public class ShopAuthServiceImpl extends SuperServiceImpl<ShopAuthMapper, ShopAu
         if (StringUtils.isBlank(shopId)) {
             return null;
         }
-        return this.lambdaQuery().eq(ShopAuthEntity::getShopId, shopId).
+        ShopAuthEntity shopAuth = this.lambdaQuery().eq(ShopAuthEntity::getShopId, shopId).
                 last("LIMIT 1").one();
+        if(Objects.isNull(shopAuth)){
+            return null;
+        }
+        ShopInfoEntity shopInfoEntity = shopInfoService.getById(shopId);
+        shopAuth.setExtendData(JSONUtil.toJsonStr(shopInfoEntity.getExtendData()));
+        shopAuth.setAreaCode(shopInfoEntity.getDictAreaCode());
+        shopAuth.setDictPlatform(shopInfoEntity.getDictPlatform());
+        return shopAuth;
     }
 
     /**

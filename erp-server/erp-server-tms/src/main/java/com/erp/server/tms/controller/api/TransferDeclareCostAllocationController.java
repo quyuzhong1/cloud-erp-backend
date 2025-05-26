@@ -7,6 +7,11 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.enums.TransferDeclareCostAllocationMainReportStatusEnum;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -139,11 +144,18 @@ public class TransferDeclareCostAllocationController extends BaseController {
             menuCode = "tms:transferDeclareCostAllocation:updateReportStatus",
             serviceClass = SmallBagCostAllocationService.class,
             keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody @Validated TransferDeclareCostAllocationDTO.UpdateStatusDTO dto) {
-    	List<String> ids = dto.getIds();
-        List<TransferDeclareCostAllocationEntity> listByIds = transferDeclareCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    public ApiResult<List<BatchResultDTO>> updateReportStatus(@RequestBody TransferDeclareCostAllocationDTO.UpdateStatusDTO dto) {
+        List<TransferDeclareCostAllocationEntity> entityList = null;
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = transferDeclareCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), null);
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            return failure("批量更新中转分摊状态失败，未查询到中转分摊记录");
+        }
+    	List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
             BatchResultDTO submit;
             try {
@@ -177,11 +189,18 @@ public class TransferDeclareCostAllocationController extends BaseController {
     menuCode = "tms:transferDeclareCostAllocation:reAllocation",
     serviceClass = SmallBagCostAllocationService.class,
     keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-    	List<String> ids = dto.getIds();
-        List<TransferDeclareCostAllocationEntity> listByIds = transferDeclareCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    public ApiResult<List<BatchResultDTO>> reAllocation(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+        List<TransferDeclareCostAllocationEntity> entityList = null;
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = transferDeclareCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            return failure("批量更新中转分摊状态失败，未查询到待确认中转分摊记录");
+        }
+    	List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
     		BatchResultDTO submit;
     		try {
@@ -215,11 +234,18 @@ public class TransferDeclareCostAllocationController extends BaseController {
     menuCode = "tms:transferDeclareCostAllocation:delete",
     serviceClass = SmallBagCostAllocationService.class,
     keyIdName = "id")
-    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-    	List<String> ids = dto.getIds();
-        List<TransferDeclareCostAllocationEntity> listByIds = transferDeclareCostAllocationService.listByIds(ids);
-        ids = listByIds.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
-    	List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody FirstMileCostAllocationDTO.ResetIdsDTO dto) {
+        List<TransferDeclareCostAllocationEntity> entityList = null;
+        if (CharSequenceUtil.isNotBlank(dto.getReportPeriodStr())){
+            entityList = transferDeclareCostAllocationService.listByReportPeriodStr(dto.getReportPeriodStr(), TransferDeclareCostAllocationMainReportStatusEnum.TOBECONFIRM.getCode());
+        }else if (CollUtil.isNotEmpty(dto.getIds())){
+            entityList = transferDeclareCostAllocationService.listByIds(dto.getIds());
+        }
+        if (CollectionUtils.isEmpty(entityList)){
+            return failure("批量更新中转分摊状态失败，未查询到待确认中转分摊记录");
+        }
+        List<String> ids = entityList.stream().map(TransferDeclareCostAllocationEntity::getMainId).distinct().collect(Collectors.toList());
+    	List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
     	for (String id : ids) {
     		BatchResultDTO submit;
     		try {

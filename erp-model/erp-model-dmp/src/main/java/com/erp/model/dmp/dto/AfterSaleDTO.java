@@ -326,6 +326,7 @@ public class AfterSaleDTO implements Serializable {
         * 销售平台
         */
         private String dictPlatform;
+        private String dictPlatformName;
 
         /**
         * 购买日期
@@ -695,6 +696,10 @@ public class AfterSaleDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class OpenApiCommonDTO{
+
+        /**
+         */
+        private String id;
 
         /**
          */
