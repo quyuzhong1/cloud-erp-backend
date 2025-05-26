@@ -737,6 +737,12 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/transferIn")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "ti.out_warehouse_id,ti.in_warehouse_id",
+            menuCode = "wms:transfer:in:paging",
+            tableAlias = "ti"
+    )
     @WebAdvanceQuery(handler = TransferInQueryHandler.class)
     public PagingVO<TransferInDTO.PagingViewDTO> exportTransferIn(@RequestBody PagingDTO<TransferInDTO.ExportDTO> dto) {
         return transferInService.exportTransferIn(dto);
@@ -744,7 +750,7 @@ public class ExportWmsFeignController {
 
     @PostMapping("/transferOut")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             warehouseTableField = "tfo.out_warehouse_id",
             menuCode = "wms:transfer:out:export",
             tableAlias = "tfo"
