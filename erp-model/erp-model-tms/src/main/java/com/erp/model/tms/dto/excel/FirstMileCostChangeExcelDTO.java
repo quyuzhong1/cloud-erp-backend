@@ -65,7 +65,7 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
      * *费用分类
      */
     @ExcelProperty(value = "*费用分类", index = 7)
-    @FieldValid(fieldName = "费用分类",isNotBlank = true,enumClass = AllocationFeeTypeEnum.class)
+    @FieldValid(fieldName = "费用分类",enumClass = AllocationFeeTypeEnum.class)
     private String feeTypeName;
     @ExcelIgnore
     private String feeType;

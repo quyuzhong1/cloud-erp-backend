@@ -380,11 +380,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         }
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (FirstMileCostAllocationDTO.CostAllocationDTO dto : dtoValidList) {
-            if (dto.getAllocatedWeight().compareTo(dto.getNewAllocatedWeight()) == 0
-                    && dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) == 0
-                    && dto.getCurrentPeriodAllocatedCost().compareTo(dto.getNewCurrentPeriodAllocatedCost()) == 0
-                    && dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) == 0
-                    && dto.getEndPeriodEstimatedCost().compareTo(dto.getNewEndPeriodEstimatedCost()) == 0) {
+            if (dto.getAllocatedWeight().equals(dto.getNewAllocatedWeight())
+                    && dto.getMidPeriodTransitCost().equals(dto.getNewMidPeriodTransitCost())
+                    && dto.getCurrentPeriodAllocatedCost().equals(dto.getNewCurrentPeriodAllocatedCost())
+                    && dto.getEndPeriodTransitCost().equals(dto.getNewEndPeriodTransitCost())
+                    && dto.getEndPeriodEstimatedCost().equals(dto.getNewEndPeriodEstimatedCost())) {
                 resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), "调整后费用值与调整前费用值全部一致", false));
                 continue;
             }
