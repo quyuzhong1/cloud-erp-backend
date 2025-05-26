@@ -95,6 +95,11 @@ public class DmpProductInfoEntity extends BaseEntity<DmpProductInfoEntity> {
      */
     @TableField("source_id")
     private String sourceId;
+    /**
+     * Shopify标识handle
+     */
+    @TableField("handle")
+    private String handle;
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 
