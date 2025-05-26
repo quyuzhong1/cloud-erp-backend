@@ -56,8 +56,11 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
         if (CharSequenceUtil.isAllBlank(excelDTO.getBusinessCode(),excelDTO.getSourceCode(),excelDTO.getTransportNo())){
             errorMsgList.add("来源单号、业务单号和物流运单号不能同时为空");
         }
-        if (CharSequenceUtil.isAllBlank(excelDTO.getMidPeriodTransitCostStr(),excelDTO.getCurrentPeriodAllocatedCostStr(),excelDTO.getEndPeriodEstimatedCostStr(),excelDTO.getEndPeriodTransitCostStr())){
-            errorMsgList.add("冲期初、本期分摊、期末在途和期末暂估不能同时为空");
+        if (CharSequenceUtil.isAllBlank(excelDTO.getAllocatedWeightStr(),excelDTO.getMidPeriodTransitCostStr(),excelDTO.getCurrentPeriodAllocatedCostStr(),excelDTO.getEndPeriodEstimatedCostStr(),excelDTO.getEndPeriodTransitCostStr())){
+            errorMsgList.add("分摊重量、冲期初、本期分摊、期末在途和期末暂估不能同时为空");
+        }
+        if (!CharSequenceUtil.isAllBlank(excelDTO.getMidPeriodTransitCostStr(),excelDTO.getCurrentPeriodAllocatedCostStr(),excelDTO.getEndPeriodEstimatedCostStr(),excelDTO.getEndPeriodTransitCostStr()) && CharSequenceUtil.isBlank(excelDTO.getFeeTypeName())){
+            errorMsgList.add("修改费用字段值，费用分类不能为空");
         }
         //月份格式验证
         try {
