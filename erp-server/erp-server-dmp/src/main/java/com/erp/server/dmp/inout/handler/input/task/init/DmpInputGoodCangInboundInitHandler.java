@@ -57,9 +57,6 @@ public class DmpInputGoodCangInboundInitHandler extends DmpInputInitHandler{
                 ,OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode()
                 ,OverseasInstockStatusEnum.MANUAL_COMPLETION.getCode()), OmsPlatformEnum.OMS_GOOD_CANG.getCode());
         List<GoodCangReceiptBatchResp> allResult = new ArrayList<>();
-        if (receiveCodeList.contains("RVG1149-250519-0015")){
-			receiveCodeList = Arrays.asList("RVG1149-250519-0015");
-		}
 
         if(CollUtil.isNotEmpty(receiveCodeList)) {
         	String typeId = dmpCfgInputEntity.getTypeId();
