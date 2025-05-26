@@ -245,7 +245,7 @@ public class SoB2cForeignServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2c
         Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = mappingList.stream().collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
         // handle信息
         Map<String, DmpProductInfoEntity> dmpProductMap = new HashMap<>();
-        if (CollectionUtils.isEmpty(list)) {
+        if (CollectionUtils.isNotEmpty(platformSpuList)) {
             // 查询中台配送信息
             List<DmpProductInfoEntity> pruductList = FeignQuery.create(DmpProductInfoEntity.class)
                     .in(DmpProductInfoEntity::getSpuId, platformSpuList)
