@@ -28,13 +28,4 @@ public interface LogisticsMappingFeign {
     @PostMapping("feign/logisticsMapping/getByLogisticsMappingParam")
     LogisticsMappingEntity getByLogisticsMappingParam(@RequestBody @Validated LogisticsMappingDTO.SearchParamDTO paramDTO);
 
-    /**
-     * @description: 根据物流映射表查询
-     * @author jack
-     * @date: 2024/10/09
-     * @param id
-     * @return List<LogisticsMappingEntity>
-     */
-    @PostMapping("feign/logisticsMapping/listDbByChannelId")
-    List<LogisticsMappingEntity> listDbByChannelId(@RequestBody String id);
 }

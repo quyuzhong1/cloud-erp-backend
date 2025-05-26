@@ -34,7 +34,15 @@
        <result column="is_api_insurance" property="isApiInsurance" />
        <result column="delivery_type" property="deliveryType" />
     </resultMap>
+    <resultMap id="warehouseChannelMap" type="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO">
+        <id  property="warehouseId" column="warehouse_id"/>
 
+        <!-- 嵌套 Compare 列表 -->
+        <collection property="channelDTOList" ofType="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO$ChannelDTO">
+            <result property="platformLogisticsChannelId" column="logistics_channel_id"/>
+            <result property="platformLogisticsChannelName" column="name"/>
+        </collection>
+    </resultMap>
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id,
@@ -319,6 +327,18 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+    </select>
+
+    <select id="listWarehouseChannel"
+            resultMap="warehouseChannelMap">
+        SELECT  lcw.warehouse_id,
+                lcw.logistics_channel_id,
+                lc."name"
+        from logistics_channel lc
+                 inner join logistics_channel_warehouse lcw on lc.id = lcw.logistics_channel_id
+        where lc.is_deleted = false and lcw.is_deleted = false
+          and lcw.warehouse_id != ''
+
     </select>
 
 

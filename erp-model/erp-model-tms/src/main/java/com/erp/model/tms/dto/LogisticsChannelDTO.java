@@ -538,6 +538,11 @@ public class LogisticsChannelDTO implements Serializable {
         private List<LogisticsMappingDTO.ViewDTO> mappingList;
 
         /**
+         * 三方仓物流映射列表
+         */
+        private List<LogisticsMappingDTO.ViewDTO> warehouseMappingList;
+
+        /**
          * 打印标签类型
          */
         private List<LogisticsPrintTypeDTO.ViewDTO> printTypeList;
@@ -580,6 +585,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 物流映射列表
          */
         private List<LogisticsMappingDTO.AddDTO> mappingList;
+
+        /**
+         * 三方仓物流映射列表
+         */
+        private List<LogisticsMappingDTO.AddDTO> warehouseMappingList;
 
         /**
          * 打印标签类型
@@ -627,6 +637,11 @@ public class LogisticsChannelDTO implements Serializable {
          * 物流映射列表
          */
         private List<LogisticsMappingDTO.UpdateDTO> mappingList;
+
+        /**
+         * 三方仓物流映射列表
+         */
+        private List<LogisticsMappingDTO.UpdateDTO> warehouseMappingList;
 
         /**
          * 打印标签类型
@@ -1076,5 +1091,36 @@ public class LogisticsChannelDTO implements Serializable {
          */
         private BigDecimal shipmentOverLimitRate;
 
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseChannelDTO {
+        /**
+         * 仓库
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+
+        /**
+         * 渠道列表
+         */
+        private List<ChannelDTO> channelDTOList;
+
+        @Data
+        @NoArgsConstructor
+        public static class ChannelDTO {
+            /**
+             * 渠道
+             */
+            private String platformLogisticsChannelId;
+            /**
+             * 渠道名称
+             */
+            private String platformLogisticsChannelName;
+        }
     }
 }
