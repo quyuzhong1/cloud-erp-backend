@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -50,6 +51,11 @@ public class ThirdWarehouseCreateInboundReq {
      * 目的仓库
      */
     private String warehouseCode;
+
+    /**
+     * 备注
+     */
+    private String remark;
 
     /**
      * 中转仓库
@@ -249,5 +255,30 @@ public class ThirdWarehouseCreateInboundReq {
          * 对应箱号装箱数量
          */
         private Integer quantity;
+        /**
+         * 箱子尺寸（长）
+         */
+        private BigDecimal boxLength;
+        /**
+         * 箱子尺寸（宽）
+         */
+        private BigDecimal boxWidth;
+        /**
+         * 箱子尺寸（高）
+         */
+        private BigDecimal boxHeight;
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+
+        /**
+         * 实际箱重（设备更新）
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位（kg） 页面展示kg，数据库存储kg
+         */
+        private String weightUnit;
     }
 }

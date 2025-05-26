@@ -1113,6 +1113,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto);
 
+    List<SoB2cEntity> listWaitShipByWarehouseIds(List<String> warehouseId);
+
     /**
      * 根据订单更新金额
      * @param id

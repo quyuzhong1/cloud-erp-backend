@@ -1457,4 +1457,16 @@ SELECT DISTINCT so.* FROM so_b2c so
             </foreach>
         </if>
     </select>
+    <select id="listWaitShipByWarehouseIds" resultType="com.erp.model.oms.entity.SoB2cEntity">
+        select sb2c.*
+        from so_b2c sb2c
+        inner join so_b2c_detail sbd on sb2c.id = sbd.main_id and sbd.is_deleted = false
+        where sb2c.is_deleted = false
+          and sb2c.invalid_status = false
+          and sb2c.bill_status = 'waitShipped'
+        and sbd.warehouse_id in
+        <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
 </mapper>

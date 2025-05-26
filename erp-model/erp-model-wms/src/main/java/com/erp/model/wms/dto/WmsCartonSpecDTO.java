@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -412,6 +413,31 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String platformSkuNo;
 
+        /**
+         * 箱子尺寸（长）
+         */
+        private BigDecimal boxLength;
+        /**
+         * 箱子尺寸（宽）
+         */
+        private BigDecimal boxWidth;
+        /**
+         * 箱子尺寸（高）
+         */
+        private BigDecimal boxHeight;
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+
+        /**
+         * 实际箱重（设备更新）
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位（kg） 页面展示kg，数据库存储kg
+         */
+        private String weightUnit;
     }
 
     /**

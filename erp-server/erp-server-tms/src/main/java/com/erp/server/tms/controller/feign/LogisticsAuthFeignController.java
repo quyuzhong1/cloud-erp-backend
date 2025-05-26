@@ -2,6 +2,8 @@ package com.erp.server.tms.controller.feign;
 
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
+import com.erp.server.tms.service.LogisticsAuthFieldService;
 import com.erp.server.tms.service.LogisticsAuthService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,8 @@ import java.util.List;
 public class LogisticsAuthFeignController {
     @Resource
     private LogisticsAuthService logisticsAuthService;
+    @Resource
+    private LogisticsAuthFieldService logisticsAuthFieldService;
 
     /**
      * 根据id获取授权信息
@@ -62,6 +66,14 @@ public class LogisticsAuthFeignController {
     public List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(@RequestBody List<String> channelIdList) {
         List<LogisticsSupplierDTO.AuthChannelViewDTO> authChannelViewDTOS = logisticsAuthService.listAuthChannelView(channelIdList);
         return authChannelViewDTOS;
+    }
+
+    @PostMapping("/updateLogisticAuthFile")
+    public Boolean updateLogisticAuthFile(@RequestBody List<LogisticsAuthFieldEntity> updateLogistic) {
+       if(updateLogistic == null || updateLogistic.isEmpty()) {
+           return true;
+       }
+       return logisticsAuthFieldService.updateBatchById(updateLogistic);
     }
 
 

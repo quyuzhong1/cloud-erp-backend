@@ -103,6 +103,11 @@ public class DmpThirdOutboundEntity extends BaseEntity<DmpThirdOutboundEntity> {
     @TableField("data_encrypt")
     private String dataEncrypt;
 
+    /**
+     * 拦截单状态
+     */
+    @TableField("intercept_status")
+    private String interceptStatus;
 
     public static final String WAREHOUSE_PLATFORM_TYPE = "warehouse_platform_type";
 
