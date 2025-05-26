@@ -50,7 +50,6 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
             return Boolean.FALSE;
         }
         List<LogisticsMappingEntity> saveList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, dtoList);
-        handleData(saveList);
         saveList.forEach(s -> s.setLogisticsChannelId(channelId));
         return this.saveBatch(saveList);
 
@@ -143,7 +142,7 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     public LogisticsMappingEntity getByLogisticsMappingParam(LogisticsMappingDTO.SearchParamDTO paramDTO) {
         return lambdaQuery().eq(LogisticsMappingEntity::getSalesPlatform,paramDTO.getSalesPlatform())
                 .eq(LogisticsMappingEntity::getLogisticsChannelId,paramDTO.getLogisticsChannelId())
-                .eq(LogisticsMappingEntity::getLogisticsSaleChannelId,paramDTO.getLogisticsSaleChannelId())
+                .eq(LogisticsMappingEntity::getPlatformLogisticsChannelId,paramDTO.getLogisticsSaleChannelId())
                 .last(SqlConstants.LIMIT_1)
                 .one();
     }
@@ -151,26 +150,5 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     public List<LogisticsMappingEntity> listDbByChannelId(String channelId) {
         return this.lambdaQuery().eq(LogisticsMappingEntity::getLogisticsChannelId, channelId).list();
 
-    }
-
-
-    /**
-     * 新增修改处理数据
-     */
-    private void handleData(List<LogisticsMappingEntity> list) {
-        if (CollectionUtils.isEmpty(list)) {
-            return;
-        }
-        List<String> logisticsSaleChannelIdList = list.stream().map(LogisticsMappingEntity::getLogisticsSaleChannelId).collect(Collectors.toList());
-        List<LogisticsSaleChannelEntity> saleChannelList = logisticsSaleChannelService.listByIds(logisticsSaleChannelIdList);
-        for (LogisticsMappingEntity item : list) {
-            String saleChannelId = item.getLogisticsSaleChannelId();
-            LogisticsSaleChannelEntity saleChannelEntity = saleChannelList.stream().
-                    filter(s -> s.getId().equals(saleChannelId)).findFirst().orElse(null);
-            if (Objects.isNull(saleChannelEntity)) {
-                throw new ServiceException("销售平台渠道不存在");
-            }
-
-        }
     }
 }
