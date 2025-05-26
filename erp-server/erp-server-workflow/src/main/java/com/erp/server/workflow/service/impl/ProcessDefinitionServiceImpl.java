@@ -247,19 +247,19 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     }
 
     @Override
-    public BatchResultDTO updateDisabled(String id, Boolean disabled) {
+    public BatchResultDTO updateDisabled(ProcessDefinitionDTO.DisableDTO disableDTO) {
         // 查询数据是否存在
-        ProcessDefinitionEntity entity = getById(id);
-        if(ObjUtil.isEmpty(entity)){
+        ProcessDefinitionEntity entity = getProcessVersionEntity(disableDTO.getId(),disableDTO.getProcessVersion());
+        if(ObjectUtil.isEmpty(entity)){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
         //查询配置信息
-        CfgProcessRuleEntity processRuleEntity = cfgProcessRuleService.getByDefinitionId(id);
-        if (ObjUtil.isNotEmpty(processRuleEntity)) {
+        CfgProcessRuleEntity processRuleEntity = cfgProcessRuleService.getByDefinitionId(disableDTO.getId());
+        if (ObjectUtil.isNotEmpty(processRuleEntity)) {
             throw new ServiceException(ApiError.PROCESS_DEFINITION_DISABLED_ERROR);
         }
 
-        entity.setDisabled(disabled);
+        entity.setDisabled(disableDTO.getDisabled());
         this.updateById(entity);
         return BatchResultDTO.success(entity.getId(), entity.getProcessName(), OperationTypeEnum.DISABLED);
     }

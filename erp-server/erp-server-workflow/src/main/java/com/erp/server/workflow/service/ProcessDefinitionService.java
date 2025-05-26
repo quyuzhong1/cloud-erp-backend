@@ -70,11 +70,10 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * 更新启禁用状态
      * @author will
      * @date 2025/5/15 15:56
-     * @param id
-     * @param disabled
+     * @param disableDTO
      * @return BatchResultDTO
      */
-    BatchResultDTO updateDisabled(String id,Boolean disabled);
+    BatchResultDTO updateDisabled(ProcessDefinitionDTO.DisableDTO disableDTO);
     /**
      * 查询tab数量
      * @author will

@@ -447,11 +447,18 @@ public class ProcessDefinitionDTO {
     @Data
     @NoArgsConstructor
     public static class DisableDTO {
+
         /**
-         * ids不能为空
+         * 部署流程ID
          */
-        @NotEmpty(message = "ids不能为空")
-        private List<String> ids;
+        @NotBlank(message = "流程定义ID不能为空")
+        private String id;
+
+        /**
+         * 流程版本
+         */
+        @NotNull(message = "流程版本不能为空")
+        private Integer processVersion;
 
         /**
          * 是否禁用

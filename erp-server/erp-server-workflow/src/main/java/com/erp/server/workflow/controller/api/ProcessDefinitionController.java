@@ -91,7 +91,7 @@ public class ProcessDefinitionController extends BaseController {
         for (ProcessDefinitionDTO.DeleteDTO deleteDTO : list) {
             BatchResultDTO submit;
             try {
-                submit = processDefinitionService.deleteByIds(deleteDTO.getId(),deleteDTO.getProcessVersion(),Boolean.FALSE);
+                submit = processDefinitionService.deleteByIds(deleteDTO.getId(),deleteDTO.getProcessVersion(),Boolean.TRUE);
             }catch (Exception e){
                 log.error("流程设计删除失败",e);
                 ProcessDefinitionEntity entity = processDefinitionService.getById(deleteDTO.getId());
@@ -163,21 +163,21 @@ public class ProcessDefinitionController extends BaseController {
      * 更新启禁用状态
      * @author will
      * @date 2025/5/15 15:55
-     * @param dto
+     * @param list
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/updateDisabled")
-    public ApiResult<List<BatchResultDTO>> updateDisabled(@RequestBody @Validated ProcessDefinitionDTO.DisableDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
-        for (String id : dto.getIds()) {
+    public ApiResult<List<BatchResultDTO>> updateDisabled(@RequestBody @Validated List<ProcessDefinitionDTO.DisableDTO> list) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(list.size());
+        for (ProcessDefinitionDTO.DisableDTO disableDTO : list) {
             BatchResultDTO submit;
             try {
-                submit = processDefinitionService.updateDisabled(id,dto.getDisabled());
+                submit = processDefinitionService.updateDisabled(disableDTO);
             }catch (Exception e){
                 log.error("流程设计启禁用失败",e);
-                ProcessDefinitionEntity entity = processDefinitionService.getById(id);
+                ProcessDefinitionEntity entity = processDefinitionService.getById(disableDTO.getId());
                 if (ObjectUtil.isEmpty(entity)) {
-                    submit = BatchResultDTO.fail(id, id, "流程设计单不存在, 启禁用失败");
+                    submit = BatchResultDTO.fail(disableDTO.getId(), disableDTO.getId(), "流程设计单不存在, 启禁用失败");
                     resultDTOS.add(submit);
                     continue;
                 }
