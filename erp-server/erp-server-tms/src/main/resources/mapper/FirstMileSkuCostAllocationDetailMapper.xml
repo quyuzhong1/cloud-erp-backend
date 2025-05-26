@@ -65,6 +65,7 @@
             fmca.transport_no,
             fmca.logistics_bill_id,
             fmca.status,
+            fmca.allocated_weight,
             fmsca.sku_id,
             fmsca.sku_no,
             fmsca.platform_sku_no,
