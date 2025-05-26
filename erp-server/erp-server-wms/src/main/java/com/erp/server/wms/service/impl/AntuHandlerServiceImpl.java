@@ -142,19 +142,6 @@ public class AntuHandlerServiceImpl extends EccangHandlerServiceImpl {
         return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
     }
 
-    @Override
-    protected Boolean hasWarehouse() {
-        AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(AntuBaseRequest.builder()
-                        .pageSize(1)
-                        .page(1)
-                .build(),getPlatForm());
-        if(!isSuccess(response.getAsk())){
-            throw new ServiceException("授权失败,"+response.getMessage());
-        }
-        return isSuccess(response.getAsk());
-    }
-
-
     private void handleData(AntuCreateOutboundReq antuCreateOutboundReq) {
         //处理地址1
         if(CharSequenceUtil.isBlank(antuCreateOutboundReq.getAddress1())){
