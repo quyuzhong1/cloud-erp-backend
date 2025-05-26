@@ -456,7 +456,6 @@ public class AfterSaleDTO implements Serializable {
          * thrid_user_info主键id*
          * 客户ID
          */
-        @Size(max = 19,message = "客户ID最大长度不能超过19位")
         private String thridUserId;
 
         @Size(max = 32,message = "客户名称最大长度不能超过32位")
@@ -555,8 +554,8 @@ public class AfterSaleDTO implements Serializable {
         /**
          * 明细
          */
-        @NotEmpty(message = "售后明细不能为空")
-        private List<AfterSaleDetailDTO.@Valid UpdateDTO> detailList;
+//        @NotEmpty(message = "售后明细不能为空")
+        private List<AfterSaleDetailDTO.UpdateDTO> detailList;
     }
 
     @Data
