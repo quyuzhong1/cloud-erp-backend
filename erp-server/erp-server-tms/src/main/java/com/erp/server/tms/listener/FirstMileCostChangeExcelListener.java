@@ -7,6 +7,7 @@ import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.tms.dto.excel.FirstMileCostChangeExcelDTO;
@@ -207,6 +208,13 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
                 errorList.add(excelDTO);
                 continue;
             }
+            //判断是否存在历史分摊数据
+            List<FirstMileSkuCostAllocationDetailEntity> entityList1 = firstMileSkuCostAllocationDetailService.listByReportMonth(entity.getSourceId(), entity.getBusinessCode(), entity.getTransportNo(), entity.getSkuId(), entity.getPlatformSkuNo(), entity.getReportPeriodId());
+            if (CollUtil.isNotEmpty(entityList1)){
+                excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】存在历史分摊数据，不支持再次修改重量", excelDTO.getSkuNo()));
+                errorList.add(excelDTO);
+                continue;
+            }
             excelDTO.setMainId(entity.getMainId());
             if(StringUtils.isNotBlank(excelDTO.getTransportNo()) && StringUtils.isNotBlank(excelDTO.getSourceCode())
                     &&(!entity.getTransportNo().equals(excelDTO.getTransportNo()) || !entity.getSourceCode().equals(excelDTO.getSourceCode()))){
@@ -281,7 +289,7 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
                 }
             }
             //明细备注
-            if(CharSequenceUtil.isNotBlank(excelDTO.getRemark()) && Objects.equals(excelDTO.getRemark(),entity.getRemark())){
+            if(CharSequenceUtil.isNotBlank(excelDTO.getRemark()) && !Objects.equals(excelDTO.getRemark(),entity.getRemark())){
                 FirstMileChangeRecordEntity productWeightEntity = FirstMileChangeRecordConverter.INSTANCE.changeCostDetailRemarkToEntityConvert(excelDTO, entity);
                 productWeightList.add(productWeightEntity);
                 if (!isRetry){
