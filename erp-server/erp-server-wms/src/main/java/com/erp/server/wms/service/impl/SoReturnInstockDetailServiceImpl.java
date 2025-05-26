@@ -721,7 +721,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setId(detailDto.getId());
                     realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
-                if (receiveQty < detailDto.getRealQty() + realQty) {
+                if (receiveQty > 0 &&  receiveQty < detailDto.getRealQty() + realQty) {
                     throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
                 }
                 detailEntity.setMainId(dto.getId());
@@ -799,7 +799,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setId(detailDto.getId());
                     realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
-                if (CollUtil.isNotEmpty(soReturnReceiveDetailEntities) && receiveQty < detailDto.getRealQty() + realQty) {
+                if (receiveQty > 0 &&  receiveQty < detailDto.getRealQty() + realQty) {
                     throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
                 }
                 detailEntity.setMainId(dto.getId());
@@ -898,7 +898,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setId(detailDto.getId());
                 realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            if (receiveQty >0 && receiveQty < detailDto.getRealQty() + realQty) {
+            if (receiveQty > 0 && receiveQty < detailDto.getRealQty() + realQty) {
                 throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
             }
             detailEntity.setMainId(dto.getId());
