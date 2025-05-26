@@ -98,6 +98,32 @@
 
 
     </select>
+    <select id="listByReportMonth"
+            resultType="com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity">
+        select
+            fmscad.*,
+            fmca.business_code,
+            fmca.source_id,
+            fmca.source_code,
+            fmca.transport_no,
+            fmca.logistics_bill_id,
+            fmca.status,
+            fmsca.allocated_weight,
+            fmsca.sku_id,
+            fmsca.sku_no,
+            fmsca.platform_sku_no,
+            fmsca.bill_source_type
+        from first_mile_sku_cost_allocation_detail fmscad
+                 left join first_mile_sku_cost_allocation fmsca on fmsca.id = fmscad.cost_main_id and fmsca.is_deleted = false
+                 left join first_mile_cost_allocation fmca on fmca.id = fmscad.main_id and fmca.is_deleted = false
+        where fmscad.is_deleted = false
+        and fmca.source_id = #{sourceId}
+        and fmca.business_code = #{businessCode}
+        and fmca.transport_no = #{transportNo}
+        and fmsca.sku_id = #{skuId}
+        and fmsca.platform_sku_no = #{platformSkuNo}
+        and fmca.report_period_id != #{reportPeriodId}
+    </select>
 
 
 </mapper>

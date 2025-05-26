@@ -23,6 +23,7 @@ import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileChangeRecordEntity;
+import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.convert.FirstMileChangeRecordConverter;
@@ -38,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -397,6 +399,20 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
             if (ReconciliationBillTypeEnum.ACTUAL.getCode().equals(dto.getBillSourceType())){
                 if (dto.getEndPeriodEstimatedCost().compareTo(dto.getNewEndPeriodEstimatedCost())!= 0){
                     resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), CharSequenceUtil.format("【{}】实际账单不可调整期末暂估", dto.getSourceCode()), false));
+                    continue;
+                }
+            }
+            //分摊重量校验 提交失败：检验分摊重量-是否超出总重量：「SKU」存在历史分摊数据，不支持再次修改重量
+            if (CharSequenceUtil.isNotBlank(dto.getNewAllocatedWeight()) && !Objects.equals(dto.getNewAllocatedWeight(),dto.getAllocatedWeight())){
+                try {
+                    BigDecimal newAllocatedWeight = new BigDecimal(dto.getNewAllocatedWeight());
+                }catch (Exception e){
+                    resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), CharSequenceUtil.format("【{}】分摊重量格式错误", dto.getSourceCode()), false));
+                }
+                //判断是否存在历史分摊数据
+                List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList = firstMileSkuCostAllocationDetailService.listByReportMonth(dto.getSourceId(), dto.getBusinessCode(), dto.getTransportNo(), dto.getSkuId(), dto.getPlatformSkuNo(), dto.getReportPeriodId());
+                if (CollUtil.isNotEmpty(skuCostAllocationDetailEntityList)){
+                    resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), CharSequenceUtil.format("【{}】存在历史分摊数据，不支持再次修改重量", dto.getSkuNo()), false));
                     continue;
                 }
             }

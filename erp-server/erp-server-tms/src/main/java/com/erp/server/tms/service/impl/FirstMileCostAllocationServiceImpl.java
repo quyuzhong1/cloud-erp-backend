@@ -908,7 +908,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
 
     private void setRemark(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity skuCostAllocationEntity, FirstMileSkuCostAllocationDetailEntity detailEntity) {
         //查询对应调整记录是否存在
-        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode(),detailEntity.getSkuId(),detailEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode(),skuCostAllocationEntity.getSkuId(),skuCostAllocationEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
         if (Objects.nonNull(changeRecordEntity)){
             detailEntity.setRemark(changeRecordEntity.getNewValue());
         }

@@ -27,4 +27,9 @@ public interface FirstMileSkuCostAllocationDetailMapper extends BaseMapper<First
     List<FirstMileSkuCostAllocationDetailEntity> listByMainIds(@Param("mainIds") List<String> mainIds);
 
     List<FirstMileSkuCostAllocationDetailEntity> listBySourceCodeList(@Param("businessCodeList") List<String> businessCodeList, @Param("sourceCodeList") List<String> sourceCodeList, @Param("transportNoList") List<String> transportNoList);
+
+    List<FirstMileSkuCostAllocationDetailEntity> listByReportMonth(@Param("sourceId") String sourceId, @Param("businessCode") String businessCode,
+                                                                   @Param("transportNo") String transportNo, @Param("skuId") String skuId,
+                                                                   @Param("platformSkuNo") String platformSkuNo,
+                                                                   @Param("reportPeriodId") String reportPeriodId);
 }
