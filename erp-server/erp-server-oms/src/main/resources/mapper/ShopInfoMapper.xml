@@ -52,14 +52,14 @@
         trade_currency,
         enable_time,
         down_time,
+        auth_expire_date,
         <if test="params.shopIdList != null and params.shopIdList.size > 0">
             si.id = ANY(#{params.shopIdList,jdbcType=ARRAY,typeHandler=com.erp.server.oms.handler.PgStringArrayTypeHandler}::varchar[]) as isAuth,
         </if>
         <if test="params.shopIdList== null or params.shopIdList.size == 0">
             false as isAuth,
         </if>
-        return_warehouse,
-        auth_expire_date
+        return_warehouse
         FROM shop_info si
         WHERE ${params.sqlMap.default}
         and si.is_deleted=FALSE
