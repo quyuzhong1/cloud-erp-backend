@@ -666,7 +666,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             firstMileSkuCostAllocationEntity.setAllocatedWeight(initFirstMileAllocationDetailEntity.getWeightAllocation());
         } else {
             //取调整记录中的分摊重量
-            FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationWeightByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.END_PERIOD_ESTIMATED_COST.getCode(),firstMileSkuCostAllocationEntity.getSkuId(),firstMileSkuCostAllocationEntity.getPlatformSkuNo());
+            FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationWeightByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.ALLOCATED_WEIGHT.getCode(),firstMileSkuCostAllocationEntity.getSkuId(),firstMileSkuCostAllocationEntity.getPlatformSkuNo());
             if (Objects.nonNull(changeRecordEntity)){
                 firstMileSkuCostAllocationEntity.setAllocatedWeight(new BigDecimal(changeRecordEntity.getNewValue()));
             }else {
