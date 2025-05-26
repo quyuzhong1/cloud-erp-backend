@@ -133,6 +133,17 @@ public class AfterSaleEntity extends BaseEntity<AfterSaleEntity> {
     @TableField("remark")
     private String remark;
 
+    /**
+     * 姓名
+     */
+    @TableField("username")
+    private String username;
+    /**
+     * 手机号码
+     */
+    @TableField("phone_number")
+    private String phoneNumber;
+
 
     public static final String CODE = "code";
 
