@@ -57,7 +57,7 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
      * *分摊重量(KG)
      */
     @ExcelProperty(value = "分摊重量(KG)", index = 6)
-    @FieldValid(fieldName = "分摊重量(KG)",isNotBlank = true,formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    @FieldValid(fieldName = "分摊重量(KG)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
     private String allocatedWeightStr;
     @ExcelIgnore
     private BigDecimal allocatedWeight;
