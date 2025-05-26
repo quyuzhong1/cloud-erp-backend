@@ -114,9 +114,9 @@
         afsd.sku_qty AS skuQty,
         afsd.price AS price,
         afsd.detail_desc AS detailDesc,
-        tui.username AS thridUserName,
+        afs.username AS thridUserName,
         tui.nick_name AS nickName,
-        tui.phone_number AS phoneNumber,
+        afs.phone_number AS phoneNumber,
         r.track_no as returnTrackNo,
         o.track_no as outboundTrackNo
         FROM
