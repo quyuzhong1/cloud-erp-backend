@@ -50,7 +50,6 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
             return Boolean.FALSE;
         }
         List<LogisticsMappingEntity> saveList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, dtoList);
-        handleData(saveList);
         saveList.forEach(s -> s.setLogisticsChannelId(channelId));
         return this.saveBatch(saveList);
 
