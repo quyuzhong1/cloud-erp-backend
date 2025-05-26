@@ -1287,6 +1287,19 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //总计采购数量
         Integer qtyTotal = detailList.stream().map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
+
+        //存在加急
+        Boolean isUrgent = detailList.stream().anyMatch(SubcontractOrderDetailEntity::getIsUrgent);
+        variablesMap.put("isUrgent", isUrgent);
+        //存在赠品
+        Boolean isGift = detailList.stream().anyMatch(SubcontractOrderDetailEntity::getIsGift);
+        variablesMap.put("isGift", isGift);
+        //SKU
+        String skuNo = detailList.stream().map(SubcontractOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        //供应商Id
+        String supplierId = detailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).collect(Collectors.joining(","));
+        variablesMap.put("supplierId", supplierId);
         return variablesMap;
     }
 

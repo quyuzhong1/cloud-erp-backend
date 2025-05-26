@@ -567,7 +567,9 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         }
         Map<String, Object> customerMap = BeanUtil.beanToMap(otherOutstockCustomerEntity);
         variablesMap.putAll(customerMap);
-
+        //SKU
+        String skuNo = detailList.stream().map(OtherOutstockDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
         //总计数量
         Integer actualQtyTotal = detailList.stream().map(OtherOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("actualQtyTotal", actualQtyTotal);

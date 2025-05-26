@@ -516,6 +516,19 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //总销售毛利率
         BigDecimal saleProfitRateTotal = detailList.stream().map(SoDetailEntity::getSaleProfitRate).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("saleProfitRateTotal", saleProfitRateTotal);
+
+        //SKU
+        String skuNo = detailList.stream().map(SoDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        //客户sku
+        String platformSkuNo = detailList.stream().map(SoDetailEntity::getPlatformSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("platformSkuNo", platformSkuNo);
+        //存在赠品
+        Boolean isGift = detailList.stream().anyMatch(SoDetailEntity::getIsGift);
+        variablesMap.put("isGift", isGift);
+        //存在补发
+        Boolean isReissue = detailList.stream().anyMatch(SoDetailEntity::getIsReissue);
+        variablesMap.put("isReissue", isReissue);
         return variablesMap;
     }
 

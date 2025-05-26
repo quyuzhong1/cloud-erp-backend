@@ -549,7 +549,9 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             throw new ServiceException(ApiError.ERROR_99059);
         }
         variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
-
+        //SKU
+        String skuNo = detailList.stream().map(OtherInstockDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
         //总计数量
         Integer actualQtyTotal = detailList.stream().map(OtherInstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("actualQtyTotal", actualQtyTotal);

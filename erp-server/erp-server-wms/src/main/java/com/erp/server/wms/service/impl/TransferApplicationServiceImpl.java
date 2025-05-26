@@ -1268,6 +1268,9 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
         //总计数量
         Integer qtyTotal = detailList.stream().map(TransferApplicationDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
+        //SKU
+        String skuNo = detailList.stream().map(TransferApplicationDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
         return variablesMap;
     }
 }
