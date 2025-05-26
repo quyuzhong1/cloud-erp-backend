@@ -127,6 +127,10 @@ public class AfterSaleServiceImpl extends SuperServiceImpl<AfterSaleMapper, Afte
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(AfterSaleDTO.AddDTO addDTO) {
+        if(addDTO.getType().equals("selfAdd") && CollUtil.isEmpty(addDTO.getDetailList()) && CollUtil.isEmpty(addDTO.getAttachUrlList())){
+            throw new ServiceException("sku明细或图片附件至少填写一种");
+        }
+
         AfterSaleEntity afterSaleEntity = new AfterSaleEntity();
         BeanMapperUtils.copy(addDTO, afterSaleEntity);
 
