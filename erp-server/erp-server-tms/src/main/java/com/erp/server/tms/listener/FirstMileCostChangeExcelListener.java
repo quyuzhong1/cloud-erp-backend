@@ -72,6 +72,14 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
                 errorMsgList.add("费用类型格式错误");
             }
         }
+        //分摊重量
+        if (CharSequenceUtil.isNotBlank(excelDTO.getAllocatedWeightStr())){
+            try {
+                excelDTO.setAllocatedWeight(new BigDecimal(excelDTO.getAllocatedWeightStr()));
+            }catch (Exception e){
+                errorMsgList.add("分摊重量格式错误");
+            }
+        }
         //冲期初在途费用
         if (CharSequenceUtil.isNotBlank(excelDTO.getMidPeriodTransitCostStr())){
             try {
@@ -130,7 +138,7 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
             if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())) {notEmptyCount++;}
             //校验数据
             List<FirstMileSkuCostAllocationDetailEntity> entityList = skuCostAllocationDetailEntityList.stream()
-                    .filter(e -> Objects.equals(e.getFeeType(), excelDTO.getFeeType()) && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()))
+                    .filter(e -> Objects.equals(e.getFeeType(), excelDTO.getFeeType()) && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()) && Objects.equals(e.getReportMonth(), excelDTO.getReportMonth()))
                     .filter(v -> {
                 //同时不为空时，匹配来源单号和业务单号
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
@@ -164,7 +172,7 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
             }
             //校验两个参数及以上都存在时。是否存在关联的多条费用分摊记录
             List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList1 = skuCostAllocationDetailEntityList.stream()
-                    .filter(e -> Objects.equals(e.getFeeType(), excelDTO.getFeeType()) && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()))
+                    .filter(e -> Objects.equals(e.getFeeType(), excelDTO.getFeeType()) && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()) && Objects.equals(e.getReportMonth(), excelDTO.getReportMonth()))
                     .filter(v -> {
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
                     if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
@@ -233,6 +241,13 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
             }
             Boolean isRetry = Boolean.FALSE;
             //冲期初在途费用
+            if(CharSequenceUtil.isNotBlank(excelDTO.getAllocatedWeightStr()) && excelDTO.getAllocatedWeight().compareTo(entity.getAllocatedWeight()) != 0){
+                FirstMileChangeRecordEntity productWeightEntity = FirstMileChangeRecordConverter.INSTANCE.changeCostAllocatedWeightToEntityConvert(excelDTO, entity);
+                productWeightList.add(productWeightEntity);
+                mainIdList.add(entity.getMainId());
+                isRetry = Boolean.TRUE;
+            }
+            //冲期初在途费用
             if(CharSequenceUtil.isNotBlank(excelDTO.getMidPeriodTransitCostStr()) && excelDTO.getMidPeriodTransitCost().compareTo(entity.getMidPeriodTransitCost()) != 0){
                 FirstMileChangeRecordEntity productWeightEntity = FirstMileChangeRecordConverter.INSTANCE.changeCostMidPeriodTransitToEntityConvert(excelDTO, entity);
                 productWeightList.add(productWeightEntity);
@@ -263,6 +278,14 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
                 productWeightList.add(productWeightEntity);
                 if (!isRetry){
                     firstMileSkuCostAllocationDetailService.updateEndPeriodEstimatedCost(entity.getId(), excelDTO.getEndPeriodEstimatedCostStr());
+                }
+            }
+            //明细备注
+            if(CharSequenceUtil.isNotBlank(excelDTO.getRemark()) && Objects.equals(excelDTO.getRemark(),entity.getRemark())){
+                FirstMileChangeRecordEntity productWeightEntity = FirstMileChangeRecordConverter.INSTANCE.changeCostDetailRemarkToEntityConvert(excelDTO, entity);
+                productWeightList.add(productWeightEntity);
+                if (!isRetry){
+                    firstMileSkuCostAllocationDetailService.updateDetailRemark(entity.getId(), excelDTO.getRemark());
                 }
             }
         }

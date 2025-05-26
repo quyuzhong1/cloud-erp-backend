@@ -507,6 +507,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 明细备注
+         */
+        private String detailRemark;
 
         /**
          * 对账单id
@@ -912,14 +916,18 @@ public class FirstMileCostAllocationDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CostAllocationDTO extends PagingVO {
-
         /**
          * 冲期初在途费用
          */
         @NotNull(message = "新的冲期初在途费用不能为空")
         @Digits(integer = 12, fraction = 2, message = "冲期初在途费用整数位不能超过12位，小数位不能超过2位")
         private String newMidPeriodTransitCost;
-
+        /**
+         * 分摊重量
+         */
+        @NotNull(message = "新的分摊重量不能为空")
+        @Digits(integer = 12, fraction = 4, message = "分摊重量整数位不能超过12位，小数位不能超过4位")
+        private String newAllocatedWeight;
         /**
          * 本期分摊费用
          */
@@ -940,6 +948,10 @@ public class FirstMileCostAllocationDTO implements Serializable {
         @NotNull(message = "新的期末暂估费用不能为空")
         @Digits(integer = 12, fraction = 2, message = "期末暂估费用整数位不能超过12位，小数位不能超过2位")
         private String newEndPeriodEstimatedCost;
+        /**
+         * 明细备注
+         */
+        private String newDetailRemark;
 
         /**
          * 是否需要重算【后端使用】

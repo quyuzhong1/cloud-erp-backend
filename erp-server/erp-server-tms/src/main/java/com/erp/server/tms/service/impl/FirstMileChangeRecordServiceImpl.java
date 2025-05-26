@@ -378,8 +378,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         }
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (FirstMileCostAllocationDTO.CostAllocationDTO dto : dtoValidList) {
-            if (dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) == 0 && dto.getCurrentPeriodAllocatedCost().compareTo(dto.getNewCurrentPeriodAllocatedCost()) == 0
-                    && dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) == 0 && dto.getEndPeriodEstimatedCost().compareTo(dto.getNewEndPeriodEstimatedCost()) == 0) {
+            if (dto.getAllocatedWeight().compareTo(dto.getNewAllocatedWeight()) == 0
+                    && dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) == 0
+                    && dto.getCurrentPeriodAllocatedCost().compareTo(dto.getNewCurrentPeriodAllocatedCost()) == 0
+                    && dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) == 0
+                    && dto.getEndPeriodEstimatedCost().compareTo(dto.getNewEndPeriodEstimatedCost()) == 0) {
                 resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), "调整后费用值与调整前费用值全部一致", false));
                 continue;
             }
@@ -409,6 +412,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         }
         List<FirstMileChangeRecordEntity> entityList = new ArrayList<>();
         for (FirstMileCostAllocationDTO.CostAllocationDTO dto : dtoValidList){
+            if (dto.getAllocatedWeight().compareTo(dto.getNewAllocatedWeight()) != 0){
+                //新增分摊重量调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostAllocatedWeightDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                dto.setIsRetry(Boolean.TRUE);
+            }
             if (dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) != 0){
                 //新增冲期初在途费用调整记录
                 entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostMidPeriodTransitDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
@@ -444,6 +452,13 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostEndPeriodEstimatedDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
                 if (!dto.getIsRetry()){
                     firstMileSkuCostAllocationDetailService.updateEndPeriodEstimatedCost(dto.getDetailId(), dto.getNewEndPeriodEstimatedCost());
+                }
+            }
+            if (!Objects.equals(dto.getNewDetailRemark(), dto.getDetailRemark())){
+                //新增分明细备注调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostDetailRemarkDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                if (!dto.getIsRetry()){
+                    firstMileSkuCostAllocationDetailService.updateDetailRemark(dto.getDetailId(), dto.getNewDetailRemark());
                 }
             }
         }
@@ -506,6 +521,20 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
                 .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+    }
+
+    @Override
+    public FirstMileChangeRecordEntity getCostAllocationWeightByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo) {
+        return this.lambdaQuery()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, platformSkuNo)
+                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
+                .last(" limit 1 ").one();
     }
 
     private void fillPagingDb(List<FirstMileChangeRecordDTO.PagingVO> list) {

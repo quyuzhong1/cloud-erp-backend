@@ -94,10 +94,19 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
     @TableField("end_period_estimated_cost")
     private BigDecimal endPeriodEstimatedCost;
     /**
+     * 备注
+     */
+    private String remark;
+    /**
      * 业务单号
      */
     @TableField(exist = false)
     private String businessCode;
+    /**
+     *分摊重量
+     */
+    @TableField(exist = false)
+    private BigDecimal allocatedWeight;
     /**
      * 来源单号
      */
