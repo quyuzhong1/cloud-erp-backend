@@ -1126,6 +1126,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
             }
             pagingViewDTO.setInvoiceNatureName(InvoiceNatureEnum.getName(pagingViewDTO.getInvoiceNature()));
+            if (CharSequenceUtil.isNotBlank(pagingViewDTO.getStartCode())){
+                pagingViewDTO.setStartCodeStr(pagingViewDTO.getNo()+"/"+pagingViewDTO.getStartCode());
+            }
         });
     }
 

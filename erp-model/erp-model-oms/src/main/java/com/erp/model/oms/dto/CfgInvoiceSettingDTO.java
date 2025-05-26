@@ -366,4 +366,24 @@ public class CfgInvoiceSettingDTO implements Serializable {
         @NotNull(message = "是否启用标识不能为空")
         private Boolean disabled;
     }
+    @Data
+    @NoArgsConstructor
+    public static class UpdateSerialDTO {
+        /**
+         * 主键Id
+         */
+        @NotBlank(message = "主键Id不能为空")
+        private String id;
+        /**
+         * 序列号
+         */
+        @NotNull(message = "序列号不能为空")
+        private Integer no;
+
+        /**
+         * 起始编号
+         */
+        @NotBlank(message = "起始编号不能为空")
+        private String startCode;
+    }
 }

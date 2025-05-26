@@ -36,4 +36,8 @@ public interface CfgInvoiceSettingService extends SuperService<CfgInvoiceSetting
      * @date: 2025/4/17 13:22
      **/
     List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName();
+
+    void updateSerialNo(CfgInvoiceSettingDTO.UpdateSerialDTO dto);
+
+    void updateSerialNoById(String id, Integer no, Integer startCode);
 }

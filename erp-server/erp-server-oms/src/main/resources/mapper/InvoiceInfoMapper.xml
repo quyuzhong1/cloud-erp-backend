@@ -52,6 +52,8 @@
         i.platform_code as platformCode,
         i.template_type as templateType,
         i.status as status,
+        i.no as no,
+        i.start_code as startCode,
         i.bill_create_time as billCreateTime,
         i.remark as remark,
         case when i.invoice_type = 'nfe' then att.attach_url else i.file_url end as fileUrl,
