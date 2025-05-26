@@ -314,7 +314,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     private String getPermissionSql() {
         String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sbdid.warehouse_id");
-        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sbd.shop_id");
         if (CharSequenceUtil.isAllBlank(warehousePermissionSql, shopPermissionSql)) {
             return null;
         }
