@@ -94,10 +94,19 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
     @TableField("end_period_estimated_cost")
     private BigDecimal endPeriodEstimatedCost;
     /**
+     * 备注
+     */
+    private String remark;
+    /**
      * 业务单号
      */
     @TableField(exist = false)
     private String businessCode;
+    /**
+     *分摊重量
+     */
+    @TableField(exist = false)
+    private BigDecimal allocatedWeight;
     /**
      * 来源单号
      */
@@ -133,6 +142,13 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
      */
     @TableField(exist = false)
     private String platformSkuNo;
+    /**
+     * 账单来源：estimated=预估账单，actual=实际账单
+     * ReconciliationBillTypeEnum
+     *
+     */
+    @TableField(exist = false)
+    private String billSourceType;
     /**
      * 费用分摊状态
      * AllocationStatusEnum

@@ -62,4 +62,8 @@ public interface FirstMileSkuCostAllocationDetailService extends SuperService<Fi
     void updateEndPeriodEstimatedCost(String detailId, String newEndPeriodEstimatedCost);
 
     List<FirstMileSkuCostAllocationDetailEntity> listBySourceCodeList(List<String> businessCodeList, List<String> sourceCodeList, List<String> transportNoList);
+
+    void updateDetailRemark(String detailId, String newDetailRemark);
+
+    List<FirstMileSkuCostAllocationDetailEntity> listByReportMonth(String sourceId, String businessCode, String transportNo, String skuId, String platformSkuNo, String reportPeriodId);
 }
