@@ -2,6 +2,8 @@ package com.erp.sdk.fs.service;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -45,6 +47,9 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -857,25 +862,36 @@ public class FsService {
         // 构建client
         Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
 
+
+//        // 创建请求对象
+//        ListInstanceReq req = ListInstanceReq.newBuilder()
+//                .pageSize(100)
+//                .approvalCode("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F")
+//                .startTime("1748244959000")
+//                .endTime("1748331406667")
+//                .build();
+//
+//        // 发起请求
+//        ListInstanceResp resp = client.approval().v4().instance().list(req);
+//
+//        // 处理服务端错误
+//        if (!resp.success()) {
+//            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
+//                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+//        }
+
         // 创建请求对象
-        GetApprovalReq req = GetApprovalReq.newBuilder()
-                .approvalCode("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F")
+        GetInstanceReq req1 = GetInstanceReq.newBuilder()
+                .instanceId("56128DE8-4E2C-4156-923B-80E97E263DAE")
                 .locale("zh-CN")
-                .withAdminId(false)
-                .userIdType("open_id")
                 .build();
 
         // 发起请求
-        GetApprovalResp resp = client.approval().v4().approval().get(req);
-
-        // 处理服务端错误
-        if (!resp.success()) {
-            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-            throw new ServiceException(resp.getMsg());
-        }
+        GetInstanceResp resp1 = client.approval().v4().instance().get(req1);
+        String form = resp1.getData().getForm();
+        JSONArray  formArray = JSONUtil.parseArray(form);
         // 业务数据处理
-        System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
+        System.out.println(Jsons.DEFAULT.toJson(resp1.getData()));
     }
 
     /**
@@ -936,9 +952,9 @@ public class FsService {
 
         // 创建请求对象
         GetInstanceReq req = GetInstanceReq.newBuilder()
-                .instanceId("81D31358-93AF-92D6-7425-01A5D67C4E71")
+                .instanceId("56128DE8-4E2C-4156-923B-80E97E263DAE")
                 .locale("zh-CN")
-                .userId("f7cb567e")
+                .userId("af4eg757")
                 .userIdType("user_id")
                 .build();
 
@@ -960,28 +976,49 @@ public class FsService {
     /**
      * 批量获取审批实例 ID
      */
-    public ListInstanceResp batchGetInstanceId(String code) throws Exception {
+    public List<String> batchGetInstanceId(String code, LocalDateTime startTime, LocalDateTime endTime) throws Exception {
+        // 转换为毫秒时间戳
+        long startMillis = startTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        long endMillis = endTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli();
         // 构建client
-        Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+        Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
 
         // 创建请求对象
         ListInstanceReq req = ListInstanceReq.newBuilder()
                 .pageSize(100)
-                .pageToken("nF1ZXJ5VGhlbkZldGNoCgAAAAAA6PZwFmUzSldvTC1yU")
-                .approvalCode("7C468A54-8745-2245-9675-08B7C63E7A85")
-                .startTime("1567690398020")
-                .endTime("1567690398020")
+                .approvalCode("code")
+                //startTime转毫秒
+                .startTime(String.valueOf(startMillis))
+                .endTime(String.valueOf(endMillis))
                 .build();
+        List<String> allInstanceCodes = new ArrayList<>();
 
-        // 发起请求
-        ListInstanceResp resp = client.approval().v4().instance().list(req);
+        try {
+            ListInstanceResp resp = null;
+            do {
+                resp = client.approval().v4().instance().list(req);
 
-        // 处理服务端错误
-        if (!resp.success()) {
-            System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
-                    resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
+                if (resp.success()) {
+                    String[] instanceCodeList = resp.getData().getInstanceCodeList();
+                    if (instanceCodeList != null && instanceCodeList.length > 0) {
+                        allInstanceCodes.addAll(Arrays.asList(instanceCodeList));
+                    }
+
+                    // 设置下一页 token
+                    String pageToken = resp.getData().getPageToken();
+                    if (StrUtil.isNotBlank(pageToken)) {
+                        req.setPageToken(pageToken);
+                    }
+                } else {
+                    log.error("调用飞书API失败：code={}, msg={}, reqId={}", resp.getCode(), resp.getMsg(), resp.getRequestId());
+                    throw new ServiceException("调用飞书API失败：" + resp.getMsg());
+                }
+            } while (StrUtil.isNotBlank(resp.getData().getPageToken()));
+        } catch (Exception e) {
+            log.error("获取审批实例ID异常", e);
+            throw new ServiceException("获取审批实例ID异常", e);
         }
-        return resp;
+        return allInstanceCodes;
     }
 
     /**
