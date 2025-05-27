@@ -1,12 +1,14 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -1039,7 +1041,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
                 startDTO.setBusinessKey(SourceTypeEnum.SO_CHANGE.getCode());
                 startDTO.setBusinessName(obj.getCode());
                 startDTO.setUserId(sellerId);
-                startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+                startDTO.setVariablesMap(getVariablesMap(obj));
                 resultList.add(startDTO);
             }
 
@@ -1069,7 +1071,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
             approveDTO.setComment(dto.getComment());
             approveDTO.setUserId(userInfo.getUid());
-            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            approveDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(approveDTO);
         });
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
@@ -1088,6 +1090,29 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             List<SoChangeEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto, updateList);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SoChangeEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<SoChangeDetailEntity> detailList = soChangeDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        if(CollUtil.isEmpty(detailList)){
+            throw new ServiceException(ApiError.ERROR_92036);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //SKU
+        String skuNo = detailList.stream().map(SoChangeDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        //变更类型
+        String changeType = detailList.stream().map(obj -> obj.getChangeType().getCode()).collect(Collectors.joining(","));
+        variablesMap.put("changeType", changeType);
+        return variablesMap;
     }
 
     /**

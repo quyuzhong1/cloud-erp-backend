@@ -53,8 +53,8 @@ public class CfgQueryOptionController extends BaseController {
      * @return
      */
     @GetMapping("/cfgApproveSync/drop/cfgApproveSyncDropDown")
-    public ApiResult<List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO>> cfgApproveSyncDropDown(@RequestParam(value = "bussinessKey") String bussinessKey) {
-        return success(cfgQueryOptionService.cfgApproveSyncDropDown(bussinessKey));
+    public ApiResult<List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO>> cfgApproveSyncDropDown(@RequestParam(value = "bussinessKey") String bussinessKey,@RequestParam(value = "fieldBelongsType") String fieldBelongsType) {
+        return success(cfgQueryOptionService.cfgApproveSyncDropDown(bussinessKey,fieldBelongsType));
     }
 
     /**

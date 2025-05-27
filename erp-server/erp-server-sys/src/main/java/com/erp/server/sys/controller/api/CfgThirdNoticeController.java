@@ -46,7 +46,7 @@ public class CfgThirdNoticeController extends BaseController {
     /**
     * 新增
     * @author jack
-    * @date:  2025-05-23
+    * @date:  2025-05-26
     * @param dto
     * @return ApiResult<String>
     */
@@ -59,7 +59,7 @@ public class CfgThirdNoticeController extends BaseController {
     /**
     * 修改
     * @author jack
-    * @date:  2025-05-23
+    * @date:  2025-05-26
     * @param dto
     * @return ApiResult
     */
@@ -92,7 +92,7 @@ public class CfgThirdNoticeController extends BaseController {
     /**
      * 列表查询
      * @author jack
-     * @date: 2025-05-13
+     * @date: 2025-05-26
      * @param dto
      * @return ApiResult<PagingVO<CfgThirdNoticeDTO.ListDTO>>
      */
@@ -111,9 +111,9 @@ public class CfgThirdNoticeController extends BaseController {
     /**
      * 详情
      * @author jack
-     * @date:  2025-05-14
+     * @date:  2025-05-26
      * @param id
-     * @return ApiResult<AfterSaleDTO.ViewDTO>>
+     * @return ApiResult<CfgThirdNoticeDTO.ViewDTO>>
      */
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
@@ -130,7 +130,7 @@ public class CfgThirdNoticeController extends BaseController {
     /**
      * 删除
      * @author jack
-     * @date:  2025-05-13
+     * @date:  2025-05-26
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
@@ -169,7 +169,7 @@ public class CfgThirdNoticeController extends BaseController {
     /**
      * 启用/停用
      * @author jack
-     * @date:  2025-05-13
+     * @date:  2025-05-26
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
@@ -207,7 +207,7 @@ public class CfgThirdNoticeController extends BaseController {
     /**
      * 导出Excel数据
      * @author jack
-     * @date:  2025-04-06
+     * @date:  2025-05-26
      * @param dto
      * @param response
      * @return

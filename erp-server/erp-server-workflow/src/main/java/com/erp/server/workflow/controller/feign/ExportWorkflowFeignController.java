@@ -33,6 +33,10 @@ public class ExportWorkflowFeignController {
     @Resource
     private CfgThirdProcessService cfgThirdProcessService;
 
+    @Resource
+    private ApproveTaskInfoService approveTaskInfoService;
+
+
     @PostMapping("/processDefinition")
     public PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto){
         return processDefinitionService.exportProcessDefinition(dto);
@@ -65,5 +69,16 @@ public class ExportWorkflowFeignController {
     @PostMapping("/exportCfgThirdProcess")
     public PagingVO<CfgThirdProcessDTO.ListDTO> exportCfgThirdProcess(@RequestBody PagingDTO<CfgThirdProcessDTO.PagingParamDTO> dto){
         return cfgThirdProcessService.paging(dto);
+    }
+    /**
+     * 第三方查询导出
+     * @author will
+     * @date 2025/5/27 11:27
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/exportApproveTaskInfo")
+    public PagingVO<ApproveTaskInfoDTO.ListDTO> exportApproveTaskInfo(@RequestBody PagingDTO<ApproveTaskInfoDTO.PagingParamDTO> dto){
+        return approveTaskInfoService.paging(dto);
     }
 }

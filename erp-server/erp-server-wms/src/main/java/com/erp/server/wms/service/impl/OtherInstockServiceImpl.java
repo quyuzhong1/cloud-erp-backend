@@ -17,6 +17,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -548,8 +549,10 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99059);
         }
-        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
-
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //SKU
+        String skuNo = detailList.stream().map(OtherInstockDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
         //总计数量
         Integer actualQtyTotal = detailList.stream().map(OtherInstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("actualQtyTotal", actualQtyTotal);

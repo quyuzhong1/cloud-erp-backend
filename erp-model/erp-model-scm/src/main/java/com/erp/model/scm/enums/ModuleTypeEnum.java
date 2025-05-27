@@ -143,6 +143,7 @@ public enum ModuleTypeEnum {
     CFG_APPROVE_SYNC("126", "ERP审批同步配置"),
     CFG_PROCESS("127", "流程配置"),
     CFG_THIRD_PROCESS("128", "三方审批生成"),
+    CFG_THIRD_NOTICE("129", "三方通知配置"),
     ;
 
 

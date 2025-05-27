@@ -1,5 +1,6 @@
 package com.erp.model.sys.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
@@ -46,16 +47,14 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 单据类型
         */
         private String businessType;
+        private String businessTypeName;
 
-        /**
-        * 通知节点
-        */
-        private String noticeNode;
 
         /**
         * 通知方式：single=单条,summary=汇总
         */
         private String method;
+        private String methodName;
 
         /**
         * 通知状态
@@ -71,6 +70,7 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 通知类型
         */
         private String noticeType;
+        private String noticeTypeName;
 
         /**
         * 跳转链接
@@ -86,18 +86,27 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 通知人员
         */
         private String roleType;
+        private List<String> roleTypeList;
+        private List<String> roleTypeNameList;
 
         /**
         * 具体人员
         */
         private String specificPerson;
+        private List<String> specificPersonList;
+        private List<String> specificPersonNameList;
+
 
         /**
         * 推送方式
         */
         private String noticeMethod;
-
-
+        private List<String> noticeMethodList;
+        /**
+         * 规则条件
+         */
+        @Dict
+        private List<CfgRuleConditionDTO.View> conditionList;
     }
 
     /**
@@ -107,7 +116,10 @@ public class CfgThirdNoticeDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        /**
+         * 规则条件集合
+         */
+        private List<CfgRuleConditionDTO.Add> conditionList;
     }
 
     /**
@@ -123,6 +135,11 @@ public class CfgThirdNoticeDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 规则条件
+         */
+        private List<CfgRuleConditionDTO.Update> conditionList;
+
     }
 
     @Data
@@ -135,11 +152,6 @@ public class CfgThirdNoticeDTO implements Serializable {
         @NotBlank(message = "单据类型不能为空")
         private String businessType;
 
-        /**
-        * 通知节点
-        */
-        @NotBlank(message = "通知节点不能为空")
-        private String noticeNode;
 
         /**
         * 通知方式：single=单条,summary=汇总
@@ -182,37 +194,24 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
         * 通知人员
         */
-        @NotBlank(message = "通知人员不能为空")
-        private String roleType;
+        @NotEmpty(message = "通知人员不能为空")
+        private List<String> roleTypeList;
 
         /**
         * 具体人员
         */
-        @Size(max = 1024,message = "具体人员最大长度不能超过1024位")
-        private String specificPerson;
+        private List<String>  specificPersonList;
 
         /**
         * 推送方式
         */
-        @NotBlank(message = "推送方式不能为空")
-        private String noticeMethod;
+        @NotEmpty(message = "推送方式不能为空")
+        private List<String> noticeMethodList;
 
         /**
          * 推送信息
          */
-        @NotEmpty
-        @Size(min = 1, message = "至少存在一条推送信息")
-        private List<CfgApproveSyncFieldMapDTO.@Valid NoticeFieldMapDTO> pushMsgList;
-
-
-        /**
-         * 规则条件集合
-         */
-        @Valid
-        @Size(min = 1, message = "至少存在一条规则条件")
-        private List<CfgRuleConditionDTO.Add> conditionList;
-
-
+        private List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList;
     }
 
     /**
@@ -255,12 +254,6 @@ public class CfgThirdNoticeDTO implements Serializable {
         private String businessTypeName;
 
         /**
-         * 通知节点
-         */
-        private String noticeNode;
-        private String noticeNodeName;
-
-        /**
          * 通知方式：single=单条,summary=汇总
          */
         private String method;
@@ -270,24 +263,26 @@ public class CfgThirdNoticeDTO implements Serializable {
          * 通知状态
          */
         private Boolean noticeStatus;
+        private String noticeStatusName;
 
         /**
          * 通知类型
          */
         private String noticeType;
-        private String noticeTypeName;
 
         /**
          * 项目角色
          */
         private String roleType;
-        private String roleTypeName;
+        private List<String> roleTypeList;
+        private List<String> roleTypeNameList;
 
         /**
          * 具体人员
          */
         private String specificPerson;
-        private String specificPersonName;
+        private List<String> specificPersonList;
+        private List<String> specificPersonNameList;
 
         /**
          * 通知标题
@@ -297,12 +292,17 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
          * 通知时间类型
          */
+        private String cron;
         private String cronType;
     }
 
     @Data
     @NoArgsConstructor
     public static class BaseDTO {
+        /**
+         * id
+         */
+        private String id;
 
         /**
          * 创建人id

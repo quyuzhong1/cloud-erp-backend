@@ -259,6 +259,9 @@ public enum ApiError implements Serializable {
     PROCESS_DEFINITION_DEPLOY_UPDATE_ERROR(94046,"流程定义已发布不支持编辑"),
     PROCESS_DEFINITION_CHANGE_ERROR(94047,"流程定义未发布不支持变更"),
     PROCESS_DEFINITION_ADD_ERROR(94048,"流程定义已存在，不支持新增"),
+    PROCESS_APPROVE_TASK_NOT_EXIST(94049,"三方生成查询不存在"),
+    PROCESS_APPROVE_TASK_DETAIL_NOT_EXIST(94050,"三方生成查询明细不存在"),
+
 
 
     /**

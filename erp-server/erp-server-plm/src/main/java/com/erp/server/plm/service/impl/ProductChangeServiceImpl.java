@@ -31,10 +31,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductChangeEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.ProductChangeStateEnum;
 import com.erp.model.plm.vo.BomVO;
@@ -285,7 +282,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
         Integer code = approveResult.getCode();
         if (200 != code) {
@@ -297,6 +294,33 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             approveEnd(dto, entity);
         }
     }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(ProductChangeEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        //获取到对应的 json
+        String detailsJson = changeDetailsService.getDetailsJson(entity.getId());
+        if (StringUtils.isNotBlank(detailsJson)) {
+            //对应就是bom
+            if (BomConstant.CHANGE_BOM.equals(entity.getType())) {
+                BomDTO bom = JSONObject.parseObject(detailsJson, BomDTO.class);
+                variablesMap.put("code", bom.getSerialNumber());
+            }
+            //对应就是sku
+            if (BomConstant.CHANGE_SKU.equals(entity.getType())) {
+                ProductSmallestUnitDTO sku = JSONObject.parseObject(detailsJson, ProductSmallestUnitDTO.class);
+                variablesMap.put("code", ObjectUtil.isNotEmpty(sku.getProductManySkuDetail()) ? "" : sku.getProductManySkuDetail().getSkuNo());
+            }
+        }
+        return variablesMap;
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)

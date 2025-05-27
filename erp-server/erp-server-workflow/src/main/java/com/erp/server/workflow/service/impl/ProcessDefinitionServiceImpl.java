@@ -236,7 +236,24 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     public PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto) {
         // 查询数据
         Page<ProcessDefinitionDTO.ExportDTO> page = this.baseMapper.query(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        if (CollUtil.isNotEmpty(page.getRecords())) {
+            handleExport(page.getRecords());
+        }
         return new PagingVO<>(page);
+    }
+
+    /**
+     * 导出数据处理
+     * @author will
+     * @date 2025/5/27 09:12
+     * @param records
+     * @return void
+     */
+    private void handleExport(List<ProcessDefinitionDTO.ExportDTO> records) {
+        // 处理导出数据
+        records.forEach(item -> {
+            item.setDisabledName(item.getDisabled() ? "是" : "否");
+        });
     }
 
     @Override

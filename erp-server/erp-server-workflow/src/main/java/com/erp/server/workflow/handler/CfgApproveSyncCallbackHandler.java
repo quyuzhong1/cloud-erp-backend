@@ -61,21 +61,6 @@ public class CfgApproveSyncCallbackHandler {
     private ProcessTaskManagementService processTaskManagementService;
     @Resource
     private ProcessTaskManagementExtService processTaskManagementExtService;
-
-    @Resource
-    private WorkMenuService workMenuService;
-
-    @Resource
-    private OmsWorkflowFeign omsWorkflowFeign;
-
-    @Resource
-    private PlmWorkflowFeign plmWorkflowFeign;
-
-    @Resource
-    private ScmWorkflowFeign scmWorkflowFeign;
-
-    @Resource
-    private WmsWorkflowFeign wmsWorkflowFeign;
     /**
      *
      * @author jack
@@ -136,27 +121,12 @@ public class CfgApproveSyncCallbackHandler {
                     endProcessDTO.setBusinessId(processManagementEntity.getBusinessId());
                     endProcessDTO.setBusinessKey(processManagementEntity.getBusinessKey());
                     endProcessDTO.setApproveStatus(actionType.equals("APPROVE")  ? ApproveTypeEnum.PASS : ApproveTypeEnum.REJECT);
-                    WorkMenuEntity workMenuEntity = workMenuService.getByModuleCode(processManagementEntity.getBusinessKey());
-                    String sysClassify = workMenuEntity.getSysClassify();
-                    Map<String, Object> variablesMap = new HashMap<>();
-                            switch (SysClassifyEnum.getEnumByCode(sysClassify)) {
-                        case PLM:
-                            variablesMap = plmWorkflowFeign.getVariablesMap(endProcessDTO);
-                            break;
-                        case SCM:
-//                            scmWorkflowFeign.approveEnd(endProcessDTO);
-                            break;
-                        case WMS:
-//                            wmsWorkflowFeign.approveEnd(endProcessDTO);
-                            break;
-                        case OMS:
-//                            omsWorkflowFeign.approveEnd(endProcessDTO);
-                            break;
-                        case FM:
-                            break;
-                        default:
-                            break;
-                    }
+                    Map<String, Object> variablesMap =new HashMap<>();
+//                    Map<String, Object> variablesMap = processManagementService.getVariablesMap(processManagementEntity.getBusinessKey(), endProcessDTO);
+//                    if(Objects.isNull(variablesMap)){
+//                        //todo 记录失败 返回失败
+//                        return Boolean.FALSE;
+//                    }
 
                     ProcessManagementDTO.ApproveDTO dto = new ProcessManagementDTO.ApproveDTO();
                     dto.setBusinessId(processManagementEntity.getBusinessId());
@@ -168,25 +138,8 @@ public class CfgApproveSyncCallbackHandler {
                     log.info("#####ProcessFeignController :::::approve>>>>> 流程审核入参 dto={}", JSONUtil.toJsonStr(dto));
                     ProcessManagementDTO.ApproveResultDTO data = processManagementService.approveProcess(dto, Boolean.TRUE);
                     if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
-                        switch (SysClassifyEnum.getEnumByCode(sysClassify)) {
-                            case PLM:
-                                plmWorkflowFeign.approveEnd(endProcessDTO);
-                                break;
-                            case SCM:
-                                scmWorkflowFeign.approveEnd(endProcessDTO);
-                                break;
-                            case WMS:
-                                wmsWorkflowFeign.approveEnd(endProcessDTO);
-                                break;
-                            case OMS:
-                                omsWorkflowFeign.approveEnd(endProcessDTO);
-                                break;
-                            case FM:
-                                break;
-                            default:
-                                break;
-                        }
-
+                        //调用各个系统的approveEnd方法
+                        processManagementService.callFeign(processManagementEntity.getBusinessKey(), endProcessDTO);
                     }
                 }catch (Exception e) {
                     log.error("解析回调数据失败，数据={}", req.getEncrypt());
