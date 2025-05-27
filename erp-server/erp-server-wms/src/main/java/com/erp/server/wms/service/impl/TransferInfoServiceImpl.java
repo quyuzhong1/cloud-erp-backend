@@ -1786,8 +1786,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：海外仓入库单
         addDTO.setSourceType(SourceTypeEnum.OVERSEAS_INBOUND.getCode());
+        LocalDate billDate = receivedEntityList.stream().map(OverseasWarehouseInboundReceivedEntity::getReceiveTime).findFirst().orElse(mainEntity.getReceiveTime()).toLocalDate();
         //默认调出日期：当前日期
-        addDTO.setBillDate(mainEntity.getReceiveTime().toLocalDate());
+        addDTO.setBillDate(billDate);
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
