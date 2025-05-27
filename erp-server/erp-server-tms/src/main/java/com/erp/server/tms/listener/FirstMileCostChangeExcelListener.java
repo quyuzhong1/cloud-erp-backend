@@ -142,7 +142,8 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
             if (CharSequenceUtil.isNotBlank(excelDTO.getTransportNo())) {notEmptyCount++;}
             //校验数据
             List<FirstMileSkuCostAllocationDetailEntity> entityList = skuCostAllocationDetailEntityList.stream()
-                    .filter(e -> Objects.equals(e.getFeeType(), excelDTO.getFeeType()) && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()) && Objects.equals(e.getReportMonth(), excelDTO.getReportMonth()))
+                    .filter(e -> ((CharSequenceUtil.isNotBlank(excelDTO.getFeeTypeName()) && Objects.equals(e.getFeeType(), excelDTO.getFeeType())) || (CharSequenceUtil.isBlank(excelDTO.getFeeTypeName())))
+                            && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()) && Objects.equals(e.getReportMonth(), excelDTO.getReportMonth()))
                     .filter(v -> {
                 //同时不为空时，匹配来源单号和业务单号
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
@@ -176,7 +177,8 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
             }
             //校验两个参数及以上都存在时。是否存在关联的多条费用分摊记录
             List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList1 = skuCostAllocationDetailEntityList.stream()
-                    .filter(e -> Objects.equals(e.getFeeType(), excelDTO.getFeeType()) && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()) && Objects.equals(e.getReportMonth(), excelDTO.getReportMonth()))
+                    .filter(e -> ((CharSequenceUtil.isNotBlank(excelDTO.getFeeTypeName()) && Objects.equals(e.getFeeType(), excelDTO.getFeeType())) || (CharSequenceUtil.isBlank(excelDTO.getFeeTypeName())))
+                            && Objects.equals(e.getPlatformSkuNo(), excelDTO.getPlatformSkuNo()) && Objects.equals(e.getSkuNo(), excelDTO.getSkuNo()) && Objects.equals(e.getReportMonth(), excelDTO.getReportMonth()))
                     .filter(v -> {
                 if (CharSequenceUtil.isAllNotBlank(excelDTO.getSourceCode(), excelDTO.getBusinessCode(),excelDTO.getTransportNo())) {
                     if (v.getSourceCode().equals(excelDTO.getSourceCode()) && v.getBusinessCode().equals(excelDTO.getBusinessCode()) && v.getTransportNo().equals(excelDTO.getTransportNo())) {return true;}else {return false;}
@@ -200,7 +202,7 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
                 continue;
 
             }
-            if (entityList.size() > 1) {
+            if (entityList.size() > 1 && CharSequenceUtil.isNotBlank(excelDTO.getFeeTypeName())) {//如果只修改重量分摊就不提示错误
                 excelDTO.setErrorMsg("存在多条费用分摊记录");
                 errorList.add(excelDTO);
                 continue;
@@ -211,12 +213,14 @@ public class FirstMileCostChangeExcelListener extends AnalysisEventListener<Firs
                 errorList.add(excelDTO);
                 continue;
             }
-            //判断是否存在历史分摊数据
-            List<FirstMileSkuCostAllocationDetailEntity> entityList1 = firstMileSkuCostAllocationDetailService.listByReportMonth(entity.getSourceId(), entity.getBusinessCode(), entity.getTransportNo(), entity.getSkuId(), entity.getPlatformSkuNo(), entity.getReportPeriodId());
-            if (CollUtil.isNotEmpty(entityList1)){
-                excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】存在历史分摊数据，不支持再次修改重量", excelDTO.getSkuNo()));
-                errorList.add(excelDTO);
-                continue;
+            if (CharSequenceUtil.isNotBlank(excelDTO.getAllocatedWeightStr())){
+                //判断是否存在历史分摊数据
+                List<FirstMileSkuCostAllocationDetailEntity> entityList1 = firstMileSkuCostAllocationDetailService.listByReportMonth(entity.getSourceId(), entity.getBusinessCode(), entity.getTransportNo(), entity.getSkuId(), entity.getPlatformSkuNo(), entity.getReportPeriodId());
+                if (CollUtil.isNotEmpty(entityList1)){
+                    excelDTO.setErrorMsg(CharSequenceUtil.format("【{}】存在历史分摊数据，不支持再次修改重量", excelDTO.getSkuNo()));
+                    errorList.add(excelDTO);
+                    continue;
+                }
             }
             excelDTO.setMainId(entity.getMainId());
             if(StringUtils.isNotBlank(excelDTO.getTransportNo()) && StringUtils.isNotBlank(excelDTO.getSourceCode())
