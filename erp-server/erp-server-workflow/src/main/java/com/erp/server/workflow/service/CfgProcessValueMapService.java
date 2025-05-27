@@ -34,9 +34,21 @@ public interface CfgProcessValueMapService extends SuperService<CfgProcessValueM
     */
     BaseResultDTO.AddDTO addOrUpdate(String cfgProcessId,String ruleId,List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto);
 
-
-
+    /**
+     * 根据第三方字段id以及定义code，解析form json得到选项的下拉值（包含amount）
+     * @author hcg
+     * @date: 2025-05-12
+     * @param fieldId，approvalCode
+     * @return
+     */
     List<CfgProcessValueMapDTO.DropDownDTO> view(String fieldId,String approvalCode);
 
+    /**
+     * 删除
+     * @author hcg
+     * @date: 2025-05-12
+     * @param ids
+     * @return
+     */
     void delete(List<String> ids);
 }

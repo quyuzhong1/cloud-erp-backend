@@ -9,6 +9,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
+import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.server.tms.mapper.LogisticsMappingMapper;
 import com.erp.server.tms.service.LogisticsMappingService;
 import com.erp.server.tms.service.LogisticsSaleChannelService;
@@ -22,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -67,34 +67,7 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
         }
         List<LogisticsMappingEntity> updateList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, list);
         updateList.forEach(s -> s.setLogisticsChannelId(channelId));
-        // 校验速卖通承运商
-//        if (updateList.stream().anyMatch(e-> PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(e.getSalesPlatform()))){
-//            List<String> saleChannelIds = updateList.stream().map(LogisticsMappingEntity::getLogisticsSaleChannelId).collect(Collectors.toList());
-//            Map<String, LogisticsSaleChannelEntity> saleChannelMap = logisticsSaleChannelService.listByIds(saleChannelIds)
-//                    .stream().collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
-//            List<String> carrierCode = tmsCarrierService.listBySalesPlatform(PlatformDictEnum.ALI_EXPRESS.getCode())
-//                    .stream()
-//                    .map(BaseDropDownDTO.CommonDTO::getCode)
-//                    .collect(Collectors.toList());
-//            updateList.forEach(e-> {
-//                if (!PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(e.getSalesPlatform())){
-//                    return;
-//                }
-//                LogisticsSaleChannelEntity saleChannelEntity = saleChannelMap.get(e.getLogisticsSaleChannelId());
-//                if(null == saleChannelEntity){
-//                    return;
-//                }
-//                if (!"Other".equalsIgnoreCase(saleChannelEntity.getCode())){
-//                    return;
-//                }
-//                if (carrierCode.contains(e.getCarrierCode())){
-//                    return;
-//                }
-//                throw new ServiceException("速卖通平台:卖配送渠道承运商不能为空");
-//            });
-//        }
-
-        List<LogisticsMappingEntity> dbList = this.listDbByChannelId(channelId);
+        List<LogisticsMappingEntity> dbList = this.listDbByChannelIdAndType(channelId, LogisticsMappingTypeEnum.PLATFORM.getCode());
         List<String> updateIdList = updateList.stream().filter(u -> StringUtils.isNotBlank(u.getId())).
                 map(LogisticsMappingEntity::getId).collect(Collectors.toList());
         List<String> deleteIdList = dbList.stream().filter(d -> !updateIdList.contains(d.getId())).map(LogisticsMappingEntity::getId).collect(Collectors.toList());
@@ -105,8 +78,8 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     }
 
     @Override
-    public List<LogisticsMappingDTO.ViewDTO> listByChannelId(String channelId) {
-        List<LogisticsMappingEntity> dbList = this.listDbByChannelId(channelId);
+    public List<LogisticsMappingDTO.ViewDTO> listByChannelIdAndType(String channelId, String type) {
+        List<LogisticsMappingEntity> dbList = this.listDbByChannelIdAndType(channelId, type);
         return BeanMapperUtils.copyList(LogisticsMappingDTO.ViewDTO.class, dbList);
     }
 
@@ -120,7 +93,7 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
 
     @Override
     public void copy(String channelId, String addChannelId) {
-        List<LogisticsMappingEntity> list = listDbByChannelId(channelId);
+        List<LogisticsMappingEntity> list = this.lambdaQuery().eq(LogisticsMappingEntity::getLogisticsChannelId, channelId).list();
         if (CollectionUtils.isNotEmpty(list)) {
 //            List<LogisticsMappingEntity> addList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, list);
             list.forEach(obj -> {
@@ -147,8 +120,47 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
                 .one();
     }
     @Override
-    public List<LogisticsMappingEntity> listDbByChannelId(String channelId) {
-        return this.lambdaQuery().eq(LogisticsMappingEntity::getLogisticsChannelId, channelId).list();
+    public List<LogisticsMappingEntity> listDbByChannelIdAndType(String channelId, String type) {
+        return this.lambdaQuery().eq(LogisticsMappingEntity::getLogisticsChannelId, channelId).eq(LogisticsMappingEntity::getType,type).list();
 
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addWarehouseMapping(String channelId, List<LogisticsMappingDTO.AddDTO> warehouseMappingList) {
+        if (CollectionUtils.isEmpty(warehouseMappingList)) {
+            return;
+        }
+        if(warehouseMappingList.stream().anyMatch(v->StringUtils.isBlank(v.getWarehouseId()))){
+            throw new ServiceException("仓库映射列表中存在仓库id为空的数据，请检查！");
+        }
+        warehouseMappingList.forEach(v->v.setType(LogisticsMappingTypeEnum.WAREHOUSE.getCode()));
+        List<LogisticsMappingEntity> saveList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, warehouseMappingList);
+        saveList.forEach(s -> s.setLogisticsChannelId(channelId));
+        this.saveBatch(saveList);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void warehouseUpdate(String channelId, List<LogisticsMappingDTO.UpdateDTO> mappingList) {
+        if (CollectionUtils.isEmpty(mappingList)) {
+            return;
+        }
+        mappingList.forEach(v -> {
+            if (StringUtils.isBlank(v.getWarehouseId())) {
+                throw new ServiceException("仓库映射列表中存在仓库id为空的数据，请检查！");
+            }
+            v.setType(LogisticsMappingTypeEnum.WAREHOUSE.getCode());
+        });
+        List<LogisticsMappingEntity> updateList = BeanMapperUtils.copyList(LogisticsMappingEntity.class, mappingList);
+        updateList.forEach(s -> s.setLogisticsChannelId(channelId));
+        List<LogisticsMappingEntity> dbList = this.listDbByChannelIdAndType(channelId, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
+        List<String> updateIdList = updateList.stream().filter(u -> StringUtils.isNotBlank(u.getId())).
+                map(LogisticsMappingEntity::getId).collect(Collectors.toList());
+        List<String> deleteIdList = dbList.stream().filter(d -> !updateIdList.contains(d.getId())).map(LogisticsMappingEntity::getId).collect(Collectors.toList());
+        if (CollectionUtils.isNotEmpty(deleteIdList)) {
+            this.removeByIds(deleteIdList);
+        }
+        this.saveOrUpdateBatch(updateList);
     }
 }

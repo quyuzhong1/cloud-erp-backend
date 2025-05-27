@@ -7,11 +7,9 @@ package com.erp.server.workflow.handler;
  */
 
 import cn.hutool.json.JSONArray;
-import com.common.business.enums.FileTaskEventEnum;
-import com.common.business.enums.ProcessFormEvent;
-import com.erp.model.workflow.dto.CfgProcessDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
+import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +30,6 @@ public interface ProcessFormHandler {
         return getEvent().name().equals(event);
     }
 
-    ProcessFormEvent getEvent();
+    CfgProcessRuleTypeEnum getEvent();
 
 }

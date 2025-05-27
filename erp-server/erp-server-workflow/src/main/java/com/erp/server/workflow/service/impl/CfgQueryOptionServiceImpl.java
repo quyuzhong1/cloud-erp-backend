@@ -11,6 +11,7 @@ import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
 import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.common.business.service.impl.SuperServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 
@@ -36,8 +37,17 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
 
     @Override
-    public List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey) {
-        List<CfgQueryOptionEntity> cfgQueryOptionEntities = lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).orderByDesc(CfgQueryOptionEntity::getFieldBelongsType).list();
+    public List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey,String fieldBelongsType) {
+        LambdaQueryWrapper<CfgQueryOptionEntity> queryWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.isNotBlank(fieldBelongsType)) {
+            queryWrapper.eq(CfgQueryOptionEntity::getFieldBelongsType, fieldBelongsType);
+        }
+        if (StringUtils.isNotBlank(bussinessKey)) {
+            queryWrapper.eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey);
+        }
+        queryWrapper.eq(CfgQueryOptionEntity::getIsDeleted, false);
+        queryWrapper.orderByDesc(CfgQueryOptionEntity::getFieldBelongsType);
+        List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.selectList(queryWrapper);
         return BeanUtil.copyToList(cfgQueryOptionEntities, CfgQueryOptionDTO.cfgApproveSyncDropDownDTO.class);
     }
 

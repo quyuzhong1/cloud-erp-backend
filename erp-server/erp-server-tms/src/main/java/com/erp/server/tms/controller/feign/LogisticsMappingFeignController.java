@@ -38,16 +38,4 @@ public class LogisticsMappingFeignController extends BaseController {
     public LogisticsMappingEntity getByLogisticsMappingParam(@RequestBody @Validated LogisticsMappingDTO.SearchParamDTO paramDTO) {
         return logisticsMappingService.getByLogisticsMappingParam(paramDTO);
     }
-
-    /**
-     * @description: 根据物流渠道id获取物流映射表
-     * @author jack
-     * @date: 2024/10/09
-     * @param id
-     * @return List<LogisticsMappingEntity>
-     */
-    @PostMapping("/listDbByChannelId")
-    List<LogisticsMappingEntity> listDbByChannelId(@RequestBody String id){
-        return logisticsMappingService.listDbByChannelId(id);
-    }
 }

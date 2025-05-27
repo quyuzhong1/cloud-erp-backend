@@ -70,6 +70,10 @@ public class ProcessDefinitionDTO {
         @NotBlank(message = "业务类型不能为空")
         private String businessKey;
 
+        /**
+         * 流程版本
+         */
+        private Integer processVersion;
     }
 
     /**
@@ -123,6 +127,11 @@ public class ProcessDefinitionDTO {
          * 是否已发布
          */
         private Boolean isDeploy;
+
+        /**
+         * 流程版本
+         */
+        private Integer processVersion;
 
         /**
          * 页面高级查询
@@ -253,10 +262,17 @@ public class ProcessDefinitionDTO {
     @Data
     @NoArgsConstructor
     public static class DeleteDTO {
+        /**
+         * 流程定义id
+         */
+        @NotBlank(message = "流程定义ID不能为空")
+        private String id;
 
-        @NotNull(message = "流程定义ID不能为空")
-        @NotEmpty(message = "流程定义ID不能为空")
-        private List<String> ids;
+        /**
+         * 流程版本
+         */
+        @NotNull(message = "流程版本不能为null")
+        private Integer processVersion;
     }
 
     @Data
@@ -410,6 +426,16 @@ public class ProcessDefinitionDTO {
         @ExcelProperty(value = "创建时间", index = 8)
         private LocalDateTime createTime;
 
+        /**
+         * 启禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 启禁用名称
+         */
+        private String disabledName;
+
     }
     @Data
     @NoArgsConstructor
@@ -431,11 +457,18 @@ public class ProcessDefinitionDTO {
     @Data
     @NoArgsConstructor
     public static class DisableDTO {
+
         /**
-         * ids不能为空
+         * 部署流程ID
          */
-        @NotEmpty(message = "ids不能为空")
-        private List<String> ids;
+        @NotBlank(message = "流程定义ID不能为空")
+        private String id;
+
+        /**
+         * 流程版本
+         */
+        @NotNull(message = "流程版本不能为空")
+        private Integer processVersion;
 
         /**
          * 是否禁用
@@ -456,5 +489,56 @@ public class ProcessDefinitionDTO {
          * 单据名称
          */
         private String name;
+    }
+
+    /**
+     * 流程变更
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ProcessChangeDTO {
+
+        @NotBlank(message = "流程ID不能为空")
+        private String id;
+
+        /**
+         * 流程名称
+         */
+        @NotBlank(message = "流程名称不能为空")
+        private String processName;
+
+        /**
+         * BPMN流程图
+         */
+        @NotBlank(message = "BPMN流程图不能为空")
+        private String bpmnXml;
+
+        /**
+         * 描述信息
+         */
+        private String remark;
+
+        /**
+         * 审核人设置
+         */
+        @NotNull(message = "审核人设置不能为空")
+        private DictBasicEnum reviewSetting;
+
+        /**
+         * 业务类型关联id
+         */
+        private String businessId;
+
+        /**
+         * 业务类型
+         */
+        @NotBlank(message = "业务类型不能为空")
+        private String businessKey;
+
+        /**
+         * 流程版本
+         */
+        @NotNull(message = "流程版本不能为空")
+        private Integer processVersion;
     }
 }

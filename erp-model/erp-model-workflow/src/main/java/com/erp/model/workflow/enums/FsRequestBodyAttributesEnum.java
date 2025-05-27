@@ -23,6 +23,8 @@ public enum FsRequestBodyAttributesEnum {
     FIELDLIST("fieldList", "明细控件类型"),
     ID("id", "控件唯一标识"),
     REQUIRED("required", "是否必填"),
+    CURRENCY("currency", "币种"),
+    CURRENCYRange("currencyRange", "币种"),
     TYPE("type", "审批终止");
 
     private final String code;

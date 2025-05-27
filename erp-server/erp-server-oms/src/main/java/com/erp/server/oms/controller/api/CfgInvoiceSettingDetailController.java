@@ -80,6 +80,7 @@ public class CfgInvoiceSettingDetailController extends BaseController {
      * @param:
      * @return:
      **/
+    @Deprecated
     @PostMapping("/listDictSelect")
     public ApiResult<List<CfgInvoiceSettingDetailDTO.ViewDictPlatformDTO>> listDictSelect(@RequestBody @Validated CfgInvoiceSettingDetailDTO.ParamsDictPlatformDTO dto){
         return success(cfgInvoiceSettingDetailService.listDictSelect(dto));

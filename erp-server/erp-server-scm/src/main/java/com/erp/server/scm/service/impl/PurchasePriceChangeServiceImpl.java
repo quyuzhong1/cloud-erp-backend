@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -936,7 +937,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             startDTO.setBusinessKey(SourceTypeEnum.PURCHASE_PRICE_CHANGE.getCode());
             startDTO.setBusinessName(obj.getCode());
             startDTO.setUserId(userInfo.getUid());
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            startDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(startDTO);
         });
         ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
@@ -962,7 +963,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
         approveDTO.setComment(comment);
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
@@ -986,6 +987,26 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             return approveEnd(entity, type,comment,isNeedProcess);
         }
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(PurchasePriceChangeEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<PurchasePriceChangeDetailEntity> detailList = purchasePriceChangeDetailService.listByPurchasePriceChangeId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.PRICE_NOT_EXIST);
+        }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //新品首批
+        String skuNo = detailList.stream().map(PurchasePriceChangeDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        return variablesMap;
     }
 
 

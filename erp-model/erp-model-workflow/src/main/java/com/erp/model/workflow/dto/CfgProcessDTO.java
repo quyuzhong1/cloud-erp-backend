@@ -231,16 +231,17 @@ public class CfgProcessDTO implements Serializable {
          */
         @NotBlank(message = "业务表id不能为空")
         private String businessId;
+
         /**
          * 业务单号
          */
         private String businessCode;
 
         /**
-         * 业务名称 用于流程图显示   任务审核: 产品名称+任务名称  其他申请单: 单据编号
+         * 流程配置类型 RuleType
          */
         @NotBlank(message = "业务名称不能为空")
-        private String businessName;
+        private String ruleType;
 
         /**
          *

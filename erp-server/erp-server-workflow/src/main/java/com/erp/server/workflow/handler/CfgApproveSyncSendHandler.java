@@ -44,20 +44,7 @@ public class CfgApproveSyncSendHandler {
 
 
     public void updateNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
-                           List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
-                           ProcessManagementEntity processManagementEntity,
-                           CfgApproveSyncEntity cfgApproveSyncEntity,
-                           String createUserId,
-                           List<String> approveIds,
-                           List<String> ccIds,
-                           Map<String, ThirdUnionDTO> thirdUnionMap,
                            List<ProcessTaskManagementEntity> processTaskManagementEntities) {
-        //pc地址
-        String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
-        //参数map
-        Map<String, Object> variablesMap = dto.getVariablesMap();
-        List<String> summaries = cfgApproveSyncBuildHandler.getSummaries(fieldMapEntities, variablesMap);
-
         //审批状态
         String approveType = dto.getApproveType();
         if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())){//审核通过
@@ -69,6 +56,15 @@ public class CfgApproveSyncSendHandler {
         } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
             //更新审批结果通知
             commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.CANCELLED.getCode());
+        } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
+            //更新审批结果通知
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.FORWARDED.getCode());
+        } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
+            //更新审批结果通知
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.PROCESSED.getCode());
+        } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
+            //更新审批结果通知
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.ROLLBACK.getCode());
         }
     }
 
@@ -109,6 +105,21 @@ public class CfgApproveSyncSendHandler {
         } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
             //发送撤销通知
             commonSendNotice(NoticeTemplateEnum.RECALL,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+        } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
+            //发送审核通知
+            CfgApproveNoticeEntity approveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode(), Boolean.TRUE);
+            if (Objects.nonNull(approveNoticeEntity)) {
+                //默认发送审核人
+                sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv);
+            }
+            //发送抄送通知
+            commonSendNotice(NoticeTemplateEnum.CC,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+        } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
+            //发送审批结果通知
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+        } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
+            //发送审批结果通知
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
         }
     }
 

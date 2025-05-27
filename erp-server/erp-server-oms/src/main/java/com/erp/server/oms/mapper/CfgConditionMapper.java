@@ -30,24 +30,11 @@ public interface CfgConditionMapper extends BaseMapper<CfgConditionEntity> {
     List<CfgConditionDTO.CommonDTO> listByConditionCode(@Param("conditionCode") String conditionCode);
     
     /**
-     * 获取所有的条件
-     * @author yl
-     * @date 2023-10-08 14:46
+     * 根据条件获取所有的下拉
+     * @author ZDY
+     * @date 2025-05-23 14:46
      * @param
      * @return java.util.List<com.erp.model.oms.dto.CfConditionDTO.ListDTO>
      */
-    List<CfgConditionDTO.ListDTO> listAllCondition();
-
-    /**
-     * 申报规则列表查询
-     * @return
-     */
-    List<CfgConditionDTO.ListDTO> listDeclareCondition();
-    /**
-     * @description: 订单处理条件下拉
-     * @author Will
-     * @date: 2024/5/9 14:35
-     * @return List<ListDTO>
-     */
-    List<CfgConditionDTO.ListDTO> listOrderHandleCondition();
+    List<CfgConditionDTO.ListDTO> listConditionByType(@Param("codeList") List<String> codeList, @Param("sourceType") String sourceType);
 }

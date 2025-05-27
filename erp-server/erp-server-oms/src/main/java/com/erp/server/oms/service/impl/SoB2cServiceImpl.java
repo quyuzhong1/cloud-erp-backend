@@ -24,6 +24,7 @@ import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -253,6 +254,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private RuleOrderApprovalService ruleOrderApprovalService;
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @Resource
     private RuleDeliveryWarehouseService ruleDeliveryWarehouseService;
@@ -3679,7 +3682,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //物流信息
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(entity.getId());
         if (ObjectUtil.isEmpty(soB2cLogisticsEntity)) {
@@ -4960,7 +4963,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("actualShippingCost", logisticsEntity.getActualShippingCost());
         map.put("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
         map.put("dictPlatform", soB2cEntity.getDictPlatform());
-
+        map.put("nfeInvoiceStatus", soB2cEntity.getNfeInvoiceStatus());
         //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
@@ -6551,8 +6554,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     private void updateLingXingOrder(SoB2cEntity entity, List<SoB2cDetailEntity> detailEntityList) {
         // 校验sku是否存在领星
-        List<String> skuIds = detailEntityList.stream().map(SoB2cDetailEntity::getSkuNo).collect(Collectors.toList());
-        LingxingApiUtils.checkSkuSyncLx(skuIds);
+        List<String> skuNoList = detailEntityList.stream().map(e->LingxingApiUtils.convertLxSku(e.getSkuNo())).collect(Collectors.toList());
+        LingxingApiUtils.checkSkuSyncLx(skuNoList);
 
         List<SoB2cDetailEntity> splitDetailList = detailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
         List<String> splitDetailIds =  splitDetailList.stream().map(SoB2cDetailEntity::getSplitDetailId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
@@ -10156,6 +10159,38 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .set(SoB2cEntity::getSoOutstockDate,null)
                 .in(SoB2cEntity::getId,clearOutDateSoIds)
                 .update();
+    }
+
+    @Override
+    public SoB2cDTO.RuleResultDTO invoiceRule(SoB2cEntity soB2cEntity) {
+        Map<String, Object> map = new HashMap<>();
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        //自动匹配开票规则
+        Map<String, Boolean> invoiceCfgRule = soB2cService.invoiceCfgRule(soB2cEntity, detailList, map);
+        SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
+        ruleResult.setId(soB2cEntity.getId());
+        ruleResult.setIsRuleMatch(invoiceCfgRule.getOrDefault("isMatch", Boolean.FALSE));
+        ruleResult.setIsPass(invoiceCfgRule.getOrDefault("isPass", Boolean.FALSE));
+        ruleResult.setMap(map);
+        ruleResult.setSoB2cDetailList(detailList);
+        return ruleResult;
+    }
+
+    private Map<String, Boolean> invoiceCfgRule(SoB2cEntity entity, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+        Map<String, Boolean> resultMap = new HashMap<>();
+        isExist(entity);
+        if (map.isEmpty()) {
+            //匹配审核规则
+            handleMatchJson(entity.getId(), detailList, map);
+        }
+        CfgInvoiceSettingDTO.RuleMatchDTO ruleOrderMatchResult = cfgRuleInvoiceService.getRuleInvoiceMatchResult(map);
+        //审核规则是否通过
+        Boolean approveSuccess = ruleOrderMatchResult.getApproveSuccess();
+        Boolean isMatch = Boolean.FALSE;
+        Boolean isPass = Boolean.FALSE;
+        resultMap.put("isMatch", isMatch);
+        resultMap.put("isPass", isPass);
+        return resultMap;
     }
 
 

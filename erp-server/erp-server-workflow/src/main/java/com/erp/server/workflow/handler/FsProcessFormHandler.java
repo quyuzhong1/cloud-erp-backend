@@ -2,38 +2,36 @@ package com.erp.server.workflow.handler;
 
 /**
  * @description: 飞书解析form类
+ *
  * @author: hcg
  * @date: 2025/5/20 12:04
  */
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
-import com.common.business.enums.ProcessFormEvent;
+import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
-import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
+import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.sdk.fs.service.FsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.ProcessFormEvent.FS_PROCESS_FORM;
 
 /**
  * @Author: hcg
@@ -56,24 +54,21 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                               List<CfgProcessValueMapEntity> valueMapList) {
 
         // 构建必要的映射关系
-        Map<String, String> tidToIdMap = buildThirdFieldIdToMapIdMap(fieldMapList);
+        Map<String, List<String>> tidToIdListMap = buildThirdFieldIdToMapIdMap(fieldMapList);
         Map<String, List<CfgProcessValueMapEntity>> valueMapListMap = buildValueMapGroupByFieldId(valueMapList);
-        Map<String, CfgProcessFieldMapEntity> fieldMapByThirdId = buildFieldMapByThirdId(fieldMapList);
+        Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdId = buildFieldMapByThirdId(fieldMapList);
 
         // 获取明细数据
         List<Map<String, Object>> detailList = (List<Map<String, Object>>) variablesMap.get("detailList");
 
         // 递归处理表单
-        processFormArray(formArray, variablesMap, fieldMapByThirdId, tidToIdMap, valueMapListMap, detailList);
+        processFormArray(formArray, variablesMap, fieldMapByThirdId, tidToIdListMap, valueMapListMap, detailList);
 
         return formArray;
     }
 
-    private Map<String, String> buildThirdFieldIdToMapIdMap(List<CfgProcessFieldMapEntity> fieldMapList) {
-        return fieldMapList.stream().collect(Collectors.toMap(
-                CfgProcessFieldMapEntity::getThirdFieldId,
-                CfgProcessFieldMapEntity::getId
-        ));
+    private Map<String, List<String>> buildThirdFieldIdToMapIdMap(List<CfgProcessFieldMapEntity> fieldMapList) {
+        return fieldMapList.stream().collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getThirdFieldId, Collectors.mapping(CfgProcessFieldMapEntity::getId, Collectors.toList())));
     }
 
     private Map<String, List<CfgProcessValueMapEntity>> buildValueMapGroupByFieldId(List<CfgProcessValueMapEntity> valueMapList) {
@@ -82,16 +77,14 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         ));
     }
 
-    private Map<String, CfgProcessFieldMapEntity> buildFieldMapByThirdId(List<CfgProcessFieldMapEntity> fieldMapList) {
-        return fieldMapList.stream().collect(Collectors.toMap(
-                CfgProcessFieldMapEntity::getThirdFieldId,
-                Function.identity()
-        ));
+    private Map<String, List<CfgProcessFieldMapEntity>> buildFieldMapByThirdId(List<CfgProcessFieldMapEntity> fieldMapList) {
+        return fieldMapList.stream()
+                .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getThirdFieldId));
     }
 
     private void processFormArray(JSONArray formArray, Map<String, Object> variablesMap,
-                                  Map<String, CfgProcessFieldMapEntity> fieldMapByThirdId,
-                                  Map<String, String> tidToIdMap,
+                                  Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdId,
+                                  Map<String, List<String>> tidToIdListMap,
                                   Map<String, List<CfgProcessValueMapEntity>> valueMapListMap,
                                   List<Map<String, Object>> detailList) {
 
@@ -101,9 +94,9 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
             // 根据字段类型分别处理
             if ("fieldList".equals(type)) {
-                processDetailTable(formField, fieldMapByThirdId, tidToIdMap, valueMapListMap, detailList);
+                processDetailTable(formField, fieldMapByThirdId, tidToIdListMap, valueMapListMap, detailList);
             } else {
-                processSimpleField(formField, variablesMap, fieldMapByThirdId, tidToIdMap, valueMapListMap);
+                processSimpleField(formField, variablesMap, fieldMapByThirdId, tidToIdListMap, valueMapListMap);
             }
 
             // 只保留 id、type、value 字段
@@ -111,8 +104,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         }
     }
 
-    private void processDetailTable(JSONObject formField, Map<String, CfgProcessFieldMapEntity> fieldMapByThirdId,
-                                    Map<String, String> tidToIdMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap,
+    private void processDetailTable(JSONObject formField, Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdId,
+                                    Map<String, List<String>> tidToIdListMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap,
                                     List<Map<String, Object>> detailList) {
 
         JSONArray children = formField.getJSONArray("children");
@@ -130,27 +123,34 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     String childType = child.getStr("type");
 
                     // 获取字段映射信息
-                    CfgProcessFieldMapEntity fieldMap = fieldMapByThirdId.get(childId);
-                    if (fieldMap == null) {
+                    List<CfgProcessFieldMapEntity> fieldMapList = fieldMapByThirdId.get(childId);
+                    if (fieldMapList == null || fieldMapList.isEmpty()) {
                         continue;
+                    }
+
+                    // 获取第一个匹配的映射
+                    CfgProcessFieldMapEntity amountEntity = null;
+                    CfgProcessFieldMapEntity fieldMap = fieldMapList.get(0);
+                    // 获取第一个匹配的映射
+                    if (fieldMapList.size()>1){
+                        fieldMapList.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex).reversed());
+                        amountEntity= fieldMapList.get(1);
                     }
 
                     String childSysField = fieldMap.getSysField();
                     String childDefault = fieldMap.getDefaultValue();
 
-                    // 跳过无字段对应的情况
-                    if (StrUtil.isEmpty(childSysField)) {
+                    if ("default".equals(childSysField) || "null_Value".equals(childSysField)) {
+                        JSONObject detailItem = createDetailItem(childId, childType, childDefault);
+                        row.add(detailItem);
                         continue;
                     }
 
                     // 获取字段值
                     Object childValue = detailRow.get(childSysField);
-                    if (childValue == null) {
-                        childValue = childDefault;
-                    }
 
                     // 执行值映射处理
-                    childValue = mapFieldValue(childId, childType, childValue, childDefault, tidToIdMap, valueMapListMap);
+                    childValue = mapFieldValue(childId, childType, childValue, tidToIdListMap, valueMapListMap);
 
                     // 特殊类型处理
                     if ("attachmentV2".equals(childType)) {
@@ -160,6 +160,27 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     } else if ("date".equals(childType)) {
                         String formattedDate = formatToRFC3339(childValue);
                         JSONObject detailItem = createDetailItem(childId, childType, formattedDate);
+                        row.add(detailItem);
+                    } else if ("amount".equals(childType)) {
+                        JSONObject detailItem = new JSONObject();
+                        detailItem.set("id", childId);
+                        detailItem.set("type", childType);
+                        detailItem.set("value", detailRow.get(amountEntity.getSysField()));
+                        detailItem.set("currency", childValue);
+                        row.add(detailItem);
+                    } else if ("department".equals(childType)) {
+                        //查询用户关系表->飞书id TODO未实现
+                        JSONObject detailItem = new JSONObject();
+                        detailItem.set("id", childId);
+                        detailItem.set("type", childType);
+                        detailItem.set("value", Arrays.asList(childValue));
+                        row.add(detailItem);
+                    } else if ("contact".equals(childType)) {
+                        //查询部门关系表->飞书id
+                        JSONObject detailItem = new JSONObject();
+                        detailItem.set("id", childId);
+                        detailItem.set("type", childType);
+                        detailItem.set("value", Arrays.asList(childValue));
                         row.add(detailItem);
                     } else {
                         JSONObject detailItem = createDetailItem(childId, childType, childValue);
@@ -183,35 +204,53 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     }
 
     private void processSimpleField(JSONObject formField, Map<String, Object> variablesMap,
-                                    Map<String, CfgProcessFieldMapEntity> fieldMapByThirdId,
-                                    Map<String, String> tidToIdMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap) {
+                                    Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdId,
+                                    Map<String, List<String>> tidToIdListMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap) {
 
         String thirdFieldId = formField.getStr("id");
         String type = formField.getStr("type");
 
-        CfgProcessFieldMapEntity entity = fieldMapByThirdId.get(thirdFieldId);
-        if (entity == null) {
+        List<CfgProcessFieldMapEntity> entityList = fieldMapByThirdId.get(thirdFieldId);
+        if (entityList == null || entityList.isEmpty()) {
             return;
+        }
+        CfgProcessFieldMapEntity amountEntity = null;
+        CfgProcessFieldMapEntity entity = entityList.get(0);
+        // 获取第一个匹配的映射
+        if (entityList.size()>1){
+            entityList.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex).reversed());
+            amountEntity= entityList.get(1);
         }
 
         String sysField = entity.getSysField();
-        if (StrUtil.isEmpty(sysField)) {
-            return; // 无字段对应，跳过处理
+        String defaultValue = entity.getDefaultValue();
+
+        if ("default".equals(sysField) || "null_Value".equals(sysField)) {
+            formField.set("value", defaultValue);
+            return;
         }
 
-        String defaultValue = entity.getDefaultValue();
         Object rawValue = variablesMap.get(sysField);
-
         // 执行值映射处理
-        Object finalValue = mapFieldValue(thirdFieldId, type, rawValue, defaultValue, tidToIdMap, valueMapListMap);
-
-        // 特殊类型处理
-        if ("attachmentV2".equals(type)) {
+        Object finalValue = mapFieldValue(thirdFieldId, type, rawValue, tidToIdListMap, valueMapListMap);
+        if (finalValue == null){
+            throw new ServiceException("字段映射错误,未获取到{}对应的值，请检查单据数据是否有缺陷",entity.getSysField());
+        }
+        // 特殊类型处理,附件、图片类型上传使用同一个接口
+        if ("attachmentV2".equals(type)||"image".equals(type)||"imageV2".equals(type)) {
             List<String> fileCodeList = processAttachment(finalValue);
             formField.set("value", fileCodeList);
         } else if ("date".equals(type)) {
             String formattedDate = formatToRFC3339(finalValue);
             formField.set("value", formattedDate);
+        } else if ("amount".equals(type)) {
+            formField.set("value", variablesMap.get(amountEntity.getSysField()));
+            formField.set("currency", finalValue);
+        } else if ("department".equals(type)) {
+            //查询部门关系表->飞书id
+        } else if ("contact".equals(type)) {
+            //查询用户关系表->飞书id
+            formField.set("value", Arrays.asList(finalValue));
         } else {
             formField.set("value", finalValue);
         }
@@ -278,39 +317,38 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         }
     }
 
-    private Object mapFieldValue(String fieldId, String fieldType, Object rawValue, String defaultValue,
-                                 Map<String, String> tidToIdMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap) {
-        // 处理空值情况
-        if (rawValue == null || StrUtil.isBlank(rawValue.toString())) {
-            String fieldMapId = tidToIdMap.get(fieldId);
-            List<CfgProcessValueMapEntity> valueMappings = valueMapListMap.get(fieldMapId);
+    private Object mapFieldValue(String fieldId, String fieldType, Object rawValue,
+                                 Map<String, List<String>> tidToIdListMap, Map<String, List<CfgProcessValueMapEntity>> valueMapListMap) {
 
-            // 查找默认值映射
-            if (valueMappings != null) {
-                Optional<String> mappedDefault = valueMappings.stream()
-                        .filter(vm -> "defalut".equals(vm.getSysValue()))
-                        .map(CfgProcessValueMapEntity::getDefaultValue)
-                        .findFirst();
-
-                if (mappedDefault.isPresent()) {
-                    return mappedDefault.get();
-                }
-
-                // 如果没有找到默认值映射，尝试使用第一个映射值
-                if (!valueMappings.isEmpty()) {
-                    return valueMappings.get(0).getThirdValue();
+        List<String> fieldMapId = tidToIdListMap.get(fieldId);
+        List<CfgProcessValueMapEntity> valueMappings = Collections.emptyList();
+        //只有金额控件类型需要遍历获取单位的值映射
+        if (CfgQueryOptionFieldTypeEnum.AMOUNT.getCode().equals(tidToIdListMap)) {
+            //金额类型对应的fieldMaId
+            for (String fieldMaId : fieldMapId) {
+                valueMappings = valueMapListMap.get(fieldMaId);
+                if (CollUtil.isNotEmpty(valueMappings)){
+                    break;
                 }
             }
-
-            // 如果没有任何映射，返回原始默认值
-            return defaultValue;
+        }else {
+            valueMappings = valueMapListMap.get(fieldMapId.get(0));
         }
 
-        // 获取字段的值映射配置
-        String fieldMapId = tidToIdMap.get(fieldId);
-        List<CfgProcessValueMapEntity> valueMappings = valueMapListMap.get(fieldMapId);
+        // 当rawValue为空时，获取对应值映射中sysValue为default记录的default_value字段作为rawValue
+        if (rawValue == null || StrUtil.isBlank(rawValue.toString())) {
+            if (valueMappings != null) {
+                Optional<String> mappedDefault = valueMappings.stream()
+                        .filter(vm -> "default".equals(vm.getSysValue()))
+                        .map(CfgProcessValueMapEntity::getDefaultValue)
+                        .findFirst();
+                if (mappedDefault.isPresent()) {
+                    rawValue = mappedDefault.get();
+                }
+            }
+        }
 
-        // 如果没有映射配置，直接返回原值
+        // 如果没有映射配置，直接返回rawValue
         if (valueMappings == null || valueMappings.isEmpty()) {
             return rawValue;
         }
@@ -318,9 +356,10 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         // 根据字段类型进行不同处理
         if ("checkboxV2".equals(fieldType)) {
             // 多选处理
+            List<CfgProcessValueMapEntity> finalValueMappings = valueMappings;
             return Arrays.stream(rawValue.toString().split(","))
                     .map(String::trim)
-                    .map(val -> valueMappings.stream()
+                    .map(val -> finalValueMappings.stream()
                             .filter(vm -> vm.getSysValue().equals(val))
                             .map(CfgProcessValueMapEntity::getThirdValue)
                             .findFirst().orElse(val))
@@ -342,7 +381,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
      * 只保留字段 id、type、value，其余移除
      */
     private void retainOnlyIdTypeValue(JSONObject formField) {
-        Set<String> keepKeys = new HashSet<>(Arrays.asList("id", "type", "value"));
+        Set<String> keepKeys = new HashSet<>(Arrays.asList("id", "type", "value","currency"));
         formField.keySet().stream()
                 .filter(key -> !keepKeys.contains(key))
                 .collect(Collectors.toList())
@@ -355,7 +394,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     }
 
     @Override
-    public ProcessFormEvent getEvent() {
-        return FS_PROCESS_FORM;
+    public CfgProcessRuleTypeEnum getEvent() {
+        return CfgProcessRuleTypeEnum.FSPROCESS;
     }
 }

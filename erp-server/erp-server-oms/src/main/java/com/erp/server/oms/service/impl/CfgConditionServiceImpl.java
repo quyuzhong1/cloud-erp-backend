@@ -9,6 +9,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.dto.CfgConditionDTO;
 import com.erp.model.oms.entity.CfgConditionEntity;
+import com.erp.model.oms.enums.ConditionSourceTypeEnum;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfgConditionMapper;
 import com.erp.server.oms.service.CfgConditionService;
@@ -34,8 +35,6 @@ import java.util.*;
 @Slf4j
 @Service
 public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper, CfgConditionEntity> implements CfgConditionService {
-    @Resource
-    private OperateLogService operateLogService;
 
     @Resource
     private DictRuleConditionService dictRuleConditionService;
@@ -106,19 +105,25 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
      */
     @Override
     public List<CfgConditionDTO.ListDTO> listAllCondition() {
-        return baseMapper.listAllCondition();
+        return baseMapper.listConditionByType(null, ConditionSourceTypeEnum.ORDER.getCode());
     }
 
     @Override
     public List<CfgConditionDTO.ListDTO> listDeclareCondition() {
-        //后面需要根据类型进行配置条件列表
-        return baseMapper.listDeclareCondition();
+        List<String> typeList = Arrays.asList("dictPlatform", "shop", "destCountry", "skuNo", "logisticsChannelId");
+        return baseMapper.listConditionByType(typeList, ConditionSourceTypeEnum.ORDER.getCode());
     }
 
     @Override
     public List<CfgConditionDTO.ListDTO> listOrderHandleCondition() {
-        //后面需要根据类型进行配置条件列表
-        return baseMapper.listOrderHandleCondition();
+        List<String> typeList = Arrays.asList("dictPlatform", "shop", "destCountry", "logisticsChannelId");
+        return baseMapper.listConditionByType(typeList, ConditionSourceTypeEnum.ORDER.getCode());
+    }
+
+    @Override
+    public List<CfgConditionDTO.ListDTO> listInvoiceHandleCondition() {
+        List<String> typeList = Arrays.asList("dictPlatform", "shop", "destCountry", "nfeInvoiceStatus", "deliveryWarehouseLocation");
+        return baseMapper.listConditionByType(typeList, null);
     }
 
 

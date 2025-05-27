@@ -12,6 +12,7 @@ import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -22,9 +23,12 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.DeliveryTypeEnum;
+import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
 import com.erp.server.tms.service.*;
@@ -91,7 +95,6 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     @Resource
     private LogisticsChannelRemotePostcodeService logisticsChannelRemotePostcodeService;
 
-
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(LogisticsChannelDTO.AddDTO addDTO) {
@@ -110,6 +113,8 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         shippingTemplateRefChannelService.addRef(channelId, templateId);
         //平台物流映射
         logisticsMappingService.add(channelId, addDTO.getMappingList());
+        // 仓库映射
+        logisticsMappingService.addWarehouseMapping(channelId, addDTO.getWarehouseMappingList());
         //面单设置 打印类型
         logisticsPrintTypeService.add(channelId, addDTO.getPrintTypeList());
         //物流地址
@@ -143,6 +148,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String channelId = updateDTO.getId();
         //平台物流映射
         logisticsMappingService.update(channelId, updateDTO.getMappingList());
+        //仓库物流映射
+        logisticsMappingService.warehouseUpdate(channelId, updateDTO.getWarehouseMappingList());
+
         //面单设置 打印类型
         logisticsPrintTypeService.update(channelId, updateDTO.getPrintTypeList());
         //物流地址
@@ -233,8 +241,13 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         /**
          * 物流映射列表
          */
-        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(id);
+        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelIdAndType(id, LogisticsMappingTypeEnum.PLATFORM.getCode());
         mappingListFillData(mappingList);
+
+        /**
+         * 物流映射列表
+         */
+        List<LogisticsMappingDTO.ViewDTO> warehouseMappingList = logisticsMappingService.listByChannelIdAndType(id, LogisticsMappingTypeEnum.WAREHOUSE.getCode());
 
         /**
          * 打印标签类型
@@ -265,12 +278,14 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         view.setAddressList(addressList);
         view.setBlackList(blackList);
         view.setMappingList(mappingList);
+        view.setWarehouseMappingList(warehouseMappingList);
         view.setPrintTypeList(printTypeList);
         view.setWarehouseDTO(warehouseDTO);
         view.setRemotePostcodeIdList(remotePostcodeDTO.getRemotePostcodeIdList());
         view.setRemotePostcodeNameList(remotePostcodeDTO.getRemotePostcodeNameList());
         return view;
     }
+
 
     /**
      * mappingList 填充数据
@@ -683,7 +698,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(dictPlatform.equals(PlatformDictEnum.TE_MU.getCode()) || dictPlatform.equals(PlatformDictEnum.RAKUTEN.getCode()) || dictPlatform.equals(PlatformDictEnum.EBAY.getCode())){
             return new LogisticsChannelDTO.SignShipDTO();
         }
-        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelId(logisticsChannelId);
+        List<LogisticsMappingDTO.ViewDTO> mappingList = logisticsMappingService.listByChannelIdAndType(logisticsChannelId, LogisticsMappingTypeEnum.PLATFORM.getCode());
         if (CollectionUtils.isEmpty(mappingList)){
             throw new ServiceException("物流渠道关联的销售平台物流渠道为空");
         }
@@ -691,7 +706,7 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if (null == viewDTO){
             throw new ServiceException("物流渠道关联无对应销售平台物流渠道");
         }
-        LogisticsSaleChannelEntity entity = logisticsSaleChannelService.getById(viewDTO.getLogisticsSaleChannelId());
+        LogisticsSaleChannelEntity entity = logisticsSaleChannelService.getById(viewDTO.getPlatformLogisticsChannelId());
         if (null == entity){
             throw new ServiceException("对应销售平台物流渠道信息不存在");
         }
@@ -813,5 +828,32 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         String msg = CharSequenceUtil.format("用户【{}】修改渠道【{}】平台标发【{}】", UserContext.getDefaultLoginUser().getUserName(),old.getCode(),
                 String.format(msgFormat,old.getIsPlatformShip()?"是":"否", dto.getIsPlatformShip()?"是":"否"));
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.LOGISTICS_CHANNEL.getCode(), old.getId(), "平台标发");
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel() {
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS = baseMapper.listWarehouseChannel();
+        if (CollectionUtils.isEmpty(warehouseChannelDTOS)) {
+            return Collections.emptyList();
+        }
+        List<String> warehouseIdList = warehouseChannelDTOS.stream()
+                .map(LogisticsChannelDTO.WarehouseChannelDTO::getWarehouseId)
+                .distinct()
+                .collect(Collectors.toList());
+        List<WarehouseEntity> warehouseEntities = FeignQuery.getByIds(WarehouseEntity.class,warehouseIdList);
+        Map<String, String> warehouseMap = warehouseEntities.stream()
+                .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (oldValue, newValue) -> oldValue));
+        warehouseChannelDTOS = warehouseChannelDTOS.stream().filter(v->{
+            if (StringUtils.isBlank(v.getWarehouseId())){
+                return false;
+            }
+            String warehouseName = warehouseMap.get(v.getWarehouseId());
+            if (StringUtils.isBlank(warehouseName)){
+                return false;
+            }
+            v.setWarehouseName(warehouseName);
+            return true;
+        }).collect(Collectors.toList());
+        return warehouseChannelDTOS;
     }
 }

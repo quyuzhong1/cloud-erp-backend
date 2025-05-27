@@ -30,7 +30,7 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     @TableField("third_field")
     private String thirdField;
     /**
-    * 第三方类型（选项、数值等）：控件type
+    * 第三方类型（选项、数值等）：控件type,CfgQueryOptionFieldTypeEnum枚举
     */
     @TableField("third_field_type")
     private String thirdFieldType;
@@ -94,6 +94,11 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
      */
     @TableField("parent_id")
     private String parentId;
+    /**
+     * 排序字段
+     */
+    @TableField("index")
+    private int index;
 
     public static final String THIRD_FIELD = "third_field";
 
@@ -124,6 +129,8 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     public static final String IS_DETAIL_FIELD = "is_detail_field";
 
     public static final String PARENT_ID = "parent_id";
+
+    public static final String INDEX = "index";
 
     @Override
     public Serializable pkVal() {

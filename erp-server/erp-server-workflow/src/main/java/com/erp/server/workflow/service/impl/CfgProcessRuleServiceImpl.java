@@ -179,7 +179,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         //删除执行条件
         List<CfgProcessRuleEntity> processRuleEntityList = this.list(new LambdaQueryWrapper<CfgProcessRuleEntity>().in(CfgProcessRuleEntity::getId, ids).eq(CfgProcessRuleEntity::getIsDeleted, false));
         processRuleEntityList.forEach(item -> {
-            if (item.getType().equals(CfgProcessRuleTypeEnum.ERPPROGRESS.getCode())) {
+            if (item.getType().equals(CfgProcessRuleTypeEnum.ERPPROCESS.getCode())) {
                 List<ProcessManagementEntity> processManagementEntities = processManagementService.list(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getActProcessDefinitionId, item.getProcessDefinitionId()).eq(ProcessManagementEntity::getIsDeleted, false));
                 if (processManagementEntities.size() > 0) {
                     throw new ServiceException("流程已被单据使用，不可删除");
@@ -242,7 +242,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         // TODO 验证数据 & 数据赋值
         // 校验 type=sysProcess 的数量是否大于1
         long sysProcessCount = addDTO.stream()
-                .filter(dto -> CfgProcessRuleTypeEnum.ERPPROGRESS.getCode().equals(dto.getType()))
+                .filter(dto -> CfgProcessRuleTypeEnum.ERPPROCESS.getCode().equals(dto.getType()))
                 .count();
         if (sysProcessCount > 1) {
             //TODO 单据name
@@ -251,7 +251,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 
         // 校验 type=fsProcess 的 processFieldMapDTOList 是否为空
         addDTO.stream()
-                .filter(dto -> CfgProcessRuleTypeEnum.FSPROGRESS.getCode().equals(dto.getType()))
+                .filter(dto -> CfgProcessRuleTypeEnum.FSPROCESS.getCode().equals(dto.getType()))
                 .forEach(dto -> {
                     if (CollectionUtils.isEmpty(dto.getProcessFieldMapDTOList())) {
                         throw new ServiceException("字段配置必须填写");

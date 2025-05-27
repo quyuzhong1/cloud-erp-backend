@@ -94,18 +94,18 @@ public class CfgProcessValueMapDTO implements Serializable {
         * 第三方选项（显示文本）
         */
         @NotBlank(message = "第三方选项（显示文本）不能为空")
-        @Size(max = 30,message = "第三方选项（显示文本）最大长度不能超过30位")
+        @Size(max = 255,message = "第三方选项（显示文本）最大长度不能超过30位")
         private String thirdValue;
 
         /**
-        * 数大臣r选项值
+        * 数大臣选项值
         */
         @NotBlank(message = "数大臣选项值不能为空")
-        @Size(max = 30,message = "数大臣选项值最大长度不能超过30位")
+        @Size(max = 255,message = "数大臣选项值最大长度不能超过30位")
         private String sysValue;
 
 
-        @Size(max = 30,message = "数大臣选项值最大长度不能超过30位")
+        @Size(max = 255,message = "数大臣选项值最大长度不能超过30位")
         private String defaultValue;
     }
 

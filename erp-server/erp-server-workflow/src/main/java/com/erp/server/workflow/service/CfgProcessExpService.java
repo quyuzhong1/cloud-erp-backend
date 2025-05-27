@@ -34,8 +34,22 @@ public interface CfgProcessExpService extends SuperService<CfgProcessExpEntity> 
     */
     BaseResultDTO.UpdateDTO addOrUpdate(String cfgProcessId,String ruleId,List<CfgProcessExpDTO.AddOrUpdateDTO> dto);
 
+    /**
+     * 删除
+     * @author hcg
+     * @date: 2025-05-12
+     * @param ids
+     * @return
+     */
     void delete(List<String> ids);
 
+    /**
+     * 高级查询
+     * @author hcg
+     * @date: 2025-05-12
+     * @param
+     * @return
+     */
     List<CfgProcessExpDTO.ViewDTO> view(String ruleId);
     /**
      * 根据规则id集合查询条件设置
