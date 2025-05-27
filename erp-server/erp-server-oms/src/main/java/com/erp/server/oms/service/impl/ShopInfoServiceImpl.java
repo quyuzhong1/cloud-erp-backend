@@ -485,6 +485,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 throw new ServiceException("批量保存失败");
             }
         }
+        //添加用户权限
+        AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
+        addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        addUserShopAuthDTO.setShopIdList(addList.stream().map(ShopInfoEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
+        authDataFeign.addUserShopAuth(addUserShopAuthDTO);
         return addList;
 
     }
