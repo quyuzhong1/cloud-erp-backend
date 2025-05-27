@@ -165,7 +165,6 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
         * 通知节点
         */
-        @NotBlank(message = "通知节点不能为空")
         private String noticeNode;
 
         /**
@@ -209,14 +208,16 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
         * 通知人员
         */
-        @NotBlank(message = "通知人员不能为空")
         private String roleType;
+
+        @NotEmpty(message = "通知人员不能为空")
+        private List<String> roleTypeList;
 
         /**
         * 具体人员
         */
-        @Size(max = 1024,message = "具体人员最大长度不能超过1024位")
         private String specificPerson;
+        private List<String>  specificPersonList;
 
         /**
         * 推送方式
