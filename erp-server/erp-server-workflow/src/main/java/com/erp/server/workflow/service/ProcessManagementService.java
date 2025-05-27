@@ -7,6 +7,7 @@ import com.common.business.enums.ApproveTypeEnum;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
+import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
 import org.camunda.bpm.engine.delegate.DelegateExecution;
@@ -178,6 +179,7 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      */
     Boolean endExecutionHandle(String processInstanceId);
 
+    Boolean callFeign(String businessKey, EndProcessDTO dto);
     /**
      * 批量启动流程
      * @param dto
