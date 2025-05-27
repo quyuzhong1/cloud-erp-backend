@@ -124,7 +124,7 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         }
 
         shudiyunB2cOrderDTOList.forEach(shudiyunB2cOrderDTO -> {
-            if (PlatformDictEnum.WDT.getCode().equalsIgnoreCase(shudiyunB2cOrderDTO.getPlatform_id())) {
+            if (dmpCfgOutputEntity.getId().equals("1859427581292469023")) {
                 DmpOutputHotfixCreateRequest request = new DmpOutputHotfixCreateRequest();
                 request.setCfgOutputId("1861317267527064372");
                 List<QueryParam> queryParams = new ArrayList<>();
@@ -366,7 +366,9 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                                 cacheMap.put("subPlatformType", subPlatformTypeMap);
                                 
                                 if(subPlatformTypeDict != null) {
-                                    shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                                    shudiyunB2cOrderDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                                    shudiyunB2cOrderDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                                    shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getValue());
                                     shudiyunB2cOrderDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                                 }
 
@@ -446,8 +448,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                         }
                         shudiyunB2cOrderDTO.setTransaction_currency_code("CNY");
                         shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
-                        shudiyunB2cOrderDTO.setPlatform_id(shopInfo.getDictPlatform());
-                        shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(shopInfo.getDictPlatform()));
                         shudiyunB2cOrderDTO.setSku_code(dmpSoDetailEntity.getSkuNo());
                         shudiyunB2cOrderDTO.setSku_name(dmpSoDetailEntity.getSkuName());
                         shudiyunB2cOrderDTO.setSpec_no(dmpSoDetailEntity.getPlatformSpuNo());
@@ -599,8 +599,32 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     }
                 }
                 shudiyunB2cOrderDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
-                shudiyunB2cOrderDTO.setPlatform_id(dmpSoInfoEntity.getSourceSystem());
-                shudiyunB2cOrderDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoInfoEntity.getSourcePlatform()));
+                String subPlatformType = customerInfo.getPlatformType();
+                if(StringUtils.isNotBlank(subPlatformType)) {
+                	Map<String, Object> subPlatformTypeMap = cacheMap.get("subPlatformType");
+                    if(subPlatformTypeMap == null) {
+                    	subPlatformTypeMap = new HashMap<>();
+                    }
+                    Object subPlatformTypebject = subPlatformTypeMap.get(subPlatformType);
+                    com.erp.model.oms.entity.DictBasicEntity subPlatformTypeDict = null;
+                    if(subPlatformTypebject == null) {
+                    	List<com.erp.model.oms.entity.DictBasicEntity> dictList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class).eq(com.erp.model.oms.entity.DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+                    	if(CollUtil.isNotEmpty(dictList)) {
+                    		subPlatformTypeDict = dictList.get(0);
+                    	}
+                    }else {
+                    	subPlatformTypeDict = (com.erp.model.oms.entity.DictBasicEntity)subPlatformTypebject; 
+                    }
+                    subPlatformTypeMap.put(subPlatformType, subPlatformTypeDict);
+                    cacheMap.put("subPlatformType", subPlatformTypeMap);
+                    
+                    if(subPlatformTypeDict != null) {
+                        shudiyunB2cOrderDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                        shudiyunB2cOrderDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                        shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getValue());
+                        shudiyunB2cOrderDTO.setSubplatform_name(subPlatformTypeDict.getValue());
+                    }
+                }
 
                 shudiyunB2cOrderDTO.setSku_code("");
                 shudiyunB2cOrderDTO.setSku_name("");

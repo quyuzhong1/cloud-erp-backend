@@ -211,6 +211,12 @@ public class DmpSoReturnDetailEntity extends BaseEntity<DmpSoReturnDetailEntity>
       */
      @TableField("return_original_type")
      private String returnOriginalType;
+     
+     /**
+      * 退款总额
+      */
+    @TableField("total_amount")
+    private BigDecimal totalAmount = BigDecimal.ZERO;
 
     public static final String MAIN_ID = "main_id";
 

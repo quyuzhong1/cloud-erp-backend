@@ -1,6 +1,7 @@
 package com.erp.server.tms.schedule;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -8,8 +9,10 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.common.business.wrapper.QueryParam;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -30,6 +33,7 @@ import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Component
@@ -85,25 +89,13 @@ public class SyncSdyJob {
             List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
             List<LogisticsBillDetailEntity> billDetailEntities = logisticsBillDetailService.listByMainIds(ids);
 
-            List<String> channelIds = list.stream().map(req -> req.getChannelId()).distinct().collect(Collectors.toList());
-
-            List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
-            if (CollUtil.isNotEmpty(channelIds)) {
-                logisticsChannelEntities = logisticsChannelService.listByIds(channelIds);
-            }
-
-            List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-            List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
-            if (CollUtil.isNotEmpty(supplierIds)) {
-                logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
-            }
-
+            Map<String, Pair<String, String>> logisticInfoMaps = syncLogisticsBillService.getLogisticInfo(list);
             for (LogisticsBillEntity entity : list) {
                 List<LogisticsBillDetailEntity> detailEntityList = billDetailEntities.stream()
                         .filter(req -> req.getMainId().equals(entity.getId()) && CharSequenceUtil.isNotBlank(req.getTrackStatus()))
                         .collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(detailEntityList)) {
-                    syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), logisticsChannelEntities, logisticsSupplierEntities);
+                    syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), logisticInfoMaps);
                 }
             }
             currentPage++;

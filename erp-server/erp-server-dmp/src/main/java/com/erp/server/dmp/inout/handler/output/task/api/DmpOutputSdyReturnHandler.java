@@ -156,6 +156,10 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setPrice(dmpSoReturnDetailEntity.getSellPrice());
             sdyDTO.setGoods_transaction_quantity(dmpSoReturnDetailEntity.getQty());
             sdyDTO.setGoods_transaction_amount(dmpSoReturnDetailEntity.getAmount());
+            BigDecimal totalAmount = dmpSoReturnDetailEntity.getTotalAmount();
+            if(totalAmount != null) {
+            	sdyDTO.setTotal_goods_transaction_amount(totalAmount);
+            }
 
             int qtyTotal = dmpSoReturnDetailEntityList.stream().filter(d -> d.getQty() != null).mapToInt(DmpSoReturnDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
@@ -318,7 +322,9 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
                     cacheMap.put("subPlatformType", subPlatformTypeMap);
                     
                     if(subPlatformTypeDict != null) {
-                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                        sdyDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                        sdyDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getValue());
                         sdyDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                     }
                 }
@@ -349,8 +355,6 @@ public class DmpOutputSdyReturnHandler extends DmpOutputTaskHandler {
             sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
 
             sdyDTO.setUnit("PCS");
-            sdyDTO.setPlatform_id(dmpSoReturnEntity.getSourceSystem());
-            sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoReturnEntity.getSourceSystem()));
             if (StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformOrderCode())){
                 sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformOrderCode());
             } else {
