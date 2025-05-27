@@ -277,15 +277,14 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
             if (StringUtils.isNotBlank(subPlatformType)) {
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
+                	shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
+                	shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
                     shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                 }
             }
         }
 
-        shudiyunB2cOrderDTO.setPlatform_id(soB2cEntity.getDictPlatform());
-        String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
-        shudiyunB2cOrderDTO.setPlatform_name(platformName);
         shudiyunB2cOrderDTO.setRoot_node_no(soB2cEntity.getPlatformCode());
         if (soB2cEntity.getPayTime() != null) {
             shudiyunB2cOrderDTO.setRoot_node_create_time(localDateTime.format(soB2cEntity.getPayTime()));

@@ -1,9 +1,13 @@
 package com.erp.server.tms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Pair;
+
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.wrapper.FeignQuery;
+import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -12,6 +16,7 @@ import com.erp.server.tms.service.*;
 import com.erp.server.tms.sync.SyncLogisticsBillService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -75,19 +80,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<String> billIds = detailEntityList.stream().map(LogisticsBillDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> entityList = logisticsBillService.listByIds(billIds);
 
-        List<String> channelIds = entityList.stream().map(req -> req.getChannelId()).distinct().collect(Collectors.toList());
-        List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
-        if (CollUtil.isNotEmpty(channelIds)) {
-            logisticsChannelEntities = logisticsChannelService.listByIds(channelIds);
-        }
-
-        List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-
-        List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
-        if (CollUtil.isNotEmpty(logisticsSupplierEntities)) {
-            logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
-        }
-
+        Map<String, Pair<String, String>> logisticInfoMaps = syncLogisticsBillService.getLogisticInfo(entityList);
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             LogisticsBillDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);
@@ -98,11 +91,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            if(syncParamDetailDTO.isNewQuerySync()) {
-            	resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncNewDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticsChannelEntities, logisticsSupplierEntities));
-            }else {
-            	resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticsChannelEntities, logisticsSupplierEntities));
-            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticInfoMaps));
         }
         return resultList;
     }
