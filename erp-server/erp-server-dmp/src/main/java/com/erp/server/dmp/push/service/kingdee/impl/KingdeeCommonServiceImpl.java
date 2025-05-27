@@ -621,6 +621,12 @@ public class KingdeeCommonServiceImpl implements KingdeeCommonService {
                     .map(CfgApiFieldMapValueEntity::getApiValue)
                     .findFirst()
                     .orElse("");
+            if(StringUtils.isBlank(apiValue)) {
+            	String defaultValue = cfgApiFieldMapDTO.getDefaultValue();
+            	if(StringUtils.isNotBlank(defaultValue)) {
+            		apiValue = defaultValue;
+            	}
+            }
             KingdeeUtils.makeFieldJson(json, cfgApiFieldMapDTO.getApiField(), ".", apiValue);
         }
     }
