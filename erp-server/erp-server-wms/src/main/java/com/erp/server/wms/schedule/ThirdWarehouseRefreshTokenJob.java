@@ -43,8 +43,8 @@ public class ThirdWarehouseRefreshTokenJob {
     /**
      * 刷新三方仓token
      */
-    @XxlJob("refreshShopToken")
-    public ReturnT<String> refreshShopToken() {
+    @XxlJob("refreshThirdWarehouseToken")
+    public ReturnT<String> refreshThirdWarehouseToken() {
         XxlJobHelper.log("[刷新三方仓token] 任务开始--------------------------------------->");
         List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.list();
         overseasProviderEntityList = overseasProviderEntityList.stream()
