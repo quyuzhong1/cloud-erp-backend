@@ -82,7 +82,8 @@
         case  WHEN pd.is_deploy THEN '是' else '否' END as isDeploy,
         pb.business_key,
         pd.remark,
-        db.name AS reviewSetting
+        db.name AS reviewSetting,
+        pd.disabled
         FROM
         process_definition pd
         LEFT JOIN process_business pb on pd.id = pb.process_definition_id and pb.is_deleted = false

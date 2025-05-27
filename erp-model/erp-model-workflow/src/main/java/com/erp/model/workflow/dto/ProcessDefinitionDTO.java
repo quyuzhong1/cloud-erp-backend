@@ -426,6 +426,16 @@ public class ProcessDefinitionDTO {
         @ExcelProperty(value = "创建时间", index = 8)
         private LocalDateTime createTime;
 
+        /**
+         * 启禁用
+         */
+        private Boolean disabled;
+
+        /**
+         * 启禁用名称
+         */
+        private String disabledName;
+
     }
     @Data
     @NoArgsConstructor
