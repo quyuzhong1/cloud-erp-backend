@@ -119,7 +119,7 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             resultDTO.setTabFlagName(item.getName());
             list.add(resultDTO);
         }
-        return Collections.emptyList();
+        return list;
     }
 
     @Override
