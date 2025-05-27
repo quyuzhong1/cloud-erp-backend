@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -1134,6 +1135,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.PRICE_NOT_EXIST);
         }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+
         //SKU
         String skuNo = detailList.stream().map(PurchasePriceDetailEntity::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);

@@ -85,7 +85,7 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
         allUserIds.addAll(ccIds);
         allUserIds = allUserIds.stream().distinct().collect(Collectors.toList());
         Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
-        //推送消息 (快接审批)
+        //推送消息 (快捷审批)
         List<CfgApproveSyncFieldMapEntity> fieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(cfgApproveSyncEntity.getId())).stream()
                 .filter(e -> e.getIsQuick().equals(Boolean.TRUE))
                 .collect(Collectors.toList());
@@ -94,7 +94,8 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
         //构建三方审批同步实例请求体
         //审批状态
         String approveType = dto.getApproveType();
-        dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.PENDING);
+        dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.PENDING);//默认审批中
+
         if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())//审核通过并且流程已经完成
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
             dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.APPROVED);
@@ -103,7 +104,12 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
             dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.REJECTED);
         } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
             dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.CANCELED);
-        } else {
+        } else if(Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())){//转交
+
+        } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
+            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.APPROVED);
+        } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
+            dto.setFSApprovalStatusEnum(FSApprovalStatusEnum.REJECTED);
         }
         CreateExternalInstanceReq req = cfgApproveSyncBuildHandler.buildExternalInstanceReq(dto,processManagementEntity, processTaskManagementEntities, processTaskCcEntities, fieldMapEntities, thirdUnionMap);
         if(Objects.isNull(req)){
@@ -119,7 +125,7 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
             log.error("同步三方审批实例失败>>>>>{}", msg);
         } else {
             //更新消息
-            cfgApproveSyncSendHandler.updateNotice(dto, fieldMapEntities, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities);
+            cfgApproveSyncSendHandler.updateNotice(dto, processTaskManagementEntities);
             //消息推送
             cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities);
 

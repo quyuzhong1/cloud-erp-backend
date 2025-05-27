@@ -33,4 +33,13 @@ public interface ExportWorkflowFeign {
 
     @PostMapping("/feign/export/exportCfgThirdProcess")
     PagingVO<CfgThirdProcessDTO.ListDTO> exportCfgThirdProcess(PagingDTO<CfgThirdProcessDTO.PagingParamDTO> dto);
+    /**
+     * 第三方查询导出
+     * @author will
+     * @date 2025/5/27 11:25
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/feign/export/exportApproveTaskInfo")
+    PagingVO<ApproveTaskInfoDTO.ListDTO> exportApproveTaskInfo(PagingDTO<ApproveTaskInfoDTO.PagingParamDTO> dto);
 }

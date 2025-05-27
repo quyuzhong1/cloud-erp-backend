@@ -596,7 +596,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
         if (CollUtil.isNotEmpty(detailList)) {
-            variablesMap.put(ThirdConstants.DETAIL_LIST, detailList);
+            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         }
         revokeDTO.setVariablesMap(variablesMap);
 
@@ -641,7 +641,7 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
         List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
         if(CollUtil.isNotEmpty(detailList)){
-            variablesMap.put(ThirdConstants.DETAIL_LIST, detailList);
+            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         }
         startDTO.setVariablesMap(variablesMap);
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);

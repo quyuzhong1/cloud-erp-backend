@@ -12,10 +12,7 @@ import com.erp.server.plm.service.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Will
@@ -45,6 +42,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private ProductChangeService productChangeService;
+    @Resource
+    private ProductChangeDetailsService productChangeDetailService;
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
@@ -83,36 +82,28 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         switch (SourceTypeEnum.getByCode(businessKey)) {
             case PRODUCT_LOGISTICS:
                 //产品物流
-
+                variablesMap = getProductLogisticsMap(dto);
                 break;
             case PILOT_APPLICATION:
                 //试产量产单
                 variablesMap = getPilotApplicationMap(dto);
                 break;
             case PRODUCT_DETAIL:
+                variablesMap = getProductDetailMap(dto);
                 //产品信息
                 break;
             case PRODUCT_BOM_INFO:
+                variablesMap = getBomInfoMap(dto);
                 //Bom信息
                 break;
             case PRODUCT_CHANGE:
+                variablesMap = getProductChangeMap(dto);
                 //Bom信息
                 break;
             default:
                 break;
         }
 
-        return variablesMap;
-    }
-
-    private Map<String, Object> getPilotApplicationMap(EndProcessDTO dto) {
-        Map<String, Object> variablesMap;
-        PilotApplicationEntity entity = pilotApplicationService.getById(dto.getBusinessId());
-        variablesMap = BeanUtil.beanToMap(entity);
-        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
-        if(CollUtil.isNotEmpty(detailList)){
-            variablesMap.put(ThirdConstants.DETAIL_LIST, detailList);
-        }
         return variablesMap;
     }
 
@@ -128,6 +119,20 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOne.setVariablesMap(dto.getVariablesMap());
         return bomInfoService.approveEnd(approveOne,entity);
     }
+
+    /**
+     * Bom信息审核通过
+     * @param dto
+     */
+    private Map<String, Object> getBomInfoMap(EndProcessDTO dto) {
+        BomInfoEntity entity = bomInfoService.getById(dto.getBusinessId());
+        if(Objects.isNull(entity)){
+            return null;
+        }
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        return variablesMap;
+    }
+
     /**
      * 产品变更审核通过
      * @param dto
@@ -144,6 +149,23 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
      * 产品信息审核通过
      * @param dto
      */
+    private Map<String, Object> getProductChangeMap(EndProcessDTO dto) {
+        ProductChangeEntity entity = productChangeService.getById(dto.getBusinessId());
+        if(Objects.isNull(entity)){
+            return null;
+        }
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<ProductChangeDetailsEntity> detailList = productChangeDetailService.lambdaQuery().eq(ProductChangeDetailsEntity::getChangeInfoId, entity.getId()).list();
+        if(CollUtil.isNotEmpty(detailList)){
+            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        }
+        return variablesMap;
+    }
+
+    /**
+     * 产品信息审核通过
+     * @param dto
+     */
     private Boolean productDetailApproveEnd(EndProcessDTO dto) {
         ProductDetailEntity entity = productDetailService.getById(dto.getBusinessId());
         ApproveOneDTO approveOne = new ApproveOneDTO();
@@ -152,6 +174,19 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOne.setVariablesMap(dto.getVariablesMap());
         return productDetailService.approveEnd(approveOne,entity);
     }
+    /**
+     * 产品信息审核通过
+     * @param dto
+     */
+    private Map<String, Object> getProductDetailMap(EndProcessDTO dto) {
+        ProductDetailEntity entity = productDetailService.getById(dto.getBusinessId());
+        if(Objects.isNull(entity)){
+            return null;
+        }
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        return variablesMap;
+    }
+
     /**
      * 盘盈盘亏单审核通过
      * @param dto
@@ -162,6 +197,18 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         approveOne.setType(dto.getApproveStatus().getStatus());
         approveOne.setId(dto.getBusinessId());
         return logisticsProductService.approveEnd(approveOne,entity);
+    }
+    /**
+     * 产品物流
+     * @param dto
+     */
+    private Map<String, Object> getProductLogisticsMap(EndProcessDTO dto) {
+        ProductLogisticsEntity entity = productLogisticsService.getById(dto.getBusinessId());
+        if(Objects.isNull(entity)){
+            return null;
+        }
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        return variablesMap;
     }
 
     /**
@@ -182,4 +229,20 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         return approveEnd;
     }
 
+    /**
+     * 试产检查
+     * @param dto
+     */
+    private Map<String, Object> getPilotApplicationMap(EndProcessDTO dto) {
+        PilotApplicationEntity entity = pilotApplicationService.getById(dto.getBusinessId());
+        if(Objects.isNull(entity)){
+            return null;
+        }
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        if(CollUtil.isNotEmpty(detailList)){
+            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        }
+        return variablesMap;
+    }
 }

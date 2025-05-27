@@ -255,6 +255,7 @@ public enum FileTaskEventEnum implements EnumMessage {
     EXPORT_PROCESS_CFG_APPROVE_SYNC("EXPORT_PROCESS_CFG_APPROVE_SYNC", "ERP审批同步配置导出"),
     EXPORT_CFG_PROCESS("EXPORT_CFG_PROCESS","流程配置Excel导出"),
     EXPORT_THIRD_PROCESS("EXPORT_THIRD_PROCESS", "三方审批生成导出"),
+    EXPORT_APPROVE_TASK("EXPORT_APPROVE_TASK", "三方生成查询导出"),
 
 
 

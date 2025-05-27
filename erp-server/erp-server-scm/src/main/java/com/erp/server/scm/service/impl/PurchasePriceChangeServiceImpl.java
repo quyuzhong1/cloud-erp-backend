@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -1000,6 +1001,7 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.PRICE_NOT_EXIST);
         }
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //新品首批
         String skuNo = detailList.stream().map(PurchasePriceChangeDetailEntity::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);

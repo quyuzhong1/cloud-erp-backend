@@ -30,7 +30,7 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     @TableField("third_field")
     private String thirdField;
     /**
-    * 第三方类型（选项、数值等）：控件type
+    * 第三方类型（选项、数值等）：控件type,CfgQueryOptionFieldTypeEnum枚举
     */
     @TableField("third_field_type")
     private String thirdFieldType;
