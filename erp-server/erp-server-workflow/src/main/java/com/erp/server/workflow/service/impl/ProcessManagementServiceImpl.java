@@ -244,7 +244,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_ALREADY_START);
         }
         // 查询流程定义
-        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId);
+        ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId);
         if (null == processDefinition) {
             // 流程定义不存在
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);

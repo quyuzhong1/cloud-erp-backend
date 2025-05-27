@@ -5,6 +5,7 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -83,4 +84,20 @@ public interface ProcessDelegateService extends SuperService<ProcessDelegateEnti
      * @return ProcessDelegateEntity
      */
     ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId);
+    /**
+     * 查询未结束数据
+     * @author will
+     * @date 2025/5/27 16:53
+     * @return List<ProcessDelegateEntity>
+     */
+    List<ProcessDelegateEntity> listNotEnded(LocalDateTime now);
+    /**
+     * xxjob更新
+     * @author will
+     * @date 2025/5/27 17:09
+     * @param entity
+     * @param now
+     * @return void
+     */
+    void updateStatusJob(ProcessDelegateEntity entity, LocalDateTime now);
 }

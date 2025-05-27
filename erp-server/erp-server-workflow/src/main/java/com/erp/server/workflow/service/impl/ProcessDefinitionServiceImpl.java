@@ -106,9 +106,6 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         return Boolean.TRUE;
     }
 
-    private void getByBusinessKey(String businessKey) {
-        processBusinessService.lambdaQuery().eq(ProcessBusinessEntity::getBusinessKey,businessKey).last("limit 1").one();
-    }
 
     /**
      * 查询未发布数据
@@ -342,5 +339,10 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             throw new ServiceException(ApiError.SAVE_PROCESS_ERROR);
         }
         return save;
+    }
+
+    @Override
+    public ProcessDefinitionEntity getIsDeployEntityById(String id) {
+        return lambdaQuery().eq(ProcessDefinitionEntity::getId,id).eq(ProcessDefinitionEntity::getIsDeploy,Boolean.TRUE).last("limit 1").one();
     }
 }

@@ -183,6 +183,26 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         return  baseMapper.getByProcessDefinitionId(processDefinitionId);
     }
 
+    @Override
+    public List<ProcessDelegateEntity> listNotEnded(LocalDateTime now) {
+        return lambdaQuery()
+                .ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode())
+                .lt(ProcessDelegateEntity::getExpireTime,now)
+                .list();
+    }
+
+    @Override
+    public void updateStatusJob(ProcessDelegateEntity entity, LocalDateTime now) {
+        String status = "";
+        if (ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getStatus())) {
+            status = ProcessDelegateStatusEnum.RUNNING.getCode();
+        } else if (ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getStatus())) {
+            status = ProcessDelegateStatusEnum.ENDED.getCode();
+        }
+        entity.setStatus(status);
+        this.updateById(entity);
+    }
+
     /**
     * 批量新增数据转换
     * @author will

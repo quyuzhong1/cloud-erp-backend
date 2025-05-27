@@ -94,4 +94,12 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * @return Boolean
      */
     Boolean changeProcess(ProcessDefinitionDTO.ProcessChangeDTO dto);
+    /**
+     * 查询已发布流程设计
+     * @author will
+     * @date 2025/5/27 16:38
+     * @param id
+     * @return ProcessDefinitionEntity
+     */
+    ProcessDefinitionEntity getIsDeployEntityById(String id);
 }
