@@ -28,7 +28,7 @@ import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserThirdFeign;
 import com.erp.sdk.fs.service.FsService;
-import com.erp.server.workflow.context.FsProcessFormFactory;
+import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.handler.ProcessFormHandler;
 import com.erp.server.workflow.mapper.CfgProcessMapper;
 import com.erp.server.workflow.service.*;
@@ -45,7 +45,7 @@ import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_CFG_PROCESS;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_CFG_PROCESS;
 
 /**
  * <p>
@@ -70,12 +70,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     private DownloadTaskFeign downloadTaskFeign;
 
     @Resource
-    private FsService fsService;
-
-    @Resource
-    private SysUserThirdFeign sysUserThirdFeign;
-
-    @Resource
     private ThirdProcessDefinitionService thirdProcessDefinitionService;
 
     @Resource
@@ -85,10 +79,10 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     private CfgProcessValueMapService cfgProcessValueMapService;
 
     @Resource
-    private FsProcessFormFactory fsProcessFormFactory;
+    private ProcessFormFactory processFormFactory;
 
     @Resource
-    private DictBasicService dictBasicService;
+    private FsService  fsService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -185,7 +179,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public void exportList(CfgProcessDTO.SearchParamDTO dto) {
-        downloadTaskFeign.saveDownloadTask("流程配置导出", EXPORT_CFG_PROCESS.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("流程配置导出", EXPORT_PROCESS_CFG_PROCESS.getCode(), dto);
     }
 
     @Override
@@ -252,18 +246,18 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "E02ECBC5-7BD1-4C11-B23D-1ED678F3806F").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
-        ProcessFormHandler handler = fsProcessFormFactory.getFileHandler(CfgProcessRuleTypeEnum.getName(dto.getRuleType()));
-        formArray = handler.assemble(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
+        ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(dto.getRuleType()).name());
+        formArray = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
         String form = JSONUtil.toJsonStr(formArray);
         CreateInstanceReq req = CreateInstanceReq.newBuilder()
                 .instanceCreate(InstanceCreate.newBuilder()
-                        .approvalCode("7DCF7A99-6E25-4A24-8386-5E2639712983")
+                        .approvalCode("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F")
                         .userId("af4eg757")
                         .form(form)
                         .build())
                 .build();
         try {
-//            String instanceCode = fsService.createInstance(req);
+            String instanceCode = fsService.createInstance(req);
             //生成三方查询记录
 
         } catch (Exception e) {

@@ -19,7 +19,7 @@ import java.util.List;
  *@Version: 1.0
  */
 @Component
-public class FsProcessFormFactory {
+public class ProcessFormFactory {
     @Resource
     private List<ProcessFormHandler> handlers;
 
@@ -27,9 +27,18 @@ public class FsProcessFormFactory {
      * 根据事件名获取具体处理对象
      * @param event 事件名，
      */
-    public ProcessFormHandler getFileHandler(String event) {
+    public ProcessFormHandler getAssembleFormHandler(String event) {
         for (ProcessFormHandler handler : handlers) {
             if (handler.isMatch(event)) {
+                return handler;
+            }
+        }
+        return null;
+    }
+
+    public ProcessFormHandler getConstructBillHandler(String event) {
+        for (ProcessFormHandler handler : handlers) {
+            if (handler.getEventType().equals(event)) {
                 return handler;
             }
         }

@@ -42,7 +42,7 @@ import com.common.core.enums.ApiError;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_THIRD_PROCESS;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_THIRD_PROCESS;
 
 /**
  * <p>
@@ -153,7 +153,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
 
     @Override
     public void exportList(CfgThirdProcessDTO.PagingParamDTO dto, HttpServletResponse response) {
-        downloadTaskFeign.saveDownloadTask("三方审批生成导出", EXPORT_THIRD_PROCESS.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("三方审批生成导出", EXPORT_PROCESS_THIRD_PROCESS.getCode(), dto);
     }
 
     @Override
