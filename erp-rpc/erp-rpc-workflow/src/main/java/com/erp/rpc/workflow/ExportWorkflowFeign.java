@@ -42,4 +42,6 @@ public interface ExportWorkflowFeign {
      */
     @PostMapping("/feign/export/exportApproveTaskInfo")
     PagingVO<ApproveTaskInfoDTO.ListDTO> exportApproveTaskInfo(PagingDTO<ApproveTaskInfoDTO.PagingParamDTO> dto);
+    @PostMapping("/feign/export/exportApproveSyncRecord")
+    PagingVO<ApproveSyncRecordDTO.ListDTO> exportApproveSyncRecord(PagingDTO<ApproveSyncRecordDTO.PagingParamDTO> dto);
 }
