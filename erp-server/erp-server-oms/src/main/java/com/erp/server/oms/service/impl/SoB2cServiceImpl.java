@@ -9253,7 +9253,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 updateDetailList.addAll(detailEntityList);
             }
             // 不出库发货虚拟商品同步数帝云
-            List<SoB2cDetailEntity> noInventorySkuDetailList = soB2cDetailEntityList.stream().filter(e -> noInventorySkuIdList.contains(e.getSkuId())).collect(Collectors.toList());
+            List<SoB2cDetailEntity> noInventorySkuDetailList = detailEntityList.stream().filter(e -> noInventorySkuIdList.contains(e.getSkuId())).collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(noInventorySkuDetailList)) {
                 syncSoB2cService.syncDataToSdy(soB2cEntity, noInventorySkuDetailList, SyncOperateEnum.OPERATE_APPROVE.getCode());
             }
