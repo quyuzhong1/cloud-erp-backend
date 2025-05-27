@@ -19,6 +19,7 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
@@ -30,6 +31,7 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
+import com.erp.model.sys.dto.AuthUserWarehouseDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExcelDTO;
@@ -654,6 +656,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
             //自动创建库区，仓位
             autoAddAreaAndLocation(warehouse);
+            //添加用户仓库权限
+            AuthUserWarehouseDTO.AddUserWarehouseAuthDTO addUserWarehouseAuthDTO = new AuthUserWarehouseDTO.AddUserWarehouseAuthDTO();
+            addUserWarehouseAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+            addUserWarehouseAuthDTO.setWarehouseIds(Collections.singletonList(warehouse.getId()));
+            authDataFeign.addUserWarehouseAuth(addUserWarehouseAuthDTO);
             return warehouse.getId();
         }
         return "";

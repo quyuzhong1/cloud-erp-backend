@@ -1,6 +1,8 @@
 package com.erp.server.sys.controller.feign;
 
 import com.common.core.controller.BaseController;
+import com.erp.model.sys.dto.AuthUserShopDTO;
+import com.erp.model.sys.dto.AuthUserWarehouseDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.server.sys.service.AuthUserShopService;
 import com.erp.server.sys.service.AuthUserWarehouseService;
@@ -80,5 +82,29 @@ public class AuthDataFeignController extends BaseController {
     @PostMapping("/listUserIdByShopIdList")
     public List<String> listUserIdByShopIdList(@RequestBody List<String> shopIdList){
         return authUserShopService.listUserIdByShopIdList(shopIdList);
+    }
+    /**
+     * 增加用户店铺权限
+     * @description:
+     * @author zdy
+     * @date: 2025/5/27 9:35
+     * @param addUserShopAuthDTO
+     * @return List<String>
+     */
+    @PostMapping("/addUserShopAuth")
+    public void addUserShopAuth(@RequestBody AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO){
+        authUserShopService.addUserShopAuth(addUserShopAuthDTO);
+    }
+    /**
+     * 增加用户仓库权限
+     * @description:
+     * @author zdy
+     * @date: 2025/5/27 9:35
+     * @param addUserWarehouseAuthDTO
+     * @return List<String>
+     */
+    @PostMapping("/addUserWarehouseAuth")
+    public void addUserWarehouseAuth(@RequestBody AuthUserWarehouseDTO.AddUserWarehouseAuthDTO addUserWarehouseAuthDTO){
+        authUserWarehouseService.addUserWarehouseAuth(addUserWarehouseAuthDTO);
     }
 }

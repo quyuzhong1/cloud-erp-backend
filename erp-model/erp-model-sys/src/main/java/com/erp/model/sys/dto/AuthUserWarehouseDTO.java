@@ -4,6 +4,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.List;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -104,4 +105,10 @@ public class AuthUserWarehouseDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class AddUserWarehouseAuthDTO {
+        private String userId;
+        private List<String> warehouseIds;
+    }
 }

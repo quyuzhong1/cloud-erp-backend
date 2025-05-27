@@ -247,4 +247,34 @@ public class AuthUserShopServiceImpl extends SuperServiceImpl<AuthUserShopMapper
             }
         }
     }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addUserShopAuth(AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO) {
+        if (Objects.isNull(addUserShopAuthDTO) || CharSequenceUtil.isBlank(addUserShopAuthDTO.getUserId()) || CollUtil.isEmpty(addUserShopAuthDTO.getShopIdList())){
+            return;
+        }
+        String userId = addUserShopAuthDTO.getUserId();
+        List<String> shopIdList = addUserShopAuthDTO.getShopIdList();
+        List<AuthUserShopEntity> list = this.lambdaQuery().eq(AuthUserShopEntity::getUserId, userId).list();
+        if (CollUtil.isNotEmpty(list)){
+            //是否全部店铺权限
+            boolean allShop = list.stream().allMatch(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()));
+            if (allShop){
+                //全部权限就不用添加用户权限了
+                return;
+            }
+        }
+        List<AuthUserShopEntity> addList = new ArrayList<>();
+        shopIdList.forEach(shopId ->{
+            AuthUserShopEntity entity = new AuthUserShopEntity();
+            entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+            entity.setUserId(userId);
+            entity.setShopId(shopId);
+            addList.add(entity);
+        });
+        if (CollUtil.isNotEmpty(addList)){
+            this.saveBatch(addList);
+        }
+    }
 }
