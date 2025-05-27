@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -70,4 +71,12 @@ public interface ApproveTaskInfoService extends SuperService<ApproveTaskInfoEnti
      * @return void
      */
     void exportList(ApproveTaskInfoDTO.PagingParamDTO dto);
+    /**
+     * 重新生成
+     * @author will
+     * @date 2025/5/27 16:11
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO afreshGenerate(String id);
 }

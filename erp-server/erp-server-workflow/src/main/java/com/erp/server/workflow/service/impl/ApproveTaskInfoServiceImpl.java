@@ -7,8 +7,10 @@ import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -168,6 +170,15 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
     @Override
     public void exportList(ApproveTaskInfoDTO.PagingParamDTO param) {
         downloadTaskFeign.saveDownloadTask("三方生成查询导出", EXPORT_APPROVE_TASK.getCode(), param);
+    }
+
+    @Override
+    public BatchResultDTO afreshGenerate(String id) {
+        ApproveTaskInfoEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.REGENERATE);
     }
 
     /**

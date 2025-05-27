@@ -1,11 +1,11 @@
 package com.erp.server.workflow.controller.api;
 
 
-import com.common.business.annotation.DataPermission;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -14,6 +14,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
+import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
+import com.erp.model.workflow.entity.ProcessManagementEntity;
 import com.erp.server.workflow.query.ApproveTaskInfoQueryHandler;
 import com.erp.server.workflow.service.ApproveTaskInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +23,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -105,5 +108,36 @@ public class ApproveTaskInfoController extends BaseController {
     public ApiResult<Boolean> exportList(@RequestBody @Validated ApproveTaskInfoDTO.PagingParamDTO dto) {
         approveTaskInfoService.exportList(dto);
         return success();
+    }
+
+    /**
+     * 重新生成
+     * @author will
+     * @date 2025/5/27 16:10
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/afreshGenerate")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "第三方生成查询重新生成")
+    @WebAdvanceQuery(handler = ApproveTaskInfoQueryHandler.class)
+    public ApiResult<List<BatchResultDTO>> afreshGenerate(@RequestBody @Validated ApproveTaskInfoDTO.AfreshGenerateTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        for (String id : dto.getIds()) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = approveTaskInfoService.afreshGenerate(id);
+            }catch (Exception e){
+                log.error("三方生成查询重新生成失败",e);
+                ApproveTaskInfoEntity entity = approveTaskInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "三方生成查询数据不存在, 重新生成失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getBussinessCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
