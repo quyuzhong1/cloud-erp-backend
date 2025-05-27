@@ -1871,6 +1871,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shop.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shop.setAuthTime(LocalDateTime.now());
         Boolean result = this.save(shop);
+        //添加用户权限
+        AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
+        addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        addUserShopAuthDTO.setShopIdList(Collections.singletonList(shop.getId()));
+        authDataFeign.addUserShopAuth(addUserShopAuthDTO);
         return Collections.singletonList(shop);
     }
 
