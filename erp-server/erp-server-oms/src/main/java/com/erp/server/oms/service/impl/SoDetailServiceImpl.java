@@ -1647,8 +1647,10 @@ public class SoDetailServiceImpl extends SuperServiceImpl<SoDetailMapper, SoDeta
         }
         soDetailEntity.setFrozenQty(frozenQty);
         soDetailEntity.setFrozenTime(LocalDateTime.now());
-        this.updateById(soDetailEntity);
-
+        boolean updated = this.updateById(soDetailEntity);
+        if (!updated) {
+            throw new ServiceException("更新销售订单明细{}失败，可能数据已变更,请稍后重试",soDetailEntity.getSkuNo());
+        }
         //库存扣减
         VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
         stockParamDTO.setParamList(lockVirtualInventory(soInfoEntity,soDetailEntity,frozenQty - oldFrozenQty));

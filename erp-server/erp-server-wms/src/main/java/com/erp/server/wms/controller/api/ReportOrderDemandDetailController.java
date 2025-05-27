@@ -1,9 +1,11 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -44,6 +46,10 @@ public class ReportOrderDemandDetailController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "rodd.warehouse_id",
+            menuCode = "wms:reportOrderDemandDetail:paging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<ReportOrderDemandDetailDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ReportOrderDemandDetailDTO.PagingParamDTO> dto) {
         PagingVO<ReportOrderDemandDetailDTO.ListDTO> pagingVO = reportOrderDemandDetailService.paging(dto);

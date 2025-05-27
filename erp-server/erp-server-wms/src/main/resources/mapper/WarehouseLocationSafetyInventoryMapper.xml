@@ -35,12 +35,16 @@
                max_qty
         from warehouse_location_safety_inventory
         where is_deleted = false
-        <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
-            and ${param.sqlMap.default}
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         ORDER BY
-        <if test="param.sortList != null and param.sortList.size > 0">
-            <foreach collection="param.sortList" item="item" separator="," close=",">
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
                 <if test="item.field == 'skuNo'">
                     sku_no ${item.sort}
                 </if>
@@ -60,12 +64,16 @@
                 max_qty
         from warehouse_location_safety_inventory
         where is_deleted = false
-        <if test="param.sqlMap.default != null and param.sqlMap.default != ''">
-            and ${param.sqlMap.default}
+        <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
+            and ${params.sqlMap.default}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         ORDER BY
-        <if test="param.sortList != null and param.sortList.size > 0">
-            <foreach collection="param.sortList" item="item" separator="," close=",">
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
                 <if test="item.field == 'skuNo'">
                     sku_no ${item.sort}
                 </if>

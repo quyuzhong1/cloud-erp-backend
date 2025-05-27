@@ -271,7 +271,7 @@
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            #{params.permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY doi.${groupName}
     </select>
@@ -352,7 +352,7 @@
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            #{params.permissionSql}
+            ${params.permissionSql}
         </if>
     </sql>
     <sql id="sql_order_view_condition">
@@ -432,7 +432,7 @@
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            #{params.permissionSql}
+            ${params.permissionSql}
         </if>
     </sql>
 

@@ -165,17 +165,17 @@ public interface InventoryMapper extends BaseMapper<InventoryEntity> {
     /**
      * 按仓库统计数量
      */
-    Long countByWarehouse();
+    Long countByWarehouse(@Param("params") InventoryDTO.SearchParamDTO params);
 
     /**
      * 按库区统计数量
      */
-    Long countByArea();
+    Long countByArea(@Param("params") InventoryDTO.SearchParamDTO params);
 
     /**
      * 按仓位统计数量
      */
-    Long countByLocation();
+    Long countByLocation(@Param("params") InventoryDTO.SearchParamDTO params);
 
     /**
      * 查询仓位下是否有库存

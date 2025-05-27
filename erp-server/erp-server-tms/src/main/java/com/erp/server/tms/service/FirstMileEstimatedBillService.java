@@ -34,7 +34,7 @@ public interface FirstMileEstimatedBillService extends SuperService<FirstMileEst
      */
     BaseResultDTO.AddDTO add(String id);
 
-    List<FirstMileEstimatedBillDTO.Tab> tabList();
+    List<FirstMileEstimatedBillDTO.Tab> tabList(FirstMileEstimatedBillDTO.PagingParam dto);
 
     boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 

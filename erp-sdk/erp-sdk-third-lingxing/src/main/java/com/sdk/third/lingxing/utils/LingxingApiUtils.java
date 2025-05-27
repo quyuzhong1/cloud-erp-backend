@@ -245,7 +245,16 @@ public class LingxingApiUtils {
         // 检查配置参数
         checkConfig();
 
+        return refreshToken();
+    }
+
+    /**
+     * 刷新领星授权token
+     */
+    public static String refreshToken() {
         try {
+            // 访问令牌key
+            String tokenKey = StrUtil.format(RedisCacheConstants.REDIS_PLATFORM_TOKEN, "lingxing", APP_ID);
             // 请求授权
             Result<?> sourceResult = AKRestClientBuild.builder().endpoint(ENDPOINT).getAccessToken(APP_ID, APP_SECRET);
             if (null == sourceResult) {
@@ -343,7 +352,7 @@ public class LingxingApiUtils {
      */
     public static Result<Object> postRequestData(String apiType, TreeMap<String, Object> requestMap) {
         Result<Object> result = LingxingApiUtils.postAndSign(apiType, requestMap);
-        if (!"0".equalsIgnoreCase(result.getCode()) && !"3001008".equalsIgnoreCase(result.getCode())) {
+        if (!"0".equalsIgnoreCase(result.getCode()) && !"3001008".equalsIgnoreCase(result.getCode()) && !"2001005".equalsIgnoreCase(result.getCode())) {
             String errorMsg = StrUtil.format("请求领星{}接口:, result={}", apiType, JSONUtil.toJsonStr(result));
             log.error(errorMsg);
             throw new ServiceException(errorMsg);
@@ -371,6 +380,21 @@ public class LingxingApiUtils {
                     log.error("拉取调用领星接口重试睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
                     Thread.currentThread().interrupt();
                 }
+                sleepTime = sleepTime + 1000;
+                count = count + 1;
+            } else if ("2001005".equalsIgnoreCase(resultData.getCode())) {
+                // 领星发版token失效刷新
+                if (10 == count) {
+                    throw new ServiceException("调用领星接口重试" + count + "失败：" + apiType);
+                }
+                try {
+                    Thread.sleep(sleepTime);
+                } catch (InterruptedException e) {
+                    log.error("拉取调用领星接口授权失效重试睡眠异常:e={}", ExceptionUtil.stacktraceToString(e));
+                    Thread.currentThread().interrupt();
+                }
+                // 刷新授权
+                LingxingApiUtils.refreshToken();
                 sleepTime = sleepTime + 1000;
                 count = count + 1;
             } else {

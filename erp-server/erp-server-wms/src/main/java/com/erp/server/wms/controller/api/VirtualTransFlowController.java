@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -54,6 +56,10 @@ public class VirtualTransFlowController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "vtf.warehouse_id",
+            menuCode = "wms:virtualTransFlow:paging"
+    )
     @WebAdvanceQuery(handler = VirtualTransFlowQueryHandler.class)
     public ApiResult<PagingVO<VirtualTransFlowDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
         return success(virtualTransFlowService.paging(dto));

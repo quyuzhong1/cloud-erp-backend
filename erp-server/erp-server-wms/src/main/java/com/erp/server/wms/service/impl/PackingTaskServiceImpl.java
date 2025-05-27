@@ -57,6 +57,7 @@ import com.erp.rpc.oms.feign.OmsListingInfoFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -169,6 +170,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     private OmsListingInfoFeign omsListingInfoFeign;
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     public void addPackingByB2BDelivery(SoDeliveryNoticeEntity soDeliveryNoticeEntity) {
@@ -2439,11 +2442,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         if (CollectionUtils.isEmpty(dto.getParams().getIds())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
-        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(),dto.getParams().getIds(), dto.getParams().getPermissionSql());
+        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(),dto.getParams().getIds(), dto.getPermissionSql());
         if (CollectionUtils.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -2489,7 +2492,8 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         String[] split = outBoxNo.split("-");
         String sourceCode = split[0];
         Integer boxNo = Integer.valueOf(split[1]);
-        List<PackingTaskEntity> taskEntityList = this.listBySourceCodes(Collections.singletonList(sourceCode));
+        String permissionSql = authDataFeign.getWarehousePermissionSql("pt.warehouse_id");
+        List<PackingTaskEntity> taskEntityList = baseMapper.listBySourceCodes(Collections.singletonList(sourceCode),permissionSql);
         if (CollUtil.isEmpty(taskEntityList)){
             throw new ServiceException(ApiError.ERROR_92141);
         }
@@ -2543,7 +2547,6 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isEmpty(taskEntityList)){
             return new PagingVO<>();
         }
-        List<String> sourceIds = taskEntityList.stream().map(PackingTaskEntity::getSourceId).distinct().collect(Collectors.toList());
         //发货数量
         List<PackingTaskDTO.DetailDTO> detailDTOList = packingTaskDetailService.listDetailByMainIds(ids);
         //装箱数

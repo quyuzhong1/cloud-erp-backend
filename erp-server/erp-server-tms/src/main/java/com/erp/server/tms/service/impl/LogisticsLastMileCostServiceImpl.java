@@ -408,6 +408,7 @@ public class LogisticsLastMileCostServiceImpl implements LogisticsLastMileCostSe
 
     @Override
     public PagingVO<LogisticsBillCostDTO.ListDTO> exportLogisticsLastMileCost(PagingDTO<LogisticsBillCostDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<LogisticsBillCostDTO.ListDTO> page = logisticsBillCostMapper.listByExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据赋值处理

@@ -542,7 +542,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
-        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,warehouseList,skuIds,companyList);
+        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,wmsTaskFeign,skuIds,companyList);
 
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), PurchaseApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -1000,6 +1000,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<PurchaseApplicationDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理

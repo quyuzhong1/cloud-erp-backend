@@ -124,6 +124,7 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
             if (Objects.nonNull(entity) && Objects.nonNull(entity.getReportPeriodMonth())){
                 reportPeriodMonth = entity.getReportPeriodMonth().withDayOfMonth(1);
             }
+            entity.setReportPeriodMonth(reportPeriodMonth);
             //检查是否存在组织对应的核算记录
             List<ReportPeriodMonthEntity> list = this.lambdaQuery().eq(ReportPeriodMonthEntity::getOrgId, company.getId())
                     .eq(ReportPeriodMonthEntity::getMonth, reportPeriodMonth).list();
@@ -138,6 +139,7 @@ public class ReportPeriodMonthServiceImpl extends SuperServiceImpl<ReportPeriodM
                 return list.get(0).getId();
             }
         }else {
+            entity.setReportPeriodMonth(reportPeriodMonthEntity.getMonth());
             return reportPeriodMonthEntity.getId();
         }
     }

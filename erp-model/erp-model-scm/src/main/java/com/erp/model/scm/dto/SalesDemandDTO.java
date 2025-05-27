@@ -195,6 +195,10 @@ public class SalesDemandDTO implements Serializable {
          * 店铺id
          */
         private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
 
         /**
          * 备货原因

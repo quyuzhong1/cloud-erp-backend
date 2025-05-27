@@ -82,6 +82,9 @@ public class ShopAuthEntity extends BaseEntity<ShopAuthEntity> {
     private String extendData;
 
     @TableField(exist = false)
+    private String areaCode;
+
+    @TableField(exist = false)
     private String dictPlatform;
 
     public static final String SHOP_ID = "shop_id";

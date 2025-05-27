@@ -111,6 +111,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SoPriceService soPriceService;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -568,7 +570,22 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuInfoSimpleVO> skuList) {
+        List<SoPriceDTO.PriceDTO> priceDTOS = new ArrayList<>();
+        boolean fullyManagedOrder = soB2cService.isFullyManagedOrder(mainEntity.getDictPlatform());
+        if (fullyManagedOrder){
+            //重算真实售价和金额
+            List<SoPriceDTO.PriceParamDTO> soPriceParams = new ArrayList<>();
 
+            list.forEach(detailEntity -> {
+                SoPriceDTO.PriceParamDTO priceParamDTO = new SoPriceDTO.PriceParamDTO();
+                priceParamDTO.setSkuId(detailEntity.getSkuId());
+                priceParamDTO.setDate(mainEntity.getPlatformOrderCreateTime().toLocalDate());
+                priceParamDTO.setQty(detailEntity.getQty());
+                priceParamDTO.setShopId(mainEntity.getShopId());
+                soPriceParams.add(priceParamDTO);
+            });
+            priceDTOS = soPriceService.batchGetSoPrice(soPriceParams);
+        }
         for (SoB2cDetailEntity detailEntity :list) {
             //产品信息
             SkuInfoSimpleVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
@@ -587,7 +604,18 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             detailEntity.setAmount(MathUtil.multiplyWithTwo(detailEntity.getPrice(),detailEntity.getQty()));
             // 产品图片
             detailEntity.setImageUrl(null == skuVO ? "" : skuVO.getSkuImagesUrl());
+            if (fullyManagedOrder){
+                SoPriceDTO.PriceDTO priceDTO = priceDTOS.stream().filter(priceDTO1 -> priceDTO1.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                detailEntity.setPrice(Objects.nonNull(priceDTO) ? priceDTO.getTaxPrice() : BigDecimal.ZERO);
+                detailEntity.setTaxRate(Objects.nonNull(priceDTO) ?  priceDTO.getTaxRate() : BigDecimal.ZERO);
+            }
         }
+        if (fullyManagedOrder){
+            BigDecimal amount = list.stream().map(detailEntity -> MathUtil.multiplyWithTwo(detailEntity.getPrice(), detailEntity.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            mainEntity.setAmount(amount);//重置主单金额
+            soB2cService.updateAmount(mainEntity.getId(),amount);
+        }
+
     }
 
     @Override

@@ -1,10 +1,12 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
@@ -43,9 +45,12 @@ public class SupplierDeliveryOrderController extends BaseController {
      * 获取 tab列表
      * @return
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList() {
-        DeliveryOrderDTO.ParamDTO paramDTO = new DeliveryOrderDTO.ParamDTO();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "t.to_warehouse_id",
+            menuCode = "wms:supplierDeliveryOrder:paging"
+    )
+    public ApiResult<List<DeliveryOrderDTO.TabListDTO>> tabList(@RequestBody DeliveryOrderDTO.ParamDTO paramDTO) {
         List<DeliveryOrderDTO.TabListDTO> tabList = srmDeliveryFeign.tabList(paramDTO);
         return success(tabList);
     }
@@ -70,6 +75,10 @@ public class SupplierDeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "do2.to_warehouse_id",
+            menuCode = "wms:supplierDeliveryOrder:paging"
+    )
     @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
     public ApiResult<PagingVO<DeliveryOrderDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<DeliveryOrderDTO.ParamDTO> dto) {
         return success(srmDeliveryFeign.paging(dto));
@@ -82,6 +91,10 @@ public class SupplierDeliveryOrderController extends BaseController {
      * @param dto
      */
     @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "do2.to_warehouse_id",
+            menuCode = "wms:supplierDeliveryOrder:paging"
+    )
     @WebAdvanceQuery(handler = SupplierDeliveryQueryHandler.class)
     public ApiResult<DeliveryOrderDTO.TotalInfo> pagingTotal(@RequestBody @Validated DeliveryOrderDTO.ParamDTO dto) {
         return success(srmDeliveryFeign.pagingTotal(dto));

@@ -942,6 +942,14 @@ public class OverseasWarehouseInboundDTO implements Serializable {
          * 签收数量
          */
         private String receiveUser;
+        /**
+         * 数据来源
+         */
+        private String sourceType;
+        /**
+         * 数据来源名称
+         */
+        private String sourceTypeName;
     }
 
 

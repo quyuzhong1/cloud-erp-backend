@@ -70,6 +70,7 @@ public class SoChangeController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "si.warehouse_id",
             menuCode = "oms:soChange:paging",
             tableAlias = "sc"
     )

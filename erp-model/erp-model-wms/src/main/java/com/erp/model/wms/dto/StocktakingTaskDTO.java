@@ -99,68 +99,6 @@ public class StocktakingTaskDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 盘点计划单号/盘点任务单号
-         */
-        private String code;
-
-        /**
-         * 单据状态集合
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 盘点状态集合
-         */
-        private List<String> stocktakingStatusList;
-
-        /**
-         * 盘点方式集合
-         */
-        private List<String> stocktakingModeList;
-
-        /**
-         * 盘点类型集合
-         */
-        private List<String> stocktakingTypeList;
-
-
-        /**
-         * 分单规则集合
-         */
-        private List<String> separateRuleList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 创建人id
-         */
-        private List<String> createUserIdList;
-
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> approveTimeList;
-
-        /**
-         * 审核人id
-         */
-        private List<String> approveUserIdList;
-
-        /**
-         * 仓库
-         */
-        private String warehouseId;
-        /**
-         * 标识
-         */
-//        @StateEnumValue(strValues = {"all", "waitSubmit", "waitApprove", "approveIng", "approve"}, message = "tab类型有误")
-//        @NotBlank(message = "tab不能为空")
-        private String tabFlag;
-        /**
          * 页面高级查询
          */
         private List<AdvanceQueryDTO> advanceQueryDTOList;

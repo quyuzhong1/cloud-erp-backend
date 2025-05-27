@@ -721,6 +721,7 @@ public class WarehouseLocationMoveServiceImpl extends SuperServiceImpl<Warehouse
 
     @Override
     public PagingVO<WarehouseLocationMoveDTO.PdaPcListDTO> exportWarehouseLocationMoveInfo(PagingDTO<WarehouseLocationMoveDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WarehouseLocationMoveDTO.PdaPcListDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         List<String> skuList = page.getRecords().stream().map(WarehouseLocationMoveDTO.PdaPcListDTO::getSkuId).distinct().collect(Collectors.toList());
         //feign获取产品信息

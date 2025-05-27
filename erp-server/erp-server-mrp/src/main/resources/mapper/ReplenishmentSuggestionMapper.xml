@@ -96,6 +96,10 @@
             <if test="params.favorite != null and params.favorite ">
                 and exists (select id from replenishment_suggestion_favorite where is_deleted = false and replenishment_suggestion_id =  rs.id and user_id = #{userId})
             </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
         order by
         <if test="params.recentSort != null and params.recentSort.size > 0">

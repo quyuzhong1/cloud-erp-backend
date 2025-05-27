@@ -6,23 +6,18 @@ import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.OperateLogDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.excel.StocktakingTaskDetailExcelDTO;
 import com.erp.model.wms.entity.StocktakingTaskDetailEntity;
 import com.erp.model.wms.entity.StocktakingTaskEntity;
-import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.StocktakingTaskDetailService;
 import com.erp.server.wms.service.StocktakingTaskService;
+import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.math3.util.Pair;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.*;
 
 /**
  * @author Lambda
@@ -38,7 +33,7 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
 
     private StocktakingTaskService stocktakingTaskService;
 
-    private List<WarehouseEntity> warehouseList;
+    private WarehouseService warehouseService;
 
     private OperateLogService operateLogService;
 
@@ -51,11 +46,11 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
 
     public StocktakingTaskExcelListener(StocktakingTaskService stocktakingTaskService,
                                         StocktakingTaskDetailService stocktakingTaskDetailService,
-                                        List<WarehouseEntity> warehouseList,
+                                        WarehouseService warehouseService,
                                         OperateLogService operateLogService) {
         this.stocktakingTaskDetailService = stocktakingTaskDetailService;
         this.stocktakingTaskService = stocktakingTaskService;
-        this.warehouseList = warehouseList;
+        this.warehouseService = warehouseService;
         this.operateLogService = operateLogService;
     }
 
@@ -96,10 +91,11 @@ public class StocktakingTaskExcelListener extends AnalysisEventListener<Stocktak
         //仓库名称
         String warehouseName = excelDTO.getWarehouseName();
         //仓库id
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(Collections.singletonList(warehouseName));
         String warehouseId = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).
-                findFirst().map(WarehouseEntity::getId).orElse("");
+                findFirst().map(WarehouseDTO.ListDTO::getId).orElse("");
         if (CharSequenceUtil.isBlank(warehouseId)) {
-            errorMsgList.add("仓库不存在");
+            errorMsgList.add("仓库不存在或没有仓库权限");
         }
         String mainId = Objects.nonNull(taskEntity) ? taskEntity.getId() : "";
         //仓位

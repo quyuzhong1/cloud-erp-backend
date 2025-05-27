@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -114,7 +115,7 @@ public class VirtualWarehouseRelationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class SelectDTO {
+    public static class SelectDTO extends SortDTO {
         /**
          * 关键词
          */
@@ -131,6 +132,10 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 关联id(店铺)
          */
         private String shopId;
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
     }
 
     @Data

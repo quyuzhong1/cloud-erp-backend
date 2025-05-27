@@ -86,7 +86,7 @@ public interface WarehouseReceiveMapper extends BaseMapper<WarehouseReceiveEntit
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.WarehouseReceiveDTO.WaitInStockPaging>
      **/
-    IPage<WarehouseReceiveDTO.WaitInStockPaging> pdaWaitInStockPaging(Page query, WarehouseReceiveDTO.WaitInStockPagingParam params);
+    IPage<WarehouseReceiveDTO.WaitInStockPaging> pdaWaitInStockPaging(Page query, @Param("params") WarehouseReceiveDTO.WaitInStockPagingParam params);
 
     /**
      * PDA:待入库查询表头数量

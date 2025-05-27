@@ -2952,7 +2952,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<PurchaseReturnOrderDTO.PagingViewDTO> page = this.baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理

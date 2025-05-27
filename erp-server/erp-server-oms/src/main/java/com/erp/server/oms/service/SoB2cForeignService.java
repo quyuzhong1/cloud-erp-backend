@@ -2,6 +2,7 @@ package com.erp.server.oms.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.ShopifyServerSoB2cDTO;
 import com.erp.model.oms.dto.SoB2cForeignDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
 
@@ -18,4 +19,9 @@ import java.util.List;
 public interface SoB2cForeignService extends IService<SoB2cEntity> {
 
     PagingVO<SoB2cForeignDTO.OrderDeliveryResp> getOrderDeliveryInfo(PagingDTO<SoB2cForeignDTO.OrderDeliveryReq> orderDeliveryReq);
+
+    /**
+     * 获取Shopify订单物流信息
+     */
+    List<ShopifyServerSoB2cDTO.SoB2cLogisticInfoDTO> getShopifyLogisticInfo(ShopifyServerSoB2cDTO.SoB2cLogisticQueryDTO dto);
 }
