@@ -143,7 +143,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @author Will
      * @date: 2023/9/7 16:31
      */
-    List<ShopDTO.ListTreeDTO> listTree();
+    List<ShopDTO.ListTreeDTO> listTree(Boolean showByAuth);
 
     /**
      * 检查店铺是否授权
@@ -185,7 +185,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param platformList
      * @return List<ShopInfoEntity>
      */
-    List<ShopInfoEntity> listByPlatformList(List<String> platformList);
+    List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql);
     /**
      * 查询亚马逊店铺信息
      * @Author Luo_WG
@@ -195,13 +195,6 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     List<ShopInfoEntity> listShopByAmazon();
 
     List<ShopSysUserAuthDTO.ViewShopDTO> listShopByAmazonAuth();
-    /**
-     * 根据条件查询是否存在店铺
-     *
-     * @author Jim
-     * @since 2023-11-09
-     */
-    boolean checkExist(String dictCountryCode, String dictPlatform, String authStatus);
 
     /**
      * 根据仓库id查询店铺
@@ -380,5 +373,12 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param shopNameList
      * @return
      */
-    List<ShopInfoEntity> listShopByName(List<String> shopNameList);
+    List<ShopInfoDTO.ListDTO> listShopByName(List<String> shopNameList);
+
+    /**
+     * 根据权限查询对应平台店铺 (默认有仓库权限的店铺)
+     * @param dictPlatform
+     * @return
+     */
+    List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(String dictPlatform);
 }

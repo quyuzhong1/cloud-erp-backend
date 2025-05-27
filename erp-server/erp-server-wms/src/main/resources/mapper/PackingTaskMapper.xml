@@ -350,4 +350,19 @@
         </if>
         group by pt.id,pt.source_code,pt.packing_status,pt.weighting_status
     </select>
+    <select id="listBySourceCodes" resultType="com.erp.model.wms.entity.PackingTaskEntity">
+        select
+            pt.*
+        from packing_task pt
+        where pt.is_deleted = false
+        <if test="sourceCodeList!= null and sourceCodeList.size > 0">
+            AND pt.source_code IN
+            <foreach collection="sourceCodeList" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="permissionSql != null and permissionSql != ''">
+            ${permissionSql}
+        </if>
+    </select>
 </mapper>

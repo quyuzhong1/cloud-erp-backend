@@ -4,6 +4,7 @@ import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
@@ -1327,6 +1328,16 @@ public class SoB2cDTO implements Serializable {
          * 第三方来源系统
          */
         private String thirdSystem;
+
+        /**
+         * 手动添加速卖通订单
+         */
+        public void checkAndSetAfterTaxAmount() {
+            // 速卖通手动单
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(this.getDictPlatform())){
+                this.setAfterTaxAmount(this.getAmount());
+            }
+        }
     }
 
 
@@ -1410,8 +1421,7 @@ public class SoB2cDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class
-    CommonDTO {
+    public static class CommonDTO {
 
         /**
          * 平台订单号
@@ -1480,6 +1490,12 @@ public class SoB2cDTO implements Serializable {
          * 卖家订单编号
          */
         private String sellerOrderCode;
+
+        /**
+         * 税后订单金额(速卖通)
+         */
+        private BigDecimal afterTaxAmount = BigDecimal.ZERO;
+
     }
 
     @Data

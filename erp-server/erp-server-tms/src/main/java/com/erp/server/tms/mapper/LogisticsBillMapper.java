@@ -71,7 +71,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@author yl
      *@date 2023-11-16
      */
-    List<LogisticsBillDTO.PagingVO> listExport(@Param("params")LogisticsBillDTO.PagingParamDTO dto);
     Page<LogisticsBillDTO.PagingVO> listExport(@Param("page") Page<LogisticsBillDTO.PagingVO> page, @Param("params")LogisticsBillDTO.PagingParamDTO dto);
 
     /**

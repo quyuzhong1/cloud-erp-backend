@@ -34,19 +34,7 @@ public class ShopSysUserAuthFeignController extends BaseController {
      */
     @PostMapping("/listShopSysUserAuthByUserIdList")
     public List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(@RequestBody List<String> userIdList) {
-        List<ShopSysUserAuthDTO.ViewDTO> list = shopSysUserAuthService.listShopSysUserAuthByUserIdList(userIdList);
-        return list;
-    }
-
-    /**
-     * 根据店铺id查询已关联用户id
-     *
-     * @return
-     */
-    @PostMapping("/listUserIdByShopIdList")
-    public List<String> listUserIdByShopIdList(@RequestBody List<String> shopIdList) {
-        List<String> list = shopSysUserAuthService.listUserIdByShopIdList(shopIdList);
-        return list;
+        return shopSysUserAuthService.listShopSysUserAuthByUserIdList(userIdList);
     }
 
     /**

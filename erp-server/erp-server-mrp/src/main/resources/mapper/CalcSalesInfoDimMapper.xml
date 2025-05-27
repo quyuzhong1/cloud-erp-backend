@@ -44,6 +44,10 @@
         where ${params.sqlMap.default}
           and csic.is_deleted = FALSE
           and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -88,6 +92,10 @@
         and csic.is_deleted = FALSE
         <if test="params.cfgRuleCalcId != null and params.cfgRuleCalcId != ''">
             and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
     </select>
 
@@ -134,6 +142,10 @@
         <if test="params.favorite != null and params.favorite ">
             and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
             and user_id = #{uid})
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -247,6 +259,10 @@
         <if test="params.favorite != null and params.favorite">
             and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
             and user_id = #{uid})
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
         </if>
         order by csic.update_time desc,csic.id desc
     </select>

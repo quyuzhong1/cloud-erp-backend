@@ -1,5 +1,6 @@
 package com.erp.server.tms.convert;
 
+import com.common.business.enums.BusinessNoTypeEnum;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.dto.excel.FirstMileCostChangeExcelDTO;
@@ -557,4 +558,128 @@ public interface FirstMileChangeRecordConverter {
             @Mapping(target = "boxNo", ignore = true)
     })
     FirstMileChangeRecordEntity changeCostEndPeriodEstimatedToEntityConvert(FirstMileCostChangeExcelDTO dto, FirstMileSkuCostAllocationDetailEntity entity);
+    @Mappings({
+            @Mapping(target = "category", constant = ""),
+            @Mapping(target = "categoryField", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum.ALLOCATED_WEIGHT.getCode())"),
+            @Mapping(target = "code", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "deliveryCode", source = "dto.sourceCode"),
+            @Mapping(target = "deliveryId", source = "dto.sourceId"),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "isLatest", constant = "true"),
+            @Mapping(target = "newValue", source = "dto.newAllocatedWeight"),
+            @Mapping(target = "oldValue", source = "dto.allocatedWeight"),
+            @Mapping(target = "reportPeriod", source = "dto.reportPeriodMonth"),
+            @Mapping(target = "reportPeriodId", source = "dto.reportPeriodId"),
+            @Mapping(target = "sourceType", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode())"),
+            @Mapping(target = "type", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordTypeEnum.MANUAL.getCode())"),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "sourceId", source = "dto.id"),
+            @Mapping(target = "changeRange", ignore = true),
+            @Mapping(target = "boxId", ignore = true),
+            @Mapping(target = "boxNo", ignore = true)
+    })
+    FirstMileChangeRecordEntity changeCostAllocatedWeightDtoToEntityConvert(FirstMileCostAllocationDTO.CostAllocationDTO dto);
+    @Mappings({
+            @Mapping(target = "category", source = "dto.feeType"),
+            @Mapping(target = "categoryField", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode())"),
+            @Mapping(target = "code", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "deliveryCode", source = "dto.sourceCode"),
+            @Mapping(target = "deliveryId", source = "dto.sourceId"),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "isLatest", constant = "true"),
+            @Mapping(target = "newValue", source = "dto.newDetailRemark"),
+            @Mapping(target = "oldValue", source = "dto.detailRemark"),
+            @Mapping(target = "reportPeriod", source = "dto.reportPeriodMonth"),
+            @Mapping(target = "reportPeriodId", source = "dto.reportPeriodId"),
+            @Mapping(target = "sourceType", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode())"),
+            @Mapping(target = "type", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordTypeEnum.MANUAL.getCode())"),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "sourceId", source = "dto.id"),
+            @Mapping(target = "changeRange", ignore = true),
+            @Mapping(target = "boxId", ignore = true),
+            @Mapping(target = "boxNo", ignore = true)
+    })
+    FirstMileChangeRecordEntity changeCostDetailRemarkDtoToEntityConvert(FirstMileCostAllocationDTO.CostAllocationDTO dto);
+    @Mappings({
+            @Mapping(target = "category", constant = ""),
+            @Mapping(target = "categoryField", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum.ALLOCATED_WEIGHT.getCode())"),
+            @Mapping(target = "code", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "deliveryCode", source = "entity.sourceCode"),
+            @Mapping(target = "deliveryId", source = "entity.sourceId"),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "isLatest", constant = "true"),
+            @Mapping(target = "newValue", source = "dto.allocatedWeightStr"),
+            @Mapping(target = "oldValue", source = "entity.allocatedWeight"),
+            @Mapping(target = "reportPeriod", source = "entity.reportMonth"),
+            @Mapping(target = "reportPeriodId", source = "entity.reportPeriodId"),
+            @Mapping(target = "skuId", source = "entity.skuId"),
+            @Mapping(target = "skuNo", source = "entity.skuNo"),
+            @Mapping(target = "platformSkuNo", source = "entity.platformSkuNo"),
+            @Mapping(target = "businessCode", source = "entity.businessCode"),
+            @Mapping(target = "transportNo", source = "entity.transportNo"),
+            @Mapping(target = "sourceType", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode())"),
+            @Mapping(target = "type", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordTypeEnum.MANUAL.getCode())"),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "sourceId", source = "entity.mainId"),
+            @Mapping(target = "changeRange", ignore = true),
+            @Mapping(target = "boxId", ignore = true),
+            @Mapping(target = "boxNo", ignore = true),
+            @Mapping(target = "logisticsBillId", source = "entity.logisticsBillId")
+    })
+    FirstMileChangeRecordEntity changeCostAllocatedWeightToEntityConvert(FirstMileCostChangeExcelDTO dto, FirstMileSkuCostAllocationDetailEntity entity);
+    @Mappings({
+            @Mapping(target = "category", source = "entity.feeType"),
+            @Mapping(target = "categoryField", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode())"),
+            @Mapping(target = "code", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "deliveryCode", source = "entity.sourceCode"),
+            @Mapping(target = "deliveryId", source = "entity.sourceId"),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "isLatest", constant = "true"),
+            @Mapping(target = "newValue", source = "dto.remark"),
+            @Mapping(target = "oldValue", source = "entity.remark"),
+            @Mapping(target = "reportPeriod", source = "entity.reportMonth"),
+            @Mapping(target = "reportPeriodId", source = "entity.reportPeriodId"),
+            @Mapping(target = "skuId", source = "entity.skuId"),
+            @Mapping(target = "skuNo", source = "entity.skuNo"),
+            @Mapping(target = "platformSkuNo", source = "entity.platformSkuNo"),
+            @Mapping(target = "businessCode", source = "entity.businessCode"),
+            @Mapping(target = "transportNo", source = "entity.transportNo"),
+            @Mapping(target = "sourceType", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode())"),
+            @Mapping(target = "type", expression = "java(com.erp.model.tms.enums.FirstMileChangeRecordTypeEnum.MANUAL.getCode())"),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "sourceId", source = "entity.mainId"),
+            @Mapping(target = "changeRange", ignore = true),
+            @Mapping(target = "boxId", ignore = true),
+            @Mapping(target = "boxNo", ignore = true),
+            @Mapping(target = "logisticsBillId", source = "entity.logisticsBillId")
+    })
+    FirstMileChangeRecordEntity changeCostDetailRemarkToEntityConvert(FirstMileCostChangeExcelDTO dto, FirstMileSkuCostAllocationDetailEntity entity);
 }

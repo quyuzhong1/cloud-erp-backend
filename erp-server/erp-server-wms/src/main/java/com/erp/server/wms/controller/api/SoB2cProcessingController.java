@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
@@ -41,6 +43,11 @@ public class SoB2cProcessingController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sbp.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "wms:soB2cProcessing:paging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<SoB2cProcessingDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cProcessingDTO.PagingParamDTO> dto) {
         return success(soB2cProcessingService.paging(dto));
@@ -54,7 +61,6 @@ public class SoB2cProcessingController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody SoB2cProcessingDTO.PagingParamDTO dto) {
         Boolean flag = soB2cProcessingService.exportExcel(dto);
         return flag == true ? success() : failure();

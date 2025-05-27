@@ -2,11 +2,13 @@ package com.erp.server.mrp.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -55,6 +57,10 @@ public class CalcSalesInfoDimController extends BaseController {
      * @param params 参数
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "csic.shop_id",
+            menuCode = "mrp:calcSalesInfoDim:paging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<CalcSalesInfoDimDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<CalcSalesInfoDimDTO.PagingParamDTO> params) {
         PagingVO<CalcSalesInfoDimDTO.PagingView> paging = calcSalesInfoDimService.paging(params);
@@ -126,6 +132,10 @@ public class CalcSalesInfoDimController extends BaseController {
      * @param params 参数
      */
     @PostMapping("/pagingDetail")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "csic.shop_id",
+            menuCode = "mrp:calcSalesInfoDim:pagingDetail"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<CalcSalesInfoDimDTO.DetailViewDTO>> pagingDetail(@RequestBody @Validated PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
         PagingVO<CalcSalesInfoDimDTO.DetailViewDTO> page = calcSalesInfoDimService.pagingDetail(params);

@@ -40,7 +40,6 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @author Jim
      * @date: 2023-11-27
      */
-    List<OverseasWarehouseInboundDTO.ListDTO> listExportExcel(@Param("params") OverseasWarehouseInboundDTO.ExportDTO params);
     Page<OverseasWarehouseInboundDTO.ListDTO> listExportExcel(@Param("page") Page<OverseasWarehouseInboundDTO.ListDTO> page, @Param("params") OverseasWarehouseInboundDTO.ExportDTO params);
 
     /**
@@ -50,7 +49,7 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @param
      * @return java.util.List<com.erp.model.wms.dto.OverseasWarehouseInboundDTO.CountDTO>
      **/
-    List<OverseasWarehouseInboundDTO.CountDTO> tabList(PermissionsDTO dto);
+    List<OverseasWarehouseInboundDTO.CountDTO> tabList(@Param("params") PermissionsDTO dto);
     
     /**
      * 根据条件获取数据对比系统数据

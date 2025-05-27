@@ -251,4 +251,14 @@ public class ShopInfoFeignController extends BaseController {
     public PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
         return shopInfoService.paging(dto);
     }
+
+    /**
+     * 根据店铺名称查询店铺信息
+     * @param shopNameList
+     * @return
+     */
+    @PostMapping("/listShopByName")
+    public List<ShopInfoDTO.ListDTO> listShopByName(@RequestBody List<String> shopNameList){
+        return shopInfoService.listShopByName(shopNameList);
+    }
 }

@@ -26,13 +26,6 @@ public interface WmsWarehouseFeign {
      */
     @PostMapping("/listByIds")
     List<WarehouseDTO.ListDTO> listByIds(@RequestBody List<String> ids);
-    /**
-     * 根据仓库名称获取仓库信息
-     * @param warehouseNameList
-     * @return
-     */
-    @PostMapping("/listByWarehouseNameList")
-    List<WarehouseEntity> listByWarehouseNameList(@RequestBody List<String> warehouseNameList);
 }
 
 

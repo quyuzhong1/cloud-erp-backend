@@ -56,6 +56,10 @@ public class FbaShipmentController extends BaseController {
      * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "fs.shop_id",
+            menuCode = "wms:fbaShipment:paging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<FbaShipmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         PagingVO<FbaShipmentDTO.ListDTO> list = fbaShipmentService.paging(dto);

@@ -12,6 +12,7 @@ import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
 import com.erp.model.dmp.entity.DmpThirdReturnInboundEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -32,6 +33,21 @@ public class DmpInputAmzReportFbaReturnInstockDetailDmpHandler extends DmpInputD
 	@Override
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity) {
 		log.debug("DmpInputAmzReportFbaReturnInstockDetailDmpHandler afterConvertData 处理");
+		if (null == dmpInputMongoEntity) {
+			return Collections.emptyList();
+		}
+		if (dmpInputMongoEntity.isEmpty()) {
+			return Collections.emptyList();
+		}
+		for (Map.Entry<String, Object> stringObjectEntry : dmpInputMongoEntity.entrySet()) {
+			if ("sku".equals(stringObjectEntry.getKey()) && null != stringObjectEntry.getValue()){
+				String newSkuValue = stringObjectEntry.getValue()
+						.toString()
+						.replaceAll("&#8208;", "-");
+				dmpInputMongoEntity.put(stringObjectEntry.getKey(), newSkuValue);
+			}
+		}
+
 		return Collections.singletonList(dmpInputMongoEntity);
 	}
 

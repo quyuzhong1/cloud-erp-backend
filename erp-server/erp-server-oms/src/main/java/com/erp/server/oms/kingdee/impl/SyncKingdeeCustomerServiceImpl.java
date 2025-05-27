@@ -360,13 +360,12 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 	public Map<String, Object> newSyncDataToSdy(CustomerInfoEntity entity, String operate) {
 		Map<String, Object> resultMap = new HashMap<>();
 		
-		String subPlatformType = entity.getPlatformType();
-		String subPlatformTypeName = entity.getPlatformType();
-		if(StringUtils.isNotBlank(subPlatformType)) {
-			List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, subPlatformType).list();
+		DictBasicEntity dictBasicEntity = null;
+		String platformType = entity.getPlatformType();
+		if(StringUtils.isNotBlank(platformType)) {
+			List<DictBasicEntity> dictList = dictBasicService.lambdaQuery().eq(DictBasicEntity::getType, "sdySubPlatform").eq(DictBasicEntity::getName, platformType).list();
 			if(CollUtil.isNotEmpty(dictList)) {
-				subPlatformType = dictList.get(0).getName();
-                subPlatformTypeName = dictList.get(0).getValue();
+				dictBasicEntity = dictList.get(0);
 			}
 		}
 		
@@ -377,18 +376,16 @@ public class SyncKingdeeCustomerServiceImpl implements SyncKingdeeCustomerServic
 		
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
-        List<String> dictKeys = Lists.newArrayList(DictBasicTypeEnum.SALES_PLATFORM.getType());
-        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(dictKeys);
-        DictBasicEntity dictBasicEntity = dictBasicEntityList.stream().filter(req -> req.getValue().equals(entity.getPlatformType())).findFirst().orElse(null);
-
         resultMap.put("oms_system", "SDC");
 		resultMap.put("biz_uni_key", entity.getId());
-		resultMap.put("platform_code", entity.getPlatformType());
-		if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-            resultMap.put("platform_name", dictBasicEntity.getName());
-        }
-		resultMap.put("sub_platform_code", subPlatformType);
-		resultMap.put("sub_platform_name", subPlatformTypeName);
+		if(dictBasicEntity != null) {
+			String platform_code = dictBasicEntity.getRemark();
+			String sub_platform_code = dictBasicEntity.getValue();
+			resultMap.put("platform_code", platform_code);
+			resultMap.put("platform_name", platform_code);
+			resultMap.put("sub_platform_code", sub_platform_code);
+			resultMap.put("sub_platform_name", sub_platform_code);
+		}
 		resultMap.put("shop_code", entity.getCode());
 		resultMap.put("shop_site", entity.getCountryId());
 		resultMap.put("shop_name", entity.getName());

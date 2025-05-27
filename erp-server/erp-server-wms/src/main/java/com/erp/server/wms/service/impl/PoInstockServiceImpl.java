@@ -46,19 +46,15 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.mapper.PoInstockMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
-import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
@@ -150,21 +146,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Resource
     private DmpMqFeign dmpMqFeign;
     @Resource
-    private SyncWdtOtherInStockService syncWdtOtherInStockService;
-
-    @Resource
-    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
-    @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
-    private DmpPushWdtFeign dmpPushWdtFeign;
-    @Resource
     private AbstractWdtService abstractWdtService;
-    @Resource
-    private PurchaseOrderFeign purchaseOrderFeign;
-
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
@@ -1667,6 +1653,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> exportPoInStock(PagingDTO<PoInstockDTO.ExportParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<PoInstockDTO.ListDTO> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             doOpHandlePurchaseStockIn(page.getRecords());

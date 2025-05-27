@@ -962,7 +962,8 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
                 .collect(Collectors.toMap(InventoryDirectionEnum::getName, Function.identity()));
 
         // 发货仓库
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listApproveWarehouse();
+        List<String> warehouseNameList = successList.stream().map(OtherInStockImportExcelDTO::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehouseNameList);
         Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList
                 .stream()
                 .collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));
@@ -1026,7 +1027,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             // 发货仓库
             WarehouseDTO.ListDTO warehouseDTO = warehouseMap.get(importExcelDTO.getWarehouseName());
             if (null == warehouseDTO) {
-                importExcelDTO.setErrorMsg(CharSequenceUtil.format("【{}】仓库不存在", importExcelDTO.getWarehouseName()));
+                importExcelDTO.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 errorList.add(importExcelDTO);
                 continue;
             }
@@ -1188,6 +1189,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
 
     @Override
     public PagingVO<OtherInstockDTO.ListDTO> exportOtherInStock(PagingDTO<OtherInstockDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<OtherInstockDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             doOpHandleData(page.getRecords());

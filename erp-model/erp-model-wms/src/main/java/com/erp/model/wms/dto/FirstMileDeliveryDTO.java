@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -1077,7 +1078,7 @@ public class FirstMileDeliveryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class GenerateLogisticReqDTO {
+    public static class GenerateLogisticReqDTO extends PermissionsDTO {
 
         /**
          * 装箱状态

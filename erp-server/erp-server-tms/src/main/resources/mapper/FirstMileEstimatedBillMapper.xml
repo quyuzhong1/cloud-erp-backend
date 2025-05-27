@@ -38,7 +38,12 @@
         <where>
             ${params.sqlMap.default}
             and eb.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
+
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -176,6 +181,7 @@
     <select id="countByParam" resultType="java.lang.Integer">
         select count(distinct eb.id)
         from first_mile_estimated_bill eb
+        inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
             left join logistics_bill_cost lbc on lbc.logistics_bill_id = eb.logistics_bill_id and lbc.is_deleted = false
         <where>
             eb.is_deleted = false
@@ -184,6 +190,10 @@
             </if>
             <if test="estimatedStatus != null and estimatedStatus != ''">
                 and eb.status = #{estimatedStatus}
+            </if>
+            <!--权限-->
+            <if test="permissionSql!=null and permissionSql!=''">
+                ${permissionSql}
             </if>
         </where>
     </select>

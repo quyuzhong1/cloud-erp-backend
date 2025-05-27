@@ -67,6 +67,7 @@
         sdnd.picking_qty as pickedQty
         from so_delivery_notice_change sdnc
         inner join so_delivery_notice_change_detail sdncd on sdnc.id = sdncd.main_id and sdncd.is_deleted = false
+        left join so_delivery_notice sdn on sdn.id = sdnc.source_id and sdn.is_deleted = false
         left join so_delivery_notice_detail sdnd on sdnd.id = sdncd.source_detail_id and sdnd.is_deleted = false
         where   ${params.sqlMap.default}
         and sdnc.is_deleted = false
@@ -84,14 +85,15 @@
 
     <select id="tabList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
+        sdnc.approve_status AS tabFlag,
+        count(sdnc.id)  AS count
         FROM  so_delivery_notice_change sdnc
-        WHERE is_deleted=FALSE
+        left join so_delivery_notice sdn on sdn.id = sdnc.source_id and sdn.is_deleted = false
+        WHERE sdnc.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY sdnc.approve_status
     </select>
     <select id="listViewDetailList" resultType="com.erp.model.wms.dto.SoDeliveryNoticeChangeDTO$ViewDetail">
         select sdncd.id as detailId,

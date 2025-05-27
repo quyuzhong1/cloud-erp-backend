@@ -54,6 +54,12 @@ public class OverseasWarehouseInboundReceivedEntity extends BaseEntity<OverseasW
      */
     @TableField("source_type")
     private String sourceType;
+    /**
+     * 流水ID
+     */
+    @TableField("flow_id")
+    private String flowId;
+
 
     public static final String DETAIL_ID = "detail_id";
 

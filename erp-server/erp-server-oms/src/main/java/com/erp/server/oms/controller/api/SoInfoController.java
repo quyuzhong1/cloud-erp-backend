@@ -70,6 +70,12 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            warehouseTableField = "si.warehouse_id",
+            menuCode = "oms:so:paging",
+            tableAlias = "si"
+    )
     public ApiResult<List<SoInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<SoInfoDTO.TabListDTO> tabList = soDetailService.tabList(dto);
         return success(tabList);
@@ -84,6 +90,7 @@ public class SoInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
+            warehouseTableField = "si.warehouse_id",
             menuCode = "oms:so:paging",
             tableAlias = "si"
     )
@@ -102,6 +109,7 @@ public class SoInfoController extends BaseController {
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
+            warehouseTableField = "si.warehouse_id",
             menuCode = "oms:so:paging",
             tableAlias = "si"
     )

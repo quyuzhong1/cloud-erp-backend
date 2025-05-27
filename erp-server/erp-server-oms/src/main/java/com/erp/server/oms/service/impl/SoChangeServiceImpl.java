@@ -769,6 +769,7 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
 
     @Override
     public PagingVO<SoChangeDTO.PagingViewDTO> exportSoChange(PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoChangeDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
             return new PagingVO<>(page);

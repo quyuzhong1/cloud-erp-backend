@@ -606,6 +606,9 @@
         <if test="params.warehouseLocation != null and params.warehouseLocation != ''">
             and it.warehouse_location = #{params.warehouseLocation}
         </if>
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         GROUP BY it.warehouse_id, it.sku_id
         ) t
         <if test="params.zeroInventory">
@@ -1052,6 +1055,10 @@
                              LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
                              LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
                     WHERE it.is_deleted = false
+                    <!--权限-->
+                    <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                        ${params.permissionSql}
+                    </if>
                     GROUP BY it.warehouse_id,
                              it.org_id,
                              it.sku_id,
@@ -1096,6 +1103,10 @@
                                                  LEFT JOIN warehouse_location wa ON s.parent_id = wa.id AND s.is_deleted = false AND wa.is_deleted = false) wl
                                        ON it.warehouse_location = wl.location_code AND it.warehouse_id = wl.warehouse_id
                     WHERE it.is_deleted = false
+                    <!--权限-->
+                    <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                        ${params.permissionSql}
+                    </if>
                     GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.dict_inventory_status, wl.area_code) m
               GROUP BY m.warehouse_id, m.org_id, m.sku_id, m.area_code) t
     </select>
@@ -1129,6 +1140,10 @@
                              LEFT JOIN product_info pi ON pd.product_id = pi.id AND pi.is_deleted = FALSE
                              LEFT JOIN product_sale ps ON ps.sku_id = pd.id AND ps.is_deleted = FALSE
                     WHERE it.is_deleted = false
+                    <!--权限-->
+                    <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                        ${params.permissionSql}
+                    </if>
                     GROUP BY it.warehouse_id, it.org_id, it.sku_id, it.dict_inventory_status, it.warehouse_location) m
               GROUP BY m.warehouse_id, m.org_id, m.sku_id, m.warehouse_location) t
     </select>

@@ -3,6 +3,7 @@ package com.erp.model.wms.enums;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.apache.commons.lang3.StringUtils;
 
 public enum ReturnTypeEnum implements EnumMessage {
 
@@ -40,6 +41,17 @@ public enum ReturnTypeEnum implements EnumMessage {
         for (ReturnTypeEnum returnTypeEnum : ReturnTypeEnum.values()) {
             if (code.equals(returnTypeEnum.getCode())) {
                 return returnTypeEnum.getName();
+            }
+        }
+        return "";
+    }
+    public static String getCode(String name) {
+        if(StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (ReturnTypeEnum returnTypeEnum : ReturnTypeEnum.values()) {
+            if (name.equals(returnTypeEnum.getName())) {
+                return returnTypeEnum.getCode();
             }
         }
         return "";

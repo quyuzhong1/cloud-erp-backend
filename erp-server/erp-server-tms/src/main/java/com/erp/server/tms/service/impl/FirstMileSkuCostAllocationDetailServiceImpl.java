@@ -128,4 +128,18 @@ public class FirstMileSkuCostAllocationDetailServiceImpl extends SuperServiceImp
         return baseMapper.listBySourceCodeList(businessCodeList,sourceCodeList,transportNoList);
     }
 
+    @Override
+    public void updateDetailRemark(String detailId, String newDetailRemark) {
+        if (CharSequenceUtil.isBlank(detailId) || Objects.isNull(newDetailRemark)){
+            return;
+        }
+        this.lambdaUpdate().set(FirstMileSkuCostAllocationDetailEntity::getRemark, newDetailRemark).eq(FirstMileSkuCostAllocationDetailEntity::getId, detailId).update();
+
+    }
+
+    @Override
+    public List<FirstMileSkuCostAllocationDetailEntity> listByReportMonth(String sourceId, String businessCode, String transportNo, String skuId, String platformSkuNo, String reportPeriodId) {
+        return baseMapper.listByReportMonth(sourceId,businessCode,transportNo,skuId,platformSkuNo,reportPeriodId);
+    }
+
 }
