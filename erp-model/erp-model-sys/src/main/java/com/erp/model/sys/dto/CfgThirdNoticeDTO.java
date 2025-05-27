@@ -208,15 +208,12 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
         * 通知人员
         */
-        private String roleType;
-
         @NotEmpty(message = "通知人员不能为空")
         private List<String> roleTypeList;
 
         /**
         * 具体人员
         */
-        private String specificPerson;
         private List<String>  specificPersonList;
 
         /**
@@ -305,13 +302,15 @@ public class CfgThirdNoticeDTO implements Serializable {
          * 项目角色
          */
         private String roleType;
-        private String roleTypeName;
+        private List<String> roleTypeList;
+        private List<String> roleTypeNameList;
 
         /**
          * 具体人员
          */
         private String specificPerson;
-        private String specificPersonName;
+        private List<String> specificPersonList;
+        private List<String> specificPersonNameList;
 
         /**
          * 通知标题
@@ -328,6 +327,10 @@ public class CfgThirdNoticeDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class BaseDTO {
+        /**
+         * id
+         */
+        private String id;
 
         /**
          * 创建人id
