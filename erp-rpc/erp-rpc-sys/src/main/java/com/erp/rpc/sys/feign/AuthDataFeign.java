@@ -1,6 +1,8 @@
 package com.erp.rpc.sys.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.sys.dto.AuthUserShopDTO;
+import com.erp.model.sys.dto.AuthUserWarehouseDTO;
 import com.erp.model.sys.dto.SysUserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,4 +60,24 @@ public interface AuthDataFeign {
      */
     @PostMapping("feign/auth/listUserIdByShopIdList")
     List<String> listUserIdByShopIdList(@RequestBody List<String> shopIdList);
+    /**
+     * 增加用户店铺权限
+     * @description:
+     * @author zdy
+     * @date: 2025/5/27 9:35
+     * @param addUserShopAuthDTO
+     * @return List<String>
+     */
+    @PostMapping("feign/auth/addUserShopAuth")
+    void addUserShopAuth(@RequestBody AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO);
+    /**
+     * 增加用户仓库权限
+     * @description:
+     * @author zdy
+     * @date: 2025/5/27 9:35
+     * @param addUserWarehouseAuthDTO
+     * @return List<String>
+     */
+    @PostMapping("feign/auth/addUserWarehouseAuth")
+    void addUserWarehouseAuth(@RequestBody AuthUserWarehouseDTO.AddUserWarehouseAuthDTO addUserWarehouseAuthDTO);
 }
