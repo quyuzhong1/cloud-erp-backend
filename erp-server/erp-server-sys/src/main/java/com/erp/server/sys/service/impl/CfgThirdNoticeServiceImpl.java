@@ -75,6 +75,14 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgThirdNoticeDTO.AddDTO addDTO) {
+        String method = addDTO.getMethod();
+        if(Objects.equals(method,CfgThirdNoticeMethodEnum.SINGLE.getCode())){//通知方式：单条
+            //推送信息不能为空
+            if(CollUtil.isEmpty(addDTO.getPushMsgList())){
+                throw new ServiceException("推送信息不能为空");
+            }
+        }
+
         CfgThirdNoticeEntity cfgThirdNoticeEntity = new CfgThirdNoticeEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdNoticeEntity);
 
@@ -104,9 +112,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         //新增明细--推送信息
         List<CfgApproveSyncFieldMapEntity> fieldMapEntityList;
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addDTO.getPushMsgList();
-        if(CollUtil.isEmpty(pushMsgList)){
-            throw new ServiceException("推送信息不能为空");
-        }else{
+        if(CollUtil.isNotEmpty(pushMsgList)){
             int sort = 1;
             for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
                 noticeFieldMapDTO.setMainId(id);
@@ -116,7 +122,9 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             cfgApproveSyncFieldMapService.saveBatch(fieldMapEntityList);
         }
         //保存规则条件
-        cfgRuleConditionService.saveRuleCondition(id, addDTO.getConditionList(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
+        if(CollUtil.isNotEmpty(addDTO.getConditionList())){
+            cfgRuleConditionService.saveRuleCondition(id, addDTO.getConditionList(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
+        }
         return new BaseResultDTO.AddDTO(cfgThirdNoticeEntity.getId(), cfgThirdNoticeEntity.getId());
     }
 
@@ -126,6 +134,14 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgThirdNoticeDTO.UpdateDTO addOrUpdateDTO) {
+        String method = addOrUpdateDTO.getMethod();
+        if(Objects.equals(method,CfgThirdNoticeMethodEnum.SINGLE.getCode())){//通知方式：单条
+            //推送信息不能为空
+            if(CollUtil.isEmpty(addOrUpdateDTO.getPushMsgList())){
+                throw new ServiceException("推送信息不能为空");
+            }
+        }
+
         CfgThirdNoticeEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方通知配置"));
         CfgThirdNoticeEntity cfgThirdNoticeEntity =  BeanMapperUtils.map(CfgThirdNoticeEntity.class, addOrUpdateDTO);
@@ -160,9 +176,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         String id = addOrUpdateDTO.getId();
         //新增明细--推送信息
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addOrUpdateDTO.getPushMsgList();
-        if(CollUtil.isEmpty(pushMsgList)){
-            throw new ServiceException("推送信息不能为空");
-        }else{
+        if(CollUtil.isNotEmpty(pushMsgList)){
             int sort = 1;
             for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
                 noticeFieldMapDTO.setMainId(id);
