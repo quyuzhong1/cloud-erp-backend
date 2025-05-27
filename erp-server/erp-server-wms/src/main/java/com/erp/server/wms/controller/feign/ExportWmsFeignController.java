@@ -816,6 +816,10 @@ public class ExportWmsFeignController {
     }
 
     @PostMapping("/virtualInventory")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "vi.warehouse_id",
+            menuCode = "wms:virtualInventory:paging"
+    )
     @WebAdvanceQuery
     public PagingVO<VirtualInventoryDTO.ListDTO> getVirtualInventory(@RequestBody PagingDTO<VirtualInventoryDTO.SearchParamDTO> dto) {
         return virtualInventoryService.getVirtualInventory(dto);
