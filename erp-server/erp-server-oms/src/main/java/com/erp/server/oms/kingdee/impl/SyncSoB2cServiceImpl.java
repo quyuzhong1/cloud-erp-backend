@@ -481,7 +481,7 @@ public class SyncSoB2cServiceImpl implements SyncSoB2cService {
                 map.put("detailId", soB2cDetailEntity.getId());
                 map.put("operate", operate);
                 omsPushMsgEntity.setPushData(JSON.toJSONString(map));
-//                omsPushMsgService.save(omsPushMsgEntity);
+                omsPushMsgService.save(omsPushMsgEntity);
             }
         }
     }
