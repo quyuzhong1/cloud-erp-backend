@@ -1,8 +1,8 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.PlatformDeliveryDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
+import com.erp.model.wms.dto.AliexpressDeliveryProratedInfoDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
 import com.erp.model.wms.entity.AliexpressDeliveryEntity;
 
@@ -28,7 +28,7 @@ public interface AliexpressDeliveryDetailService extends SuperService<Aliexpress
      * @author lrp
      * @date: 2024-05-06
      */
-    Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> dto, AliexpressDeliveryEntity platformCode, List<PlatformDeliveryDTO> existDetailList);
+    Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> dto, AliexpressDeliveryEntity platformCode, List<AliexpressDeliveryProratedInfoDTO> existDetailList);
 
 
 

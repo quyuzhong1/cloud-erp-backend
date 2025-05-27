@@ -69,6 +69,10 @@ public class DmpInputAliExpressOrderDetailDmpHandler extends DmpInputAliExpressO
 								c.put("platformSkuId", child_order_ext_info_map.getOrDefault("sku_id",""));
 							}
 						}
+						Object orderStatusObj = c.getOrDefault("order_status", "");
+						if (null != orderStatusObj) {
+							c.put("platformStatus", orderStatusObj);
+						}
 
 						Object order_id = dmpInputMongoChild.get("order_id");
 						c.put("order_id", order_id);
