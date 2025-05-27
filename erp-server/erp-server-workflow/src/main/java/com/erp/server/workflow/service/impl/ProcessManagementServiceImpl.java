@@ -51,6 +51,7 @@ import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
+import com.erp.sdk.fs.enmu.FsActionStatusEnum;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.*;
 import io.netty.util.internal.StringUtil;
@@ -303,10 +304,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 保存流程数据失败
             throw new ServiceException(ApiError.ERROR_94004);
         }
-
-
-
-
         // 完成新增数据事务提交之后,发送MQ消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -316,14 +313,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setProcessManagementId(insertManagementEntity.getId());
                 mqDto.setBusinessName(insertManagementEntity.getBusinessName());
                 mqDto.setInstanceId(processInstanceId);
-                mqDto.setTaskId(taskId);
+//                mqDto.setTaskId(taskId);
                 mqDto.setOperator(dto.getUserId());
                 mqDto.setVariablesMap(dto.getVariablesMap());
                 mqDto.setBusinessKey(dto.getBusinessKey());
                 syncFsExternalInstance(mqDto);
             }
         });
-
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
@@ -441,7 +437,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setProcessManagementId(managementTask.getManagementId());
                 mqDto.setBusinessName(managementTask.getBusinessName());
                 mqDto.setInstanceId(processInstanceId);
-                mqDto.setTaskId(managementTask.getTaskId());
+//                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
                 mqDto.setVariablesMap(dto.getVariablesMap());
                 mqDto.setBusinessKey(dto.getBusinessKey());
@@ -730,6 +726,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         taskService.delegateTask(task.getId(), dto.getTargetUserId());
         // 更新流程任务数据
         processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), dto.getSourceUserId(), dto.getRemark());
+
+        //操作人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        // 完成新增数据事务提交之后,发送MQ消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                //判断该单据类型是否有ERP审批同步定义
+                CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                mqDto.setProcessManagementId(managementTask.getManagementId());
+                mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setInstanceId(managementTask.getProcessInstanceId());
+//                mqDto.setTaskId(managementTask.getTaskId());
+                mqDto.setOperator(userInfo.getUid());
+//                    mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setBusinessKey(managementTask.getBusinessKey());
+                mqDto.setApproveType(FsActionStatusEnum.FORWARDED.getCode());//转办
+                syncFsExternalInstance(mqDto);
+            }
+        });
         return Boolean.TRUE;
     }
 
@@ -798,7 +814,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setProcessManagementId(managementTask.getManagementId());
                 mqDto.setBusinessName(managementTask.getBusinessName());
                 mqDto.setInstanceId(processInstanceId);
-                mqDto.setTaskId(managementTask.getTaskId());
+//                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
                 mqDto.setVariablesMap(dto.getVariablesMap());
                 mqDto.setBusinessKey(dto.getBusinessKey());
@@ -1118,6 +1134,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             taskService.delegateTask(task.getId(), dto.getTargetUserId());
             // 更新流程任务数据
             processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), managementTask.getCurApproveId(), dto.getRemark());
+
+            //操作人
+            LoginUser userInfo = UserContext.getDefaultLoginUser();
+            // 完成新增数据事务提交之后,发送MQ消息
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+                @Override
+                public void afterCommit() {
+                    //判断该单据类型是否有ERP审批同步定义
+                    CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                    mqDto.setProcessManagementId(managementTask.getManagementId());
+                    mqDto.setBusinessName(managementTask.getBusinessName());
+                    mqDto.setInstanceId(managementTask.getProcessInstanceId());
+//                mqDto.setTaskId(managementTask.getTaskId());
+                    mqDto.setOperator(userInfo.getUid());
+//                    mqDto.setVariablesMap(dto.getVariablesMap());
+                    mqDto.setBusinessKey(managementTask.getBusinessKey());
+                    mqDto.setApproveType(FsActionStatusEnum.FORWARDED.getCode());//转办
+                    syncFsExternalInstance(mqDto);
+                }
+            });
         }
         return Boolean.TRUE;
     }
@@ -1196,7 +1232,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param dto
      * @return Boolean
      */
-    private Boolean callFeign(String businessKey, EndProcessDTO dto) {
+    @Override
+    public Boolean callFeign(String businessKey, EndProcessDTO dto) {
         WorkMenuEntity menuEntity = workMenuService.getByModuleCode(businessKey);
         String feignBeanName = menuEntity.getFeignBeanName();
         if (CharSequenceUtil.isBlank(feignBeanName)) {
@@ -1356,6 +1393,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         } catch (ProcessEngineException e) {
             throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
         }
+        //操作人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+
+        // 完成新增数据事务提交之后,发送MQ消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                //判断该单据类型是否有ERP审批同步定义
+                CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                mqDto.setProcessManagementId(entity.getId());
+                mqDto.setBusinessName(entity.getBusinessName());
+                mqDto.setInstanceId(entity.getProcessInstanceId());
+//                mqDto.setTaskId(managementTask.getTaskId());
+                mqDto.setOperator(userInfo.getUid());
+//                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setBusinessKey(entity.getBusinessKey());
+                mqDto.setApproveType(FsActionStatusEnum.PROCESSED.getCode());
+                syncFsExternalInstance(mqDto);
+            }
+        });
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.PASS);
     }
 
@@ -1409,6 +1466,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         } catch (ProcessEngineException e) {
             throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
         }
+
+        //操作人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        // 完成新增数据事务提交之后,发送MQ消息
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+            @Override
+            public void afterCommit() {
+                //判断该单据类型是否有ERP审批同步定义
+                CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
+                mqDto.setProcessManagementId(entity.getId());
+                mqDto.setBusinessName(entity.getBusinessName());
+                mqDto.setInstanceId(entity.getProcessInstanceId());
+//                mqDto.setTaskId(managementTask.getTaskId());
+                mqDto.setOperator(userInfo.getUid());
+//                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setBusinessKey(entity.getBusinessKey());
+                mqDto.setApproveType(FsActionStatusEnum.ROLLBACK.getCode());
+                syncFsExternalInstance(mqDto);
+            }
+        });
         return BatchResultDTO.success(entity.getId(), entity.getBusinessCode(), OperationTypeEnum.REJECT);
     }
 
