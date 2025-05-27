@@ -195,7 +195,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
 					}
 				}
 			}
-			Map<String, String> notChannelMaps = entitys.stream().filter(e -> StringUtils.isBlank(e.getChannelId()) || StringUtils.isNotBlank(e.getOutstockId())).collect(Collectors.toMap(LogisticsBillEntity::getId, LogisticsBillEntity::getOutstockId));
+			Map<String, String> notChannelMaps = entitys.stream().filter(e -> StringUtils.isBlank(e.getChannelId()) && StringUtils.isNotBlank(e.getOutstockId())).collect(Collectors.toMap(LogisticsBillEntity::getId, LogisticsBillEntity::getOutstockId));
 			if(CollUtil.isNotEmpty(notChannelMaps)) {
 				Map<String, SoOutstockEntity> idSoOutMaps = FeignQuery.getByIds(SoOutstockEntity.class, notChannelMaps.values()).stream().collect(Collectors.toMap(SoOutstockEntity::getId, s -> s));
 				for(Map.Entry<String, String> notChannelMap : notChannelMaps.entrySet()) {
