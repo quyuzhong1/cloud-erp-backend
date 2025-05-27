@@ -1887,7 +1887,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/soReturnInstockTemplate.xlsx";
+        String path = "excel/soReturnInstockTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -2026,6 +2026,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 } else {
                     addDetail.setWarehouseId(warehouseEntity.getId());
                 }
+                addDetail.setReturnTypeDict(ReturnTypeEnum.getCode(soReturnStockImportExcelDTO.getReturnType()));
                 //仓位信息
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(CharSequenceUtil.format("{}-{}",ObjectUtil.isEmpty(warehouseEntity) ? "" : warehouseEntity.getId(), soReturnStockImportExcelDTO.getWarehouseLocationName()));
                 if (ObjectUtil.isEmpty(warehouseLocationEntity) && CharSequenceUtil.isNotBlank(soReturnStockImportExcelDTO.getWarehouseLocationName())) {

@@ -94,4 +94,6 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
     List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(@Param("platform") String platform, @Param("authStatus") String authStatus, @Param("warehousePlatformType") String warehousePlatformType, @Param("disabled") Boolean disabled);
 
     Boolean estimateIsOutOfRangeDelivery(@Param("logisticsChannelId")String logisticsChannelId, @Param("country")String country, @Param("postCode")String postCode);
+
+    List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
 }

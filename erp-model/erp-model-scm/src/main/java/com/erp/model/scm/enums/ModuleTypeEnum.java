@@ -146,6 +146,7 @@ public enum ModuleTypeEnum {
     PROCESS_DELEGATE("125", "委托审批"),
     CFG_APPROVE_SYNC("126", "ERP审批同步配置"),
     CFG_PROCESS("127", "流程配置"),
+    CFG_RULE_INVOICE("126", "开票规则"),
     ;
 
 

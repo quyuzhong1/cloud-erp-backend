@@ -246,9 +246,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         List<InvoiceInfoEntity> existList = this.listBySoIds(Collections.singletonList(id));
         Map<String, List<CfgInvoiceSettingDetailEntity>> map = cfgInvoiceSettingDetailList.stream().collect(Collectors.groupingBy(CfgInvoiceSettingDetailEntity::getShopId));
 
-        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_GENERATE);
-        }
+//        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
+//            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_GENERATE);
+//        }
         //店铺
         List<CfgInvoiceSettingDetailEntity> invoiceSettingDetailList = map.get(soB2cEntity.getShopId());
         if (CollUtil.isEmpty(invoiceSettingDetailList)) {
@@ -269,9 +269,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.INVOICING.getCode());
         soB2cService.updateById(soB2cEntity);
 
-        //异步生成发票,调用第三方
-        nfeInvoiceService.createInvoice(soB2cEntity,isAsync);
-
+        SoB2cDTO.RuleResultDTO invoiceResult = soB2cService.invoiceRule(soB2cEntity);
+        if (invoiceResult.getIsPass()){
+            //异步生成发票,调用第三方
+            nfeInvoiceService.createInvoice(soB2cEntity,isAsync);
+        }else {
+            //不通过
+            throw new ServiceException("开票规则未匹配通过，开票失败");
+        }
         //添加日志
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】生成NF-e发票",soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), invoiceInfoEntity.getId(), "生成NF-e发票操作");
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票成功");

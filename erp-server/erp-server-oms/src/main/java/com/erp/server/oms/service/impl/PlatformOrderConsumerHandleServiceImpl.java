@@ -246,9 +246,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
      * @return void
      */
     private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
-        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
-            return;
-        }
+//        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
+//            return;
+//        }
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
         if (ObjUtil.isEmpty(invoiceSettingDetail)) {
             return;
