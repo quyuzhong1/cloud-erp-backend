@@ -78,7 +78,7 @@ public class CfgRuleInvoiceDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        private List<RuleConditionDTO.AddDTO> conditionList;
     }
 
     /**
@@ -93,7 +93,7 @@ public class CfgRuleInvoiceDTO implements Serializable {
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
-
+        private List<RuleConditionDTO.UpdateDTO> conditionList;
     }
 
     @Data

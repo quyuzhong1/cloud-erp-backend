@@ -50,7 +50,7 @@ public class CfgRuleInvoiceController extends BaseController {
     */
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "开票规则新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgRuleInvoiceDTO.AddDTO dto) {
+    public ApiResult<String> add(@RequestBody @Validated CfgRuleInvoiceDTO.AddDTO dto) {
         return success(cfgRuleInvoiceService.add(dto));
     }
 

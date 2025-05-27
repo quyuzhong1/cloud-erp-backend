@@ -25,7 +25,7 @@ public interface CfgRuleInvoiceService extends SuperService<CfgRuleInvoiceEntity
     * @param dto
     * @return
     */
-    BaseResultDTO.AddDTO add(CfgRuleInvoiceDTO.AddDTO dto);
+    String add(CfgRuleInvoiceDTO.AddDTO dto);
 
     /**
     * 修改
