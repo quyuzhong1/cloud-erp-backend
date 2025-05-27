@@ -40,8 +40,8 @@ public class WmsFirstMileDeliveryController {
      **/
     @PostMapping("/getGenerateLogisticDTO")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            shopTableField = "fd.shop_id",
-            warehouseTableField = "fd.delivery_warehouse_id,fd.dest_warehouse_id",
+            shopTableField = "fmd.shop_id",
+            warehouseTableField = "fmd.delivery_warehouse_id,fmd.dest_warehouse_id",
             menuCode = "wms:fbaDelivery:paging"
     )
     public List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(@RequestBody FirstMileDeliveryDTO.GenerateLogisticReqDTO dto) {
