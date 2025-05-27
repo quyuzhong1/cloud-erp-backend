@@ -44,7 +44,7 @@ public interface CfgProcessFieldMapService extends SuperService<CfgProcessFieldM
      * @param ruleId
      * @return
      */
-    List<CfgProcessFieldMapDTO.ViewDTO> view(String ruleId);
+    List<CfgProcessFieldMapDTO.ViewDTO> view(String ruleId,String type);
 
     /**
      * 删除

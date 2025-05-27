@@ -7,9 +7,11 @@ package com.erp.server.workflow.handler;
  */
 
 import cn.hutool.json.JSONArray;
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +26,7 @@ public interface ProcessFormHandler {
     /**
      * 构造流程表单结构
      */
-    JSONArray assemble(JSONArray formArray, Map<String,Object> variablesMap,List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
+    JSONArray assembleForm(JSONArray formArray, Map<String,Object> variablesMap,List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
 
     default boolean isMatch(String event) {
         return getEvent().name().equals(event);
@@ -32,4 +34,21 @@ public interface ProcessFormHandler {
 
     CfgProcessRuleTypeEnum getEvent();
 
+
+    /**
+     * 解析表单结构
+     */
+    List<CfgProcessFieldMapDTO.ViewDTO> parseForm(String formString);
+
+    /**
+     * 解析表单选项值
+     */
+    Map<String, Map<String, String>> parseFormValue(String formString);
+
+    /**
+     * 构造单据
+     */
+    Map<String, Object> constructBill(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
+
+    DictBasicEnum getEventType();
 }

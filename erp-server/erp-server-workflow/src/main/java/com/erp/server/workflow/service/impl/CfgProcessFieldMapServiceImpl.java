@@ -1,11 +1,8 @@
 package com.erp.server.workflow.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -16,10 +13,12 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessValueMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.context.ProcessFormFactory;
+import com.erp.server.workflow.handler.ProcessFormHandler;
 import com.erp.server.workflow.mapper.CfgProcessFieldMapMapper;
 import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -38,7 +37,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
-import org.springframework.web.servlet.View;
 
 import javax.annotation.Resource;
 
@@ -64,6 +62,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
     @Resource
     private FsService fsService;
+
+    @Resource
+    private ProcessFormFactory processFormFactory;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -128,17 +129,18 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     }
 
     @Override
-    public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId) {
+    public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId,String type) {
         try {
             GetApprovalResp approval = fsService.getApproval("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F");
             String formStr = JSONUtil.toJsonStr(approval.getData());
-            List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = parseForm(formStr);
+            ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(type).name());
+            List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = handler.parseForm(formStr);
             viewDTOList.forEach(e -> {
                 e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
             });
             return viewDTOList;
         } catch (Exception e) {
-            throw new ServiceException("获取指定飞书审批定义失败");
+            throw new ServiceException("获取指定飞书审批定义失败:{}",  e);
         }
     }
 
@@ -240,60 +242,4 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         return entitiesToAddOrUpdate;
     }
 
-    //解析form数据
-    public static List<CfgProcessFieldMapDTO.ViewDTO> parseForm(String formString) {
-        JSONObject root = JSONUtil.parseObj(formString);
-        String form = root.getStr(FsRequestBodyAttributesEnum.FORM.getCode());
-        JSONArray formArray = JSONUtil.parseArray(form);
-        List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = new ArrayList<>();
-        for (cn.hutool.json.JSONObject field : formArray.jsonIter()) {
-            CfgProcessFieldMapDTO.ViewDTO viewDTO = new CfgProcessFieldMapDTO.ViewDTO();
-            viewDTO.setThirdField("单据头-" + field.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
-            viewDTO.setThirdFieldType(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()));
-            viewDTO.setThirdFieldRequired(field.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
-            viewDTO.setThirdFieldId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode())); // 父级 fieldList 的 ID
-            viewDTO.setIsDetailField(false);
-            if (CfgQueryOptionFieldTypeEnum.FIELDLIST.getCode().equals(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()))) {
-                viewDTO.setIsDetailField(true);
-                JSONArray detailFields = field.getJSONArray(FsRequestBodyAttributesEnum.CHILDREN.getCode());
-
-                for (JSONObject detail : detailFields.jsonIter()) {
-                    CfgProcessFieldMapDTO.ViewDTO detailViewDTO = new CfgProcessFieldMapDTO.ViewDTO();
-                    detailViewDTO.setThirdField("单据明细-" + detail.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
-                    detailViewDTO.setThirdFieldType(detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()));
-                    detailViewDTO.setThirdFieldRequired(detail.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
-                    detailViewDTO.setThirdFieldId(detail.getStr(FsRequestBodyAttributesEnum.ID.getCode())); // 父级 fieldList 的 ID
-                    detailViewDTO.setIsDetailField(true);
-                    detailViewDTO.setParentId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
-                    //如果是金额类型，则添加一个币种的子元素
-                    if (detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())) {
-                        viewDTO.setIndex(1);
-                        //克隆一个对象
-                        CfgProcessFieldMapDTO.ViewDTO detailViewDTO2 = new CfgProcessFieldMapDTO.ViewDTO();
-                        BeanUtil.copyProperties(detailViewDTO, detailViewDTO2);
-                        detailViewDTO2.setThirdField(detailViewDTO2.getThirdField() + "币种");
-                        detailViewDTO2.setIndex(0);
-                        detailViewDTO2.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
-                        detailViewDTO2.setCfgType("sysCfg");
-                        viewDTOList.add(detailViewDTO2);
-                    }
-                    viewDTOList.add(detailViewDTO); // 将子元素直接添加到 viewDTOList
-                }
-                continue; // 跳过当前 viewDTO 的添加
-            }
-            // 如果当前 field 是金额类型，则添加一个币种的子元素
-            if (field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())) {
-                viewDTO.setIndex(1);
-                //克隆一个对象
-                CfgProcessFieldMapDTO.ViewDTO viewDTO2 = new CfgProcessFieldMapDTO.ViewDTO();
-                BeanUtil.copyProperties(viewDTO, viewDTO2);
-                viewDTO2.setThirdField(viewDTO2.getThirdField() + "币种");
-                viewDTO2.setIndex(0);
-                viewDTO2.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
-                viewDTOList.add(viewDTO2);
-            }
-            viewDTOList.add(viewDTO);
-        }
-        return viewDTOList;
-    }
 }

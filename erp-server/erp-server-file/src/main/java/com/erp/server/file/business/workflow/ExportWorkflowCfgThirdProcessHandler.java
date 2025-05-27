@@ -17,7 +17,7 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_THIRD_PROCESS;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_THIRD_PROCESS;
 
 /**
  *@Author: hcg
@@ -50,6 +50,6 @@ public class ExportWorkflowCfgThirdProcessHandler extends AbstractPageFileEventH
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_THIRD_PROCESS;
+        return EXPORT_PROCESS_THIRD_PROCESS;
     }
 }
