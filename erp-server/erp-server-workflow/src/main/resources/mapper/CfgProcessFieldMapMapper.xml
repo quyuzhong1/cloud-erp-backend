@@ -26,6 +26,7 @@
         <result column="third_field_id" property="thirdFieldId"/>
         <result column="is_detail_field" property="isDetailField"/>
         <result column="parent_id" property="parentId"/>
+        <result column="index" property="index"/>
     </resultMap>
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
@@ -39,6 +40,6 @@
         version,
         is_deleted,
         third_field, third_field_type, third_field_required, sys_field, sys_field_type, sys_field_required, cfg_id, default_value,
-        is_unique, cfg_type, process_definition_id,  third_field_id, is_detail_field, parent_id
+        is_unique, cfg_type, process_definition_id,  third_field_id, is_detail_field, parent_id,index
     </sql>
 </mapper>

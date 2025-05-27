@@ -415,7 +415,7 @@ public class CfgApproveSyncDTO implements Serializable {
         //实例id
         private String instanceId;
         //任务id
-        private String taskId;
+//        private String taskId;
         //流程操作人（创建人、审批人）
         private String operator;
         //流程类型

@@ -83,7 +83,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private Boolean isUnique;
 
         /**
-        * 配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置
+        * 配置类型：sysCfg:系统字段配置、fsCfg:飞书字段配置
         */
         private String cfgType;
 
@@ -106,6 +106,11 @@ public class CfgProcessFieldMapDTO implements Serializable {
          * 第三方字段所属明细控件id
          */
         private String parentId;
+
+        /**
+         * 排序字段
+         */
+        private int index;
 
         /**
          * thirdFieldTypeName
@@ -178,13 +183,6 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private Boolean thirdFieldRequired;
 
         /**
-        * 第三方字段说明：description
-        */
-        @NotBlank(message = "第三方字段说明：description不能为空")
-        @Size(max = 100,message = "第三方字段说明：description最大长度不能超过100位")
-        private String thirdFieldDescription;
-
-        /**
         * 数大臣字段
         */
         @NotBlank(message = "数大臣字段不能为空")
@@ -214,7 +212,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
         * 默认值
         */
-        @Size(max = 30,message = "默认值最大长度不能超过30位")
+        @Size(max = 255,message = "默认值最大长度不能超过30位")
         private String defaultValue;
 
         /**
@@ -224,9 +222,9 @@ public class CfgProcessFieldMapDTO implements Serializable {
         private Boolean isUnique;
 
         /**
-        * 配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置
+        * 配置类型：sysCfg:系统字段配置、fsCfg:飞书字段配置
         */
-        @Size(max = 30,message = "配置类型：sysCfg:系统字段配置、thirdCfg:飞书字段配置最大长度不能超过30位")
+        @Size(max = 30,message = "配置类型：sysCfg:系统字段配置、fsCfg:飞书字段配置最大长度不能超过30位")
         private String cfgType;
 
         /**
@@ -254,6 +252,12 @@ public class CfgProcessFieldMapDTO implements Serializable {
          */
         @Size(max = 255,message = "父控件id最大长度不能超过255位")
         private String parentId;
+
+        /**
+         * 排序
+         */
+        @Size(max = 255,message = "排序最大长度不能超过255位")
+        private int index;
     }
 
 

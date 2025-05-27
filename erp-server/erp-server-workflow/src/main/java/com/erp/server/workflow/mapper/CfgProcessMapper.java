@@ -1,4 +1,5 @@
 package com.erp.server.workflow.mapper;
+
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.workflow.dto.CfgProcessDTO;
@@ -22,14 +23,15 @@ import java.util.List;
  */
 @Mapper
 public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
-      /**
-       * @description: 高级查询流程配置
-       * @author: hcg
-       * @date: 2025/5/12 17:45
-       * @param: query, params
-       * @return: CfgProcessDTO.ListDTO
-       **/
+    /**
+     * @description: 高级查询流程配置
+     * @author: hcg
+     * @date: 2025/5/12 17:45
+     * @param: query, params
+     * @return: CfgProcessDTO.ListDTO
+     **/
     IPage<CfgProcessDTO.ProcessViewDTO> getProcessWithRuleAndAggregatedExps(Page query, @Param("params") CfgProcessDTO.SearchParamDTO params);
+
     /**
      * @description: view
      * @author: hcg
@@ -39,6 +41,14 @@ public interface CfgProcessMapper extends BaseMapper<CfgProcessEntity> {
      **/
     CfgProcessDTO.ViewDTO getViewDTOById(String id);
 
+    /**
+     * 高级查询tab
+     *
+     * @param params
+     * @return
+     * @author hcg
+     * @date: 2025-05-12
+     */
     List<CfgProcessDTO.TabListDTO> tabList(@Param("params") CfgProcessDTO.SearchParamDTO params);
 
 }

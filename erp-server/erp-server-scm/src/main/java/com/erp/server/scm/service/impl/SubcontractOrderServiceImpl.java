@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -1277,7 +1278,7 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getPrice(),obj.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
@@ -1287,6 +1288,19 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
         //总计采购数量
         Integer qtyTotal = detailList.stream().map(SubcontractOrderDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
+
+        //存在加急
+        Boolean isUrgent = detailList.stream().anyMatch(SubcontractOrderDetailEntity::getIsUrgent);
+        variablesMap.put("isUrgent", isUrgent);
+        //存在赠品
+        Boolean isGift = detailList.stream().anyMatch(SubcontractOrderDetailEntity::getIsGift);
+        variablesMap.put("isGift", isGift);
+        //SKU
+        String skuNo = detailList.stream().map(SubcontractOrderDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
+        //供应商Id
+        String supplierId = detailList.stream().map(SubcontractOrderDetailEntity::getSupplierId).collect(Collectors.joining(","));
+        variablesMap.put("supplierId", supplierId);
         return variablesMap;
     }
 

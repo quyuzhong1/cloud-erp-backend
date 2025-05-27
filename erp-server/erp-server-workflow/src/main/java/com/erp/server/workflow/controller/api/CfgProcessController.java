@@ -7,10 +7,12 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogViewService;
 import com.erp.model.workflow.entity.CfgProcessEntity;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.server.workflow.handler.CfgProcessQueryHandler;
 import com.erp.server.workflow.service.CfgProcessRuleService;
+import com.erp.server.workflow.service.CfgThirdProcessService;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
@@ -97,6 +99,12 @@ public class CfgProcessController extends BaseController {
      * @return: CfgInvoiceSettingDTO.ViewDTO
      **/
     @GetMapping("/view")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "workflow:cfgProcess:view",
+            serviceClass = CfgThirdProcessService.class,
+            keyIdName = "settingId")
+    @LogViewService
     public ApiResult<CfgProcessDTO.ViewDTO> view(@RequestParam(value = "settingId") String settingId) {
         return success(cfgProcessService.view(settingId));
     }

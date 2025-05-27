@@ -23,7 +23,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_CFG_PROCESS;
  */
 @Component
 @Slf4j
-public class ExportCFGProcessHandler extends AbstractPageFileEventHandler<CfgProcessDTO.ProcessViewDTO, CfgProcessDTO.SearchParamDTO> {
+public class ExportWorkflowCfgProcessHandler extends AbstractPageFileEventHandler<CfgProcessDTO.ProcessViewDTO, CfgProcessDTO.SearchParamDTO> {
     @Resource
     private ExportWorkflowFeign exportWorkflowFeign;
 

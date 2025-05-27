@@ -14,7 +14,7 @@ public interface ExportWorkflowFeign {
     @PostMapping("/feign/export/processDefinition")
     PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto);
     @PostMapping("/feign/export/processManagement")
-    PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(@RequestBody PagingDTO<ProcessManagementDTO.ExportDTO> dto);
+    PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(@RequestBody PagingDTO<ProcessManagementDTO.SearchDTO> dto);
     /**
      * 委托审批导出
      * @author will 
@@ -30,4 +30,16 @@ public interface ExportWorkflowFeign {
 
     @PostMapping("/feign/export/exportCfgProcess")
     PagingVO<CfgProcessDTO.ProcessViewDTO> exportCfgProcess(PagingDTO<CfgProcessDTO.SearchParamDTO> dto);
+
+    @PostMapping("/feign/export/exportCfgThirdProcess")
+    PagingVO<CfgThirdProcessDTO.ListDTO> exportCfgThirdProcess(PagingDTO<CfgThirdProcessDTO.PagingParamDTO> dto);
+    /**
+     * 第三方查询导出
+     * @author will
+     * @date 2025/5/27 11:25
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
+    @PostMapping("/feign/export/exportApproveTaskInfo")
+    PagingVO<ApproveTaskInfoDTO.ListDTO> exportApproveTaskInfo(PagingDTO<ApproveTaskInfoDTO.PagingParamDTO> dto);
 }

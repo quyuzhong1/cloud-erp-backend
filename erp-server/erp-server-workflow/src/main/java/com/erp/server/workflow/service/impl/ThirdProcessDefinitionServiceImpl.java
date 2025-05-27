@@ -91,11 +91,11 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     }
 
     @Override
-    public List<ThirdProcessDefinitionDTO.DropDownDTO> dropDown() {
+    public List<ThirdProcessDefinitionDTO.DropDownDTO> dropDown(String type) {
         //1、定时拉取获取定义状态
         //2、保存启动条件时验证定义状态
         List<ThirdProcessDefinitionEntity> thirdProcessDefinitionEntities = this.list(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode())
-                .eq(ThirdProcessDefinitionEntity::getType, ThirdProcessDefinitionTypeEnum.PUSH.getCode()).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+                .eq(ThirdProcessDefinitionEntity::getType, type).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         //stream遍历thirdProcessDefinitionEntities 处理entity
         List<ThirdProcessDefinitionDTO.DropDownDTO> dropDownDTOS = thirdProcessDefinitionEntities.stream().map(thirdProcessDefinitionEntity -> {
             ThirdProcessDefinitionDTO.DropDownDTO dropDownDTO = new ThirdProcessDefinitionDTO.DropDownDTO();

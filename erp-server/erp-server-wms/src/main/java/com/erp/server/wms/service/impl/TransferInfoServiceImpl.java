@@ -13,6 +13,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -618,7 +619,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
         approveDTO.setComment(comment);
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
@@ -629,6 +630,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             approveEnd(entity, type, comment, isSyncKingDee);
         }
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -2092,10 +2094,19 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_99048);
         }
-        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
-        //总计数量
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        //调拨总数
         Integer qtyTotal = detailList.stream().map(TransferInfoDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("qtyTotal", qtyTotal);
+        //调入仓库
+        String inWarehouseId = detailList.stream().map(TransferInfoDetailEntity::getInWarehouseId).collect(Collectors.joining(","));
+        variablesMap.put("inWarehouseId", inWarehouseId);
+        //调出仓库
+        String outWarehouseId = detailList.stream().map(TransferInfoDetailEntity::getOutWarehouseId).collect(Collectors.joining(","));
+        variablesMap.put("outWarehouseId", outWarehouseId);
+        //SKU
+        String skuNo = detailList.stream().map(TransferInfoDetailEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
         return variablesMap;
     }
 }

@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-05-13 09:43:58
  */
 public enum CfgProcessRuleTypeEnum implements EnumMessage {
-	ERPPROGRESS("erpProcess", "ERP流程"),
-	FSPROGRESS("fsProcess", "飞书流程"),
+	ERPPROCESS("erpProcess", "ERP流程"),
+	FSPROCESS("fsProcess", "飞书流程"),
     ;
     /**
      * 类型
@@ -52,5 +52,17 @@ public enum CfgProcessRuleTypeEnum implements EnumMessage {
             }
         }
         return "";
+    }
+
+    public static CfgProcessRuleTypeEnum getByCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
+        for (CfgProcessRuleTypeEnum statusEnum : CfgProcessRuleTypeEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum;
+            }
+        }
+        return null;
     }
 }

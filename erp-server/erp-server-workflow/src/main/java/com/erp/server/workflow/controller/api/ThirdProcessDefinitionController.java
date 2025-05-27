@@ -70,12 +70,13 @@ public class ThirdProcessDefinitionController extends BaseController {
     }
 
     /**
-     * 飞书流程对应的流程名称
+     * 飞书流程下拉（name：value）
+     * type = push  or pull
      * @return
      */
     @GetMapping("/drop/down")
     @LogAction(value = LogActionEnum.UPDATE, desc = "三方审批定义")
-    public ApiResult<List<ThirdProcessDefinitionDTO.DropDownDTO>> dropDown() {
-        return success(thirdProcessDefinitionService.dropDown());
+    public ApiResult<List<ThirdProcessDefinitionDTO.DropDownDTO>> dropDown(@RequestParam("type") @Validated String type) {
+        return success(thirdProcessDefinitionService.dropDown(type));
     }
 }

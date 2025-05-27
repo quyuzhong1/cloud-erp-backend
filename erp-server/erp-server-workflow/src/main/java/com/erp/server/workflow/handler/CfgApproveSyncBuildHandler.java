@@ -65,7 +65,7 @@ public class CfgApproveSyncBuildHandler {
         //process_task_management表id
         String processManagementId = mqDto.getProcessManagementId();
         //任务id
-        String taskId = mqDto.getTaskId();
+//        String taskId = mqDto.getTaskId();
         //实例id
         String instanceId = mqDto.getInstanceId();
         //创建人id

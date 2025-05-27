@@ -1,6 +1,7 @@
 package com.erp.server.plm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -410,6 +411,14 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             //总计数量
             variablesMap.put("createDeptId", findUserDTO.getDepartmentId());
         }
+        List<BomSkuEntity> bomList = bomSkuService.listBomSkuByBomId(entity.getId());
+        if (CollUtil.isEmpty(bomList)) {
+            throw new ServiceException(ApiError.ERROR_95095);
+        }
+        String parentSkuNo = bomList.stream().map(BomSkuEntity::getParentSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("parentSkuNo", parentSkuNo);
+        String skuNo = bomList.stream().map(BomSkuEntity::getSkuNo).collect(Collectors.joining(","));
+        variablesMap.put("skuNo", skuNo);
         return variablesMap;
     }
 

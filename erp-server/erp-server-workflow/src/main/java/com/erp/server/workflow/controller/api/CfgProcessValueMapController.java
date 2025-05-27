@@ -32,38 +32,6 @@ public class CfgProcessValueMapController extends BaseController {
     private CfgProcessValueMapService cfgProcessValueMapService;
 
     /**
-     * 新增
-     * @author hcg
-     * @date: 2025-05-12
-     * @param dto
-     * @return ApiResult<String>
-     */
-//    @PostMapping("/add")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "流程设置值映射新增")
-//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated List<CfgProcessValueMapDTO.AddOrUpdateDTO> dto) {
-//        return success(cfgProcessValueMapService.addOrUpdate(dto));
-//    }
-
-    /**
-     * 修改
-     * @author hcg
-     * @date: 2025-05-12
-     * @param dto
-     * @return ApiResult
-     */
-//    @PostMapping("/update")
-//    @LogAction(value = LogActionEnum.UPDATE, desc = "流程设置值映射修改")
-//        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//        tableField = "create_user_id",
-//        menuCode = "workflow:cfgProcessValueMap:update",
-//        serviceClass = CfgProcessValueMapService.class,
-//        keyIdName = "id")
-//    public ApiResult<?> update(@RequestBody @Validated CfgProcessValueMapDTO.UpdateDTO dto) {
-//        cfgProcessValueMapService.update(dto);
-//        return success();
-//    }
-
-    /**
      * 值映射详情
      *
      * @description:

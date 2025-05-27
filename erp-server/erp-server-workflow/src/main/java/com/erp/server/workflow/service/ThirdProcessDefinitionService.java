@@ -35,5 +35,5 @@ public interface ThirdProcessDefinitionService extends SuperService<ThirdProcess
     Boolean update(ThirdProcessDefinitionDTO.UpdateDTO dto);
 
 
-    List<ThirdProcessDefinitionDTO.DropDownDTO> dropDown();
+    List<ThirdProcessDefinitionDTO.DropDownDTO> dropDown(String type);
 }

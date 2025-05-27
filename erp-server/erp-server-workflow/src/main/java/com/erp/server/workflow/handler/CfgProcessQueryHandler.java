@@ -34,6 +34,5 @@ public class CfgProcessQueryHandler extends AbstractQueryHandler {
             return "";
         }
         return null;
-    }{
     }
 }

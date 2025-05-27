@@ -1,11 +1,11 @@
 package com.erp.model.workflow.dto;
 
-import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 /**
@@ -30,6 +30,12 @@ public class ProcessDTO {
          */
         @NotBlank(message = "流程定义ID不能为空")
         private String processDefinitionId;
+
+        /**
+         * 流程版本
+         */
+        @NotNull(message = "流程版本不能为空")
+        private Integer processVersion;
     }
 
     /**

@@ -287,7 +287,7 @@ public enum SourceTypeEnum {
 
     public static String getName(String type) {
         for (SourceTypeEnum sourceTypeEnum : SourceTypeEnum.values()) {
-            if (type.equals(sourceTypeEnum.getCode())) {
+            if (sourceTypeEnum.getCode().equals(type)) {
                 return sourceTypeEnum.getName();
             }
         }

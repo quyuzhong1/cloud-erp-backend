@@ -61,55 +61,70 @@
     </sql>
 
     <sql id="List_Process_Management">
-        SELECT
-            ptm.id,
-            pm.id as managementId,
-            pm.process_instance_id,
-            pm.process_definition_id,
-            pm.process_version ,
-            pm.process_status ,
-            pd.process_name ,
-            pm.business_id ,
-            pm.business_code ,
-            pm.business_name ,
-            pm.business_key,
-            pm.act_process_definition_id ,
-            ptm.cur_approve_id ,
-            ptm.cur_activity_id,
-            ptm.cur_activity_name,
-            ptm.task_id,
-            ptm.task_status,
-            ptm.cur_approve_name AS cur_approve_name,
-            concat(wm.detail_url,pm.business_id) as detail_url,
-            pm.create_time as createTime,
-            pm.update_time as updateTime,
-            ptm.label_json,
-            ptm.approve_time,
-            pm.end_time
-        FROM process_task_management AS ptm
-                 LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
-                 LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
-                 LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
-        where ${param.sqlMap.default} and ptm.is_deleted = false
-          <if test="null != param and null != param.processName and param.processName != ''">
-              and pd.process_name ilike concat('%', #{param.processName}::text,'%')
-          </if>
-          <if test="null != param and null != param.businessNames and param.businessNames.size() > 0">
-              and pm.business_name in
-              <foreach collection="param.businessNames" item="businessName" open="(" separator="," close=")">
-                  #{businessName}
-              </foreach>
-          </if>
-          <if test="null != param and null != param.processVersion">
-              and pm.process_version = #{param.processVersion}
-          </if>
-          <if test="null != param and null != param.processStatus and param.processStatus.size() > 0">
-          and pm.process_status in
-            <foreach collection="param.processStatus" item="processStatus" open="(" separator="," close=")">
-                #{processStatus}
-            </foreach>
-          </if>
-
+       select * from (
+           SELECT
+                ptm.id,
+                pm.id as managementId,
+                pm.process_instance_id,
+                pm.process_definition_id,
+                pm.process_version ,
+                pm.process_status ,
+                pm.process_name ,
+                pm.business_id ,
+                pm.business_code ,
+                pm.business_name ,
+                pm.business_key,
+                pm.act_process_definition_id ,
+                ptm.cur_approve_id ,
+                ptm.cur_activity_id,
+                ptm.cur_activity_name,
+                ptm.task_id,
+                ptm.task_status,
+                ptm.cur_approve_name AS cur_approve_name,
+                concat(wm.detail_url,pm.business_id) as detail_url,
+                pm.create_time as createTime,
+                pm.update_time as updateTime,
+                ptm.label_json,
+                ptm.approve_time,
+                pm.end_time,
+                'erp' as sourcePlatform
+            FROM process_task_management AS ptm
+             LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
+             LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
+             LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
+            where  ptm.is_deleted = false
+            union all
+            select
+                tptm.id,
+                tpm.id as managementId,
+                tpm.process_instance_id,
+                tpm.process_definition_id,
+                null as process_version ,
+                tpm.status as process_status ,
+                tpm.process_instance_name as process_name ,
+                tpm.business_id ,
+                tpm.business_code ,
+                '' as business_name ,
+                tpm.business_key,
+                '' as act_process_definition_id ,
+                tptm.sys_user_id as cur_approve_id ,
+                tptm.node_id as  cur_activity_id,
+                tptm.node_name as cur_activity_name,
+                tptm.task_id,
+                tptm.task_status,
+                '' AS cur_approve_name,
+                '' as detail_url,
+                tpm.create_time as createTime,
+                tpm.update_time as updateTime,
+                null as label_json,
+                case when tptm.task_status = 'approve' then tptm.end_time else null end as approve_time,
+                tpm.end_time,
+                'fs' as sourcePlatform
+            from third_process_task_management tptm
+            inner join third_process_management tpm on tptm.main_id = tpm.id and tpm.is_deleted = false
+            where tptm.is_deleted = false
+            ) pp
+        where ${param.sqlMap.default} order by pp.createTime desc
     </sql>
 
     <select id="getTaskByBusiness"
@@ -152,19 +167,8 @@
 
     <select id="paging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
        <include refid="List_Process_Management"/>
-        order by ptm.create_time desc
     </select>
 
-    <select id="export" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$PagingResultDTO">
-        <include refid="List_Process_Management"/>
-        <if test="null != param.ids and param.ids.size() > 0">
-            and ptm.id in
-            <foreach collection="param.ids" item="id" open="(" separator="," close=")">
-                #{id}
-            </foreach>
-        </if>
-        order by ptm.create_time desc
-    </select>
     <select id="listProcessTaskByIds"
             resultType="com.erp.model.workflow.dto.ProcessManagementDTO$ManagementTaskDTO">
         <include refid="Get_Task_Management"/>

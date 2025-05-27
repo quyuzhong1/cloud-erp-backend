@@ -13,6 +13,7 @@ import com.common.core.utils.HttpCommonUtil;
 import com.common.core.utils.OkHttpUtils;
 import com.erp.model.sys.dto.FindThirdUserDTO;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.FsBotParamsDTO;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.model.workflow.enums.LocaleEnum;
@@ -853,119 +854,28 @@ public class FsService {
 
 
     public static void main(String[] args) throws Exception {
-        //测试
-//        Client client = Client.newBuilder("cli_a885904d16b5500e","U3pYsRdP7HTIpkolUjJol5cHtl12eoLu")
-//                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
-//                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
-//                .build();
-        //生产
-        Client client = Client.newBuilder("cli_a2c644b09af9500d","VJJKhsIg05R8HgO2JJgbteYvwDb5325z")
-                .requestTimeout(3, TimeUnit.SECONDS) // 设置httpclient 超时时间，默认永不超时
-                .logReqAtDebug(true) // 在 debug 模式下会打印 http 请求和响应的 headers、body 等信息。.build();
-                .build();
+        // 构建client
+        Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
 
         // 创建请求对象
-        GetExternalApprovalReq req = GetExternalApprovalReq.newBuilder()
-                .approvalCode("0F625108-DBA7-4B25-B85D-0BBE76CD8ABC")
+        GetApprovalReq req = GetApprovalReq.newBuilder()
+                .approvalCode("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F")
+                .locale("zh-CN")
+                .withAdminId(false)
                 .userIdType("open_id")
                 .build();
 
         // 发起请求
-        GetExternalApprovalResp resp = client.approval().v4().externalApproval().get(req);
+        GetApprovalResp resp = client.approval().v4().approval().get(req);
 
         // 处理服务端错误
         if (!resp.success()) {
             System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
                     resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
-            return;
+            throw new ServiceException(resp.getMsg());
         }
-
         // 业务数据处理
         System.out.println(Jsons.DEFAULT.toJson(resp.getData()));
-
-
-        //获取飞书的应用token
-        String tenantAccessToken = "t-g1045kfvYHJRRUTZTSVO7PHDERHSD36Y6FI3ZCU6";
-
-        if (StringUtils.isNotBlank(tenantAccessToken)) {
-            Map<String, String> headerMap = new HashMap<>();
-            String authorization = FS_AUTHORIZATION + tenantAccessToken;
-            headerMap.put(AUTHORIZATION, authorization);
-            headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
-            Map<String, Object> bodyMap = new HashMap<>();
-            bodyMap.put("template_id", 1008);
-            bodyMap.put("user_id", "1319c76g");
-            bodyMap.put("approval_name", "@i18n@approvalName");
-            bodyMap.put("title_user_id", "1319c76g");
-            bodyMap.put("title_user_id_type ", UserIdTypeEnum.USERID.getCode());
-
-            Map<String, Object> contentMap = new HashMap<>();
-            List<Map<String, String>> summaries = new ArrayList<>();
-            Map<String, String> summaryMap1 = new HashMap<>();
-            summaryMap1.put("summary", "@i18n@summary1");
-            summaries.add(summaryMap1);
-
-            contentMap.put("user_id", "1319c76g");
-            contentMap.put("user_id_type", UserIdTypeEnum.USERID.getCode());
-            contentMap.put("summaries", summaries);
-            bodyMap.put("content", contentMap);
-
-            List<Map<String, Object>> i18nResources = new ArrayList<>();
-            Map<String, Object> i18nResourcesMap1 = new HashMap<>();
-            Map<String, String> i18nResourcesTextMap1 = new HashMap<>();
-            i18nResourcesTextMap1.put("@i18n@approvalName", "试产量产单");
-            i18nResourcesTextMap1.put("@i18n@summary1", "SCLC250520000002");
-            i18nResourcesTextMap1.put("@i18n@actionName", "拒绝");
-            i18nResourcesMap1.put("locale", LocaleEnum.LOCALE_ZH_CN.getCode());
-            i18nResourcesMap1.put("is_default", true);
-            i18nResourcesMap1.put("texts", i18nResourcesTextMap1);
-            i18nResources.add(i18nResourcesMap1);
-            bodyMap.put("i18n_resources", i18nResources);
-
-            List<Map<String, Object>> actions = new ArrayList<>();
-            Map<String, Object> actionsMap1 = new HashMap<>();
-            actionsMap1.put("action_name", "DETAIL");
-            actionsMap1.put("url", "https://erptest.ulanzi.cn:8030/zh-cn/dashboard?metaTitle=首页");
-            actionsMap1.put("android_url", "https://erptest.ulanzi.cn:8030/zh-cn/dashboard?metaTitle=首页");
-            actionsMap1.put("ios_url", "https://erptest.ulanzi.cn:8030/zh-cn/dashboard?metaTitle=首页");
-            actionsMap1.put("pc_url", "https://erptest.ulanzi.cn:8030/zh-cn/dashboard?metaTitle=首页");
-            actions.add(actionsMap1);
-            bodyMap.put("actions", actions);
-
-            List<Map<String, Object>> actionConfigs = new ArrayList<>();
-            Map<String, Object> actionConfigMap1 = new HashMap<>();
-            actionConfigMap1.put("action_type", "APPROVE");
-            actionConfigMap1.put("is_need_reason", true);
-            actionConfigMap1.put("is_reason_required", true);
-            actionConfigMap1.put("is_need_attachment", true);
-            actionConfigMap1.put("next_status", "APPROVED");
-            actionConfigs.add(actionConfigMap1);
-
-            Map<String, Object> actionConfigMap2 = new HashMap<>();
-            actionConfigMap2.put("action_type", "REJECT");
-            actionConfigMap2.put("action_name", "@i18n@actionName");
-            actionConfigMap2.put("next_status", "REJECTED");
-            actionConfigs.add(actionConfigMap2);
-            bodyMap.put("action_configs", actionConfigs);
-
-
-            Map<String, Object> actionCallbackMap = new HashMap<>();
-            actionCallbackMap.put("action_callback_url", "http://feish.cn/approval/openapi/operate");
-            actionCallbackMap.put("action_callback_token", "sdjkljkx9lsadf110");
-            actionCallbackMap.put("action_callback_key", "gfdqedvsadfgfsd");
-            actionCallbackMap.put("action_context", "acasdasd");
-            bodyMap.put("action_callback", actionCallbackMap);
-
-            //7506438417787551772
-            String jsonString = JSONObject.toJSONString(bodyMap);
-            System.out.println("bodyMap ===" + jsonString);
-            String resultStr = OkHttpUtils.doPostJson(ThirdConstants.FS_APPROVE_MESSAGE_SEND_URL, bodyMap, headerMap);
-            Map<String, Object> resultMap = JSON.parseObject(resultStr, Map.class);
-            if (resultMap != null && resultMap.containsKey("code")) {
-                Integer code = (Integer) resultMap.get("code");
-                int succeedCode = 0;
-            }
-        }
     }
 
     /**

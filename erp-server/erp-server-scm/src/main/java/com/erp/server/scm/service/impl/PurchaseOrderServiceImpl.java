@@ -16,6 +16,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.*;
@@ -1849,7 +1850,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        variablesMap.put("detailList", BeanUtil.copyToList(detailList,Map.class));
+        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(),obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
@@ -1859,6 +1860,15 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         //总计采购数量
         Integer purchaseQtyTotal = detailList.stream().map(PurchaseOrderDetailEntity::getPurchaseQty).reduce(MathUtil.ZERO, Integer::sum);
         variablesMap.put("purchaseQtyTotal", purchaseQtyTotal);
+        //存在加急
+        Boolean isUrgent = detailList.stream().anyMatch(PurchaseOrderDetailEntity::getIsUrgent);
+        variablesMap.put("isUrgent", isUrgent);
+        //存在赠品
+        Boolean isGift = detailList.stream().anyMatch(PurchaseOrderDetailEntity::getIsGift);
+        variablesMap.put("isGift", isGift);
+        //新品首批
+        String firstMassProduct = detailList.stream().map(PurchaseOrderDetailEntity::getFirstMassProduct).collect(Collectors.joining(","));
+        variablesMap.put("firstMassProduct", firstMassProduct);
         return variablesMap;
     }
 

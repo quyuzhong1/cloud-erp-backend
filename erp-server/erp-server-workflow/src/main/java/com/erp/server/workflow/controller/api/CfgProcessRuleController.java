@@ -41,18 +41,6 @@ public class CfgProcessRuleController extends BaseController {
     private CfgProcessRuleService cfgProcessRuleService;
 
     /**
-     * 新增
-     * @author hcg
-     * @date: 2025-05-13
-     * @param dto
-     * @return ApiResult<String>
-     */
-//    @PostMapping("/add")
-//    @LogAction(value = LogActionEnum.INSERT, desc = "流程设置执行条件新增")
-//    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated List<CfgProcessRuleDTO.AddOrUpdateDTO> dto) {
-//        return success(cfgProcessRuleService.addOrUpdate(dto));
-//    }
-    /**
      * 执行条件更新默认
      *
      * @param dto
