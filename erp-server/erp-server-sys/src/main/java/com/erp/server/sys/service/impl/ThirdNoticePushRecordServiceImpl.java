@@ -6,12 +6,17 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+import com.erp.model.sys.entity.CfgApproveSyncFieldMapEntity;
+import com.erp.model.sys.entity.CfgThirdNoticeEntity;
 import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeTypeEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
@@ -102,6 +107,15 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     @Override
     public void exportList(ThirdNoticePushRecordDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("三方通知推送记录导出", EXPORT_SYS_THIRD_NOTICE_RECORD.getCode(), param);
+    }
+
+
+    @Override
+    public BatchResultDTO repush(String id) {
+        ThirdNoticePushRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方通知推送记录数据"));
+
+
+        return BatchResultDTO.success(entity.getId(), entity.getId(), "");
     }
 
 }
