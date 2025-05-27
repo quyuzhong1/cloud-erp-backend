@@ -135,16 +135,4 @@ public class AliexpressDeliveryEntity extends BaseEntity<AliexpressDeliveryEntit
 
     public static final String WAREHOUSE_NAME = "warehouse_name";
 
-    /**
-     * 发货单分摊金额
-     */
-    public static BigDecimal calculateDeliveryProratedAmount(BigDecimal targetProratedAmount, BigDecimal actualAmount, BigDecimal detailActualAmount) {
-        if (actualAmount.compareTo(BigDecimal.ZERO) == 0){
-            return BigDecimal.ZERO;
-        }
-        // 当前发货税后金额
-        return targetProratedAmount.multiply(detailActualAmount)
-                .divide(actualAmount, 4, RoundingMode.DOWN);
-    }
-
 }

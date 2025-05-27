@@ -223,6 +223,8 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                     detailAddDTO.setPlatformSkuId(detailDTO.getPlatformSkuId());
                     // 平台产品ID
                     detailAddDTO.setPlatformSpuNo(detailDTO.getPlatformSpuNo());
+                    // 平台销售订单明细状态
+                    detailAddDTO.setOrderDetailPlatformStatus(detailDTO.getOrderDetailPlatformStatus());
                     detailAddList.add(detailAddDTO);
                 }
             }
