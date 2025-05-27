@@ -64,4 +64,6 @@ public interface AuthUserWarehouseService extends SuperService<AuthUserWarehouse
      * @return
      */
     List<SysUserDTO.WarehouseDTO> listWarehouseIdByUserIds(List<String> userIds);
+
+    void addUserWarehouseAuth(AuthUserWarehouseDTO.AddUserWarehouseAuthDTO addUserWarehouseAuthDTO);
 }

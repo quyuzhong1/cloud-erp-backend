@@ -33,6 +33,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.sys.dto.AuthUserShopDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -245,6 +246,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopAuthService.saveOrUpdate(shopAuthEntity);
         }
         shopChannelRefService.batchUpdate(shop,dto.getChannelIdList());
+        //添加用户权限
+        AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
+        addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        addUserShopAuthDTO.setShopIdList(Collections.singletonList(shop.getId()));
+        authDataFeign.addUserShopAuth(addUserShopAuthDTO);
         return Collections.singletonList(shop);
 
     }

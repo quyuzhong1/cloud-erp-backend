@@ -203,6 +203,36 @@ public class AuthUserWarehouseServiceImpl extends SuperServiceImpl<AuthUserWareh
         return baseMapper.getWarehouseUserList(null,userIds);
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addUserWarehouseAuth(AuthUserWarehouseDTO.AddUserWarehouseAuthDTO addUserWarehouseAuthDTO) {
+        if (Objects.isNull(addUserWarehouseAuthDTO) || CharSequenceUtil.isBlank(addUserWarehouseAuthDTO.getUserId()) || CollUtil.isEmpty(addUserWarehouseAuthDTO.getWarehouseIds())){
+            return;
+        }
+        String userId = addUserWarehouseAuthDTO.getUserId();
+        List<String> warehouseIds = addUserWarehouseAuthDTO.getWarehouseIds();
+        List<AuthUserWarehouseEntity> list = this.lambdaQuery().eq(AuthUserWarehouseEntity::getUserId, userId).list();
+        if (CollUtil.isNotEmpty(list)){
+            //是否全部店铺权限
+            boolean allShop = list.stream().allMatch(e -> AuthDataTypeEnum.ENUM_ALL.getCode().equals(e.getAuthType()));
+            if (allShop){
+                //全部权限就不用添加用户权限了
+                return;
+            }
+        }
+        List<AuthUserWarehouseEntity> addList = new ArrayList<>();
+        warehouseIds.forEach(warehouseId ->{
+            AuthUserWarehouseEntity entity = new AuthUserWarehouseEntity();
+            entity.setAuthType(AuthDataTypeEnum.ENUM_PART.getCode());
+            entity.setUserId(userId);
+            entity.setWarehouseId(warehouseId);
+            addList.add(entity);
+        });
+        if (CollUtil.isNotEmpty(addList)){
+            this.saveBatch(addList);
+        }
+    }
+
 
     /**
     * 新增修改处理数据
