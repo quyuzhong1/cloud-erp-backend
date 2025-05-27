@@ -32,7 +32,7 @@
         ati.update_time,
         ati.version,
         ati.is_deleted,
-        ati.source_platform, ati.type, ati.third_definniation_name, ati.third_instance_id, ati.third_approval_code, ati.bussiness_key, ati.bussiness_code
+        ati.source_platform, ati.type, ati.third_definniation_name, ati.third_instance_id, ati.third_approval_code, ati.bussiness_key, ati.bussiness_code,ati.happen_time,ati.status,ati.reason
     </sql>
 
     <!-- tab列表 -->
