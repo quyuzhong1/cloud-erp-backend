@@ -35,14 +35,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * ERP审批同步-通知配置
+ * 三方推送记录
  *
  * @author jack
  * @since 2025-05-12
  */
 @Slf4j
 @RestController
-@LogSystemModule("ERP审批同步-通知配置")
+@LogSystemModule("三方推送记录")
 @RequestMapping("/approveSyncRecord")
 public class ApproveSyncRecordController extends BaseController {
 
