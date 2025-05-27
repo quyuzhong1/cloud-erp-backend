@@ -75,8 +75,30 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgThirdNoticeDTO.AddDTO addDTO) {
+        String method = addDTO.getMethod();
+        if(Objects.equals(method,CfgThirdNoticeMethodEnum.SINGLE.getCode())){//通知方式：单条
+            //推送信息不能为空
+            if(CollUtil.isEmpty(addDTO.getPushMsgList())){
+                throw new ServiceException("推送信息不能为空");
+            }
+        }
+
         CfgThirdNoticeEntity cfgThirdNoticeEntity = new CfgThirdNoticeEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdNoticeEntity);
+
+        if(CollUtil.isNotEmpty(addDTO.getRoleTypeList())){
+            String roleType = String.join(",", addDTO.getRoleTypeList());
+            cfgThirdNoticeEntity.setRoleType(roleType);
+        }else {
+            cfgThirdNoticeEntity.setRoleType("");
+        }
+
+        if(CollUtil.isNotEmpty(addDTO.getSpecificPersonList())){
+            String specificPerson = String.join(",", addDTO.getSpecificPersonList());
+            cfgThirdNoticeEntity.setSpecificPerson(specificPerson);
+        }else{
+            cfgThirdNoticeEntity.setSpecificPerson("");
+        }
 
         log.info("开始新增三方通知配置");
         boolean save = super.save(cfgThirdNoticeEntity);
@@ -90,9 +112,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         //新增明细--推送信息
         List<CfgApproveSyncFieldMapEntity> fieldMapEntityList;
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addDTO.getPushMsgList();
-        if(CollUtil.isEmpty(pushMsgList)){
-            throw new ServiceException("推送信息不能为空");
-        }else{
+        if(CollUtil.isNotEmpty(pushMsgList)){
             int sort = 1;
             for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
                 noticeFieldMapDTO.setMainId(id);
@@ -102,7 +122,9 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             cfgApproveSyncFieldMapService.saveBatch(fieldMapEntityList);
         }
         //保存规则条件
-        cfgRuleConditionService.saveRuleCondition(id, addDTO.getConditionList(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
+        if(CollUtil.isNotEmpty(addDTO.getConditionList())){
+            cfgRuleConditionService.saveRuleCondition(id, addDTO.getConditionList(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
+        }
         return new BaseResultDTO.AddDTO(cfgThirdNoticeEntity.getId(), cfgThirdNoticeEntity.getId());
     }
 
@@ -112,9 +134,30 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgThirdNoticeDTO.UpdateDTO addOrUpdateDTO) {
+        String method = addOrUpdateDTO.getMethod();
+        if(Objects.equals(method,CfgThirdNoticeMethodEnum.SINGLE.getCode())){//通知方式：单条
+            //推送信息不能为空
+            if(CollUtil.isEmpty(addOrUpdateDTO.getPushMsgList())){
+                throw new ServiceException("推送信息不能为空");
+            }
+        }
+
         CfgThirdNoticeEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方通知配置"));
         CfgThirdNoticeEntity cfgThirdNoticeEntity =  BeanMapperUtils.map(CfgThirdNoticeEntity.class, addOrUpdateDTO);
+
+        if(CollUtil.isNotEmpty(addOrUpdateDTO.getRoleTypeList())){
+            String roleType = String.join(",", addOrUpdateDTO.getRoleTypeList());
+            cfgThirdNoticeEntity.setRoleType(roleType);
+        }else{
+            cfgThirdNoticeEntity.setRoleType("");
+        }
+        if(CollUtil.isNotEmpty(addOrUpdateDTO.getSpecificPersonList())){
+            String specificPerson = String.join(",", addOrUpdateDTO.getSpecificPersonList());
+            cfgThirdNoticeEntity.setSpecificPerson(specificPerson);
+        }else{
+            cfgThirdNoticeEntity.setSpecificPerson("");
+        }
 
         log.info("编辑 开始修改三方通知配置数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgThirdNoticeEntity);
@@ -133,9 +176,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         String id = addOrUpdateDTO.getId();
         //新增明细--推送信息
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addOrUpdateDTO.getPushMsgList();
-        if(CollUtil.isEmpty(pushMsgList)){
-            throw new ServiceException("推送信息不能为空");
-        }else{
+        if(CollUtil.isNotEmpty(pushMsgList)){
             int sort = 1;
             for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
                 noticeFieldMapDTO.setMainId(id);
@@ -232,8 +273,10 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 Map<String, String> noticeItemPeopleMap = noticeItemPeople.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
                 List<String> roleTypes = Arrays.asList(record.getRoleType().split(","));
                 if (CollUtil.isNotEmpty(roleTypes)) {
+                    record.setRoleTypeList(roleTypes);
+
                     List<String> roleTypeNameList = roleTypes.stream().map(e -> noticeItemPeopleMap.getOrDefault(e, "")).filter(StringUtil::isNotBlank).collect(Collectors.toList());
-                    record.setRoleTypeName(String.join(",", roleTypeNameList));
+                    record.setRoleTypeNameList(roleTypeNameList);
                 }
             }
 
@@ -241,8 +284,10 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 List<String> userIds = Arrays.asList(record.getSpecificPerson().split(","));
                 List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIds);
                 if (CollUtil.isNotEmpty(userList)) {
+                    record.setSpecificPersonList(userIds);
+
                     List<String> specificPersonNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
-                    record.setSpecificPersonName(String.join(",", specificPersonNameList));
+                    record.setSpecificPersonNameList(specificPersonNameList);
                 }
             }
         }

@@ -77,7 +77,7 @@
         cfg_third_notice AS ctn
         WHERE
         ${params.sqlMap.default}
-        AND cas.is_deleted = FALSE
+        AND ctn.is_deleted = FALSE
         <if test="params.ids != null and params.ids.size > 0">
             and ctn.id in
             <foreach collection="params.ids" item="id" open="(" separator="," close=")">
