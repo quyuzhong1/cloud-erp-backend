@@ -1,11 +1,15 @@
 package com.erp.server.sys.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+import com.erp.model.sys.entity.CfgThirdNoticeEntity;
+import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.erp.server.sys.query.CfgThirdNoticeQueryHandler;
 import com.erp.server.sys.query.ThirdNoticePushRecordQueryHandler;
+import com.erp.server.sys.service.CfgThirdNoticeService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -25,9 +29,10 @@ import com.erp.server.sys.service.ThirdNoticePushRecordService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
-import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
-
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 三方通知推送记录
@@ -96,6 +101,43 @@ public class ThirdNoticePushRecordController extends BaseController {
     public ApiResult<Object> exportList(@RequestBody @Validated ThirdNoticePushRecordDTO.PagingParamDTO dto, HttpServletResponse response) {
         thirdNoticePushRecordService.exportList(dto, response);
         return success();
+    }
+
+    /**
+     * 重推
+     * @author jack
+     * @date:  2025-05-27
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/repush")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "sys:cfgThirdNotice:repush",
+            serviceClass = CfgThirdNoticeService.class,
+            keyIdName = "ids")
+    public ApiResult<List<BatchResultDTO>> repush(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<ThirdNoticePushRecordEntity> list = thirdNoticePushRecordService.lambdaQuery().in(ThirdNoticePushRecordEntity::getId, ids).list();
+        Map<String, ThirdNoticePushRecordEntity> idEntityMap = list.stream().collect(Collectors.toMap(ThirdNoticePushRecordEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = thirdNoticePushRecordService.repush(id);
+            }catch (Exception e){
+                log.error("三方通知记录重推失败",e);
+                ThirdNoticePushRecordEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "三方通知记录重推失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }

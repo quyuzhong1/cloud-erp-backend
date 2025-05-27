@@ -43,6 +43,10 @@ import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import javax.validation.Validator;
+
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE;
 
 /**
@@ -69,19 +73,21 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     private CfgRuleConditionService cfgRuleConditionService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
+    @Resource
+    private Validator validator;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgThirdNoticeDTO.AddDTO addDTO) {
         String method = addDTO.getMethod();
-        if(Objects.equals(method,CfgThirdNoticeMethodEnum.SINGLE.getCode())){//通知方式：单条
-            //推送信息不能为空
-            if(CollUtil.isEmpty(addDTO.getPushMsgList())){
-                throw new ServiceException("推送信息不能为空");
-            }
-        }
+        List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addDTO.getPushMsgList();
+        //可能存在一条空数据，需要排除掉
+        handlePushMsg(pushMsgList, method);
+
+        //可能存在一条空数据，需要排除掉
+        List<CfgRuleConditionDTO.Add> conditionList = addDTO.getConditionList();
+        handleAddConditionList(conditionList);
 
         CfgThirdNoticeEntity cfgThirdNoticeEntity = new CfgThirdNoticeEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdNoticeEntity);
@@ -100,6 +106,13 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             cfgThirdNoticeEntity.setSpecificPerson("");
         }
 
+        if(CollUtil.isNotEmpty(addDTO.getNoticeMethodList())){
+            String noticeMethod = String.join(",", addDTO.getNoticeMethodList());
+            cfgThirdNoticeEntity.setNoticeMethod(noticeMethod);
+        }else{
+            cfgThirdNoticeEntity.setNoticeMethod("");
+        }
+
         log.info("开始新增三方通知配置");
         boolean save = super.save(cfgThirdNoticeEntity);
         if(!save) {
@@ -111,7 +124,6 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), cfgThirdNoticeEntity.getId(), "新增操作");
         //新增明细--推送信息
         List<CfgApproveSyncFieldMapEntity> fieldMapEntityList;
-        List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addDTO.getPushMsgList();
         if(CollUtil.isNotEmpty(pushMsgList)){
             int sort = 1;
             for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
@@ -122,10 +134,74 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             cfgApproveSyncFieldMapService.saveBatch(fieldMapEntityList);
         }
         //保存规则条件
-        if(CollUtil.isNotEmpty(addDTO.getConditionList())){
-            cfgRuleConditionService.saveRuleCondition(id, addDTO.getConditionList(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
+        if(CollUtil.isNotEmpty(conditionList)){
+            cfgRuleConditionService.saveRuleCondition(id, conditionList, RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
         }
         return new BaseResultDTO.AddDTO(cfgThirdNoticeEntity.getId(), cfgThirdNoticeEntity.getId());
+    }
+
+    private void handlePushMsg(List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList, String method) {
+        if(CollUtil.isEmpty(pushMsgList)){
+            return ;
+        }
+        CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO dto = pushMsgList.stream().filter(e -> StringUtils.isBlank(e.getFieldName()) && StringUtils.isBlank(e.getFieldSource())).findFirst().orElse(null);
+        if(Objects.nonNull(dto)){
+            pushMsgList.remove(dto);
+        }
+        if(Objects.equals(method,CfgThirdNoticeMethodEnum.SINGLE.getCode())){//通知方式：单条
+            //推送信息不能为空
+            if(CollUtil.isEmpty(pushMsgList)){
+                throw new ServiceException("推送信息不能为空");
+            }else {
+                for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
+                    Set<ConstraintViolation<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO>> violations = validator.validate(noticeFieldMapDTO);
+                    if (!violations.isEmpty()) {
+                        ConstraintViolation<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> firstViolation = violations.iterator().next();
+                        String message = firstViolation.getMessage();
+                        throw new ServiceException(message); // 或者自定义异常处理
+                    }
+                }
+            }
+        }
+    }
+
+    private void handleAddConditionList(List<CfgRuleConditionDTO.Add> conditionList) {
+        if(CollUtil.isEmpty(conditionList)){
+            return ;
+        }
+        CfgRuleConditionDTO.Add conditionDTO = conditionList.stream().filter(e -> StringUtils.isBlank(e.getField()) && StringUtils.isBlank(e.getCompare())).findFirst().orElse(null);
+        if(Objects.nonNull(conditionDTO)){
+            conditionList.remove(conditionDTO);
+        }
+        if(CollUtil.isNotEmpty(conditionList)){
+            for (CfgRuleConditionDTO.Add condition : conditionList) {
+                Set<ConstraintViolation<CfgRuleConditionDTO.Add>> violations = validator.validate(condition);
+                if (!violations.isEmpty()) {
+                    ConstraintViolation<CfgRuleConditionDTO.Add> firstViolation = violations.iterator().next();
+                    String message = firstViolation.getMessage();
+                    throw new ServiceException(message); // 或者自定义异常处理
+                }
+            }
+        }
+    }
+    private void handleUpdateConditionList(List<CfgRuleConditionDTO.Update> conditionList) {
+        if(CollUtil.isEmpty(conditionList)){
+            return ;
+        }
+        CfgRuleConditionDTO.Update conditionDTO = conditionList.stream().filter(e ->StringUtils.isBlank(e.getId()) && StringUtils.isBlank(e.getField()) && StringUtils.isBlank(e.getCompare())).findFirst().orElse(null);
+        if(Objects.nonNull(conditionDTO)){
+            conditionList.remove(conditionDTO);
+        }
+        if(CollUtil.isNotEmpty(conditionList)){
+            for (CfgRuleConditionDTO.Update condition : conditionList) {
+                Set<ConstraintViolation<CfgRuleConditionDTO.Update>> violations = validator.validate(condition);
+                if (!violations.isEmpty()) {
+                    ConstraintViolation<CfgRuleConditionDTO.Update> firstViolation = violations.iterator().next();
+                    String message = firstViolation.getMessage();
+                    throw new ServiceException(message); // 或者自定义异常处理
+                }
+            }
+        }
     }
 
     /**
@@ -135,12 +211,13 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Override
     public Boolean update(CfgThirdNoticeDTO.UpdateDTO addOrUpdateDTO) {
         String method = addOrUpdateDTO.getMethod();
-        if(Objects.equals(method,CfgThirdNoticeMethodEnum.SINGLE.getCode())){//通知方式：单条
-            //推送信息不能为空
-            if(CollUtil.isEmpty(addOrUpdateDTO.getPushMsgList())){
-                throw new ServiceException("推送信息不能为空");
-            }
-        }
+        List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addOrUpdateDTO.getPushMsgList();
+        //可能存在一条空数据，需要排除掉
+        handlePushMsg(pushMsgList, method);
+
+        //可能存在一条空数据，需要排除掉
+        List<CfgRuleConditionDTO.Update> conditionList = addOrUpdateDTO.getConditionList();
+        handleUpdateConditionList(conditionList);
 
         CfgThirdNoticeEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方通知配置"));
@@ -159,6 +236,13 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             cfgThirdNoticeEntity.setSpecificPerson("");
         }
 
+        if(CollUtil.isNotEmpty(addOrUpdateDTO.getNoticeMethodList())){
+            String noticeMethod = String.join(",", addOrUpdateDTO.getNoticeMethodList());
+            cfgThirdNoticeEntity.setNoticeMethod(noticeMethod);
+        }else{
+            cfgThirdNoticeEntity.setNoticeMethod("");
+        }
+
         log.info("编辑 开始修改三方通知配置数据，id：【{}】", old.getId());
         boolean save = super.updateById(cfgThirdNoticeEntity);
         if(!save) {
@@ -170,12 +254,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgThirdNoticeEntity.getId(), "三方通知配置");
         operateLogService.addModuleOperateLogByObj(old, cfgThirdNoticeEntity, ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), cfgThirdNoticeEntity.getId(), msg);
 
-        //规则条件
-        cfgRuleConditionService.updateRuleCondition(addOrUpdateDTO.getId(), addOrUpdateDTO.getConditionList(), ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
-
         String id = addOrUpdateDTO.getId();
         //新增明细--推送信息
-        List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addOrUpdateDTO.getPushMsgList();
         if(CollUtil.isNotEmpty(pushMsgList)){
             int sort = 1;
             for (CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO noticeFieldMapDTO : pushMsgList) {
@@ -219,6 +299,10 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             }
             cfgApproveSyncFieldMapService.saveOrUpdateBatch(list);
         }
+
+        //规则条件
+        cfgRuleConditionService.updateRuleCondition(addOrUpdateDTO.getId(), addOrUpdateDTO.getConditionList(), ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
+
         return Boolean.TRUE;
     }
 
@@ -277,6 +361,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
                     List<String> roleTypeNameList = roleTypes.stream().map(e -> noticeItemPeopleMap.getOrDefault(e, "")).filter(StringUtil::isNotBlank).collect(Collectors.toList());
                     record.setRoleTypeNameList(roleTypeNameList);
+
+                    record.setRoleType(roleTypeNameList.stream().collect(Collectors.joining(",")));
                 }
             }
 
@@ -288,6 +374,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
                     List<String> specificPersonNameList = userList.stream().map(FindUserDTO::getUserName).collect(Collectors.toList());
                     record.setSpecificPersonNameList(specificPersonNameList);
+
+                    record.setSpecificPerson(specificPersonNameList.stream().collect(Collectors.joining(",")));
                 }
             }
         }
@@ -331,6 +419,9 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 data.setSpecificPersonList(specificPersonList);
                 data.setSpecificPersonNameList(specificPersonNameList);
             }
+        }
+        if(StringUtils.isNotBlank(data.getNoticeMethod())){
+            data.setNoticeMethodList(Arrays.asList(data.getNoticeMethod().split(",")));
         }
 
         //查询规则条件

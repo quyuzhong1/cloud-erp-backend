@@ -1,6 +1,7 @@
 package com.erp.server.sys.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -99,7 +100,9 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void updateRuleCondition(String ruleId, List<CfgRuleConditionDTO.Update> conditionList, String moduleType, String sourceType) {
-        checkRuleCondition(conditionList);
+        if(CollUtil.isNotEmpty(conditionList)){
+            checkRuleCondition(conditionList);
+        }
         //查询规则条件
         List<CfgRuleConditionEntity> oleConditions = list(Wrappers.<CfgRuleConditionEntity>lambdaQuery()
                 .eq(CfgRuleConditionEntity::getRuleId, ruleId));

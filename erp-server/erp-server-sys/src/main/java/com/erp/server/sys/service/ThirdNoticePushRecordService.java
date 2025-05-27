@@ -23,4 +23,5 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
 
     List<ThirdNoticePushRecordDTO.TabListDTO> tabList(PermissionsDTO dto);
 
+    BatchResultDTO repush(String id);
 }

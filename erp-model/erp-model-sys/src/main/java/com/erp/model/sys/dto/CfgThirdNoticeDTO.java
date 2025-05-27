@@ -101,9 +101,7 @@ public class CfgThirdNoticeDTO implements Serializable {
         * 推送方式
         */
         private String noticeMethod;
-        private String noticeMethodList;
-        private String noticeMethodNameList;
-
+        private List<String> noticeMethodList;
         /**
          * 规则条件
          */
@@ -207,8 +205,6 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
         * 推送方式
         */
-        private String noticeMethod;
-
         @NotEmpty(message = "推送方式不能为空")
         private List<String> noticeMethodList;
 
@@ -273,7 +269,6 @@ public class CfgThirdNoticeDTO implements Serializable {
          * 通知类型
          */
         private String noticeType;
-        private String noticeTypeName;
 
         /**
          * 项目角色
