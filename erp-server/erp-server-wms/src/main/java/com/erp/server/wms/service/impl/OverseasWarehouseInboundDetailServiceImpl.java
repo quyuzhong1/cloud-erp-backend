@@ -1,10 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.constant.ApproveType;
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OverseasInstockStatusEnum;
@@ -14,10 +13,16 @@ import com.common.business.vo.LoginUser;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.entity.*;
+import com.erp.model.wms.enums.SignSourceTypeEnum;
+import com.erp.rpc.tms.feign.FirstMileChangeRecordFeign;
+import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
+import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
 import com.erp.server.wms.convert.WmsOverseasWarehouseInboundConverter;
 import com.erp.server.wms.mapper.OverseasWarehouseInboundDetailMapper;
 import com.erp.server.wms.service.*;
@@ -29,12 +34,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static cn.hutool.json.XMLTokener.entity;
 
 /**
  * <p>
@@ -57,6 +60,10 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
     private TransferInfoService transferInfoService;
+    @Resource
+    private TmsFirstMileLogisticFeign tmsFirstMileLogisticFeign;
+    @Resource
+    private FirstMileChangeRecordFeign firstMileChangeRecordFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -206,7 +213,19 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
             if (entity.getPackQty() < entity.getReceiveQty() + dto.getReceivedQty()){
                 throw new ServiceException("当前签收数量大于剩余签收数量");
             }
-
+            //时间校验 货件名称+SKU在填写月关联的头程分摊已生成，不可修改
+            LocalDate date = dto.getReceiveDate().with(TemporalAdjusters.firstDayOfMonth());
+            String sourceId = CharSequenceUtil.isNotBlank(mainEntity.getSourceId()) ? mainEntity.getSourceId() : "";//发货单id
+            String code = CharSequenceUtil.isNotBlank(mainEntity.getCode()) ? mainEntity.getCode() : "";//业务单号
+            FirstMileCostAllocationDTO.DetailDTO detailDTO = new FirstMileCostAllocationDTO.DetailDTO();
+            detailDTO.setSourceId(sourceId);
+            detailDTO.setBusinessCode(code);
+            detailDTO.setReportMonth(date);
+            //判断是否存在对应的头程分摊
+            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySourceIdAndCode(detailDTO);
+            if (CollUtil.isNotEmpty(detailDTOS)){
+                throw new ServiceException("发货单【{}】该月【{}】已生成头程分摊，不可修改",mainEntity.getSourceCode(),date);
+            }
             entity.setReceiveQty(entity.getReceiveQty() + dto.getReceivedQty());
             entity.setDiffQty(entity.getDiffQty() + dto.getReceivedQty());
             entity.setReceiveTime(dto.getReceiveDate().atStartOfDay());
@@ -221,6 +240,7 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                     userInfo.getUserName(),
                     dto.getReceivedQty(),
                     dto.getReceiveDate().atStartOfDay(),
+                    SignSourceTypeEnum.MANUAL.getCode(),
                     ""
             );
             addReceivedList.add(receivedEntity);
@@ -264,6 +284,109 @@ public class OverseasWarehouseInboundDetailServiceImpl extends SuperServiceImpl<
                 throw new ServiceException(ApiError.ERROR_GENERATE_TRANSFER_OUT);
             }
         }
+        List<OverseasWarehouseInboundDetailEntity> allDetailEntityList = this.getByMainIds(mainIdList);
+        // 主订单状态
+        // 检查是否完全签收
+        for (OverseasWarehouseInboundEntity overseasWarehouseInboundEntity : overseasWarehouseInboundEntityList) {
+            List<OverseasWarehouseInboundDetailEntity> currentDetailEntityList = allDetailEntityList.stream()
+                    .filter(e -> StringUtils.equals(e.getMainId(), overseasWarehouseInboundEntity.getId()))
+                    .collect(Collectors.toList());
+            if( currentDetailEntityList.stream().allMatch(e-> 0 == e.getDiffQty())){
+                overseasWarehouseInboundEntity.setInstockStatus(OverseasInstockStatusEnum.AUTOMATIC_COMPLETION.getCode());
+            }else{
+                overseasWarehouseInboundEntity.setInstockStatus(OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode());
+            }
+        }
+        overseasWarehouseInboundService.updateBatchById(overseasWarehouseInboundEntityList);
+        return resultDTOS;
+
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<BatchResultDTO> allChangeReceived(List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dtoList.size());
+
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        // 主表ID， 详情
+        Map<String, List<OverseasWarehouseInboundDetailEntity>> detailResultMap = new HashMap<>();
+        // 主表ID， 主实体
+        Map<String, OverseasWarehouseInboundEntity> mainResultMap = new HashMap<>();
+        Map<String, Integer> receiverdMap = new HashMap<>();
+        List<OverseasWarehouseInboundDetailEntity> detailEntityList = this.getByIds(dtoList.stream().map(OverseasWarehouseInboundDTO.ReceivedDTO::getDetailId).collect(Collectors.toList()));
+        List<OverseasWarehouseInboundReceivedEntity> addReceivedList = new ArrayList<>();
+        List<String> mainIdList = detailEntityList.stream().map(OverseasWarehouseInboundDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        List<OverseasWarehouseInboundEntity> overseasWarehouseInboundEntityList = overseasWarehouseInboundService.listByIds(mainIdList);
+        List<FirstMileChangeRecordDTO.AddDTO> changeRecordList = new ArrayList<>();
+        for (OverseasWarehouseInboundDTO.ReceivedDTO dto : dtoList) {
+            // 查询详情
+            OverseasWarehouseInboundDetailEntity detailEntity  = detailEntityList.stream()
+                    .filter(e -> StringUtils.equals(e.getId(), dto.getDetailId()))
+                    .findFirst()
+                    .orElse(null);
+            if (Objects.isNull(detailEntity)){
+                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_DETAIL_NOT_EXIST);
+            }
+            // 校验
+            // 查询提交的平台
+            OverseasWarehouseInboundEntity entity = overseasWarehouseInboundEntityList.stream().filter(v->v.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
+            if (Objects.isNull(entity)){
+                throw new ServiceException(ApiError.OVERSEAS_WAREHOUSE_INBOUND_NOT_EXIST);
+            }
+            if (detailEntity.getPackQty() < detailEntity.getReceiveQty() + dto.getReceivedQty()){
+                throw new ServiceException("当前签收数量大于剩余签收数量");
+            }
+            //时间校验 货件名称+SKU在填写月关联的头程分摊已生成，不可修改
+            LocalDate date = dto.getReceiveDate().with(TemporalAdjusters.firstDayOfMonth());
+            String sourceId = CharSequenceUtil.isNotBlank(entity.getSourceId()) ? entity.getSourceId() : "";//发货单id
+            String code = CharSequenceUtil.isNotBlank(entity.getCode()) ? entity.getCode() : "";//业务单号
+            FirstMileCostAllocationDTO.DetailDTO detailDTO = new FirstMileCostAllocationDTO.DetailDTO();
+            detailDTO.setSourceId(sourceId);
+            detailDTO.setBusinessCode(code);
+            detailDTO.setReportMonth(date);
+            //判断是否存在对应的头程分摊
+            List<FirstMileCostAllocationDTO.DetailDTO> detailDTOS = tmsFirstMileLogisticFeign.getRecordBySourceIdAndCode(detailDTO);
+            if (CollUtil.isNotEmpty(detailDTOS)){
+                throw new ServiceException("发货单【{}】该月【{}】已生成头程分摊，不可修改",entity.getSourceCode(),date);
+            }
+            detailEntity.setReceiveQty(detailEntity.getReceiveQty() + dto.getReceivedQty());
+            detailEntity.setDiffQty(detailEntity.getDiffQty() + dto.getReceivedQty());
+            detailEntity.setReceiveTime(dto.getReceiveDate().atStartOfDay());
+            // 计算在途数量
+            int newTransportQty = detailEntity.getPackQty() - detailEntity.getReceiveQty();
+            detailEntity.setTransportQty(newTransportQty);
+            if (Objects.equals(detailEntity.getReceiveQty(), detailEntity.getPackQty())){
+                detailEntity.setReceiveStatus("already");
+            }
+            // 添加签收记录
+            OverseasWarehouseInboundReceivedEntity receivedEntity = new OverseasWarehouseInboundReceivedEntity(detailEntity.getId(),
+                    userInfo.getUserName(),
+                    dto.getReceivedQty(),
+                    dto.getReceiveDate().atStartOfDay(),
+                    SignSourceTypeEnum.CHANGE.getCode());
+            addReceivedList.add(receivedEntity);
+            // 添加主表
+            mainResultMap.putIfAbsent(entity.getId(), entity);
+
+            // 添加明细
+            List<OverseasWarehouseInboundDetailEntity> currentDetailEntityList = detailResultMap.get(entity.getId());
+            if (CollectionUtils.isEmpty(currentDetailEntityList)){
+                List<OverseasWarehouseInboundDetailEntity> currentList = new LinkedList<>();
+                currentList.add(detailEntity);
+                detailResultMap.put(entity.getId(), currentList);
+            } else {
+                currentDetailEntityList.add(detailEntity);
+                detailResultMap.put(entity.getId(), currentDetailEntityList);
+            }
+            receiverdMap.put(receivedEntity.getDetailId(), receivedEntity.getReceiveQty());
+            // 头程调整记录
+            changeRecordList.add(OverseasWarehouseInboundConverter.INSTANCE.convertOverseasToChangeRecord(entity, detailEntity, receivedEntity));
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("单号【{}】SKU【{}】新增了一个调整记录,签收【{}】时间【{}】", code, detailEntity.getSkuNo(),receivedEntity.getReceiveQty(),receivedEntity.getReceiveTime()), ModuleTypeEnum.OVERSEAS_WAREHOUSE_INBOUND.getCode(), entity.getId(), "调整签收");
+        }
+        //调整记录新增
+        firstMileChangeRecordFeign.batchAdd(changeRecordList);
+        this.updateBatchById(detailEntityList);
+        overseasWarehouseInboundReceivedService.saveBatch(addReceivedList);
         List<OverseasWarehouseInboundDetailEntity> allDetailEntityList = this.getByMainIds(mainIdList);
         // 主订单状态
         // 检查是否完全签收

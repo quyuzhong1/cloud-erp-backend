@@ -89,4 +89,6 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     List<PackingTaskDTO.StatusDTO> selectRequisitionPackingStatusByIds(@Param("taskIds") List<String> taskIds, @Param("sourceCodes") List<String> sourceCodes);
+
+    List<PackingTaskEntity> listBySourceCodes(@Param("sourceCodeList") List<String> sourceCodeList, @Param("permissionSql") String permissionSql);
 }

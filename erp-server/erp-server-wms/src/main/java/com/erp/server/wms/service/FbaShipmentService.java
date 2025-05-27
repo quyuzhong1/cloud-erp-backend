@@ -273,4 +273,16 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
      *
      */
     PagingVO<FbaShipmentDTO.SyncViewDTO> syncPaging(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+    /**
+     * 货件列表
+     *
+     */
+    List<FbaShipmentDTO.ListDTO> viewList(FbaShipmentDTO.ViewListReqDTO dto);
+
+    /**
+     * 调整签收
+     * @param dtoList
+     * @return
+     */
+    List<BatchResultDTO> changeReceived(List<FbaShipmentDTO.ReceivedDTO> dtoList);
 }

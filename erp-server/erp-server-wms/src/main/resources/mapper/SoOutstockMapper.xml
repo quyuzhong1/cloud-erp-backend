@@ -132,6 +132,7 @@
            sod.warehouse_location AS warehouseLocation
         FROM so_outstock so
         INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND  sod.is_deleted=FALSE
+        left join so_b2c sb on sb.id = so.so_id and sb.is_deleted=FALSE
         WHERE
             ${params.sqlMap.default}
           and so.is_deleted=FALSE
@@ -200,15 +201,17 @@
     </select>
     <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
           SELECT
-            approve_status,
-            invalid_status,
-	        count(*)
-	     FROM so_outstock
-	     WHERE is_deleted=FALSE
+            so.approve_status,
+            so.invalid_status,
+	        count(distinct so.id)
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
+        left join so_b2c sb on sb.id = so.so_id and sb.is_deleted=FALSE
+	     WHERE so.is_deleted=FALSE
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-         GROUP BY approve_status,invalid_status
+         GROUP BY so.approve_status,so.invalid_status
     </select>
     <select id="getIdsByTemp" resultType="java.lang.String">
         SELECT so.id FROM "temp_recovry_record" trr,${tableName} so where trr.code = so.code and so.is_deleted = false

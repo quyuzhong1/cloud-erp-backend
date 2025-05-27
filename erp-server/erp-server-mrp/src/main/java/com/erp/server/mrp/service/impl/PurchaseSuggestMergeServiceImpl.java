@@ -705,6 +705,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             map.put("default",tabSql);
             pagingParamDTO.setSqlMap(map);
             pagingParamDTO.setIsMerge(dto.getIsMerge());
+            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
             Integer count = this.baseMapper.tabList(pagingParamDTO);
             resultDTO.setCount(ObjectUtils.isEmpty(count) ? MathUtil.ZERO : count);
             resultDTO.setTabFlag(item.getCode());

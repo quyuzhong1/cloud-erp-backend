@@ -36,14 +36,17 @@ public class TransferInfoQueryHandler extends AbstractQueryHandler {
         //待审核
         if (PageListTypeEnum.TO_BE_APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.APPROVE_ING.getCode());
+            super.buildDefaultDTO("ti.invalid_status", Collections.singletonList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
         }
         //已审核
         if (PageListTypeEnum.APPROVE.getCode().equals(value)) {
             super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.APPROVE.getCode());
+            super.buildDefaultDTO("ti.invalid_status", Collections.singletonList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
         }
         //不通过
         if (PageListTypeEnum.REJECT.getCode().equals(value)) {
             super.buildDefaultDTO("ti.approve_status", ApproveStatusEnum.REJECT.getCode());
+            super.buildDefaultDTO("ti.invalid_status", Collections.singletonList(InvalidStatusEnum.NOT_VOIDED.getStatus()));
         }
         return super.getSplicingSQL();
     }

@@ -48,7 +48,7 @@ public class DmpInputLxOrderApiInitHandler extends DmpInputInitHandler {
         }
 
         // 明细扩展参数
-        String detailExtendJson = dmpCfgInputDetailEntity.getExtendJson();
+        String detailExtendJson = dmpInputTaskEntity.getExtendJson();
         if (StringUtils.isNotBlank(detailExtendJson)){
             TreeMap<String, Object> detailTreeMap = JSON.parseObject(detailExtendJson, TreeMap.class);
             requestMap.putAll(detailTreeMap);
@@ -71,7 +71,6 @@ public class DmpInputLxOrderApiInitHandler extends DmpInputInitHandler {
         requestMap.put("length", pageSize);
         // 首次请求
         Result<Object> result = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
-
         Map<String, Object> dataResultMap = (Map<String, Object>) result.getData();
         Object totalObj = dataResultMap.get("total");
         int total =  Integer.parseInt(totalObj.toString());

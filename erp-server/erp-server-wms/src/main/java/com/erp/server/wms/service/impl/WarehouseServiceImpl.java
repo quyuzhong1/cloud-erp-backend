@@ -51,6 +51,7 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.kingdee.SyncKingdeeWarehouseService;
@@ -142,6 +143,8 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Resource
     private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     public List<WarehouseDTO.UpdateDTO> listWarehouseByIds(List<String> ids) {
@@ -156,23 +159,27 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        List<WarehouseEntity> list = this.list();
-        if (CollectionUtils.isEmpty(list)) {
-            return new ArrayList<>();
+    public List<WarehouseDTO.ListDTO> listApproveWarehouse(Boolean showByAuth) {
+        String permissionSql = null;
+        if (Objects.nonNull(showByAuth) && showByAuth){
+            permissionSql = authDataFeign.getWarehousePermissionSql("id");
         }
-        List<WarehouseDTO.ListDTO> resultList = BeanMapperUtils.copyList(WarehouseDTO.ListDTO.class, list);
-
+        List<WarehouseDTO.ListDTO> resultList = baseMapper.listApproveWarehouse(permissionSql);
+        if (CollectionUtils.isEmpty(resultList)) {
+            return Collections.emptyList();
+        }
         // 查询仓库关联服务商
         Map<String, List<OverseasProviderDTO.ListWithWarehouseDTO>> warehouseBindMap = overseasProviderService.mapByWarehouseIds();
         // 填充信息
         this.fillListData(resultList, warehouseBindMap);
-
         return resultList.stream().sorted(Comparator.comparing(WarehouseDTO.ListDTO::getDisabled)).collect(Collectors.toList());
     }
 
     @Override
     public List<WarehouseDTO.ListInventoryQtyDTO> listWarehouseInventoryQty(WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        if (Objects.nonNull(dto.getShowByAuth()) && dto.getShowByAuth()){
+            dto.setPermissionSql(authDataFeign.getWarehousePermissionSql("wh.id"));
+        }
         List<WarehouseEntity> list = baseMapper.listWarehouse(dto);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
@@ -327,7 +334,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
     @Override
     public List<WarehouseDTO.ListTreeDTO> listTree() {
-        List<WarehouseDTO.ListDTO> list = listApproveWarehouse();
+        List<WarehouseDTO.ListDTO> list = listApproveWarehouse(Boolean.TRUE);
         if (CollectionUtils.isEmpty(list)) {
             return new ArrayList<>();
         }
@@ -422,24 +429,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
 
     @Override
-    public List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(List<String> warehouseNameList) {
-        if (CollectionUtils.isEmpty(warehouseNameList)) {
-            return new ArrayList<>();
-        }
-        List<WarehouseEntity> list = lambdaQuery().in(WarehouseEntity::getName,warehouseNameList).list();
-        if (CollectionUtils.isEmpty(list)) {
-            return new ArrayList<>();
-        }
-        List<WarehouseDTO.UpdateDTO> resultList = new ArrayList<>();
-        for (WarehouseEntity warehouseEntity : list) {
-            WarehouseDTO.UpdateDTO updateDTO = BeanMapperUtils.map(WarehouseDTO.UpdateDTO.class, warehouseEntity);
-            updateDTO.setApproveStatusEnum(warehouseEntity.getApproveStatus());
-            resultList.add(updateDTO);
-        }
-        return resultList;
-    }
-
-    @Override
     public PagingVO<WarehouseDTO.ListDTO> selectPaging(PagingDTO<WarehouseDTO.SelectDTO> searchDTO) {
         Page query = new Page(searchDTO.getCurrPage(), searchDTO.getPageSize());
         WarehouseDTO.SelectDTO params = searchDTO.getParams();
@@ -454,6 +443,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         if(params.isFilterSelfAddFlag()){
             params.setWarehouseManageType(WarehouseManageTypeEnum.SELF_BUILD.getCode());
+        }
+        if (Objects.nonNull(params.getShowByAuth()) && params.getShowByAuth()){
+            params.setPermissionSql(authDataFeign.getWarehousePermissionSql("wh.id"));
         }
         IPage<WarehouseDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<WarehouseDTO.ListDTO> records = pagResult.getRecords();
@@ -471,7 +463,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
     }
     @Override
     public PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //获取导出数据
         Page<WarehouseDTO.PagingViewDTO> page = baseMapper.getExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         List<WarehouseExportExcelDTO> resultList = new ArrayList<>();
@@ -580,7 +572,7 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
 
         List<String> orgIds = resultList.stream().map(WarehouseDTO.ListDTO::getOrgId).collect(Collectors.toList());
         List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(orgIds);
-
+        List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
         for (WarehouseDTO.ListDTO listDTO : resultList) {
             // 组织信息
             String orgName = accountingCompanyList.stream().filter(obj -> obj.getId().equals(listDTO.getOrgId())).map(BaseIdDTO.CodeDTO::getName).findFirst().orElse("");
@@ -592,6 +584,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             OmsPlatformEnum platformEnum = this.checkAndGetPlatformInfo(listDTO, warehouseBindMap);
             listDTO.setDictPlatform(null == platformEnum ? "" : platformEnum.getCode());
             listDTO.setPlatformName(null == platformEnum ? "" : platformEnum.getName());
+            //平台类型
+            DictBasicDTO.ListDTO dict = dictList.stream().filter(e -> Objects.nonNull(e) && e.getId().equals(listDTO.getTypeId())).findFirst().orElse(null);
+            listDTO.setTypeName(Objects.nonNull(dict) ? dict.getName() : CharSequenceUtil.EMPTY);
         }
     }
 
@@ -1234,12 +1229,11 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
             List<DictBasicDTO.ListDTO> dictList = dictBasicService.getByKey(DictBasicEnum.WAREHOUSE_TYPE.getKey());
             typeIdList = dictList.stream().filter(e -> dto.getTypeCodeList().contains(e.getValue())).map(DictBasicDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         }
-        List<WarehouseEntity> list = lambdaQuery()
-                .eq(CharSequenceUtil.isNotBlank(dto.getWarehouseName()), WarehouseEntity::getName, dto.getWarehouseName())
-                .in(CollectionUtils.isNotEmpty(dto.getOrgIdList()), WarehouseEntity::getOrgId, dto.getOrgIdList())
-                .in(CollectionUtils.isNotEmpty(dto.getWarehouseIdList()), WarehouseEntity::getId, dto.getWarehouseIdList())
-                .in(CollectionUtils.isNotEmpty(typeIdList), WarehouseEntity::getTypeId, typeIdList)
-                .list();
+        dto.setTypeIdList(typeIdList);
+        if (Objects.nonNull(dto.getShowByAuth()) && dto.getShowByAuth()){
+            dto.setPermissionSql(authDataFeign.getWarehousePermissionSql("id"));
+        }
+        List<WarehouseEntity> list = baseMapper.listByParam(dto);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }
@@ -1419,8 +1413,9 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
      * @date 2024/4/18 10:26
      */
     @Override
-    public List<WarehouseDTO.ListDTO> getByNames(@Param("nameList") List<String> nameList) {
-        return baseMapper.getByNames(nameList);
+    public List<WarehouseDTO.ListDTO> listByNames(@Param("nameList") List<String> nameList) {
+        String permissionSql = authDataFeign.getWarehousePermissionSql("id");
+        return baseMapper.listByNames(nameList,permissionSql);
     }
 
     /**
@@ -1454,14 +1449,6 @@ public class WarehouseServiceImpl extends SuperServiceImpl<WarehouseMapper, Ware
         }
         return Boolean.FALSE.equals(disabled) && warehouseEntity.getOpenTime() == null;
 	}
-
-    @Override
-    public List<WarehouseEntity> listByWarehouseNameList(List<String> warehouseNameList) {
-        if (CollUtil.isEmpty(warehouseNameList)){
-            return Collections.emptyList();
-        }
-        return this.lambdaQuery().in(WarehouseEntity::getName,warehouseNameList).list();
-    }
 
     private void validateOpenCloseTime(WarehouseEntity warehouseEntity) {
 		if(this.checkOpenCloseTime(warehouseEntity)) {

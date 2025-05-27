@@ -92,7 +92,7 @@
             </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
-                #{params.permissionSql}
+                ${params.permissionSql}
             </if>
         GROUP BY sku.sku_no,sku.name_cn
     </select>
@@ -242,7 +242,7 @@
             </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
-                #{params.permissionSql}
+                ${params.permissionSql}
             </if>
 
         GROUP BY sku.parent_category_name
@@ -343,7 +343,7 @@
             </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
-                #{params.permissionSql}
+                ${params.permissionSql}
             </if>
 
         </where>
@@ -487,7 +487,7 @@
             </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
-                #{params.permissionSql}
+                ${params.permissionSql}
             </if>
 
         </where>
@@ -600,7 +600,7 @@
         </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            #{params.permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY dsi.charge_name
     </select>
@@ -869,7 +869,7 @@
             </if>
             <!--权限-->
             <if test="params.permissionSql!=null and params.permissionSql!=''">
-                #{params.permissionSql}
+                ${params.permissionSql}
             </if>
 
         </where>

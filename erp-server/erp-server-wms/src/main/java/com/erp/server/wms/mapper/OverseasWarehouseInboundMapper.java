@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PermissionsDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDetailDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.entity.OverseasWarehouseInboundEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -39,7 +40,6 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @author Jim
      * @date: 2023-11-27
      */
-    List<OverseasWarehouseInboundDTO.ListDTO> listExportExcel(@Param("params") OverseasWarehouseInboundDTO.ExportDTO params);
     Page<OverseasWarehouseInboundDTO.ListDTO> listExportExcel(@Param("page") Page<OverseasWarehouseInboundDTO.ListDTO> page, @Param("params") OverseasWarehouseInboundDTO.ExportDTO params);
 
     /**
@@ -49,7 +49,7 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @param
      * @return java.util.List<com.erp.model.wms.dto.OverseasWarehouseInboundDTO.CountDTO>
      **/
-    List<OverseasWarehouseInboundDTO.CountDTO> tabList(PermissionsDTO dto);
+    List<OverseasWarehouseInboundDTO.CountDTO> tabList(@Param("params") PermissionsDTO dto);
     
     /**
      * 根据条件获取数据对比系统数据
@@ -66,4 +66,6 @@ public interface OverseasWarehouseInboundMapper extends BaseMapper<OverseasWareh
      * @return
      */
     List<FirstMileDeliveryDTO.ReceiveDTO> countReceiveQtyByParams(@Param("params") FirstMileDeliveryDTO.RequestReceiveDTO dto);
+
+    List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> viewChangeList(@Param("params")OverseasWarehouseInboundDTO.ViewListReqDTO dto);
 }

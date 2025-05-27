@@ -7,24 +7,21 @@ import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.utils.BeanMapperUtils;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.ProductDetailDTO;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.VwAllocationAllocationExcelDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.model.wms.enums.VirtualWarehouseAllocationTypeEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 分货单校验
@@ -116,7 +113,7 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
         if (CharSequenceUtil.isBlank(vwAllocationAllocationExcelDTO.getWarehouseName())) {
             errorMsgList.add("实体仓不能为空");
         }
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getWarehouseName()));
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getWarehouseName()));
         List<VirtualWarehouseDTO.VwDTO> vwDtoList = virtualWarehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getToVirtualWarehouseName()));
         if (CollectionUtils.isEmpty(vwDtoList) || Objects.isNull(vwDtoList.get(0))) {
             errorMsgList.add("调入虚拟仓不存在");
@@ -129,7 +126,7 @@ public class VirtualWarehouseAllocationExcelListener extends AnalysisEventListen
         }
 
         if (CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) {
-            errorMsgList.add("实体仓不存在");
+            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
         } else {
             if (Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
                 errorMsgList.add("实体仓非启用状态");

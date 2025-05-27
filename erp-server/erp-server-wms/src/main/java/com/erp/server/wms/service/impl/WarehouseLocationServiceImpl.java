@@ -342,10 +342,10 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public List<PdaWarehouseLocationDTO.WarehouseAreaDTO> listWarehouseArea() {
-        List<WarehouseEntity> list = warehouseService.list();
+        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(true);
         List<WarehouseLocationEntity> warehouseAreaList = lambdaQuery().eq(WarehouseLocationEntity::getType, WarehouseLocationTypeEnum.AREA.getCode()).list();
         List<PdaWarehouseLocationDTO.WarehouseAreaDTO> warehouseAreaDTOList = new ArrayList<>();
-        for (WarehouseEntity warehouseEntity : list) {
+        for (WarehouseDTO.ListDTO warehouseEntity : list) {
             PdaWarehouseLocationDTO.WarehouseAreaDTO warehouseAreaDTO = new PdaWarehouseLocationDTO.WarehouseAreaDTO();
             warehouseAreaDTO.setWarehouseId(warehouseEntity.getId());
             warehouseAreaDTO.setWarehouseName(warehouseEntity.getName());
@@ -416,6 +416,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public PagingVO<WarehouseAreaDTO.PagingView> areaPaging(PagingDTO<WarehouseAreaDTO.PagingParam> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<WarehouseAreaDTO.PagingView> paging = baseMapper.areaPaging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(paging);
     }
@@ -550,6 +551,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WarehouseLocationExportVo> page = baseMapper.listAllByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()) ,dto.getParams());
         return new PagingVO<>(page);
     }
@@ -593,6 +595,7 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
 
     @Override
     public PagingVO<WarehouseLocationDTO.ViewDto> pagingByParam(PagingDTO<WarehouseLocationDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<WarehouseLocationDTO.ViewDto> result = baseMapper.pagingByArgs(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(result);
     }
@@ -645,12 +648,12 @@ public class WarehouseLocationServiceImpl extends SuperServiceImpl<WarehouseLoca
         //通过必填校验的行
         List<WarehouseLocationExcelDto> verifyList = listener.getSuccessList();
         List<String> excelWarehouseNameList = verifyList.stream().map(WarehouseLocationExcelDto::getWarehouseName).collect(Collectors.toList());
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(excelWarehouseNameList);
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(excelWarehouseNameList);
         Map<String, String> warehouseName2IdMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, WarehouseDTO.ListDTO::getId));
         for (WarehouseLocationExcelDto row : verifyList) {
             String warehouseId = warehouseName2IdMap.get(row.getWarehouseName());
             if(warehouseId == null){
-                row.setErrorMsg("仓库不存在");
+                row.setErrorMsg(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 errorList.add(row);
                 continue;
             }

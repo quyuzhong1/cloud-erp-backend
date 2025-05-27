@@ -57,6 +57,7 @@ public class QcInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
+            warehouseTableField = "qb.warehouse_id",
             menuCode = "wms:qcBill:paging",
             tableAlias = "qb")
     @WebAdvanceQuery(handler = QcInfoQueryHandler.class)
@@ -73,6 +74,7 @@ public class QcInfoController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "qc_user_id",
+            warehouseTableField = "qb.warehouse_id",
             menuCode = "wms:qcBill:paging",
             tableAlias = "qb")
     public ApiResult<List<QcInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {

@@ -32,7 +32,7 @@ public interface RequisitionApplicationMapper extends BaseMapper<RequisitionAppl
      * @param searchParam
      * @return java.util.List<com.erp.model.wms.dto.RequisitionApplicationDTO.TabListDTO>
      **/
-    List<RequisitionApplicationDTO.TabListDTO> tabList(FirstMileDeliveryDTO.PagingParamDTO searchParam);
+    List<RequisitionApplicationDTO.TabListDTO> tabList(@Param("params") FirstMileDeliveryDTO.PagingParamDTO searchParam);
 
     /**
      * 分页查询

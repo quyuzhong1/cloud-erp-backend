@@ -1,5 +1,6 @@
 package com.erp.model.tms.dto;
 
+import com.erp.model.tms.entity.FirstMileCostAllocationEntity;
 import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
 import com.erp.model.tms.entity.InitFirstMileAllocationDetailEntity;
 
@@ -15,8 +16,10 @@ public class FirstMileCostAllocationParamDTO {
     private final Integer deliveryQty;
     private final int asLastMonthReceiveQty;
     private final InitFirstMileAllocationDetailEntity initEntity;
+    private final FirstMileCostAllocationEntity entity;
 
     /**
+     * @param entity
      * @param detailEntity
      * @param judgeReconciliationDTO
      * @param productAllocatedAmount
@@ -26,7 +29,8 @@ public class FirstMileCostAllocationParamDTO {
      * @param asLastMonthReceiveQty
      * @param initEntity
      */
-    public FirstMileCostAllocationParamDTO(FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO, BigDecimal productAllocatedAmount, int currentMonthReceiveQty, int receiveQty, Integer deliveryQty, int asLastMonthReceiveQty, InitFirstMileAllocationDetailEntity initEntity) {
+    public FirstMileCostAllocationParamDTO(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationDetailEntity detailEntity, FirstMileCostAllocationDTO.JudgeReconciliationDTO judgeReconciliationDTO, BigDecimal productAllocatedAmount, int currentMonthReceiveQty, int receiveQty, Integer deliveryQty, int asLastMonthReceiveQty, InitFirstMileAllocationDetailEntity initEntity) {
+        this.entity = entity;
         this.detailEntity = detailEntity;
         this.judgeReconciliationDTO = judgeReconciliationDTO;
         this.productAllocatedAmount = productAllocatedAmount;
@@ -67,5 +71,8 @@ public class FirstMileCostAllocationParamDTO {
 
     public InitFirstMileAllocationDetailEntity getInitEntity() {
         return initEntity;
+    }
+    public FirstMileCostAllocationEntity getEntity() {
+        return entity;
     }
 }

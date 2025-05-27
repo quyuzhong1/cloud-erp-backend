@@ -335,6 +335,10 @@
         WHERE pr.is_deleted = FALSE
         AND pr.invalid_status = FALSE
         AND pr.approve_status = 'approve'
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         AND  EXISTS (
             SELECT
                 t.id
@@ -430,6 +434,10 @@
         LEFT JOIN po_receive_detail prd ON pr.id = prd.main_id AND prd.is_deleted = FALSE AND prd.is_deleted = FALSE
         WHERE pr.is_deleted = FALSE
         AND pr.approve_status = 'approve'
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         AND EXISTS (
             SELECT
                 t.id

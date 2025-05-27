@@ -49,9 +49,8 @@ public class FbaTransitCalculateReportController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:fbaTransitCalculateReport:paging",
-            tableAlias = "ftcr"
+            warehouseTableField = "ftcr.warehouse_id",
+            menuCode = "wms:fbaTransitCalculateReport:paging"
     )
     @WebAdvanceQuery
     public ApiResult<PagingVO<FbaTransitCalculateReportDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaTransitCalculateReportDTO.PagingParamDTO> dto) {

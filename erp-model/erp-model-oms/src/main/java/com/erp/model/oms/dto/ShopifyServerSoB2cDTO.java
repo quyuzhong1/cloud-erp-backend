@@ -49,7 +49,8 @@ public class ShopifyServerSoB2cDTO {
     @Data
     @NoArgsConstructor
     public static class SoB2cLogisticInfoDTO {
-
+        private String shopId;
+        private String shopName;
         private String code;
         private String orderNumber;
         private LocalDateTime lastSignTime;
@@ -96,5 +97,6 @@ public class ShopifyServerSoB2cDTO {
         private String platformSpuNo;
         private String productName;
         private String productImage;
+        private String handle;
     }
 }

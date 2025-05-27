@@ -464,6 +464,7 @@ public class InitStockServiceImpl extends SuperServiceImpl<InitStockMapper, Init
 
     @Override
     public PagingVO<InitStockDTO.ListDTO> exportInitStock(PagingDTO<InitStockDTO.ExportSearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<InitStockDTO.ListDTO> page = this.baseMapper.exportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             filling(page.getRecords());

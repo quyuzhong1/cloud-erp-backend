@@ -67,6 +67,12 @@ public class StocktakingTaskController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "std.warehouse_id",
+            menuCode = "wms:stocktakingTask:paging",
+            tableAlias = "st"
+    )
     public ApiResult<List<StocktakingTaskDTO.TabDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<StocktakingTaskDTO.TabDTO> tabList = stocktakingTaskService.tabList(dto);
         return success(tabList);
@@ -81,6 +87,7 @@ public class StocktakingTaskController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "std.warehouse_id",
             menuCode = "wms:stocktakingTask:paging",
             tableAlias = "st"
     )
@@ -284,6 +291,13 @@ public class StocktakingTaskController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出盘点任务")
     @PostMapping("/export")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "std.warehouse_id",
+            menuCode = "wms:stocktakingTask:paging",
+            tableAlias = "st"
+    )
+    @WebAdvanceQuery(handler = StocktakingTaskQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid StocktakingTaskDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = stocktakingTaskService.exportExcel(dto, response);
         return result ? success() : failure();
