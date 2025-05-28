@@ -51,7 +51,7 @@
         <include refid="Base_Column_List"></include>
             wm.module_classify  AS bussinessKeyName
         from cfg_third_process as ctp
-        LEFT JOIN public.work_menu wm ON wm.module_code = p.bussiness_key AND wm.is_deleted = false
+        LEFT JOIN public.work_menu wm ON wm.module_code = ctp.bussiness_key AND wm.is_deleted = false
         where
         ${params.sqlMap.default}
         and is_deleted = false
