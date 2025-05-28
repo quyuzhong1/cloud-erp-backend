@@ -13,6 +13,8 @@ public enum SoB2cReturnTypeEnum implements EnumMessage {
     CUSTOMER_RETURNS("customerReturns","买家退货"),
     RETURNS_FROM_SERVICE_PROVIDERS("returnsFromServiceProviders","服务商退件"),
     CLAIM("claim","认领"),
+    DEDUCTION("refund","退货退款"),
+    REPLENISHMENT("replenishment","退货补货")
     ;
 
     SoB2cReturnTypeEnum(String code, String name) {
