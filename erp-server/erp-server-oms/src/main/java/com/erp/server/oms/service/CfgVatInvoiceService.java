@@ -1,9 +1,11 @@
 package com.erp.server.oms.service;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CfgVatInvoiceEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgVatInvoiceDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 
 import java.time.LocalDateTime;
 import java.util.List;

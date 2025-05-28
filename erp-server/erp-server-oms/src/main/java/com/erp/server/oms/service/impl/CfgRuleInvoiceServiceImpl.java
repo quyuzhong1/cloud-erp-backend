@@ -15,18 +15,19 @@ import com.common.core.entity.ConditionElement;
 import com.common.core.server.rule.SpElServer;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
 import com.erp.model.oms.dto.RuleConditionDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.InvoiceInfoInvoiceTypeEnum;
+import com.erp.model.oms.enums.SoB2cNfeStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgRuleInvoiceMapper;
-import com.erp.server.oms.service.CfgRuleInvoiceService;
+import com.erp.server.oms.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.oms.service.OperateLogService;
 import com.common.core.exception.ServiceException;
-import com.erp.server.oms.service.RuleConditionService;
 import org.apache.poi.ss.formula.functions.T;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -58,6 +59,15 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
     private RuleConditionService ruleConditionService;
     @Resource
     private SpElServer spElServer;
+    @Lazy
+    @Resource
+    private SoB2cService soB2cService;
+    @Lazy
+    @Resource
+    private SoB2cDetailService soB2cDetailService;
+    @Lazy
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -164,7 +174,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
         if (disabled.equals(state)) {
             throw new ServiceException(ApiError.ERROR_98027);
         }
-        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "停用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "停用");
+        String content = String.format("启用状态[%s]变更为[%s]", Boolean.TRUE.equals(disabled) ? "禁用" : "启用", Boolean.TRUE.equals(disabled) ? "启用" : "禁用");
         entity.setDisabled(state);
         operateLogService.addModuleOperateLog(content, ModuleTypeEnum.CFG_RULE_INVOICE.getCode(), entity.getId(), "状态变更");
         this.updateById(entity);
@@ -187,7 +197,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
     public CfgInvoiceSettingDTO.RuleMatchDTO getRuleInvoiceMatchResult(Map<String, Object> map) {
         CfgInvoiceSettingDTO.RuleMatchDTO ruleMatch = new CfgInvoiceSettingDTO.RuleMatchDTO();
         if (Objects.isNull(map)) {
-            ruleMatch.setApproveSuccess(Boolean.FALSE);
+            ruleMatch.setIsPass(Boolean.FALSE);
             return ruleMatch;
         }
         log.info("参数为=========={}", map);
@@ -205,13 +215,49 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
             //获取到表达式
             Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
             if (matchResult) {
-                ruleMatch.setApproveSuccess(Boolean.TRUE);
-                ruleMatch.setRuleName(item.getName());
+                ruleMatch.setIsPass(Boolean.TRUE);
                 return ruleMatch;
             }
         }
         return ruleMatch;
     }
+
+    @Override
+    public Map<String, Boolean> invoiceCfgRule(SoB2cEntity entity, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
+        Map<String, Boolean> resultMap = new HashMap<>();
+        if (null == entity) {
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单表");
+        }
+        if (map.isEmpty()) {
+            //匹配审核规则
+            soB2cService.handleMatchJson(entity.getId(), detailList, map);
+        }
+        CfgInvoiceSettingDTO.RuleMatchDTO result = this.getRuleInvoiceMatchResult(map);
+        Boolean isPass = Objects.nonNull(result) && Objects.nonNull(result.getIsPass()) && result.getIsPass() ? Boolean.TRUE : Boolean.FALSE;
+        //匹配通过修改销售订单开票状态
+        if (isPass && CharSequenceUtil.isBlank(entity.getNfeInvoiceStatus())) {
+            entity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.PENDING.getCode());
+            soB2cService.lambdaUpdate().eq(SoB2cEntity::getId, entity.getId())
+                    .set(SoB2cEntity::getNfeInvoiceStatus, entity.getNfeInvoiceStatus())
+                    .update();
+        }
+        //规则是否通过
+        resultMap.put("isPass", isPass);
+        return resultMap;
+    }
+
+    @Override
+    public SoB2cDTO.InvoiceResult invoiceRule(SoB2cEntity soB2cEntity) {
+        Map<String, Object> map = new HashMap<>();
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
+        //自动匹配开票规则
+        Map<String, Boolean> invoiceCfgRule = cfgRuleInvoiceService.invoiceCfgRule(soB2cEntity, detailList, map);
+        SoB2cDTO.InvoiceResult ruleResult = new SoB2cDTO.InvoiceResult();
+        ruleResult.setSoB2cEntity(soB2cEntity);
+        ruleResult.setIsPass(invoiceCfgRule.getOrDefault("isPass", Boolean.FALSE));
+        return ruleResult;
+    }
+
     /**
      * 根据优先级获取规则列表
      *

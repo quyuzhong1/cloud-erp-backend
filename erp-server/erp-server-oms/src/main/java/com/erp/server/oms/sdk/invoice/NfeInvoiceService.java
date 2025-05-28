@@ -45,10 +45,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -99,6 +96,8 @@ public class NfeInvoiceService {
 
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -260,7 +259,12 @@ public class NfeInvoiceService {
                 .eq(DmpSoBillDetailEntity::getSourcePlatform, soB2cEntity.getDictPlatform())
                 .list();
         if (CollUtil.isEmpty(allDmpSoBillDetailEntityList)) {
-           throw new ServiceException("开票地址信息不能为空");
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())
+                    || (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform()))){
+                throw new ServiceException("开票地址信息不能为空");
+            }
+           //按照销售信息赋值
+            return getNfeClienteDTOBySoB2c(soB2cEntity);
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
@@ -280,6 +284,34 @@ public class NfeInvoiceService {
         return nfeClienteDTO;
     }
 
+    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cEntity soB2cEntity) {
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        if (ObjUtil.isEmpty(receiverEntity)) {
+            throw new ServiceException("B2C买家信息记录不存在");
+        }
+        NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soB2cReceiverEntityToNfeCliente(receiverEntity);
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())){
+            nfeClienteDTO.setBairro(receiverEntity.getCityName());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getMobile())){
+            nfeClienteDTO.setMobile(receiverEntity.getReceiverTelNumber());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())){
+            nfeClienteDTO.setRua(receiverEntity.getFirstAddress() + receiverEntity.getSecondAddress() + receiverEntity.getFullAddress());
+        }
+        //州（省份）二字码缩写
+        List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
+                .eq(DictCityEntity::getCountryCode, "BR")
+                .eq(DictCityEntity::getType,"province")
+                .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "')")
+                .list();
+        if (CollUtil.isEmpty(dictCityList)) {
+            throw new ServiceException("开票省份/州二字码未找到");
+        }
+        nfeClienteDTO.setUf(dictCityList.get(0).getCode());
+        nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
+        return nfeClienteDTO;
+    }
 
 
     /**
@@ -334,7 +366,7 @@ public class NfeInvoiceService {
             List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList = listingMap.get(CharSequenceUtil.format("{}-{}-{}", soB2cEntity.getDictPlatform(), detailEntity.getPlatformSkuNo(),soB2cEntity.getShopId()));
             //税务信息
             InvoiceTaxEntity invoiceTaxEntity = CollUtil.isEmpty(listingInfoWithSkuMappingList) ? null : listingInfoWithSkuMappingList.stream().filter(obj -> ObjUtil.isNotEmpty(taxMap.get(obj.getListingId()))).map(obj -> taxMap.get(obj.getListingId())).findFirst().orElse(null);
-            if (ObjUtil.isEmpty(invoiceTaxEntity)) {
+            if (Objects.isNull(invoiceTaxEntity)) {
                 throw new ServiceException(ApiError.ERROR_SKU_INVOICE_TAX_NOT_EXIST,detailEntity.getPlatformSkuNo(),shopInfoEntity.getName());
             }
             nfeItensDTO.setName(invoiceTaxEntity.getInvoiceProductName());
