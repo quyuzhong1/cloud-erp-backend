@@ -191,6 +191,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             JiFengCreateOutboundRequest.SkuListDTO skuListDTO = new JiFengCreateOutboundRequest.SkuListDTO();
             skuListDTO.setSku(item.getProductSku());
             skuListDTO.setNum(item.getQuantity());
+            skuListDTO.setHsCode(item.getHsCode());
             skuListDTOS.add(skuListDTO);
         });
         jiFengCreateOutboundRequest.setSkuList(skuListDTOS);
