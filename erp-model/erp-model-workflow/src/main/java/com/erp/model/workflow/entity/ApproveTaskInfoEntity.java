@@ -25,12 +25,12 @@ import java.io.Serializable;
 public class ApproveTaskInfoEntity extends BaseEntity<ApproveTaskInfoEntity> {
 
     /**
-    * 流程来源
+    * 流程来源,CfgProcessRuleTypeEnum
     */
     @TableField("source_platform")
     private String sourcePlatform;
     /**
-    * 类型
+    * 类型,ApproveTaskTypeEnum
     */
     @TableField("type")
     private String type;

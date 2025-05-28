@@ -11,6 +11,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.OperationTypeEnum;
+import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
@@ -149,8 +150,9 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         //流程类型
         viewDTO.setTypeName(ApproveTaskTypeEnum.getName(viewDTO.getType()));
         //执行状态
-        viewDTO.setStatusName(ApproveTaskStatusEnum.getName(viewDTO.getType()));
-
+        viewDTO.setStatusName(ApproveTaskStatusEnum.getName(viewDTO.getStatus()));
+        //数大臣单据名称
+        viewDTO.setBussinessKeyName(SourceTypeEnum.getName(viewDTO.getBussinessKey()));
         //明细
         List<ApproveTaskDetailEntity> approveTaskDetailList = approveTaskDetailService.listByMainId(id);
         if (CollUtil.isEmpty(approveTaskDetailList)) {
@@ -198,7 +200,9 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             //流程类型
             listDTO.setTypeName(ApproveTaskTypeEnum.getName(listDTO.getType()));
             //执行状态
-            listDTO.setStatusName(ApproveTaskStatusEnum.getName(listDTO.getType()));
+            listDTO.setStatusName(ApproveTaskStatusEnum.getName(listDTO.getStatus()));
+            //数大臣单据名称
+            listDTO.setBussinessKeyName(SourceTypeEnum.getName(listDTO.getBussinessKey()));
         }
     }
 

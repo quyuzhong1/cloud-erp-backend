@@ -93,7 +93,7 @@ public class ApproveTaskInfoDTO implements Serializable {
         private String sourcePlatformName;
 
         /**
-         * 类型【可排序】
+         * 类型,ApproveTaskTypeEnum【可排序】
          */
         private String type;
         /**
