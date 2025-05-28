@@ -131,6 +131,10 @@ public class ThirdNoticePushRecordDTO implements Serializable {
     public static class BaseDTO {
 
         /**
+         *
+         */
+        private String id;
+        /**
          * 创建人id
          */
         private String createUserId;
