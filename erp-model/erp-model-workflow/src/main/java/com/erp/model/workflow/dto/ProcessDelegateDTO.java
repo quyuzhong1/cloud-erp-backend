@@ -92,7 +92,7 @@ public class ProcessDelegateDTO implements Serializable {
          */
         private String status;
         /**
-         * 委托状态名称【可排序】
+         * 委托状态名称
          */
         private String statusName;
 
@@ -102,7 +102,7 @@ public class ProcessDelegateDTO implements Serializable {
         private String businessKey;
 
         /**
-         * 单据类型名称【可排序】
+         * 单据类型名称
          */
         private String businessKeyName;
 
@@ -111,7 +111,7 @@ public class ProcessDelegateDTO implements Serializable {
          */
         private String startUserId;
         /**
-         * 发起人名称【可排序】
+         * 发起人名称
          */
         private String startUserName;
 
@@ -121,7 +121,7 @@ public class ProcessDelegateDTO implements Serializable {
         private String delegateUserId;
 
         /**
-         * 委托人名称【可排序】
+         * 委托人名称
          */
         private String delegateUserName;
 
@@ -136,7 +136,7 @@ public class ProcessDelegateDTO implements Serializable {
         private LocalDateTime expireTime;
 
         /**
-         * 创建人ID
+         * 创建人ID【可排序】
          */
         private String createUserId;
 
@@ -145,7 +145,7 @@ public class ProcessDelegateDTO implements Serializable {
          */
         private String createUserName;
         /**
-         * 创建时间
+         * 创建时间【可排序】
          */
         private LocalDateTime createTime;
 

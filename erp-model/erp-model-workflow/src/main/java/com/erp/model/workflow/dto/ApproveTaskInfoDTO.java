@@ -78,12 +78,12 @@ public class ApproveTaskInfoDTO implements Serializable {
     public static class ListDTO {
 
         /**
-         * 主键id
+         * 主键id【可排序】
          */
         private String id;
 
         /**
-         * 流程来源
+         * 流程来源【可排序】
          */
         private String sourcePlatform;
 
@@ -93,7 +93,7 @@ public class ApproveTaskInfoDTO implements Serializable {
         private String sourcePlatformName;
 
         /**
-         * 类型
+         * 类型【可排序】
          */
         private String type;
         /**
@@ -102,22 +102,22 @@ public class ApproveTaskInfoDTO implements Serializable {
         private String typeName;
 
         /**
-         * 第三方单据（飞书实例name）
+         * 第三方单据（飞书实例name）【可排序】
          */
         private String thirdDefinniationName;
 
         /**
-         * 第三方单号（飞书实例id）
+         * 第三方单号（飞书实例id）【可排序】
          */
         private String thirdInstanceId;
 
         /**
-         * 第三方审批定义
+         * 第三方审批定义【可排序】
          */
         private String thirdApprovalCode;
 
         /**
-         * 数大臣单据名称，采购订单等
+         * 数大臣单据名称，采购订单等【可排序】
          */
         private String bussinessKey;
 
@@ -127,17 +127,17 @@ public class ApproveTaskInfoDTO implements Serializable {
         private String bussinessKeyName;
 
         /**
-         * 数大臣单号，单据号
+         * 数大臣单号，单据号【可排序】
          */
         private String bussinessCode;
 
         /**
-         * 发生时间
+         * 发生时间【可排序】
          */
         private LocalDateTime happenTime;
 
         /**
-         * 执行状态，ApproveTaskStatusEnum枚举
+         * 执行状态，ApproveTaskStatusEnum枚举【可排序】
          */
         private String status;
 
@@ -147,7 +147,7 @@ public class ApproveTaskInfoDTO implements Serializable {
         private String statusName;
 
         /**
-         * 失败原因
+         * 失败原因【可排序】
          */
         private String reason;
     }
