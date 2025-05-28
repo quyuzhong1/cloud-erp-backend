@@ -77,6 +77,11 @@ public class CfgThirdProcessDTO implements Serializable {
         private LocalDateTime enableTime;
 
         /**
+         * 第三方审批定义code
+         */
+        private String thirdProcessDefinitionCode;
+
+        /**
          * 字段映射
          */
         private List<CfgProcessFieldMapDTO.ViewDTO> fieldMapList;
@@ -152,6 +157,12 @@ public class CfgThirdProcessDTO implements Serializable {
         private LocalDateTime enableTime;
 
         /**
+         * 第三方审批定义code
+         */
+        @NotBlank(message = "第三方审批定义code不能为空")
+        private String thirdProcessDefinitionCode;
+
+        /**
          * 字段映射
          */
         private List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapList;
@@ -200,6 +211,11 @@ public class CfgThirdProcessDTO implements Serializable {
          * 启用状态
          */
         private Boolean enableStatus;
+
+        /**
+         * 第三方审批定义code
+         */
+        private String thirdProcessDefinitionCode;
 
         /**
          * 字段映射

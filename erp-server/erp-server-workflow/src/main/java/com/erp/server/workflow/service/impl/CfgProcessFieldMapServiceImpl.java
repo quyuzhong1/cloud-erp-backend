@@ -131,7 +131,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     @Override
     public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId,String type) {
         try {
-            GetApprovalResp approval = fsService.getApproval("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F");
+            GetApprovalResp approval = fsService.getApproval(processDefinitionId);
             String formStr = JSONUtil.toJsonStr(approval.getData());
             ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(type).name());
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = handler.parseForm(formStr);

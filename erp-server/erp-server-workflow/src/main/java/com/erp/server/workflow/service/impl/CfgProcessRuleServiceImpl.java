@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.util.CollectionUtils;
@@ -178,6 +179,9 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     public void delete(List<String> ids) {
         //删除执行条件
         List<CfgProcessRuleEntity> processRuleEntityList = this.list(new LambdaQueryWrapper<CfgProcessRuleEntity>().in(CfgProcessRuleEntity::getId, ids).eq(CfgProcessRuleEntity::getIsDeleted, false));
+        if (CollUtil.isEmpty(processRuleEntityList)){
+            throw new ServiceException("请选择要删除的流程执行条件");
+        }
         processRuleEntityList.forEach(item -> {
             if (item.getType().equals(CfgProcessRuleTypeEnum.ERPPROCESS.getCode())) {
                 List<ProcessManagementEntity> processManagementEntities = processManagementService.list(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getActProcessDefinitionId, item.getProcessDefinitionId()).eq(ProcessManagementEntity::getIsDeleted, false));
@@ -193,9 +197,12 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
         removeByIds(ids);
         cfgProcessExpService.delete(ids);
         cfgProcessFieldMapService.delete(ids);
-        // 操作日志
-        String msg = StrUtil.format("删除【{}】流程设置执行条件", UserContext.getDefaultLoginUser().getUserName(), "流程设置执行条件", "");
-        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntityList.get(0).getCfgProcessId(), "删除操作");
+        processRuleEntityList.forEach(processRuleEntity -> {
+            // 操作日志
+            String msg = StrUtil.format("删除【{}】流程设置执行条件", UserContext.getDefaultLoginUser().getUserName(), "流程设置执行条件", "");
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntity.getCfgProcessId(), "删除操作");
+        });
+
     }
 
     @Override
