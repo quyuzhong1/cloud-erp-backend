@@ -102,6 +102,12 @@ public class CfgThirdNoticeDTO implements Serializable {
         */
         private String noticeMethod;
         private List<String> noticeMethodList;
+
+        /**
+         * 推送信息
+         */
+        private List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList;
+
         /**
          * 规则条件
          */
