@@ -127,7 +127,7 @@ public class CfgThirdProcessController extends BaseController {
     @GetMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-//            menuCode = "workflow:cfgThirdProcess:view",
+            menuCode = "workflow:cfgThirdProcess:view",
             serviceClass = CfgThirdProcessService.class,
             keyIdName = "id")
     @LogViewService
