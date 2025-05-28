@@ -424,6 +424,13 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             data.setNoticeMethodList(Arrays.asList(data.getNoticeMethod().split(",")));
         }
 
+        //推送信息
+        List<CfgApproveSyncFieldMapEntity> cfgApproveSyncFieldMapEntities = cfgApproveSyncFieldMapService.listByMainIds(Arrays.asList(entity.getId()));
+        if(CollUtil.isNotEmpty(cfgApproveSyncFieldMapEntities)){
+            List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = BeanMapper.copyList(cfgApproveSyncFieldMapEntities, CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO.class);
+            data.setPushMsgList(pushMsgList);
+        }
+
         //查询规则条件
         List<CfgRuleConditionEntity> ruleConditionEntities = cfgRuleConditionService.list(Wrappers.<CfgRuleConditionEntity>lambdaQuery()
                 .eq(CfgRuleConditionEntity::getRuleId, entity.getId())

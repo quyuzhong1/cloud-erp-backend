@@ -1940,7 +1940,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             } else {
                 startDTO.setUserId(userInfo.getUid());
             }
-            startDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            startDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(startDTO);
         });
         ApiResult<List<ProcessManagementDTO.StartResultDTO>> listApiResult = workflowFeign.batchStartProcess(resultList);
@@ -1972,7 +1972,7 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
             approveDTO.setComment(dto.getComment());
             approveDTO.setUserId(userInfo.getUid());
-            approveDTO.setVariablesMap(BeanUtil.beanToMap(obj));
+            approveDTO.setVariablesMap(getVariablesMap(obj));
             resultList.add(approveDTO);
         });
         ApiResult<List<ProcessManagementDTO.ApproveResultDTO>> listApiResult = workflowFeign.batchApproveProcess(resultList);
@@ -1991,6 +1991,22 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             List<CustomerInfoEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto, updateList);
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(CustomerInfoEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        List<CfgCountryPartitionEntity> cfgCountryPartitionEntity = FeignQuery.create(CfgCountryPartitionEntity.class).eq(CfgCountryPartitionEntity::getCountry,entity.getCountryId()).list();
+        if(CollectionUtils.isNotEmpty(cfgCountryPartitionEntity)){
+            variablesMap.put("partitionName", cfgCountryPartitionEntity.get(0).getPartitionName());
+        }
+        return variablesMap;
     }
 
     @Override
