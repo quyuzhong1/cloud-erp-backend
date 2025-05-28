@@ -135,7 +135,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public CfgProcessDTO.ViewDTO view(String settingId) {
-        cfgProcessRuleService.getByIdOpt(settingId).orElseThrow(() -> new ServiceException("未找到该流程配置数据，{}",settingId));
         CfgProcessDTO.ViewDTO viewDTO = baseMapper.getViewDTOById(settingId);
 
         for (CfgProcessRuleDTO.ViewDTO ruleDto : viewDTO.getProcessRuleDTOList()) {
