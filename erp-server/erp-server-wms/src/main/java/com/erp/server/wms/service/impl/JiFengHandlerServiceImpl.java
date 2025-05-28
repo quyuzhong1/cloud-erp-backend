@@ -69,6 +69,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
                 .expectedTime(createInboundReq.getEtaDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                 .warehouse(createInboundReq.getWarehouseCode())
                 .remark(createInboundReq.getRemark())
+                .receiptType(2)
                 .build();
         //封装箱子明细
         List<JiFengCreateInboundRequest.SkuListDTO> skuListDTOS = new ArrayList<>();
@@ -184,11 +185,13 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         jiFengCreateOutboundRequest.setLogisticsName(createOutboundReq.getShippingMethodName());
         jiFengCreateOutboundRequest.setTrackingNo(createOutboundReq.getTrackingNo());
         jiFengCreateOutboundRequest.setPackageType(3);
+        jiFengCreateOutboundRequest.setLabelUrl(createOutboundReq.getLabelUrl());
         List<JiFengCreateOutboundRequest.SkuListDTO> skuListDTOS = new ArrayList<>();
         createOutboundReq.getItems().forEach(item -> {
             JiFengCreateOutboundRequest.SkuListDTO skuListDTO = new JiFengCreateOutboundRequest.SkuListDTO();
             skuListDTO.setSku(item.getProductSku());
             skuListDTO.setNum(item.getQuantity());
+            skuListDTO.setHsCode(item.getHsCode());
             skuListDTOS.add(skuListDTO);
         });
         jiFengCreateOutboundRequest.setSkuList(skuListDTOS);

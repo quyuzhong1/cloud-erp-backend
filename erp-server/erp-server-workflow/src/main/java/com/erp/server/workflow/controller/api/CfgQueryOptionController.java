@@ -34,7 +34,7 @@ public class CfgQueryOptionController extends BaseController {
      * 查询option配置表下拉
      * @return
      */
-    @GetMapping("/processDefinition/drop/down")
+    @GetMapping("/drop/down")
     public ApiResult<List<CfgQueryOptionDTO.ListDTO>> proDropDown(@RequestParam(value = "bussinessKey") String bussinessKey) {
         return success(cfgQueryOptionService.proDropDown(bussinessKey));
     }
@@ -43,7 +43,7 @@ public class CfgQueryOptionController extends BaseController {
      * 字段配置系统字段下拉
      * @return
      */
-    @GetMapping("/processDefinition/drop/down/sysField")
+    @GetMapping("/drop/down/sysField")
     public ApiResult<List<CfgQueryOptionDTO.ViewDTO>> getSystenfield(@RequestParam(value = "bussinessKey") String bussinessKey) {
         return success(cfgQueryOptionService.getSystemfield(bussinessKey));
     }

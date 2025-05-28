@@ -2,12 +2,11 @@ package com.erp.model.workflow.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -81,7 +80,10 @@ public class CfgProcessExpDTO implements Serializable {
         */
         private String name;
 
-
+        /**
+         * 值类型
+         */
+        private String valueType;
     }
 
     /**
@@ -156,6 +158,12 @@ public class CfgProcessExpDTO implements Serializable {
         */
         @Size(max = 255,message = "值对应名称最大长度不能超过100位")
         private String name;
+
+        /**
+         * 值类型
+         */
+        @NotBlank(message = "值类型不能为空")
+        private String valueType;
     }
 
 

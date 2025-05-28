@@ -2,7 +2,7 @@ package com.sdk.wms.jifeng.enums;
 
 
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import io.seata.common.util.StringUtils;
 import lombok.Getter;
@@ -107,14 +107,14 @@ public enum JiFengEnums {
      */
     @Getter
     public enum ReturnInstockTypeEnum {
-        RETURNS_FROM_SERVICE_PROVIDERS(1,"服务商退件", SoB2cReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
-        CUSTOMER_RETURNS(2,"客户退件", SoB2cReturnTypeEnum.CUSTOMER_RETURNS),
+        RETURNS_FROM_SERVICE_PROVIDERS(1,"服务商退件", ReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        CUSTOMER_RETURNS(2,"客户退件", ReturnTypeEnum.CUSTOMER_RETURNS),
         ;
         private final Integer code;
         private final String name;
-        private final SoB2cReturnTypeEnum erpEnum;
+        private final ReturnTypeEnum erpEnum;
 
-        ReturnInstockTypeEnum(Integer code, String name, SoB2cReturnTypeEnum erpEnum) {
+        ReturnInstockTypeEnum(Integer code, String name, ReturnTypeEnum erpEnum) {
             this.code = code;
             this.name = name;
             this.erpEnum = erpEnum;
@@ -143,7 +143,7 @@ public enum JiFengEnums {
                     .filter(item -> item.getCode().toString().equalsIgnoreCase(code))
                     .findFirst()
                     .map(ReturnInstockTypeEnum::getErpEnum)
-                    .map(SoB2cReturnTypeEnum::getCode)
+                    .map(ReturnTypeEnum::getCode)
                     .orElse("");
         }
     }

@@ -128,7 +128,7 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
         // 当前用户信息
         LoginUser loginUser = UserContext.getDefaultLoginUser();
         // 符合 ruleId 存在于 ids 的更新
-        List<CfgProcessExpEntity> cfgProcessExpEntityList = this.list(new LambdaQueryWrapper<CfgProcessExpEntity>().in(CfgProcessExpEntity::getRuleId, mainIds));
+        List<CfgProcessExpEntity> cfgProcessExpEntityList = this.list(new LambdaQueryWrapper<CfgProcessExpEntity>().in(CfgProcessExpEntity::getRuleId, mainIds).eq(CfgProcessExpEntity::getIsDeleted, false));
         if (CollUtil.isEmpty(cfgProcessExpEntityList)) {
             return;
         }

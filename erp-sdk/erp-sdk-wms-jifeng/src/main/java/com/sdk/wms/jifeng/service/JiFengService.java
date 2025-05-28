@@ -6,6 +6,7 @@ import com.alibaba.fastjson.TypeReference;
 import com.alibaba.fastjson.parser.Feature;
 import com.alibaba.fastjson.parser.ParserConfig;
 import com.common.business.constant.BusinessCommonConstants;
+import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.utils.OkHttpUtils;
 import com.sdk.wms.jifeng.dto.request.JiFengAuthRequest;
 import com.sdk.wms.jifeng.dto.request.JiFengCreateInboundRequest;
@@ -298,7 +299,9 @@ public class JiFengService {
         String path = "/api/inbound/create";
         String url = getUrl(authMap.get("domain").toString());
         Map<String, String> headerMap = buildHearderMap(authMap, path);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(jiFengCreateInboundRequest));
         String bodyStr = OkHttpUtils.doPostJson(url+path, JSONUtil.toJsonStr(jiFengCreateInboundRequest), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         JiFengBaseResp<JiFengCreateInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateInboundResp.class);
         return response;
     }
@@ -314,7 +317,9 @@ public class JiFengService {
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("inboundNo",inboundNo);
         paramMap.put("erpNo",erpNo);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(paramMap));
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         JiFengBaseResp<JiFengCreateInboundResp> response = JiFengUtils.parseToJiFengResp(bodyStr,JiFengCreateInboundResp.class);
         return response;
     }
@@ -346,7 +351,9 @@ public class JiFengService {
         if(!BusinessCommonConstants.hasProfile("prod")){
             request.setPickingNote("测试单");
         }
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(request));
         String bodyStr = OkHttpUtils.doPostJson(url+path, JSONUtil.toJsonStr(request), headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         JiFengBaseResp<String> response = JiFengUtils.parseToJiFengResp(bodyStr,String.class);
         return response;
     }
@@ -361,7 +368,9 @@ public class JiFengService {
         Map<String, String> headerMap = buildHearderMap(authMap, path);
         Map<String,Object> paramMap = new HashMap<>();
         paramMap.put("erpNo",erpNo);
+        ThirdWarehouseContext.setRequestJson(JSONUtil.toJsonStr(paramMap));
         String bodyStr = OkHttpUtils.doPostJson(url+path, paramMap, headerMap);
+        ThirdWarehouseContext.setResponseJson(bodyStr);
         JiFengBaseResp<String> response = JiFengUtils.parseToJiFengResp(bodyStr,String.class);
         return response;
     }

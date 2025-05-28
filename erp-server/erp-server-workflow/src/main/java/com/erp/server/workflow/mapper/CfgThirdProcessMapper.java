@@ -7,6 +7,7 @@ import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -33,7 +34,7 @@ public interface CfgThirdProcessMapper extends BaseMapper<CfgThirdProcessEntity>
      * @return: java.util.List<com.erp.model.workflow.dto.CfgThirdProcessDTO.TabListDTO>
      *
      */
-    List<CfgThirdProcessDTO.TabListDTO> tabList(CfgThirdProcessDTO.PagingParamDTO searchParam);
+    List<CfgThirdProcessDTO.TabListDTO> tabList(@Param("params") CfgThirdProcessDTO.PagingParamDTO searchParam);
 
     /**
      * @description: 三方审批生成分页
@@ -41,7 +42,7 @@ public interface CfgThirdProcessMapper extends BaseMapper<CfgThirdProcessEntity>
      * @param params
      * @return
      */
-    IPage<CfgThirdProcessDTO.ListDTO> paging(Page query, CfgThirdProcessDTO.@NotNull(message = "参数不能为空") @Valid PagingParamDTO params);
+    IPage<CfgThirdProcessDTO.ListDTO> paging(Page query, @Param("params")  CfgThirdProcessDTO.PagingParamDTO params);
 
     CfgThirdProcessDTO.ViewDTO getView(String id);
 }

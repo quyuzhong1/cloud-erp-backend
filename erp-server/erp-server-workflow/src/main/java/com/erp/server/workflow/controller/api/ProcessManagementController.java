@@ -13,6 +13,7 @@ import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessManagementEntity;
@@ -139,7 +140,7 @@ public class ProcessManagementController extends BaseController {
         for (String id : dto.getIds()) {
             ProcessManagementDTO.ManagementTaskDTO entity = entityMap.get(id);
             if(Objects.isNull(entity)){
-                resultDTOS.add(BatchResultDTO.fail(id,id,"流程管理不存在"));
+                resultDTOS.add(BatchResultDTO.fail(id,id, ApiError.TASK_NOT_EXIST.msg));
                 continue;
             }
             try {

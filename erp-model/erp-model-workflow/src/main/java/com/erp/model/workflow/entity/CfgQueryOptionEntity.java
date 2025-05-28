@@ -1,13 +1,13 @@
 package com.erp.model.workflow.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -102,7 +102,16 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
 
     @TableField("controls")
     private String controls;
-
+    /**
+     * 值类型
+     */
+    @TableField("value_type")
+    private String valueType;
+    /**
+     * 使用类型
+     */
+    @TableField("use_type")
+    private String useType;
 
     public static final String Condition_Field_Name = "condition_field_name";
 

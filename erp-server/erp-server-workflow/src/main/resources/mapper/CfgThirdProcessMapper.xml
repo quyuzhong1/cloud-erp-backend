@@ -19,6 +19,7 @@
        <result column="source_platform" property="sourcePlatform" />
        <result column="enable_status" property="enableStatus" />
        <result column="enable_time" property="enableTime" />
+        <result column="third_process_definition_code" property="thirdProcessDefinitionCode" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -34,9 +35,10 @@
         is_deleted,
         code, name, bussiness_key, operate_type, source_platform, enable_status, enable_time
     </sql>
+
     <select id="tabList" resultType="com.erp.model.workflow.dto.CfgThirdProcessDTO$TabListDTO">
         SELECT
-        cas.enable_status AS tabFlag,
+        ctp.enable_status AS tabFlag,
         count(1)  AS count
         FROM  cfg_third_process as ctp
         WHERE ctp.is_deleted=FALSE
@@ -49,17 +51,19 @@
     <select id="paging" resultType="com.erp.model.workflow.dto.CfgThirdProcessDTO$ListDTO">
         select
         <include refid="Base_Column_List"></include>
-            wm.module_classify  AS bussinessKeyName
+            ,wm.module_classify  AS bussiness_key_name,
+            db.name AS source_platform
         from cfg_third_process as ctp
-        LEFT JOIN public.work_menu wm ON wm.module_code = p.bussiness_key AND wm.is_deleted = false
+        LEFT JOIN public.work_menu wm ON wm.module_code = ctp.bussiness_key AND wm.is_deleted = false
+        LEFT JOIN public.dict_basic db ON db.type = 'sourcePlatform' AND db.is_deleted = false AND db.value = ctp.source_platform
         where
         ${params.sqlMap.default}
-        and is_deleted = false
+        and ctp.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by create_time desc
+        order by ctp.create_time desc
     </select>
 
     <!-- 主表 resultMap -->
@@ -72,6 +76,7 @@
         <result property="sourcePlatform" column="process_source_platform"/>
         <result property="enableStatus" column="process_enable_status"/>
         <result property="enableTime" column="process_enable_time"/>
+        <result property="thirdProcessDefinitionCode" column="thirdProcessDefinitionCode"/>
 
         <!-- 字段映射 -->
         <collection property="fieldMapList" ofType="com.erp.model.workflow.dto.CfgProcessFieldMapDTO$ViewDTO"
@@ -125,6 +130,8 @@
             p.source_platform AS process_source_platform,
             p.enable_status AS process_enable_status,
             p.enable_time AS process_enable_time,
+            p.third_process_definition_code AS thirdProcessDefinitionCode,
+
 
             -- 字段映射表字段
             fm.id AS field_map_id,

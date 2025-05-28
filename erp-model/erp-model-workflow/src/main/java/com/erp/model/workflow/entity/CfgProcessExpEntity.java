@@ -1,13 +1,13 @@
 package com.erp.model.workflow.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -69,6 +69,12 @@ public class CfgProcessExpEntity extends BaseEntity<CfgProcessExpEntity> {
     */
     @TableField("name")
     private String name;
+
+    /**
+     * 值对应名称
+     */
+    @TableField("value_type")
+    private String valueType;
 
 
     public static final String RULE_ID = "rule_id";

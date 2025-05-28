@@ -167,21 +167,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-//        String processDefinitionId = getProcessDefinitionId(dto);
-//        if (CharSequenceUtil.isBlank(processDefinitionId)) {
-//            // 业务无已启用的Erp流程配置
-//            return new ProcessManagementDTO.StartResultDTO(dto);
-//        }
-//        //启动流程
-//        return startProcess(dto, processDefinitionId);
-
-        // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
+        String processDefinitionId = getProcessDefinitionId(dto);
+        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+            // 业务无已启用的Erp流程配置
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
-        return startProcess(dto, processBusiness.getProcessDefinitionId());
+        //启动流程
+        return startProcess(dto, processDefinitionId);
     }
 
 
@@ -224,7 +216,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 continue;
             }
             List<ConditionElement> conditionElementList = BeanMapper.copyList(processExpList, ConditionElement.class);
-            Boolean matchResult = spElServer.matchDetailExpressionByConditionList(conditionElementList, dto.getVariablesMap());
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, dto.getVariablesMap());
             //存在一条以上的规则都匹配数据的时候直接报错
             if (CharSequenceUtil.isNotBlank(processDefinitionId) && matchResult) {
                 throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
