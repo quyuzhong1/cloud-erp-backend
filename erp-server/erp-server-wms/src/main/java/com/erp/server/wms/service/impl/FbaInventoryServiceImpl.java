@@ -86,7 +86,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public FbaInventoryDTO.SummaryNumber summaryNumber(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         FbaInventoryDTO.SummaryNumber summaryNumber = this.baseMapper.summaryNumber(pagingParamDTO.getParams());
         return summaryNumber;
     }
@@ -251,7 +251,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaInventoryDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<FbaInventoryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理

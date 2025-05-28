@@ -1269,9 +1269,6 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
                     shudiyunB2cOrderDTO.setTransaction_currency(viewDTO.getName());
                 }
             }
-            shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-            String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
-            shudiyunB2cOrderDTO.setPlatform_name(platformName);
             shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
             shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
 
@@ -1279,7 +1276,9 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
             if (StringUtils.isNotBlank(subPlatformType)) {
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
+                	shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
+                	shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
                     shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                 }
             }

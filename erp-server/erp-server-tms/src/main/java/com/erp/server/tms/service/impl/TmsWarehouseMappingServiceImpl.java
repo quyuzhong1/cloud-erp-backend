@@ -204,6 +204,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
 
     @Override
     public PagingVO<TmsWarehouseMappingDTO.ListDTO> exportWarehouseMapping(PagingDTO<TmsWarehouseMappingDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<TmsWarehouseMappingDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(page);
     }
@@ -221,7 +222,7 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
         }
         //仓库信息
         List<String> warehouseNameList = successList.stream().map(TmsWarehouseMappingExcelDTO::getErpWarehouseName).distinct().collect(Collectors.toList());
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
+        List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
         //根据编码查询
         List<String> logisticsWarehouseCodeList = successList.stream().map(TmsWarehouseMappingExcelDTO::getLogisticsWarehouseCode).distinct().collect(Collectors.toList());
         List<TmsWarehouseMappingEntity> tmsWarehouseMappingList = this.listByLogisticsWarehouseCodeList(logisticsWarehouseCodeList);
@@ -232,11 +233,10 @@ public class TmsWarehouseMappingServiceImpl extends SuperServiceImpl<TmsWarehous
             List<String> errorMsgList = new ArrayList<>();
             //仓库是否存在
             String warehouseId = warehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getErpWarehouseName())
-                            && ApproveStatusEnum.APPROVE.getCode().equals(obj.getApproveStatusEnum().getCode())
                             && !obj.getDisabled())
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getId())).orElse("");
             if (CharSequenceUtil.isBlank(warehouseId)) {
-                errorMsgList.add("未找到有效仓库名称");
+                errorMsgList.add("未找到有效仓库名称或没有仓库权限");
             }
             //导入数据是否存在重复
             long count = successList.stream().filter(obj -> CharSequenceUtil.equals(excelDTO.getLogisticsWarehouseCode(), obj.getLogisticsWarehouseCode())).count();

@@ -110,8 +110,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         }
 
         List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
-        List<WarehouseEntity> warehouseList = warehouseService.list();
-        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseList, operateLogService);
+        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseService, operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {

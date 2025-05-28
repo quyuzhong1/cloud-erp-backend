@@ -136,4 +136,6 @@ public interface FirstMileChangeRecordService extends SuperService<FirstMileChan
     FirstMileChangeRecordEntity getCostAllocationByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo, String category, String reportPeriodId);
 
     void updateCostIsLatest(String sourceType, String businessCode, String sourceCode, String logisticsBillId, String skuId, String feeType, String categoryField);
+
+    FirstMileChangeRecordEntity getCostAllocationWeightByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo);
 }

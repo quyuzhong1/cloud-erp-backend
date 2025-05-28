@@ -13,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-05-12 15:19:23
  */
 public enum FirstMileChangeRecordCategoryFieldEnum implements EnumMessage {
+	COST_ALLOCATED_DETAIL("remark", "分摊明细备注"),
+	ALLOCATED_WEIGHT("allocated_weight", "分摊重量"),
 	CURRENT_PERIOD_ALLOCATED_COST("current_period_allocated_cost", "本期分摊费用"),
 	MID_PERIOD_TRANSIT_COST("mid_period_transit_cost", "冲期初在途费用"),
     END_PERIOD_TRANSIT_COST("end_period_transit_cost", "期末在途费用"),

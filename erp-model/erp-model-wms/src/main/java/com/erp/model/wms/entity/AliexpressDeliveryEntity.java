@@ -2,9 +2,15 @@ package com.erp.model.wms.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.List;
+
+import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -85,6 +91,31 @@ public class AliexpressDeliveryEntity extends BaseEntity<AliexpressDeliveryEntit
      */
     @TableField("is_outstock")
     private Boolean isOutstock;
+    /**
+     * (速卖通)买家视角订单金额
+     */
+    @TableField("actual_amount")
+    private BigDecimal actualAmount;
+    /**
+     * (速卖通)买家视角订单金额币种
+     */
+    @TableField("actual_currency")
+    private String actualCurrency;
+    /**
+     * (速卖通)订单总明细结算总金额
+     */
+    @TableField("order_amount")
+    private BigDecimal orderAmount;
+    /**
+     * (速卖通)订单总明细结算币种
+     */
+    @TableField("order_currency")
+    private String orderCurrency;
+    /**
+     * 当前发货单税后支付金额
+     */
+    @TableField("after_tax_amount")
+    private BigDecimal afterTaxAmount;
 
     public static final String PLATFORM_CODE = "platform_code";
 
@@ -103,10 +134,5 @@ public class AliexpressDeliveryEntity extends BaseEntity<AliexpressDeliveryEntit
     public static final String OUT_BOUND_TIME = "out_bound_time";
 
     public static final String WAREHOUSE_NAME = "warehouse_name";
-
-    @Override
-    public Serializable pkVal() {
-        return null;
-    }
 
 }

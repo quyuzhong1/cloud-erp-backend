@@ -139,6 +139,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public PagingVO<PickingListsDTO.PagingView> paging(PagingDTO<PickingListsDTO.PagingParam> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<PickingListsDTO.PagingView> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(page);
     }
@@ -1670,7 +1671,7 @@ public class PickingListsServiceImpl extends SuperServiceImpl<PickingListsMapper
 
     @Override
     public PagingVO<PickingListsDTO.ExportInfoDTO> exportPickingLists(PagingDTO<PickingListsDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<PickingListsDTO.ExportInfoDTO> page = baseMapper.exportInfo(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         List<String> warehouseIds = page.getRecords().stream()
                 .map(PickingListsDTO.ExportInfoDTO::getWarehouseId)

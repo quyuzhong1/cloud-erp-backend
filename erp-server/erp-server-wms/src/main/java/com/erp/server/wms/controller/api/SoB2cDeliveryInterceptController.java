@@ -70,6 +70,8 @@ public class SoB2cDeliveryInterceptController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "sbd.shop_id",
+            warehouseTableField = "sbdid.warehouse_id",
             menuCode = "wms:soB2cDeliveryIntercept:paging",
             tableAlias = "sbdi"
     )
@@ -87,6 +89,8 @@ public class SoB2cDeliveryInterceptController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "sbd.shop_id",
+            warehouseTableField = "sbdid.warehouse_id",
             menuCode = "wms:soB2cDeliveryIntercept:paging",
             tableAlias = "sbdi"
     )

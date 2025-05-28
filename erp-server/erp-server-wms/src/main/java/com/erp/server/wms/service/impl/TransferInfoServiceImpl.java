@@ -1702,7 +1702,6 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     public PagingVO<TransferInfoDTO.PdaListDTO> pdaPaging(PagingDTO<TransferInfoDTO.PdaSearchParamDTO> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         TransferInfoDTO.PdaSearchParamDTO params = pagingParamDTO.getParams();
         List<String> approveStatusList = params.getApproveStatusList();
@@ -1713,7 +1712,8 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
             dateList.add(now);
             params.setBillDateList(dateList);
         }
-        IPage<TransferInfoDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, pagingParamDTO.getParams());
+        params.setPermissionSql(pagingParamDTO.getPermissionSql());
+        IPage<TransferInfoDTO.PdaListDTO> pageData = this.baseMapper.pdaPaging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
         }
@@ -1790,8 +1790,9 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         TransferInfoDTO.AddDTO addDTO = new TransferInfoDTO.AddDTO();
         //默认来源类型：海外仓入库单
         addDTO.setSourceType(SourceTypeEnum.OVERSEAS_INBOUND.getCode());
+        LocalDate billDate = receivedEntityList.stream().map(OverseasWarehouseInboundReceivedEntity::getReceiveTime).findFirst().orElse(mainEntity.getReceiveTime()).toLocalDate();
         //默认调出日期：当前日期
-        addDTO.setBillDate(mainEntity.getReceiveTime().toLocalDate());
+        addDTO.setBillDate(billDate);
         //默认调拨方向：普通
         addDTO.setTransferDirection(TransferDirectionEnum.ORDINARY.getCode());
         //调入组织
@@ -1948,6 +1949,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
 
     @Override
     public PagingVO<TransferInfoDTO.ListDTO> exportTransferInfo(PagingDTO<TransferInfoDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<TransferInfoDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             doOpHandleData(page.getRecords());

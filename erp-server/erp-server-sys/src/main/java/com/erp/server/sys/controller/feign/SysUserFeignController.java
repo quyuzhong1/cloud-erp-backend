@@ -18,7 +18,6 @@ import com.erp.model.sys.entity.SysRoleMenuEntity;
 import com.erp.model.sys.entity.SysUserInfoEntity;
 import com.erp.model.sys.entity.SysUserWechatEntity;
 import com.erp.model.sys.vo.SupplierUserVO;
-import com.erp.model.sys.vo.SysMenuVO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.constant.SysConstant;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeService;
@@ -63,8 +62,10 @@ public class SysUserFeignController extends BaseController {
     @Autowired
     private SysRoleMenuService sysRoleMenuService;
 
-    @Autowired
-    private KingdeeUserRefPostService kingdeeUserRefPostService;
+    @Resource
+    private AuthUserShopService authUserShopService;
+    @Resource
+    private AuthUserWarehouseService authUserWarehouseService;
 
     @Resource
     private SysUserWechatService wechatService;

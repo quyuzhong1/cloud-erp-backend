@@ -414,7 +414,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
     @Override
     public PagingVO<PoReconciliationDetailDTO.ListDTO> exportPoReconciliationDetailScm(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto) {
-                Page<PoReconciliationDetailDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page<PoReconciliationDetailDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理
             fillList(page.getRecords());

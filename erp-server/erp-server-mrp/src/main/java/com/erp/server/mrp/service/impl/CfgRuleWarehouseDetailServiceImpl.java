@@ -23,6 +23,7 @@ import com.erp.model.sys.entity.DictPartitionEntity;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.VitualWarehouseChannelTypeEnum;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.server.mrp.mapper.CfgRuleWarehouseDetailMapper;
 import com.erp.server.mrp.service.CfgRuleWarehouseDetailService;
 import com.erp.server.mrp.service.CfgRuleWarehouseService;
@@ -57,6 +58,13 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
 
     @Resource
     private CfgRuleWarehouseService cfgRuleWarehouseService;
+
+    @Resource
+    private AuthDataFeign authDataFeign;
+    /**
+     * 分页
+     *
+     * @param dto
 
     /**
     * 修改
@@ -236,7 +244,8 @@ public class CfgRuleWarehouseDetailServiceImpl extends SuperServiceImpl<CfgRuleW
         if (CollectionUtils.isEmpty(mainIdList)) {
             return Collections.emptyList();
         }
-        List<CfgRuleWarehouseDetailEntity> list = listByMainIdList(mainIdList);
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("warehouse_id");
+        List<CfgRuleWarehouseDetailEntity> list = baseMapper.listByParams(mainIdList,warehousePermissionSql);
         if (CollectionUtils.isEmpty(list)) {
             return Collections.emptyList();
         }

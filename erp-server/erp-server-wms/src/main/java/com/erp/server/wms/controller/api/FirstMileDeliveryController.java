@@ -94,6 +94,13 @@ public class FirstMileDeliveryController extends BaseController {
     * @return
     */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "fd.shop_id",
+            warehouseTableField = "fd.delivery_warehouse_id,fd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging",
+            tableAlias = "fd"
+    )
     public ApiResult<List<FirstMileDeliveryDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(firstMileDeliveryService.tabList(dto));
     }
@@ -108,6 +115,8 @@ public class FirstMileDeliveryController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "fd.shop_id",
+            warehouseTableField = "fd.delivery_warehouse_id,fd.dest_warehouse_id",
             menuCode = "wms:fbaDelivery:paging",
             tableAlias = "fd"
     )

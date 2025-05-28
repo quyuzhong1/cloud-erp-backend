@@ -3,8 +3,9 @@ package com.erp.server.oms.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.base.PagingDTO;
 import com.erp.model.oms.dto.ShopDTO;
+import com.erp.model.oms.dto.ShopInfoDTO;
+import com.erp.model.oms.dto.ShopSysUserAuthDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -39,9 +40,6 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
      */
     IPage<ShopDTO.ListDTO> pagingSelect(Page query,@Param("params") ShopDTO.SelectDTO params);
 
-
-    List<ShopDTO.PagingViewDTO> listExport(@Param("params") ShopDTO.ExportDTO dto);
-
     Page<ShopDTO.PagingViewDTO> listExport(@Param("page") Page<ShopDTO.PagingViewDTO> page,@Param("params") ShopDTO.ExportDTO dto);
 
     IPage<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(@Param("page") Page query, @Param("params") AdvanceQueryContainer advanceQueryDTO, @Param("shopIds") List<String> shopIds);
@@ -54,4 +52,26 @@ public interface ShopInfoMapper extends BaseMapper<ShopInfoEntity> {
      * @return IPage<AreaDTO>
      */
     IPage<ShopDTO.AreaDTO> pagingSelectArea(Page query,@Param("params") ShopDTO.AreaParamDTO params);
+
+    /**
+     * 根据参数获取店铺列表
+     * @param platformList
+     * @param permissionSql
+     * @return
+     */
+    List<ShopInfoEntity> listByParam(@Param("platformList") List<String> platformList, @Param("permissionSql") String permissionSql);
+    /**
+     * 根据店铺名称查询店铺信息
+     * @param shopNameList
+     * @return
+     * */
+    List<ShopInfoDTO.ListDTO> listShopByName(@Param("nameList") List<String> shopNameList, @Param("permissionSql") String permissionSql);
+
+    /**
+     * 根据权限查询对应平台店铺
+     * @param permissionSql
+     * @param dictPlatform
+     * @return
+     */
+    List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(@Param("permissionSql") String permissionSql, @Param("dictPlatform") String dictPlatform);
 }

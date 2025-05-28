@@ -3,6 +3,7 @@ package com.sdk.wms.goodcang.service;
 
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.sdk.wms.goodcang.constants.GoodCangConstants;
@@ -73,8 +74,11 @@ public class GoodCangServiceTest {
 
     @Test
     public void getInboundDetailTest() {
-        GoodCangResponse<GoodCangReceiptBatchResp> response = goodCangService.getInboundDetail("RVG2199-231222-0001");
-        System.out.println(response);
+        Map<String,Object> paramsMap = new HashMap<>();
+        paramsMap.put("receiving_code","RVG1149-240918-0002");
+        String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_GET_GRN_DETAIL,paramsMap);
+        GoodCangResponse<JSONObject> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<JSONObject>>() {}.getType());
+        System.out.println(JSONUtil.toJsonStr(respDto));
     }
 //    @Test
 //    public void getReceiptBatchTest() {
@@ -293,4 +297,20 @@ public class GoodCangServiceTest {
         System.out.println(response);
         System.out.println(JSONUtil.toJsonStr(response.getData()));
     }
+
+    @Test
+    public void getInventoryLog() {
+        Map<String, Object> hashMap = new HashMap<>();
+        hashMap.put("create_date_from", "2025-04-01 16:06:01");
+        hashMap.put("create_date_end", "2025-04-25 12:00:00");
+        List<String> referenceNoList = new ArrayList<>();
+        referenceNoList.add("RG2199-250401-0003");
+        hashMap.put("reference_no_list", referenceNoList);
+        hashMap.put("pageSize", 200);
+        hashMap.put("page", 1);
+        String json = JSON.toJSONString(hashMap);
+        String response = GoodCangUtils.sendPost(GoodCangConstants.GET_INVENTORY_LOG,json);
+        System.out.println("结果 :"+ response);
+    }
+
 }

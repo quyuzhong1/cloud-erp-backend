@@ -117,6 +117,7 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
 
     @Override
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> paging(PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<FirstMileWeightAllocationDTO.ViewDTO> pageData = baseMapper.paging(query, dto.getParams());
         //会有性能问题，待优化
@@ -167,16 +168,14 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
     @Override
     public void exportExcel(FirstMileWeightAllocationDTO.ExportParamDTO dto) {
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        StringBuilder builder = new StringBuilder();
-        builder.append("头程重量分摊导出").append(date);
-        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_TMS_FM_WEIGHT_ALLOCATION.getCode(), dto);
+        downloadTaskFeign.saveDownloadTask("头程重量分摊导出" + date, EXPORT_TMS_FM_WEIGHT_ALLOCATION.getCode(), dto);
     }
 
     @Override
-    public List<FirstMileWeightAllocationDTO.TabDTO> tabList() {
+    public List<FirstMileWeightAllocationDTO.TabDTO> tabList(FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO) {
         List<FirstMileWeightAllocationDTO.TabDTO> list = new ArrayList<>();
-        Integer wait = this.lambdaQuery().in(FirstMileWeightAllocationEntity::getCostAllocationStatus, Arrays.asList("not", "part")).count();
-        Integer already = this.lambdaQuery().in(FirstMileWeightAllocationEntity::getCostAllocationStatus, Collections.singletonList("already")).count();
+        Integer wait = baseMapper.countTabNum(pagingParamDTO.getPermissionSql(),Arrays.asList("not", "part"));
+        Integer already = baseMapper.countTabNum(pagingParamDTO.getPermissionSql(),Collections.singletonList("already"));
         list.add(new FirstMileWeightAllocationDTO.TabDTO("wait", "待分摊", wait));
         list.add(new FirstMileWeightAllocationDTO.TabDTO("already", "已分摊", already));
         return list;

@@ -13,21 +13,16 @@
 
 package com.erp.server.dmp.amz;
 
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentials;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.AWSAuthenticationCredentialsProvider;
-import com.erp.sdk.oms.amz.spapi.SellingPartnerAPIAA.LWAAuthorizationCredentials;
 import com.erp.sdk.oms.amz.spapi.api.ListingsRestrictionsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
-import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiConfigUtils;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
 import com.erp.sdk.oms.amz.spapi.model.listingsrestrictions.RestrictionList;
-import org.checkerframework.checker.units.qual.A;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import com.erp.server.dmp.ErpServerDmpApplication;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.junit.Test;
 
 import java.util.List;
 

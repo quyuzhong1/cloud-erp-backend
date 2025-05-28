@@ -660,19 +660,27 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
      * @param deliveryDetailEntity
      */
     private void setInitFirstMileOrAllocatedWeightData(FirstMileSkuCostAllocationEntity firstMileSkuCostAllocationEntity, FirstMileCostAllocationEntity entity, InitFirstMileAllocationDetailEntity initFirstMileAllocationDetailEntity, List<FirstMileWeightAllocationEntity> weightAllocationEntityList, FirstMileDeliveryDetailEntity deliveryDetailEntity) {
+        //取值优先取值期初头程分摊，无期初取值上一次分摊重量{或取值修改值}，无上次分摊取值重量分摊-分摊重量
         if (Objects.nonNull(initFirstMileAllocationDetailEntity)) {
             firstMileSkuCostAllocationEntity.setInitFirstMileDetailId(initFirstMileAllocationDetailEntity.getId());
             firstMileSkuCostAllocationEntity.setAllocatedWeight(initFirstMileAllocationDetailEntity.getWeightAllocation());
         } else {
-            List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream()
-                    .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
-                            && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
-                    ).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(weightAllocationEntityList1)) {
-                throw new ServiceException(CharSequenceUtil.format("发货单【{}】SKU【{}】期初和重量分摊记录不存在", entity.getSourceCode(), deliveryDetailEntity.getSkuNo()));
+            //取调整记录中的分摊重量
+            FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationWeightByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.ALLOCATED_WEIGHT.getCode(),firstMileSkuCostAllocationEntity.getSkuId(),firstMileSkuCostAllocationEntity.getPlatformSkuNo());
+            if (Objects.nonNull(changeRecordEntity)){
+                firstMileSkuCostAllocationEntity.setAllocatedWeight(new BigDecimal(changeRecordEntity.getNewValue()));
+            }else {
+                List<FirstMileWeightAllocationEntity> weightAllocationEntityList1 = weightAllocationEntityList.stream()
+                        .filter(e -> CharSequenceUtil.isNotBlank(e.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
+                                && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
+                        ).collect(Collectors.toList());
+                if (CollectionUtils.isEmpty(weightAllocationEntityList1)) {
+                    throw new ServiceException(CharSequenceUtil.format("发货单【{}】SKU【{}】期初和重量分摊记录不存在", entity.getSourceCode(), deliveryDetailEntity.getSkuNo()));
+                }
+                firstMileSkuCostAllocationEntity.setAllocatedWeight(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getAllocationWeight).reduce(BigDecimal.ZERO, BigDecimal::add));
+                firstMileSkuCostAllocationEntity.setWeightAllocationId(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getId).distinct().collect(Collectors.joining(",")));
+
             }
-            firstMileSkuCostAllocationEntity.setAllocatedWeight(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getAllocationWeight).reduce(BigDecimal.ZERO, BigDecimal::add));
-            firstMileSkuCostAllocationEntity.setWeightAllocationId(weightAllocationEntityList1.stream().map(FirstMileWeightAllocationEntity::getId).distinct().collect(Collectors.joining(",")));
         }
     }
 
@@ -891,9 +899,19 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             setEndPeriodTransitCost(entity,detailEntity,judgeReconciliationDTO,initEntity,allocatedAmount);
             //期末暂估费用 计算
             setEndPeriodEstimatedCost(entity, detailEntity,skuCostAllocationEntity,productAllocatedAmount,receiveQty,deliveryQty);
+            //设置备注
+            setRemark(entity,skuCostAllocationEntity,detailEntity);
         }
         //保存sku分摊明细记录
         firstMileSkuCostAllocationDetailService.saveBatch(skuCostAllocationDetailEntityList);
+    }
+
+    private void setRemark(FirstMileCostAllocationEntity entity, FirstMileSkuCostAllocationEntity skuCostAllocationEntity, FirstMileSkuCostAllocationDetailEntity detailEntity) {
+        //查询对应调整记录是否存在
+        FirstMileChangeRecordEntity changeRecordEntity = firstMileChangeRecordService.getCostAllocationByParams(FirstMileChangeRecordSourceTypeEnum.FIRSTMILECOST.getCode(),entity.getSourceId(),entity.getBusinessCode(),FirstMileChangeRecordCategoryFieldEnum.COST_ALLOCATED_DETAIL.getCode(),skuCostAllocationEntity.getSkuId(),skuCostAllocationEntity.getPlatformSkuNo(),detailEntity.getFeeType(),entity.getReportPeriodId());
+        if (Objects.nonNull(changeRecordEntity)){
+            detailEntity.setRemark(changeRecordEntity.getNewValue());
+        }
     }
 
     /**
@@ -1868,7 +1886,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
             handleImportSuccessList(mainIdList,dataList,errorList);
             if (!errorList.isEmpty()) {
                 StringBuilder sb = new StringBuilder();
-                String excelPath = "excel/firstMileWeightChangeExportError.xlsx";
+                String excelPath = "excel/firstMileCostChangeExportError.xlsx";
                 String name = "头程费用分摊调整错误.xlsx";
                 String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
                 sb.append(date);

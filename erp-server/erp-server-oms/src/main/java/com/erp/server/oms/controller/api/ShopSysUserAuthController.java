@@ -1,6 +1,7 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataIdempotent;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.ShopSysUserAuthDTO;

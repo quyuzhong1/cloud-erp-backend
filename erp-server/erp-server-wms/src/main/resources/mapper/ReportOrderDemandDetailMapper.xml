@@ -78,6 +78,10 @@
         <where>
             ${params.sqlMap.default}
             and rodd.is_deleted = false
+            <!--权限-->
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">

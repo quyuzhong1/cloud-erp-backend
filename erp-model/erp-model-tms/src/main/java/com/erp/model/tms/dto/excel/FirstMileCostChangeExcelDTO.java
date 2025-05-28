@@ -3,6 +3,7 @@ package com.erp.model.tms.dto.excel;
 import com.alibaba.excel.annotation.ExcelIgnore;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.core.anno.FieldValid;
+import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import lombok.Data;
 
@@ -53,25 +54,34 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     @FieldValid(fieldName = "SKU",isNotBlank = true, maxLength =64 )
     private String skuNo;
     /**
+     * *分摊重量(KG)
+     */
+    @ExcelProperty(value = "分摊重量(KG)", index = 6)
+    @FieldValid(fieldName = "分摊重量(KG)",formatPattern = FieldFormatPatternTypeEnum.AMOUNT4)
+    private String allocatedWeightStr;
+    @ExcelIgnore
+    private BigDecimal allocatedWeight;
+    /**
      * *费用分类
      */
-    @ExcelProperty(value = "*费用分类", index = 6)
-    @FieldValid(fieldName = "费用分类",isNotBlank = true,enumClass = AllocationFeeTypeEnum.class)
+    @ExcelProperty(value = "*费用分类", index = 7)
+    @FieldValid(fieldName = "费用分类",enumClass = AllocationFeeTypeEnum.class)
     private String feeTypeName;
     @ExcelIgnore
     private String feeType;
     /**
      * 冲期初在途费用
      */
-    @ExcelProperty(value = "冲期初在途费用(¥)", index = 7)
+    @ExcelProperty(value = "冲期初在途费用(¥)", index = 8)
     @FieldValid(fieldName = "冲期初在途费用")
     private String midPeriodTransitCostStr;
     @ExcelIgnore
     private BigDecimal midPeriodTransitCost;
+
     /**
      * 本期分摊费用
      */
-    @ExcelProperty(value = "本期分摊费用(¥)", index = 8)
+    @ExcelProperty(value = "本期分摊费用(¥)", index = 9)
     @FieldValid(fieldName = "本期分摊费用")
     private String currentPeriodAllocatedCostStr;
     @ExcelIgnore
@@ -79,7 +89,7 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     /**
      * 期末在途费用(¥)
      */
-    @ExcelProperty(value = "期末在途费用(¥)", index = 9)
+    @ExcelProperty(value = "期末在途费用(¥)", index = 10)
     @FieldValid(fieldName = "期末在途费用")
     private String endPeriodTransitCostStr;
     @ExcelIgnore
@@ -87,11 +97,19 @@ public class FirstMileCostChangeExcelDTO implements Serializable {
     /**
      * 期末暂估费用(¥)
      */
-    @ExcelProperty(value = "期末暂估费用(¥)", index = 10)
+    @ExcelProperty(value = "期末暂估费用(¥)", index = 11)
     @FieldValid(fieldName = "期末暂估费用")
     private String endPeriodEstimatedCostStr;
     @ExcelIgnore
     private BigDecimal endPeriodEstimatedCost;
+
+    /**
+     * 备注
+     */
+    @ExcelProperty(value = "备注", index = 12)
+    @FieldValid(fieldName = "备注")
+    private String remark;
+
     @ExcelIgnore
     private String mainId;
     /**
