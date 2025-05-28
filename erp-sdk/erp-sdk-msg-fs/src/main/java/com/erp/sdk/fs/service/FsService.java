@@ -948,14 +948,12 @@ public class FsService {
      */
     public GetInstanceResp getInstance(String instanceCode) throws Exception {
         // 构建client
-        Client client = Client.newBuilder("YOUR_APP_ID", "YOUR_APP_SECRET").build();
+        Client client = Client.newBuilder("cli_a8858e6f51b95013", "dMU3PHMMoC172dOxFdn8agJeQvYpKYd3").build();
 
         // 创建请求对象
         GetInstanceReq req = GetInstanceReq.newBuilder()
-                .instanceId("56128DE8-4E2C-4156-923B-80E97E263DAE")
+                .instanceId(instanceCode)
                 .locale("zh-CN")
-                .userId("af4eg757")
-                .userIdType("user_id")
                 .build();
 
         // 发起请求
