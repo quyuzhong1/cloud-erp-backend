@@ -31,7 +31,7 @@ import com.erp.model.oms.entity.SoB2cReturnEntity;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
 import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
@@ -352,7 +352,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             addDTO.setShopId(generateSoB2cReturnViewDTO.getShopId());
             addDTO.setAmount(generateSoB2cReturnViewDTO.getAmount());
             addDTO.setCurrency(generateSoB2cReturnViewDTO.getCurrency());
-            addDTO.setType(SoB2cReturnTypeEnum.CUSTOMER_RETURNS.code);
+            addDTO.setType(ReturnTypeEnum.CUSTOMER_RETURNS.code);
             addDTO.setReason(generateSoB2cReturnViewDTO.getReturnReason());
             addDTO.setStatus(SoB2cReturnStatusEnum.TO_BE_RETURNED.code);
             addDTO.setSourceType(SoB2cReturnSourceTypeEnum.SELF_ADD.code);
@@ -468,7 +468,7 @@ public class SoB2cReturnServiceImpl extends SuperServiceImpl<SoB2cReturnMapper, 
             pagingViewDTO.setPlatformName(PlatformDictEnum.getNameByCode(pagingViewDTO.getPlatform()));
             ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(pagingViewDTO.getShopId())).findFirst().orElse(new ShopInfoEntity());
             pagingViewDTO.setShopName(shopInfoEntity.getName());
-            pagingViewDTO.setTypeName(SoB2cReturnTypeEnum.getName(pagingViewDTO.getType()));
+            pagingViewDTO.setTypeName(ReturnTypeEnum.getName(pagingViewDTO.getType()));
             pagingViewDTO.setStatusName(SoB2cReturnStatusEnum.getName(pagingViewDTO.getStatus()));
             SkuVO skuVO = skuVOS.stream().filter(v->v.getSkuId().equals(pagingViewDTO.getSkuId())).findFirst().orElse(new SkuVO());
             pagingViewDTO.setProductName(skuVO.getSkuName());

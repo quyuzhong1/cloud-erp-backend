@@ -23,7 +23,7 @@ import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnReceiveDetailEntity;
 import com.erp.model.wms.enums.ReturnReasonEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
