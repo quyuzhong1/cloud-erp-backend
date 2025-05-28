@@ -17,7 +17,6 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -87,8 +86,8 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
             throw new ServiceException("委托审批保存失败");
         }
         // 操作日志
-        List<Pair<String, String>> addPairList = list.stream().map(obj -> new Pair<>(obj.getId(),  CharSequenceUtil.format("新增-【{}】-【{}】-【{}】", ProcessDelegateStatusEnum.PENDING.getCode(), SourceTypeEnum.getName(obj.getBusinessKey()) , obj.getCode()))).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog("新增了一条SKU【%s】", ModuleTypeEnum.PROCESS_DELEGATE.getCode(), addPairList, "新增操作");
+        List<Pair<String, String>> addPairList = list.stream().map(obj -> new Pair<>(obj.getId(),  CharSequenceUtil.format("新增-【{}】-【{}】-【{}】", ProcessDelegateStatusEnum.PENDING.getName(), SourceTypeEnum.getName(obj.getBusinessKey()) , obj.getCode()))).collect(Collectors.toList());
+        operateLogService.batchAddModuleOperateLog("%s", ModuleTypeEnum.PROCESS_DELEGATE.getCode(), addPairList, "新增操作");
         return new BaseResultDTO.AddDTO(list.get(0).getId(), list.get(0).getCode());
     }
 
@@ -107,8 +106,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         }
         // 记录主单操作日志
         log.info("编辑 开始记录委托审批日志数据，单号：【{}】", entity.getCode());
-        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "委托审批");
-        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PROCESS_DELEGATE.getCode(), entity.getId(), msg);
+        operateLogService.addModuleOperateLogByObj(old, entity, ModuleTypeEnum.PROCESS_DELEGATE.getCode(), entity.getId(), "");
         return Boolean.TRUE;
     }
 
@@ -187,17 +185,24 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     public List<ProcessDelegateEntity> listNotEnded(LocalDateTime now) {
         return lambdaQuery()
                 .ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode())
-                .lt(ProcessDelegateEntity::getExpireTime,now)
+                .lt(ProcessDelegateEntity::getEffectiveTime,now)
                 .list();
     }
 
     @Override
     public void updateStatusJob(ProcessDelegateEntity entity, LocalDateTime now) {
         String status = "";
-        if (ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getStatus())) {
+        /**
+         * 1、当前时间在生效时间-失效时间之间时更新成运行中
+         * 2、当前时间在生效时间之后更新成已结束
+         */
+        if (ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getStatus()) && (entity.getEffectiveTime().isBefore(now) || entity.getEffectiveTime().equals(now)) && entity.getExpireTime().isAfter(now)) {
             status = ProcessDelegateStatusEnum.RUNNING.getCode();
-        } else if (ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getStatus())) {
+        } else if (ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getStatus()) && entity.getExpireTime().isBefore(now)) {
             status = ProcessDelegateStatusEnum.ENDED.getCode();
+        } else {
+            //无需更新状态
+            return;
         }
         entity.setStatus(status);
         this.updateById(entity);
