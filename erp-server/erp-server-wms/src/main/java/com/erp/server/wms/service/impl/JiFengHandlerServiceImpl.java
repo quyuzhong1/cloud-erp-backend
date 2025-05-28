@@ -185,6 +185,7 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
         jiFengCreateOutboundRequest.setLogisticsName(createOutboundReq.getShippingMethodName());
         jiFengCreateOutboundRequest.setTrackingNo(createOutboundReq.getTrackingNo());
         jiFengCreateOutboundRequest.setPackageType(3);
+        jiFengCreateOutboundRequest.setLabelUrl(createOutboundReq.getLabelUrl());
         List<JiFengCreateOutboundRequest.SkuListDTO> skuListDTOS = new ArrayList<>();
         createOutboundReq.getItems().forEach(item -> {
             JiFengCreateOutboundRequest.SkuListDTO skuListDTO = new JiFengCreateOutboundRequest.SkuListDTO();
