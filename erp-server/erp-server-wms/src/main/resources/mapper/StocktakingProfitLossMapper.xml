@@ -22,14 +22,15 @@
 
     <select id="tabList" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$TabDTO">
         SELECT
-        bill_type AS tabFlag,
-        count(id) AS count
+        spl.bill_type AS tabFlag,
+        count(distinct spl.id) AS count
         FROM stocktaking_profit_loss spl
-        WHERE is_deleted=FALSE
+        INNER JOIN stocktaking_profit_loss_detail spld ON spl.id=spld.main_id AND spld.is_deleted=FALSE
+        WHERE spl.is_deleted=FALSE
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-        GROUP BY bill_type
+        GROUP BY spl.bill_type
     </select>
     <!--分页展示-->
     <select id="paging" resultType="com.erp.model.wms.dto.StocktakingProfitLossDTO$PagingViewDTO">

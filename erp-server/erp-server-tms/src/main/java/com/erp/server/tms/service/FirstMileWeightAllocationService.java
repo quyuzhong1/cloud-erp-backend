@@ -42,12 +42,14 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
 
     /**
      * tab页统计
+     *
      * @param
+     * @param pagingParamDTO
      * @return
      * @date: 2024-08-22
      * @author: tanmujin
      */
-    List<FirstMileWeightAllocationDTO.TabDTO> tabList();
+    List<FirstMileWeightAllocationDTO.TabDTO> tabList(FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO);
 
     /**
      * 重量重算

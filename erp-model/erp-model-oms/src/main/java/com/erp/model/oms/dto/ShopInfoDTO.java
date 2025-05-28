@@ -59,4 +59,34 @@ public class ShopInfoDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ListDTO {
+        private String id;
+        /**
+         * 店铺名称
+         */
+        private String name;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+        /**
+         * 平台类型
+         */
+        private String dictPlatform;
+        /**
+         * 是否启用
+         */
+        private boolean disabled;
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+        /**
+         * 销售组织名称
+         */
+        private String salesOrgName;
+    }
 }

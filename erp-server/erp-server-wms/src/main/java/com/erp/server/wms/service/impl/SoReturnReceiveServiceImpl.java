@@ -6,7 +6,6 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
@@ -28,7 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.ProductVO;
@@ -41,12 +40,12 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnReasonEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoReturnReceiveMapper;
@@ -123,10 +122,12 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SoReturnNoticeDetailService soReturnNoticeDetailService;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> paging(PagingDTO<SoReturnReceiveDTO.PagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         if (CollectionUtils.isNotEmpty(pagingParamDTO.getParams().getApproveStatusList())) {
             pagingParamDTO.getParams().setInvalidStatus(Boolean.FALSE);
@@ -161,7 +162,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 CustomerInfoEntity customerInfoEntity = customerInfoEntities.stream().filter(req -> req.getId().equals(obj.getCustomerId())).findFirst().orElse(new CustomerInfoEntity());
                 obj.setCustomerName(customerInfoEntity.getName());
                 if("B2C".equals(obj.getType())){
-                    obj.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(obj.getReturnTypeDict()));
+                    obj.setReturnTypeDictName(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                     SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                     obj.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
                 }else{
@@ -174,14 +175,23 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
         }
         return new PagingVO(pageData);
     }
-
+    private String getPermissionSql(String permissionSql) {
+        //构造店铺权限
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+        if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
+            permissionSql = permissionSql + " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B'))";
+        }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
+            permissionSql = " AND ((srr.type = 'B2C' " + shopPermissionSql + ") OR (srr.type = 'B2B'))";
+        }
+        return permissionSql;
+    }
     @Override
     public List<SoReturnReceiveDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
         SoReturnChangeListTypeEnum[] values = SoReturnChangeListTypeEnum.values();
         List<SoReturnReceiveDTO.StatusCountDTO> list = new ArrayList<>();
         for (SoReturnChangeListTypeEnum item : values) {
             SoReturnReceiveDTO.PagingParam pagingParam = new SoReturnReceiveDTO.PagingParam();
-            pagingParam.setPermissionSql(dto.getPermissionSql());
+            pagingParam.setPermissionSql(getPermissionSql(dto.getPermissionSql()));
             pagingParam.setInvalidStatus(Boolean.FALSE);
             SoReturnReceiveDTO.StatusCountDTO resultDTO = new SoReturnReceiveDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
@@ -371,7 +381,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(detailEntity.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 detailView.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
                 if(Objects.nonNull(soB2cReturnEntity)){
-                    detailView.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(soB2cReturnEntity.getType()));
+                    detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soB2cReturnEntity.getType()));
                     detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soB2cReturnEntity.getReason()));
                 }
             }else{
@@ -889,7 +899,7 @@ public class SoReturnReceiveServiceImpl extends SuperServiceImpl<SoReturnReceive
 
     @Override
     public PagingVO<SoReturnReceiveDTO.PagingView> exportSoReturnReceive(PagingDTO<SoReturnReceiveDTO.PagingParam> dto) {
-
+        dto.getParams().setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         Page<SoReturnReceiveDTO.PagingView> pagingViews = baseMapper.soReturnReceiveExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         //获取sku的id集合
         List<String> skuIdList = pagingViews.getRecords().stream().map(SoReturnReceiveDTO.PagingView::getSkuId).collect(Collectors.toList());

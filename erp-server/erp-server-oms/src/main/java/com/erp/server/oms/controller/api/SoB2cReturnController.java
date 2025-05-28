@@ -1,18 +1,19 @@
 package com.erp.server.oms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.dto.SoB2cReturnDTO;
 import com.erp.model.oms.enums.SoB2cReturnReasonEnum;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.server.oms.query.SoB2cReturnQueryHandler;
 import com.erp.server.oms.service.SoB2cReturnService;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +48,10 @@ public class SoB2cReturnController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sbr.shop_id",
+            menuCode = "oms:soB2cReturn:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
     public ApiResult<PagingVO<SoB2cReturnDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
         PagingVO<SoB2cReturnDTO.PagingViewDTO> pagingVO = soB2cReturnService.paging(dto);
@@ -142,7 +147,7 @@ public class SoB2cReturnController extends BaseController {
     @GetMapping("getSoReturnType")
     public ApiResult<List<BaseDropDownDTO.CommonDTO>> getSoReturnType() {
         List<ReturnTypeEnum> returnTypeEnumList = Arrays.asList(ReturnTypeEnum.values());
-        List<SoB2cReturnTypeEnum> soB2cReturnTypeEnumList = Arrays.asList(SoB2cReturnTypeEnum.values());
+        List<ReturnTypeEnum> soB2cReturnTypeEnumList = Arrays.asList(ReturnTypeEnum.values());
         List<BaseDropDownDTO.CommonDTO> list = new ArrayList<>();
         returnTypeEnumList.forEach(v->{
             list.add(new BaseDropDownDTO.CommonDTO(v.getCode(),v.getName()));

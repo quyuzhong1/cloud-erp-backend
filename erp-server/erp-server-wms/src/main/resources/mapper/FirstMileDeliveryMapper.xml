@@ -121,12 +121,15 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  first_mile_delivery
-        WHERE is_deleted=FALSE
-
-        GROUP BY approve_status
+        fd.approve_status AS tabFlag,
+        count(fd.id)  AS count
+        FROM  first_mile_delivery fd
+        WHERE fd.is_deleted=FALSE
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY fd.approve_status
     </select>
 
     <select id="listDeliveryRecord" resultType="com.erp.model.wms.dto.FirstMileDeliveryDTO$DeliverRecordView">
@@ -274,6 +277,10 @@
                  left join warehouse fw on fmd.delivery_warehouse_id = fw.id and fw.is_deleted =false
                  left join warehouse tw on fmd.dest_warehouse_id = tw.id and tw.is_deleted = false
         where fmd.is_deleted = false
+        <!--数据权限-->
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         <if test="params.packingStatus != null and params.packingStatus != ''">
             AND (pt.packing_status = #{params.packingStatus} or fmd.approve_status = 'approve')
         </if>

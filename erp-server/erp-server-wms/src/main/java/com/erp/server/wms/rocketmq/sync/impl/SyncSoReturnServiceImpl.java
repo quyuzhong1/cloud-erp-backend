@@ -3,7 +3,6 @@ package com.erp.server.wms.rocketmq.sync.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -16,6 +15,7 @@ import com.common.business.enums.*;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -40,7 +40,7 @@ import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
@@ -188,6 +188,14 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 		instockEntity.setCustomerName(retcustName);
         instockEntity.setId(IdWorker.getIdStr());
         instockEntity.setThirdCode(kingdeeReturnOrderEntity.getFEThirdBillNo());
+        String fSettleCurrCode = kingdeeReturnOrderEntity.getFSettleCurrCode();
+        if(StringUtils.isNotBlank(fSettleCurrCode)) {
+    		instockEntity.setCurrency(fSettleCurrCode);
+    		instockEntity.setCurrencySymbol(CurrencyEnum.getSymbolByCode(fSettleCurrCode));
+        }
+        instockEntity.setInventoryOrgId(instockEntity.getSalesOrgId());
+        instockEntity.setInventoryOrgName(instockEntity.getSalesOrgName());
+
         List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
         for (KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity : orderItemEntityList) {
             SoReturnInstockDetailEntity instockDetailEntity = new SoReturnInstockDetailEntity();
@@ -206,6 +214,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             instockDetailEntity.setSkuId(skuVO.getSkuId());
             instockDetailEntity.setRealQty(Double.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()).intValue());
             instockDetailEntity.setWarehouseLocation(kingdeeReturnOrderItemEntity.getFStockLocId());
+            instockDetailEntity.setReturnTypeDict(kingdeeReturnOrderItemEntity.getFReturnType());
             detailEntityList.add(instockDetailEntity);
         }
 

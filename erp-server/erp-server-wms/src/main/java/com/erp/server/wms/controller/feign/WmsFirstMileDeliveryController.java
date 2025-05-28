@@ -39,6 +39,11 @@ public class WmsFirstMileDeliveryController {
      * 根据入参查询单据数量
      **/
     @PostMapping("/getGenerateLogisticDTO")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "fmd.shop_id",
+            warehouseTableField = "fmd.delivery_warehouse_id,fmd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging"
+    )
     public List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(@RequestBody FirstMileDeliveryDTO.GenerateLogisticReqDTO dto) {
         return firstMileDeliveryService.getGenerateLogisticDTO(dto);
     }

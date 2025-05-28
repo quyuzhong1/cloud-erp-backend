@@ -81,15 +81,13 @@
         select approve_status, count(id) from requisition_application_change where is_deleted = false group by approve_status
     </select>
 
-    <select id="listExport" resultType="com.erp.model.wms.dto.RequisitionApplicationChangeDTO$ListDTO">
-
-    </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.RequisitionApplicationChangeDTO$TabListDTO">
         SELECT
         rac.approve_status AS tabFlag,
-        count(*)  AS count
+        count(distinct rac.id)  AS count
         FROM  requisition_application_change rac
-        WHERE is_deleted=FALSE
+        left join requisition_application ra on ra.id = rac.business_id and ra.is_deleted = false
+        WHERE rac.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>

@@ -707,7 +707,10 @@
                         #{item}
                     </foreach>
                 </if>
-
+                <!--权限-->
+                <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                    ${params.permissionSql}
+                </if>
             </where>
             group by tf.sku_id,tf.warehouse_id
             <if test="params.hideZeroInventory">

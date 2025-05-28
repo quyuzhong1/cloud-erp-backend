@@ -44,7 +44,7 @@ public class DeliveryOrderFeginController extends BaseController {
      */
     @PostMapping("/tabList")
     public List<DeliveryOrderDTO.TabListDTO> tabList(@RequestBody DeliveryOrderDTO.ParamDTO paramDTO) {
-        return deliveryOrderService.tabList(paramDTO.getSupplierIdList());
+        return deliveryOrderService.tabList(paramDTO);
     }
 
     /**
@@ -131,14 +131,6 @@ public class DeliveryOrderFeginController extends BaseController {
     @PostMapping("/listDetailDTOByDetailSourceIds")
     public List<DeliveryOrderDetailDTO.ListDTO> listDetailDTOByDetailSourceIds(@RequestBody List<String> purchaseDetailIds){
         return detailService.listDetailDTOByDetailSourceIds(purchaseDetailIds);
-    }
-
-    /**
-     * 导出
-     */
-    @PostMapping("/getExportList")
-    public List<DeliveryOrderExportExcelDTO> getExportList(@RequestBody DeliveryOrderDTO.ParamDTO dto){
-        return deliveryOrderService.getExportList(dto);
     }
 
     /**

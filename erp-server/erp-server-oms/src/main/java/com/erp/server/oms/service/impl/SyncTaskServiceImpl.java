@@ -1045,8 +1045,6 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
         // 部门信息
         List<SysDepartmentEntity> deptList = sysUserFeign.getDeptEntityList();
-        // 计算自发货明细单价
-        Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap = syncSoB2cService.convertAllAliExpressDeliveryDetailPrice(allDeliveryDetailList, soB2cDetailEntityList, skuVOList);
 
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
@@ -1086,7 +1084,6 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                     shopInfoList,
                     customerInfoList,
                     companyEntities,
-                    deliveryDetailPriceMap,
                     receiverEntity,
                     omsAllDictList,
                     partitionEntityList,

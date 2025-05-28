@@ -13,6 +13,8 @@
 package com.erp.server.dmp.lingxing;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
@@ -22,6 +24,7 @@ import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.sdk.third.lingxing.dto.*;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +32,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 
 /**
@@ -178,4 +182,44 @@ public class LingxingApiTest {
         System.out.println(JSON.toJSONString(resultList));
     }
 
+
+    @Test
+    public void testOrder(){
+
+        // 请求参数
+        TreeMap<String, Object> requestMap = new TreeMap<>();
+        // 主表扩展参数
+        String extendJson = "{\"platform_code\": [10003, 10015, 10024]}";
+        if (StringUtils.isNotBlank(extendJson)){
+            TreeMap<String, Object> mainTreeMap = JSON.parseObject(extendJson, TreeMap.class);
+            requestMap.putAll(mainTreeMap);
+        }
+
+        // 明细扩展参数
+        String detailExtendJson = "{\"length\": 200, \"date_type\": \"update_time\", \"order_status\": 4}";
+        if (StringUtils.isNotBlank(detailExtendJson)){
+            TreeMap<String, Object> detailTreeMap = JSON.parseObject(detailExtendJson, TreeMap.class);
+            requestMap.putAll(detailTreeMap);
+        }
+
+        // 时间
+        // start_time 开始时间，时间戳格式【单位：秒】，双开区间	是	[int]	1710925191
+        long startEpochSecond = LocalDateTimeUtil.parse("2025-05-26 09:50:00.088", DatePattern.NORM_DATETIME_MS_PATTERN).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+        requestMap.put("start_time", startEpochSecond);
+        // end_time 结束时间，时间戳格式【单位：秒】，双开区间	是	[int]	1713430791
+        long endEpochSecond = LocalDateTimeUtil.parse("2025-05-26 10:51:45.099", DatePattern.NORM_DATETIME_MS_PATTERN).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+        requestMap.put("end_time", endEpochSecond);
+
+        // 分页参数
+        int page = 0;
+        int pageSize = 500;
+        requestMap.put("offset", page);
+        requestMap.put("length", pageSize);
+        System.out.println("请求报文");
+        System.out.println(JSONUtil.toJsonStr(requestMap));
+        // 首次请求
+        Result<Object> result = LingxingApiUtils.postRequestDataAndRetry("pb/mp/order/v2/list", requestMap);
+        System.out.println("响应报文");
+        System.out.println(JSONUtil.toJsonStr(result));
+    }
 }

@@ -688,16 +688,13 @@ public class SyncKingdeeSoServiceImpl implements SyncKingdeeSoService {
                 shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
             }
 
-            shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-
-            String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
-            shudiyunB2cOrderDTO.setPlatform_name(platformName);
-
             String subPlatformType = customerInfo.getPlatformType();
             if (StringUtils.isNotBlank(subPlatformType)) {
                 DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(customerInfo.getPlatformType())).findFirst().orElse(null);
                 if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
-                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getName());
+                	shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
+                	shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
                     shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                 }
             }

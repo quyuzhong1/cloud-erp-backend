@@ -37,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -89,6 +90,9 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 	@Resource
 	private InventoryClosedRecordService inventoryClosedRecordService;
 
+    @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
+
 	@Override
 	public String getBizName() {
 		return "平台退货入库";
@@ -114,10 +118,29 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			return;
 		}
 
-		SoReturnInstockEntity existEntity = soReturnInstockService.getByThirdCode(dto.getPlatformReturnOrderNo());
-		if(Objects.nonNull(existEntity)){
-			return;
+		if (PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())){
+			if (CollectionUtils.isEmpty(dto.getProductDetailList())){
+				ServiceException.runError("谷仓退货入库明细流水为空");
+			}
+			String thirdId = dto.getProductDetailList().get(0).getThirdId();
+			if (StringUtils.isBlank(thirdId)){
+				ServiceException.runError("谷仓退货入库明细流水thirdId不能为空");
+			}
+			// 谷仓按明细ID判断
+			Integer count = soReturnInstockDetailService.lambdaQuery()
+					.eq(SoReturnInstockDetailEntity::getSourceDetailId, thirdId)
+					.eq(SoReturnInstockDetailEntity::getCreateUserId, dto.getAuthId())
+					.count();
+			if (count > 0) {
+				return;
+			}
+		} else {
+			SoReturnInstockEntity existEntity = soReturnInstockService.getByThirdCode(dto.getPlatformReturnOrderNo());
+			if(Objects.nonNull(existEntity)){
+				return;
+			}
 		}
+
 		OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseService.getByPlatform(dto.getAuthId(),dto.getWarehouseCode());
 		if(Objects.isNull(overseasProviderWarehouseEntity) || CharSequenceUtil.isBlank(overseasProviderWarehouseEntity.getWarehouseId())){
 			throw new ServiceException(ApiError.NOT_EXIST,"仓库信息");
@@ -212,6 +235,8 @@ public class PlatformNewReturnInstockConsumerService extends AbstractNewPlatform
 			soReturnInstockDetailEntity.setWarehouseName(warehouseEntity.getName());
 			soReturnInstockDetailEntity.setRemark(dto.getReason());
 			soReturnInstockDetailEntity.setReturnTypeDict(dto.getReturnType());
+			soReturnInstockDetailEntity.setSourceDetailId(detail.getThirdId());
+			soReturnInstockDetailEntity.setCreateUserId(dto.getAuthId());
 			detailEntityList.add(soReturnInstockDetailEntity);
 		}
 		return detailEntityList;

@@ -78,6 +78,7 @@
         cast(cad.end_period_estimated_cost AS NUMERIC(16, 2)) as endPeriodEstimatedCost,
         a.create_time as createTime,a.create_user_name as createUserName, a.update_user_name as updateUserName,a.update_time as updateTime,
         rpm.month as reportPeriodMonth,to_char(rpm.month, 'YYYY-MM') AS reportPeriodStr,
+        cad.remark as detailRemark,
         case when cad.fee_type = 'shippingCost' then 1
             when cad.fee_type = 'declareCost' then 2
             when cad.fee_type = 'otherTaxFee' then 3

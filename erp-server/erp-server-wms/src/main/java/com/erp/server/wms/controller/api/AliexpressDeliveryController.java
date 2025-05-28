@@ -47,6 +47,7 @@ public class AliexpressDeliveryController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "ad.shop_id",
             menuCode = "wms:aliexpressDelivery:paging",
             tableAlias = "ad"
     )

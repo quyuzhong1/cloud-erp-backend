@@ -4,7 +4,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
@@ -49,11 +48,12 @@ import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.*;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -157,6 +157,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Resource
     private RedisUtil redisUtil;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
 
     @Override
@@ -787,6 +789,7 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public PagingVO<SoReturnDTO.PagingView> exportSoReturn(PagingDTO<SoReturnDTO.PagingParam> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoReturnDTO.PagingView> page = baseMapper.soDeliveryNoticeExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         //获取sku的id集合
         List<String> skuIdList = page.getRecords().stream().map(SoReturnDTO.PagingView::getSkuId).collect(Collectors.toList());
@@ -1105,10 +1108,8 @@ public class SoReturnServiceImpl extends SuperServiceImpl<SoReturnMapper, SoRetu
 
     @Override
     public List<SoReturnEntity> listSoReturnByApproveStatus() {
-        LambdaQueryWrapper<SoReturnEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(SoReturnEntity::getApproveStatus, ApproveStatusEnum.APPROVE.getStatus());
-        queryWrapper.orderByDesc(SoReturnEntity::getCode);
-        return baseMapper.selectList(queryWrapper);
+        String permissionSql = authDataFeign.getWarehousePermissionSql("sr.warehouse_id");
+        return baseMapper.listSoReturnByApproveStatus(ApproveStatusEnum.APPROVE.getStatus(), permissionSql);
     }
 
     @Override

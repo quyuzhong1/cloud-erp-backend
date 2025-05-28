@@ -27,7 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -40,13 +40,13 @@ import com.erp.model.wms.dto.SoReturnNoticeDetailDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.ReturnReasonEnum;
-import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.CustomerFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.mapper.SoReturnNoticeMapper;
@@ -119,9 +119,11 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
     @Override
     public PagingVO<SoReturnNoticeDTO.PagingView> paging(PagingDTO<SoReturnNoticeDTO.PagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoReturnNoticeDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
@@ -172,7 +174,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 if("B2C".equals(obj.getType())){
                     SoB2cReturnEntity soB2cReturnEntity = soB2cReturnEntityList.stream().filter(v -> v.getId().equals(obj.getSourceId())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(soB2cReturnEntity)) {
-                        obj.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(soB2cReturnEntity.getType()));
+                        obj.setReturnTypeDictName(ReturnTypeEnum.getName(soB2cReturnEntity.getType()));
                         SoB2cReturnDetailEntity soDetailEntity = soB2cReturnDetailEntityList.stream().filter(v -> v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                         obj.setSalesQty(soDetailEntity.getSaleQty());
                     }
@@ -193,14 +195,25 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
         }
         return new PagingVO(pageData);
     }
+    private String getPermissionSql(String permissionSql) {
+        //构造店铺权限
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+        if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
+            permissionSql = permissionSql + " AND ((srn.type = 'B2C' " + shopPermissionSql + ") OR (srn.type = 'B2B'))";
+        }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
+            permissionSql = " AND ((srn.type = 'B2C' " + shopPermissionSql + ") OR (srn.type = 'B2B'))";
+        }
+        return permissionSql;
+    }
 
     @Override
     public List<SoReturnNoticeDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
         SoReturnChangeListTypeEnum[] values = SoReturnChangeListTypeEnum.values();
         List<SoReturnNoticeDTO.StatusCountDTO> list = new ArrayList<>();
+        String permissionSql = getPermissionSql(dto.getPermissionSql());
         for (SoReturnChangeListTypeEnum item : values) {
             SoReturnNoticeDTO.PagingParam pagingParam = new SoReturnNoticeDTO.PagingParam();
-            pagingParam.setPermissionSql(dto.getPermissionSql());
+            pagingParam.setPermissionSql(permissionSql);
             SoReturnNoticeDTO.StatusCountDTO resultDTO = new SoReturnNoticeDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
             if (SoReturnChangeListTypeEnum.TO_BE_APPROVE.getCode().equals(item.getCode())) {
@@ -492,7 +505,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 if(Objects.nonNull(soB2cReturnEntity)){
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soB2cReturnEntity.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                     detailView.setDeliveryQty(actualQty);
-                    detailView.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(soB2cReturnEntity.getType()));
+                    detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soB2cReturnEntity.getType()));
                     detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soB2cReturnEntity.getReason()));
                 }
             }else{
@@ -821,7 +834,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 SoB2cReturnEntity soB2cReturnEntity = soB2cReturnEntityList.stream().filter(v->v.getId().equals(view.getSourceId())).findFirst().orElse(new SoB2cReturnEntity());
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 view.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
-                view.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(soB2cReturnEntity.getType()));
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(soB2cReturnEntity.getType()));
                 view.setReturnReasonDictName(ReturnReasonEnum.getName(soB2cReturnEntity.getReason()));
             }else{
                 //销售退货单
@@ -848,6 +861,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
 
     @Override
     public PagingVO<SoReturnNoticeDTO.PagingView> exportSoReturnNotice(PagingDTO<SoReturnNoticeDTO.PagingParam> dto) {
+        dto.getParams().setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         Page<SoReturnNoticeDTO.PagingView> pagingViews = baseMapper.soReturnNoticeExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         //获取sku的id集合
         List<String> skuIdList = pagingViews.getRecords().stream().map(SoReturnNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());

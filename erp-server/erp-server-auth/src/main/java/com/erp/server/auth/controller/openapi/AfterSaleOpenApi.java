@@ -81,10 +81,10 @@ public class AfterSaleOpenApi {
      */
     @OpenApi("add")
     public ApiResult<BaseResultDTO.AddDTO> add( @Valid AfterSaleDTO.AddDTO dto){
-        if(CollUtil.isEmpty(dto.getDetailList())){
-            return  ApiResult.error(500, "寄修申请单明细不能为空");
-        }
         dto.setType("wx");
+        if(CollUtil.isEmpty(dto.getDetailList()) && CollUtil.isEmpty(dto.getAttachmentList())){
+            return  ApiResult.error(500, "sku明细或图片附件至少填写一种");
+        }
         return afterSaleFeign.add(dto);
     }
 

@@ -41,7 +41,7 @@ import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.oms.enums.ReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -70,6 +70,7 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.oms.feign.SoInfoFeign;
 import com.erp.rpc.oms.feign.SoReturnFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -210,10 +211,12 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Resource
     private SoReturnNoticeService soReturnNoticeService;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> paging(PagingDTO<SoReturnInstockDTO.PagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<SoReturnInstockDTO.PagingView> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
@@ -264,7 +267,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         // 平台来源
                         obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                     } else {
-                        obj.setReturnTypeDict(SoB2cReturnTypeEnum.getName(obj.getReturnTypeDict()));
+                        obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                     }
 
                     obj.setPlatformOrderCode(soB2cEntity.getPlatformCode());
@@ -298,14 +301,24 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         }
         return new PagingVO(pageData);
     }
-
+    private String getPermissionSql(String permissionSql) {
+        //构造店铺权限
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+        if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
+            permissionSql = permissionSql + " AND ((sri.type = 'B2C' " + shopPermissionSql + ") OR (sri.type = 'B2B'))";
+        }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
+            permissionSql = " AND ((sri.type = 'B2C' " + shopPermissionSql + ") OR (sri.type = 'B2B'))";
+        }
+        return permissionSql;
+    }
     @Override
     public List<SoReturnInstockDTO.StatusCountDTO> listCount(PermissionsDTO dto) {
         SoReturnChangeListTypeEnum[] values = SoReturnChangeListTypeEnum.values();
         List<SoReturnInstockDTO.StatusCountDTO> list = new ArrayList<>();
+        String permissionSql = getPermissionSql(dto.getPermissionSql());
         for (SoReturnChangeListTypeEnum item : values) {
             SoReturnInstockDTO.PagingParam pagingParam = new SoReturnInstockDTO.PagingParam();
-            pagingParam.setPermissionSql(dto.getPermissionSql());
+            pagingParam.setPermissionSql(permissionSql);
             pagingParam.setInvalidStatus(Boolean.FALSE);
             SoReturnInstockDTO.StatusCountDTO resultDTO = new SoReturnInstockDTO.StatusCountDTO();
             Integer count = MathUtil.ZERO;
@@ -622,7 +635,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailView.setMustQty(soB2cReturnDetailEntity.getReturnQty());
                 Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setReceiveQty(receiveQty);
-                detailView.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
+                detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
                 detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
             }else{
                 SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(new SoReturnDetailEntity());
@@ -1120,7 +1133,6 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public PagingVO<SoReturnInstockDTO.PdaPagingView> PdaPaging(PagingDTO<SoReturnInstockDTO.PdaPagingParam> pagingParamDTO) {
-        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         SoReturnInstockDTO.PdaPagingParam params = pagingParamDTO.getParams();
         List<String> approveStatusList = params.getApproveStatusList();
@@ -1131,6 +1143,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
             dateList.add(now);
             params.setBillDateList(dateList);
         }
+        params.setPermissionSql(getPermissionSql(pagingParamDTO.getPermissionSql()));
         IPage<SoReturnInstockDTO.PdaPagingView> pageData = this.baseMapper.pdaPaging(query, params);
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO(new Page());
@@ -1156,9 +1169,10 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         LocalDate startDate = endDate.minusDays(30);
         PdaTabFlagEnum[] values = PdaTabFlagEnum.values();
         List<SoReturnInstockDTO.PdaSoReturnInstockCountDTO> list = new ArrayList<>();
+        String permissionSql = getPermissionSql(dto.getPermissionSql());
         for (PdaTabFlagEnum item : values) {
             SoReturnInstockDTO.PagingParam pagingParamDTO = new SoReturnInstockDTO.PagingParam();
-            pagingParamDTO.setPermissionSql(dto.getPermissionSql());
+            pagingParamDTO.setPermissionSql(permissionSql);
             pagingParamDTO.setInvalidStatus(Boolean.FALSE);
             SoReturnInstockDTO.PdaSoReturnInstockCountDTO resultDTO = new SoReturnInstockDTO.PdaSoReturnInstockCountDTO();
             Integer count = MathUtil.ZERO;
@@ -1676,6 +1690,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(PagingDTO<SoReturnInstockDTO.PagingParam> dto) {
+        dto.getParams().setPermissionSql(getPermissionSql(dto.getPermissionSql()));
         Page<SoReturnInstockDTO.PagingView> pagingViews = baseMapper.soReturnInstockExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         //获取sku的id集合
         List<String> skuIdList = pagingViews.getRecords().stream().map(SoReturnInstockDTO.PagingView::getSkuId).collect(Collectors.toList());
@@ -1869,7 +1884,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
     @Override
     public void downloadTemplate(HttpServletResponse response) {
-        String path = "classpath:excel/soReturnInstockTemplate.xlsx";
+        String path = "excel/soReturnInstockTemplate.xlsx";
         String excelName = "template.xlsx";
         ResourceLoader resourceLoader = new DefaultResourceLoader();
         try {
@@ -1959,11 +1974,11 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
 
         //仓库
         List<String> warehosueNameList = successList.stream().map(SoReturnStockImportExcelDTO::getWarehouseName).distinct().collect(Collectors.toList());
-        List<WarehouseEntity> warehouseList = warehouseService.listByWarehouseNameList(warehosueNameList);
-        Map<String, WarehouseEntity> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseEntity::getName, Function.identity()));
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehosueNameList);
+        Map<String, WarehouseDTO.ListDTO> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, Function.identity()));
 
         //仓位
-        List<String> warehousIdList = warehouseList.stream().map(WarehouseEntity::getId).distinct().collect(Collectors.toList());
+        List<String> warehousIdList = warehouseList.stream().map(WarehouseDTO.ListDTO::getId).distinct().collect(Collectors.toList());
         List<String> warehouseLocationNameList = successList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getWarehouseLocationName())).map(SoReturnStockImportExcelDTO::getWarehouseLocationName).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndNameList(warehousIdList, warehouseLocationNameList);
         Map<String, WarehouseLocationEntity> warehouseLocationMap = warehouseLocationList.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}",obj.getWarehouseId(),obj.getName()) , Function.identity()));
@@ -2002,12 +2017,13 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     addDetail.setSkuId(skuVO.getSkuId());
                     addDetail.setSkuNo(soReturnStockImportExcelDTO.getSkuNo());
                 }
-                WarehouseEntity warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
+                WarehouseDTO.ListDTO warehouseEntity = warehouseMap.get(soReturnStockImportExcelDTO.getWarehouseName());
                 if (ObjectUtil.isEmpty(warehouseEntity) || warehouseEntity.getDisabled() || !ApproveStatusEnum.APPROVE.getStatus().equals(warehouseEntity.getApproveStatus().getCode())) {
                     errorMsgList.add("未找到有效仓库：" + soReturnStockImportExcelDTO.getWarehouseName());
                 } else {
                     addDetail.setWarehouseId(warehouseEntity.getId());
                 }
+                addDetail.setReturnTypeDict(ReturnTypeEnum.getCode(soReturnStockImportExcelDTO.getReturnType()));
                 //仓位信息
                 WarehouseLocationEntity warehouseLocationEntity = warehouseLocationMap.get(CharSequenceUtil.format("{}-{}",ObjectUtil.isEmpty(warehouseEntity) ? "" : warehouseEntity.getId(), soReturnStockImportExcelDTO.getWarehouseLocationName()));
                 if (ObjectUtil.isEmpty(warehouseLocationEntity) && CharSequenceUtil.isNotBlank(soReturnStockImportExcelDTO.getWarehouseLocationName())) {

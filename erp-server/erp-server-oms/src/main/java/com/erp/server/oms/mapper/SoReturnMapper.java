@@ -74,6 +74,11 @@ public interface SoReturnMapper extends BaseMapper<SoReturnEntity> {
      **/
     List<SoReturnDTO.PdaSoReturn> pdaList(SoReturnDTO.PdaSoReturnParam dto);
 
-
-
+    /**
+     * 查询退货单列表
+     * @param approveStatus
+     * @param permissionSql
+     * @return
+     */
+    List<SoReturnEntity> listSoReturnByApproveStatus(@Param("approveStatus") String approveStatus, @Param("permissionSql") String permissionSql);
 }

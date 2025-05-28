@@ -808,6 +808,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         Integer flag = MathUtil.ONE;
         //分组金额
         BigDecimal groupAmount = BigDecimal.ZERO;
+        //速卖通税后分组金额
+        BigDecimal groupAfterTaxAmount = BigDecimal.ZERO;
         //分组预估费用
         BigDecimal groupEstimatedShippingCost = BigDecimal.ZERO;
         //分组实际费用
@@ -909,6 +911,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             //拆分金额所占比例
             BigDecimal rate = MathUtil.divide(splitTotalAmount, totalAmount);
             BigDecimal amount = MathUtil.multiplyWithTwo(rate, entity.getAmount());
+            BigDecimal afterTaxAmount = MathUtil.multiplyWithTwo(rate, entity.getAfterTaxAmount());
             BigDecimal estimatedShippingCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getEstimatedShippingCost());
             BigDecimal actualShippingCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getActualShippingCost());
             BigDecimal accessoriesCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesCost());
@@ -916,6 +919,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             //最后一条根据减法计算金额
             if (i == splitList.size() - 1) {
                 amount = MathUtil.subtract(entity.getAmount(), groupAmount);
+                afterTaxAmount = MathUtil.subtract(entity.getAfterTaxAmount(), groupAfterTaxAmount);
                 estimatedShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getEstimatedShippingCost(), groupEstimatedShippingCost);
                 actualShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getActualShippingCost(), groupActualShippingCost);
                 accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(), groupAccessoriesCost);
@@ -923,6 +927,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
             //基本信息金额
             addDTO.setAmount(amount);
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform())) {
+                // 速卖通记录分摊的税后金额
+                addDTO.setAfterTaxAmount(afterTaxAmount);
+            }
             //预估费用
             logisticsAddDTO.setEstimatedShippingCost(estimatedShippingCost);
             //实际费用
@@ -968,6 +976,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             splittableGroups.add(groupsBean);
             //计算已生成金额
             groupAmount = MathUtil.add(addDTO.getAmount(), groupAmount);
+            // 计算已已生成的速卖通税后金额
+            groupAfterTaxAmount = MathUtil.add(addDTO.getAfterTaxAmount(), groupAfterTaxAmount);
             groupEstimatedShippingCost = MathUtil.add(logisticsAddDTO.getEstimatedShippingCost(), groupEstimatedShippingCost);
             groupActualShippingCost = MathUtil.add(logisticsAddDTO.getActualShippingCost(), groupActualShippingCost);
             groupAccessoriesCost = MathUtil.add(logisticsAddDTO.getAccessoriesCost(), groupAccessoriesCost);

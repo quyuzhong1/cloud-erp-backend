@@ -65,6 +65,7 @@ public class PurchaseChangeController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "change_user_id",
+            warehouseTableField = "pc.delivery_warehouse_id",
             menuCode = "scm:purchaseChange:paging",
             tableAlias = "pc")
     @WebAdvanceQuery
@@ -82,6 +83,7 @@ public class PurchaseChangeController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "change_user_id",
+            warehouseTableField = "pc.delivery_warehouse_id",
             menuCode = "scm:purchaseChange:paging",
             tableAlias = "pc")
     public ApiResult<List<ListStatusCountDTO.PurchaseChangeCountDTO>> listCount(@RequestBody PermissionsDTO dto) {

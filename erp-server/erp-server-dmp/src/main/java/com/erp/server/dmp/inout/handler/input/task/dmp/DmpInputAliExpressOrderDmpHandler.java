@@ -150,6 +150,19 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						}
 					}
 
+					// 买家视角订单金额
+					Object actualFeeObj = detailData.get("actual_fee");
+					if(actualFeeObj != null) {
+						Map<String, Object> actualFeeMap = (Map) actualFeeObj;
+						Object actualFee = actualFeeMap.get("amount");
+						if (actualFee != null) {
+							dmpDataMap.put("actualAmount",actualFee);
+						}
+						Object actualFeeCurrency = actualFeeMap.get("currency_code");
+						if (actualFeeCurrency != null) {
+							dmpDataMap.put("actualCurrency",actualFeeCurrency);
+						}
+					}
 
 					//退款
 					Object refundInfoObj = detailData.get("refund_info");

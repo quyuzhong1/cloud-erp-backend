@@ -9,13 +9,15 @@ import org.apache.commons.lang3.StringUtils;
 import java.util.stream.Stream;
 
 @Getter
-public enum SoB2cReturnTypeEnum implements EnumMessage {
+public enum ReturnTypeEnum implements EnumMessage {
     CUSTOMER_RETURNS("customerReturns","买家退货"),
     RETURNS_FROM_SERVICE_PROVIDERS("returnsFromServiceProviders","服务商退件"),
     CLAIM("claim","认领"),
+    DEDUCTION("refund","退货退款"),
+    REPLENISHMENT("replenishment","退货补货")
     ;
 
-    SoB2cReturnTypeEnum(String code, String name) {
+    ReturnTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
     }
@@ -43,8 +45,8 @@ public enum SoB2cReturnTypeEnum implements EnumMessage {
     /**
      * 通过code查询
      */
-    public static SoB2cReturnTypeEnum getByCode(String code){
-        return Stream.of(SoB2cReturnTypeEnum.values())
+    public static ReturnTypeEnum getByCode(String code){
+        return Stream.of(ReturnTypeEnum.values())
                 .filter(typeEnum -> typeEnum.getCode().equalsIgnoreCase(code))
                 .findFirst()
                 .orElse(null);
@@ -54,9 +56,20 @@ public enum SoB2cReturnTypeEnum implements EnumMessage {
         if (StringUtils.isBlank(code)) {
             return "";
         }
-        for (SoB2cReturnTypeEnum typeEnum : SoB2cReturnTypeEnum.values()) {
+        for (ReturnTypeEnum typeEnum : ReturnTypeEnum.values()) {
             if (code.equals(typeEnum.getCode())) {
                 return typeEnum.getName();
+            }
+        }
+        return "";
+    }
+    public static String getCode(String name) {
+        if(StringUtils.isBlank(name)) {
+            return "";
+        }
+        for (ReturnTypeEnum returnTypeEnum : ReturnTypeEnum.values()) {
+            if (name.equals(returnTypeEnum.getName())) {
+                return returnTypeEnum.getCode();
             }
         }
         return "";

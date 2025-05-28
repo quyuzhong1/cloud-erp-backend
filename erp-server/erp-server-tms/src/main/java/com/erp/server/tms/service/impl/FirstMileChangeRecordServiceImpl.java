@@ -23,6 +23,7 @@ import com.erp.model.tms.dto.FirstMileChangeRecordDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 import com.erp.model.tms.entity.FirstMileChangeRecordEntity;
+import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
 import com.erp.model.tms.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.tms.convert.FirstMileChangeRecordConverter;
@@ -38,6 +39,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -188,7 +190,9 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     public void saveProductWeightByEntity(List<FirstMileChangeRecordEntity> list) {
         //新增记录前修改原来的记录为非最新记录
         list.forEach(e -> {
-            e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            if (CharSequenceUtil.isBlank(e.getCode())){
+                e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            }
             if (FirstMileChangeRecordChangeRangeEnum.ORDER.getCode().equals(e.getChangeRange())){
                 this.lambdaUpdate()
                         .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
@@ -334,16 +338,21 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
     @Transactional(rollbackFor = Exception.class)
     public void savePackageByEntity(List<FirstMileChangeRecordEntity> entityList) {
         //新增记录前修改原来的记录为非最新记录
-        entityList.forEach(e -> this.lambdaUpdate()
-                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
-                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
-                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
-                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
-                .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
-                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
-                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
-                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
-             .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
+        entityList.forEach(e -> {
+            if (CharSequenceUtil.isBlank(e.getCode())){
+                e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            }
+            this.lambdaUpdate()
+                    .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                    .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                    .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                    .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                    .eq(FirstMileChangeRecordEntity::getBoxId, e.getBoxId())
+                    .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                    .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                    .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
+                    .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+        });
         //新增记录
         boolean saveBatch = this.saveBatch(entityList);
         if (!saveBatch){
@@ -371,8 +380,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         }
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
         for (FirstMileCostAllocationDTO.CostAllocationDTO dto : dtoValidList) {
-            if (dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) == 0 && dto.getCurrentPeriodAllocatedCost().compareTo(dto.getNewCurrentPeriodAllocatedCost()) == 0
-                    && dto.getEndPeriodTransitCost().compareTo(dto.getNewEndPeriodTransitCost()) == 0 && dto.getEndPeriodEstimatedCost().compareTo(dto.getNewEndPeriodEstimatedCost()) == 0) {
+            if (dto.getAllocatedWeight().equals(dto.getNewAllocatedWeight())
+                    && dto.getMidPeriodTransitCost().equals(dto.getNewMidPeriodTransitCost())
+                    && dto.getCurrentPeriodAllocatedCost().equals(dto.getNewCurrentPeriodAllocatedCost())
+                    && dto.getEndPeriodTransitCost().equals(dto.getNewEndPeriodTransitCost())
+                    && dto.getEndPeriodEstimatedCost().equals(dto.getNewEndPeriodEstimatedCost())) {
                 resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), "调整后费用值与调整前费用值全部一致", false));
                 continue;
             }
@@ -390,6 +402,20 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                     continue;
                 }
             }
+            //分摊重量校验 提交失败：检验分摊重量-是否超出总重量：「SKU」存在历史分摊数据，不支持再次修改重量
+            if (CharSequenceUtil.isNotBlank(dto.getNewAllocatedWeight()) && !Objects.equals(dto.getNewAllocatedWeight(),dto.getAllocatedWeight())){
+                try {
+                    BigDecimal newAllocatedWeight = new BigDecimal(dto.getNewAllocatedWeight());
+                }catch (Exception e){
+                    resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), CharSequenceUtil.format("【{}】分摊重量格式错误", dto.getSourceCode()), false));
+                }
+                //判断是否存在历史分摊数据
+                List<FirstMileSkuCostAllocationDetailEntity> skuCostAllocationDetailEntityList = firstMileSkuCostAllocationDetailService.listByReportMonth(dto.getSourceId(), dto.getBusinessCode(), dto.getTransportNo(), dto.getSkuId(), dto.getPlatformSkuNo(), dto.getReportPeriodId());
+                if (CollUtil.isNotEmpty(skuCostAllocationDetailEntityList)){
+                    resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), CharSequenceUtil.format("【{}】存在历史分摊数据，不支持再次修改重量", dto.getSkuNo()), false));
+                    continue;
+                }
+            }
             resultDTOS.add(new BatchResultDTO(dto.getId(), dto.getSourceCode(), "校验通过", true));
         }
         return resultDTOS;
@@ -402,6 +428,11 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
         }
         List<FirstMileChangeRecordEntity> entityList = new ArrayList<>();
         for (FirstMileCostAllocationDTO.CostAllocationDTO dto : dtoValidList){
+            if (dto.getAllocatedWeight().compareTo(dto.getNewAllocatedWeight()) != 0){
+                //新增分摊重量调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostAllocatedWeightDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                dto.setIsRetry(Boolean.TRUE);
+            }
             if (dto.getMidPeriodTransitCost().compareTo(dto.getNewMidPeriodTransitCost()) != 0){
                 //新增冲期初在途费用调整记录
                 entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostMidPeriodTransitDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
@@ -439,6 +470,13 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                     firstMileSkuCostAllocationDetailService.updateEndPeriodEstimatedCost(dto.getDetailId(), dto.getNewEndPeriodEstimatedCost());
                 }
             }
+            if (!Objects.equals(dto.getNewDetailRemark(), dto.getDetailRemark())){
+                //新增分明细备注调整记录
+                entityList.add(FirstMileChangeRecordConverter.INSTANCE.changeCostDetailRemarkDtoToEntityConvert(dto).setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ)));
+                if (!dto.getIsRetry()){
+                    firstMileSkuCostAllocationDetailService.updateDetailRemark(dto.getDetailId(), dto.getNewDetailRemark());
+                }
+            }
         }
         saveCostByEntity(entityList);
     }
@@ -449,16 +487,21 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
             return;
         }
         //新增记录前修改原来的记录为非最新记录
-        entityList.forEach(e -> this.lambdaUpdate()
-                .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
-                .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
-                .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
-                .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
-                .eq(FirstMileChangeRecordEntity::getSkuId, e.getSkuId())
-                .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
-                .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
-                .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
-                .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update());
+        entityList.forEach(e -> {
+            if (CharSequenceUtil.isBlank(e.getCode())){
+                e.setCode(docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_TCTZ));
+            }
+            this.lambdaUpdate()
+                    .eq(FirstMileChangeRecordEntity::getSourceType, e.getSourceType())
+                    .eq(FirstMileChangeRecordEntity::getBusinessCode, e.getBusinessCode())
+                    .eq(FirstMileChangeRecordEntity::getDeliveryCode, e.getDeliveryCode())
+                    .eq(FirstMileChangeRecordEntity::getLogisticsBillId, e.getLogisticsBillId())
+                    .eq(FirstMileChangeRecordEntity::getSkuId, e.getSkuId())
+                    .eq(FirstMileChangeRecordEntity::getCategory, e.getCategory())
+                    .eq(FirstMileChangeRecordEntity::getCategoryField, e.getCategoryField())
+                    .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
+                    .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+        });
         //新增记录
         boolean saveBatch = this.saveBatch(entityList);
         if (!saveBatch){
@@ -494,6 +537,20 @@ public class FirstMileChangeRecordServiceImpl extends SuperServiceImpl<FirstMile
                 .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
                 .eq(FirstMileChangeRecordEntity::getIsLatest,Boolean.TRUE)
                 .set(FirstMileChangeRecordEntity::getIsLatest,Boolean.FALSE).update();
+    }
+
+    @Override
+    public FirstMileChangeRecordEntity getCostAllocationWeightByParams(String sourceType, String deliveryId, String businessCode, String categoryField, String skuId, String platformSkuNo) {
+        return this.lambdaQuery()
+                .eq(FirstMileChangeRecordEntity::getSourceType, sourceType)
+                .eq(FirstMileChangeRecordEntity::getDeliveryId, deliveryId)
+                .eq(FirstMileChangeRecordEntity::getBusinessCode, businessCode)
+                .eq(FirstMileChangeRecordEntity::getCategoryField, categoryField)
+                .eq(FirstMileChangeRecordEntity::getSkuId, skuId)
+                .eq(FirstMileChangeRecordEntity::getPlatformSkuNo, platformSkuNo)
+                .eq(FirstMileChangeRecordEntity::getIsLatest, Boolean.TRUE)
+                .orderByDesc(FirstMileChangeRecordEntity::getCreateTime)
+                .last(" limit 1 ").one();
     }
 
     private void fillPagingDb(List<FirstMileChangeRecordDTO.PagingVO> list) {

@@ -323,6 +323,7 @@ public class TransferLogisticsSupplierServiceImpl extends SuperServiceImpl<Trans
 
     @Override
     public PagingVO<TransferLogisticsSupplierDTO.PagingViewDTO> exportTransferLogisticsSupplier(PagingDTO<TransferLogisticsSupplierDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<TransferLogisticsSupplierDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             fillPagingData(page.getRecords());

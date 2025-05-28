@@ -1,6 +1,7 @@
 package com.erp.model.mrp.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -90,7 +91,7 @@ public class DeliverySuggestDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class TabListParamDTO {
+    public static class TabListParamDTO extends PermissionsDTO {
 
         /**
          * 平台类型

@@ -81,5 +81,8 @@ public class PlatformReturnInstockDTO extends UniqueDto {
 
         //实退数量
         private Integer realQty;
+
+        //明细唯一ID
+        private String thirdId;
     }
 }

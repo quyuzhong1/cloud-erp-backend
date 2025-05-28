@@ -316,7 +316,9 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
                     cacheMap.put("subPlatformType", subPlatformTypeMap);
                     
                     if(subPlatformTypeDict != null) {
-                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                    	sdyDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                        sdyDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getValue());
                         sdyDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                     }
                 }
@@ -347,8 +349,6 @@ public class DmpOutputSdyRefundHandler extends DmpOutputTaskHandler {
             sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
 
             sdyDTO.setUnit("PCS");
-            sdyDTO.setPlatform_id(dmpSoRefundEntity.getSourceSystem());
-            sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoRefundEntity.getSourceSystem()));
             sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoRefundEntity.getRefundTime()));
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoRefundEntity.getPlatformUpdateTime()));
             sdyDTO.setGoods_status("已退货");
