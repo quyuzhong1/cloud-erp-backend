@@ -49,17 +49,17 @@
     <select id="paging" resultType="com.erp.model.workflow.dto.CfgThirdProcessDTO$ListDTO">
         select
         <include refid="Base_Column_List"></include>
-            wm.module_classify  AS bussinessKeyName
+            ,wm.module_classify  AS bussinessKeyName
         from cfg_third_process as ctp
         LEFT JOIN public.work_menu wm ON wm.module_code = ctp.bussiness_key AND wm.is_deleted = false
         where
         ${params.sqlMap.default}
-        and is_deleted = false
+        and ctp.is_deleted = false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-        order by create_time desc
+        order by ctp.create_time desc
     </select>
 
     <!-- 主表 resultMap -->
