@@ -220,6 +220,10 @@ public class ApproveTaskInfoDTO implements Serializable {
          * 执行状态名称
          */
         private String statusName;
+        /**
+         * 发生时间
+         */
+        private LocalDateTime happenTime;
 
         /**
          * 明细
