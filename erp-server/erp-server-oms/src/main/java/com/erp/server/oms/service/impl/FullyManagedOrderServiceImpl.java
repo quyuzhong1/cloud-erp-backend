@@ -133,6 +133,9 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
     private SoB2cDeliveryFeign soB2cDeliveryFeign;
     @Resource
     private SoB2cRefCategoryService soB2cRefCategoryService;
+
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
     
     @Override
     public List<SoB2cDTO.TabListDTO> fullyManagedTabList(PermissionsDTO param) {
@@ -295,7 +298,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
                             SoB2cEntity entity = soB2cService.getById(soB2cEntity.getId());
                             if ((Objects.nonNull(logisticsRuleResult.getAutoGetTrackNo()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNo()))
                                     || (Boolean.FALSE.equals(entity.getIsOutOfRangeDelivery()) && Objects.nonNull(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()))) {
-                                soB2cService.getLogisticsCode(soB2cEntity.getId(),  Boolean.TRUE);
+                                soB2cRuleService.handleAutoSubmitDelivery(soB2cEntity.getId());
                             }
                         }
                     }
