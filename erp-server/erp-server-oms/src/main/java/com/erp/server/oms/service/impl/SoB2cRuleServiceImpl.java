@@ -131,6 +131,13 @@ public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEnt
             String warehouseLogisticsChannelId = Objects.nonNull(viewDTO)?viewDTO.getPlatformLogisticsChannelId():"";
             BatchResultDTO submitDelivery = soB2cService.submitDelivery(soId, warehouseLogisticsChannelId);
             if(!submitDelivery.getSuccess()){
+                if(StringUtils.isNotBlank(submitDelivery.getMsg())){
+                    SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
+                    addError.setType(SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode());
+                    addError.setMainId(soId);
+                    addError.setMessage(StrUtil.format("海外仓自动提交发货异常,{}",submitDelivery.getMsg()));
+                    soB2cErrorService.add(addError);
+                }
                 return false;
             }
         }catch (Exception e){

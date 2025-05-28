@@ -1097,6 +1097,10 @@ public class LogisticsChannelDTO implements Serializable {
     @NoArgsConstructor
     public static class WarehouseChannelDTO {
         /**
+         * 海外仓库id
+         */
+        private String overseasWarehouseId;
+        /**
          * 仓库
          */
         private String warehouseId;

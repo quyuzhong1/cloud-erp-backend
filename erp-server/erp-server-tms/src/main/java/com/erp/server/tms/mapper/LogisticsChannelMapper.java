@@ -95,5 +95,5 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
 
     IPage<LogisticsChannelDTO.PagingViewDTO> paging(Page<LogisticsChannelDTO.PagingViewDTO> query, @Param("params") LogisticsChannelDTO.PagingParamDTO params);
 
-    List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
+    List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel(@Param("overseasWarehouseIds") List<String> overseasWarehouseIds);
 }
