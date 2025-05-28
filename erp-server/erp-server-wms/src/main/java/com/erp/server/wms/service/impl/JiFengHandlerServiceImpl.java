@@ -205,9 +205,9 @@ public class JiFengHandlerServiceImpl extends AbstractThirdWarehouseHandler {
             if(StringUtils.isNotBlank(resp.getMessage()) && resp.getMessage().contains("Order canceled")){
                 return success(ThirdWarehouseCancelResultEnum.INTERCEPTION_SUCCESSFUL.getCode());
             }
-            //如果是拦截中，查询订单的状态
+            //拦截中
             if(resp.getCode().equals(20023)){
-
+                return success(ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode());
             }
             return failure(resp.getMessage());
         }

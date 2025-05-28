@@ -3095,6 +3095,14 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截成功,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
             return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "三方仓拦截成功");
+        } else if ( ThirdWarehouseCancelResultEnum.INTERCEPTING.getCode().equals(stringApiResult.getData())) {
+            //拦截中
+            soB2cEntity.setIsFrozen(Boolean.TRUE);
+            soB2cEntity.setIsIntercept(Boolean.TRUE);
+            this.updateById(soB2cEntity);
+            String msg = CharSequenceUtil.format("用户【{}】发起海外拦截中,备注：【{}】", UserContext.getDefaultLoginUser().getUserName(), remark);
+            operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "发货拦截");
+            return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "发起拦截中，等待三方仓处理");
         } else {
             //自动拦截结果确认，拦截失败
             String msg = CharSequenceUtil.format("用户【{}】发起海外仓拦截失败，备注：【{}】,原因：【{}】", UserContext.getDefaultLoginUser().getUserName(),remark, stringApiResult.getMsg());
