@@ -334,6 +334,15 @@ public class RocketMqConsumerGroup {
      */
     public static final String WORKFLOW_SYNC_FS_INSTANCE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_sync_fs_instance_consumer";
 
+    /**
+     *
+     */
+    public static final String WORKFLOW_FS_APPROVALS_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_fs_approvals_consumer";
+
+    /**
+     *
+     */
+    public static final String WORKFLOW_FS_INSTANCES_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_fs_instances_consumer";
     //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
     /**
      * 旺店通推送货品资料

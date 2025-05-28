@@ -6,19 +6,13 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.anno.ParamData;
-import com.common.core.enums.PannoEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.plm.enums.ApprovalStatusEnum;
-import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.entity.ThirdProcessInstanceEntity;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
-import com.lark.oapi.service.approval.v4.model.GetApprovalResp;
-import com.lark.oapi.service.approval.v4.model.GetApprovalRespBody;
 import com.lark.oapi.service.approval.v4.model.GetInstanceResp;
 import com.lark.oapi.service.approval.v4.model.GetInstanceRespBody;
 import lombok.extern.slf4j.Slf4j;
@@ -80,7 +74,8 @@ public class DmpInputFeishuGetInstancesInitHandler extends DmpInputInitHandler {
             }
         }
         //更新原表中的数据
-        dmpInputTaskInitDTOList.add(DmpInputTaskInitDTO.initMsg(result.toJSONString()));
+        DmpInputTaskInitDTO dmpInputTaskInitDTO = DmpInputTaskInitDTO.initMsg(result.toJSONString());
+        dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
         return dmpInputTaskInitDTOList;
     }
 }
