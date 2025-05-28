@@ -21,12 +21,14 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.CfgProcessRuleDTO;
-import com.erp.model.workflow.entity.*;
+import com.erp.model.workflow.entity.CfgProcessEntity;
+import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
+import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
+import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.sys.feign.SysUserThirdFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.handler.ProcessFormHandler;
@@ -42,7 +44,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_CFG_PROCESS;
@@ -221,7 +226,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public CfgProcessEntity getByBusinessKey(String businessKey) {
-        return null;
+        return lambdaQuery().eq(CfgProcessEntity::getBussinessKey,businessKey).last("limit 1").one();
     }
 
 
