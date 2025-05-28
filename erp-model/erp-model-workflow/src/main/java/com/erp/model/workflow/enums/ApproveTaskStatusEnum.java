@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
  * @date 2025/5/27 10:24
  */
 public enum ApproveTaskStatusEnum implements EnumMessage {
+    ALL("all", "全部"),
     SUCCESS("success", "生成成功"),
     FAIL("fail", "生成失败"),
     ;
