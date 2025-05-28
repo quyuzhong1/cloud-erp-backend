@@ -64,6 +64,11 @@ public class ThirdProcessInstanceEntity extends BaseEntity<ThirdProcessInstanceE
     */
     @TableField("instance_code")
     private String instanceCode;
+    /**
+     * 是否转换完成
+     */
+    @TableField("is_complete")
+    private Boolean isComplete;
 
 
     public static final String APPROVAL_NAME = "approval_name";
@@ -81,6 +86,8 @@ public class ThirdProcessInstanceEntity extends BaseEntity<ThirdProcessInstanceE
     public static final String APPROVAL_CODE = "approval_code";
 
     public static final String INSTANCE_CODE = "instance_code";
+
+    public static final String IS_COMPLETE = "is_complete";
 
     @Override
     public Serializable pkVal() {

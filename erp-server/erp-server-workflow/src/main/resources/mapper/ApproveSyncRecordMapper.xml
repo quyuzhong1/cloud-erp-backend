@@ -38,6 +38,58 @@
         is_deleted,
         cfg_approve_sync_id, notice_type, business_type, business_code, notice_method, receiver_id, receiver_name, send_time, title, status, error_reason
     </sql>
-
-
+    <select id="tabList" resultType="com.erp.model.workflow.dto.ApproveSyncRecordDTO$TabListDTO">
+        SELECT
+        asr.status AS tabFlag,
+        count(1)  AS count
+        FROM  approve_sync_record as asr
+        WHERE asr.is_deleted=FALSE
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY asr.status
+    </select>
+    <select id="paging" resultType="com.erp.model.workflow.dto.ApproveSyncRecordDTO$ListDTO">
+        select
+            asr.id as id,
+            asr.create_user_id as createUserId,
+            asr.create_user_name as createUserName,
+            asr.create_time as createTime,
+            asr.update_user_id as updateUserId,
+            asr.update_user_name as updateUserName,
+            asr.update_time as updateTime,
+            asr.version as version,
+            asr.is_deleted as isDeleted,
+            asr.cfg_approve_sync_id as cfgApproveSyncId,
+            asr.notice_type as noticeType,
+            asr.business_type as businessType,
+            asr.business_code as businessCode,
+            asr.notice_method as noticeMethod,
+            asr.receiver_id as receiverId,
+            asr.receiver_name as receiverName,
+            asr.send_time as sendTime,
+            asr.title as title,
+            asr.status as status,
+            asr.error_reason as errorReason
+        from approve_sync_record as asr
+        WHERE
+            ${params.sqlMap.default}
+          AND asr.is_deleted = FALSE
+        <if test="params.ids != null and params.ids.size > 0">
+            and asr.id in
+            <foreach collection="params.ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        ORDER BY
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        asr.create_time DESC
+    </select>
 </mapper>

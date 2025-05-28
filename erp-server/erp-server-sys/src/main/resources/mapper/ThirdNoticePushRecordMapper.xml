@@ -75,7 +75,7 @@
         tnpr.title as title,
         tnpr.status as status,
         tnpr.error_reason as errorReason
-        from third_notice_push_record
+        from third_notice_push_record as tnpr
         WHERE
         ${params.sqlMap.default}
         AND tnpr.is_deleted = FALSE

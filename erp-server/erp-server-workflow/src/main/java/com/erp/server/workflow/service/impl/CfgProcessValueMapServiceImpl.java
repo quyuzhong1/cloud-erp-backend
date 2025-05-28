@@ -15,9 +15,12 @@ import com.common.business.vo.LoginUser;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
+import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.context.ProcessFormFactory;
+import com.erp.server.workflow.handler.ProcessFormHandler;
 import com.erp.server.workflow.mapper.CfgProcessValueMapMapper;
 import com.erp.server.workflow.service.CfgProcessValueMapService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -59,6 +62,9 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
 
     @Resource
     private RedisService redisService;
+
+    @Resource
+    private ProcessFormFactory   processFormFactory;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -151,14 +157,15 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
     }
 
     @Override
-    public List<CfgProcessValueMapDTO.DropDownDTO> view(String fieldId, String approvalCode) {
+    public List<CfgProcessValueMapDTO.DropDownDTO> view(String fieldId, String approvalCode,String type) {
         try {
             GetApprovalResp approval = fsService.getApproval(approvalCode);
             String jsonStr = JSONUtil.toJsonStr(approval.getData());
             if (ObjectUtil.isNotEmpty(redisService.getCacheObject(fieldId))){
                 return redisService.getCacheObject(fieldId);
             }
-            Map<String, Map<String, String>> stringMapMap = parseFormValue(jsonStr);
+            ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(type).name());
+            Map<String, Map<String, String>> stringMapMap = handler.parseFormValue(jsonStr);
             Map<String, String> stringMap = stringMapMap.get(fieldId);
             //遍历map，key作为DropDownDTO的value，value作为DropDownDTO的name
             List<CfgProcessValueMapDTO.DropDownDTO> dropDownDTOS = new ArrayList<>();
@@ -205,142 +212,5 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
      */
     private void handleData(CfgProcessValueMapEntity cfgProcessValueMapEntity) {
         // TODO 验证数据 & 数据赋值
-    }
-
-    /**
-     * 解析表单值，提取下拉选项和其他特定字段类型的值映射
-     *
-     * @param formString 表单JSON字符串
-     * @return 字段ID到值映射的Map
-     */
-    public static Map<String, Map<String, String>> parseFormValue(String formString) {
-        JSONObject root = JSONUtil.parseObj(formString);
-        String formStringValue = root.getStr(FsRequestBodyAttributesEnum.FORM.getCode());
-        JSONArray formArray = JSONUtil.parseArray(formStringValue);
-
-        Map<String, Map<String, String>> parsedValues = new HashMap<>();
-
-        // 遍历表单字段
-        for (JSONObject field : formArray.jsonIter()) {
-            String fieldId = field.getStr(FsRequestBodyAttributesEnum.ID.getCode());
-            String type = field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode());
-
-            if (FsRequestBodyAttributesEnum.FIELDLIST.getCode().equals(type)) {
-                // 处理明细表字段
-                processDetailFields(field, parsedValues);
-            } else {
-                // 处理普通字段
-                processField(field, fieldId, type, parsedValues);
-            }
-        }
-
-        return parsedValues;
-    }
-
-    /**
-     * 处理普通字段
-     */
-    private static void processField(JSONObject field, String fieldId, String type, Map<String, Map<String, String>> parsedValues) {
-        // 处理金额类型
-        if (CfgQueryOptionFieldTypeEnum.AMOUNT.getCode().equals(type)) {
-            processAmountField(field, fieldId, parsedValues);
-            return;
-        }
-
-        // 处理包含选项的字段
-        if (field.containsKey(FsRequestBodyAttributesEnum.OPTION.getCode())) {
-            Object valueObj = field.get(FsRequestBodyAttributesEnum.OPTION.getCode());
-            if (valueObj instanceof JSONArray) {
-                processOptionArray((JSONArray) valueObj, fieldId, parsedValues);
-            } else if (valueObj != null && !field.get(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.DEPARTMENT.getCode())) {
-                // 处理单个值选项
-                Map<String, String> valueMap = new HashMap<>();
-                valueMap.put(FsRequestBodyAttributesEnum.VALUE.getCode(), valueObj.toString());
-                parsedValues.put(fieldId, valueMap);
-            }
-        }
-    }
-
-    /**
-     * 处理明细表字段
-     */
-    private static void processDetailFields(JSONObject field, Map<String, Map<String, String>> parsedValues) {
-        JSONArray detailFields = field.getJSONArray(FsRequestBodyAttributesEnum.CHILDREN.getCode());
-        if (detailFields == null) {
-            return;
-        }
-
-        for (JSONObject detail : detailFields.jsonIter()) {
-            String detailId = detail.getStr("id");
-            String detailType = detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode());
-
-            if (!detail.containsKey(FsRequestBodyAttributesEnum.OPTION.getCode())) {
-                continue;
-            }
-
-            // 处理明细表中的字段
-            processField(detail, detailId, detailType, parsedValues);
-        }
-    }
-
-    /**
-     * 处理金额类型字段
-     */
-    private static void processAmountField(JSONObject field, String fieldId, Map<String, Map<String, String>> parsedValues) {
-        Object obj = field.get(FsRequestBodyAttributesEnum.OPTION.getCode());
-        if (obj == null) {
-            return;
-        }
-
-        Map<String, String> valueMap = new HashMap<>();
-        JSONObject option = (JSONObject) obj;
-        JSONArray currencyRange = option.getJSONArray("currencyRange");
-
-        if (currencyRange != null) {
-            for (Object currency : currencyRange) {
-                valueMap.put(currency.toString(), currency.toString());
-            }
-            parsedValues.put(fieldId, valueMap);
-        }
-    }
-
-    /**
-     * 处理选项数组
-     */
-    private static void processOptionArray(JSONArray valueList, String fieldId, Map<String, Map<String, String>> parsedValues) {
-        if (valueList == null) {
-            return;
-        }
-
-        Map<String, String> valueMap = new HashMap<>();
-        for (JSONObject value : valueList.jsonIter()) {
-            String valueCode = value.getStr(FsRequestBodyAttributesEnum.VALUE.getCode());
-            String valueText = value.getStr(FsRequestBodyAttributesEnum.TEXT.getCode());
-            if (valueCode != null && valueText != null) {
-                valueMap.put(valueCode, valueText);
-            }
-        }
-
-        if (!valueMap.isEmpty()) {
-            parsedValues.put(fieldId, valueMap);
-        }
-    }
-
-    /**
-     * 处理单个选项对象
-     */
-    private static void processSingleOption(JSONObject option, String fieldId, Map<String, Map<String, String>> parsedValues) {
-        if (option == null) {
-            return;
-        }
-
-        String valueCode = option.getStr(FsRequestBodyAttributesEnum.VALUE.getCode());
-        String valueText = option.getStr(FsRequestBodyAttributesEnum.TEXT.getCode());
-
-        if (valueCode != null && valueText != null) {
-            Map<String, String> valueMap = new HashMap<>();
-            valueMap.put(valueCode, valueText);
-            parsedValues.put(fieldId, valueMap);
-        }
     }
 }

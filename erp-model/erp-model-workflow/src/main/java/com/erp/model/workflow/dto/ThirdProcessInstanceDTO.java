@@ -76,6 +76,10 @@ public class ThirdProcessInstanceDTO implements Serializable {
         */
         private String instanceCode;
 
+        /**
+         * 是否转换完成
+         */
+        private Boolean isComplete;
 
     }
 
@@ -163,7 +167,6 @@ public class ThirdProcessInstanceDTO implements Serializable {
         @NotBlank(message = "审批实例 Code不能为空")
         @Size(max = 30,message = "审批实例 Code最大长度不能超过30位")
         private String instanceCode;
-
 
     }
 

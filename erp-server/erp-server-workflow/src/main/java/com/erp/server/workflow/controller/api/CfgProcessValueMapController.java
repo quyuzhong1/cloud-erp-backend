@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
 
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogSystemModule;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,7 +34,7 @@ public class CfgProcessValueMapController extends BaseController {
 
     /**
      * 值映射详情
-     *
+     * type = 执行条件的type值，现在只有erpProcess和fsProcess
      * @description:
      * @author: hcg
      * @date: 2025/4/9 14:40
@@ -41,7 +42,7 @@ public class CfgProcessValueMapController extends BaseController {
      * @return: CfgInvoiceSettingDTO.ViewDTO
      **/
     @GetMapping("/view")
-    public ApiResult<List<CfgProcessValueMapDTO.DropDownDTO>> view(@RequestParam(value = "thirdFieldId") String thirdFieldId, @RequestParam(value = "approvalCode") String approvalCode) {
-        return success(cfgProcessValueMapService.view(thirdFieldId, approvalCode));
+    public ApiResult<List<CfgProcessValueMapDTO.DropDownDTO>> view(@RequestParam(value = "thirdFieldId") @Validated String thirdFieldId, @RequestParam(value = "approvalCode") @Validated String approvalCode, @RequestParam(value = "type") @Validated String type){
+        return success(cfgProcessValueMapService.view(thirdFieldId, approvalCode,type));
     }
 }

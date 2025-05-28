@@ -26,6 +26,7 @@ import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.camunda.bpm.engine.RuntimeService;
 import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.util.*;
@@ -55,6 +56,8 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
     private CfgApproveSyncBuildHandler cfgApproveSyncBuildHandler;
     @Resource
     private ProcessManagementService processManagementService;
+    @Resource
+    private RuntimeService runtimeService;
 
     @Override
     public void onMessage(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto) {

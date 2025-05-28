@@ -167,13 +167,21 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-        String processDefinitionId = getProcessDefinitionId(dto);
-        if (CharSequenceUtil.isBlank(processDefinitionId)) {
-            // 业务无已启用的Erp流程配置
+//        String processDefinitionId = getProcessDefinitionId(dto);
+//        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+//            // 业务无已启用的Erp流程配置
+//            return new ProcessManagementDTO.StartResultDTO(dto);
+//        }
+//        //启动流程
+//        return startProcess(dto, processDefinitionId);
+
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
-        //启动流程
-        return startProcess(dto, processDefinitionId);
+        return startProcess(dto, processBusiness.getProcessDefinitionId());
     }
 
 
@@ -249,7 +257,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException(ApiError.PROCESS_ALREADY_START);
         }
         // 查询流程定义
-        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId);
+        ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId);
         if (null == processDefinition) {
             // 流程定义不存在
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
@@ -315,6 +323,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 保存流程数据失败
             throw new ServiceException(ApiError.ERROR_94004);
         }
+
+        Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
         // 完成新增数据事务提交之后,发送MQ消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -326,7 +336,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(taskId);
                 mqDto.setOperator(dto.getUserId());
-                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
                 syncFsExternalInstance(mqDto);
             }
@@ -450,7 +460,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
-                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
                 mqDto.setApproveType(dto.getApproveType().getStatus());
                 syncFsExternalInstance(mqDto);
@@ -738,6 +748,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 更新流程任务数据
         processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), dto.getSourceUserId(), dto.getRemark());
 
+        Map<String, Object> variables = runtimeService.getVariables(managementTask.getProcessInstanceId());
         //操作人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         // 完成新增数据事务提交之后,发送MQ消息
@@ -751,7 +762,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setInstanceId(managementTask.getProcessInstanceId());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
-//                    mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(managementTask.getBusinessKey());
                 mqDto.setApproveType(FsActionStatusEnum.FORWARDED.getCode());//转办
                 syncFsExternalInstance(mqDto);
@@ -782,6 +793,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
 
         String processInstanceId = managementTask.getProcessInstanceId();
+        Map<String, Object> variables = runtimeService.getVariables(processInstanceId);
         // 查询当前实例
         ProcessInstance processInstance = runtimeService.createProcessInstanceQuery().processInstanceId(processInstanceId).singleResult();
         if(null == processInstance || processInstance.isEnded()){
@@ -816,6 +828,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 删除本地流程任务数据
         removeByProcessInstanceId(processInstance.getProcessInstanceId());
 
+
         // 完成新增数据事务提交之后,发送MQ消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -827,7 +840,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
-                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
                 mqDto.setApproveType(ApproveTypeEnum.CANCEL.getStatus());//撤销
                 syncFsExternalInstance(mqDto);
@@ -1146,6 +1159,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             // 更新流程任务数据
             processTaskManagementService.updateTransfer(taskId, dto.getTargetUserId(),findUserDTO.getUserName(), managementTask.getCurApproveId(), dto.getRemark());
 
+            Map<String, Object> variables = runtimeService.getVariables(managementTask.getProcessInstanceId());
             //操作人
             LoginUser userInfo = UserContext.getDefaultLoginUser();
             // 完成新增数据事务提交之后,发送MQ消息
@@ -1159,7 +1173,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     mqDto.setInstanceId(managementTask.getProcessInstanceId());
 //                mqDto.setTaskId(managementTask.getTaskId());
                     mqDto.setOperator(userInfo.getUid());
-//                    mqDto.setVariablesMap(dto.getVariablesMap());
+                    mqDto.setVariablesMap(variables);
                     mqDto.setBusinessKey(managementTask.getBusinessKey());
                     mqDto.setApproveType(FsActionStatusEnum.FORWARDED.getCode());//转办
                     syncFsExternalInstance(mqDto);
@@ -1389,6 +1403,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_PASS_ERROR);
         }
+
+        Map<String, Object> variables = runtimeService.getVariables(entity.getProcessInstanceId());
+
         entity.setProcessStatus(ProcessStatusEnum.FINISH);
         entity.setOption(ProcessManagementOptionEnum.PASS.getCode());
         entity.setApproveStatus(ApproveStatusEnum.APPROVE);
@@ -1418,7 +1435,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setInstanceId(entity.getProcessInstanceId());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
-//                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(entity.getBusinessKey());
                 mqDto.setApproveType(FsActionStatusEnum.PROCESSED.getCode());
                 syncFsExternalInstance(mqDto);
@@ -1462,6 +1479,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (!ProcessStatusEnum.PAUSE.equals(entity.getProcessStatus()) && !ProcessStatusEnum.RUNNING.equals(entity.getProcessStatus())) {
             throw new ServiceException(ApiError.PROCESS_MANAGEMENT_REJECT_ERROR);
         }
+        Map<String, Object> variables = runtimeService.getVariables(entity.getProcessInstanceId());
+
         entity.setProcessStatus(ProcessStatusEnum.TERMINATION);
         entity.setOption(ProcessManagementOptionEnum.REJECT.getCode());
         entity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
@@ -1478,6 +1497,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             throw new ServiceException("强制驳回失败: " + e.getMessage(), e);
         }
 
+
         //操作人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         // 完成新增数据事务提交之后,发送MQ消息
@@ -1491,7 +1511,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setInstanceId(entity.getProcessInstanceId());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
-//                mqDto.setVariablesMap(dto.getVariablesMap());
+                mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(entity.getBusinessKey());
                 mqDto.setApproveType(FsActionStatusEnum.ROLLBACK.getCode());
                 syncFsExternalInstance(mqDto);

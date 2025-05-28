@@ -35,6 +35,8 @@ public class ExportWorkflowFeignController {
 
     @Resource
     private ApproveTaskInfoService approveTaskInfoService;
+    @Resource
+    private ApproveSyncRecordService approveSyncRecordService;
 
 
     @PostMapping("/processDefinition")
@@ -80,5 +82,10 @@ public class ExportWorkflowFeignController {
     @PostMapping("/exportApproveTaskInfo")
     public PagingVO<ApproveTaskInfoDTO.ListDTO> exportApproveTaskInfo(@RequestBody PagingDTO<ApproveTaskInfoDTO.PagingParamDTO> dto){
         return approveTaskInfoService.paging(dto);
+    }
+
+    @PostMapping("/exportApproveSyncRecord")
+    public PagingVO<ApproveSyncRecordDTO.ListDTO> exportApproveSyncRecord(@RequestBody PagingDTO<ApproveSyncRecordDTO.PagingParamDTO> dto){
+        return approveSyncRecordService.paging(dto);
     }
 }

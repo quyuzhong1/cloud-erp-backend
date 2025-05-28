@@ -420,13 +420,10 @@ public class CfgApproveSyncDTO implements Serializable {
         private String operator;
         //流程类型
         private String businessKey;
-
         //erp的操作动作（发起流程，审批通过，审批不通过，撤销）
         private String approveType;
-
         //飞书的流程状态
         private FSApprovalStatusEnum fSApprovalStatusEnum;
-
         /**
          * 流程参数map
          */

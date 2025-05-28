@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_CFG_PROCESS;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_CFG_PROCESS;
 
 /**
  * @description: 流程配置导出Handler
@@ -41,7 +41,7 @@ public class ExportWorkflowCfgProcessHandler extends AbstractPageFileEventHandle
 
     @Override
     public FileTaskEventEnum getEvent() {
-        return EXPORT_CFG_PROCESS;
+        return EXPORT_PROCESS_CFG_PROCESS;
     }
 
     @Override

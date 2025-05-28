@@ -7,18 +7,23 @@ package com.erp.server.workflow.handler;
  * @date: 2025/5/20 12:04
  */
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.DateTime;
 import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.FastDFSClientUtil;
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
+import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
 import com.erp.sdk.fs.service.FsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -49,7 +54,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     }
 
     @Override
-    public JSONArray assemble(JSONArray formArray, Map<String, Object> variablesMap,
+    public JSONArray assembleForm(JSONArray formArray, Map<String, Object> variablesMap,
                               List<CfgProcessFieldMapEntity> fieldMapList,
                               List<CfgProcessValueMapEntity> valueMapList) {
 
@@ -130,11 +135,12 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
                     // 获取第一个匹配的映射
                     CfgProcessFieldMapEntity amountEntity = null;
-                    CfgProcessFieldMapEntity fieldMap = fieldMapList.get(0);
+                    CfgProcessFieldMapEntity fieldMap = fieldMap= fieldMapList.get(0);
                     // 获取第一个匹配的映射
                     if (fieldMapList.size()>1){
                         fieldMapList.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex).reversed());
                         amountEntity= fieldMapList.get(1);
+                        fieldMap= fieldMapList.get(0);
                     }
 
                     String childSysField = fieldMap.getSysField();
@@ -169,14 +175,16 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                         detailItem.set("currency", childValue);
                         row.add(detailItem);
                     } else if ("department".equals(childType)) {
-                        //查询用户关系表->飞书id TODO未实现
+                        //查询用户关系表->飞书id TODO未实现,再次查询做值映射
                         JSONObject detailItem = new JSONObject();
                         detailItem.set("id", childId);
                         detailItem.set("type", childType);
-                        detailItem.set("value", Arrays.asList(childValue));
+                        JSONObject openId = new JSONObject();
+                        openId.set("open_id", childValue);
+                        detailItem.set("value", Arrays.asList(openId));
                         row.add(detailItem);
                     } else if ("contact".equals(childType)) {
-                        //查询部门关系表->飞书id
+                        //查询部门关系表->飞书id TODO未实现,再次查询做值映射
                         JSONObject detailItem = new JSONObject();
                         detailItem.set("id", childId);
                         detailItem.set("type", childType);
@@ -388,6 +396,231 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 .forEach(formField::remove);
     }
 
+
+    /**
+     * 解析整个表单 JSON，返回平铺的 ViewDTO 列表
+     */
+    public List<CfgProcessFieldMapDTO.ViewDTO> parseForm(String formString) {
+        JSONObject body = JSONUtil.parseObj(formString);
+        String formJson = body.getStr(FsRequestBodyAttributesEnum.FORM.getCode());
+        JSONArray fields = JSONUtil.parseArray(formJson);
+
+        List<CfgProcessFieldMapDTO.ViewDTO> result = new ArrayList<>();
+        for (JSONObject field : fields.jsonIter()) {
+            result.addAll(parseField(field, false, null));
+        }
+        return result;
+    }
+    /**
+     * 递归解析单个字段，isDetail=是否明细子项，parentId=父级 ID
+     * 如果是 FIELDLIST，会继续对子节点调用本方法。
+     * 如果是 AMOUNT，会产生额外的“币种”子项。
+     */
+    private List<CfgProcessFieldMapDTO.ViewDTO> parseField(
+            JSONObject field, boolean isDetail, String parentId
+    ) {
+        List<CfgProcessFieldMapDTO.ViewDTO> list = new ArrayList<>();
+
+        // 构造基础 DTO
+        CfgProcessFieldMapDTO.ViewDTO dto = buildBaseDTO(field, isDetail, parentId);
+
+        String type = dto.getThirdFieldType();
+        // 如果是明细列表（FIELDLIST），则递归解析其 children 并直接返回汇总列表
+        if (CfgQueryOptionFieldTypeEnum.FIELDLIST.getCode().equals(type)) {
+            JSONArray children = field.getJSONArray(FsRequestBodyAttributesEnum.CHILDREN.getCode());
+            for (JSONObject child : children.jsonIter()) {
+                list.addAll(parseField(child, true, dto.getThirdFieldId()));
+            }
+            return list;
+        }
+        // 非 FIELDLIST 的正常项先添加自身
+        list.add(dto);
+
+        // 如果是金额类型，再生成一个“币种”子项
+        if (CfgQueryOptionFieldTypeEnum.AMOUNT.getCode().equals(type)) {
+            list.add(createAmountField(dto));
+        }
+
+        return list;
+    }
+
+    /**
+     * 构造一个最基础的 ViewDTO（不包含“币种”那条）
+     */
+    private CfgProcessFieldMapDTO.ViewDTO buildBaseDTO(
+            JSONObject field, boolean isDetail, String parentId
+    ) {
+        CfgProcessFieldMapDTO.ViewDTO dto = new CfgProcessFieldMapDTO.ViewDTO();
+
+        // 设置前缀：单据头 or 单据明细
+        String prefix = isDetail ? "单据明细-" : "单据头-";
+        dto.setThirdField(prefix + field.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
+
+        dto.setThirdFieldType(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()));
+        dto.setThirdFieldRequired(field.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
+        dto.setThirdFieldId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
+        dto.setIsDetailField(isDetail);
+        dto.setParentId(parentId);
+        // 默认 index 可不设，或由调用方根据业务设定
+        return dto;
+    }
+
+    /**
+     * 由一个“金额”类型的 DTO 克隆并生产对应的“币种”子项
+     */
+    private CfgProcessFieldMapDTO.ViewDTO createAmountField(
+            CfgProcessFieldMapDTO.ViewDTO amountDto
+    ) {
+        CfgProcessFieldMapDTO.ViewDTO currencyDto = new CfgProcessFieldMapDTO.ViewDTO();
+        // 复制除了 type、prefix 之外的其它公共属性
+        BeanUtil.copyProperties(amountDto, currencyDto);
+
+        // 调整子项显示文案、类型、index、cfgType
+        currencyDto.setThirdField(amountDto.getThirdField() + "币种");
+        currencyDto.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
+        currencyDto.setIndex(0);              // 币种一般排前面
+        currencyDto.setCfgType("sysCfg");
+        return currencyDto;
+    }
+
+    /**
+     * 解析表单值，提取下拉选项和其他特定字段类型的值映射
+     *
+     * @param formString 表单JSON字符串
+     * @return 字段ID到值映射的Map
+     */
+    public Map<String, Map<String, String>> parseFormValue(String formString) {
+        JSONObject root = JSONUtil.parseObj(formString);
+        String formStringValue = root.getStr(FsRequestBodyAttributesEnum.FORM.getCode());
+        JSONArray formArray = JSONUtil.parseArray(formStringValue);
+
+        Map<String, Map<String, String>> parsedValues = new HashMap<>();
+
+        // 遍历表单字段
+        for (JSONObject field : formArray.jsonIter()) {
+            String fieldId = field.getStr(FsRequestBodyAttributesEnum.ID.getCode());
+            String type = field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode());
+
+            if (FsRequestBodyAttributesEnum.FIELDLIST.getCode().equals(type)) {
+                // 处理明细表字段
+                processDetailFields(field, parsedValues);
+            } else {
+                // 处理普通字段
+                processField(field, fieldId, type, parsedValues);
+            }
+        }
+
+        return parsedValues;
+    }
+
+    /**
+     * 处理普通字段
+     */
+    private static void processField(JSONObject field, String fieldId, String type, Map<String, Map<String, String>> parsedValues) {
+        // 处理金额类型
+        if (CfgQueryOptionFieldTypeEnum.AMOUNT.getCode().equals(type)) {
+            processAmountField(field, fieldId, parsedValues);
+            return;
+        }
+
+        // 处理包含选项的字段
+        if (field.containsKey(FsRequestBodyAttributesEnum.OPTION.getCode())) {
+            Object valueObj = field.get(FsRequestBodyAttributesEnum.OPTION.getCode());
+            if (valueObj instanceof JSONArray) {
+                processOptionArray((JSONArray) valueObj, fieldId, parsedValues);
+            } else if (valueObj != null && !field.get(FsRequestBodyAttributesEnum.TYPE.getCode()).equals(CfgQueryOptionFieldTypeEnum.DEPARTMENT.getCode())) {
+                // 处理单个值选项
+                Map<String, String> valueMap = new HashMap<>();
+                valueMap.put(FsRequestBodyAttributesEnum.VALUE.getCode(), valueObj.toString());
+                parsedValues.put(fieldId, valueMap);
+            }
+        }
+    }
+
+    /**
+     * 处理明细表字段
+     */
+    private static void processDetailFields(JSONObject field, Map<String, Map<String, String>> parsedValues) {
+        JSONArray detailFields = field.getJSONArray(FsRequestBodyAttributesEnum.CHILDREN.getCode());
+        if (detailFields == null) {
+            return;
+        }
+
+        for (JSONObject detail : detailFields.jsonIter()) {
+            String detailId = detail.getStr("id");
+            String detailType = detail.getStr(FsRequestBodyAttributesEnum.TYPE.getCode());
+
+            if (!detail.containsKey(FsRequestBodyAttributesEnum.OPTION.getCode())) {
+                continue;
+            }
+
+            // 处理明细表中的字段
+            processField(detail, detailId, detailType, parsedValues);
+        }
+    }
+
+    /**
+     * 处理金额类型字段
+     */
+    private static void processAmountField(JSONObject field, String fieldId, Map<String, Map<String, String>> parsedValues) {
+        Object obj = field.get(FsRequestBodyAttributesEnum.OPTION.getCode());
+        if (obj == null) {
+            return;
+        }
+
+        Map<String, String> valueMap = new HashMap<>();
+        JSONObject option = (JSONObject) obj;
+        JSONArray currencyRange = option.getJSONArray("currencyRange");
+
+        if (currencyRange != null) {
+            for (Object currency : currencyRange) {
+                valueMap.put(currency.toString(), currency.toString());
+            }
+            parsedValues.put(fieldId, valueMap);
+        }
+    }
+
+    /**
+     * 处理选项数组
+     */
+    private static void processOptionArray(JSONArray valueList, String fieldId, Map<String, Map<String, String>> parsedValues) {
+        if (valueList == null) {
+            return;
+        }
+
+        Map<String, String> valueMap = new HashMap<>();
+        for (JSONObject value : valueList.jsonIter()) {
+            String valueCode = value.getStr(FsRequestBodyAttributesEnum.VALUE.getCode());
+            String valueText = value.getStr(FsRequestBodyAttributesEnum.TEXT.getCode());
+            if (valueCode != null && valueText != null) {
+                valueMap.put(valueCode, valueText);
+            }
+        }
+
+        if (!valueMap.isEmpty()) {
+            parsedValues.put(fieldId, valueMap);
+        }
+    }
+
+    /**
+     * 处理单个选项对象
+     */
+    private static void processSingleOption(JSONObject option, String fieldId, Map<String, Map<String, String>> parsedValues) {
+        if (option == null) {
+            return;
+        }
+
+        String valueCode = option.getStr(FsRequestBodyAttributesEnum.VALUE.getCode());
+        String valueText = option.getStr(FsRequestBodyAttributesEnum.TEXT.getCode());
+
+        if (valueCode != null && valueText != null) {
+            Map<String, String> valueMap = new HashMap<>();
+            valueMap.put(valueCode, valueText);
+            parsedValues.put(fieldId, valueMap);
+        }
+    }
+
+
     @Override
     public boolean isMatch(String event) {
         return ProcessFormHandler.super.isMatch(event);
@@ -396,5 +629,17 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     @Override
     public CfgProcessRuleTypeEnum getEvent() {
         return CfgProcessRuleTypeEnum.FSPROCESS;
+    }
+
+
+    @Override
+    public Map<String, Object> constructBill(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
+
+        return Collections.emptyMap();
+    }
+
+    @Override
+    public DictBasicEnum getEventType() {
+        return DictBasicEnum.FSAPPROVE;
     }
 }

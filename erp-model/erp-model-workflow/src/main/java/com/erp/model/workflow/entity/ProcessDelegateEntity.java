@@ -31,7 +31,7 @@ public class ProcessDelegateEntity extends BaseEntity<ProcessDelegateEntity> {
     @TableField("code")
     private String code;
     /**
-    * 委托状态
+    * 委托状态,ProcessDelegateStatusEnum枚举
     */
     @TableField("status")
     private String status;
