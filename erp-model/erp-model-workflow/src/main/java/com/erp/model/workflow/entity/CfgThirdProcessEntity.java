@@ -60,7 +60,11 @@ public class CfgThirdProcessEntity extends BaseEntity<CfgThirdProcessEntity> {
     */
     @TableField("enable_time")
     private LocalDateTime enableTime;
-
+    /**
+     * 第三方审批定义code
+     */
+    @TableField("third_process_definition_code")
+    private String thirdProcessDefinitionCode;
 
     public static final String CODE = "code";
 
@@ -75,6 +79,8 @@ public class CfgThirdProcessEntity extends BaseEntity<CfgThirdProcessEntity> {
     public static final String ENABLE_STATUS = "enable_status";
 
     public static final String ENABLE_TIME = "enable_time";
+
+    public static final String THIRD_PROCESS_DEFINITION_CODE = "third_process_definition_code";
 
     @Override
     public Serializable pkVal() {
