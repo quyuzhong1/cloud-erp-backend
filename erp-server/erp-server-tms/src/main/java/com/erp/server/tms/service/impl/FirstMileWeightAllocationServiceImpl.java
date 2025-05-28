@@ -7,6 +7,7 @@ import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -183,7 +184,6 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         list.add(new FirstMileWeightAllocationDTO.TabDTO("already", "已分摊", already));
         return list;
     }
-
     /**
      * 更新费用分摊状态
      */
@@ -202,42 +202,48 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
         costAllocationList.sort(Comparator.comparing(FirstMileWeightAllocationDTO.CostAllocationDTO::getReportPeriod).reversed());
         FirstMileWeightAllocationDTO.CostAllocationDTO costAllocationDTO = costAllocationList.get(0);
         LocalDate reportPeriod = costAllocationDTO.getReportPeriod();
-        //获取日期最新的数据集合
-        List<FirstMileWeightAllocationDTO.CostAllocationDTO> list = costAllocationList.stream().filter(item -> item.getReportPeriod().equals(reportPeriod)).collect(Collectors.toList());
-        //按sku维度分组
-        Map<String, List<FirstMileWeightAllocationDTO.CostAllocationDTO>> map = list.stream().collect(Collectors.groupingBy(FirstMileWeightAllocationDTO.CostAllocationDTO::getSkuId));
+        if(Objects.nonNull(reportPeriod)){
+            String calculateMonth = reportPeriod.format(formatter);
 
-        if(costAllocationDTO.getCostAllocationStatus().equals("confirm") //最新费用分摊的核算状态first_mile_cost_allocation表的status值是confirm
-                && costAllocationDTO.getBillSourceType() != null && costAllocationDTO.getBillSourceType().equals("actual") //最新费用分摊的费用来源是实际账单first_mile_sku_cost_allocation表的bill_source_type值：actual
-        ){
-            //sku维度 最新费用分摊的费用的期末在途费用为0 first_mile_sku_cost_allocation_detail表的end_period_transit_cost：0
-            for (Map.Entry<String, List<FirstMileWeightAllocationDTO.CostAllocationDTO>> entry : map.entrySet()) {
-                String skuId = entry.getKey();
-                List<FirstMileWeightAllocationDTO.CostAllocationDTO> value = entry.getValue();
-                //判断是否所有记录都等于0 ，
-                boolean allMatch = value.stream().allMatch(item -> item.getEndPeriodTransitCost().compareTo(BigDecimal.ZERO) == 0);
-                if(Boolean.TRUE.equals(allMatch)){
-                    this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.ALREADY.getCode())
-                            .set(FirstMileWeightAllocationEntity::getCalculateMonth, costAllocationDTO.getReportPeriod().format(formatter))
-                            .eq(FirstMileWeightAllocationEntity::getSkuId,skuId)
-                            .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
-                            .update();
-                }else {
-                    this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode())
-                            .set(FirstMileWeightAllocationEntity::getCalculateMonth, costAllocationDTO.getReportPeriod().format(formatter))
-                            .eq(FirstMileWeightAllocationEntity::getSkuId,skuId)
-                            .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
-                            .update();
-                }
+            //获取日期最新的数据集合
+            List<FirstMileWeightAllocationDTO.CostAllocationDTO> list = costAllocationList.stream().filter(item -> item.getReportPeriod().equals(reportPeriod)).collect(Collectors.toList());
+            //按sku维度分组
+            Map<String, List<FirstMileWeightAllocationDTO.CostAllocationDTO>> groupedBySku = list.stream().collect(Collectors.groupingBy(FirstMileWeightAllocationDTO.CostAllocationDTO::getSkuId));
+
+            // 核对主判断条件
+            //最新费用分摊的核算状态first_mile_cost_allocation表的status值是confirm
+            boolean isConfirm = "confirm".equals(costAllocationDTO.getCostAllocationStatus());
+            //最新费用分摊的费用来源是实际账单first_mile_sku_cost_allocation表的bill_source_type值：actual
+            boolean isActualSource = "actual".equals(Optional.ofNullable(costAllocationDTO.getBillSourceType()).orElse(""));
+
+            if(isConfirm && isActualSource){
+                //sku维度 最新费用分摊的费用的期末在途费用为0 first_mile_sku_cost_allocation_detail表的end_period_transit_cost：0
+                groupedBySku.forEach((skuId, items) -> {
+                    boolean allMatch = items.stream()
+                            .allMatch(item -> BigDecimal.ZERO.compareTo(item.getEndPeriodTransitCost()) == 0);
+
+                    LambdaUpdateChainWrapper<FirstMileWeightAllocationEntity> updateWrapper = this.lambdaUpdate()
+                            .set(FirstMileWeightAllocationEntity::getCalculateMonth, calculateMonth)
+                            .eq(FirstMileWeightAllocationEntity::getSkuId, skuId)
+                            .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId);
+
+                    if (allMatch) {
+                        updateWrapper.set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.ALREADY.getCode());
+                    } else {
+                        updateWrapper.set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode());
+                    }
+                    updateWrapper.update();
+                });
+            }else{
+                this.lambdaUpdate()
+                        .set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode())
+                        .set(FirstMileWeightAllocationEntity::getCalculateMonth, costAllocationDTO.getReportPeriod().format(formatter))
+                        .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
+                        .update();
             }
-        }else{
-            this.lambdaUpdate()
-                    .set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode())
-                    .set(FirstMileWeightAllocationEntity::getCalculateMonth, costAllocationDTO.getReportPeriod().format(formatter))
-                    .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
-                    .update();
         }
     }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
