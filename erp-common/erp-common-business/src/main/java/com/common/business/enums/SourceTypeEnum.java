@@ -10,11 +10,6 @@ import java.util.Objects;
 
 @NoArgsConstructor
 public enum SourceTypeEnum {
-    SELF_ADD("selfAdd", "手动新增",""),
-    AUTO_ADD("autoAdd", "自动新增",""),
-
-
-
     //SCM
     PURCHASE_ORDER("purchaseOrder", "采购订单","purchase_order"),
     PURCHASE_APPLICATION("purchaseApplication", "采购申请单","purchase_application"),
@@ -251,6 +246,9 @@ public enum SourceTypeEnum {
 
     //售后申请
     AFTER_SALE("afterSale", "售后申请","after_sale"),
+
+    SELF_ADD("selfAdd", "手动新增",""),
+    AUTO_ADD("autoAdd", "自动新增",""),
     ;
 
     /**

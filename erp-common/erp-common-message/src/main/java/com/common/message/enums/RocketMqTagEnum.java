@@ -606,6 +606,14 @@ public enum RocketMqTagEnum {
     WORKFLOW_SYNC_FS_INSTANCE_TAG(12001, RocketMqTagEnum.SYNC_WORKFLOW, "workflow_sync_fs_instance_tag"),
 
 
+
+    //-----------------------------sys 从13001开始------------------------------------------------------------------
+    /**
+     * sys 三方通知推送记录
+     */
+    SYS_SEND_THIRD_NOTICE_TAG(13001, RocketMqTagEnum.SYNC_WORKFLOW, "sys_send_third_notice_tag"),
+
+
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
