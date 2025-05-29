@@ -234,6 +234,21 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                     }
                     updateWrapper.update();
                 });
+            }else {
+                //sku维度 费用重量分摊存在则更新为部分分摊
+                 this.lambdaUpdate().set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode())
+                        .set(FirstMileWeightAllocationEntity::getCalculateMonth, calculateMonth)
+                        .in(FirstMileWeightAllocationEntity::getSkuId, groupedBySku.keySet())
+                        .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
+                        .update();
+
+                //sku维度 费用重量分摊不存在则更新为未分摊
+                this.lambdaUpdate()
+                        .set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.NOT.getCode())
+                        .set(FirstMileWeightAllocationEntity::getCalculateMonth, calculateMonth)
+                        .notIn(FirstMileWeightAllocationEntity::getSkuId, groupedBySku.keySet())
+                        .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
+                        .update();
             }
         }
     }
