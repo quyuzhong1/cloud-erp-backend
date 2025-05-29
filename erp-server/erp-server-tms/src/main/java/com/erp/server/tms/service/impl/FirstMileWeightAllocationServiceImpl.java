@@ -234,6 +234,14 @@ public class FirstMileWeightAllocationServiceImpl extends SuperServiceImpl<First
                     }
                     updateWrapper.update();
                 });
+
+                //重量分摊里有的SKU，在最新的费用分摊里没有，那直接更新为已分摊
+                this.lambdaUpdate()
+                        .set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.ALREADY.getCode())
+                        .set(FirstMileWeightAllocationEntity::getCalculateMonth, costAllocationDTO.getReportPeriod().format(formatter))
+                        .eq(FirstMileWeightAllocationEntity::getLogisticsBillId, logisticsBillId)
+                        .notIn(FirstMileWeightAllocationEntity::getSkuId, groupedBySku.keySet())
+                        .update();
             }else{
                 this.lambdaUpdate()
                         .set(FirstMileWeightAllocationEntity::getCostAllocationStatus, CostAllocationStatusEnum.PART.getCode())
