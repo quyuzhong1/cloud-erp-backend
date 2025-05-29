@@ -106,17 +106,19 @@ public class SdyDataSyncJob {
             if (StringUtils.isNotBlank(queryParamsStr)) {
                 List<QueryParam> queryParams = JSONUtil.toList(queryParamsStr, QueryParam.class);
                 QueryWrapper<SoOutstockEntity> queryWrapper = (QueryWrapper<SoOutstockEntity>) QueryParam.getQueryWrapper(queryParams);
-                Page<SoOutstockEntity> page = soOutstockService.page(new Page<>(currentPage, pageSize), queryWrapper);
+                Page<SoOutstockEntity> page = soOutstockService.page(new Page<>(currentPage + 1, pageSize), queryWrapper);
                 list = page.getRecords();
             } else {
                 list = soOutstockService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
             }
             if (CollUtil.isEmpty(list)) {
+                XxlJobHelper.log("===========当前页数：" + currentPage + "， 结果为空结束时间：" + LocalDateTime.now());
                 return;
             }
 
             List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
             if (CollUtil.isEmpty(ids)) {
+                XxlJobHelper.log("===========当前页数：" + currentPage + "， 结果为空结束时间：" + LocalDateTime.now());
                 return;
             }
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
@@ -220,7 +222,7 @@ public class SdyDataSyncJob {
                 );
             }
             currentPage++;
-            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "处理数量："+ list.size() +" 结束时间：" + LocalDateTime.now());
         }
     }
 
@@ -248,12 +250,13 @@ public class SdyDataSyncJob {
             if (StringUtils.isNotBlank(queryParamsStr)) {
                 List<QueryParam> queryParams = JSONUtil.toList(queryParamsStr, QueryParam.class);
                 QueryWrapper<SoReturnInstockEntity> queryWrapper = (QueryWrapper<SoReturnInstockEntity>) QueryParam.getQueryWrapper(queryParams);
-                Page<SoReturnInstockEntity> page = soReturnInstockService.page(new Page<>(currentPage, pageSize), queryWrapper);
+                Page<SoReturnInstockEntity> page = soReturnInstockService.page(new Page<>(currentPage + 1, pageSize), queryWrapper);
                 list = page.getRecords();
             } else {
                 list = soReturnInstockService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
             }
             if (CollUtil.isEmpty(list)) {
+                XxlJobHelper.log("===========当前页数：" + currentPage + "， 结果为空结束时间：" + LocalDateTime.now());
                 return;
             }
 
@@ -414,7 +417,7 @@ public class SdyDataSyncJob {
                 );
             }
             currentPage++;
-            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "处理数量："+ list.size() +" 结束时间：" + LocalDateTime.now());
         }
 
     }
