@@ -25,15 +25,22 @@
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         pd.id,
-        pd.create_user_id,
-        pd.create_user_name,
-        pd.create_time,
-        pd.update_user_id,
-        pd.update_user_name,
-        pd.update_time,
+        pd.create_user_id as createUserId,
+        pd.create_user_name as createUserName,
+        pd.create_time as createTime,
+        pd.update_user_id as updateUserId,
+        pd.update_user_name as updateUserName,
+        pd.update_time as updateTime,
         pd.version,
-        pd.is_deleted,
-        pd.code, pd.status, pd.business_key, pd.start_user_id, pd.delegate_user_id, pd.effective_time, pd.expire_time, pd.closed_time
+        pd.is_deleted as isDeleted,
+        pd.code,
+        pd.status,
+        pd.business_key as businessKey,
+        pd.start_user_id as startUserId,
+        pd.delegate_user_id as delegateUserId ,
+        pd.effective_time as effectiveTime,
+        pd.expire_time as expireTime,
+        pd.closed_time as closedTime
     </sql>
 
     <!-- 查询tab列表 -->

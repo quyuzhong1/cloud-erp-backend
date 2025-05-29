@@ -8,6 +8,7 @@ import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -25,12 +26,12 @@ import java.io.Serializable;
 public class ApproveTaskInfoEntity extends BaseEntity<ApproveTaskInfoEntity> {
 
     /**
-    * 流程来源
+    * 流程来源,CfgProcessRuleTypeEnum
     */
     @TableField("source_platform")
     private String sourcePlatform;
     /**
-    * 类型
+    * 类型,ApproveTaskTypeEnum
     */
     @TableField("type")
     private String type;
@@ -64,7 +65,7 @@ public class ApproveTaskInfoEntity extends BaseEntity<ApproveTaskInfoEntity> {
      * 发生时间
      */
     @TableField("happen_time")
-    private String happenTime;
+    private LocalDateTime happenTime;
 
     /**
      * 执行状态，ApproveTaskStatusEnum枚举

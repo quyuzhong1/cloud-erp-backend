@@ -118,7 +118,6 @@ public class ApproveTaskInfoController extends BaseController {
      */
     @PostMapping("/afreshGenerate")
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "第三方生成查询重新生成")
-    @WebAdvanceQuery(handler = ApproveTaskInfoQueryHandler.class)
     public ApiResult<List<BatchResultDTO>> afreshGenerate(@RequestBody @Validated ApproveTaskInfoDTO.AfreshGenerateTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
