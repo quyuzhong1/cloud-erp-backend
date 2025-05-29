@@ -1350,6 +1350,8 @@ public class SoB2cDTO implements Serializable {
     @AllArgsConstructor
     public static class RuleResultDTO{
 
+        private String name;
+
         private Boolean isRuleMatch;
 
         /**

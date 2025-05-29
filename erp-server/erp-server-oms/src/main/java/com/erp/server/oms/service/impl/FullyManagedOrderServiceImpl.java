@@ -19,8 +19,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
@@ -302,7 +300,7 @@ public class FullyManagedOrderServiceImpl extends SuperServiceImpl<SoB2cMapper, 
                             SoB2cEntity entity = soB2cService.getById(soB2cEntity.getId());
                             if ((Objects.nonNull(logisticsRuleResult.getAutoGetTrackNo()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNo()))
                                     || (Boolean.FALSE.equals(entity.getIsOutOfRangeDelivery()) && Objects.nonNull(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()))) {
-                                soB2cRuleService.handleAutoSubmitDelivery(soB2cEntity.getId());
+                                soB2cRuleService.handleAutoSubmitDelivery(soB2cEntity.getId(), logisticsRuleResult.getName());
                             }
                         }
                     }
