@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
@@ -97,7 +98,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             processDefinitionEntity.setId(entity.getId());
             processDefinitionEntity.setIsDeploy(Boolean.FALSE);
             // 更新 processDefinitionEntity
-            if (!updateById(processDefinitionEntity)) {
+            if (!this.update(processDefinitionEntity,getUpdateWrapper(processDefinitionEntity.getId(),entity.getProcessVersion()))) {
                 throw new ServiceException(ApiError.UPDATE_PROCESS_ERROR);
             }
         }
@@ -154,7 +155,8 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         ApplicationContextUtils.getBean(ProcessDefinitionServiceImpl.class).deleteIsDeployById(dto.getProcessDefinitionId());
         // 保存部署时间和部署id 部署状态
         ProcessDefinitionEntity update = new ProcessDefinitionEntity(dto, deploy.getId(), deploy.getDeploymentTime(),entity.getVersion());
-        ApplicationContextUtils.getBean(ProcessDefinitionServiceImpl.class).updateById(update);
+        ApplicationContextUtils.getBean(ProcessDefinitionServiceImpl.class).update(update,getUpdateWrapper(update.getId(),update.getProcessVersion()
+        ));
         return new ProcessDTO.DeployResultDTO(definitionEntity, entity.getVersion());
     }
 
@@ -175,7 +177,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     @Override
     public ProcessDefinitionDTO.CopyResultDTO copy(ProcessDefinitionDTO.CopyDTO dto) {
         // 查询数据是否存在
-        ProcessDefinitionEntity entity = getById(dto.getId());
+        ProcessDefinitionEntity entity = getProcessVersionEntity(dto.getId(),dto.getProcessVersion());
         if(null == entity){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
@@ -274,7 +276,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         }
 
         entity.setDisabled(disableDTO.getDisabled());
-        this.updateById(entity);
+        this.update(entity,getUpdateWrapper(entity.getId(),entity.getProcessVersion()));
         return BatchResultDTO.success(entity.getId(), entity.getProcessName(), OperationTypeEnum.DISABLED);
     }
 
@@ -344,5 +346,21 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     @Override
     public ProcessDefinitionEntity getIsDeployEntityById(String id) {
         return lambdaQuery().eq(ProcessDefinitionEntity::getId,id).eq(ProcessDefinitionEntity::getIsDeploy,Boolean.TRUE).last("limit 1").one();
+    }
+
+
+    /**
+     * 获取更新唯一字段
+     * @author will
+     * @date 2025/5/29 11:26
+     * @param id
+     * @param processVersion
+     * @return UpdateWrapper<ProcessDefinitionEntity>
+     */
+    private UpdateWrapper<ProcessDefinitionEntity> getUpdateWrapper (String id,Integer processVersion) {
+        UpdateWrapper<ProcessDefinitionEntity> wrapper = new UpdateWrapper<>();
+        wrapper.eq("id", id)
+                .eq("process_version", processVersion);
+        return  wrapper;
     }
 }

@@ -334,6 +334,12 @@ public class RocketMqConsumerGroup {
      */
     public static final String WORKFLOW_SYNC_FS_INSTANCE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_sync_fs_instance_consumer";
 
+
+    /**
+     *
+     */
+    public static final String SYS_SEND_THIRD_NOTICE_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-sys_send_third_notice_consumer";
+
     /**
      *
      */

@@ -1,5 +1,6 @@
 package com.erp.model.workflow.dto;
 
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -98,7 +99,10 @@ public class ApproveTaskDetailDTO implements Serializable {
         */
         private String sysFieldValue;
 
-
+        /**
+         * 字段信息
+         */
+        private CfgQueryOptionEntity cfgQueryOptionEntity;
     }
 
     /**
