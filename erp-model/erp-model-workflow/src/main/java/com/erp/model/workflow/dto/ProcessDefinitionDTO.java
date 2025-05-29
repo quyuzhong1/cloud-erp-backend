@@ -157,6 +157,11 @@ public class ProcessDefinitionDTO {
         private String processName;
 
         /**
+         * 流程版本
+         */
+        private Integer processVersion;
+
+        /**
          * 流程状态
          */
         private List<String> approveStatus;
@@ -311,6 +316,11 @@ public class ProcessDefinitionDTO {
         @NotNull(message = "流程定义ID不能为空")
         @NotEmpty(message = "流程定义ID不能为空")
         private String id;
+
+        /**
+         * 版本
+         */
+        private Integer processVersion;
     }
 
 
