@@ -116,7 +116,6 @@ public class CfgRuleInvoiceDTO implements Serializable {
         /**
         * 描述
         */
-        @NotBlank(message = "描述不能为空")
         @Size(max = 255,message = "描述最大长度不能超过255位")
         private String remark;
 

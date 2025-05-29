@@ -1,11 +1,15 @@
 package com.erp.server.oms.service;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CfgRuleInvoiceEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgRuleInvoiceDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,4 +50,8 @@ public interface CfgRuleInvoiceService extends SuperService<CfgRuleInvoiceEntity
     BatchResultDTO delete(CfgRuleInvoiceEntity entity);
 
     CfgInvoiceSettingDTO.RuleMatchDTO getRuleInvoiceMatchResult(Map<String, Object> map);
+
+    Map<String, Boolean> invoiceCfgRule(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailList, Map<String, Object> map);
+
+    SoB2cDTO.InvoiceResult invoiceRule(SoB2cEntity soB2cEntity);
 }

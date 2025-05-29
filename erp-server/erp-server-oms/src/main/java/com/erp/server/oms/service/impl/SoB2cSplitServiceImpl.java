@@ -117,6 +117,9 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     @Resource
     private SoPriceService soPriceService;
 
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
+
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
         List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listContainDeleted(ids);
@@ -739,7 +742,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                     if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                             || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                        soB2cService.getLogisticsCode(entity.getId(),  Boolean.TRUE);
+                        soB2cRuleService.handleAutoSubmitDelivery(entity.getId());
                     }
 
                 }

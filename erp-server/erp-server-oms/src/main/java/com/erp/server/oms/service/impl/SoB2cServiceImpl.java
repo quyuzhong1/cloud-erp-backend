@@ -394,6 +394,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private SoPriceService soPriceService;
 
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(getPermissionSql());
@@ -7172,7 +7175,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+                    soB2cRuleService.handleAutoSubmitDelivery(id);
                 }
             }
         }
@@ -10170,39 +10173,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     }
 
     @Override
-    public SoB2cDTO.RuleResultDTO invoiceRule(SoB2cEntity soB2cEntity) {
-        Map<String, Object> map = new HashMap<>();
-        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(soB2cEntity.getId());
-        //自动匹配开票规则
-        Map<String, Boolean> invoiceCfgRule = soB2cService.invoiceCfgRule(soB2cEntity, detailList, map);
-        SoB2cDTO.RuleResultDTO ruleResult = new SoB2cDTO.RuleResultDTO();
-        ruleResult.setId(soB2cEntity.getId());
-        ruleResult.setIsRuleMatch(invoiceCfgRule.getOrDefault("isMatch", Boolean.FALSE));
-        ruleResult.setIsPass(invoiceCfgRule.getOrDefault("isPass", Boolean.FALSE));
-        ruleResult.setMap(map);
-        ruleResult.setSoB2cDetailList(detailList);
-        return ruleResult;
-    }
-
-    private Map<String, Boolean> invoiceCfgRule(SoB2cEntity entity, List<SoB2cDetailEntity> detailList, Map<String, Object> map) {
-        Map<String, Boolean> resultMap = new HashMap<>();
-        isExist(entity);
-        if (map.isEmpty()) {
-            //匹配审核规则
-            handleMatchJson(entity.getId(), detailList, map);
-        }
-        CfgInvoiceSettingDTO.RuleMatchDTO ruleOrderMatchResult = cfgRuleInvoiceService.getRuleInvoiceMatchResult(map);
-        //审核规则是否通过
-        Boolean approveSuccess = ruleOrderMatchResult.getApproveSuccess();
-        Boolean isMatch = Boolean.FALSE;
-        Boolean isPass = Boolean.FALSE;
-        resultMap.put("isMatch", isMatch);
-        resultMap.put("isPass", isPass);
-        return resultMap;
-    }
-
-
-    @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity) {
@@ -10652,7 +10622,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 }
                                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                                    soB2cService.getLogisticsCode(soB2cEntity.getId(),  Boolean.TRUE);
+                                    soB2cRuleService.handleAutoSubmitDelivery(soB2cEntity.getId());
                                 }
                             }
                         }

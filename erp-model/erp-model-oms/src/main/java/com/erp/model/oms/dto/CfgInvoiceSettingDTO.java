@@ -390,26 +390,7 @@ public class CfgInvoiceSettingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class RuleMatchDTO {
-
-        /**
-         * 流转状态
-         */
-        private String flowStatus;
-
-        /**
-         * 分类明细id list
-         */
-        private  List<String> categoryDetailIdList;
-
-        /**
-         * 通过结果
-         */
-        private Boolean approveSuccess;
-
-        /**
-         * 规则名称
-         */
-        private String ruleName;
-
+        //是否匹配
+        Boolean isPass = Boolean.FALSE;
     }
 }

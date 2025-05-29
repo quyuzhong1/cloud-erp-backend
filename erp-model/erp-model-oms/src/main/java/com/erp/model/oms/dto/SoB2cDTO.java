@@ -1378,6 +1378,20 @@ public class SoB2cDTO implements Serializable {
         private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InvoiceResult{
+        /**
+         * 销售订单信息
+         */
+        private SoB2cEntity soB2cEntity;
+        /**
+         * 是否通过
+         */
+        private Boolean isPass;
+    }
     /**
      * 修改
      */
