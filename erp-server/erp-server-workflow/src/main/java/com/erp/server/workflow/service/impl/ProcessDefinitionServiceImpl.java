@@ -155,7 +155,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         ApplicationContextUtils.getBean(ProcessDefinitionServiceImpl.class).deleteIsDeployById(dto.getProcessDefinitionId());
         // 保存部署时间和部署id 部署状态
         ProcessDefinitionEntity update = new ProcessDefinitionEntity(dto, deploy.getId(), deploy.getDeploymentTime(),entity.getVersion());
-        ApplicationContextUtils.getBean(ProcessDefinitionServiceImpl.class).update(update,getUpdateWrapper(update.getId(),update.getProcessVersion()
+        ApplicationContextUtils.getBean(ProcessDefinitionServiceImpl.class).update(update,getUpdateWrapper(update.getId(),dto.getProcessVersion()
         ));
         return new ProcessDTO.DeployResultDTO(definitionEntity, entity.getVersion());
     }
@@ -326,12 +326,17 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     @Override
     public Boolean changeProcess(ProcessDefinitionDTO.ProcessChangeDTO dto) {
         // 查询数据是否存在
-        ProcessDefinitionEntity entity = getProcessVersionEntity(dto.getId(),dto.getProcessVersion());
-        if(ObjUtil.isEmpty(entity)){
+        List<ProcessDefinitionEntity> list = listByIds(Collections.singletonList(dto.getId()));
+        if(CollUtil.isEmpty(list)){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
-        if (!entity.getIsDeploy()) {
+        ProcessDefinitionEntity oldEntity = list.stream().filter(obj -> obj.getProcessVersion().equals(dto.getProcessVersion())).findFirst().orElse(null);
+        if (!oldEntity.getIsDeploy()) {
             throw new ServiceException(ApiError.PROCESS_DEFINITION_CHANGE_ERROR);
+        }
+        long count = list.stream().filter(obj -> !obj.getIsDeploy()).count();
+        if (count > MathUtil.ZERO) {
+            throw new ServiceException(ApiError.PROCESS_DEFINITION_CHANGE_EXIST_NOT_DEPLOY);
         }
         // 实体转换
         ProcessDefinitionEntity processDefinitionEntity = new ProcessDefinitionEntity(dto);
