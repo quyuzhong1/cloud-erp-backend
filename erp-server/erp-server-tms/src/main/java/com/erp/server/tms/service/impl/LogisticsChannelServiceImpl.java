@@ -19,6 +19,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.*;
@@ -26,8 +27,11 @@ import com.erp.model.tms.enums.DeliveryTypeEnum;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
 import com.erp.model.tms.enums.PaperSizeEnum;
 import com.erp.model.tms.enums.UnDeliverableDecisionEnum;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsWarehouseFeign;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.mapper.LogisticsChannelMapper;
@@ -94,6 +98,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     private TmsCarrierService tmsCarrierService;
     @Resource
     private LogisticsChannelRemotePostcodeService logisticsChannelRemotePostcodeService;
+
+    @Resource
+    private WmsOverseasWarehouseFeign overseasWarehouseFeign;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -832,21 +839,45 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
 
     @Override
     public List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel() {
-        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS = baseMapper.listWarehouseChannel();
+        //查询所有有匹配系统仓库的海外仓
+        List<OverseasProviderEntity> overseasProviderEntityList = FeignQuery.create(OverseasProviderEntity.class).eq(OverseasProviderEntity::getAuthStatus, AuthStatusEnum.ALREADY.getCode()).list();
+        if(CollectionUtils.isEmpty(overseasProviderEntityList)){
+            return new ArrayList<>();
+        }
+        List<String> authIds = overseasProviderEntityList.stream().map(OverseasProviderEntity::getId).distinct().collect(Collectors.toList());
+        List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList = FeignQuery.create(OverseasProviderWarehouseEntity.class)
+                .in(OverseasProviderWarehouseEntity::getMainId, authIds)
+                .ne(OverseasProviderWarehouseEntity::getWarehouseId, "")
+                .eq(OverseasProviderWarehouseEntity::getDisabled, Boolean.FALSE)
+                .list();
+        if(CollectionUtils.isEmpty(overseasProviderWarehouseEntityList)){
+            return new ArrayList<>();
+        }
+        List<String> overseasWarehouseIds = overseasProviderWarehouseEntityList.stream()
+                .map(OverseasProviderWarehouseEntity::getId)
+                .distinct()
+                .collect(Collectors.toList());
+        //查询物流渠道
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS = baseMapper.listWarehouseChannel(overseasWarehouseIds);
         if (CollectionUtils.isEmpty(warehouseChannelDTOS)) {
             return Collections.emptyList();
         }
-        List<String> warehouseIdList = warehouseChannelDTOS.stream()
-                .map(LogisticsChannelDTO.WarehouseChannelDTO::getWarehouseId)
+        List<String> warehouseIdList = overseasProviderWarehouseEntityList.stream()
+                .map(OverseasProviderWarehouseEntity::getWarehouseId)
                 .distinct()
                 .collect(Collectors.toList());
         List<WarehouseEntity> warehouseEntities = FeignQuery.getByIds(WarehouseEntity.class,warehouseIdList);
         Map<String, String> warehouseMap = warehouseEntities.stream()
                 .collect(Collectors.toMap(WarehouseEntity::getId, WarehouseEntity::getName, (oldValue, newValue) -> oldValue));
         warehouseChannelDTOS = warehouseChannelDTOS.stream().filter(v->{
-            if (StringUtils.isBlank(v.getWarehouseId())){
+            OverseasProviderWarehouseEntity overseasProviderWarehouseEntity = overseasProviderWarehouseEntityList.stream()
+                    .filter(e -> e.getId().equals(v.getOverseasWarehouseId()))
+                    .findFirst()
+                    .orElse(null);
+            if(Objects.isNull(overseasProviderWarehouseEntity)){
                 return false;
             }
+            v.setWarehouseId(overseasProviderWarehouseEntity.getWarehouseId());
             String warehouseName = warehouseMap.get(v.getWarehouseId());
             if (StringUtils.isBlank(warehouseName)){
                 return false;

@@ -86,6 +86,9 @@ public class SoB2cController extends BaseController {
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private WorkflowFeign workflowFeign;
+
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
     /**
      * 获取状态统计
      *
@@ -180,7 +183,7 @@ public class SoB2cController extends BaseController {
                 Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+                    soB2cRuleService.handleAutoSubmitDelivery(id);
                 }
             }
         }
@@ -391,7 +394,7 @@ public class SoB2cController extends BaseController {
             Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
             if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                     || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+                soB2cRuleService.handleAutoSubmitDelivery(id);
             }
         }
 

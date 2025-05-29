@@ -85,6 +85,10 @@ public class FullyManagedOrderController extends BaseController {
     private WorkflowFeign workflowFeign;
     @Resource
     private FullyManagedOrderService fullyManagedOrderService;
+
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
+
     /**
      * 获取状态统计
      *
@@ -141,7 +145,7 @@ public class FullyManagedOrderController extends BaseController {
                 SoB2cEntity entity = soB2cService.getById(id);
                 if ((Objects.nonNull(logisticsRuleResult.getAutoGetTrackNo()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNo()))
                         || (Boolean.FALSE.equals(entity.getIsOutOfRangeDelivery()) && Objects.nonNull(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()))) {
-                    soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+                    soB2cRuleService.handleAutoSubmitDelivery(id);
                 }
             }
         }
@@ -276,7 +280,7 @@ public class FullyManagedOrderController extends BaseController {
             Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
             if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                     || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+                soB2cRuleService.handleAutoSubmitDelivery(id);
             }
         }
 

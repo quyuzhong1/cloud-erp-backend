@@ -35,11 +35,11 @@
        <result column="delivery_type" property="deliveryType" />
     </resultMap>
     <resultMap id="warehouseChannelMap" type="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO">
-        <id  property="warehouseId" column="warehouse_id"/>
+        <id  property="overseasWarehouseId" column="overseas_warehouse_id"/>
 
         <!-- 嵌套 Compare 列表 -->
         <collection property="channelDTOList" ofType="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO$ChannelDTO">
-            <result property="platformLogisticsChannelId" column="logistics_channel_id"/>
+            <result property="platformLogisticsChannelId" column="id"/>
             <result property="platformLogisticsChannelName" column="name"/>
         </collection>
     </resultMap>
@@ -332,13 +332,13 @@
     </select>
     <select id="listWarehouseChannel"
             resultMap="warehouseChannelMap">
-        SELECT  lcw.warehouse_id,
-                lcw.logistics_channel_id,
-                lc."name"
+        SELECT   lcw.overseas_warehouse_id,lc.id,lc.name
         from logistics_channel lc
-                 inner join logistics_channel_warehouse lcw on lc.id = lcw.logistics_channel_id
+                 inner join logistics_supplier ls on ls.id = lc.main_id
+                 inner join logistics_warehouse lcw on ls.id = lcw.main_id
         where lc.is_deleted = false and lcw.is_deleted = false
-          and lcw.warehouse_id != ''
+          and ls.is_deleted = false and lc.disabled = false
+        order by lcw.overseas_warehouse_id
 
     </select>
 
