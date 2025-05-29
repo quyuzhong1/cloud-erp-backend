@@ -8,7 +8,7 @@ import com.common.business.enums.OrderTypeEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
-import com.erp.model.oms.enums.ReturnTypeEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import io.seata.common.util.StringUtils;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
