@@ -1,9 +1,8 @@
 package com.erp.server.workflow.service;
-import com.erp.model.workflow.dto.CfgQueryOptionDTO;
-import com.erp.model.workflow.dto.ProcessDefinitionDTO;
-import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 
 import java.util.List;
 
@@ -32,4 +31,14 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey);
 
     List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey);
+
+    /**
+     * 根据单据和字段查询
+     * @author will
+     * @date 2025/5/29 10:36
+     * @param bussinessKey
+     * @param sysFieldList
+     * @return List<CfgQueryOptionEntity>
+     */
+    List<CfgQueryOptionEntity> listBySysFieldList(String bussinessKey,List<String> sysFieldList);
 }

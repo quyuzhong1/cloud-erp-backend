@@ -23,6 +23,7 @@ import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.entity.ApproveTaskDetailEntity;
 import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.ApproveTaskStatusEnum;
 import com.erp.model.workflow.enums.ApproveTaskTypeEnum;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
@@ -31,9 +32,11 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ApproveTaskInfoMapper;
 import com.erp.server.workflow.service.ApproveTaskDetailService;
 import com.erp.server.workflow.service.ApproveTaskInfoService;
+import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.erp.server.workflow.service.OperateLogService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,6 +66,8 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
 
     @Resource
     private ApproveTaskDetailService approveTaskDetailService;
+    @Autowired
+    private CfgQueryOptionService cfgQueryOptionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -159,13 +164,21 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_DETAIL_NOT_EXIST);
         }
         List<ApproveTaskDetailDTO.ViewDTO> viewDetailList = BeanUtil.copyToList(approveTaskDetailList, ApproveTaskDetailDTO.ViewDTO.class);
+
+        List<String> sysFieldList = approveTaskDetailList.stream().map(ApproveTaskDetailEntity::getSysField).distinct().collect(Collectors.toList());
+        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionService.listBySysFieldList(entity.getBussinessKey(), sysFieldList);
+        Map<String, CfgQueryOptionEntity> cfgQueryOptionMap = CollUtil.isEmpty(cfgQueryOptionList) ? new HashMap<>() : cfgQueryOptionList.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, Function.identity()));
+
         for (ApproveTaskDetailDTO.ViewDTO detailDTO : viewDetailList) {
             //第三方类型名称
             detailDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getThirdFieldType()));
             //数大臣类型名称
             detailDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getSysFieldType()));
+            //数大臣单据字段信息
+            detailDTO.setCfgQueryOptionEntity(cfgQueryOptionMap.get(detailDTO.getSysField()));
         }
         viewDTO.setDetailList(viewDetailList);
+
         return viewDTO;
     }
 

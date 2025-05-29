@@ -90,4 +90,11 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         });
         return viewDTOS;
     }
+
+    @Override
+    public List<CfgQueryOptionEntity> listBySysFieldList(String bussinessKey, List<String> sysFieldList) {
+        return lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey,bussinessKey)
+                .in(CfgQueryOptionEntity::getConditionField,sysFieldList)
+                .list();
+    }
 }
