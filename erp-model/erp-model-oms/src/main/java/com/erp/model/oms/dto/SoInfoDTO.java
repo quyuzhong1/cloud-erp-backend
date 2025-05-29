@@ -2370,6 +2370,10 @@ public class SoInfoDTO implements Serializable {
          * 销售组织id
          */
         private String salesOrgId;
+        /**
+         * 库存组织id
+         */
+        private String warehouseOrgId;
     }
 
     @Data

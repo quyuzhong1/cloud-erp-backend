@@ -2276,7 +2276,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setReturnAmount(view.getAmount());
             view.setTaxReturnAmount(view.getTaxAmount());
             //限制销售组织下的
-            if(soWarehouseDTO.getOrgId().equals(view.getSalesOrgId())){
+            if(soWarehouseDTO.getOrgId().equals(view.getWarehouseOrgId())){
                 view.setWarehouseId(soWarehouseDTO.getWarehouseId());
                 view.setWarehouseName(soWarehouseDTO.getWarehouseName());
             }
