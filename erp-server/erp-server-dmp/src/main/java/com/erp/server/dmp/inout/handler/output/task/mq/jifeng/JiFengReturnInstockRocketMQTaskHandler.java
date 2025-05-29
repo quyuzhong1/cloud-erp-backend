@@ -105,6 +105,9 @@ public class JiFengReturnInstockRocketMQTaskHandler extends DmpOutputRocketMQTas
         if(!"1".equals(status)){
             return null;
         }
+        if(Objects.isNull(dmpMainEntity.getPutAwayTime())){
+            return null;
+        }
         PlatformReturnInstockDTO dto = BeanUtil.copyProperties(dmpMainEntity, PlatformReturnInstockDTO.class);
         String sourcePlatform = dmpMainEntity.getSourcePlatform();
         dto.setPlatform(sourcePlatform);
