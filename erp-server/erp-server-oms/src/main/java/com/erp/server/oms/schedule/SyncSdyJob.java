@@ -278,7 +278,9 @@ public class SyncSdyJob {
                 }
                 // 不出库发货虚拟商品推送
                 if (soB2cEntity.getIsNotOutbound()){
-                    List<SoB2cDetailEntity> noInventorySkuDetailList = soB2cDetailEntityList.stream().filter(e -> noInventorySkuIdList.contains(e.getSkuId())).collect(Collectors.toList());
+                    List<SoB2cDetailEntity> noInventorySkuDetailList = soB2cDetailEntityList.stream()
+                            .filter(e -> noInventorySkuIdList.contains(e.getSkuId()) && e.getMainId().equals(soB2cEntity.getId()))
+                            .collect(Collectors.toList());
                     if (CollectionUtils.isNotEmpty(noInventorySkuDetailList)) {
                         // 原始同步数帝云
                         syncSoB2cService.syncDataToSdy(soB2cEntity,
