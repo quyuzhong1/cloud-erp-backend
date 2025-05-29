@@ -42,7 +42,7 @@ public class DmpOutputFeishuGetInstancesRocketMQTaskHandler extends DmpOutputRoc
 
     @Override
     protected List<String> getSourceCodeKeys() {
-        return Arrays.asList("ulanzi_approval_code");
+        return Arrays.asList("serial_number");
     }
 
 }

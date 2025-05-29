@@ -54,9 +54,8 @@ public class DmpInputFeishuBatchGetInstanceIdInitHandler extends DmpInputInitHan
                     List<String> ids = fsService.batchGetInstanceId(approvalCode, startTime, endTime);
                     for (String id : ids) {
                         JSONObject object = new JSONObject();
-                        object.put("instanceId", id);
+                        object.put("instance_id", id);
                         object.put("ulanzi_approval_code", approvalCode);
-                        object.put("status", "code");
                         result.add(object);
                     }
                 } catch (Exception e) {

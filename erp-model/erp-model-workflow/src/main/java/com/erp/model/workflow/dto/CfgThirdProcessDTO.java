@@ -153,7 +153,6 @@ public class CfgThirdProcessDTO implements Serializable {
         /**
          * 启用时间
          */
-        @NotNull(message = "启用时间不能为空")
         private LocalDateTime enableTime;
 
         /**
@@ -215,7 +214,7 @@ public class CfgThirdProcessDTO implements Serializable {
         /**
          * 第三方审批定义code
          */
-        private String thirdProcessDefinitionCode;
+        private String thirdProcessDefinitionName;
 
         /**
          * 字段映射
