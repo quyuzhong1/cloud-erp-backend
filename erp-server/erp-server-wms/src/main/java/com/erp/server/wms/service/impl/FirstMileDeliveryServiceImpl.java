@@ -1732,6 +1732,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //库存sku
             if(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(data.getDemandType())){
                 data.setStockSku(data.getPlatformSkuNo());
+            }else{
+                data.setStockSku("");
             }
 
             long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(data.getSkuId())&& bomType.equals(e.getType())).count();
