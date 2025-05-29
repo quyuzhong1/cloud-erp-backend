@@ -907,4 +907,30 @@ public class SoInfoController extends BaseController {
         BatchResultDTO result = soInfoService.singleUploadLogisticLabel(dto.getFile(), dto.getId());
         return result.getSuccess() ? success(result) : failure(result);
     }
+
+    /**
+     * 下推采购申请单数据显示
+     * @author will
+     * @date 2025/5/29 15:19
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/viewPushPurchaseApplication")
+    public ApiResult<List<SoB2cDTO.ViewPushPurchaseApplicationDTO>> viewPushPurchaseApplication(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<SoB2cDTO.ViewPushPurchaseApplicationDTO> list = soInfoService.viewPushPurchaseApplication(dto.getIds());
+        return success(list);
+    }
+
+    /**
+     * 下推采购申请保存
+     * @author will
+     * @date 2025/5/29 15:42
+     * @param list
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/pushPurchaseApplication")
+    public ApiResult<BatchResultDTO> pushPurchaseApplication(@RequestBody @Validated List<SoB2cDTO.PushPurchaseApplicationDTO> list) {
+        BatchResultDTO result = soInfoService.pushPurchaseApplication(list);
+        return result.getSuccess() ? success(result) : failure(result);
+    }
 }

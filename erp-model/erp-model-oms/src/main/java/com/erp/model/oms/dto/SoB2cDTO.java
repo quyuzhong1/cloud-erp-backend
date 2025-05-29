@@ -3766,4 +3766,95 @@ public class SoB2cDTO implements Serializable {
         private String platformSkuNo;
         private String platformSpuNo;
     }
+
+    /**
+     * 采购申请下推数据显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewPushPurchaseApplicationDTO{
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 销售订单明细id
+         */
+        private String soDetailId;
+        /**
+         * 销售订单编码
+         */
+        private String soCode;
+        /**
+         * SKUId
+         */
+        private String skuId;
+        /**
+         * SKU编号
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 销售数量
+         */
+        private Integer qty;
+        /**
+         * 待申请数量
+         */
+        private Integer unApplyQty;
+
+    }
+
+    /**
+     * 采购申请下推数据显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushPurchaseApplicationDTO{
+        /**
+         * 销售订单id
+         */
+        @NotBlank(message = "销售订单id不能为空")
+        private String soId;
+        /**
+         * 销售订单明细id
+         */
+        @NotBlank(message = "销售订单明细id不能为空")
+        private String soDetailId;
+        /**
+         * 申请数量
+         */
+        @NotNull(message = "申请数量不能为空")
+        private Integer applyQty;
+        /**
+         * 仓库Id
+         */
+        @NotBlank(message = "仓库Id不能为空")
+        private String warehouseId;
+        /**
+         * 组织id
+         */
+        @NotBlank(message = "组织id不能为空")
+        private String orgId;
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+        /**
+         * 是否加急
+         */
+        private Boolean isUrgent;
+        /**
+         * 计划交期
+         */
+        private LocalDate planDeliveryDate;
+        /**
+         * 备注
+         */
+        @Size(message = "备注长度不能超过200", max = 200)
+        private String remark;
+    }
 }
