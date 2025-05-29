@@ -106,6 +106,7 @@ public class DmpOutputKingdeeOrderReturnRocketMQTaskHandler extends DmpOutputRoc
     	resultEntity.setFDate(LocalDateUtil.formatTime(entity.getBillDate(), "yyyy-MM-dd'T'HH:mm:ss.SSS"));
     	resultEntity.setFEThirdBillNo(entity.getThirdBillNo());
     	resultEntity.setFDocumentStatus(entity.getStatus());
+    	resultEntity.setFSettleCurrCode(entity.getCurrencyCode());
         return resultEntity;
     }
 
@@ -122,6 +123,7 @@ public class DmpOutputKingdeeOrderReturnRocketMQTaskHandler extends DmpOutputRoc
         	itemEntity.setFRealQty(item.getQty().toString());
         	itemEntity.setFStockLocId(item.getWarehouseLocation());
         	itemEntity.setFSOEntryId(item.getSoEntryId());
+        	itemEntity.setFReturnType(item.getSolutionType());
             orderItemList.add(itemEntity);
         }
         return orderItemList;

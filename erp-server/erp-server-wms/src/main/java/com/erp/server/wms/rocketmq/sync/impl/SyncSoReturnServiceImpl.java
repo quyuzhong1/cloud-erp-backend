@@ -16,6 +16,7 @@ import com.common.business.enums.*;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.constant.CommonConstants;
 import com.common.core.enums.ApiError;
+import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
@@ -188,6 +189,14 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
 		instockEntity.setCustomerName(retcustName);
         instockEntity.setId(IdWorker.getIdStr());
         instockEntity.setThirdCode(kingdeeReturnOrderEntity.getFEThirdBillNo());
+        String fSettleCurrCode = kingdeeReturnOrderEntity.getFSettleCurrCode();
+        if(StringUtils.isNotBlank(fSettleCurrCode)) {
+    		instockEntity.setCurrency(fSettleCurrCode);
+    		instockEntity.setCurrencySymbol(CurrencyEnum.getSymbolByCode(fSettleCurrCode));
+        }
+        instockEntity.setInventoryOrgId(instockEntity.getSalesOrgId());
+        instockEntity.setInventoryOrgName(instockEntity.getSalesOrgName());
+
         List<SoReturnInstockDetailEntity> detailEntityList = new ArrayList<>();
         for (KingdeeReturnOrderItemEntity kingdeeReturnOrderItemEntity : orderItemEntityList) {
             SoReturnInstockDetailEntity instockDetailEntity = new SoReturnInstockDetailEntity();
@@ -206,6 +215,7 @@ public class SyncSoReturnServiceImpl implements SyncSoReturnService {
             instockDetailEntity.setSkuId(skuVO.getSkuId());
             instockDetailEntity.setRealQty(Double.valueOf(kingdeeReturnOrderItemEntity.getFRealQty()).intValue());
             instockDetailEntity.setWarehouseLocation(kingdeeReturnOrderItemEntity.getFStockLocId());
+            instockDetailEntity.setReturnTypeDict(kingdeeReturnOrderItemEntity.getFReturnType());
             detailEntityList.add(instockDetailEntity);
         }
 

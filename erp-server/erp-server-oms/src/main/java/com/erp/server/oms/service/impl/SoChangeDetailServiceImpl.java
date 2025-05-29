@@ -12,6 +12,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -558,6 +559,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap, closeSoDetailIdList);
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+                saveOrUpdateList.forEach(item -> {
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOList.stream().filter(b -> b.getParentSkuId().equals(item.getSkuId())).findFirst().orElse(null);
+                    if(Objects.nonNull(bomChildrenSkuDTO)){
+                        item.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+                    }
+                });
                 Map<String, List<SoDetailEntity>> soDetailSaveMap = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
                 for (Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
                     // 金额信息加上折扣额计算
