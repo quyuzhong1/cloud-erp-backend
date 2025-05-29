@@ -87,4 +87,11 @@ public interface OverseasWarehouseInboundDetailService extends SuperService<Over
      * 通用手动授权
      */
     List<BatchResultDTO> allManualReceived(List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList);
+
+    /**
+     * 调整签收，不修改库存
+     * @param dtoList
+     * @return
+     */
+    List<BatchResultDTO> allChangeReceived(List<OverseasWarehouseInboundDTO.ReceivedDTO> dtoList);
 }

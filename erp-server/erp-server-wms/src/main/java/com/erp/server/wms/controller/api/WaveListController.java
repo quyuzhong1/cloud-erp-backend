@@ -1,10 +1,12 @@
 package com.erp.server.wms.controller.api;
 
 import cn.hutool.core.collection.CollectionUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -35,6 +37,11 @@ public class WaveListController extends BaseController {
      * 分页查询
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sbd.shop_id",
+            warehouseTableField = "sbdd.warehouse_id",
+            menuCode = "wms:waveList:paging"
+    )
     @WebAdvanceQuery(handler = WaveListAdvanceQueryHandler.class)
     public ApiResult<PagingVO<WaveListDTO.ViewDTO>> paging(@RequestBody PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO){
         PagingVO<WaveListDTO.ViewDTO> pagingVO = waveListService.paging(pagingDTO);
@@ -94,9 +101,14 @@ public class WaveListController extends BaseController {
     /**
      * tabList
      */
-    @GetMapping("/tabList")
-    public ApiResult<List<WaveListDTO.TabDTO>> tabList() {
-        List<WaveListDTO.TabDTO> list = waveListService.tabList();
+    @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sbd.shop_id",
+            warehouseTableField = "sbdd.warehouse_id",
+            menuCode = "wms:waveList:paging"
+    )
+    public ApiResult<List<WaveListDTO.TabDTO>> tabList(@RequestBody WaveListDTO.SearchParamDTO paramDTO) {
+        List<WaveListDTO.TabDTO> list = waveListService.tabList(paramDTO);
         return ApiResult.success(list);
     }
 

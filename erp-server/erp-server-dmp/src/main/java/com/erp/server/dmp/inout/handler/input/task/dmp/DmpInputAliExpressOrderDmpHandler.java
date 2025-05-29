@@ -104,13 +104,7 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 					dmpDataMap.put("currencyCode", payAmountMap.get("currency_code"));
 				}
 
-				// 平台取消
-		        boolean isCancel = sourceOrder.convertCancel();
-		        dmpDataMap.put("isCancel", isCancel);
-		        // 平台冻结
-		        boolean isFrozen = sourceOrder.convertFrozen();
-		        dmpDataMap.put("invalidStatus", isCancel && !isFrozen);
-				
+				Object logisticInfoListObj = null;
 				Map<String, Object> detailData = orderIdDetailMaps.get(dmpDataMap.get("thirdCode"));
 				if(detailData != null) {
 					Object logistics_amount_obj = detailData.get("logistics_amount");
@@ -156,6 +150,19 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 						}
 					}
 
+					// 买家视角订单金额
+					Object actualFeeObj = detailData.get("actual_fee");
+					if(actualFeeObj != null) {
+						Map<String, Object> actualFeeMap = (Map) actualFeeObj;
+						Object actualFee = actualFeeMap.get("amount");
+						if (actualFee != null) {
+							dmpDataMap.put("actualAmount",actualFee);
+						}
+						Object actualFeeCurrency = actualFeeMap.get("currency_code");
+						if (actualFeeCurrency != null) {
+							dmpDataMap.put("actualCurrency",actualFeeCurrency);
+						}
+					}
 
 					//退款
 					Object refundInfoObj = detailData.get("refund_info");
@@ -228,14 +235,22 @@ public class DmpInputAliExpressOrderDmpHandler extends DmpInputDbConvertDmpHandl
 			        }
 			        
 			        dmpDataMap.put("extendData", JSON.toJSONString(labelMap));
-			        dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder));
 			        dmpDataMap.put("payStatus", sourceOrder.convertPayStatus().equals(SoB2cPayStatusEnum.ENUM_PAID.getCode()));
+					// 订单物流信息
+					logisticInfoListObj = detailData.get("logistic_info_list");
+					// 发货状态
+					dmpDataMap.put("deliveryStatus", sourceOrder.convertBillStatus(isAliexpressPlatformWarehouseOrder, logisticInfoListObj));
 			        // 审核状态状态
 			        // （ApproveStatus字典类型）
-			        dmpDataMap.put("orderStatus", sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder));
-
+			        dmpDataMap.put("orderStatus", sourceOrder.convertApproveStatus(isAliexpressPlatformWarehouseOrder, logisticInfoListObj));
 				}
-				
+
+				// 平台取消
+				boolean isCancel = sourceOrder.convertNewCancel(logisticInfoListObj);
+				dmpDataMap.put("isCancel", isCancel);
+				// 平台冻结
+				boolean isFrozen = sourceOrder.convertFrozen();
+				dmpDataMap.put("invalidStatus", isCancel && !isFrozen);
 			}
 		}
 	}

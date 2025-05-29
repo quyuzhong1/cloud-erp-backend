@@ -206,6 +206,10 @@
             <if test="params.platform != null and params.platform != ''">
                 and ds.platform = #{params.platform}
             </if>
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
     </select>
 

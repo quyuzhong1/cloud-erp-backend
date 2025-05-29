@@ -1118,4 +1118,6 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      * @param amount
      */
     void updateAmount(String id, BigDecimal amount);
+
+    void clearOutDateBySoIds(List<String> clearOutDateSoIds);
 }

@@ -90,13 +90,15 @@ public enum AliexpressDeliveryOrderStatusEnum implements EnumMessage {
         // 分拨中心出库
         // 交航成功
         // 配送失败
+        // 仓配交接成功(带发货时间)
         return Stream.of(
                         AliexpressDeliveryOrderStatusEnum.SHIPPED,
                         AliexpressDeliveryOrderStatusEnum.SIGNED,
                         AliexpressDeliveryOrderStatusEnum.TO_COUNTRY_CLEARANCE,
                         AliexpressDeliveryOrderStatusEnum.DISTRIBUTION_CENTER_DELIVERY,
                         AliexpressDeliveryOrderStatusEnum.SUCCESS_DELIVERY,
-                        AliexpressDeliveryOrderStatusEnum.DELIVERY_FAILED
+                        AliexpressDeliveryOrderStatusEnum.DELIVERY_FAILED,
+                        AliexpressDeliveryOrderStatusEnum.WAREHOUSE_HANDOVER_SUCCESS
                 )
                 .map(AliexpressDeliveryOrderStatusEnum::getName)
                 .collect(Collectors.toList());

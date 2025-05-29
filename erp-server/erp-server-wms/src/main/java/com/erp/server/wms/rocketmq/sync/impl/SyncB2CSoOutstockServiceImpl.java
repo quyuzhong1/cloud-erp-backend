@@ -1,15 +1,19 @@
 package com.erp.server.wms.rocketmq.sync.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.lang.Pair;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.WdtSoOutStockDTO;
 import com.common.business.dto.WdtSoOutStockDetailDTO;
+import com.common.business.dto.WdtSoOutStockDetailDTO.PositionDetailsList;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.*;
 import com.common.business.wrapper.FeignQuery;
@@ -61,6 +65,8 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -282,7 +288,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         List<InOutStockDTO> inOutStockList = new ArrayList<>();
         ArrayList<SoOutstockDetailEntity> detailList = new ArrayList<>();
         for (WdtSoOutStockDetailDTO detailDTO : entity.getDetailList()) {
-            if (CollectionUtils.isEmpty(detailDTO.getPositionDetailsList())){
+            List<PositionDetailsList> positionDetailsList = detailDTO.getPositionDetailsList();
+			if (CollectionUtils.isEmpty(positionDetailsList)){
                 //暂时使用空仓位
                 SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
                 detailEntity.setId(IdWorker.getIdStr());
@@ -310,11 +317,17 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
                     buildInOutStock(id, detailEntity, soOutstock, virtualWarehouseId, inOutStockList);
                 }
             } else {
-                for (WdtSoOutStockDetailDTO.PositionDetailsList detail : detailDTO.getPositionDetailsList()) {
+            	Map<String, Pair<BigDecimal, BigDecimal>> recIdAmountMap = this.splitAmountAndLocalCurrency(detailDTO);
+                for (WdtSoOutStockDetailDTO.PositionDetailsList detail : positionDetailsList) {
                     if (Boolean.FALSE.equals(warehouse.getIsEnableLocation())) {
                         detail.setPositionNo("");
                     }
                     SoOutstockDetailEntity detailEntity = BeanMapperUtils.map(SoOutstockDetailEntity.class, detailDTO);
+                    Pair<BigDecimal, BigDecimal> amountPair = recIdAmountMap.get(detail.getRecId());
+                    if(amountPair != null) {
+                    	detailEntity.setAmount(amountPair.getKey());
+                    	detailEntity.setAllAmountLocalCurrency(amountPair.getValue());
+                    }
                     detailEntity.setId(IdWorker.getIdStr());
                     String skuId = skuList.stream().filter(s -> s.getSkuNo().equals(detailEntity.getSkuNo())).
                             findFirst().map(SkuVO::getSkuId).orElse("");
@@ -343,6 +356,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
 
         //2024.09.11 jack sdc-erp销售出库单增加旺店通的物流渠道名称
+        soOutstock.setLogisticsChannelCode(entity.getLogisticsCompanyCode());
         soOutstock.setLogisticsChannelName(entity.getLogisticsCompanyName());
         //订单标签
         soOutstock.setTradeLabel(entity.getTradeLabel());
@@ -622,6 +636,42 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         }
         return virtualWarehouseList.get(0).getVirtualWarehouseId();
     }
+    
+    private Map<String, Pair<BigDecimal, BigDecimal>> splitAmountAndLocalCurrency(WdtSoOutStockDetailDTO detailDTO){
+    	Map<String, Pair<BigDecimal, BigDecimal>> map = new HashMap<>();
+    	List<PositionDetailsList> positionDetailsList = detailDTO.getPositionDetailsList();
+    	if(CollUtil.isNotEmpty(positionDetailsList)) {
+    		BigDecimal sum = new BigDecimal(positionDetailsList.stream().map(PositionDetailsList::getPositionGoodsCount).reduce(Integer::sum).orElse(0));
+    		if(sum.compareTo(BigDecimal.ZERO) > 0) {
+    			BigDecimal amount = detailDTO.getAmount();
+        		BigDecimal allAmountLocalCurrency = detailDTO.getAllAmountLocalCurrency();
+        		int index = 1;
+        		int size = positionDetailsList.size();
+        		
+        		BigDecimal addAmount = BigDecimal.ZERO;
+        		BigDecimal addAllAmountLocalCurrency = BigDecimal.ZERO;
+    			for(PositionDetailsList positionDetails : positionDetailsList) {
+    				String recId = positionDetails.getRecId();
+    				BigDecimal nowAmount = BigDecimal.ZERO;
+            		BigDecimal nowAllAmountLocalCurrency = BigDecimal.ZERO;
+    				BigDecimal positionGoodsCount = new BigDecimal(positionDetails.getPositionGoodsCount());
+    				if(index == size) {
+    					nowAmount = amount.subtract(addAmount);
+    					nowAllAmountLocalCurrency = allAmountLocalCurrency.subtract(addAllAmountLocalCurrency);
+        			}else {
+        				nowAmount = amount.multiply(positionGoodsCount).divide(sum , 4 , RoundingMode.DOWN);
+        				nowAllAmountLocalCurrency = allAmountLocalCurrency.multiply(positionGoodsCount).divide(sum , 4 , RoundingMode.DOWN);
+        			}
+        			map.put(recId, new Pair<>(nowAmount, nowAllAmountLocalCurrency));
+        			addAmount = addAmount.add(nowAmount);
+        			addAllAmountLocalCurrency = addAllAmountLocalCurrency.add(nowAllAmountLocalCurrency);
+        			index = index + 1;
+        		}
+    		}
+    	}
+    	return map;
+    }
+    
 }
 
 

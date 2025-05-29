@@ -313,7 +313,9 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                             cacheMap.put("subPlatformType", subPlatformTypeMap);
                             
                             if(subPlatformTypeDict != null) {
-                                shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                            	shudiyunB2cOrderDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                            	shudiyunB2cOrderDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                                shudiyunB2cOrderDTO.setSubplatform_no(subPlatformTypeDict.getValue());
                                 shudiyunB2cOrderDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                             }
                         }
@@ -342,14 +344,6 @@ public class DmpOutputSdyWdtOriginalOrderHandler extends DmpOutputTaskHandler {
                 }
             }
 
-            String sourcePlatform = dmpSoInfoEntity.getSourcePlatform();
-            String sourcePlatformName = dmpSoInfoEntity.getSourcePlatform();
-			shudiyunB2cOrderDTO.setPlatform_id(sourcePlatform);
-            WdtSourcePlatformEnum wdtSourcePlatformEnum = WdtSourcePlatformEnum.getByCode(sourcePlatform);
-            if(wdtSourcePlatformEnum != null) {
-            	sourcePlatformName = wdtSourcePlatformEnum.getName();
-            }
-            shudiyunB2cOrderDTO.setPlatform_name(sourcePlatformName);
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getPlatformCode());
             shudiyunB2cOrderDTO.setRoot_node_modify_time(localDateTime.format(dmpSoInfoEntity.getPlatformUpdateTime()));
             if (dmpSoDetailEntity.getPrice().compareTo(BigDecimal.ZERO) == 0) {

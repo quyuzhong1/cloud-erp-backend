@@ -5,7 +5,10 @@ import cn.hutool.core.bean.BeanUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.erp.model.wms.dto.AliexpressDeliveryDetailDTO;
+import com.erp.model.wms.dto.AliexpressDeliveryProratedInfoDTO;
 import com.erp.model.wms.entity.AliexpressDeliveryDetailEntity;
+import com.erp.model.wms.entity.AliexpressDeliveryEntity;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.AliexpressDeliveryDetailMapper;
 import com.erp.server.wms.service.AliexpressDeliveryDetailService;
 import lombok.extern.slf4j.Slf4j;
@@ -14,11 +17,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import java.util.LinkedList;
+import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -33,24 +35,43 @@ import java.util.stream.Collectors;
 @Service
 public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<AliexpressDeliveryDetailMapper, AliexpressDeliveryDetailEntity> implements AliexpressDeliveryDetailService {
 
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO, String platformCode) {
+    public Boolean addOrUpdate(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO, AliexpressDeliveryEntity mainEntity, List<AliexpressDeliveryProratedInfoDTO> proratedInfoList) {
         if(CollectionUtils.isEmpty(addDTO)){
             return true;
         }
         if (addDTO.stream().anyMatch(e-> StringUtils.isBlank(e.getUniqueId()))){
-            ServiceException.runError("速卖通发货明细唯一ID为空,平台单号【{}】", platformCode);
+            ServiceException.runError("速卖通发货明细唯一ID为空,平台单号【{}】", mainEntity.getPlatformCode());
         }
         if (addDTO.stream().anyMatch(e-> StringUtils.isBlank(e.getPlatformSpuNo()))){
-            ServiceException.runError("速卖通发货明细产品ID为空,平台单号【{}】", platformCode);
+            ServiceException.runError("速卖通发货明细产品ID为空,平台单号【{}】", mainEntity.getPlatformCode());
         }
-
         //先删除后新增
 //        this.removeByMainId(addDTO.get(0).getMainId());
-        List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = BeanUtil.copyToList(addDTO,AliexpressDeliveryDetailEntity.class);
+        // 补充明细ID
+        List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = fillData(addDTO, mainEntity, proratedInfoList);
 
-        String mainId = addDTO.get(0).getMainId();
+        log.info("开始新增/更新速卖通发货单详情");
+        boolean save = super.saveOrUpdateBatch(aliexpressDeliveryDetailEntityList);
+        if(!save) {
+            throw new ServiceException("速卖通发货单详情新增/更新失败");
+        }
+        return true;
+    }
+
+    /**
+     * 补充信息
+     */
+    private List<AliexpressDeliveryDetailEntity> fillData(List<AliexpressDeliveryDetailDTO.AddDTO> addDTO,
+                                                          AliexpressDeliveryEntity mainEntity,
+                                                          List<AliexpressDeliveryProratedInfoDTO> proratedInfoList) {
+        List<AliexpressDeliveryDetailEntity> aliexpressDeliveryDetailEntityList = BeanUtil.copyToList(addDTO,AliexpressDeliveryDetailEntity.class);
+        String mainId = mainEntity.getId();
         // 查询历史已存在明细
         List<String> detailUniqueIds = addDTO.stream().map(AliexpressDeliveryDetailDTO.AddDTO::getUniqueId).distinct().collect(Collectors.toList());
         Map<String, AliexpressDeliveryDetailEntity> existDetailMap = lambdaQuery()
@@ -69,17 +90,30 @@ public class AliexpressDeliveryDetailServiceImpl extends SuperServiceImpl<Aliexp
                 }
             }
         }
+        // 记录分摊信息
+        // proratedInfoList按UniqueId分组
+        Map<String, AliexpressDeliveryProratedInfoDTO> proratedInfoMap = proratedInfoList
+                .stream()
+                .collect(Collectors.toMap(AliexpressDeliveryProratedInfoDTO::getUniqueId, Function.identity()));
 
-        log.info("开始新增/更新速卖通发货单详情");
-        boolean save = super.saveOrUpdateBatch(aliexpressDeliveryDetailEntityList);
-        if(!save) {
-            throw new ServiceException("速卖通发货单详情新增/更新失败");
+        for (AliexpressDeliveryDetailEntity aliexpressDeliveryDetailEntity : aliexpressDeliveryDetailEntityList) {
+            AliexpressDeliveryProratedInfoDTO proratedInfoDTO = proratedInfoMap.get(aliexpressDeliveryDetailEntity.getUniqueId());
+            if (null == proratedInfoDTO) {
+                ServiceException.runError("速卖通发货单明细分摊信息不存在,明细唯一ID【{}】", aliexpressDeliveryDetailEntity.getUniqueId());
+            }
+            aliexpressDeliveryDetailEntity.setPlatformDetailId(proratedInfoDTO.getPlatformOrderDetailId());
+            aliexpressDeliveryDetailEntity.setProratedAmount(proratedInfoDTO.getProratedAmount());
+            aliexpressDeliveryDetailEntity.setProratedUnitPrice(proratedInfoDTO.getProratedUnitPrice());
         }
-        return true;
+        return aliexpressDeliveryDetailEntityList;
     }
 
 
     public boolean removeByMainId(String mainId){
         return this.lambdaUpdate().eq(AliexpressDeliveryDetailEntity::getMainId, mainId).remove();
     }
+
+
+
+
 }

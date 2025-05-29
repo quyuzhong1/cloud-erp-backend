@@ -62,6 +62,9 @@ public enum AllocationFeeTypeEnum implements EnumMessage {
     public static AllocationFeeTypeEnum getByCode(String code) {
         return Arrays.stream(AllocationFeeTypeEnum.values()).filter(r -> Objects.equals(r.getCode(), code)).findFirst().orElse(null);
     }
+    public static AllocationFeeTypeEnum getByName(String name) {
+        return Arrays.stream(AllocationFeeTypeEnum.values()).filter(r -> Objects.equals(r.getName(), name)).findFirst().orElse(null);
+    }
 }
 
 

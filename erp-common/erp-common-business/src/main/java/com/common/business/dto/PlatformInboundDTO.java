@@ -2,6 +2,8 @@ package com.common.business.dto;
 
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.WarehousePlatformTypeEnum;
+import com.common.core.anno.Panno;
+import com.common.core.enums.PannoEnum;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -15,6 +17,11 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class PlatformInboundDTO extends UniqueDto {
+
+    /**
+     * erp授权Id
+     */
+    private String authId;
 
     /**
      * 仓库平台类型
@@ -88,6 +95,9 @@ public class PlatformInboundDTO extends UniqueDto {
 
         //签收时间
         private LocalDateTime receiveTime;
+
+        //签收水流明细ID
+        private String thirdId;
 
     }
 

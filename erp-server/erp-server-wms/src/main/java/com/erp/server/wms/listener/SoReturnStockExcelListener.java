@@ -8,6 +8,8 @@ import com.common.business.enums.OrderTypeEnum;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.wms.dto.excel.SoReturnStockImportExcelDTO;
+import com.erp.model.wms.enums.ReturnTypeEnum;
+import io.seata.common.util.StringUtils;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -56,6 +58,10 @@ public class SoReturnStockExcelListener extends AnalysisEventListener<SoReturnSt
         }
         if (CharSequenceUtil.isBlank(importExcelDTO.getTypeName())) {
             importExcelDTO.setTypeName(OrderTypeEnum.B2B.getName());
+        }
+        String returnTypeCode = ReturnTypeEnum.getCode(importExcelDTO.getReturnType());
+        if(StringUtils.isBlank(returnTypeCode) && !CharSequenceUtil.isBlank(importExcelDTO.getReturnType())) {
+            errorMsgList.add("退货类型错误，请选择正确的退货类型");
         }
         //币别
         if (CharSequenceUtil.isBlank(importExcelDTO.getCurrencyStr())) {

@@ -109,13 +109,4 @@ public interface FbaShipmentConsumerConverter {
     FbaShipmentDetailEntity detailSetSkuMappingInfo(FbaShipmentDetailEntity detailEntity,
                                                     ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO,
                                                     List<String> hasChildrenSkuIds);
-
-    @Mappings({
-            @Mapping(target = "skuId", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuId())"),
-            @Mapping(target = "skuNo", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSkuNo())"),
-            @Mapping(target = "asin", expression = "java(null == listingInfoWithSkuMappingDTO ? \"\" :listingInfoWithSkuMappingDTO.checkAndGetProductSpuNo())"),
-            @Mapping(target = "shopId", source = "receiveEntity.shopId"),
-    })
-    FbaShipmentReceiveEntity receiveSetSkuMappingInfo(FbaShipmentReceiveEntity receiveEntity,
-                                                      ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO);
 }

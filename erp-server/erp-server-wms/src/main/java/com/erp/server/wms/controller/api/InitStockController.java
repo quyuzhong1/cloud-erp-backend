@@ -53,6 +53,7 @@ public class InitStockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "ism.warehouse_id",
             menuCode = "wms:initStock:paging",
             tableAlias = "ism"
     )

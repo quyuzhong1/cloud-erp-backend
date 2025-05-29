@@ -31,7 +31,8 @@
         update_time,
         version,
         is_deleted,
-        main_id, sku_id, sku_no, outstock_detail_id, delivery_qty, sku_weight
+        main_id, sku_id, sku_no, outstock_detail_id, delivery_qty, sku_weight,
+        unit_cost,unit_currency,billing_weight
     </sql>
 
 <select id="paging" resultType="com.erp.model.tms.dto.SmallBagCostAllocationDTO$ListDTO">
@@ -118,5 +119,16 @@
             </if>
         </where>
         group by t.report_status
+    </select>
+    <select id="listByReportPeriodStr" resultType="com.erp.model.tms.entity.SmallBagCostAllocationEntity">
+        select
+            sbca.id,sbca.main_id
+            from small_bag_cost_allocation sbca
+        left join small_bag_cost_allocation_main sbcam on sbca.main_id = sbcam.id and sbcam.is_deleted = false
+        where sbca.is_deleted = false
+        and sbcam.report_date = #{reportPeriodStr}
+        <if test="reportStatus != null and reportStatus!=''">
+            and sbcam.report_status = #{reportStatus}
+        </if>
     </select>
 </mapper>

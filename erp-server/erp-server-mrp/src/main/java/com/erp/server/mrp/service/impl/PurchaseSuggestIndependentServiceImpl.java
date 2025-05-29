@@ -89,6 +89,7 @@ public class PurchaseSuggestIndependentServiceImpl extends SuperServiceImpl<Purc
 
     @Override
     public PagingVO<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> listPurchaseSuggestion(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
+        params.getParams().setPermissionSql(params.getPermissionSql());
         Page<ReplenishmentSuggestionDTO.PurchaseSuggestionDTO> pagingVO = baseMapper.pagingExportPurchaseSuggestion(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         if (CollectionUtils.isEmpty(pagingVO.getRecords())) {
             throw new ServiceException("未找到采购计划数据");

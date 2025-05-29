@@ -131,6 +131,10 @@
         <where>
             ${params.sqlMap.default}
             and wa.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -138,7 +142,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        wa.create_time DESC,wa.box_no
+        wa.create_time DESC,wa.box_no,wa.sku_no
     </select>
     <select id="listByParamIds" resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewDTO">
         select wa.id,
@@ -275,6 +279,75 @@
                  LEFT JOIN first_mile_sku_cost_allocation_detail cad ON cad.cost_main_id = ca.id AND cad.is_deleted = FALSE
                  LEFT JOIN report_period_month rpm ON rpm.id = a.report_period_id AND rpm.is_deleted = FALSE
         where a.is_deleted = false and a.logistics_bill_id = #{logisticsBillId}
+    </select>
+    <select id="countTabNum" resultType="java.lang.Integer">
+        select count(1) from first_mile_weight_allocation wa
+        where wa.is_deleted = false
+        and wa.cost_allocation_status in
+        <foreach collection="statusList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+    </select>
+    <select id="viewProductWeight"
+            resultType="com.erp.model.tms.dto.FirstMileWeightAllocationDTO$ViewProductWeightDTO">
+        select
+            wa.source_id,
+            wa.source_code sourceCode,
+            wa.business_code businessCode,
+            wa.transport_no transportNo,
+            wa.logistics_bill_id logisticsBillId,
+            wa.cost_allocation_status costAllocationStatus,
+            <if test="params.changeType == 'changeProductWeight'">
+                wa.id,
+                wa.sku_id,
+                wa.sku_no skuNo,
+                wa.product_name productName,
+                wa.platform_sku_no platformSkuNo,
+                wa.delivery_qty deliveryQty,
+                wa.product_weight productWeight,
+            </if>
+            <if test="params.changeType == 'changeOutstockSize'">
+                wa.box_length,
+                wa.box_width,
+                wa.box_height,
+                wa.box_size_unit,
+                wa.out_stock_weight outStockWeight,
+            </if>
+            wa.weight_unit,
+            wa.box_id,
+            wa.box_no boxNo
+        from first_mile_weight_allocation wa
+        where wa.is_deleted = false
+        <if test="params.ids != null and params.ids.size > 0">
+            AND wa.id IN
+            <foreach collection="params.ids" item="id" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+        </if>
+        <if test="params.changeType == 'changeOutstockSize'">
+            group by
+            wa.source_id,
+            wa.source_code,
+            wa.business_code,
+            wa.transport_no,
+            wa.logistics_bill_id,
+            wa.cost_allocation_status,
+            wa.box_length,
+            wa.box_width,
+            wa.box_height,
+            wa.box_size_unit,
+            wa.out_stock_weight,
+            wa.volume_weight,
+            wa.weight_unit,
+            wa.box_id,
+            wa.box_no
+        </if>
+        order by
+        wa.source_code DESC,wa.box_no
     </select>
 
 

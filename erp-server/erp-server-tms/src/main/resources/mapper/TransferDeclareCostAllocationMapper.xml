@@ -31,7 +31,7 @@
         update_time,
         version,
         is_deleted,
-        main_id, sku_id, sku_no, outstock_detail_id, delivery_qty, sku_weight
+        main_id, sku_id, sku_no, outstock_detail_id, delivery_qty, sku_weight,unit_cost,unit_currency
     </sql>
 <select id="paging" resultType="com.erp.model.tms.dto.TransferDeclareCostAllocationDTO$ListDTO">
 	select
@@ -108,5 +108,17 @@
             </if>
         </where>
         group by t.report_status
+    </select>
+    <select id="listByReportPeriodStr"
+            resultType="com.erp.model.tms.entity.TransferDeclareCostAllocationEntity">
+        select
+            tdca.id,tdca.main_id
+        from transfer_declare_cost_allocation tdca
+        left join transfer_declare_cost_allocation_main tdcam on tdca.main_id = tdcam.id and tdcam.is_deleted = false
+        where tdca.is_deleted = false
+        and tdcam.report_date = #{reportPeriodStr}
+        <if test="reportStatus != null and reportStatus!=''">
+            and tdcam.report_status = #{reportStatus}
+        </if>
     </select>
 </mapper>

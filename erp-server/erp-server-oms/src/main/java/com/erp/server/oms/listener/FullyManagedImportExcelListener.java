@@ -1,28 +1,16 @@
 package com.erp.server.oms.listener;
 
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.OperateLogDTO;
-import com.erp.model.oms.dto.OrderCategoryDetailDTO;
-import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.FullyManagedImportExcelDTO;
-import com.erp.model.oms.dto.excel.SkuMappingCustomerImportExcelDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
-import com.erp.model.oms.entity.ListingInfoEntity;
-import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -31,14 +19,12 @@ import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.oms.service.DictBasicService;
-import com.erp.server.oms.service.ListingInfoService;
 import com.erp.server.oms.service.OrderCategoryDetailService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -200,7 +186,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
         //全托管平台类型
         List<DictBasicDTO.ViewDTO> dictList = dictBasicService.getByKey(DictBasicTypeEnum.FULLY_MANAGED.getType());
         //店铺列表
-        List<ShopInfoEntity> shopList = shopInfoService.listShopByName(shopNameList);
+        List<ShopInfoDTO.ListDTO> shopList = shopInfoService.listShopByName(shopNameList);
         //币种列表
         List<DictCurrencyEntity> currencyEntityList = sysUserFeign.currencyList();
         //订单来源类型
@@ -212,7 +198,7 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
         //sku列表
         List<SkuVO> skuList = plmTaskFeign.listBySkuNoList(skuNoList);
         //仓库列表
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
+        List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
 
         for (FullyManagedImportExcelDTO excelDTO : dataList) {
             List<String> errorMsgList = new ArrayList<>();
@@ -234,9 +220,9 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
                 excelDTO.setDictPlatform(platform);
             }
             //店铺
-            ShopInfoEntity shop = shopList.stream().filter(v -> v.getName().equals(excelDTO.getShopName())).findFirst().orElse(null);
+            ShopInfoDTO.ListDTO shop = shopList.stream().filter(v -> v.getName().equals(excelDTO.getShopName())).findFirst().orElse(null);
             if(Objects.isNull(shop)){
-                errorMsgList.add("店铺不存在【"+excelDTO.getShopName()+"】");
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
             }else {
                 excelDTO.setShopId(shop.getId());
             }
@@ -281,9 +267,9 @@ public class FullyManagedImportExcelListener extends AnalysisEventListener<Fully
             }
             //仓库
             if (CharSequenceUtil.isNotBlank(excelDTO.getDeliveryWarehouseName())){
-                WarehouseDTO.UpdateDTO warehouse = warehouseList.stream().filter(v -> v.getName().equals(excelDTO.getDeliveryWarehouseName())).findFirst().orElse(null);
+                WarehouseDTO.ListDTO warehouse = warehouseList.stream().filter(v -> v.getName().equals(excelDTO.getDeliveryWarehouseName())).findFirst().orElse(null);
                 if(Objects.isNull(warehouse)){
-                    errorMsgList.add("仓库不存在【"+excelDTO.getDeliveryWarehouseName()+"】");
+                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 }else {
                     excelDTO.setDeliveryWarehouseId(warehouse.getId());
                 }

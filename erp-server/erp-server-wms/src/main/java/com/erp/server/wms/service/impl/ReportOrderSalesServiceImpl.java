@@ -89,6 +89,7 @@ public class ReportOrderSalesServiceImpl extends SuperServiceImpl<ReportOrderSal
 
     @Override
     public PagingVO<ReportOrderSalesDTO.ListDTO> paging(PagingDTO<ReportOrderSalesDTO.PagingParamDTO> pagingDTO) {
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         //最大统计时长
         ReportOrderSalesDTO.PagingOtherParamDTO paramDTO = getMaxStatDurationList();
         Page query = new Page(pagingDTO.getCurrPage(), pagingDTO.getPageSize());

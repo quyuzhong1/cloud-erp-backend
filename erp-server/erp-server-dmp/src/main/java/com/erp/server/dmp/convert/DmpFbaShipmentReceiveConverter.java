@@ -35,28 +35,4 @@ public interface DmpFbaShipmentReceiveConverter {
     @Mappings({
     })
     List<FbaReceiveDetailEntity> dtoListToEntityList(List<FbaShipmentReceiveDTO> dtoList);
-
-
-    @Mappings({
-            // 有效签收时间
-            @Mapping(target = "receiveDate", expression = "java(java.time.OffsetDateTime.parse(entity.getReceivedDateLocaleStr()).toLocalDateTime())"),
-            // UTC签收时间
-            @Mapping(target = "receiveUTCDate", expression = "java(entity.getReceivedDateStr())"),
-            // 当地签收日期
-            @Mapping(target = "receiveLocaleDate", expression = "java(entity.getReceivedDateLocaleStr())"),
-            @Mapping(target = "fnSku", source = "fnsku"),
-            @Mapping(target = "msku", source = "sku"),
-            @Mapping(target = "receiveQty", source = "quantity"),
-            @Mapping(target = "fulfillmentCenter", source = "fulfillmentCenterId"),
-            @Mapping(target = "asin", constant = ""),
-            @Mapping(target = "skuNo", constant = ""),
-            @Mapping(target = "skuId", constant = ""),
-            @Mapping(target = "detailId", constant = ""),
-            @Mapping(target = "sourceType", constant = "lingxing"),
-    })
-    FbaShipmentReceiveEntity sourceToTargetEntity(FbaReceiveDetailEntity entity);
-
-    @Mappings({
-    })
-    List<FbaShipmentReceiveEntity> sourceListToEntityList(List<FbaReceiveDetailEntity> dtoList);
 }

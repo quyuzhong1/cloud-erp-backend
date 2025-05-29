@@ -203,4 +203,13 @@ public interface OverseasWarehouseInboundService extends SuperService<OverseasWa
     List<BaseDropDownDTO.CommonDTO> getLogisticByTransferWarehouseId(String transferWarehouseId);
 
     PagingVO<OverseasWarehouseInboundDTO.ListDTO> exportOverseasWarehouseInbound(PagingDTO<OverseasWarehouseInboundDTO.ExportDTO> dto);
+    /**
+     * 详情变更列表
+     *
+     * @param dto
+     * @return
+     * @author zdy
+     * @date: 2025-05-19
+     */
+    List<OverseasWarehouseInboundDetailDTO.ViewChangeDTO> viewChangeList(OverseasWarehouseInboundDTO.ViewListReqDTO dto);
 }

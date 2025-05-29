@@ -203,6 +203,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     public PagingVO<ReplenishmentSuggestionVO.PagingView> paging(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
         LoginUser user = UserContext.getDefaultLoginUser();
+        params.getParams().setPermissionSql(params.getPermissionSql());
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
         if (!CollectionUtils.isEmpty(pagingVO.getRecords())) {
             processData(pagingVO.getRecords());
@@ -889,6 +890,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
     @Override
     @SuppressWarnings("all")
     public PagingVO<DynamicExcelDTO> listHistorySalesQty(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
+        params.getParams().setPermissionSql(params.getPermissionSql());
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
         List<ReplenishmentSuggestionVO.PagingView> list = pagingVO.getRecords();
@@ -1011,6 +1013,7 @@ public class ReplenishmentSuggestionServiceImpl extends SuperServiceImpl<Repleni
 
     @Override
     public PagingVO<ReplenishmentSuggestionDTO.ReplenishmentRuleExportDTO> listReplenishmentRule(PagingDTO<ReplenishmentSuggestionDTO.PagingParamDTO> params) {
+        params.getParams().setPermissionSql(params.getPermissionSql());
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<ReplenishmentSuggestionVO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
         if (CollectionUtils.isEmpty(pagingVO.getRecords())) {

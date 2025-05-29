@@ -91,6 +91,8 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "ad.shop_id",
+            warehouseTableField = "ad.warehouse_id",
             menuCode = "tms:initFirstMileAllocation:paging",
             tableAlias = "a"
     )
@@ -110,6 +112,8 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "ad.shop_id",
+            warehouseTableField = "ad.warehouse_id",
             menuCode = "tms:initFirstMileAllocation:paging",
             tableAlias = "a"
     )
@@ -309,7 +313,6 @@ public class InitFirstMileAllocationController extends BaseController {
      * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery(handler = InitFirstMileAllocationQueryHandler.class)
     public ApiResult<Object> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto) {
         initFirstMileAllocationService.exportExcel(dto);
         return success(Boolean.TRUE);
