@@ -1,0 +1,32 @@
+package com.erp.rpc.workflow.feign;
+
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+
+/**
+ * cfgQueryOption Feign
+ * @date 2025-05-29
+ * @author jack
+ */
+@FeignClient(name = "erp-workflow", contextId = "cfgQueryOption")
+public interface CfgQueryOptionFeign {
+
+    /**
+     * 根据业务ID查询审批记录
+     */
+    @PostMapping("/feign/cfgQueryOption/listByMqParams")
+    List<CfgQueryOptionEntity> listByMqParams(@RequestBody CfgQueryOptionDTO.MqParamsDTO mqParamsDTO);
+    /**
+     * 根据业务ID查询审批记录
+     */
+    @PostMapping("/feign/cfgQueryOption/listByIds")
+    List<CfgQueryOptionEntity> listByIds(@RequestBody List<String> ids);
+}

@@ -36,7 +36,6 @@ public class ProcessFeignController extends BaseController {
     @Resource
     public WorkflowService workflowService;
 
-
     @Resource
     private ProcessTaskService processTaskService;
 

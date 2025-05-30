@@ -1,11 +1,22 @@
 package com.erp.server.sys.rocketmq.consumer;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
+import com.erp.model.plm.entity.NoticeMessageRecordEntity;
 import com.erp.model.sys.dto.CfgThirdNoticeDTO;
+import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+import com.erp.model.sys.vo.FsBatchSendMessageDTO;
+import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.sdk.fs.service.FsService;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+
+import javax.annotation.Resource;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -15,7 +26,7 @@ import org.springframework.stereotype.Service;
 @RocketMQMessageListener(topic = RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC,
         selectorExpression = "sys_send_third_notice_tag",
         consumerGroup = RocketMqConsumerGroup.SYS_SEND_THIRD_NOTICE_CONSUMER)
-public class SendThirdNoticeConsumerService implements RocketMQListener<CfgThirdNoticeDTO.MqDTO> {
+public class SendThirdNoticeConsumerService implements RocketMQListener<FsBatchSendMessageDTO> {
     /*
     //------plm------
     新建产品  com.erp.server.plm.service.impl.NoticeMessageServiceImpl.newProductNotice  productInfo
@@ -54,14 +65,21 @@ public class SendThirdNoticeConsumerService implements RocketMQListener<CfgThird
 
 */
 
+
+    @Resource
+    private FsService fsService;
+
     @Override
-    public void onMessage(CfgThirdNoticeDTO.MqDTO dto) {
+    public void onMessage(FsBatchSendMessageDTO dto) {
         log.info("SendThirdNoticeConsumerService 开始");
 
-
-
-
-
+        //发送消息的结果
+        Boolean sendResult = fsService.sendMessage(dto);
+        //当发送成功后
+        if (Boolean.TRUE.equals(sendResult)) {
+            System.out.println("");
+        }
+        //保存发送消息通知记录
 
         log.info("SendThirdNoticeConsumerService 结束");
     }

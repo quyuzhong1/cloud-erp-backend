@@ -600,4 +600,22 @@ public interface PlmTaskFeign {
 
     @GetMapping("/feign/product/getBrandByQuerySql")
     List<String> getBrandByQuerySql(@RequestParam String compareCodeSplicingValueSql);
+
+    /**
+     * @description:
+     * @author jack
+     * @date: 2025-05-30
+     * @param preTaskIds
+     */
+    @PostMapping("/feign/projectTask/listProjectTaskByTaskIds")
+    List<ProjectTaskEntity> listProjectTaskByTaskIds(@RequestBody List<String> preTaskIds);
+
+    /**
+     * @description:
+     * @author jack
+     * @date: 2025-05-30
+     * @param preTaskIds
+     */
+    @PostMapping("/feign/projectTask/listTaskFollowerByTaskIds")
+    List<TaskFollowerEntity> listTaskFollowerByTaskIds(@RequestBody List<String> preTaskIds);
 }

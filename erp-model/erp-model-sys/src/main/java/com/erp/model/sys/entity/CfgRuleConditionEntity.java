@@ -78,6 +78,12 @@ public class CfgRuleConditionEntity extends BaseEntity<CfgRuleConditionEntity> {
     @TableField("source_type")
     private String sourceType;
 
+    /**
+     * 值类型
+     */
+    @TableField("value_type")
+    private String valueType;
+
 
     public static final String LEFT_BRACKET = "left_bracket";
 

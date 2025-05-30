@@ -41,4 +41,6 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
      * @return List<CfgQueryOptionEntity>
      */
     List<CfgQueryOptionEntity> listBySysFieldList(String bussinessKey,List<String> sysFieldList);
+
+    List<CfgQueryOptionEntity> listByMqParams(CfgQueryOptionDTO.MqParamsDTO mqParamsDTO);
 }

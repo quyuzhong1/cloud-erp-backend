@@ -1,12 +1,12 @@
 package com.erp.server.sys.service;
 import com.common.business.vo.PagingVO;
-import com.erp.model.sys.entity.CfgThirdNoticeEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.CfgThirdNoticeDTO;
+import com.erp.model.sys.dto.MqConsumerRecordDTO;
+import com.erp.model.sys.entity.CfgThirdNoticeEntity;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.constraints.NotNull;
 import java.util.List;
 
 /**
@@ -49,4 +49,6 @@ public interface CfgThirdNoticeService extends SuperService<CfgThirdNoticeEntity
     BatchResultDTO enable(String id, Boolean noticeStatus);
 
     void exportList(CfgThirdNoticeDTO.PagingParamDTO dto, HttpServletResponse response);
+
+    void testPush(MqConsumerRecordDTO.MqDTO dto);
 }

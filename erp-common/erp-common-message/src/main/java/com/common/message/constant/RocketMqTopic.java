@@ -14,6 +14,10 @@ public class RocketMqTopic {
     public static final String SYNC_ERP_LOG_TO_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_erp_log_to_sys_topic";
 
     /**
+     * 接收ddl 的变化后的数据库数据
+     */
+    public static final String RECEIVE_DDL_TO_MQ_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-receive_ddl_to_mq_sys_topic";
+    /**
      * 推送三方通知
      */
     public static final String SEND_THIRD_NOTICE_SYS_TOPIC = "${spring.cloud.nacos.discovery.namespace}-send_third_notice_sys_topic";

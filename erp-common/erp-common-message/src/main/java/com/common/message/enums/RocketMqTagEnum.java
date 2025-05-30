@@ -611,7 +611,9 @@ public enum RocketMqTagEnum {
     /**
      * sys 三方通知推送记录
      */
-    SYS_SEND_THIRD_NOTICE_TAG(13001, RocketMqTagEnum.SYNC_WORKFLOW, "sys_send_third_notice_tag"),
+    SYS_SEND_THIRD_NOTICE_TAG(13001, RocketMqTagEnum.SYNC_SYS, "sys_send_third_notice_tag"),
+
+    SYS_RECEIVE_DDL_TO_MQ_TAG(13002, RocketMqTagEnum.SYNC_SYS, "sys_receive_ddl_to_mq_tag"),
 
 
     ;
@@ -638,6 +640,8 @@ public enum RocketMqTagEnum {
     public static final String SYNC_OMS = "sync_oms";
 
     public static final String SYNC_TMS = "sync_tms";
+
+    public static final String SYNC_SYS = "sync_sys";
 
     public static final String SYNC_WORKFLOW = "sync_workflow";
 

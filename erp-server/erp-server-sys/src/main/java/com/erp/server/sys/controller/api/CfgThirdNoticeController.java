@@ -4,6 +4,7 @@ package com.erp.server.sys.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.sys.dto.MqConsumerRecordDTO;
 import com.erp.model.sys.entity.CfgThirdNoticeEntity;
 import com.erp.server.sys.query.CfgThirdNoticeQueryHandler;
 import lombok.extern.slf4j.Slf4j;
@@ -222,6 +223,12 @@ public class CfgThirdNoticeController extends BaseController {
     @WebAdvanceQuery(handler = CfgThirdNoticeQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated CfgThirdNoticeDTO.PagingParamDTO dto, HttpServletResponse response) {
         cfgThirdNoticeService.exportList(dto, response);
+        return success();
+    }
+
+    @PostMapping("/testPush")
+    public ApiResult<Object> testPush(@RequestBody MqConsumerRecordDTO.MqDTO dto) {
+        cfgThirdNoticeService.testPush(dto);
         return success();
     }
 
