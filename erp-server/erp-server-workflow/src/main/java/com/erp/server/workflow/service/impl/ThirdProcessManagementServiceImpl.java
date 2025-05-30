@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONObject;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
 import com.erp.server.workflow.mapper.ThirdProcessManagementMapper;
@@ -84,6 +85,15 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, thirdProcessManagementEntity, null, thirdProcessManagementEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional
+    public void insert(JSONObject jsonObject) {
+        //TODO 解析数据
+        //1、生成主表数据
+        //2、生成task明细数据
     }
 
 

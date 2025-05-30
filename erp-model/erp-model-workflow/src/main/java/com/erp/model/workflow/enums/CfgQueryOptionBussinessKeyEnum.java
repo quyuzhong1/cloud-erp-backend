@@ -86,4 +86,15 @@ public enum CfgQueryOptionBussinessKeyEnum implements EnumMessage {
         }
         return "";
     }
+	public static CfgQueryOptionBussinessKeyEnum getByCode(String code) {
+		if (StringUtils.isBlank(code)) {
+			return null;
+		}
+		for (CfgQueryOptionBussinessKeyEnum statusEnum : CfgQueryOptionBussinessKeyEnum.values()) {
+			if (code.equals(statusEnum.getCode())) {
+				return statusEnum;
+			}
+		}
+		return null;
+	}
 }

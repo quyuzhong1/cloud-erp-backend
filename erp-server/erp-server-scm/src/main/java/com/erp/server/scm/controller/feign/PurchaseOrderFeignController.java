@@ -19,6 +19,7 @@ import javax.annotation.Resource;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -537,5 +538,24 @@ public class PurchaseOrderFeignController {
     @PostMapping("/listAllPurchaseBySkuIdAndSupplier")
     public List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO) {
         return purchaseOrderService.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO);
+    }
+
+    @PostMapping("/updatePurchaseOrder")
+    public void updatePurchaseOrder(@RequestBody PurchaseOrderEntity purchaseOrderEntity) {
+        purchaseOrderService.updatePurchaseOrder(purchaseOrderEntity);
+    }
+
+    @PostMapping("/updatePurchaseOrderByUnique")
+    public void updatePurchaseOrderByUnique(String field,String value,@RequestBody PurchaseOrderEntity purchaseOrderEntity) {
+        purchaseOrderService.updatePurchaseOrderByUnique(field,value,purchaseOrderEntity);
+    }
+    @PostMapping("/save")
+    public void save(@RequestBody PurchaseOrderEntity purchaseOrderEntity) {
+        purchaseOrderService.save(purchaseOrderEntity);
+    }
+
+    @PostMapping("/saveAndUpdate")
+    public void saveAndUpdate(@RequestBody PurchaseOrderEntity purchaseOrderEntity) {
+        purchaseOrderService.insert(purchaseOrderEntity);
     }
 }

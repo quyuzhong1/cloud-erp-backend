@@ -1,4 +1,5 @@
 package com.erp.server.workflow.service;
+import cn.hutool.json.JSONObject;
 import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
@@ -33,4 +34,5 @@ public interface ThirdProcessManagementService extends SuperService<ThirdProcess
     Boolean update(ThirdProcessManagementDTO.UpdateDTO dto);
 
 
+    void insert(JSONObject jsonObject);
 }
