@@ -1,7 +1,9 @@
 package com.erp.oms.aliexpress.dto.request;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
@@ -67,4 +69,26 @@ public class DeclareDeliverRequest implements Serializable {
      * 子订单下标
      */
     private List<String> subTradeOrderIndexList;
+
+    /**
+     * 子订单下标和类型
+     */
+    public List<SubTradeOrderDTO> subTradeOrderDTOList;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SubTradeOrderDTO {
+
+        /**
+         * 发货类型
+         */
+        private String sendType;
+
+        /**
+         * 下标
+         */
+        private String subTradeOrderIndex;
+
+    }
 }
