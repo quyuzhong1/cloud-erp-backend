@@ -17,6 +17,7 @@ import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
 import com.erp.model.workflow.entity.ApproveSyncRecordEntity;
 import com.erp.model.workflow.enums.ApproveSyncRecordNoticeTypeEnum;
 import com.erp.model.workflow.enums.ApproveSyncRecordStatusEnum;
+import com.erp.model.workflow.enums.CfgApproveNoticeNoticeTypeEnum;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
@@ -86,6 +87,8 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
             record.setNoticeMethodName(CfgApproveSyncSyncPlatformEnum.getName(record.getNoticeMethod()));
 
             record.setStatusName(ApproveSyncRecordStatusEnum.getName(record.getStatus()));
+
+            record.setNoticeNodeName(CfgApproveNoticeNoticeTypeEnum.getName(record.getNoticeNode()));
         }
     }
 
