@@ -5301,6 +5301,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //物流商id
             String logisticsChannelId = matchResult.getLogisticsChannelId();
             String logisticsChannelName = matchResult.getLogisticsChannelName();
+            resultDTO.setName(matchResult.getName());
             autoGetTrackNo = matchResult.getAutoGetTrackNo();
             autoGetTrackNotOfRangeDelivery = matchResult.getAutoGetTrackNotOfRangeDelivery();
             if (StringUtils.isNotBlank(logisticsChannelId)) {
@@ -7107,7 +7108,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cRuleService.handleAutoSubmitDelivery(id);
+                    soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
                 }
             }
         }
@@ -10546,7 +10547,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 }
                                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                                    soB2cRuleService.handleAutoSubmitDelivery(soB2cEntity.getId());
+                                    soB2cRuleService.handleAutoSubmitDelivery(soB2cEntity.getId(), logisticsRuleResult.getName());
                                 }
                             }
                         }

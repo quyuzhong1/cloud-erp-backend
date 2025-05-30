@@ -1,15 +1,19 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.enums.LogisticsMappingTypeEnum;
@@ -26,7 +30,6 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -65,8 +68,11 @@ public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEnt
     @Resource
     private SoB2cErrorService soB2cErrorService;
 
+    @Resource
+    private OperateLogService operateLogService;
+
     @Override
-    public boolean handleAutoSubmitDelivery(String soId) {
+    public boolean handleAutoSubmitDelivery(String soId, String name) {
         SoB2cEntity entity = this.getByIdOpt(soId).orElseThrow(() -> new ServiceException("销售订单不存在，soId: " + soId));
         SoB2cLogisticsEntity soB2cLogisticsEntity = soB2cLogisticsService.getByMainId(soId);
         if (soB2cLogisticsEntity == null || StringUtils.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
@@ -94,6 +100,11 @@ public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEnt
         if( !isWarehouseLogistic && !isOverseasWarehouse) {
             // 获取跟踪号
             soB2cService.getLogisticsCode(entity.getId(),  Boolean.TRUE);
+            //重新查询主表判断是否提交发货成功
+            entity = this.getById(soId);
+            if(!entity.getSignOrderError().equals(SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode())){
+                operateLogService.addModuleOperateLog(CharSequenceUtil.format("订单自动提交发货，物流规则【{}】",name),ModuleTypeEnum.SO_B2C.getCode(),entity.getId(),"自动提交发货" );
+            }
         }else if(!isWarehouseLogistic) {
             // 非海外仓物流+海外仓仓库 获取跟踪号 然后查询配置的海外仓物流后提交发货
             // 获取跟踪号
@@ -113,23 +124,24 @@ public class SoB2cRuleServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEnt
                 soB2cErrorService.add(addError);
                 return false;
             }
-            if (!submitDelivery(soId, viewDTO)){
+            if (!submitDelivery(soId, viewDTO,name)){
                 return false;
             }
         }else if(isOverseasWarehouse) {
             // 海外仓物流+海外仓仓库 直接提交发货
-            if (!submitDelivery(soId, null)){
+            if (!submitDelivery(soId, null,name)){
                 return false;
             }
         }
         return true;
     }
 
-    public boolean submitDelivery(String soId, LogisticsMappingDTO.ViewDTO viewDTO) {
+    public boolean submitDelivery(String soId, LogisticsMappingDTO.ViewDTO viewDTO,String ruleName) {
         // 提交发货
         try {
             String warehouseLogisticsChannelId = Objects.nonNull(viewDTO)?viewDTO.getPlatformLogisticsChannelId():"";
             BatchResultDTO submitDelivery = soB2cService.submitDelivery(soId, warehouseLogisticsChannelId);
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("订单自动提交发货，物流规则【{}】",ruleName),ModuleTypeEnum.SO_B2C.getCode(),soId,"自动提交发货" );
             if(!submitDelivery.getSuccess()){
                 if(StringUtils.isNotBlank(submitDelivery.getMsg())){
                     SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();

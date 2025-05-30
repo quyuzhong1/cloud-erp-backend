@@ -11,5 +11,5 @@ import com.erp.model.oms.entity.SoB2cEntity;
  */
 public interface SoB2cRuleService extends SuperService<SoB2cEntity> {
 
-    boolean handleAutoSubmitDelivery(String soId);
+    boolean handleAutoSubmitDelivery(String soId, String name);
 }
