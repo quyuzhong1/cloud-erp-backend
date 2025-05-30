@@ -984,8 +984,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             //数量
             int waitQty = v.getApplyQty() - purchaseQty;
-            if(waitQty == 0 || waitQty >= v.getApplyQty()){
-                throw new ServiceException("只有SKU剩余数量小于申请数量，且不为0时，可以提交关闭");
+            if(waitQty == 0 || waitQty > v.getApplyQty()){
+                throw new ServiceException("只有SKU剩余数量小于等于申请数量，且不为0时，可以提交关闭");
             }
             v.setCloseReason(dto.getCloseReason());
             v.setCreatePoType(CreatePoTypeEnum.CLOSED.getStatus());

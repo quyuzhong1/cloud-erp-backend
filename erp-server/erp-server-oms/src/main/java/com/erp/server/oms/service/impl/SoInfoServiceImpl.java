@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
@@ -1244,6 +1245,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "dto.id")
     public String updateSo(SoInfoDTO.UpdateDTO dto) {
         String id = dto.getId();
         SoInfoEntity soInfo = this.getById(id);
@@ -2276,7 +2278,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setReturnAmount(view.getAmount());
             view.setTaxReturnAmount(view.getTaxAmount());
             //限制销售组织下的
-            if(soWarehouseDTO.getOrgId().equals(view.getSalesOrgId())){
+            if(soWarehouseDTO.getOrgId().equals(view.getWarehouseOrgId())){
                 view.setWarehouseId(soWarehouseDTO.getWarehouseId());
                 view.setWarehouseName(soWarehouseDTO.getWarehouseName());
             }
@@ -3270,6 +3272,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "id")
     public Boolean unLockVirtualInventory(String id) {
         SoInfoEntity soInfoEntity = getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {
