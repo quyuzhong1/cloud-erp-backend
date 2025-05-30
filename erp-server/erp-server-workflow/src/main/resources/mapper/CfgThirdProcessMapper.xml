@@ -121,7 +121,7 @@
         <result property="defaultValue" column="value_map_default_value"/>
     </resultMap>
 
-    <select id="getView" resultType="com.erp.model.workflow.dto.CfgThirdProcessDTO$ViewDTO">
+    <select id="getView" resultMap="viewDTOResultMap">
         SELECT
             -- 主表字段
             p.id AS process_id,
