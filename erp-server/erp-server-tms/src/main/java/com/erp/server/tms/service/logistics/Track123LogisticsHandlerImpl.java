@@ -7,6 +7,7 @@ import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.ValidatorUtil;
 import com.erp.model.dmp.dto.CfgAppClientDTO;
@@ -24,8 +25,8 @@ import com.erp.model.tms.vo.request.RegisterTrackVO;
 import com.erp.model.tms.vo.response.LogisticsServiceResponseVO;
 import com.erp.model.tms.vo.response.RegisterResponseVO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
+import com.erp.server.tms.service.DictBasicService;
 import com.erp.server.tms.service.LogisticsOperateService;
 import com.sdk.tms.track123.model.request.ExtendField;
 import com.sdk.tms.track123.model.request.OceanRegisterRequest;
@@ -63,6 +64,8 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
     private DmpTaskFeign dmpTaskFeign;
     @Resource
     private LogisticsOperateService logisticsOperateService;
+    @Resource
+    private DictBasicService dictBasicService;
     private final static String HAS_BEEN_IMPORTED = "The order number has been imported";
     private final static DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     /**
@@ -248,14 +251,20 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         List<RegisterResponseVO> registerResponseVOS = new ArrayList<>();
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)) {
             return failure("注册数据不能为空");
+
         }
-        List<RegisterRequest> registerRequests = LogisticsChannelConverter.INSTANCE.registerTrackNoByTrack123(logisticsRegisterVOS);
-        //去掉非顺丰物流单手机号传递
-        registerRequests.forEach(registerRequest -> {
-            String trackNo = registerRequest.getTrackNo();
-            if (StringUtils.isEmpty(trackNo) || !trackNo.startsWith("SF")){
+        List<RegisterRequest> registerRequests = new ArrayList<>();
+        logisticsRegisterVOS.forEach(e ->{
+            RegisterRequest registerRequest = new RegisterRequest();
+            BeanMapperUtils.copy(e, registerRequest);
+            if (Objects.isNull(e.getIsPushMobile()) || !e.getIsPushMobile()){
                 registerRequest.setExtendFieldMap(null);
+            }else {
+                ExtendField extendFieldMap = new ExtendField();
+                extendFieldMap.setPhoneSuffix(getPhoneSuffix4(e.getPhoneSuffix()));
+                registerRequest.setExtendFieldMap(extendFieldMap);
             }
+            registerRequests.add(registerRequest);
         });
         ValidatorUtil.validateEntity(registerRequests);
         try {
@@ -301,6 +310,17 @@ public class Track123LogisticsHandlerImpl extends AbstractLogisticsHandler {
         }
     }
 
+    private String getPhoneSuffix4(String phoneSuffix){
+        if (StringUtils.isEmpty(phoneSuffix)){
+            return "";
+        }
+        //获取手机号后四位
+        if (phoneSuffix.length()<=4){
+            return phoneSuffix;
+        }else {
+            return phoneSuffix.substring(phoneSuffix.length() - 4);
+        }
+    }
     @Override
     public ApiResult<List<RegisterResponseVO>> oceanRegisterLogisticsNumber(List<LogisticsTrackBaseDTO.OceanRegisterRequestDTO> list) {
         if (CollectionUtils.isEmpty(list)) {

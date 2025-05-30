@@ -1473,8 +1473,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (CollectionUtils.isEmpty(listDto)){
             return Collections.emptyMap();
         }
-        return listDto.stream()
-                .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
+        if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)){
+            return listDto.stream()
+                    .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSpuNo));
+        }else{
+            return listDto.stream()
+                    .collect(Collectors.groupingBy(ListingInfoWithSkuMappingDTO::getPlatformSkuNo));
+        }
     }
 
 
@@ -1482,7 +1488,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
      * 检查或获取映射关系
      */
     @Override
-    public ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform) {
+    public ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform, String platformSkuNo) {
         if (CollectionUtils.isEmpty(mappingDTOList)) {
             return null;
         }
@@ -1495,6 +1501,14 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
         )){
             throw new ServiceException("来源平台SPU为空");
+        }
+        if(PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)){
+            // 美客多根据订单中的店铺+平台产品ID+平台SKU匹配对照表映射，没找到listing数据时，再根据店铺+平台产品ID匹配映射
+            return mappingDTOList.stream()
+                    .filter(v -> v.getPlatformSkuNo().equals(platformSkuNo))
+                    .findFirst()
+                    .orElse(mappingDTOList.isEmpty() ? null : mappingDTOList.get(0));
         }
         // 查询相同SPU记录
         return mappingDTOList.stream()
@@ -1577,14 +1591,19 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
 
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
-                && PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
-                && PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
-                && PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
-                && PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
         ){
             // 速卖通/Shopify/Tiktok订单SKU为空的情况只根据PlatformSkuNo匹配
             if (CollectionUtils.isNotEmpty(platformSkuList) && platformSkuList.stream().allMatch(StringUtils::isNotBlank)){
                 paramDTO.setPlatformSkuNoList(platformSkuList);
+            }
+            // 美客多根据订单中的店铺+平台产品ID+平台SKU匹配对照表映射，没找到listing数据时，再根据店铺+平台产品ID匹配映射
+            if(PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
+                    || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)){
+                paramDTO.setPlatformSkuNoList(new ArrayList<>());
             }
             // 存在空SKU忽略PlatformSkuNo查询
         } else {

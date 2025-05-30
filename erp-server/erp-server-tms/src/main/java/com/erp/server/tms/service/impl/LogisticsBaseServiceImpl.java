@@ -1,5 +1,6 @@
 package com.erp.server.tms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
@@ -19,10 +20,7 @@ import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsTrackBaseDTO;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsAddressEntity;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
-import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
-import com.erp.model.tms.entity.LogisticsTrackEntity;
+import com.erp.model.tms.entity.*;
 import com.erp.model.tms.enums.LogisticsAddressTypeEnum;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -75,6 +73,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
 
     @Resource
     private TikTokFullService tikTokFullService;
+    @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
 
     @Override
     public List<BatchResultDTO> syncLogisticsChannel(String platform) {
@@ -271,9 +271,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (CollectionUtils.isEmpty(mapList)) {
             return;
         }
-        if (CollectionUtils.isEmpty(records)) {
-            return;
-        }
+        //获取映射信息
+        List<String> channelIds = records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<LogisticsThirdChannelRefEntity> refEntityList = logisticsThirdChannelRefService.listByChannelIds(channelIds);
+        //构建注册数据
+        buildRegisterData(records,refEntityList);
         //跟据类型判断走小包、海运
         ApiResult<List<RegisterResponseVO>> listApiResult;
         if (CharSequenceUtil.equals(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode(),transportType)) {
@@ -316,6 +318,19 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
     }
 
+    private void buildRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records, List<LogisticsThirdChannelRefEntity> refEntityList) {
+        if (CollUtil.isEmpty(records) || CollUtil.isEmpty(refEntityList)){
+            return;
+        }
+        records.forEach(record -> {
+            LogisticsThirdChannelRefEntity refEntity = refEntityList.stream().filter(e -> e.getLogisticsChannelId().equals(record.getChannelId())).findFirst().orElse(null);
+            if (Objects.nonNull(refEntity)){
+                record.setIsPushMobile(refEntity.getIsPushMobile());
+                record.setThirdSupplierCode(refEntity.getThirdSupplierCode());
+            }
+        });
+    }
+
     /**
      * @description: 获取快递运单轨迹
      * @author Will
@@ -342,6 +357,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
                     .trackNo(trackNo)
                     .phoneSuffix(record.getTelNumber())
+                    .courierCode(record.getThirdSupplierCode())
+                    .isPushMobile(record.getIsPushMobile())
                     .build());
         }
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)){

@@ -742,7 +742,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                     Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                     if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                             || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                        soB2cRuleService.handleAutoSubmitDelivery(entity.getId());
+                        soB2cRuleService.handleAutoSubmitDelivery(entity.getId(), logisticsRuleResult.getName());
                     }
 
                 }
