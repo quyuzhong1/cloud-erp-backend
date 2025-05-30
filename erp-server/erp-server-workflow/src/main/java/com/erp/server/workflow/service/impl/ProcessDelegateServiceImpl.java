@@ -35,7 +35,7 @@ import com.erp.model.workflow.enums.ProcessDelegateStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
-import com.erp.server.sys.convert.SysUserConvert;
+import com.erp.server.workflow.convert.ProcessDelegateConvert;
 import com.erp.server.workflow.mapper.ProcessDelegateMapper;
 import com.erp.server.workflow.service.OperateLogService;
 import com.erp.server.workflow.service.ProcessDelegateService;
@@ -243,7 +243,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
             if (CollUtil.isEmpty(userDeptList)){
                 throw new ServiceException("当前登陆人未找到部门信息");
             }
-            return SysUserConvert.INSTANCE.sysUserDeptToFindUser(sysUserDeptList);
+            return ProcessDelegateConvert.INSTANCE.sysUserDeptToFindUser(sysUserDeptList);
         } else {
             //全部权限
             return sysUserFeign.getUserList();
