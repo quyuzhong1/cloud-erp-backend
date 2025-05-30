@@ -202,7 +202,6 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             String msg = StrUtil.format("删除【{}】流程设置执行条件", UserContext.getDefaultLoginUser().getUserName(), "流程设置执行条件", "");
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntity.getCfgProcessId(), "删除操作");
         });
-
     }
 
     @Override

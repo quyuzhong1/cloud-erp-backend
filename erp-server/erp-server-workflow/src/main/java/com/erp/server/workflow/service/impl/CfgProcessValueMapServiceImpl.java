@@ -192,18 +192,8 @@ public class CfgProcessValueMapServiceImpl extends SuperServiceImpl<CfgProcessVa
         if (CollectionUtils.isEmpty(cfgProcessValueMapEntities)) {
             return;
         }
-        //创建一个List<String>长度为cfgProcessValueMapEntities的长度
-        List<String> ids = new ArrayList<>(cfgProcessValueMapEntities.size());
-        cfgProcessValueMapEntities.forEach(item -> {
-            item.setIsDeleted(true)
-                    .setUpdateTime(LocalDateTime.now())
-                    .setUpdateUserId(loginUser.getUid())
-                    .setUpdateUserName(loginUser.getUserName());
-            ids.add(item.getId());
-        });
-        // 批量更新
-        this.updateBatchById(cfgProcessValueMapEntities);
-        log.info("删除流程设置执行条件: {}", ids);
+        List<String> ids = cfgProcessValueMapEntities.stream().map(CfgProcessValueMapEntity::getId).collect(Collectors.toList());
+        removeByIds(ids);
     }
 
 

@@ -132,17 +132,8 @@ public class CfgProcessExpServiceImpl extends SuperServiceImpl<CfgProcessExpMapp
         if (CollUtil.isEmpty(cfgProcessExpEntityList)) {
             return;
         }
-        ArrayList<String> ids = new ArrayList<>(cfgProcessExpEntityList.size());
-        cfgProcessExpEntityList.forEach(item -> {
-            item.setIsDeleted(true)
-                    .setUpdateTime(LocalDateTime.now())
-                    .setUpdateUserId(loginUser.getUid())
-                    .setUpdateUserName(loginUser.getUserName());
-            ids.add(item.getId());
-        });
-        // 批量更新
-        this.updateBatchById(cfgProcessExpEntityList);
-        log.info("删除流程设置执行条件: {}", ids);
+        List<String> ids = cfgProcessExpEntityList.stream().map(CfgProcessExpEntity::getId).collect(Collectors.toList());
+        removeByIds(ids);
     }
 
     /**

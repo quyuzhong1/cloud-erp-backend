@@ -154,19 +154,10 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         if (CollectionUtils.isEmpty(cfgProcessFieldMapEntityList)) {
             return;
         }
-        List<String> ids = new ArrayList<>(cfgProcessFieldMapEntityList.size());
-        cfgProcessFieldMapEntityList.forEach(item -> {
-            item.setIsDeleted(true)
-                    .setUpdateTime(LocalDateTime.now())
-                    .setUpdateUserId(loginUser.getUid())
-                    .setUpdateUserName(loginUser.getUserName());
-            ids.add(item.getId());
-        });
-        // 批量更新
-        this.updateBatchById(cfgProcessFieldMapEntityList);
-        log.info("删除流程设置执行条件: {}", ids);
+        List<String> ids = cfgProcessFieldMapEntityList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
+        removeByIds(ids);
         //删除选项条件设置
-        cfgProcessValueMapService.delete(cfgProcessFieldMapEntityList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList()));
+        cfgProcessValueMapService.delete(ids);
     }
 
 

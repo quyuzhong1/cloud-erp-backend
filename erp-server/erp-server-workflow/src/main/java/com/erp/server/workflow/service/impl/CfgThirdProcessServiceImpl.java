@@ -15,10 +15,12 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.enums.CfgThirdProcessSourcePlatformEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.CfgThirdProcessMapper;
 import com.erp.server.workflow.service.*;
@@ -84,6 +86,32 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
             throw new ServiceException("三方审批生成保存失败");
         }
 
+        List<CfgProcessFieldMapDTO.ViewDTO> view = cfgProcessFieldMapService.view(addDTO.getThirdProcessDefinitionCode(), addDTO.getSourcePlatform());
+        //筛选出必填的飞书审批定义字段,并转为map
+        List<String> ids = view.stream().map(e -> {
+            if (e.getThirdFieldRequired()) {
+                //跳过本次
+                return null;
+            }
+            return e.getThirdFieldId();
+        }).collect(Collectors.toList());
+        Map<String, String> collect = view.stream().collect(Collectors.toMap(CfgProcessFieldMapDTO.ViewDTO::getThirdFieldId, CfgProcessFieldMapDTO.ViewDTO::getThirdField));
+        //分离必填
+        if (CollUtil.isNotEmpty(ids)) {
+            //删除飞书审批定义字段
+            List<CfgProcessFieldMapDTO.AddOrUpdateDTO> fieldMapList = addDTO.getFieldMapList();
+            fieldMapList.stream().map(e -> {
+                if (ids.contains(e.getThirdFieldId())) {
+                    ids.remove(e.getThirdFieldId());
+                }
+                return null;
+            });
+        }
+        if (ids.size() > 0) {
+            //使用ids获取collect中的value
+            List<String> names = ids.stream().map(collect::get).collect(Collectors.toList());
+            throw new ServiceException("三方审批生成保存失败,缺少飞书必填字段："+StrUtil.join(","+names));
+        }
         //新增明细：field->cfg_type、cfg_id thirdCfg
         cfgProcessFieldMapService.add(addDTO.getBussinessKey(), cfgThirdProcessEntity.getId(), cfgThirdProcessEntity.getId(), addDTO.getFieldMapList());
         // 操作日志
@@ -125,6 +153,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         pageData.getRecords().forEach(
                 e -> {
                     e.setSourcePlatformName(sourcePlatFormName);
+                    e.setOperateType(DictBasicEnum.getByCode(e.getOperateType()).getType());
                 }
         );
         return new PagingVO<>(pageData);
