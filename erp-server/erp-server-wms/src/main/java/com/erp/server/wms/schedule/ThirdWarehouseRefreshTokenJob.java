@@ -47,6 +47,41 @@ public class ThirdWarehouseRefreshTokenJob {
     public ReturnT<String> refreshThirdWarehouseToken() {
         XxlJobHelper.log("[刷新三方仓token] 任务开始--------------------------------------->");
         List<OverseasProviderEntity> overseasProviderEntityList = overseasProviderService.list();
+        //refreshToken过期的，将状态更新为未授权
+        List<OverseasProviderEntity> refreshTokenExpireList = overseasProviderEntityList.stream()
+                .filter(overseasProviderEntity -> {
+                    if (overseasProviderEntity.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())) {
+                        Map<String, Object> authMap = overseasProviderEntity.getAuthJson();
+                        if (authMap == null || authMap.isEmpty() || !authMap.containsKey("refreshExpireIn")) {
+                            return false;
+                        }
+                        String expireTimeStr = (String) authMap.get("refreshExpireIn");
+                        LocalDateTime expireTime = LocalDateTime.parse(
+                                expireTimeStr,
+                                DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                        );
+                        //如果当前时间+12小时大于过期时间，则需要刷新
+                        LocalDateTime now = LocalDateTime.now();
+                        return now.isAfter(expireTime);
+                    }
+                    return false;
+                })
+                .collect(Collectors.toList());
+        refreshTokenExpireList.forEach(overseasProviderEntity -> {
+            overseasProviderEntity.setAuthStatus(AuthStatusEnum.NOT.getCode());
+            log.warn("[刷新三方仓token] refreshToken过期: authId={}, Code={}，状态更新为未授权",
+                    overseasProviderEntity.getId(),
+                    overseasProviderEntity.getCode()
+            );
+            XxlJobHelper.log("[刷新三方仓token] refreshToken过期: authId={}, Code={}，状态更新为未授权",
+                    overseasProviderEntity.getId(),
+                    overseasProviderEntity.getCode()
+            );
+        });
+        if(CollectionUtils.isNotEmpty(refreshTokenExpireList)){
+            overseasProviderService.updateBatchById(refreshTokenExpireList);
+        }
+        overseasProviderEntityList = overseasProviderService.list();
         overseasProviderEntityList = overseasProviderEntityList.stream()
                 .filter(overseasProviderEntity -> {
                     overseasProviderEntity.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode());

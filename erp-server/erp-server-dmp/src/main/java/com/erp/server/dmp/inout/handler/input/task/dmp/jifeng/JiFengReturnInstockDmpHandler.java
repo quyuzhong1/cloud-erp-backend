@@ -30,13 +30,15 @@ public class JiFengReturnInstockDmpHandler extends DmpInputDbConvertDmpHandler {
 				String createTimeStr = dmpDataMap.getOrDefault("createTime", "").toString();
 				if (StringUtils.isNotBlank(createTimeStr)){
 					LocalDateTime createTime = LocalDateTime.parse(createTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-					dmpDataMap.put("platform_create_time", createTime);
+					createTime = createTime.plusHours(11);
+					dmpDataMap.put("platformCreateTime", createTime);
 				}
 
 				String finishTimeStr = dmpDataMap.getOrDefault("finishTime", "").toString();
 				if (StringUtils.isNotBlank(finishTimeStr)){
 					LocalDateTime finishTime = LocalDateTime.parse(finishTimeStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-					dmpDataMap.put("put_away_time", finishTime);
+					finishTime = finishTime.plusHours(11);
+					dmpDataMap.put("putAwayTime", finishTime);
 				}
 			}
 		}
