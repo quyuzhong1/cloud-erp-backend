@@ -133,6 +133,12 @@
             <artifactId>erp-sdk-msg-fs</artifactId>
             <version>0.0.1-SNAPSHOT</version>
         </dependency>
+        <dependency>
+            <groupId>com.erp.server</groupId>
+            <artifactId>erp-server-sys</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <profiles>
