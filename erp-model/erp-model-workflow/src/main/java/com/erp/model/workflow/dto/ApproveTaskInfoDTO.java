@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
@@ -250,7 +251,7 @@ public class ApproveTaskInfoDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO  {
 
         /**
         * 主键id
@@ -261,6 +262,7 @@ public class ApproveTaskInfoDTO implements Serializable {
          * 三方查询明细
          */
         @NotEmpty(message = "三方查询明细数据不能为空")
+        @Valid
         private List<ApproveTaskDetailDTO.UpdateDTO> detailList;
     }
 

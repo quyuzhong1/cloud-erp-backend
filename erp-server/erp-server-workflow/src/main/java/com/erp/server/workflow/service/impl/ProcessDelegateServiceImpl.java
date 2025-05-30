@@ -17,11 +17,14 @@ import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.entity.ProcessDelegateEntity;
@@ -73,13 +76,10 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(ProcessDelegateDTO.AddDTO addDTO) {
-        //时间校验
-        if (addDTO.getEffectiveTime().isAfter(addDTO.getExpireTime()) || addDTO.getEffectiveTime().equals(addDTO.getExpireTime())) {
-            throw new ServiceException(ApiError.PROCESS_DELEGATE_TIME_ERROR);
-        }
         // 数据处理
-       List<ProcessDelegateEntity> list =  handleAddData(addDTO);
-
+        List<ProcessDelegateEntity> list =  handleAddData(addDTO);
+        //更新校验
+        list.forEach(this::checkUpdateData);
         log.info("开始新增委托审批");
         boolean save = super.saveBatch(list);
         if(!save) {
@@ -97,8 +97,12 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         ProcessDelegateEntity old = super.getById(updateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "委托审批"));
         ProcessDelegateEntity entity =  BeanMapperUtils.map(ProcessDelegateEntity.class, updateDTO);
+        //状态校验
+        if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(old.getStatus())) {
+            throw new ServiceException(ApiError.PROCESS_DELEGATE_UPDATE);
+        }
         //更新校验
-        checkUpdateData(old,entity);
+        checkUpdateData(entity);
         log.info("编辑 开始修改委托审批数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(entity);
         if(!save) {
@@ -177,8 +181,8 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     }
 
     @Override
-    public ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId) {
-        return  baseMapper.getByProcessDefinitionId(processDefinitionId);
+    public ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId,String startUserId) {
+        return  baseMapper.getByProcessDefinitionId(processDefinitionId,startUserId);
     }
 
     @Override
@@ -208,6 +212,15 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         this.updateById(entity);
     }
 
+    @Override
+    public List<String> listStartUserId() {
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+
+
+        return Collections.emptyList();
+    }
+
     /**
     * 批量新增数据转换
     * @author will
@@ -216,17 +229,10 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     * @return List<ProcessDelegateEntity>
     */
     private List<ProcessDelegateEntity> handleAddData(ProcessDelegateDTO.AddDTO addDTO) {
-        //委托信息
-        List<ProcessDelegateEntity> processDelegateList = listByBusinessKeyList(addDTO.getBusinessKeyList());
-        Map<String, ProcessDelegateEntity> map = CollUtil.isEmpty(processDelegateList) ? new HashMap<>() : processDelegateList.stream().collect(Collectors.toMap(ProcessDelegateEntity::getBusinessKey, Function.identity()));
 
         List<ProcessDelegateEntity> resultList = new ArrayList<>();
         for (String businessKey : addDTO.getBusinessKeyList()) {
             ProcessDelegateEntity processDelegateEntity = BeanUtil.toBean(addDTO, ProcessDelegateEntity.class);
-            ProcessDelegateEntity oldEntity = map.get(businessKey);
-            if (ObjectUtil.isNotEmpty(oldEntity)) {
-                throw new ServiceException(ApiError.PROCESS_DELEGATE_BUSINESS_KEY_EXIST,SourceTypeEnum.getName(businessKey));
-            }
             // 生成单号
             String code = docNoGenHelper.generateCode(BusinessNoTypeEnum.CODE_LCWT);
             processDelegateEntity.setCode(code);
@@ -240,33 +246,37 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
      * 更新校验
      * @author will
      * @date 2025/5/12 19:30
-     * @param old
      * @param entity
      * @return void
      */
-    private void checkUpdateData (ProcessDelegateEntity old,ProcessDelegateEntity entity) {
-        //状态校验
-        if (!ProcessDelegateStatusEnum.PENDING.getCode().equals(old.getStatus())) {
-            throw new ServiceException(ApiError.PROCESS_DELEGATE_UPDATE);
-        }
+    private void checkUpdateData (ProcessDelegateEntity entity) {
         //时间校验
         if (entity.getEffectiveTime().isAfter(entity.getExpireTime()) || entity.getEffectiveTime().equals(entity.getExpireTime())) {
             throw new ServiceException(ApiError.PROCESS_DELEGATE_TIME_ERROR);
         }
         List<ProcessDelegateEntity> processDelegateList = this.listByBusinessKeyList(Collections.singletonList(entity.getBusinessKey()));
-        if (CollUtil.isNotEmpty(processDelegateList) && !processDelegateList.get(0).getId().equals(entity.getId())) {
-            throw new ServiceException(ApiError.PROCESS_DELEGATE_BUSINESS_KEY_ERROR,processDelegateList.get(0).getCode());
+
+        for ( ProcessDelegateEntity detailEntity : processDelegateList) {
+            //单据类型不能重复
+            if (detailEntity.getId().equals(entity.getId())) {
+                continue;
+            }
+            //时间不能重叠
+            boolean overlap = LocalDateUtil.isOverlapLocalDateTime(entity.getEffectiveTime(), entity.getExpireTime(), detailEntity.getEffectiveTime(), detailEntity.getExpireTime());
+            if (overlap) {
+                throw new ServiceException(ApiError.PROCESS_PROCESS_DELEGATE_OVERLAP);
+            }
         }
     }
     /**
-     * 根据单据类型查询
+     * 根据单据类型查询未结束数据
      * @author will
      * @date 2025/5/12 19:32
      * @param businessKeyList
      * @return List<ProcessDelegateEntity>
      */
     private List<ProcessDelegateEntity> listByBusinessKeyList (List<String> businessKeyList) {
-        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).list();
+        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode()).list();
     }
 
     /**

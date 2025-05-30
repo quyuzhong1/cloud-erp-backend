@@ -83,7 +83,7 @@ public interface ProcessDelegateService extends SuperService<ProcessDelegateEnti
      * @param processDefinitionId
      * @return ProcessDelegateEntity
      */
-    ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId);
+    ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId,String startUserId);
     /**
      * 查询未结束数据
      * @author will
@@ -100,4 +100,11 @@ public interface ProcessDelegateService extends SuperService<ProcessDelegateEnti
      * @return void
      */
     void updateStatusJob(ProcessDelegateEntity entity, LocalDateTime now);
+    /**
+     * 根据登陆人id查询委托审批信息
+     * @author will
+     * @date 2025/5/29 19:48
+     * @return List<String>
+     */
+    List<String> listStartUserId();
 }

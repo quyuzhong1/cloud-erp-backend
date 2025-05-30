@@ -3374,6 +3374,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         return uploadOrderLabel(multipartFile, entity);
     }
 
+    @Override
+    public List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(List<String> ids) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public BatchResultDTO pushPurchaseApplication(List<SoB2cDTO.PushPurchaseApplicationDTO> list) {
+        return null;
+    }
+
     @NotNull
     private BatchResultDTO uploadOrderLabel(MultipartFile multipartFile, SoInfoEntity entity) {
         SoLabelEntity labelEntity = soLabelService.getByMainId(entity.getId());

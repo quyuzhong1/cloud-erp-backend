@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.entity.SoChangeEntity;
@@ -511,4 +512,22 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return
      */
     BatchResultDTO singleUploadLogisticLabel(MultipartFile file, String id);
+    /**
+     * 查询采购申请数据
+     * @author will 
+     * @date 2025/5/29 15:43
+     * @param ids
+     * @return List<ViewPushPurchaseApplicationDTO>
+     */
+    List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(List<String> ids);
+
+    /**
+     * 下推采购申请保存
+     * @author will
+     * @date 2025/5/29 15:44
+     * @param list
+     * @return BatchResultDTO
+     */
+    BatchResultDTO pushPurchaseApplication(List<SoB2cDTO.PushPurchaseApplicationDTO> list);
+
 }

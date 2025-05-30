@@ -21,10 +21,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.CfgProcessRuleDTO;
-import com.erp.model.workflow.entity.CfgProcessEntity;
-import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
-import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
-import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
+import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
@@ -44,10 +41,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_CFG_PROCESS;
@@ -88,6 +82,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Resource
     private FsService  fsService;
+
+    @Resource
+    private ThirdProcessInstanceService processInstanceService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -247,26 +244,33 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
         //组装form，1、实时获取 2、查询流程定义表
-        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "E02ECBC5-7BD1-4C11-B23D-1ED678F3806F").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
-        JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
+//        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "E02ECBC5-7BD1-4C11-B23D-1ED678F3806F").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+//        JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
         ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(dto.getRuleType()).name());
-        formArray = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
-        String form = JSONUtil.toJsonStr(formArray);
-        CreateInstanceReq req = CreateInstanceReq.newBuilder()
-                .instanceCreate(InstanceCreate.newBuilder()
-                        .approvalCode("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F")
-                        .userId("af4eg757")
-                        .form(form)
-                        .build())
-                .build();
-        try {
-            String instanceCode = fsService.createInstance(req);
-            //生成三方查询记录
+//        formArray = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
+//        String form = JSONUtil.toJsonStr(formArray);
+//        CreateInstanceReq req = CreateInstanceReq.newBuilder()
+//                .instanceCreate(InstanceCreate.newBuilder()
+//                        .approvalCode("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F")
+//                        .userId("af4eg757")
+//                        .form(form)
+//                        .build())
+//                .build();
 
+        try {
+//            String instanceCode = fsService.createInstance(req);
+            //生成三方查询记录
+            ThirdProcessInstanceEntity id = processInstanceService.getById("1");
+            String form = id.getForm();
+            JSONArray objects = JSONUtil.parseArray(form);
+            Map<String, Object> map = handler.constructBill(objects, fieldMapList, valueMapList);
+            System.out.println(map);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+
+
     }
 
 }

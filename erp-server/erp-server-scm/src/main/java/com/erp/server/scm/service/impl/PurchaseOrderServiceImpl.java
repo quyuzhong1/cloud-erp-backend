@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -40,6 +41,7 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProductVO;
@@ -3351,5 +3353,28 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
                 moduleOperateLogService.addModuleOperateLog(String.format("合同盖章状态由[%s]变更为[%s]", oldName,name), ModuleTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), "合同盖章状态更新");
             }
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional
+    public void updatePurchaseOrder(PurchaseOrderEntity purchaseOrderEntity) {
+        this.updateById(purchaseOrderEntity);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional
+    public void updatePurchaseOrderByUnique(String field,String value,PurchaseOrderEntity purchaseOrderEntity) {
+        //将field作为唯一键更新entity
+        this.update(purchaseOrderEntity, new QueryWrapper<PurchaseOrderEntity>().eq(field, value));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional
+    public void insert(PurchaseOrderEntity purchaseOrderEntity) {
+        this.save(purchaseOrderEntity);
+        updateApproveStatus(Arrays.asList(purchaseOrderEntity.getId()), purchaseOrderEntity.getApproveStatus());
     }
 }

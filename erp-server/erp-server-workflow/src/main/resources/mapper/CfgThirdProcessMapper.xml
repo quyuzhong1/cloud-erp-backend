@@ -24,16 +24,16 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        code, name, bussiness_key, operate_type, source_platform, enable_status, enable_time
+        ctp.id,
+        ctp.create_user_id,
+        ctp.create_user_name,
+        ctp.create_time,
+        ctp.update_user_id,
+        ctp.update_user_name,
+        ctp.update_time,
+        ctp.version,
+        ctp.is_deleted,
+        ctp.code, ctp.name, ctp.bussiness_key, ctp.operate_type, ctp.source_platform, ctp.enable_status, ctp.enable_time
     </sql>
 
     <select id="tabList" resultType="com.erp.model.workflow.dto.CfgThirdProcessDTO$TabListDTO">
