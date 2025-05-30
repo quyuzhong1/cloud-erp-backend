@@ -71,7 +71,7 @@
             asr.title as title,
             asr.status as status,
             asr.error_reason as errorReason,
-            asr.notice_node as noticeNode,
+            asr.notice_node as noticeNode
         from approve_sync_record as asr
         WHERE
             ${params.sqlMap.default}
