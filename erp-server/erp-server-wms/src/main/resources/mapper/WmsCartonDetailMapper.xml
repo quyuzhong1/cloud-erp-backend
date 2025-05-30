@@ -31,7 +31,8 @@
             wcs.box_height,
             wcs.size_unit,
             wcs.weight_unit,
-            wcs.package_weight
+            wcs.package_weight,
+            wcd.fn_sku as platformSkuNo
         FROM
             wms_carton_detail wcd
                 INNER JOIN wms_carton wc ON wc.id = wcd.main_id and wc.is_deleted = FALSE
