@@ -54,6 +54,7 @@ public class SoOutstockController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
             warehouseTableField = "so.warehouse_id",
+            shopTableField = "so.shop_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
@@ -73,6 +74,7 @@ public class SoOutstockController extends BaseController {
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
             warehouseTableField = "so.warehouse_id",
+            shopTableField = "so.shop_id",
             menuCode = "wms:so:outstock:paging",
             tableAlias = "so"
     )
