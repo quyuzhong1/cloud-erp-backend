@@ -182,4 +182,15 @@ public class ProcessDelegateController extends BaseController {
         return success();
     }
 
+
+    /**
+     * 获取委托审批信息
+     * @author will
+     * @date 2025/5/19 17:48
+     * @return ApiResult<ProcessDelegateEntity>
+     */
+    @GetMapping("/listStartUserId")
+    public ApiResult<List<String>> listStartUserId() {
+        return success(processDelegateService.listStartUserId());
+    }
 }

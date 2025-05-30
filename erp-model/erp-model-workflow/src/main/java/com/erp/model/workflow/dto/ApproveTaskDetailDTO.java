@@ -120,13 +120,20 @@ public class ApproveTaskDetailDTO implements Serializable {
     */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends CommonDTO {
+    public static class UpdateDTO  {
 
         /**
         * 主键id
         */
         @NotBlank(message = "主键id不能为空")
         private String id;
+
+        /**
+         * 数大臣字段值
+         */
+        @NotBlank(message = "数大臣字段值不能为空")
+        @Size(max = 32,message = "数大臣字段值最大长度不能超过32位")
+        private String sysFieldValue;
 
     }
 

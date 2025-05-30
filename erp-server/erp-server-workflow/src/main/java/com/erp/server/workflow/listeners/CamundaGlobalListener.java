@@ -4,6 +4,8 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.erp.model.workflow.entity.ProcessDelegateEntity;
 import com.erp.server.workflow.service.ProcessDelegateService;
 import com.erp.server.workflow.service.ProcessManagementService;
@@ -206,7 +208,9 @@ public class CamundaGlobalListener {
       //查询委托审批信息,重新赋值审核人
       List<String> proList = Arrays.stream(executionDelegate.getProcessDefinitionId().split(":")).collect(Collectors.toList());
       if (CollUtil.isNotEmpty(proList)) {
-        ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(proList.get(0));
+        //获取当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(proList.get(0),userInfo.getUid());
         if (ObjectUtil.isNotEmpty(processDelegateEntity)) {
           candidateUsers = Collections.singletonList(processDelegateEntity.getDelegateUserId());
         }

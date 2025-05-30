@@ -511,6 +511,14 @@ public class LocalDateUtil {
         return (realStartDate.compareTo(endDate) <=0 && startDate.compareTo(realEndDate) <= 0);
     }
 
+    /**
+     * 检查两个时间段是否有时间重叠
+     */
+    public static boolean isOverlapLocalDateTime (LocalDateTime realStartTime, LocalDateTime realEndTime,
+                                                  LocalDateTime startTime, LocalDateTime endTime) {
+        return (realStartTime.compareTo(endTime) <=0 && startTime.compareTo(realEndTime) <= 0);
+    }
+
     public static LocalDateTime getStartDateTimeOfYear(int year) {
         return LocalDateTime.of(year, Month.JANUARY, 1, 0, 0, 0);
     }

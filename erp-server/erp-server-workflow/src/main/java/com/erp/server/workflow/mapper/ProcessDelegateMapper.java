@@ -45,5 +45,5 @@ public interface ProcessDelegateMapper extends BaseMapper<ProcessDelegateEntity>
      * @param processDefinitionId
      * @return ProcessDelegateEntity
      */
-    ProcessDelegateEntity getByProcessDefinitionId(@Param("processDefinitionId")String processDefinitionId);
+    ProcessDelegateEntity getByProcessDefinitionId(@Param("processDefinitionId")String processDefinitionId,@Param("startUserId")String startUserId);
 }
