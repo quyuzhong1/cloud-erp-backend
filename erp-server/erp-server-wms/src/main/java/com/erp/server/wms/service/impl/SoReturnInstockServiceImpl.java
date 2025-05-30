@@ -41,7 +41,7 @@ import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.BillTypeEnum;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
@@ -267,7 +267,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                         // 平台来源
                         obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                     } else {
-                        obj.setReturnTypeDict(SoB2cReturnTypeEnum.getName(obj.getReturnTypeDict()));
+                        obj.setReturnTypeDict(ReturnTypeEnum.getName(obj.getReturnTypeDict()));
                     }
 
                     obj.setPlatformOrderCode(soB2cEntity.getPlatformCode());
@@ -635,7 +635,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                 detailView.setMustQty(soB2cReturnDetailEntity.getReturnQty());
                 Integer receiveQty = soReturnReceiveDetailEntitieList.stream().filter(req -> detailEntity.getSourceDetailId().equals(req.getId()) && req.getSkuId().equals(detailEntity.getSkuId()) && ApproveStatusEnum.APPROVE.getStatus().equals(req.getApproveStatus())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
                 detailView.setReceiveQty(receiveQty);
-                detailView.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
+                detailView.setReturnTypeDictName(ReturnTypeEnum.getName(detailEntity.getReturnTypeDict()));
                 detailView.setReturnReasonDictName(ReturnReasonEnum.getName(detailEntity.getReturnReasonDict()));
             }else{
                 SoReturnDetailEntity soReturnDetailEntity = returnDetailEntityList.stream().filter(detail -> detail.getId().equals(detailEntity.getSoReturnDetailId())).findFirst().orElse(new SoReturnDetailEntity());
