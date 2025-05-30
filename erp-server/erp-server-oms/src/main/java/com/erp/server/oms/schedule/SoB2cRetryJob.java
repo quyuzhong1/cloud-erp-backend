@@ -9,6 +9,7 @@ import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -73,7 +74,7 @@ public class SoB2cRetryJob {
         }
         XxlJobHelper.log("SoB2cRetryJob 执行开始");
         try {
-            String jobParam = "{\"count\":10, \"intervalHour\":1, \"type\":\"signDelivery,getLogisticsCode,submitDelivery\"}";
+            String jobParam = XxlJobHelper.getJobParam();
             int count = 3;
             int intervalHour = 0;
             List<String> typeList = new ArrayList<>();
@@ -199,6 +200,26 @@ public class SoB2cRetryJob {
                 soB2cErrorEntity.setVersion(soB2cErrorEntity.getVersion() + 1);
                 soB2cErrorService.updateById(soB2cErrorEntity);
                 XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单非待发货/已发货={}", soB2cErrorEntity.getMainId());
+                return true;
+            }
+        }
+        if (SoB2cErrorTypeEnum.SUBMIT_DELIVERY.getCode().equalsIgnoreCase(type)
+                || SoB2cErrorTypeEnum.GET_LOGISTICS_CODE.getCode().equalsIgnoreCase(type)) {
+            SoB2cEntity soB2cEntity = soMap.get(soB2cErrorEntity.getMainId());
+            if (null == soB2cEntity) {
+                XxlJobHelper.log("SoB2cRetryJob 当前任务无销售订单id={}", soB2cErrorEntity.getMainId());
+                return true;
+            }
+            if (soB2cEntity.getIsCancel() || soB2cEntity.getInvalidStatus()) {
+                XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单作废={}", soB2cErrorEntity.getMainId());
+                return true;
+            }
+            if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus()) ||
+                    !ApproveStatusEnum.APPROVE.equals(soB2cEntity.getApproveStatus())
+            ) {
+                soB2cErrorEntity.setVersion(soB2cErrorEntity.getVersion() + 1);
+                soB2cErrorService.updateById(soB2cErrorEntity);
+                XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单非审核通过-配货中={}", soB2cErrorEntity.getMainId());
                 return true;
             }
         }
