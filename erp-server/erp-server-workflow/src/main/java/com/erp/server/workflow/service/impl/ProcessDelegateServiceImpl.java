@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.FindUserDTO;
+import com.common.business.dto.UserRequestPermissionsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
@@ -26,11 +27,15 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.entity.ProcessDelegateEntity;
 import com.erp.model.workflow.enums.ProcessDelegateStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
+import com.erp.server.sys.convert.SysUserConvert;
 import com.erp.server.workflow.mapper.ProcessDelegateMapper;
 import com.erp.server.workflow.service.OperateLogService;
 import com.erp.server.workflow.service.ProcessDelegateService;
@@ -213,12 +218,36 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     }
 
     @Override
-    public List<String> listStartUserId() {
+    public List<FindUserDTO> listStartUserId() {
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-
-
-        return Collections.emptyList();
+        List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
+        Map<String,List<UserRequestPermissionsDTO>> map = CollUtil.isEmpty(requestPermissionsList) ? new HashMap<>() : requestPermissionsList.stream().collect(Collectors.groupingBy(UserRequestPermissionsDTO::getPermissionsCode));
+        List<UserRequestPermissionsDTO> userRequestPermissionsList = map.get("workflow:processDelegate:add");
+        if (CollUtil.isEmpty(userRequestPermissionsList)) {
+            throw new ServiceException("当前登陆人未找到新增权限");
+        }
+        UserRequestPermissionsDTO userRequestPermissionsDTO = userRequestPermissionsList.get(0);
+        if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissionsDTO.getDataScope())) {
+            //个人权限
+            return  sysUserFeign.getUserListByUserIds(Collections.singletonList(userInfo.getUid()));
+        } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(userRequestPermissionsDTO.getDataScope())) {
+            //部门权限
+            SysDepartmentUserNumberDTO departmentUserNumberDTO = sysUserFeign.getDeptByUserId(userInfo.getUid());
+            if (ObjectUtil.isEmpty(departmentUserNumberDTO)) {
+                throw new ServiceException("当前登陆人未找到部门信息");
+            }
+            List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
+            Map<String, List<SysUserDeptDTO>> deptMap = userDeptList.stream().collect(Collectors.groupingBy(SysUserDeptDTO::getDeptId));
+            List<SysUserDeptDTO> sysUserDeptList = deptMap.get(departmentUserNumberDTO.getDepartmentId());
+            if (CollUtil.isEmpty(userDeptList)){
+                throw new ServiceException("当前登陆人未找到部门信息");
+            }
+            return SysUserConvert.INSTANCE.sysUserDeptToFindUser(sysUserDeptList);
+        } else {
+            //全部权限
+            return sysUserFeign.getUserList();
+        }
     }
 
     /**

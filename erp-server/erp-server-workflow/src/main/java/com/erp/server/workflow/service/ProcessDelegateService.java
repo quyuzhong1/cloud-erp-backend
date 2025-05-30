@@ -1,4 +1,5 @@
 package com.erp.server.workflow.service;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.entity.ProcessDelegateEntity;
 import com.common.business.service.SuperService;
@@ -104,7 +105,7 @@ public interface ProcessDelegateService extends SuperService<ProcessDelegateEnti
      * 根据登陆人id查询委托审批信息
      * @author will
      * @date 2025/5/29 19:48
-     * @return List<String>
+     * @return List<FindUserDTO>
      */
-    List<String> listStartUserId();
+    List<FindUserDTO> listStartUserId();
 }
