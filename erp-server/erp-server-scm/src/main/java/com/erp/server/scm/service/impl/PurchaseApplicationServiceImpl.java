@@ -17,9 +17,11 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -29,6 +31,7 @@ import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -75,6 +78,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1402,8 +1406,19 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     }
 
     @Override
-    public BatchResultDTO pushPurchaseApplication(SoB2cDTO.PushPurchaseApplicationDTO pushDTO) {
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pushPurchaseApplication(SoB2cDTO.PushPurchaseApplicationDTO pushDTO) {
         List<SoB2cDTO.PushDetailDTO> detailList = pushDTO.getDetailList();
+
+        List<String> soDetailIdList = detailList.stream().map(SoB2cDTO.PushDetailDTO::getSoDetailId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.listBySourceDetailIdList(soDetailIdList);
+
+        //原销售订单明细
+        List<SoDetailEntity> soDetailList = FeignQuery.getByIds(SoDetailEntity.class, soDetailIdList);
+        if (CollUtil.isEmpty(soDetailIdList)) {
+            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+        }
+        Map<String, SoDetailEntity> soDetailMap = soDetailList.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
 
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
@@ -1425,9 +1440,29 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             for (SoB2cDTO.PushDetailDTO detailDTO : value) {
                 PurchaseApplicationDetailDTO.AddDTO addDetailDTO = new PurchaseApplicationDetailDTO.AddDTO();
                 BeanUtil.copyProperties(detailDTO, addDetailDTO);
+                addDetailDTO.setSourceDetailId(detailDTO.getSoDetailId());
+                //已下推数量
+                Integer hasPushQty = purchaseApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), addDetailDTO.getSourceDetailId())).map(PurchaseApplicationDetailEntity::getApplyQty).reduce(MathUtil.ZERO, Integer::sum);
+                //销售订单数量
+                SoDetailEntity soDetailEntity = soDetailMap.get(detailDTO.getSoDetailId());
+                if (ObjUtil.isEmpty(soDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+                }
+                if (hasPushQty + detailDTO.getApplyQty() > soDetailEntity.getQty()) {
+                    throw new ServiceException(CharSequenceUtil.format("销售订单【{}】SKU【{}】的申请数量【{}】和已下推数量【{}】之和不能大于销售订单数量【{}】",value.get(0).getSoCode(),soDetailEntity.getSkuNo(),detailDTO.getApplyQty(), hasPushQty, soDetailEntity.getQty()));
+                }
+                addDetailDTO.setSkuId(soDetailEntity.getSkuId());
+                addDetailDTO.setSkuNo(soDetailEntity.getSkuNo());
                 addDetailList.add(addDetailDTO);
             }
+            dto.setDetails(addDetailList);
+            PurchaseApplicationServiceImpl bean = ApplicationContextUtils.getBean(PurchaseApplicationServiceImpl.class);
+            PurchaseApplicationEntity add = bean.add(dto);
+            //提交
+            if (Boolean.TRUE.equals(pushDTO.getIsSubmit())) {
+                bean.submit(add.getId());
+            }
         }
-        return null;
+        return Boolean.TRUE;
     }
 }

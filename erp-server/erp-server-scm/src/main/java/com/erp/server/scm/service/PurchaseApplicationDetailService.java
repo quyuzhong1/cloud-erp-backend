@@ -81,4 +81,12 @@ public interface PurchaseApplicationDetailService extends SuperService<PurchaseA
      * @return Integer
      */
     List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(List<String> purchaseMergeIdList);
+    /**
+     * 根据来源明细id查询
+     * @author will
+     * @date 2025/5/30 15:20
+     * @param soDetailIdList
+     * @return List<PurchaseApplicationDetailEntity>
+     */
+    List<PurchaseApplicationDetailEntity> listBySourceDetailIdList(List<String> soDetailIdList);
 }

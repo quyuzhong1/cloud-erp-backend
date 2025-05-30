@@ -212,7 +212,7 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @author will
      * @date 2025/5/30 14:51
      * @param dto
-     * @return BatchResultDTO
+     * @return Boolean
      */
-    BatchResultDTO pushPurchaseApplication(SoB2cDTO.PushPurchaseApplicationDTO dto);
+    Boolean pushPurchaseApplication(SoB2cDTO.PushPurchaseApplicationDTO dto);
 }
