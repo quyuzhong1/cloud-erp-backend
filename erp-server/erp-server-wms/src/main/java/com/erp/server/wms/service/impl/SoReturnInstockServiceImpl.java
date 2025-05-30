@@ -303,7 +303,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
     }
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
-        String shopPermissionSql = authDataFeign.getShopPermissionSql("sb.shop_id");
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sri.shop_id");
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
             permissionSql = permissionSql + " AND ((sri.type = 'B2C' " + shopPermissionSql + ") OR (sri.type = 'B2B'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){
@@ -365,6 +365,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         if (CharSequenceUtil.isNotBlank(soReturnId)) {
             if("B2C".equals(dto.getType())){
                 SoB2cReturnEntity soB2cReturnEntity = FeignQuery.getById(SoB2cReturnEntity.class,dto.getSoReturnId());
+                dto.setShopId(soB2cReturnEntity.getShopId());
                 //获取销售单信息
                 SoB2cEntity soB2cEntity = FeignQuery.getById(SoB2cEntity.class,soB2cReturnEntity.getSoId());
                 ShopInfoEntity shopInfoEntity = FeignQuery.getById(ShopInfoEntity.class,soB2cReturnEntity.getShopId());
@@ -439,6 +440,7 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
         //获取组织信息
         List<BaseIdDTO.CodeDTO> orgList = sysUserFeign.getAccountingCompanyList(Arrays.asList(dto.getSalesOrgId(), updateDTO.getOrgId()));
         entity.setType(dto.getType());
+        entity.setShopId(dto.getShopId());
         entity.setSalesOrgId(dto.getSalesOrgId());
         String orgName = orgList.stream().filter(o -> CharSequenceUtil.isNotBlank(dto.getSalesOrgId()) && dto.getSalesOrgId().equals(o.getId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         entity.setSalesOrgName(orgName);

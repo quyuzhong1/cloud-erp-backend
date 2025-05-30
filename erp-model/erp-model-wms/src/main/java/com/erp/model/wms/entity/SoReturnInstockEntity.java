@@ -233,6 +233,11 @@ public class SoReturnInstockEntity extends BaseEntity<SoReturnInstockEntity> {
      */
     @TableField("currency_symbol")
     private String currencySymbol;
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
 
     @TableField(exist = false)
     private List<SoReturnInstockDetailEntity> detailEntityList;

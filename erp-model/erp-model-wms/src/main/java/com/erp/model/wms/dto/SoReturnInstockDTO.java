@@ -349,6 +349,10 @@ public class SoReturnInstockDTO {
          */
         private String customerId;
         /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
          * 销售组织
          */
         private String salesOrgId;
