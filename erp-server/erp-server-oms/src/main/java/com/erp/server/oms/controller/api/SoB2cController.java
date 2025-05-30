@@ -183,7 +183,7 @@ public class SoB2cController extends BaseController {
                 Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cRuleService.handleAutoSubmitDelivery(id);
+                    soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
                 }
             }
         }
@@ -394,7 +394,7 @@ public class SoB2cController extends BaseController {
             Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
             if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                     || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                soB2cRuleService.handleAutoSubmitDelivery(id);
+                soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
             }
         }
 

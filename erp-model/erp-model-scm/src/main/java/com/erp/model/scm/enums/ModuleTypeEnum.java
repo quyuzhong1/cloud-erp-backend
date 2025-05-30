@@ -149,6 +149,7 @@ public enum ModuleTypeEnum {
     CFG_RULE_INVOICE("126", "开票规则"),
     CFG_THIRD_PROCESS("128", "三方审批生成"),
     CFG_THIRD_NOTICE("129", "三方通知配置"),
+    SKU_ORG_REF("127", "SKU与采购组织关系"),
     ;
 
 
