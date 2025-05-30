@@ -27,7 +27,7 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.oms.enums.SoReturnChangeListTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -175,7 +175,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 if("B2C".equals(obj.getType())){
                     SoB2cReturnEntity soB2cReturnEntity = soB2cReturnEntityList.stream().filter(v -> v.getId().equals(obj.getSourceId())).findFirst().orElse(null);
                     if (ObjectUtils.isNotEmpty(soB2cReturnEntity)) {
-                        obj.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(soB2cReturnEntity.getType()));
+                        obj.setReturnTypeDictName(ReturnTypeEnum.getName(soB2cReturnEntity.getType()));
                         SoB2cReturnDetailEntity soDetailEntity = soB2cReturnDetailEntityList.stream().filter(v -> v.getId().equals(obj.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                         obj.setSalesQty(soDetailEntity.getSaleQty());
                     }
@@ -506,7 +506,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 if(Objects.nonNull(soB2cReturnEntity)){
                     Integer actualQty = soOutstockDetailEntities.stream().filter(detail -> soB2cReturnEntity.getSoId().equals(detail.getSoId()) && detail.getSkuId().equals(detailEntity.getSkuId()) && detail.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getStatus())).map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                     detailView.setDeliveryQty(actualQty);
-                    detailView.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(soB2cReturnEntity.getType()));
+                    detailView.setReturnTypeDictName(ReturnTypeEnum.getName(soB2cReturnEntity.getType()));
                     detailView.setReturnReasonDictName(ReturnReasonEnum.getName(soB2cReturnEntity.getReason()));
                 }
             }else{
@@ -835,7 +835,7 @@ public class SoReturnNoticeServiceImpl extends SuperServiceImpl<SoReturnNoticeMa
                 SoB2cReturnEntity soB2cReturnEntity = soB2cReturnEntityList.stream().filter(v->v.getId().equals(view.getSourceId())).findFirst().orElse(new SoB2cReturnEntity());
                 SoB2cReturnDetailEntity soB2cReturnDetailEntity = soB2cReturnDetailEntityList.stream().filter(v->v.getId().equals(view.getSourceDetailId())).findFirst().orElse(new SoB2cReturnDetailEntity());
                 view.setSalesQty(soB2cReturnDetailEntity.getSaleQty());
-                view.setReturnTypeDictName(SoB2cReturnTypeEnum.getName(soB2cReturnEntity.getType()));
+                view.setReturnTypeDictName(ReturnTypeEnum.getName(soB2cReturnEntity.getType()));
                 view.setReturnReasonDictName(ReturnReasonEnum.getName(soB2cReturnEntity.getReason()));
             }else{
                 //销售退货单

@@ -12,7 +12,7 @@ import com.common.message.handler.AbstractNewPlatformConsumerHandler;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cReturnSourceTypeEnum;
 import com.erp.model.oms.enums.SoB2cReturnStatusEnum;
-import com.erp.model.oms.enums.SoB2cReturnTypeEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
@@ -172,7 +172,7 @@ public class NewPlatformReturnOrderConsumerService extends AbstractNewPlatformCo
 		soB2cReturnEntity.setShopId(soB2cEntity.getShopId());
 		soB2cReturnEntity.setAmount(soB2cEntity.getAmount());
 		soB2cReturnEntity.setCurrency(soB2cEntity.getCurrency());
-		soB2cReturnEntity.setType(SoB2cReturnTypeEnum.CUSTOMER_RETURNS.code);
+		soB2cReturnEntity.setType(ReturnTypeEnum.CUSTOMER_RETURNS.getCode());
 		soB2cReturnEntity.setReason(dto.getReason());
 		soB2cReturnEntity.setStatus(SoB2cReturnStatusEnum.RETURNED.code);
 		if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())){
