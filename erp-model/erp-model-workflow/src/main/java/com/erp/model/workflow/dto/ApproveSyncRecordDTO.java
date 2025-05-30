@@ -118,6 +118,12 @@ public class ApproveSyncRecordDTO implements Serializable {
          */
         private String errorReason;
 
+        /**
+         * 通知节点
+         */
+        private String noticeNode;
+        private String noticeNodeName;
+
     }
 
     @Data

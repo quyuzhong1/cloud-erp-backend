@@ -53,7 +53,7 @@
         <include refid="Base_Column_List"></include>
             ,wm.module_classify AS bussiness_key_name,
             db.name AS source_platform,
-            tpe.name AS third_process_definition_name
+            tpe.name AS third_process_definition_name,
         from cfg_third_process as ctp
         LEFT JOIN public.work_menu wm ON wm.module_code = ctp.bussiness_key AND wm.is_deleted = false
         LEFT JOIN public.dict_basic db ON db.type = 'sourcePlatform' AND db.is_deleted = false AND db.value = ctp.source_platform
