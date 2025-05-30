@@ -51,6 +51,7 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -3377,14 +3378,36 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(List<String> ids) {
-
+        List<SoB2cDTO.ViewPushPurchaseApplicationDTO> list = baseMapper.viewPushPurchaseApplication(ids);
+        if (CollUtil.isEmpty(list)) {
+            return Collections.emptyList();
+        }
+        handlePushApplication(list);
         return Collections.emptyList();
     }
 
-    @Override
-    public BatchResultDTO pushPurchaseApplication(List<SoB2cDTO.PushPurchaseApplicationDTO> list) {
-        return null;
+    /**
+     * 处理推送采购申请
+     * @param list
+     */
+    private void handlePushApplication (List<SoB2cDTO.ViewPushPurchaseApplicationDTO> list) {
+        if (CollUtil.isEmpty(list)) {
+            return;
+        }
+        List<String> soDetailIdList = list.stream().map(SoB2cDTO.ViewPushPurchaseApplicationDTO::getSoDetailId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationDetailEntity> applicationDetailList = FeignQuery.create(PurchaseApplicationDetailEntity.class).in(PurchaseApplicationDetailEntity::getSourceDetailId, soDetailIdList).list();
+        Map<String, List<PurchaseApplicationDetailEntity>> map = CollUtil.isEmpty(applicationDetailList) ? new HashMap<>() : applicationDetailList.stream().collect(Collectors.groupingBy(PurchaseApplicationDetailEntity::getSourceDetailId));
+        for (SoB2cDTO.ViewPushPurchaseApplicationDTO dto : list) {
+            List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = map.get(dto.getSoDetailId());
+            if (CollUtil.isEmpty(purchaseApplicationDetailList)) {
+                dto.setUnApplyQty(dto.getQty());
+                continue;
+            }
+            Integer totalApplyQty = purchaseApplicationDetailList.stream().map(PurchaseApplicationDetailEntity::getApplyQty).reduce(MathUtil.ZERO, Integer::sum);
+            dto.setUnApplyQty(dto.getQty() - totalApplyQty);
+        }
     }
+
 
     @NotNull
     private BatchResultDTO uploadOrderLabel(MultipartFile multipartFile, SoInfoEntity entity) {

@@ -920,17 +920,4 @@ public class SoInfoController extends BaseController {
         List<SoB2cDTO.ViewPushPurchaseApplicationDTO> list = soInfoService.viewPushPurchaseApplication(dto.getIds());
         return success(list);
     }
-
-    /**
-     * 下推采购申请保存
-     * @author will
-     * @date 2025/5/29 15:42
-     * @param list
-     * @return ApiResult<BatchResultDTO>
-     */
-    @PostMapping("/pushPurchaseApplication")
-    public ApiResult<BatchResultDTO> pushPurchaseApplication(@RequestBody @Validated List<SoB2cDTO.PushPurchaseApplicationDTO> list) {
-        BatchResultDTO result = soInfoService.pushPurchaseApplication(list);
-        return result.getSuccess() ? success(result) : failure(result);
-    }
 }

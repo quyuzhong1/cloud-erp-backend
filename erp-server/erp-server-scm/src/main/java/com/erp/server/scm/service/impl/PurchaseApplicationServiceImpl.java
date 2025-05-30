@@ -28,6 +28,7 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.enums.BomTypeEnum;
@@ -1398,5 +1399,35 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    @Override
+    public BatchResultDTO pushPurchaseApplication(SoB2cDTO.PushPurchaseApplicationDTO pushDTO) {
+        List<SoB2cDTO.PushDetailDTO> detailList = pushDTO.getDetailList();
+
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
+        if (ObjectUtils.isEmpty(findUserDTO)) {
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+        Map<String, List<SoB2cDTO.PushDetailDTO>> map = detailList.stream().collect(Collectors.groupingBy(SoB2cDTO.PushDetailDTO::getSoId));
+        for (Map.Entry<String, List<SoB2cDTO.PushDetailDTO>> entry : map.entrySet()) {
+            List<SoB2cDTO.PushDetailDTO> value = entry.getValue();
+            PurchaseApplicationDTO.AddDTO dto = new PurchaseApplicationDTO.AddDTO();
+            dto.setSourceId(entry.getKey());
+            dto.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+            dto.setApplyDate(LocalDate.now());
+            dto.setSourceCode(value.get(0).getSoCode());
+            dto.setApplyUserId(userInfo.getUid());
+            dto.setApplyDeptId(findUserDTO.getDepartmentId());
+            List<PurchaseApplicationDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (SoB2cDTO.PushDetailDTO detailDTO : value) {
+                PurchaseApplicationDetailDTO.AddDTO addDetailDTO = new PurchaseApplicationDetailDTO.AddDTO();
+                BeanUtil.copyProperties(detailDTO, addDetailDTO);
+                addDetailList.add(addDetailDTO);
+            }
+        }
+        return null;
     }
 }

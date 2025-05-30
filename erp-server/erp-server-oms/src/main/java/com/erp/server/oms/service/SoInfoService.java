@@ -520,14 +520,4 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return List<ViewPushPurchaseApplicationDTO>
      */
     List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(List<String> ids);
-
-    /**
-     * 下推采购申请保存
-     * @author will
-     * @date 2025/5/29 15:44
-     * @param list
-     * @return BatchResultDTO
-     */
-    BatchResultDTO pushPurchaseApplication(List<SoB2cDTO.PushPurchaseApplicationDTO> list);
-
 }
