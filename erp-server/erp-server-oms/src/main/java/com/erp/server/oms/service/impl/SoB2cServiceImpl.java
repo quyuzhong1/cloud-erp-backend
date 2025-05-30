@@ -6767,7 +6767,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setRemark("B2C订单平台自动生成");
                 // 平台订单记录历史映射
                 if (entity.hasPlatformWarehouseOrder()) {
-                    List<ListingInfoWithSkuMappingDTO> list = listingInfoWithSkuMappingDTOMap.getOrDefault(detailItem.getPlatformSkuNo(), Collections.emptyList());
+                    List<ListingInfoWithSkuMappingDTO> list;
+                    if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                            || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+                        list = listingInfoWithSkuMappingDTOMap.getOrDefault(detailItem.getPlatformSpuNo(), Collections.emptyList());
+                    }else{
+                        list = listingInfoWithSkuMappingDTOMap.getOrDefault(detailItem.getPlatformSkuNo(), Collections.emptyList());
+                    }
                     List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> historyList = B2cOrderConverter.INSTANCE.skuMappingDTOListToGenDTOList(list);
                     // 按过期时间排序
                     List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> sortList = historyList.stream()
@@ -8086,10 +8092,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (SoB2cDetailEntity detailEntity : detailList) {
             SoB2cDetailEntity old = new SoB2cDetailEntity();
             BeanMapper.copy(detailEntity, old);
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList;
             // 映射关系
-            List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailEntity.getPlatformSkuNo());
+            if(PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                    || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+                mappingDTOList = listDto.stream().filter(v->v.getPlatformSpuNo().equals(detailEntity.getPlatformSpuNo())).collect(Collectors.toList());
+            }else{
+                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailEntity.getPlatformSkuNo());
+            }
             // 检查和获取映射关系
-            ListingInfoWithSkuMappingDTO skuDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailEntity.getPlatformSpuNo(), entity.getDictPlatform());
+            ListingInfoWithSkuMappingDTO skuDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailEntity.getPlatformSpuNo(), entity.getDictPlatform(),detailEntity.getPlatformSkuNo());
 
             //校验对照表是否有对照关系
             if (ObjectUtil.isNotEmpty(skuDTO)) {
