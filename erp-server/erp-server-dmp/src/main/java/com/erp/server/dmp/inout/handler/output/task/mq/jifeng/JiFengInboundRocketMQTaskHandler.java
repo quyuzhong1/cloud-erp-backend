@@ -15,6 +15,7 @@ import com.erp.server.dmp.inout.handler.output.task.mq.DmpOutputRocketMQTaskHand
 import com.sdk.wms.goodcang.dto.response.GoodCangReceiptBatchResp.GcReceiving;
 import com.sdk.wms.goodcang.enums.GoodCangEnums;
 import com.sdk.wms.jifeng.dto.response.JiFengInboundResp;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -81,9 +82,10 @@ public class JiFengInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
     	String sourcePlatform = dmpThirdInboundEntity.getSourcePlatform();
 		platformInboundDTO.setPlatform(sourcePlatform);
     	platformInboundDTO.setProvider(sourcePlatform);
-    	platformInboundDTO.setReceivingStatus(this.convertStatus(Integer.valueOf(dmpThirdInboundEntity.getReceivingStatus())));
 		List<JiFengInboundResp.SkuListDTO> boxListDTOS = JSON.parseArray(dmpThirdInboundEntity.getDetailListJson(), JiFengInboundResp.SkuListDTO.class);
-    	List<Receiving> receivingDataList = new ArrayList<>();
+
+		platformInboundDTO.setReceivingStatus(this.convertStatus(Integer.valueOf(dmpThirdInboundEntity.getReceivingStatus()),boxListDTOS));
+		List<Receiving> receivingDataList = new ArrayList<>();
 
 
     	for(JiFengInboundResp.SkuListDTO skuListDTO : boxListDTOS) {
@@ -98,7 +100,7 @@ public class JiFengInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
 			LocalDateTime receiveTime = systemZoned.toLocalDateTime();
 			platformInboundDTO.setDownloadTime(receiveTime);
     		receiving.setProductSku(skuListDTO.getSku());
-    		receiving.setReceiveQty(skuListDTO.getReceiveCount());
+    		receiving.setReceiveQty(skuListDTO.getPutawayCount());
     		receiving.setReceiveTime(receiveTime);
     		receivingDataList.add(receiving);
     	}
@@ -120,10 +122,10 @@ public class JiFengInboundRocketMQTaskHandler extends DmpOutputRocketMQTaskHandl
         dto.setItems(items);
     }
 
-	private String convertStatus(Integer status) {
+	private String convertStatus(Integer status,List<JiFengInboundResp.SkuListDTO> boxListDTOS) {
 		if(status == 4){
 			return OverseasInstockStatusEnum.SIGNED.getCode();
-		}else if(status == 3){
+		}else if(status == 3 && CollectionUtils.isNotEmpty(boxListDTOS) && boxListDTOS.stream().anyMatch(v->v.getPutawayCount() > 0)){
 			return OverseasInstockStatusEnum.PARTIAL_SIGNED.getCode();
 		}else if (status == 0){
 			return OverseasInstockStatusEnum.TO_BE_SHIPPED.getCode();
