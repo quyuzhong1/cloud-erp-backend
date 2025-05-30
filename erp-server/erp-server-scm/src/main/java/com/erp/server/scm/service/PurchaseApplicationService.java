@@ -215,4 +215,12 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return Boolean
      */
     Boolean pushPurchaseApplication(SoB2cDTO.PushPurchaseApplicationDTO dto);
+    /**
+     * 上查
+     * @author will
+     * @date 2025/5/30 16:19
+     * @param ids
+     * @return List<CheckUpDTO>
+     */
+    List<PurchaseApplicationDTO.CheckUpDTO> checkUp(List<String> ids);
 }

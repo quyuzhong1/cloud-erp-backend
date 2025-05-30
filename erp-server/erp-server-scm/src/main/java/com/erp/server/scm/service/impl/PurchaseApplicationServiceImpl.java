@@ -1465,4 +1465,33 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         return Boolean.TRUE;
     }
+
+    @Override
+    public List<PurchaseApplicationDTO.CheckUpDTO> checkUp(List<String> ids) {
+        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByIds(ids);
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        List<String> mainIdList = detailList.stream().map(PurchaseApplicationDetailEntity::getPurchaseApplicationId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationEntity> purchaseApplicationList = this.listByIds(mainIdList);
+        if (CollUtil.isEmpty(purchaseApplicationList)) {
+            throw new ServiceException(ApiError.ERROR_98016);
+        }
+        Map<String, PurchaseApplicationEntity> map = purchaseApplicationList.stream().collect(Collectors.toMap(PurchaseApplicationEntity::getId, Function.identity()));
+        List<PurchaseApplicationDTO.CheckUpDTO> resultList = new ArrayList<>();
+        for (PurchaseApplicationDetailEntity detailEntity : detailList) {
+            PurchaseApplicationEntity purchaseApplicationEntity = map.get(detailEntity.getPurchaseApplicationId());
+            if (ObjUtil.isEmpty(purchaseApplicationEntity)) {
+                throw new ServiceException(ApiError.ERROR_98016);
+            }
+            PurchaseApplicationDTO.CheckUpDTO checkUpDTO = new PurchaseApplicationDTO.CheckUpDTO();
+            checkUpDTO.setSourceId(purchaseApplicationEntity.getSourceId());
+            checkUpDTO.setSourceCode(purchaseApplicationEntity.getSourceCode());
+            checkUpDTO.setSourceType(purchaseApplicationEntity.getSourceType());
+            checkUpDTO.setSkuId(detailEntity.getSkuId());
+            checkUpDTO.setSkuNo(detailEntity.getSkuNo());
+            resultList.add(checkUpDTO);
+        }
+        return resultList;
+    }
 }

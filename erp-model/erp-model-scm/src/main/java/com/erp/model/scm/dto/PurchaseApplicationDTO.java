@@ -1151,4 +1151,42 @@ public class PurchaseApplicationDTO implements Serializable {
          */
         private List<BatchResultDTO> batchResultDTOList;
     }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class CheckUpDTO {
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * 上游单据数量
+         */
+        private String oldQty;
+        /**
+         * 已申请数量
+         */
+        private String applyQty;
+        /**
+         * 待申请数量
+         */
+        private String unApplyQty;
+    }
 }

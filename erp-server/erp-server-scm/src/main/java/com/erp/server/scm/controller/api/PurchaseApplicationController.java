@@ -563,4 +563,16 @@ public class PurchaseApplicationController extends BaseController {
         return flag ? success() : failure();
     }
 
+    /**
+     * 上查数据
+     * @author will
+     * @date 2025/5/30 16:11
+     * @param idsDTO
+     * @return ApiResult<List<CheckUpDTO>>
+     */
+    @PostMapping("/checkUp")
+    public ApiResult<List<PurchaseApplicationDTO.CheckUpDTO>> checkUp(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<PurchaseApplicationDTO.CheckUpDTO> list = purchaseApplicationService.checkUp(idsDTO.getIds());
+        return success(list);
+    }
 }
