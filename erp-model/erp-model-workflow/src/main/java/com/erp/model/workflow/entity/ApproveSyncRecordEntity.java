@@ -80,11 +80,6 @@ public class ApproveSyncRecordEntity extends BaseEntity<ApproveSyncRecordEntity>
     */
     @TableField("error_reason")
     private String errorReason;
-    /**
-     * 通知节点
-     */
-    @TableField("notice_node")
-    private String noticeNode;
 
 
     public static final String CFG_APPROVE_SYNC_ID = "cfg_approve_sync_id";
