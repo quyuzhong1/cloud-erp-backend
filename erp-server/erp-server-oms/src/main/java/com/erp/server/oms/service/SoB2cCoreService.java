@@ -39,4 +39,13 @@ public interface SoB2cCoreService {
      * @return List<GenerateB2cDTO>
      */
     List<SoOutstockDTO.GenerateB2cDTO> splitB2cSoOutstock(SoB2cEntity mainEntity, SoOutstockDTO.GenerateB2cDTO generateB2cDTO);
+
+    /**
+     * 查询支付方式配置是否存在
+     * @author will
+     * @date 2025/5/30 10:56
+     * @param entity
+     * @return Boolean
+     */
+    Boolean listPayMethodSetting(SoB2cEntity entity);
 }

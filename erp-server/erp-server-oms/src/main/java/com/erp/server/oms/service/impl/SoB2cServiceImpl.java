@@ -397,6 +397,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     @Resource
     private SoB2cRuleService soB2cRuleService;
 
+    @Lazy
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
+
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(getPermissionSql());
@@ -2220,9 +2224,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (entity.getIsCancel()) {
             throw new ServiceException(CharSequenceUtil.format("销售订单【{}】平台已取消，不支持发货", entity.getCode()));
         }
-
+        //查询支付方式是否支持继续发货
+        Boolean isFlag = soB2cCoreService.listPayMethodSetting(entity);
         //待付款不能提交发货
-        if (CharSequenceUtil.equals(entity.getPayStatus(), SoB2cPayStatusEnum.ENUM_PAYMENT.getCode())) {
+        if (CharSequenceUtil.equals(entity.getPayStatus(), SoB2cPayStatusEnum.ENUM_PAYMENT.getCode()) && !isFlag) {
             throw new ServiceException(CharSequenceUtil.format("销售订单【{}】未付款，不支持发货", entity.getCode()));
         }
 
