@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -219,5 +220,13 @@ public class PurchaseApplicationDetailServiceImpl extends SuperServiceImpl<Purch
     @Override
     public List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> listByMergeIdList(List<String> purchaseMergeIdList) {
         return baseMapper.listByMergeIdList(purchaseMergeIdList);
+    }
+
+    @Override
+    public List<PurchaseApplicationDetailEntity> listBySourceDetailIdList(List<String> soDetailIdList) {
+        if (CollectionUtils.isEmpty(soDetailIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(PurchaseApplicationDetailEntity::getSourceDetailId,soDetailIdList).list();
     }
 }

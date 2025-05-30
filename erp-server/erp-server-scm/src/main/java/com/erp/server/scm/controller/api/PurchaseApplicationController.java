@@ -550,7 +550,6 @@ public class PurchaseApplicationController extends BaseController {
     }
 
 
-
     /**
      * 销售订单下推采购申请保存
      * @author will
@@ -560,8 +559,8 @@ public class PurchaseApplicationController extends BaseController {
      */
     @PostMapping("/pushPurchaseApplication")
     public ApiResult<BatchResultDTO> pushPurchaseApplication(@RequestBody @Validated SoB2cDTO.PushPurchaseApplicationDTO dto) {
-        BatchResultDTO result = purchaseApplicationService.pushPurchaseApplication(dto);
-        return result.getSuccess() ? success(result) : failure(result);
+        Boolean flag = purchaseApplicationService.pushPurchaseApplication(dto);
+        return flag ? success() : failure();
     }
 
 }
