@@ -1055,7 +1055,10 @@ public class OverseasWarehouseInboundServiceImpl extends SuperServiceImpl<Overse
         if (Objects.isNull(mainEntity)) {
             return ApiResult.success();
         }
-        if (Objects.nonNull(mainEntity.getReceiveTime()) && dto.getDownloadTime().isBefore(mainEntity.getReceiveTime())) {
+        // 谷仓有入库流水忽略时间校验
+        if (Objects.nonNull(mainEntity.getReceiveTime())
+                && dto.getDownloadTime().isBefore(mainEntity.getReceiveTime())
+                && !PlatformDictEnum.GOOD_CANG.getCode().equalsIgnoreCase(dto.getPlatform())) {
             return ApiResult.success();
         }
         //更新入库状态
