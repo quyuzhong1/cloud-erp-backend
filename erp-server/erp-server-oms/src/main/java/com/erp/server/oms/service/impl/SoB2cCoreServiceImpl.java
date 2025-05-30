@@ -381,7 +381,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         }
         List<CfgSettingDTO.PayMethodDTO> list = cfgSettingList.stream()
                 .filter(obj -> CharSequenceUtil.isNotBlank(obj.getValue()))
-                .map(obj -> BeanUtil.toBean(obj.getValue(), CfgSettingDTO.PayMethodDTO.class))
+                .map(obj -> JSONUtil.toBean(obj.getValue(), CfgSettingDTO.PayMethodDTO.class))
                 .collect(Collectors.toList());
         if (CollUtil.isEmpty(list)) {
             log.error("未找到支付方式，平台：{}，支付方式：{}", entity.getDictPlatform(), entity.getDictPayMethod());
@@ -394,5 +394,22 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
            return Boolean.FALSE;
         }
         return Boolean.TRUE;
+    }
+
+    /**
+     * 付款信息验证
+     * @author will
+     * @date 2025/5/30 15:51
+     * @param entity
+     * @return void
+     */
+    @Override
+    public void checkPayMent(SoB2cEntity entity) {
+        //查询支付方式是否支持继续发货
+        Boolean isFlag = this.listPayMethodSetting(entity);
+        //如果支付状态是待付款，并且支付方式不支持继续发货，则抛出异常
+        if ((ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) && !isFlag) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
+        }
     }
 }

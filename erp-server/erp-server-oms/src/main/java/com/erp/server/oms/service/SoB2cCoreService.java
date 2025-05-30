@@ -48,4 +48,13 @@ public interface SoB2cCoreService {
      * @return Boolean
      */
     Boolean listPayMethodSetting(SoB2cEntity entity);
+
+    /**
+     * 验证销售订单是否付款
+     * @author will
+     * @date 2025/5/30 15:54
+     * @param entity
+     * @return void
+     */
+    void checkPayMent(SoB2cEntity entity);
 }
