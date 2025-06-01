@@ -4,9 +4,13 @@ import com.common.message.constant.RocketMqTopic;
 import com.erp.model.plm.entity.NoticeMessageRecordEntity;
 import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
+import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
 import com.erp.model.sys.vo.FsBatchSendMessageDTO;
+import com.erp.model.sys.vo.SendThirdNoticeConsumerDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.sys.service.ThirdNoticePushRecordService;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +30,7 @@ import java.util.stream.Collectors;
 @RocketMQMessageListener(topic = RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC,
         selectorExpression = "sys_send_third_notice_tag",
         consumerGroup = RocketMqConsumerGroup.SYS_SEND_THIRD_NOTICE_CONSUMER)
-public class SendThirdNoticeConsumerService implements RocketMQListener<FsBatchSendMessageDTO> {
+public class SendThirdNoticeConsumerService implements RocketMQListener<SendThirdNoticeConsumerDTO> {
     /*
     //------plm------
     新建产品  com.erp.server.plm.service.impl.NoticeMessageServiceImpl.newProductNotice  productInfo
@@ -68,19 +72,29 @@ public class SendThirdNoticeConsumerService implements RocketMQListener<FsBatchS
 
     @Resource
     private FsService fsService;
+    @Resource
+    private ThirdNoticePushRecordService thirdNoticePushRecordService;
 
     @Override
-    public void onMessage(FsBatchSendMessageDTO dto) {
+    public void onMessage(SendThirdNoticeConsumerDTO dto) {
         log.info("SendThirdNoticeConsumerService 开始");
 
         //发送消息的结果
         Boolean sendResult = fsService.sendMessage(dto);
         //当发送成功后
         if (Boolean.TRUE.equals(sendResult)) {
-            System.out.println("");
+            String messageId = dto.getMessageId();
+            thirdNoticePushRecordService.lambdaUpdate().
+                    set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
+                    .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                    .update();
+        }else {
+            String messageId = dto.getMessageId();
+            thirdNoticePushRecordService.lambdaUpdate().
+                    set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
+                    .eq(ThirdNoticePushRecordEntity::getId, messageId)
+                    .update();
         }
-        //保存发送消息通知记录
-
         log.info("SendThirdNoticeConsumerService 结束");
     }
 }

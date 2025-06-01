@@ -15,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 public enum ThirdNoticePushRecordStatusEnum implements EnumMessage {
 	SUCCESS("success", "推送成功"),
 	FAILED("failed", "推送失败"),
+	SENDING("sending", "推送中"),
     ;
     /**
      * 类型
