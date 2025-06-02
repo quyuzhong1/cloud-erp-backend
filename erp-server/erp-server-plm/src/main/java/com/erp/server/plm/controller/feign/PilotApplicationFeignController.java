@@ -2,6 +2,8 @@ package com.erp.server.plm.controller.feign;
 
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.core.controller.BaseController;
+import com.erp.model.plm.dto.PilotApplicationDTO;
+import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.server.plm.service.PilotApplicationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,4 +37,13 @@ public class PilotApplicationFeignController extends BaseController {
         pilotApplicationService.updateDetailByPilotApplicationDetailIds(map);
     }
 
+    @PostMapping ("/listByCodes")
+     public List<PilotApplicationEntity> listByCodes(@RequestBody List<String> list) {
+         return pilotApplicationService.listByCodes(list);
+    }
+
+    @PostMapping("/updateApproveStatus")
+     public void updateApproveStatus(@RequestBody PilotApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        pilotApplicationService.updateApproveStatus(updateApprovalStatusDTO);
+    }
 }

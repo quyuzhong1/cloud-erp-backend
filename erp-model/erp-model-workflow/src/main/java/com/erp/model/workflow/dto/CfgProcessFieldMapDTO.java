@@ -105,7 +105,17 @@ public class CfgProcessFieldMapDTO implements Serializable {
         /**
          * 第三方字段所属明细控件id
          */
-        private String parentId;
+        private String thirdParentId;
+
+        /**
+         * 明细字段父id
+         */
+        private String sysParentId;
+
+        /**
+         * 组别类型（0正常级别，1集合父项，2集合子项）
+         */
+        private String groupType;
 
         /**
          * 排序字段

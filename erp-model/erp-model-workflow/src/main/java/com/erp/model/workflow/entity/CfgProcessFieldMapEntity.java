@@ -92,13 +92,24 @@ public class CfgProcessFieldMapEntity extends BaseEntity<CfgProcessFieldMapEntit
     /**
      * 第三方字段所属明细控件id
      */
-    @TableField("parent_id")
-    private String parentId;
+    @TableField("third_parent_id")
+    private String thirdParentId;
     /**
      * 排序字段
      */
     @TableField("index")
     private int index;
+    /**
+     * 系统明细字段所属父字段id（query_option中的parentId）
+     */
+    @TableField("sys_parent_id")
+    private String sysParentId;
+    /**
+     * 组别类型（0正常级别，1集合父项，2集合子项）
+     */
+    @TableField("group_type")
+    private String groupType;
+
 
     public static final String THIRD_FIELD = "third_field";
 

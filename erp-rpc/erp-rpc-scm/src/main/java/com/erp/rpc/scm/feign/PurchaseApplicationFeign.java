@@ -59,4 +59,13 @@ public interface PurchaseApplicationFeign {
      */
     @PostMapping("/listStockInQty")
     List<PurchaseApplicationDTO.ListDTO> listStockInQty(@RequestBody List<PurchaseApplicationDTO.ListDTO> purchaseList);
+
+    @PostMapping("/listByCodes")
+    List<PurchaseApplicationEntity> listByCodes(@RequestBody List<String> list);
+
+//    @PostMapping("/updateApproveStatus")
+//    void updateApproveStatus(@RequestBody PurchaseApplicationEntity one, String approveStatus);
+
+    @PostMapping ("/updatePA")
+    void updatePA(@RequestBody PurchaseApplicationDTO.updatePADTO updateDTO);
 }

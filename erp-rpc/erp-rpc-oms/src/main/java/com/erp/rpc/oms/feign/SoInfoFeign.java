@@ -89,4 +89,18 @@ public interface SoInfoFeign {
      */
     @PostMapping("feign/soInfo/sdyFieldOrderHandler")
     void sdyFieldOrderHandler(@RequestBody SoInfoToSdyDTO soInfoToSdyDTO);
+
+    /**
+     * 根据code批量查询
+     * @param list
+     */
+    @PostMapping("feign/soInfo/listByCodes")
+    List<SoInfoEntity> listByCodes(List<String> list);
+
+    /**
+     * 修改单据审批状态
+     * @param updateApprovalStatusDTO
+     */
+    @PostMapping("feign/soInfo/updateApproveStatus")
+    void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

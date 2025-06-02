@@ -3,7 +3,9 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.entity.OtherOutstockEntity;
 import com.erp.model.wms.enums.InventoryDirectionEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -534,5 +536,13 @@ public class OtherOutstockDTO implements Serializable {
          * 数量
          */
         private Integer count;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private OtherOutstockEntity otherOutstockEntity;
+         private String approveStatus;
     }
 }

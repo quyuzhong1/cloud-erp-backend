@@ -10,6 +10,7 @@ import cn.hutool.json.JSONObject;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -3384,6 +3385,16 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         }
         handlePushApplication(list);
         return Collections.emptyList();
+    }
+
+    @Override
+    public List<SoInfoEntity> listByCodes(List<String> list) {
+        return this.list(new LambdaQueryWrapper<SoInfoEntity>().in(SoInfoEntity::getCode, list).eq(SoInfoEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        this.updateApproveStatus(Collections.singletonList(updateApprovalStatusDTO.getSoInfoEntity()),  updateApprovalStatusDTO.getBillApproveStatusEnum(), updateApprovalStatusDTO.getSoInfoEntity().getApproveUserName());
     }
 
     /**

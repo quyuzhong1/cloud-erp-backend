@@ -3,8 +3,11 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.wms.entity.TransferApplicationEntity;
+import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -589,4 +592,11 @@ public class TransferApplicationDTO implements Serializable {
         private Boolean isBody;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private TransferApplicationEntity transferApplicationEntity;
+        private String approveStatus;
+    }
 }
