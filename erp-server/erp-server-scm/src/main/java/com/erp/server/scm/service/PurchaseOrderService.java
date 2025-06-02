@@ -12,6 +12,7 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -502,7 +503,11 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
 
     void updatePurchaseOrder(PurchaseOrderEntity purchaseOrderEntity);
 
-    void updatePurchaseOrderByUnique(String field,String value,PurchaseOrderEntity purchaseOrderEntity);
+    void updatePurchaseOrderByUnique(PurchaseOrderDTO.UpdateContractStampStatusParamsDTO dto);
 
-    void insert(PurchaseOrderEntity purchaseOrderEntity);
+    void insert(PurchaseOrderDTO.AddDTO dto);
+
+    List<PurchaseOrderEntity> getPurchaseOrderByCode(HashSet<String> strings);
+
+     void updateApproveStatus(PurchaseOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

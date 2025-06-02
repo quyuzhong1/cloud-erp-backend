@@ -164,9 +164,4 @@ public class RocketMqTopic {
      *   workflow 同步飞书审批定义
      */
     public static final String DMP_PLATFORM_APPROVALS_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_approvals_to_workflow_topic";
-
-    /**
-     *   workflow 同步飞书审批实例
-     */
-    public static final String DMP_PLATFORM_INSTANCES_TO_WORKFLOW_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_instances_to_workflow_topic";
 }

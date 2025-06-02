@@ -7,6 +7,7 @@ package com.erp.rpc.sys.feign;
  */
 
 import com.common.business.config.FeignErrorDecoder;
+import com.erp.model.sys.entity.SysDepartmentThirdEntity;
 import com.erp.model.sys.entity.SysUserThirdEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;

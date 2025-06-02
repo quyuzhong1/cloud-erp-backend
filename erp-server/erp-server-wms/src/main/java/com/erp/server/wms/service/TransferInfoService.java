@@ -280,4 +280,8 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
      * @return BatchResultDTO
      */
     BatchResultDTO handleErrorData(String id);
+
+    List<TransferInfoEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(TransferInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

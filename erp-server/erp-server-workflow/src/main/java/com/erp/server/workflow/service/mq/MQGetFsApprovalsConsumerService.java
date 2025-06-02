@@ -19,7 +19,7 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 @RocketMQMessageListener(topic = RocketMqTopic.DMP_PLATFORM_APPROVALS_TO_WORKFLOW_TOPIC,
-        selectorExpression = "dmp_platform_approvals_to_workflow_tag",
+        selectorExpression = "${spring.cloud.nacos.discovery.namespace}-dmp_platform_approvals_to_workflow_tag",
         consumerGroup = RocketMqConsumerGroup.WORKFLOW_FS_APPROVALS_CONSUMER)
 public class MQGetFsApprovalsConsumerService implements RocketMQListener<JSONObject> {
     @Resource

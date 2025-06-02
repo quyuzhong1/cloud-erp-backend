@@ -9,6 +9,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -1282,6 +1283,23 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
             doOpHandleData(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<OtherInstockEntity> listByCodes(List<String> list) {
+        return this.list(new QueryWrapper<OtherInstockEntity>().lambda().in(OtherInstockEntity::getCode, list).eq(OtherInstockEntity::getIsDeleted,Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+         String approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        OtherInstockEntity otherInstockEntity = updateApprovalStatusDTO.getOtherInstockEntity();
+        this.lambdaUpdate().in(OtherInstockEntity::getId, Collections.singletonList(otherInstockEntity.getId()))
+                .set(OtherInstockEntity::getApproveUserId, otherInstockEntity.getApproveUserId())
+                .set(OtherInstockEntity::getApproveUserName, otherInstockEntity.getApproveUserName())
+                .set(OtherInstockEntity::getApproveStatus, approveStatus)
+                .set(OtherInstockEntity::getApproveTime, otherInstockEntity.getApproveTime())
+                .update();
     }
 
     @Override

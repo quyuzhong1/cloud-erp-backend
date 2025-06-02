@@ -223,4 +223,10 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
      * @return List<CheckUpDTO>
      */
     List<PurchaseApplicationDTO.CheckUpDTO> checkUp(List<String> ids);
+
+    List<PurchaseApplicationEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus);
+
+    void updatePA(PurchaseApplicationDTO.updatePADTO updateDTO);
 }

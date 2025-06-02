@@ -7,6 +7,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.plm.vo.ProductVO;
+import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 
@@ -1862,4 +1863,48 @@ public class PurchaseOrderDTO implements Serializable {
         private String contractStampStatus;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateContractStampStatusParamsDTO{
+        /**
+         * 唯一键name
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String field;
+
+        /**
+         * 唯一键value
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String value;
+
+        /**
+         * 合同盖章状态
+         */
+        @NotBlank(message = "合同盖章状态不能为空")
+        private String contractStampStatus;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+     public static class InsertDTO extends AddDTO {
+
+        private String approveStatus;
+
+        private LocalDateTime approveTime;
+
+        private String approveUserId;
+
+        private String approveUserName;
+     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private PurchaseOrderEntity purchaseOrderEntity;
+        private String approveStatus;
+    }
 }

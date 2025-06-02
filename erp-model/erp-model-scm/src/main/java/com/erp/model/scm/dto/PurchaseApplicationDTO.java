@@ -4,8 +4,11 @@ import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.scm.entity.PurchaseApplicationEntity;
+import com.erp.model.scm.entity.PurchasePriceEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -1188,5 +1191,48 @@ public class PurchaseApplicationDTO implements Serializable {
          * 待申请数量
          */
         private String unApplyQty;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+     public static class updatePADTO extends UpdateDTO{
+        /**
+         * 唯一键name
+         */
+        private String field;
+
+        /**
+         * 唯一键value
+         */
+        private String value;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddPADTO extends AddDTO{
+        /**
+         * 审核状态
+         */
+        private String approvalStatus;
+
+        /**
+         * 审核人id
+         */
+        private String approvalUserId;
+
+        /**
+         * 审核人名
+         */
+        private String approvalUserName;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class UpdateApprovalStatusDTO {
+        private PurchaseApplicationEntity purchaseApplicationEntity;
+        private ApproveStatusEnum approveStatus;
     }
 }

@@ -8,6 +8,7 @@ import cn.hutool.core.date.DateUnit;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -1466,6 +1467,25 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(SKUCLASSPATH).setPid(id)
                 .setBusinessId(id).setOperation("取消作废").setContent(msg));
         return BatchResultDTO.success(old.getId(), old.getCode(), OperationTypeEnum.UN_INVALID);
+    }
+
+    @Override
+    public List<PilotApplicationEntity> listByCodes(List<String> list) {
+        if (CollectionUtils.isNotEmpty(list)) {
+            return super.list(new LambdaQueryWrapper<PilotApplicationEntity>().in(PilotApplicationEntity::getCode, list).eq( PilotApplicationEntity::getIsDeleted, Boolean.FALSE));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void updateApproveStatus(PilotApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        PilotApplicationEntity pilotApplicationEntity = updateApprovalStatusDTO.getEntity();
+
+        lambdaUpdate().eq(PilotApplicationEntity::getId, pilotApplicationEntity.getId())
+                .set(PilotApplicationEntity::getApproveUserId, pilotApplicationEntity.getApproveUserId())
+                .set(PilotApplicationEntity::getApproveStatus, approveStatus)
+                .update(new PilotApplicationEntity());
     }
 
     /**

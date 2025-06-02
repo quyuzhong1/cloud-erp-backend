@@ -520,4 +520,8 @@ public interface SoInfoService extends SuperService<SoInfoEntity> {
      * @return List<ViewPushPurchaseApplicationDTO>
      */
     List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(List<String> ids);
+
+    List<SoInfoEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(SoInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

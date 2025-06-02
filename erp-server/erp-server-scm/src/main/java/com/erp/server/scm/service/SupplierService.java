@@ -1,6 +1,7 @@
 package com.erp.server.scm.service;
 
 import com.common.business.dto.base.*;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -12,6 +13,7 @@ import com.erp.model.scm.entity.SupplierPhaseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -340,4 +342,8 @@ public interface SupplierService extends SuperService<SupplierEntity> {
     PagingVO<SupplierExportExcelDTO> exportSupplier(PagingDTO<SupplierDTO.PagingParamDTO> dto);
 
     Boolean updateVoucherNo(List<String> ids, String voucherNo);
+
+    void add(SupplierDTO.InsertDTO addDTO);
+
+    void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
 }

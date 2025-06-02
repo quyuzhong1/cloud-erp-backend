@@ -3,6 +3,7 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -229,4 +230,8 @@ public interface PurchasePriceService extends SuperService<PurchasePriceEntity> 
     List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
 
     BatchResultDTO updateOutPlatformCode(PurchasePriceEntity entity, String outPlatformCode);
+
+    List<PurchasePriceEntity> listByCodes(List<String> codes);
+
+    void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }
