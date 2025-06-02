@@ -314,6 +314,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(insertManagementEntity.getId());
                 mqDto.setBusinessName(insertManagementEntity.getBusinessName());
+                mqDto.setBusinessCode(insertManagementEntity.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(taskId);
                 mqDto.setOperator(dto.getUserId());
@@ -438,6 +439,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(managementTask.getManagementId());
                 mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
@@ -740,6 +742,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(managementTask.getManagementId());
                 mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(managementTask.getProcessInstanceId());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
@@ -818,6 +821,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(managementTask.getManagementId());
                 mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
@@ -1152,6 +1156,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     mqDto.setProcessManagementId(managementTask.getManagementId());
                     mqDto.setBusinessName(managementTask.getBusinessName());
                     mqDto.setInstanceId(managementTask.getProcessInstanceId());
+                    mqDto.setBusinessCode(managementTask.getBusinessCode());
 //                mqDto.setTaskId(managementTask.getTaskId());
                     mqDto.setOperator(userInfo.getUid());
                     mqDto.setVariablesMap(variables);
@@ -1413,6 +1418,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(entity.getId());
                 mqDto.setBusinessName(entity.getBusinessName());
+                mqDto.setBusinessCode(entity.getBusinessCode());
                 mqDto.setInstanceId(entity.getProcessInstanceId());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
@@ -1490,6 +1496,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setProcessManagementId(entity.getId());
                 mqDto.setBusinessName(entity.getBusinessName());
                 mqDto.setInstanceId(entity.getProcessInstanceId());
+                mqDto.setBusinessCode(entity.getBusinessCode());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
                 mqDto.setVariablesMap(variables);

@@ -57,7 +57,8 @@ public class CfgApproveSyncBuildHandler {
                                                               List<ProcessTaskManagementEntity> processTaskManagementEntities,
                                                               List<ProcessTaskCcEntity> processTaskCcEntities,
                                                               List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
-                                                              Map<String, ThirdUnionDTO> thirdUnionMap){
+                                                              Map<String, ThirdUnionDTO> thirdUnionMap,
+                                                              String errorReason){
         //pc地址
         String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
         //erp审批同步配置表
@@ -87,12 +88,13 @@ public class CfgApproveSyncBuildHandler {
         if(Objects.isNull(thirdUnionDTO)){
             userName = "";
             //todo 推送记录  失败  创建人未绑定飞书
+            errorReason= "创建人未绑定飞书";
             return null;
         }else{
             if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenId())){
                 //todo 推送记录  失败  创建人未绑定飞书
+                errorReason= "创建人未绑定飞书";
             }
-//            thirdUserId = thirdUnionDTO.getThirdUserId();
             thirdOpenUserId = thirdUnionDTO.getThirdOpenId();
             values.put("@i18n@userName", thirdUnionDTO.getUserName());
             userName = thirdUnionDTO.getUserName();
@@ -132,9 +134,11 @@ public class CfgApproveSyncBuildHandler {
         //任务列表数组  最大长度：300
         if(CollUtil.isEmpty(processTaskManagementEntities)){
             //todo 推送记录  失败
+            errorReason= "审批任务不能为空";
         }else {
             if(processTaskManagementEntities.size() > 300){
                 //todo 推送记录  失败
+                errorReason= "飞书平台任务列表数不能超过300";
             }
 
             AtomicReference<Integer> num = new AtomicReference<>(0);
@@ -178,10 +182,11 @@ public class CfgApproveSyncBuildHandler {
 
         //抄送列表数组 最大长度：200
         if(CollUtil.isEmpty(processTaskCcEntities)){
-            //todo 推送记录  失败
+
         }else {
             if(processTaskCcEntities.size() > 200){
                 //todo 推送记录  失败
+                errorReason= "飞书平台抄送列表数不能超过200";
             }
             String ccTitle = StrUtil.format("抄送通知：【{}】提交的审核名称({})抄送给你",userName,businessName);
             CcNode[] ccList = processTaskCcEntities.stream()

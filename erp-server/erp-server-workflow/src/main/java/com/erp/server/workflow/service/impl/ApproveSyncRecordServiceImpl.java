@@ -102,4 +102,5 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         ApproveSyncRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方推送记录数据"));
         return BatchResultDTO.success(entity.getId(), entity.getId(), "");
     }
+
 }

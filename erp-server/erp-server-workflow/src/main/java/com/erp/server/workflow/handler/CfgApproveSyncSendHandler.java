@@ -1,8 +1,10 @@
 package com.erp.server.workflow.handler;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.FsBotParamsDTO;
@@ -11,6 +13,7 @@ import com.erp.model.workflow.enums.*;
 import com.erp.sdk.fs.enmu.FsActionStatusEnum;
 import com.erp.sdk.fs.enmu.UserIdTypeEnum;
 import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.service.ApproveSyncRecordService;
 import com.erp.server.workflow.service.CfgApproveNoticeService;
 import com.erp.server.workflow.service.CfgSettingService;
 import com.erp.server.workflow.service.ProcessTaskManagementExtService;
@@ -40,31 +43,33 @@ public class CfgApproveSyncSendHandler {
     private CfgApproveSyncBuildHandler cfgApproveSyncBuildHandler;
     @Resource
     private FsService fsService;
-
+    @Resource
+    private ApproveSyncRecordService approveSyncRecordService;
 
 
     public void updateNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
-                           List<ProcessTaskManagementEntity> processTaskManagementEntities) {
+                                List<ProcessTaskManagementEntity> processTaskManagementEntities,
+                                ApproveSyncRecordEntity syncRecordEntity) {
         //审批状态
         String approveType = dto.getApproveType();
         if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())){//审核通过
             //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.APPROVED.getCode());
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.APPROVED.getCode(),syncRecordEntity);
         } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())) {//审核不通过
             //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.REJECTED.getCode());
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.REJECTED.getCode(),syncRecordEntity);
         } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
             //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.CANCELLED.getCode());
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.CANCELLED.getCode(),syncRecordEntity);
         } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
             //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.FORWARDED.getCode());
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.FORWARDED.getCode(),syncRecordEntity);
         } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
             //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.PROCESSED.getCode());
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.PROCESSED.getCode(),syncRecordEntity);
         } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
             //更新审批结果通知
-            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.ROLLBACK.getCode());
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.ROLLBACK.getCode(),syncRecordEntity);
         }
     }
 
@@ -76,7 +81,8 @@ public class CfgApproveSyncSendHandler {
                            List<String> approveIds,
                            List<String> ccIds,
                            Map<String, ThirdUnionDTO> thirdUnionMap,
-                           List<ProcessTaskManagementEntity> processTaskManagementEntities) {
+                           List<ProcessTaskManagementEntity> processTaskManagementEntities,
+                           ApproveSyncRecordEntity syncRecordEntity) {
         //pc地址
         String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
         //参数map
@@ -86,65 +92,76 @@ public class CfgApproveSyncSendHandler {
         //审批状态
         String approveType = dto.getApproveType();
         if(StringUtils.isBlank(approveType) || (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus()) && !Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH))){//创建流程
-            //发送审核通知
-            CfgApproveNoticeEntity approveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode(), Boolean.TRUE);
-            if (Objects.nonNull(approveNoticeEntity)) {
-                //默认发送审核人
-                sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv);
-            }
+            //默认发送审核人
+            sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
+
             //发送抄送通知
-            commonSendNotice(NoticeTemplateEnum.CC,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+            commonSendNotice(NoticeTemplateEnum.CC, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         }if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())//审核通过并且流程已经完成
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
             //发送审批结果通知
-            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if (Objects.equals(approveType, ApproveTypeEnum.REJECT.getStatus())
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {//审核不通过并且流程已经完成
             //发送审批结果通知
-            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if (Objects.equals(approveType, ApproveTypeEnum.CANCEL.getStatus())) {//撤销
             //发送撤销通知
-            commonSendNotice(NoticeTemplateEnum.RECALL,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+            commonSendNotice(NoticeTemplateEnum.RECALL,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
-            //发送审核通知
-            CfgApproveNoticeEntity approveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode(), Boolean.TRUE);
-            if (Objects.nonNull(approveNoticeEntity)) {
-                //默认发送审核人
-                sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv);
-            }
+            //默认发送审核人
+            sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
+
             //发送抄送通知
-            commonSendNotice(NoticeTemplateEnum.CC,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+            commonSendNotice(NoticeTemplateEnum.CC,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
             //发送审批结果通知
-            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
             //发送审批结果通知
-            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv);
+            commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         }
     }
 
     //发送审批 Bot 消息（除了1008模板外）
-    private void commonSendNotice(NoticeTemplateEnum noticeTemplateEnum , CfgApproveSyncEntity cfgApproveSyncEntity, String createUserId, List<String> approveIds, List<String> ccIds, Map<String, ThirdUnionDTO> thirdUnionMap, List<String> summaries, String pcLinkByEnv) {
+    private void commonSendNotice(NoticeTemplateEnum noticeTemplateEnum ,
+                                  CfgApproveSyncEntity cfgApproveSyncEntity,
+                                  String createUserId,
+                                  List<String> approveIds,
+                                  List<String> ccIds,
+                                  Map<String, ThirdUnionDTO> thirdUnionMap,
+                                  List<String> summaries,
+                                  String pcLinkByEnv,
+                                  ApproveSyncRecordEntity syncRecordEntity) {
         CfgApproveNoticeEntity cfgApproveNoticeEntity = cfgApproveNoticeService.getByNoticeTypeAndMainId(cfgApproveSyncEntity.getId(), noticeTemplateEnum.getCode(), Boolean.TRUE);
         if (Objects.nonNull(cfgApproveNoticeEntity)) {
             List<String> sendUserIds = getSendUserIds(cfgApproveNoticeEntity, createUserId, approveIds, ccIds);
-            sendCcNotice(noticeTemplateEnum.getName(), summaries, createUserId, sendUserIds, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv);
+            sendNotice(noticeTemplateEnum.getName(), summaries, createUserId, sendUserIds, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
         }
     }
 
     //更新审批 Bot 消息
-    private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status) {
+    private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status,ApproveSyncRecordEntity syncRecordEntity) {
         processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE )).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(processTaskManagementEntities)){
             List<String> messsageIds = processTaskManagementExtService.listByProcessTaskManagementIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
             if(CollUtil.isNotEmpty(messsageIds)){
+                List<ApproveSyncRecordEntity> list = new ArrayList<>();
                 for (String messsageId : messsageIds) {
+                    ApproveSyncRecordEntity newRecord =  new ApproveSyncRecordEntity();
+                    BeanMapper.copy(syncRecordEntity,newRecord);
                     Boolean b = fsService.updateApproveMessage(messsageId, status);
-                    if(!b){
-                        //todo , 记录失败
-
+                    if(Boolean.FALSE.equals(b)){
+                        //记录失败
+                        newRecord.setErrorReason(String.format("飞书消息更新失败,messsageId：%s",messsageId));
+                    }else {
+                        newRecord.setErrorReason(String.format("飞书消息更新成功,messsageId：%s",messsageId));
+                        newRecord.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
                     }
+                    list.add(newRecord);
                 }
+                //保存日志
+                approveSyncRecordService.saveBatch(list);
             }
         }
     }
@@ -180,42 +197,72 @@ public class CfgApproveSyncSendHandler {
      * @author jack
      * @date 2025-05-21
      */
-    public void sendCcNotice(String tempId,List<String> summaries,String titleUserId,List<String> sendUserIds , Map<String, ThirdUnionDTO> thirdUnionMap, CfgApproveSyncEntity cfgApproveSyncEntity,String pcLinkByEnv){
+    public void sendNotice(String tempId,
+                           List<String> summaries,
+                           String titleUserId,
+                           List<String> sendUserIds ,
+                           Map<String, ThirdUnionDTO> thirdUnionMap,
+                           CfgApproveSyncEntity cfgApproveSyncEntity,
+                           String pcLinkByEnv,
+                           ApproveSyncRecordEntity syncRecordEntity){
         if(CollUtil.isNotEmpty(sendUserIds)){
             List<FsBotParamsDTO.SendParamsDTO> sendParams = new ArrayList<>();
+            List<ApproveSyncRecordEntity> list = new ArrayList<>();
+            Map<String , ApproveSyncRecordEntity> map = new HashMap<>();
             for (String userId : sendUserIds) {
+                ApproveSyncRecordEntity newRecord =  new ApproveSyncRecordEntity();
+                BeanMapper.copy(syncRecordEntity,newRecord);
+                newRecord.setReceiverId(userId);
                 if(thirdUnionMap.containsKey(userId)){
-                    FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
-                    params.setTemplateId(tempId);
-                    params.setUserId(thirdUnionMap.get(userId).getThirdUserId());
-//                    params.setUuid(e.getId());
-                    params.setApprovalName(cfgApproveSyncEntity.getTitle());
-                    params.setTitleUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
-                    if(thirdUnionMap.containsKey(titleUserId)){
+                    newRecord.setReceiverName(thirdUnionMap.get(userId).getUserName());
+                    if(StringUtils.isBlank(thirdUnionMap.get(userId).getThirdUserId())){
+                        newRecord.setErrorReason("用户未绑定飞书");
+                        list.add(newRecord);
+                    }else {
+                        FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
+                        params.setTemplateId(tempId);
+                        params.setUserId(thirdUnionMap.get(userId).getThirdUserId());
+                        params.setApprovalName(cfgApproveSyncEntity.getTitle());
                         params.setTitleUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
+                        if(thirdUnionMap.containsKey(titleUserId)){
+                            params.setTitleUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
+                        }
+                        params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
+                        params.setActionDetailUrl(pcLinkByEnv);
+                        params.setActionCallbackUrl("");
+                        params.setActionCallbackToken("");
+                        params.setActionCallbackKey("");
+                        params.setActionContext("");
+                        params.setSummaries(summaries);
+                        sendParams.add(params);
+
+                        map.put(params.getUserId(),newRecord);
                     }
-                    params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
-                    params.setActionDetailUrl(pcLinkByEnv);
-                    params.setActionCallbackUrl("");
-                    params.setActionCallbackToken("");
-                    params.setActionCallbackKey("");
-                    params.setActionContext("");
-                    params.setSummaries(summaries);
-                    sendParams.add(params);
+                }else{
+                    newRecord.setReceiverName("");
+                    newRecord.setErrorReason("用户不存在");
+                    list.add(newRecord);
                 }
             }
 
             if(CollUtil.isNotEmpty(sendParams)){
                 for (FsBotParamsDTO.SendParamsDTO sendParam : sendParams) {
+                    ApproveSyncRecordEntity newRecord = map.get(sendParam.getUserId());
                     //构建请求体
                     Map<String, Object> bodyMap = fsService.buildCcBodyMap(sendParam);
                     //发送消息
                     String messageId = fsService.sendErpApproveSyncMessage(bodyMap);
                     if(StringUtils.isBlank(messageId)){//发送失败
-                        //todo 记录错误信息
+                        newRecord.setErrorReason(String.format("发送失败,消息请求体：%s",JSONUtil.toJsonStr(sendParam)));
+                    }else {
+                        newRecord.setErrorReason(String.format("messageId：%s",messageId));
+                        newRecord.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
                     }
+                    list.add(newRecord);
                 }
             }
+            //保存日志
+            approveSyncRecordService.saveBatch(list);
         }
     }
 
@@ -224,41 +271,71 @@ public class CfgApproveSyncSendHandler {
      * @author jack
      * @date 2025-05-21
      */
-    public void sendApproveNotice(NoticeTemplateEnum noticeTemplateEnum, List<String> summaries, List<ProcessTaskManagementEntity> processTaskManagementEntities, Map<String, ThirdUnionDTO> thirdUnionMap, CfgApproveSyncEntity cfgApproveSyncEntity,String pcLinkByEnv) {
+    public void sendApproveNotice(NoticeTemplateEnum noticeTemplateEnum,
+                                  List<String> summaries,
+                                  List<ProcessTaskManagementEntity> processTaskManagementEntities,
+                                  Map<String, ThirdUnionDTO> thirdUnionMap,
+                                  CfgApproveSyncEntity cfgApproveSyncEntity,
+                                  String pcLinkByEnv,
+                                  ApproveSyncRecordEntity syncRecordEntity) {
         processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE_ING )).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(processTaskManagementEntities)){
+            List<ApproveSyncRecordEntity> list = new ArrayList<>();
+            Map<String , ApproveSyncRecordEntity> map = new HashMap<>();
+
             Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
             List<FsBotParamsDTO.SendParamsDTO> sendParams = new ArrayList<>();
             for (ProcessTaskManagementEntity e : processTaskManagementEntities) {
+                ApproveSyncRecordEntity newRecord =  new ApproveSyncRecordEntity();
+                BeanMapper.copy(syncRecordEntity,newRecord);
+                newRecord.setReceiverId(e.getCurApproveId());
                 if(thirdUnionMap.containsKey(e.getCurApproveId())){
-                    FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
-                    params.setTemplateId(noticeTemplateEnum.getName());
-                    params.setUserId(thirdUnionMap.get(e.getCurApproveId()).getThirdUserId());
-                    params.setUuid(e.getId());
-                    params.setApprovalName(cfgApproveSyncEntity.getTitle());
-                    if(thirdUnionMap.containsKey(e.getCreateUserId())){
-                        params.setTitleUserId(thirdUnionMap.get(e.getCreateUserId()).getThirdUserId());
+                    ThirdUnionDTO thirdUnionDTO = thirdUnionMap.get(e.getCurApproveId());
+                    newRecord.setReceiverName(thirdUnionDTO.getUserName());
+                    if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId())){
+                        newRecord.setErrorReason("用户未绑定飞书");
+                        list.add(newRecord);
+                    }else {
+                        FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
+                        params.setTemplateId(noticeTemplateEnum.getName());
+                        params.setUserId(thirdUnionDTO.getThirdUserId());
+                        params.setUuid(e.getId());
+                        params.setApprovalName(cfgApproveSyncEntity.getTitle());
+                        if(thirdUnionMap.containsKey(e.getCreateUserId())){
+                            params.setTitleUserId(thirdUnionMap.get(e.getCreateUserId()).getThirdUserId());
+                        }
+                        params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
+                        params.setActionDetailUrl(pcLinkByEnv);
+                        params.setActionCallbackUrl(String.valueOf(dataJson.get("actionCallbackUrl")));
+                        params.setActionCallbackToken(String.valueOf(dataJson.get("actionCallbackToken")));
+                        params.setActionCallbackKey(String.valueOf(dataJson.get("actionCallbackKey")));
+                        params.setActionContext("");
+                        params.setSummaries(summaries);
+                        sendParams.add(params);
+
+                        map.put(params.getUserId(),newRecord);
                     }
-                    params.setTitleUserIdType(UserIdTypeEnum.USERID.getCode());
-                    params.setActionDetailUrl(pcLinkByEnv);
-                    params.setActionCallbackUrl(String.valueOf(dataJson.get("actionCallbackUrl")));
-                    params.setActionCallbackToken(String.valueOf(dataJson.get("actionCallbackToken")));
-                    params.setActionCallbackKey(String.valueOf(dataJson.get("actionCallbackKey")));
-                    params.setActionContext("");
-                    params.setSummaries(summaries);
-                    sendParams.add(params);
+                }else{
+                    newRecord.setReceiverName("");
+                    newRecord.setErrorReason("用户不存在");
+                    list.add(newRecord);
                 }
             }
 
             if(CollUtil.isNotEmpty(sendParams)){
                 for (FsBotParamsDTO.SendParamsDTO sendParam : sendParams) {
+                    ApproveSyncRecordEntity newRecord = map.get(sendParam.getUserId());
                     //构建请求体
                     Map<String, Object> bodyMap = fsService.buildApproveBodyMap(sendParam);
                     //发送消息
                     String messageId = fsService.sendErpApproveSyncMessage(bodyMap);
                     if(StringUtils.isBlank(messageId)){//发送失败
                         //todo 记录错误信息
+                        newRecord.setErrorReason(String.format("发送失败,消息请求体：%s",JSONUtil.toJsonStr(sendParam)));
                     }else{
+                        newRecord.setErrorReason(String.format("messageId：%s",messageId));
+                        newRecord.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
+
                         //保持messageId 用于后续更新接口
                         ProcessTaskManagementExtEntity entity = new ProcessTaskManagementExtEntity();
                         entity.setProcessTaskManagementId(sendParam.getUuid());
@@ -266,8 +343,11 @@ public class CfgApproveSyncSendHandler {
                         entity.setSoucePlatform(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
                         processTaskManagementExtService.save(entity);
                     }
+                    list.add(newRecord);
                 }
             }
+            //保存日志
+            approveSyncRecordService.saveBatch(list);
         }
     }
 
