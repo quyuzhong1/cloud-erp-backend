@@ -148,7 +148,10 @@ public class ProcessDelegateDTO implements Serializable {
          * 创建时间【可排序】
          */
         private LocalDateTime createTime;
-
+        /**
+         * 是否自动终止
+         */
+        private Boolean isAuto;
     }
 
 

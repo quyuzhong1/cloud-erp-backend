@@ -1,6 +1,5 @@
 package com.erp.server.workflow.listeners;
 
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
@@ -26,7 +25,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -204,23 +202,39 @@ public class CamundaGlobalListener {
       Boolean isMultiInstance = nextActPropertiesMap.get("isMultiInstance") != null && Boolean.parseBoolean(nextActPropertiesMap.get("isMultiInstance").toString());
       String startUserId = (String) executionDelegate.getVariable("creator");
       List<String> candidateUsers = processManagementService.getCandidateByAct(destination, executionDelegate, startUserId);
-
-      //查询委托审批信息,重新赋值审核人
-      List<String> proList = Arrays.stream(executionDelegate.getProcessDefinitionId().split(":")).collect(Collectors.toList());
-      if (CollUtil.isNotEmpty(proList)) {
-        //获取当前登陆人
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(proList.get(0),userInfo.getUid());
-        if (ObjectUtil.isNotEmpty(processDelegateEntity)) {
-          candidateUsers.remove(processDelegateEntity.getStartUserId());
-          candidateUsers.add(processDelegateEntity.getDelegateUserId());
-        }
-      }
+      //委托人处理
+      List<String> userIdList = getCandidateUsers(executionDelegate,candidateUsers);
       if (Boolean.TRUE.equals(isMultiInstance) || CharSequenceUtil.equals(nextActType, "multiInstanceBody")) {
-        executionDelegate.setVariable(MUL_USER_LIST, candidateUsers);
+        executionDelegate.setVariable(MUL_USER_LIST, userIdList);
       } else {
-        executionDelegate.setVariable("userList", candidateUsers);
+        executionDelegate.setVariable("userList", userIdList);
       }
     }
+  }
+  /**
+   * 委托人处理
+   * @author will
+   * @date 2025/6/1 12:05
+   * @param executionDelegate
+   * @param candidateUsers
+   * @return List<String>
+   */
+  private List<String> getCandidateUsers(DelegateExecution executionDelegate,List<String> candidateUsers) {
+    if (ObjectUtil.isEmpty(executionDelegate) || CharSequenceUtil.isBlank(executionDelegate.getProcessDefinitionId())) {
+      return candidateUsers;
+    }
+    //查询委托审批信息,重新赋值审核人
+    List<String> proList = Arrays.stream(executionDelegate.getProcessDefinitionId().split(":")).collect(Collectors.toList());
+    //获取当前登陆人
+    LoginUser userInfo = UserContext.getDefaultLoginUser();
+    if (!candidateUsers.contains(userInfo.getUid())) {
+      return candidateUsers;
+    }
+    ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(proList.get(0), userInfo.getUid());
+    if (ObjectUtil.isNotEmpty(processDelegateEntity)) {
+      candidateUsers.remove(processDelegateEntity.getStartUserId());
+      candidateUsers.add(processDelegateEntity.getDelegateUserId());
+    }
+    return candidateUsers;
   }
 }
