@@ -550,6 +550,7 @@ public class FirstMileCostAllocationServiceImpl extends SuperServiceImpl<FirstMi
                             && CharSequenceUtil.isNotBlank(e.getSkuId()) && CharSequenceUtil.isNotBlank(deliveryDetailEntity.getSkuId()) && e.getSkuId().equals(deliveryDetailEntity.getSkuId())
                             && CharSequenceUtil.isNotBlank(e.getPlatformSkuNo()) && CharSequenceUtil.isNotBlank(deliveryDetailEntity.getPlatformSkuNo()) && e.getPlatformSkuNo().equals(deliveryDetailEntity.getPlatformSkuNo())
                             && Objects.equals(e.getReportPeriodMonth(), lastMonth)
+                            && ((CharSequenceUtil.isNotBlank(entity.getReconciliationId()) && Objects.equals(e.getReconciliationId(), entity.getReconciliationId()))) || (CharSequenceUtil.isNotBlank(entity.getEstimatedBillId()) && Objects.equals(e.getEstimatedBillId(), entity.getEstimatedBillId()))
                             && Objects.equals(e.getBillSourceType(), finalBillSourceType))
                     .findFirst().orElse(null);
             FirstMileSkuCostAllocationEntity lastAllocation = null;
