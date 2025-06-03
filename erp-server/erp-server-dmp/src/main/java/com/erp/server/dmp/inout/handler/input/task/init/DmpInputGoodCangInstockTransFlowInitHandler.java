@@ -56,11 +56,13 @@ public class DmpInputGoodCangInstockTransFlowInitHandler extends DmpInputGoodCan
             // 主数据不存在明细无需处理
             return Collections.emptyList();
         }
+        // 父级任务
+        DmpInputTaskEntity parentTaskEntity = dmpInputTaskService.getById(dmpInputTaskEntity.getParentTaskId());
 
         // 开始时间=最早退货单号创建时间
         LocalDateTime createDateFrom = null;
         // 结束时间=任务指定结束时间
-        LocalDateTime createDateEnd = null;
+        LocalDateTime createDateEnd = parentTaskEntity.getEndTime();
         // 退货单号列表
         List<String> referenceNoList = new LinkedList<>();
         for (Map<String, Object> parentDatum : parentData) {
@@ -69,13 +71,6 @@ public class DmpInputGoodCangInstockTransFlowInitHandler extends DmpInputGoodCan
                 LocalDateTime addTime = LocalDateTime.parse(createTime, DATE_FORMATTER);
                 if (createDateFrom == null || addTime.isBefore(createDateFrom)) {
                     createDateFrom = addTime.minusMinutes(1);
-                }
-            }
-            String updateTimeStr = parentDatum.getOrDefault("update_at", "").toString();
-            if (StringUtils.isNotBlank(updateTimeStr)) {
-                LocalDateTime curUpdateTime = LocalDateTime.parse(updateTimeStr, DATE_FORMATTER);
-                if (createDateEnd == null || curUpdateTime.isBefore(createDateEnd)) {
-                    createDateEnd = curUpdateTime.plusMinutes(1);
                 }
             }
             String code = parentDatum.getOrDefault("receiving_code", "").toString();

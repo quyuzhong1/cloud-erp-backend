@@ -223,6 +223,7 @@ public class SyncSdyJob {
             // 出库单
             List<SoOutstockEntity> outstockEntityList = FeignQuery.create(SoOutstockEntity.class)
                     .in(SoOutstockEntity::getSoId, soIds)
+                    .eq(SoOutstockEntity::getInvalidStatus, false)
                     .list();
 
             //产品信息
