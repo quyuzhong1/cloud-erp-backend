@@ -10,6 +10,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import cn.hutool.json.JSON;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -56,6 +57,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.handle.BaseWorkflowService;
 import com.erp.sdk.fs.enmu.FsActionStatusEnum;
+import com.erp.server.workflow.listeners.CamundaGlobalListener;
 import com.erp.server.workflow.mapper.ProcessManagementMapper;
 import com.erp.server.workflow.service.*;
 import io.netty.util.internal.StringUtil;
@@ -167,14 +169,20 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-        String processDefinitionId = getProcessDefinitionId(dto);
-        if (CharSequenceUtil.isBlank(processDefinitionId)) {
-            // 业务无已启用的Erp流程配置
+//        String processDefinitionId = getProcessDefinitionId(dto);
+//        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+//            // 业务无已启用的Erp流程配置
+//            return new ProcessManagementDTO.StartResultDTO(dto);
+//        }
+//        //启动流程
+//        return startProcess(dto, processDefinitionId);
+        // 查询业务数据和关联流程定义
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
+        if (null == processBusiness) {
+            // 业务未绑定流程定义
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
-        //启动流程
-        return startProcess(dto, processDefinitionId);
-
+        return startProcess(dto, processBusiness.getProcessDefinitionId());
     }
 
 
@@ -944,7 +952,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         String processDefinitionId = execution.getProcessDefinitionId();
 
         // 查询流程设计审核人处理方式
-        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId.split(":")[0]);
+        ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId.split(":")[0]);
         if (processDefinition == null) {
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
@@ -956,7 +964,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
 
         Map<String, FindUserDTO> userMap = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, e -> e));
-        saveTaskManagementEntities(task, processInstanceId, activityId, processStartTime, propertiesDTO, executionId, activityName, candidateUsers, userMap);
+        saveTaskManagementEntities(task, processInstanceId, activityId, processStartTime, propertiesDTO, executionId, activityName, candidateUsers, userMap,execution.getVariables());
     }
 
     /**
@@ -1015,7 +1023,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param candidateUsers 审批人
      * @param userMap 审批人信息
      */
-    private void saveTaskManagementEntities(DelegateTask task, String processInstanceId, String activityId, LocalDateTime processStartTime, CamundaDTO.PropertiesDTO propertiesDTO, String executionId, String activityName, List<String> candidateUsers, Map<String, FindUserDTO> userMap) {
+    private void saveTaskManagementEntities(DelegateTask task, String processInstanceId, String activityId, LocalDateTime processStartTime, CamundaDTO.PropertiesDTO propertiesDTO, String executionId, String activityName, List<String> candidateUsers, Map<String, FindUserDTO> userMap,Map<String, Object> variables) {
         List<FindUserDTO> copyUserList = getCopyUserList(propertiesDTO);
         candidateUsers.forEach(userId -> {
             FindUserDTO findUserDTO = userMap.get(userId);
@@ -1023,14 +1031,40 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 log.error("###ProcessManagementServiceImpl>>>saveTaskManagementEntities:::审批人不存在, userId: {}", userId);
                 return;
             }
-            ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, findUserDTO, executionId, activityName);
+            //是否委托标识
+            JSONObject labelJson = new JSONObject();
+            labelJson.set("isDelegate",isDelegate(userId,variables));
+
+            ProcessTaskManagementEntity insertTask = new ProcessTaskManagementEntity(processInstanceId, activityId, task.getId(), processStartTime, ApproveStatusEnum.APPROVE_ING, propertiesDTO, findUserDTO, executionId, activityName,labelJson);
             ProcessTaskManagementEntity taskManagementEntity = processTaskManagementService.saveProcessTask(insertTask);
             if (CollUtil.isNotEmpty(copyUserList)) {
                 processTaskCcService.saveCcUser(task.getId(), copyUserList, taskManagementEntity.getId());
             }
         });
     }
-    
+
+    /**
+     * 是否委托标识
+     * @author will
+     * @date 2025/6/3 19:28
+     * @param variables
+     * @return Boolean
+     */
+    private Boolean isDelegate (String userId,Map<String, Object> variables) {
+        // 获取当前登录用户
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        Map<String, String> delegateInfo = (Map<String, String>) variables.get("DELEGATE_INFO_"+ userInfo.getUid());
+        if (ObjectUtil.isEmpty(delegateInfo)) {
+            return Boolean.FALSE;
+        }
+        String delegateUser = delegateInfo.get("delegateUser");
+        String delegateType = delegateInfo.get("delegateType");
+        if (CamundaGlobalListener.AUTO_DELEGATE.equals(delegateType) && CharSequenceUtil.equals(userId,delegateUser)) {
+            return Boolean.TRUE;
+        }
+        return Boolean.FALSE;
+    }
+
     /**
      * 获取抄送人信息
      * @author will 

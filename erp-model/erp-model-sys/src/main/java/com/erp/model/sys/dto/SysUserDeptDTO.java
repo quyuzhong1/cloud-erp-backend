@@ -27,4 +27,9 @@ public class SysUserDeptDTO {
     private String deptName;
 
 
+    /**
+     * 用户状态1：正常 0：禁用
+     */
+    private Integer userState;
+
 }

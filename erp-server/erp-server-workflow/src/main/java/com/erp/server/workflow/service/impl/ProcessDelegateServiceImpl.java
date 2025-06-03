@@ -251,7 +251,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
                 throw new ServiceException("当前登陆人未找到部门信息");
             }
             List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
-            Map<String, List<SysUserDeptDTO>> deptMap = userDeptList.stream().collect(Collectors.groupingBy(SysUserDeptDTO::getDeptId));
+            Map<String, List<SysUserDeptDTO>> deptMap = userDeptList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.getDeptId()) && MathUtil.ONE.equals(obj.getUserState())).collect(Collectors.groupingBy(SysUserDeptDTO::getDeptId));
             List<SysUserDeptDTO> sysUserDeptList = deptMap.get(departmentUserNumberDTO.getDepartmentId());
             if (CollUtil.isEmpty(userDeptList)){
                 throw new ServiceException("当前登陆人未找到部门信息");
