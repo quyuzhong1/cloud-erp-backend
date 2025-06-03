@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -1070,6 +1071,20 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.PURCHASE_PRICE.getCode(), v, "更新外部平台单号");
         });
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public List<PurchasePriceEntity> listByCodes(List<String> codes) {
+        return this.list(new LambdaQueryWrapper<PurchasePriceEntity>().in(PurchasePriceEntity::getCode, codes).eq(PurchasePriceEntity::getIsDeleted, false));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(PurchasePriceDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        PurchasePriceEntity purchasePriceEntity = updateApprovalStatusDTO.getPurchasePriceEntity();
+        updateApproveStatus(Collections.singletonList(purchasePriceEntity), approveStatus);
     }
 
     /**

@@ -179,7 +179,9 @@
         <result property="processDefinitionId" column="fm_process_definition_id"/>
         <result property="thirdFieldId" column="third_field_id"/>
         <result property="isDetailField" column="is_detail_field"/>
-        <result property="parentId" column="parent_id"/>
+        <result property="thirdParentId" column="thirdParentId"/>
+        <result property="sysParentId" column="sys_parent_id"/>
+        <result property="groupType" column="group_type"/>
         <result property="index" column="index"/>
 
         <collection property="processValueMapDTOList"
@@ -200,22 +202,20 @@
 
     <!-- 主查询：根据流程ID获取完整视图 -->
     <select id="getViewDTOById" resultMap="viewDTOResultMap">
-        SELECT
-            p.id                             AS process_id,
-            p.code                           AS process_code,
-            p.name                           AS process_name,
-            p.bussiness_key                  AS process_bussiness_key,
+        SELECT p.id                             AS process_id,
+               p.code                           AS process_code,
+               p.name                           AS process_name,
+               p.bussiness_key                  AS process_bussiness_key,
 
-            r.id                             AS rule_id,
-            r.type                           AS rule_type,
-            r.cfg_process_id                 AS cfg_process_id,
-            r.process_definition_id          AS r_process_definition_id,
-            r.process_definition_version     AS process_definition_version,
-            r.is_default                     AS is_default,
-            r.disabled                       AS disabled,
+               r.id                             AS rule_id,
+               r.type                           AS rule_type,
+               r.cfg_process_id                 AS cfg_process_id,
+               r.process_definition_id          AS r_process_definition_id,
+               r.process_definition_version     AS process_definition_version,
+               r.is_default                     AS is_default,
+               r.disabled                       AS disabled,
 
-            (
-                SELECT STRING_AGG(
+               (SELECT STRING_AGG(
                                CONCAT_WS(' ',
                                          COALESCE(sub_e.left_bracket, ''),
                                          COALESCE(sub_cqo.condition_field_name, ''),
@@ -235,47 +235,47 @@
                                        AND sub_e.field = sub_cqo.condition_field
                                        AND sub_cqo.is_deleted = false
                 WHERE sub_e.rule_id = r.id
-                  AND sub_e.is_deleted = false
-            ) AS exp_desc,
+                  AND sub_e.is_deleted = false) AS exp_desc,
 
-            e.id                             AS exp_id,
-            e.rule_id                        AS rule_id_for_exp,
-            e.left_bracket                   AS left_bracket,
-            e.field                          AS field,
-            e.compare                        AS compare,
-            e.value                          AS value,
-            e.right_bracket                  AS right_bracket,
-            e.logic                          AS logic,
-            e.index                          AS exp_index,
-            e.name                           AS exp_name,
+               e.id                             AS exp_id,
+               e.rule_id                        AS rule_id_for_exp,
+               e.left_bracket                   AS left_bracket,
+               e.field                          AS field,
+               e.compare                        AS compare,
+               e.value                          AS value,
+               e.right_bracket                  AS right_bracket,
+               e.logic                          AS logic,
+               e.index                          AS exp_index,
+               e.name                           AS exp_name,
 
-            fm.id                            AS field_map_id,
-            fm.third_field                   AS third_field,
-            fm.third_field_type              AS third_field_type,
-            fm.third_field_required          AS third_field_required,
-            fm.sys_field                     AS sys_field,
-            fm.sys_field_type                AS sys_field_type,
-            fm.sys_field_required            AS sys_field_required,
-            fm.cfg_id                        AS cfg_id,
-            fm.default_value                 AS field_default_value,
-            fm.is_unique                     AS is_unique,
-            fm.cfg_type                      AS cfg_type,
-            fm.process_definition_id         AS fm_process_definition_id,
-            fm.third_field_id                AS third_field_id,
-            fm.is_detail_field               AS is_detail_field,
-            fm.parent_id                     AS parent_id,
-            fm.index                         AS index
+               fm.id                            AS field_map_id,
+               fm.third_field                   AS third_field,
+               fm.third_field_type              AS third_field_type,
+               fm.third_field_required          AS third_field_required,
+               fm.sys_field                     AS sys_field,
+               fm.sys_field_type                AS sys_field_type,
+               fm.sys_field_required            AS sys_field_required,
+               fm.cfg_id                        AS cfg_id,
+               fm.default_value                 AS field_default_value,
+               fm.is_unique                     AS is_unique,
+               fm.cfg_type                      AS cfg_type,
+               fm.process_definition_id         AS fm_process_definition_id,
+               fm.third_field_id                AS third_field_id,
+               fm.is_detail_field               AS is_detail_field,
+               fm.third_parent_id               AS third_parent_id,
+               fm.sys_parent_id                 AS sys_parent_id,
+               fm.group_type                    AS group_type,
+               fm.index                         AS index
         FROM public.cfg_process p
                  LEFT JOIN public.cfg_process_rule r ON p.id = r.cfg_process_id AND r.is_deleted = false
                  LEFT JOIN public.cfg_process_exp e ON r.id = e.rule_id AND e.is_deleted = false
                  LEFT JOIN public.cfg_process_field_map fm ON r.id = fm.cfg_id AND fm.is_deleted = false
         WHERE p.id = #{id}
           AND p.is_deleted = false
-        ORDER BY
-            p.id ASC,
-            r.create_time DESC, r.id ASC,
-            e.index ASC, e.id ASC,
-            fm.id ASC
+        ORDER BY p.id ASC,
+                 r.create_time DESC, r.id ASC,
+                 e.index ASC, e.id ASC,
+                 fm.id ASC
     </select>
 
     <select id="listValueMapByFieldMapId" resultMap="valueViewDTOResultMap">

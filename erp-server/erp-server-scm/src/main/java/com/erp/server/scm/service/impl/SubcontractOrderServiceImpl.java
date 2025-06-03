@@ -7,6 +7,7 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -1570,6 +1571,23 @@ public class SubcontractOrderServiceImpl extends SuperServiceImpl<SubcontractOrd
             //更新采购申请单的生成状态
             purchaseOrderService.updateCreatePoType(poIds);
         }
+    }
+
+    @Override
+    public List<SubcontractOrderEntity> listByCodes(List<String> list) {
+         return this.list(new QueryWrapper<SubcontractOrderEntity>().lambda().in(SubcontractOrderEntity::getCode, list).eq(SubcontractOrderEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(SubcontractOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+         String approveStatus = updateApprovalStatusDTO.getApproveStatus();
+         SubcontractOrderEntity subcontractOrderEntity = updateApprovalStatusDTO.getSubcontractOrderEntity();
+         lambdaUpdate().in(SubcontractOrderEntity::getId, Collections.singletonList(subcontractOrderEntity.getId()))
+                .set(SubcontractOrderEntity::getApproveStatus, approveStatus)
+                .set(SubcontractOrderEntity::getApproveUserId, subcontractOrderEntity.getApproveUserId())
+                .set(SubcontractOrderEntity::getApproveUserName, subcontractOrderEntity.getApproveUserName())
+                .set(SubcontractOrderEntity::getApproveTime, subcontractOrderEntity.getApproveTime())
+                .update();
     }
 
 }

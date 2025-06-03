@@ -101,7 +101,9 @@
         <result property="processDefinitionId" column="field_map_process_definition_id"/>
         <result property="thirdFieldId" column="field_map_third_field_id"/>
         <result property="isDetailField" column="field_map_is_detail_field"/>
-        <result property="parentId" column="field_map_parent_id"/>
+        <result property="thirdParentId" column="field_map_parent_id"/>
+         <result property="groupType" column="field_map_group_type"/>
+         <result property="sysParentId" column="sys_parent_id"/>
         <result property="index" column="field_map_index"/>
         <result property="thirdFieldTypeName" column="thirdFieldTypeName"/>
         <result property="sysFieldTypeName" column="sysFieldTypeName"/>
@@ -150,7 +152,9 @@
             fm.process_definition_id AS field_map_process_definition_id,
             fm.third_field_id AS field_map_third_field_id,
             fm.is_detail_field AS field_map_is_detail_field,
-            fm.parent_id AS field_map_parent_id,
+            fm.third_parent_id AS field_map_parent_id,
+            fm.group_type AS field_map_group_type,
+            fm.sys_parent_id AS sys_parent_id,
             fm.index AS field_map_index,
             b1.value AS thirdFieldTypeName,
             b2.value AS sysFieldTypeName,

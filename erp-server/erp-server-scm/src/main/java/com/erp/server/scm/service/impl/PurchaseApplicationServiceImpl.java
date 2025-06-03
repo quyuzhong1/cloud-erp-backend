@@ -7,6 +7,8 @@ import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -1493,5 +1495,33 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             resultList.add(checkUpDTO);
         }
         return resultList;
+    }
+
+    @Override
+    public List<PurchaseApplicationEntity> listByCodes(List<String> list) {
+        if (CollUtil.isNotEmpty(list)) {
+            return this.list(new LambdaQueryWrapper<PurchaseApplicationEntity>().in(PurchaseApplicationEntity::getCode,list));
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus) {
+        String userId = sysUserFeign.getThirdByUserIds("fs", one.getApproveUserId()).getUserId();
+        //更新审核状态
+        lambdaUpdate().in(PurchaseApplicationEntity::getId,Arrays.asList(one.getId()))
+                .set(PurchaseApplicationEntity::getApproveUserId,userId)
+                .set(PurchaseApplicationEntity::getApproveStatus,approveStatus)
+                .update();
+    }
+
+    @Override
+    public void updatePA(PurchaseApplicationDTO.updatePADTO updateDTO) {
+        PurchaseApplicationEntity one = this.getOne(new QueryWrapper<PurchaseApplicationEntity>().eq(updateDTO.getField(), updateDTO.getValue()));
+        if (ObjUtil.isEmpty(one)) {
+            throw new ServiceException("未找到采购申请单");
+        }
+        BeanUtil.copyProperties(updateDTO,one);
+        this.updateById(one);
     }
 }
