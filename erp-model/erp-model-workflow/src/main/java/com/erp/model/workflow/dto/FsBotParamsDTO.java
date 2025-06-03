@@ -28,9 +28,11 @@ public class FsBotParamsDTO implements Serializable {
 
         private String templateId;
         private String userId;
+        private String thirdUserId;
         private String uuid;
         private String approvalName;
         private String titleUserId;
+        private String titleThirdUserId;
         private String titleUserIdType;
         private String comment;
         private String note;

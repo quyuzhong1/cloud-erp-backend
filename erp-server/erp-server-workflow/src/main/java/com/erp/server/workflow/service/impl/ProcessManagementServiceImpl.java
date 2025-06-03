@@ -809,10 +809,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 }
             }
         }
-        // 删除本地流程任务数据
-        removeByProcessInstanceId(processInstance.getProcessInstanceId());
-
-
         // 完成新增数据事务提交之后,发送MQ消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -829,6 +825,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessKey(dto.getBusinessKey());
                 mqDto.setApproveType(ApproveTypeEnum.CANCEL.getStatus());//撤销
                 syncFsExternalInstance(mqDto);
+
+                // 删除本地流程任务数据
+                removeByProcessInstanceId(processInstance.getProcessInstanceId());
             }
         });
 

@@ -1,14 +1,19 @@
 package com.erp.model.workflow.entity;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Map;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import com.common.business.enums.ApproveStatusEnum;
+import org.apache.ibatis.type.JdbcType;
 
 
 /**
@@ -22,8 +27,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("approve_sync_record")
-public class ApproveSyncRecordEntity extends BaseEntity<ApproveSyncRecordEntity> {
+@TableName(value = "approve_sync_record", autoResultMap = true)
+public class ApproveSyncRecordEntity extends BaseEntity<ApproveSyncRecordEntity> implements Serializable{
 
     /**
     * 主表id
@@ -86,6 +91,11 @@ public class ApproveSyncRecordEntity extends BaseEntity<ApproveSyncRecordEntity>
     @TableField("notice_node")
     private String noticeNode;
 
+    /**
+     * json数据
+     */
+    @TableField(value = "data_json", typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> dataJson;
 
     public static final String CFG_APPROVE_SYNC_ID = "cfg_approve_sync_id";
 

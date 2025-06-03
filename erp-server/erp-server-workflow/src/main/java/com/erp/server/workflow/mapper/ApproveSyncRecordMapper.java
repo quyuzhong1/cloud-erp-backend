@@ -27,4 +27,6 @@ public interface ApproveSyncRecordMapper extends BaseMapper<ApproveSyncRecordEnt
     List<ApproveSyncRecordDTO.TabListDTO> tabList(@Param("params") ApproveSyncRecordDTO.PagingParamDTO searchParam);
 
     IPage<ApproveSyncRecordDTO.ListDTO> paging(Page query, @Param("params")  ApproveSyncRecordDTO.PagingParamDTO params);
+
+    int insertBatch(@Param("list") List<ApproveSyncRecordEntity> list);
 }

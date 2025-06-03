@@ -729,13 +729,13 @@ public class FsService {
         bodyMap.put("template_id", dto.getTemplateId());
         //
         //接收审批 Bot 消息的目标用户的 user_id
-        bodyMap.put("user_id", dto.getUserId());
+        bodyMap.put("user_id", dto.getThirdUserId());
         //自定义的幂等 ID
         bodyMap.put("uuid", dto.getUuid());
         //对应模板标题的 {approval_name}
         bodyMap.put("approval_name", "@i18n@approvalName");
         //对应模板标题的 {title_user_id}
-        bodyMap.put("title_user_id", dto.getTitleUserId());
+        bodyMap.put("title_user_id", dto.getTitleThirdUserId());
         //指定 title_user_id 传入的用户 ID 类型
         bodyMap.put("title_user_id_type ", dto.getTitleUserIdType());
 
