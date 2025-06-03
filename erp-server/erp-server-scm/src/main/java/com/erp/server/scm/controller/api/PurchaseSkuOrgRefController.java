@@ -72,7 +72,7 @@ public class PurchaseSkuOrgRefController extends BaseController {
      * 根据sku获取采购组织关系
      */
     @PostMapping("/getBySkuIdList")
-    public ApiResult<List<PurchaseSkuOrgRefEntity>> getBySkuIdList(@RequestParam("skuIdList") List<String> skuIdList) {
-        return success(purchaseSkuOrgRefService.getBySkuIdList(skuIdList));
+    public ApiResult<List<PurchaseSkuOrgRefEntity>> getBySkuIdList(@RequestBody @Validated PurchaseSkuOrgRefDTO.QuerySkuDTO querySkuDTO) {
+        return success(purchaseSkuOrgRefService.getBySkuIdList(querySkuDTO.getSkuIdList()));
     }
 }
