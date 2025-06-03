@@ -321,10 +321,9 @@ public class ShopifyOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandle
         if (ObjectUtil.isNotEmpty(dmpSoInfoEntity.getPayTime())) {
             // 使用Instant类将Unix时间戳转换为LocalDateTime对象
             orderDTO.setPayTime(dmpSoInfoEntity.getPayTime());
-
-            //付款方式
-            orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
         }
+        //付款方式
+        orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
 
         //买家备注
         orderDTO.setBuyerRemark(dmpSoInfoEntity.getBuyerRemark());

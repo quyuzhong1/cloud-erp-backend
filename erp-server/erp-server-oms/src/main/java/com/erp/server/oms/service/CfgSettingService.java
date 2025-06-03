@@ -1,8 +1,11 @@
 package com.erp.server.oms.service;
-import com.erp.model.oms.entity.CfgSettingEntity;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgSettingDTO;
+import com.erp.model.oms.entity.CfgSettingEntity;
+
+import java.util.List;
 
 /**
  * <p>
@@ -41,4 +44,12 @@ public interface CfgSettingService extends SuperService<CfgSettingEntity> {
      * @return
      */
     CfgSettingEntity getSettingByKey(String key);
+
+
+    /**
+     * 获取配置实体记录
+     * @param key
+     * @return
+     */
+    List<CfgSettingEntity> listSettingByKey(String key);
 }
