@@ -169,7 +169,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
             throw new ServiceException(ApiError.PROCESS_DELEGATE_CLOSE);
         }
         //更新终止时间和状态
-        entity.setStatus(ProcessDelegateStatusEnum.ENDED.getCode());
+        entity.setStatus(ProcessDelegateStatusEnum.MANUAL_END.getCode());
         entity.setClosedTime(LocalDateTime.now());
         boolean isClose = this.updateById(entity);
         if (!isClose) {
@@ -194,7 +194,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     @Override
     public List<ProcessDelegateEntity> listNotEnded(LocalDateTime now) {
         return lambdaQuery()
-                .ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode())
+                .in(ProcessDelegateEntity::getStatus,Arrays.asList(ProcessDelegateStatusEnum.PENDING.getCode(),ProcessDelegateStatusEnum.RUNNING.getCode()) )
                 .lt(ProcessDelegateEntity::getEffectiveTime,now)
                 .list();
     }
@@ -210,7 +210,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         if (ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getStatus()) && (entity.getEffectiveTime().isBefore(now) || entity.getEffectiveTime().equals(now)) && entity.getExpireTime().isAfter(now)) {
             status = ProcessDelegateStatusEnum.RUNNING.getCode();
         } else if (ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getStatus()) && entity.getExpireTime().isBefore(now)) {
-            status = ProcessDelegateStatusEnum.ENDED.getCode();
+            status = ProcessDelegateStatusEnum.AUTO_END.getCode();
         } else {
             //无需更新状态
             return;
@@ -316,7 +316,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
      * @return List<ProcessDelegateEntity>
      */
     private List<ProcessDelegateEntity> listByBusinessKeyList (List<String> businessKeyList) {
-        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode()).list();
+        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).in(ProcessDelegateEntity::getStatus,Arrays.asList(ProcessDelegateStatusEnum.PENDING.getCode(),ProcessDelegateStatusEnum.RUNNING.getCode())).list();
     }
 
     /**
