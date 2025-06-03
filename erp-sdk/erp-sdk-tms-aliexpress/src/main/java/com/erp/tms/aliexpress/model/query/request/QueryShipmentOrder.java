@@ -53,7 +53,7 @@ public class QueryShipmentOrder {
          * 子交易单序号
          * (必须)
          */
-        private String sub_trade_order_index;
+        private Integer sub_trade_order_index;
     }
 
     @Data
