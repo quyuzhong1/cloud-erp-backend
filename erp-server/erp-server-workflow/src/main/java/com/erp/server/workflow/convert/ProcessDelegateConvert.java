@@ -25,5 +25,6 @@ public interface ProcessDelegateConvert {
             @Mapping(target = "departmentId", source = "deptId"),
             @Mapping(target = "departmentName", source = "deptName")
     })
+    FindUserDTO sysUserDeptToFindUser(SysUserDeptDTO dto);
     List<FindUserDTO> sysUserDeptToFindUser(List<SysUserDeptDTO> sourceDataList);
 }
