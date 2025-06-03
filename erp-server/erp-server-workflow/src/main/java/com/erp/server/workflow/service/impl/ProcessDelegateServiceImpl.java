@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_DELEGATE;
+import static com.erp.rpc.sys.feign.aspect.DataPermissionAspect.DATA_SCOPE_ALL;
 
 /**
  * <p>
@@ -170,6 +171,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         //更新终止时间和状态
         entity.setStatus(ProcessDelegateStatusEnum.ENDED.getCode());
         entity.setClosedTime(LocalDateTime.now());
+        entity.setIsAuto(Boolean.FALSE);
         boolean isClose = this.updateById(entity);
         if (!isClose) {
             throw new ServiceException(ApiError.PROCESS_DELEGATE_CLOSE_ERROR);
@@ -199,6 +201,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStatusJob(ProcessDelegateEntity entity, LocalDateTime now) {
         String status = "";
         /**
@@ -209,11 +212,15 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
             status = ProcessDelegateStatusEnum.RUNNING.getCode();
         } else if (ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getStatus()) && entity.getExpireTime().isBefore(now)) {
             status = ProcessDelegateStatusEnum.ENDED.getCode();
+            entity.setIsAuto(Boolean.TRUE);
         } else {
             //无需更新状态
             return;
         }
+        //添加操作日志
+        String msg = CharSequenceUtil.format("状态由【{}】变更为【{}】 ", ProcessDelegateStatusEnum.getName(entity.getStatus()),ProcessDelegateStatusEnum.getName(status));
         entity.setStatus(status);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PROCESS_DELEGATE.getCode(), entity.getId(), "定时更新");
         this.updateById(entity);
     }
 
@@ -221,13 +228,19 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     public List<FindUserDTO> listStartUserId() {
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
         Map<String,List<UserRequestPermissionsDTO>> map = CollUtil.isEmpty(requestPermissionsList) ? new HashMap<>() : requestPermissionsList.stream().collect(Collectors.groupingBy(UserRequestPermissionsDTO::getPermissionsCode));
         List<UserRequestPermissionsDTO> userRequestPermissionsList = map.get("workflow:processDelegate:add");
-        if (CollUtil.isEmpty(userRequestPermissionsList)) {
+        if (CollUtil.isEmpty(userRequestPermissionsList) && !roleIdList.contains("1")) {
             throw new ServiceException("当前登陆人未找到新增权限");
         }
-        UserRequestPermissionsDTO userRequestPermissionsDTO = userRequestPermissionsList.get(0);
+        UserRequestPermissionsDTO userRequestPermissionsDTO = CollUtil.isEmpty(userRequestPermissionsList) ? new UserRequestPermissionsDTO() : userRequestPermissionsList.get(0);
+        if (roleIdList.contains("1")) {
+            userRequestPermissionsDTO.setDataScope(DATA_SCOPE_ALL);
+            userRequestPermissionsDTO.setPermissionsCode("workflow:processDelegate:add");
+        }
         if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissionsDTO.getDataScope())) {
             //个人权限
             return  sysUserFeign.getUserListByUserIds(Collections.singletonList(userInfo.getUid()));
@@ -320,7 +333,11 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
 
         for (ProcessDelegateDTO.ListDTO listDTO : list) {
             //状态名称
-            listDTO.setStatusName(ProcessDelegateStatusEnum.getName(listDTO.getStatus()));
+            if (ProcessDelegateStatusEnum.ENDED.getCode().equals(listDTO.getStatus())) {
+                listDTO.setStatusName(ProcessDelegateStatusEnum.getName(listDTO.getStatus()) + (listDTO.getIsAuto() ? "" :"[终止]"));
+            } else {
+                listDTO.setStatusName(ProcessDelegateStatusEnum.getName(listDTO.getStatus()));
+            }
             //单据名称
             listDTO.setBusinessKeyName(SourceTypeEnum.getName(listDTO.getBusinessKey()));
             listDTO.setStartUserName(map.get(listDTO.getStartUserId()));

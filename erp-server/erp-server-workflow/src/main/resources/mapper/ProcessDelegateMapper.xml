@@ -40,7 +40,8 @@
         pd.delegate_user_id as delegateUserId ,
         pd.effective_time as effectiveTime,
         pd.expire_time as expireTime,
-        pd.closed_time as closedTime
+        pd.closed_time as closedTime,
+        pd.is_auto as isAuto
     </sql>
 
     <!-- 查询tab列表 -->

@@ -1457,6 +1457,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 }
                 addDetailDTO.setSkuId(soDetailEntity.getSkuId());
                 addDetailDTO.setSkuNo(soDetailEntity.getSkuNo());
+                addDetailDTO.setDestWarehouseId(detailDTO.getWarehouseId());
                 addDetailList.add(addDetailDTO);
             }
             dto.setDetails(addDetailList);

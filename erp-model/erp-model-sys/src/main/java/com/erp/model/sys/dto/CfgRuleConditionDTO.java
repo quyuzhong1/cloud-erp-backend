@@ -35,6 +35,7 @@ public class CfgRuleConditionDTO implements Serializable {
         private String logic;
         private String name;
         private Integer index;
+        private String valueType;
 
     }
 
@@ -50,6 +51,7 @@ public class CfgRuleConditionDTO implements Serializable {
         private String rightBracket;
         private String logic;
         private String name;
+        private String valueType;
         /**
          * 字段名称
          */
