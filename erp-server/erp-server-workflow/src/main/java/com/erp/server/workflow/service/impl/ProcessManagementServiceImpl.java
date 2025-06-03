@@ -164,20 +164,20 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-        String processDefinitionId = getProcessDefinitionId(dto);
-        if (CharSequenceUtil.isBlank(processDefinitionId)) {
-            // 业务无已启用的Erp流程配置
-            return new ProcessManagementDTO.StartResultDTO(dto);
-        }
-        //启动流程
-        return startProcess(dto, processDefinitionId);
+//        String processDefinitionId = getProcessDefinitionId(dto);
+//        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+//            // 业务无已启用的Erp流程配置
+//            return new ProcessManagementDTO.StartResultDTO(dto);
+//        }
+//        //启动流程
+//        return startProcess(dto, processDefinitionId);
         // 查询业务数据和关联流程定义
- /*       ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
+        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
         if (null == processBusiness) {
             // 业务未绑定流程定义
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
-        return startProcess(dto, processBusiness.getProcessDefinitionId());*/
+        return startProcess(dto, processBusiness.getProcessDefinitionId());
     }
 
 
