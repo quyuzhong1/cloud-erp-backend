@@ -566,6 +566,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getType());
         approveOneDTO.setId(dto.getId());
+        approveOneDTO.setComment(dto.getComment());
         List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PURCHASE_PRICE_CHANGE:
@@ -640,6 +641,18 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = wmsTaskFeign.noticeChangeApprove(baseApproveParamDTO);
                 break;
             case REQUISITION_APPLICATION_CHANGE:
+                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                break;
+            case OTHER_INSTOCK:
+                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                break;
+            case OTHER_OUTSTOCK:
+                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                break;
+            case TRANSFER_IN:
+                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                break;
+            case TRANSFER_OUT:
                 resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
                 break;
             default:

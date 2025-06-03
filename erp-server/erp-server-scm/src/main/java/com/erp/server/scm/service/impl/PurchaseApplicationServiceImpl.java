@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
@@ -36,6 +37,7 @@ import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
+import com.erp.model.plm.entity.PilotApplicationDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.enums.PilotPushPurchaseStatusEnum;
@@ -1479,8 +1481,22 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (CollUtil.isEmpty(purchaseApplicationList)) {
             throw new ServiceException(ApiError.ERROR_98016);
         }
+        //销售订单明细
+        List<String> sourceDetailIdList = detailList.stream().map(PurchaseApplicationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = CollUtil.isEmpty(sourceDetailIdList) ? Collections.emptyList() : FeignQuery.getByIds(SoDetailEntity.class, sourceDetailIdList);
+        Map<String, SoDetailEntity> soDetailMap = soDetailList.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
+
+        //试产量产明细
+        List<PilotApplicationDetailEntity> pilotApplicationDetailList = CollUtil.isEmpty(sourceDetailIdList) ? Collections.emptyList() : FeignQuery.getByIds(PilotApplicationDetailEntity.class, sourceDetailIdList);
+        Map<String, PilotApplicationDetailEntity> pilotApplicationDetailMap = pilotApplicationDetailList.stream().collect(Collectors.toMap(PilotApplicationDetailEntity::getId, Function.identity()));
+
+        //所有明细
+        List<PurchaseApplicationDetailEntity> allDetailList = purchaseApplicationDetailService.listBySourceDetailIdList(sourceDetailIdList);
+        Map<String, List<PurchaseApplicationDetailEntity>> allDetailMap = allDetailList.stream().collect(Collectors.groupingBy(PurchaseApplicationDetailEntity::getSourceDetailId));
+
+
         Map<String, PurchaseApplicationEntity> map = purchaseApplicationList.stream().collect(Collectors.toMap(PurchaseApplicationEntity::getId, Function.identity()));
-        List<PurchaseApplicationDTO.CheckUpDTO> resultList = new ArrayList<>();
+        Set<PurchaseApplicationDTO.CheckUpDTO> resultList = new HashSet<>();
         for (PurchaseApplicationDetailEntity detailEntity : detailList) {
             PurchaseApplicationEntity purchaseApplicationEntity = map.get(detailEntity.getPurchaseApplicationId());
             if (ObjUtil.isEmpty(purchaseApplicationEntity)) {
@@ -1492,9 +1508,25 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             checkUpDTO.setSourceType(purchaseApplicationEntity.getSourceType());
             checkUpDTO.setSkuId(detailEntity.getSkuId());
             checkUpDTO.setSkuNo(detailEntity.getSkuNo());
+
+            //类型为销售订单
+            if (CharSequenceUtil.equals(purchaseApplicationEntity.getSourceType(),SourceTypeEnum.SO_INFO.getCode())) {
+                SoDetailEntity soDetailEntity = soDetailMap.get(detailEntity.getSourceDetailId());
+                checkUpDTO.setOldQty(ObjectUtil.isEmpty(soDetailEntity) ? MathUtil.ZERO : soDetailEntity.getQty());
+            } else if (CharSequenceUtil.equals(purchaseApplicationEntity.getSourceType(),SourceTypeEnum.PILOT_APPLICATION.getCode())){
+                PilotApplicationDetailEntity pilotApplicationDetailEntity = pilotApplicationDetailMap.get(detailEntity.getSourceDetailId());
+                checkUpDTO.setOldQty(ObjectUtil.isEmpty(pilotApplicationDetailEntity) ? MathUtil.ZERO : pilotApplicationDetailEntity.getApplyQty());
+            } else {
+                throw new ServiceException("未找到上查单据");
+            }
+            //采购申请量
+            List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = allDetailMap.get(detailEntity.getSourceDetailId());
+            Integer applyQty = purchaseApplicationDetailList.stream().map(PurchaseApplicationDetailEntity::getApplyQty).reduce(MathUtil.ZERO, Integer::sum);
+            checkUpDTO.setApplyQty(applyQty);
+            checkUpDTO.setUnApplyQty(checkUpDTO.getOldQty() - checkUpDTO.getApplyQty());
             resultList.add(checkUpDTO);
         }
-        return resultList;
+        return resultList.stream().collect(Collectors.toList());
     }
 
     @Override

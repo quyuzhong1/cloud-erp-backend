@@ -99,5 +99,5 @@ public interface SoInfoMapper extends BaseMapper<SoInfoEntity> {
      * @param ids
      * @return List<ViewPushPurchaseApplicationDTO>
      */
-    List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(List<String> ids);
+    List<SoB2cDTO.ViewPushPurchaseApplicationDTO> viewPushPurchaseApplication(@Param("ids")List<String> ids);
 }

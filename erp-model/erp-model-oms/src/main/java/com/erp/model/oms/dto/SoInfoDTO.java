@@ -311,7 +311,10 @@ public class SoInfoDTO implements Serializable {
          * 剩余数量
          */
         private Integer waitQty;
-
+        /**
+         * 申请数量
+         */
+        private Integer applyQty;
 
         /**
          * 单位

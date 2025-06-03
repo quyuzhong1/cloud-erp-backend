@@ -8,7 +8,6 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.erp.model.scm.entity.PurchasePriceEntity;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -1182,15 +1181,15 @@ public class PurchaseApplicationDTO implements Serializable {
         /**
          * 上游单据数量
          */
-        private String oldQty;
+        private Integer oldQty;
         /**
          * 已申请数量
          */
-        private String applyQty;
+        private Integer applyQty;
         /**
          * 待申请数量
          */
-        private String unApplyQty;
+        private Integer unApplyQty;
     }
 
     @Data

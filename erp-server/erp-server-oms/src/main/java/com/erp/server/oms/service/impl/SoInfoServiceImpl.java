@@ -834,6 +834,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         // 收款条件
         List<KingdeeReceiptConditionEntity> receiveConditionList = kingdeeReceiptConditionService.list();
 
+
+        //采购申请单信息
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = FeignQuery.create(PurchaseApplicationDetailEntity.class).in(PurchaseApplicationDetailEntity::getSourceDetailId, sodIdList).list();
+
         //销售出库单列表
         List<SoOutstockEntity> soOutstockList = soOutstockFeign.listBySoIds(soIdList);
         for (SoInfoDTO.PagingViewDTO item : list) {
@@ -897,6 +901,9 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 item.setIsVirtualScarce(virtuaParamScarceDTO.getIsVirtualScarce());
                 item.setVirtualScarceQty(ObjectUtil.isEmpty(virtuaParamScarceDTO.getVirtualScarceQty()) ? MathUtil.ZERO : virtuaParamScarceDTO.getVirtualScarceQty());
             }
+            //申请数量
+            Integer applyQty = purchaseApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), item.getDetailId())).map(PurchaseApplicationDetailEntity::getApplyQty).reduce(MathUtil.ZERO, Integer::sum);
+            item.setApplyQty(applyQty);
 
             //作废状态
             Boolean invalidStatus = item.getInvalidStatus();
