@@ -77,7 +77,7 @@ public class AliExpressTests {
         QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
                 .send_type("all")
 //                .sub_trade_order_index("LP00659545751639")
-                .sub_trade_order_index("1")
+                .sub_trade_order_index(1)
                 .shipment_list(Collections.singletonList(shipment))
                 .build();
 
@@ -172,7 +172,7 @@ public class AliExpressTests {
             for (String subOrder : subTradeOrderList) {
                 QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
                         .send_type(declareDeliverRequest.getSendType())
-                        .sub_trade_order_index(subOrder)
+                        .sub_trade_order_index(Integer.valueOf(subOrder))
                         .shipment_list(Collections.singletonList(shipment))
                         .build();
                 subTradeOrders.add(tradeOrder);
@@ -206,7 +206,7 @@ public class AliExpressTests {
                 }
             }
         } catch (ServiceException e) {
-            if (-353 == e.getCode()) {
+            if (Integer.valueOf(-353).equals(e.getCode())) {
                 log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 return;
             }
@@ -267,7 +267,7 @@ public class AliExpressTests {
         }
         QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
                 .send_type(declareDeliverRequest.getSendType())
-                .sub_trade_order_index("1")
+                .sub_trade_order_index(Integer.valueOf("1"))
                 .shipment_list(Collections.singletonList(shipment))
                 .build();
         QueryShipmentOrder requestParams = QueryShipmentOrder.builder()
