@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -1141,6 +1142,20 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
             resultList.add(excelDTO);
         }
         return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public List<PurchasePriceChangeEntity> listByCodes(List<String> codes) {
+        return this.list(new QueryWrapper<PurchasePriceChangeEntity>().lambda().in(PurchasePriceChangeEntity::getCode, codes).eq(PurchasePriceChangeEntity::getIsDeleted,false));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(PurchasePriceChangeDTO.UpdateApprovalStatusDTO  updateApprovalStatusDTO) {
+        PurchasePriceChangeEntity entity = updateApprovalStatusDTO.getPurchasePricechangeEntity();
+        ApproveStatusEnum approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        updateApproveStatus(Collections.singletonList(entity), approveStatus);
     }
 
     /**
