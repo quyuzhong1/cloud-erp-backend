@@ -175,6 +175,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                     return signShippedDetailList;
                 }
                 if (Integer.valueOf(-999).equals(e.getCode()) && e.getMsg().contains("系统已经重新路由")){
+                    log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示系统已经重新路由(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                     //更新跟踪号，重新申明下单
                     return reShipOrder(e, currentDetailEntityList, request, signShippedDetailList, mainEntity);
                 }
