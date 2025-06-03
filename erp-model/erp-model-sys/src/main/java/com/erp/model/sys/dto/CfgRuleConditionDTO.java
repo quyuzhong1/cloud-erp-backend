@@ -50,6 +50,7 @@ public class CfgRuleConditionDTO implements Serializable {
         private String rightBracket;
         private String logic;
         private String name;
+        private String valueType;
         /**
          * 字段名称
          */
