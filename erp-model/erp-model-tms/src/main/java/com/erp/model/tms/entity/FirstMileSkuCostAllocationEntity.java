@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
@@ -138,6 +139,11 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
      */
     @TableField("reconciliation_detail_id")
     private String reconciliationDetailId;
+    /**
+     * 上期分摊明细
+     */
+    @TableField(exist = false)
+    private List<FirstMileSkuCostAllocationDetailEntity> lastDetailEntityList;
 
 
     public static final String MAIN_ID = "main_id";
