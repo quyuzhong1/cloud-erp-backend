@@ -3393,7 +3393,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             return Collections.emptyList();
         }
         handlePushApplication(list);
-        return Collections.emptyList();
+        return list;
     }
 
     @Override

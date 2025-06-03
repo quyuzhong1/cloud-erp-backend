@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_DELEGATE;
+import static com.erp.rpc.sys.feign.aspect.DataPermissionAspect.DATA_SCOPE_ALL;
 
 /**
  * <p>
@@ -168,7 +169,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
             throw new ServiceException(ApiError.PROCESS_DELEGATE_CLOSE);
         }
         //更新终止时间和状态
-        entity.setStatus(ProcessDelegateStatusEnum.ENDED.getCode());
+        entity.setStatus(ProcessDelegateStatusEnum.MANUAL_END.getCode());
         entity.setClosedTime(LocalDateTime.now());
         boolean isClose = this.updateById(entity);
         if (!isClose) {
@@ -193,12 +194,13 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     @Override
     public List<ProcessDelegateEntity> listNotEnded(LocalDateTime now) {
         return lambdaQuery()
-                .ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode())
+                .in(ProcessDelegateEntity::getStatus,Arrays.asList(ProcessDelegateStatusEnum.PENDING.getCode(),ProcessDelegateStatusEnum.RUNNING.getCode()) )
                 .lt(ProcessDelegateEntity::getEffectiveTime,now)
                 .list();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStatusJob(ProcessDelegateEntity entity, LocalDateTime now) {
         String status = "";
         /**
@@ -208,12 +210,15 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         if (ProcessDelegateStatusEnum.PENDING.getCode().equals(entity.getStatus()) && (entity.getEffectiveTime().isBefore(now) || entity.getEffectiveTime().equals(now)) && entity.getExpireTime().isAfter(now)) {
             status = ProcessDelegateStatusEnum.RUNNING.getCode();
         } else if (ProcessDelegateStatusEnum.RUNNING.getCode().equals(entity.getStatus()) && entity.getExpireTime().isBefore(now)) {
-            status = ProcessDelegateStatusEnum.ENDED.getCode();
+            status = ProcessDelegateStatusEnum.AUTO_END.getCode();
         } else {
             //无需更新状态
             return;
         }
+        //添加操作日志
+        String msg = CharSequenceUtil.format("状态由【{}】变更为【{}】 ", ProcessDelegateStatusEnum.getName(entity.getStatus()),ProcessDelegateStatusEnum.getName(status));
         entity.setStatus(status);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PROCESS_DELEGATE.getCode(), entity.getId(), "定时更新");
         this.updateById(entity);
     }
 
@@ -221,13 +226,19 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     public List<FindUserDTO> listStartUserId() {
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
         Map<String,List<UserRequestPermissionsDTO>> map = CollUtil.isEmpty(requestPermissionsList) ? new HashMap<>() : requestPermissionsList.stream().collect(Collectors.groupingBy(UserRequestPermissionsDTO::getPermissionsCode));
         List<UserRequestPermissionsDTO> userRequestPermissionsList = map.get("workflow:processDelegate:add");
-        if (CollUtil.isEmpty(userRequestPermissionsList)) {
+        if (CollUtil.isEmpty(userRequestPermissionsList) && !roleIdList.contains("1")) {
             throw new ServiceException("当前登陆人未找到新增权限");
         }
-        UserRequestPermissionsDTO userRequestPermissionsDTO = userRequestPermissionsList.get(0);
+        UserRequestPermissionsDTO userRequestPermissionsDTO = CollUtil.isEmpty(userRequestPermissionsList) ? new UserRequestPermissionsDTO() : userRequestPermissionsList.get(0);
+        if (roleIdList.contains("1")) {
+            userRequestPermissionsDTO.setDataScope(DATA_SCOPE_ALL);
+            userRequestPermissionsDTO.setPermissionsCode("workflow:processDelegate:add");
+        }
         if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissionsDTO.getDataScope())) {
             //个人权限
             return  sysUserFeign.getUserListByUserIds(Collections.singletonList(userInfo.getUid()));
@@ -305,7 +316,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
      * @return List<ProcessDelegateEntity>
      */
     private List<ProcessDelegateEntity> listByBusinessKeyList (List<String> businessKeyList) {
-        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode()).list();
+        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).in(ProcessDelegateEntity::getStatus,Arrays.asList(ProcessDelegateStatusEnum.PENDING.getCode(),ProcessDelegateStatusEnum.RUNNING.getCode())).list();
     }
 
     /**

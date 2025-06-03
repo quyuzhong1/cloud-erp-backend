@@ -5,9 +5,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.erp.model.sys.entity.SysDepartmentThirdEntity;
+import com.erp.model.sys.entity.SysUserThirdEntity;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.mapper.SysDepartmentThirdMapper;
@@ -26,6 +29,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.SysDepartmentThirdDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -76,6 +81,16 @@ public class SysDepartmentThirdServiceImpl extends SuperServiceImpl<SysDepartmen
             // 记录日志或通知
             e.printStackTrace(); // 替换为实际日志记录方式
         }
+    }
+
+    @Override
+    public SysDepartmentThirdEntity findByDepartmentId(String platform, String departmentId) {
+        SysDepartmentThirdEntity one = lambdaQuery().eq(SysDepartmentThirdEntity::getPlatform, platform)
+                .in(SysDepartmentThirdEntity::getDeptId, departmentId)
+                .ne(SysDepartmentThirdEntity::getThirdOpenDeptId, "")
+                .ne(SysDepartmentThirdEntity::getThirdDeptId, "")
+                .one();
+        return one;
     }
 
     private void processAndSaveDepartmentData(ChildrenDepartmentResp response) {
