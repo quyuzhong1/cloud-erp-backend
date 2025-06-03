@@ -14,6 +14,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -1450,6 +1451,23 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
             doOpHandleData(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<OtherOutstockEntity> listByCodes(List<String> list) {
+        return this.list(new QueryWrapper<OtherOutstockEntity>().lambda().in(OtherOutstockEntity::getCode, list).eq(OtherOutstockEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(OtherOutstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        String approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        OtherOutstockEntity otherOutstockEntity = updateApprovalStatusDTO.getOtherOutstockEntity();
+        this.lambdaUpdate().in(OtherOutstockEntity::getId, Collections.singletonList( otherOutstockEntity.getId()))
+                .set(OtherOutstockEntity::getApproveUserId, otherOutstockEntity.getApproveUserId())
+                .set(OtherOutstockEntity::getApproveUserName, otherOutstockEntity.getApproveUserName())
+                .set(OtherOutstockEntity::getApproveStatus, approveStatus)
+                .set(OtherOutstockEntity::getApproveTime, otherOutstockEntity.getApproveTime())
+                .update();
     }
 
     private String getTypeNameByCode(String code){

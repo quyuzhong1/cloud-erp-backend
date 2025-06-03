@@ -17,10 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.time.LocalDate;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * 采购订单feign
@@ -546,16 +543,21 @@ public class PurchaseOrderFeignController {
     }
 
     @PostMapping("/updatePurchaseOrderByUnique")
-    public void updatePurchaseOrderByUnique(String field,String value,@RequestBody PurchaseOrderEntity purchaseOrderEntity) {
-        purchaseOrderService.updatePurchaseOrderByUnique(field,value,purchaseOrderEntity);
+    public void updatePurchaseOrderByUnique(PurchaseOrderDTO.UpdateContractStampStatusParamsDTO dto) {
+        purchaseOrderService.updatePurchaseOrderByUnique(dto);
     }
-    @PostMapping("/save")
-    public void save(@RequestBody PurchaseOrderEntity purchaseOrderEntity) {
-        purchaseOrderService.save(purchaseOrderEntity);
+    @PostMapping("/add")
+    public void save(@RequestBody PurchaseOrderDTO.AddDTO dto) {
+        purchaseOrderService.insert(dto);
     }
 
-    @PostMapping("/saveAndUpdate")
-    public void saveAndUpdate(@RequestBody PurchaseOrderEntity purchaseOrderEntity) {
-        purchaseOrderService.insert(purchaseOrderEntity);
+    @PostMapping("/getPurchaseOrderByCode")
+    public List<PurchaseOrderEntity> getPurchaseOrderByCode(@RequestBody HashSet<String> strings) {
+        return purchaseOrderService.getPurchaseOrderByCode(strings);
+    }
+
+    @PostMapping("/updateApproveStatus")
+    public void updateApproveStatus(@RequestBody PurchaseOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        purchaseOrderService.updateApproveStatus(updateApprovalStatusDTO);
     }
 }

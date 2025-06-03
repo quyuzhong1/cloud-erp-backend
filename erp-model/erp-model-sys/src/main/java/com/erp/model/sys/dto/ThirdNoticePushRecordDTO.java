@@ -189,4 +189,16 @@ public class ThirdNoticePushRecordDTO implements Serializable {
 
     }
 
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MqDTO  {
+
+
+    }
+
 }

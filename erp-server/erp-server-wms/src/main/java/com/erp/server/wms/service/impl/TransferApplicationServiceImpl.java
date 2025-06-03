@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -870,6 +871,21 @@ public class TransferApplicationServiceImpl extends SuperServiceImpl<TransferApp
             doOpHandleData(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<TransferApplicationEntity> listByCodes(List<String> list) {
+        return this.list(new QueryWrapper<TransferApplicationEntity>().lambda().in(TransferApplicationEntity::getCode, list).eq(TransferApplicationEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(TransferApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        String approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        TransferApplicationEntity transferApplicationEntity = updateApprovalStatusDTO.getTransferApplicationEntity();
+        lambdaUpdate().in(TransferApplicationEntity::getId, Collections.singletonList(transferApplicationEntity.getId()))
+                .set(TransferApplicationEntity::getApproveUserId, transferApplicationEntity.getApproveUserId())
+                .set(TransferApplicationEntity::getApproveStatus, approveStatus)
+                .update();
     }
 
     /**

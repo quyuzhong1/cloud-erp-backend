@@ -6,6 +6,7 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -2406,5 +2407,15 @@ public class CustomerInfoServiceImpl extends SuperServiceImpl<CustomerInfoMapper
             }
         }
         return new VirtualWarehouseDTO.VwDTO();
+    }
+
+    @Override
+    public List<CustomerInfoEntity> listByCodes(List<String> list) {
+         return this.list(new QueryWrapper<CustomerInfoEntity>().lambda().in(CustomerInfoEntity::getCode, list).eq(CustomerInfoEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(CustomerInfoEntity entity) {
+        this.updateById(entity);
     }
 }

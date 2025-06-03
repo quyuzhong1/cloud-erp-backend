@@ -130,6 +130,19 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         if(Objects.nonNull(cfgSettingEntity)){
             dataJson = cfgSettingEntity.getDataJson();
 
+            boolean uat = BusinessCommonConstants.hasProfile("uat");
+            boolean dev = BusinessCommonConstants.hasProfile("dev");
+            boolean test = BusinessCommonConstants.hasProfile("test");
+            boolean prod = BusinessCommonConstants.hasProfile("prod");
+            String url ="";
+            if(uat){
+                url = String.valueOf(dataJson.get("uat"));
+            }else  if(dev||test){
+                url = String.valueOf(dataJson.get("test"));
+            }else if(prod){
+                url = String.valueOf(dataJson.get("prod"));
+            }
+            dataJson.put("actionCallbackUrl",url);
         }
         return dataJson;
     }

@@ -325,6 +325,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(insertManagementEntity.getId());
                 mqDto.setBusinessName(insertManagementEntity.getBusinessName());
+                mqDto.setBusinessCode(insertManagementEntity.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(taskId);
                 mqDto.setOperator(dto.getUserId());
@@ -449,6 +450,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(managementTask.getManagementId());
                 mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
@@ -751,6 +753,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(managementTask.getManagementId());
                 mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(managementTask.getProcessInstanceId());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
@@ -817,10 +820,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 }
             }
         }
-        // 删除本地流程任务数据
-        removeByProcessInstanceId(processInstance.getProcessInstanceId());
-
-
         // 完成新增数据事务提交之后,发送MQ消息
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
@@ -829,6 +828,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(managementTask.getManagementId());
                 mqDto.setBusinessName(managementTask.getBusinessName());
+                mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
@@ -836,6 +836,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessKey(dto.getBusinessKey());
                 mqDto.setApproveType(ApproveTypeEnum.CANCEL.getStatus());//撤销
                 syncFsExternalInstance(mqDto);
+
+                // 删除本地流程任务数据
+                removeByProcessInstanceId(processInstance.getProcessInstanceId());
             }
         });
 
@@ -1163,6 +1166,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     mqDto.setProcessManagementId(managementTask.getManagementId());
                     mqDto.setBusinessName(managementTask.getBusinessName());
                     mqDto.setInstanceId(managementTask.getProcessInstanceId());
+                    mqDto.setBusinessCode(managementTask.getBusinessCode());
 //                mqDto.setTaskId(managementTask.getTaskId());
                     mqDto.setOperator(userInfo.getUid());
                     mqDto.setVariablesMap(variables);
@@ -1424,6 +1428,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO mqDto = new CfgApproveSyncDTO.SyncFsProcessToMqDTO();
                 mqDto.setProcessManagementId(entity.getId());
                 mqDto.setBusinessName(entity.getBusinessName());
+                mqDto.setBusinessCode(entity.getBusinessCode());
                 mqDto.setInstanceId(entity.getProcessInstanceId());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
@@ -1501,6 +1506,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setProcessManagementId(entity.getId());
                 mqDto.setBusinessName(entity.getBusinessName());
                 mqDto.setInstanceId(entity.getProcessInstanceId());
+                mqDto.setBusinessCode(entity.getBusinessCode());
 //                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
                 mqDto.setVariablesMap(variables);

@@ -80,6 +80,24 @@
         WHERE is_deleted = FALSE
           AND bussiness_key = #{businessKey}
     </select>
+    <select id="listByMqParams" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
+        SELECT
+            id,
+            create_user_id,
+            create_user_name,
+            create_time,
+            update_user_id,
+            update_user_name,
+            update_time,
+            version,
+            is_deleted,
+            condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic,controls,parent_id,class_path,is_extend,value_type,use_type
+        FROM
+            cfg_query_option
+        WHERE
+            is_deleted = FALSE
+          AND bussiness_key IN ( SELECT bussiness_key FROM cfg_query_option WHERE is_deleted = FALSE AND TABLE_NAME = #{params.tableName} AND sys_classify = #{params.sysClassify} LIMIT 1 )
+    </select>
 
 
 </mapper>

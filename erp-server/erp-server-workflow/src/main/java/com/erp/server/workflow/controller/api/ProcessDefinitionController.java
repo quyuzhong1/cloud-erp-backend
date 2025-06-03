@@ -94,7 +94,7 @@ public class ProcessDefinitionController extends BaseController {
                 submit = processDefinitionService.deleteByIds(deleteDTO.getId(),deleteDTO.getProcessVersion(),Boolean.TRUE);
             }catch (Exception e){
                 log.error("流程设计删除失败",e);
-                ProcessDefinitionEntity entity = processDefinitionService.getById(deleteDTO.getId());
+                ProcessDefinitionEntity entity = processDefinitionService.getProcessVersionEntity(deleteDTO.getId(),deleteDTO.getProcessVersion());
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(deleteDTO.getId(), deleteDTO.getId(), "流程设计单不存在, 删除失败");
                     resultDTOS.add(submit);
@@ -175,7 +175,7 @@ public class ProcessDefinitionController extends BaseController {
                 submit = processDefinitionService.updateDisabled(disableDTO);
             }catch (Exception e){
                 log.error("流程设计启禁用失败",e);
-                ProcessDefinitionEntity entity = processDefinitionService.getById(disableDTO.getId());
+                ProcessDefinitionEntity entity = processDefinitionService.getProcessVersionEntity(disableDTO.getId(),disableDTO.getProcessVersion());
                 if (ObjectUtil.isEmpty(entity)) {
                     submit = BatchResultDTO.fail(disableDTO.getId(), disableDTO.getId(), "流程设计单不存在, 启禁用失败");
                     resultDTOS.add(submit);

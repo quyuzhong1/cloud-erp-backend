@@ -23,6 +23,7 @@
        <result column="title" property="title" />
        <result column="status" property="status" />
        <result column="error_reason" property="errorReason" />
+        <result property="dataJson" column="dataJson" typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -38,6 +39,44 @@
         is_deleted,
         cfg_approve_sync_id, notice_type, business_type, business_code, notice_method, receiver_id, receiver_name, send_time, title, status, error_reason
     </sql>
+    <insert id="insertBatch" parameterType="java.util.List">
+        INSERT INTO approve_sync_record (
+        id, cfg_approve_sync_id, notice_type, business_type, business_code,
+        notice_method, receiver_id, receiver_name, send_time, title,
+        status, error_reason, notice_node, data_json,
+        create_user_id, create_user_name, create_time,
+        update_user_id, update_user_name, update_time
+        )
+        VALUES
+        <foreach collection="list" item="item" separator=",">
+            (
+            #{item.id},
+            #{item.cfgApproveSyncId},
+            #{item.noticeType},
+            #{item.businessType},
+            #{item.businessCode},
+            #{item.noticeMethod},
+            #{item.receiverId},
+            #{item.receiverName},
+            #{item.sendTime},
+            #{item.title},
+            #{item.status},
+            #{item.errorReason},
+            #{item.noticeNode},
+            CAST(
+            #{item.dataJson, typeHandler=com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler}
+            AS jsonb
+            ),
+            #{item.createUserId},
+            #{item.createUserName},
+            #{item.createTime},
+            #{item.updateUserId},
+            #{item.updateUserName},
+            #{item.updateTime}
+            )
+        </foreach>
+    </insert>
+
     <select id="tabList" resultType="com.erp.model.workflow.dto.ApproveSyncRecordDTO$TabListDTO">
         SELECT
         asr.status AS tabFlag,

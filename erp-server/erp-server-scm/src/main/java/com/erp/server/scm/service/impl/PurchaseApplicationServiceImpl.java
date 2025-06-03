@@ -4,9 +4,12 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcelFactory;
 import com.alibaba.excel.exception.ExcelCommonException;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -17,9 +20,11 @@ import com.common.business.dto.base.*;
 import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -28,8 +33,11 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.FastDFSClientUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.mrp.dto.PurchaseSuggestMergeDTO;
+import com.erp.model.oms.dto.SoB2cDTO;
+import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
+import com.erp.model.plm.entity.PilotApplicationDetailEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.enums.PilotPushPurchaseStatusEnum;
@@ -74,6 +82,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -1399,5 +1408,153 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<Pair<String, String>> pairList = Stream.of(entity).map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         moduleOperateLogService.batchAddModuleOperateLog("提交了一个采购申请单【%s】", ModuleTypeEnum.PURCHASE_APPLICATION.getCode(),pairList,"提交操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean pushPurchaseApplication(SoB2cDTO.PushPurchaseApplicationDTO pushDTO) {
+        List<SoB2cDTO.PushDetailDTO> detailList = pushDTO.getDetailList();
+
+        List<String> soDetailIdList = detailList.stream().map(SoB2cDTO.PushDetailDTO::getSoDetailId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = purchaseApplicationDetailService.listBySourceDetailIdList(soDetailIdList);
+
+        //原销售订单明细
+        List<SoDetailEntity> soDetailList = FeignQuery.getByIds(SoDetailEntity.class, soDetailIdList);
+        if (CollUtil.isEmpty(soDetailIdList)) {
+            throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+        }
+        Map<String, SoDetailEntity> soDetailMap = soDetailList.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
+
+        //当前登陆人
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(userInfo.getUid());
+        if (ObjectUtils.isEmpty(findUserDTO)) {
+            throw new ServiceException(ApiError.USER_NOT_EXIST);
+        }
+        Map<String, List<SoB2cDTO.PushDetailDTO>> map = detailList.stream().collect(Collectors.groupingBy(SoB2cDTO.PushDetailDTO::getSoId));
+        for (Map.Entry<String, List<SoB2cDTO.PushDetailDTO>> entry : map.entrySet()) {
+            List<SoB2cDTO.PushDetailDTO> value = entry.getValue();
+            PurchaseApplicationDTO.AddDTO dto = new PurchaseApplicationDTO.AddDTO();
+            dto.setSourceId(entry.getKey());
+            dto.setSourceType(SourceTypeEnum.SO_INFO.getCode());
+            dto.setApplyDate(LocalDate.now());
+            dto.setSourceCode(value.get(0).getSoCode());
+            dto.setApplyUserId(userInfo.getUid());
+            dto.setApplyDeptId(findUserDTO.getDepartmentId());
+            List<PurchaseApplicationDetailDTO.AddDTO> addDetailList = new ArrayList<>();
+            for (SoB2cDTO.PushDetailDTO detailDTO : value) {
+                PurchaseApplicationDetailDTO.AddDTO addDetailDTO = new PurchaseApplicationDetailDTO.AddDTO();
+                BeanUtil.copyProperties(detailDTO, addDetailDTO);
+                addDetailDTO.setSourceDetailId(detailDTO.getSoDetailId());
+                //已下推数量
+                Integer hasPushQty = purchaseApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), addDetailDTO.getSourceDetailId())).map(PurchaseApplicationDetailEntity::getApplyQty).reduce(MathUtil.ZERO, Integer::sum);
+                //销售订单数量
+                SoDetailEntity soDetailEntity = soDetailMap.get(detailDTO.getSoDetailId());
+                if (ObjUtil.isEmpty(soDetailEntity)) {
+                    throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
+                }
+                if (hasPushQty + detailDTO.getApplyQty() > soDetailEntity.getQty()) {
+                    throw new ServiceException(CharSequenceUtil.format("销售订单【{}】SKU【{}】的申请数量【{}】和已下推数量【{}】之和不能大于销售订单数量【{}】",value.get(0).getSoCode(),soDetailEntity.getSkuNo(),detailDTO.getApplyQty(), hasPushQty, soDetailEntity.getQty()));
+                }
+                addDetailDTO.setSkuId(soDetailEntity.getSkuId());
+                addDetailDTO.setSkuNo(soDetailEntity.getSkuNo());
+                addDetailList.add(addDetailDTO);
+            }
+            dto.setDetails(addDetailList);
+            PurchaseApplicationServiceImpl bean = ApplicationContextUtils.getBean(PurchaseApplicationServiceImpl.class);
+            PurchaseApplicationEntity add = bean.add(dto);
+            //提交
+            if (Boolean.TRUE.equals(pushDTO.getIsSubmit())) {
+                bean.submit(add.getId());
+            }
+        }
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public List<PurchaseApplicationDTO.CheckUpDTO> checkUp(List<String> ids) {
+        List<PurchaseApplicationDetailEntity> detailList = purchaseApplicationDetailService.listByIds(ids);
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98017);
+        }
+        List<String> mainIdList = detailList.stream().map(PurchaseApplicationDetailEntity::getPurchaseApplicationId).distinct().collect(Collectors.toList());
+        List<PurchaseApplicationEntity> purchaseApplicationList = this.listByIds(mainIdList);
+        if (CollUtil.isEmpty(purchaseApplicationList)) {
+            throw new ServiceException(ApiError.ERROR_98016);
+        }
+        //销售订单明细
+        List<String> sourceDetailIdList = detailList.stream().map(PurchaseApplicationDetailEntity::getSourceDetailId).distinct().collect(Collectors.toList());
+        List<SoDetailEntity> soDetailList = CollUtil.isEmpty(sourceDetailIdList) ? Collections.emptyList() : FeignQuery.getByIds(SoDetailEntity.class, sourceDetailIdList);
+        Map<String, SoDetailEntity> soDetailMap = soDetailList.stream().collect(Collectors.toMap(SoDetailEntity::getId, Function.identity()));
+
+        //试产量产明细
+        List<PilotApplicationDetailEntity> pilotApplicationDetailList = CollUtil.isEmpty(sourceDetailIdList) ? Collections.emptyList() : FeignQuery.getByIds(PilotApplicationDetailEntity.class, sourceDetailIdList);
+        Map<String, PilotApplicationDetailEntity> pilotApplicationDetailMap = pilotApplicationDetailList.stream().collect(Collectors.toMap(PilotApplicationDetailEntity::getId, Function.identity()));
+
+        //所有明细
+        List<PurchaseApplicationDetailEntity> allDetailList = purchaseApplicationDetailService.listBySourceDetailIdList(sourceDetailIdList);
+        Map<String, List<PurchaseApplicationDetailEntity>> allDetailMap = allDetailList.stream().collect(Collectors.groupingBy(PurchaseApplicationDetailEntity::getSourceDetailId));
+
+
+        Map<String, PurchaseApplicationEntity> map = purchaseApplicationList.stream().collect(Collectors.toMap(PurchaseApplicationEntity::getId, Function.identity()));
+        Set<PurchaseApplicationDTO.CheckUpDTO> resultList = new HashSet<>();
+        for (PurchaseApplicationDetailEntity detailEntity : detailList) {
+            PurchaseApplicationEntity purchaseApplicationEntity = map.get(detailEntity.getPurchaseApplicationId());
+            if (ObjUtil.isEmpty(purchaseApplicationEntity)) {
+                throw new ServiceException(ApiError.ERROR_98016);
+            }
+            PurchaseApplicationDTO.CheckUpDTO checkUpDTO = new PurchaseApplicationDTO.CheckUpDTO();
+            checkUpDTO.setSourceId(purchaseApplicationEntity.getSourceId());
+            checkUpDTO.setSourceCode(purchaseApplicationEntity.getSourceCode());
+            checkUpDTO.setSourceType(purchaseApplicationEntity.getSourceType());
+            checkUpDTO.setSkuId(detailEntity.getSkuId());
+            checkUpDTO.setSkuNo(detailEntity.getSkuNo());
+
+            //类型为销售订单
+            if (CharSequenceUtil.equals(purchaseApplicationEntity.getSourceType(),SourceTypeEnum.SO_INFO.getCode())) {
+                SoDetailEntity soDetailEntity = soDetailMap.get(detailEntity.getSourceDetailId());
+                checkUpDTO.setOldQty(ObjectUtil.isEmpty(soDetailEntity) ? MathUtil.ZERO : soDetailEntity.getQty());
+            } else if (CharSequenceUtil.equals(purchaseApplicationEntity.getSourceType(),SourceTypeEnum.PILOT_APPLICATION.getCode())){
+                PilotApplicationDetailEntity pilotApplicationDetailEntity = pilotApplicationDetailMap.get(detailEntity.getSourceDetailId());
+                checkUpDTO.setOldQty(ObjectUtil.isEmpty(pilotApplicationDetailEntity) ? MathUtil.ZERO : pilotApplicationDetailEntity.getApplyQty());
+            } else {
+                throw new ServiceException("未找到上查单据");
+            }
+            //采购申请量
+            List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = allDetailMap.get(detailEntity.getSourceDetailId());
+            Integer applyQty = purchaseApplicationDetailList.stream().map(PurchaseApplicationDetailEntity::getApplyQty).reduce(MathUtil.ZERO, Integer::sum);
+            checkUpDTO.setApplyQty(applyQty);
+            checkUpDTO.setUnApplyQty(checkUpDTO.getOldQty() - checkUpDTO.getApplyQty());
+            resultList.add(checkUpDTO);
+        }
+        return resultList.stream().collect(Collectors.toList());
+    }
+
+    @Override
+    public List<PurchaseApplicationEntity> listByCodes(List<String> list) {
+        if (CollUtil.isNotEmpty(list)) {
+            return this.list(new LambdaQueryWrapper<PurchaseApplicationEntity>().in(PurchaseApplicationEntity::getCode,list));
+        }
+        return new ArrayList<>();
+    }
+
+    @Override
+    public void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus) {
+        String userId = sysUserFeign.getThirdByUserIds("fs", one.getApproveUserId()).getUserId();
+        //更新审核状态
+        lambdaUpdate().in(PurchaseApplicationEntity::getId,Arrays.asList(one.getId()))
+                .set(PurchaseApplicationEntity::getApproveUserId,userId)
+                .set(PurchaseApplicationEntity::getApproveStatus,approveStatus)
+                .update();
+    }
+
+    @Override
+    public void updatePA(PurchaseApplicationDTO.updatePADTO updateDTO) {
+        PurchaseApplicationEntity one = this.getOne(new QueryWrapper<PurchaseApplicationEntity>().eq(updateDTO.getField(), updateDTO.getValue()));
+        if (ObjUtil.isEmpty(one)) {
+            throw new ServiceException("未找到采购申请单");
+        }
+        BeanUtil.copyProperties(updateDTO,one);
+        this.updateById(one);
     }
 }

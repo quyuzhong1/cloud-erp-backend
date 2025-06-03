@@ -412,6 +412,8 @@ public class CfgApproveSyncDTO implements Serializable {
         private String processManagementId;
         //流程名称
         private String businessName;
+        //单据编码
+        private String businessCode;
         //实例id
         private String instanceId;
         //任务id

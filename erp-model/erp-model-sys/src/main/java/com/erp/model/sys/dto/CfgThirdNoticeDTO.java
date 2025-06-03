@@ -381,15 +381,5 @@ public class CfgThirdNoticeDTO implements Serializable {
     }
 
 
-    /**
-     *
-     */
-    @Data
-    @NoArgsConstructor
-    public static class MqDTO  {
-
-
-    }
-
 
 }

@@ -3,6 +3,7 @@ import com.erp.model.sys.entity.SysDepartmentThirdEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.SysDepartmentThirdDTO;
+import com.erp.model.sys.entity.SysUserThirdEntity;
 
 import java.util.List;
 
@@ -19,4 +20,6 @@ public interface SysDepartmentThirdService extends SuperService<SysDepartmentThi
     List<SysDepartmentThirdDTO.ThirdDeptDropDownDTO> listThirdDeptDropDown(SysDepartmentThirdDTO.ThirdDeptParamDTO dto);
 
     void syncFsDept();
+
+    SysDepartmentThirdEntity findByDepartmentId(String platform, String departmentId);
 }

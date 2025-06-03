@@ -112,6 +112,31 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
      */
     @TableField("use_type")
     private String useType;
+    /**
+     * 使用类型
+     */
+    @TableField("parent_id")
+    private String parentId;
+    /**
+     * 使用类型
+     */
+    @TableField("class_path")
+    private String classpath;
+    /**
+     * 使用类型
+     */
+    @TableField("is_extend")
+    private String isExtend;
+    /**
+     * 使用类型
+     */
+    @TableField("table_name")
+    private String tableName;
+    /**
+     * 使用类型
+     */
+    @TableField("sys_classify")
+    private String sysClassify;
 
     public static final String Condition_Field_Name = "condition_field_name";
 

@@ -61,6 +61,8 @@ public class CfgApproveSyncCallbackHandler {
     private ProcessTaskManagementService processTaskManagementService;
     @Resource
     private ProcessTaskManagementExtService processTaskManagementExtService;
+    @Resource
+    private ApproveSyncRecordService approveSyncRecordService;
     /**
      *
      * @author jack
@@ -213,7 +215,7 @@ public class CfgApproveSyncCallbackHandler {
                     "  \"action_type\": \"APPROVE\",\n" +
                     "  \"user_id\": \"1319c76g\",\n" +
                     "  \"approval_code\": \"0F625108-DBA7-4B25-B85D-0BBE76CD8ABC\",\n" +
-                    "  \"message_id\": \"7507215736248090627\",\n" +
+                    "  \"message_id\": \"7511274081787150364\",\n" +
                     "  \"reason\": \"ok\"\n" +
                     "}";
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");

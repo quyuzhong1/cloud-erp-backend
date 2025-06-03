@@ -2,6 +2,7 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -14,10 +15,11 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.message.constant.RocketMqTopic;
+import com.common.message.enums.RocketMqTagEnum;
+import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CfgApproveSyncFieldMapDTO;
-import com.erp.model.sys.dto.CfgRuleConditionDTO;
-import com.erp.model.sys.dto.DictBasicDTO;
+import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.CfgApproveSyncFieldMapEntity;
 import com.erp.model.sys.entity.CfgRuleConditionEntity;
 import com.erp.model.sys.entity.CfgThirdNoticeEntity;
@@ -36,7 +38,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.CfgThirdNoticeDTO;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import com.common.core.utils.*;
@@ -75,6 +77,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private Validator validator;
+    @Resource
+    private MQProducerService mqProducerService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -111,6 +115,10 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             cfgThirdNoticeEntity.setNoticeMethod(noticeMethod);
         }else{
             cfgThirdNoticeEntity.setNoticeMethod("");
+        }
+        //单据均为即时推送
+        if(Objects.equals(cfgThirdNoticeEntity.getMethod(),CfgThirdNoticeMethodEnum.SINGLE.getCode())){
+            cfgThirdNoticeEntity.setCron("");
         }
 
         log.info("开始新增三方通知配置");
@@ -241,6 +249,11 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             cfgThirdNoticeEntity.setNoticeMethod(noticeMethod);
         }else{
             cfgThirdNoticeEntity.setNoticeMethod("");
+        }
+
+        //单据均为即时推送
+        if(Objects.equals(cfgThirdNoticeEntity.getMethod(),CfgThirdNoticeMethodEnum.SINGLE.getCode())){
+            cfgThirdNoticeEntity.setCron("");
         }
 
         log.info("编辑 开始修改三方通知配置数据，id：【{}】", old.getId());
@@ -475,5 +488,10 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Override
     public void exportList(CfgThirdNoticeDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("三方通知配置导出", EXPORT_SYS_THIRD_NOTICE.getCode(), param);
+    }
+
+    @Override
+    public void testPush(MqConsumerRecordDTO.MqDTO dto) {
+        mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(),dto , IdUtil.simpleUUID(),1);
     }
 }

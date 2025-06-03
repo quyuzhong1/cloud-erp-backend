@@ -2,6 +2,8 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -818,6 +820,18 @@ public class SoChangeServiceImpl extends SuperServiceImpl<SoChangeMapper, SoChan
             item.setOldAmountStr(oldCurrencySymbol + oldAmount);
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<SoChangeEntity> listByCodes(List<String> list) {
+         return this.list(new QueryWrapper<SoChangeEntity>().lambda().in(SoChangeEntity::getCode, list).eq(SoChangeEntity::getIsDeleted, Boolean.FALSE));
+    }
+
+    @Override
+    public void updateApproveStatus(SoChangeEntity entity) {
+        if (ObjectUtil.isNotEmpty(entity)) {
+            this.updateById(entity);
+        }
     }
 
 

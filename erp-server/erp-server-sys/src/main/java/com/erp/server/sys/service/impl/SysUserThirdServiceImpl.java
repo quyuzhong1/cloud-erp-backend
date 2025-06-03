@@ -211,12 +211,7 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
 
     @Override
     public SysUserThirdEntity getUserByThird(String platform, String thirdId) {
-        return lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
-                .or(queryWrapper -> queryWrapper.eq(SysUserThirdEntity::getThirdOpenId, thirdId))
-                .or(queryWrapper -> queryWrapper.eq(SysUserThirdEntity::getThirdUserId, thirdId))
-                .or(queryWrapper -> queryWrapper.eq(SysUserThirdEntity::getThirdUnionId, thirdId))
-                .last("limit 1")
-                .one();
+        return baseMapper.getUserByThird(platform, thirdId);
     }
 
     /**

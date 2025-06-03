@@ -1449,6 +1449,23 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         return Boolean.TRUE;
     }
 
+    @Override
+    public void add(SupplierDTO.InsertDTO addDTO) {
+        String id = addSupplier(addDTO);
+        //根据id，更新审核状态
+        updateApproveStatusForDisApprove(Collections.singletonList(id), addDTO.getApprovalStatus());
+    }
+
+    @Override
+    public void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO) {
+        ApproveStatusEnum approveStatus = updateApproveStatusDTO.getApproveStatus();
+        SupplierEntity supplierEntity = updateApproveStatusDTO.getSupplierEntity();
+        if (approveStatus == ApproveStatusEnum.APPROVE_ING){
+            supplierEntity.setApproveUserId(sysUserFeign.getThirdByUserIds( "FS",supplierEntity.getApproveUserId()).getUserId());
+        }
+        updateApproveStatus( Collections.singletonList(supplierEntity), approveStatus);
+    }
+
     /**
      * @description: 更新状态
      * @author Will

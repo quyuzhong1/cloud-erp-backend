@@ -102,4 +102,14 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      * @return ProcessDefinitionEntity
      */
     ProcessDefinitionEntity getIsDeployEntityById(String id);
+
+    /**
+     * 根据id和版本查询
+     * @author will
+     * @date 2025/5/30 16:35
+     * @param id
+     * @param processVersion
+     * @return ProcessDefinitionEntity
+     */
+    ProcessDefinitionEntity getProcessVersionEntity(String id,Integer processVersion);
 }

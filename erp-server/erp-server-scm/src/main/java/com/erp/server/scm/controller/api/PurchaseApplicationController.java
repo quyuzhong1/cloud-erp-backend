@@ -15,6 +15,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.scm.dto.ExcelImportDTO;
 import com.erp.model.scm.dto.ListStatusCountDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
@@ -551,4 +552,30 @@ public class PurchaseApplicationController extends BaseController {
         return purchaseApplicationService.batchGetSubcontractPurchasePrice(list);
     }
 
+
+    /**
+     * 销售订单下推采购申请保存
+     * @author will
+     * @date 2025/5/29 15:42
+     * @param dto
+     * @return ApiResult<BatchResultDTO>
+     */
+    @PostMapping("/pushPurchaseApplication")
+    public ApiResult<BatchResultDTO> pushPurchaseApplication(@RequestBody @Validated SoB2cDTO.PushPurchaseApplicationDTO dto) {
+        Boolean flag = purchaseApplicationService.pushPurchaseApplication(dto);
+        return flag ? success() : failure();
+    }
+
+    /**
+     * 上查数据
+     * @author will
+     * @date 2025/5/30 16:11
+     * @param idsDTO
+     * @return ApiResult<List<CheckUpDTO>>
+     */
+    @PostMapping("/checkUp")
+    public ApiResult<List<PurchaseApplicationDTO.CheckUpDTO>> checkUp(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<PurchaseApplicationDTO.CheckUpDTO> list = purchaseApplicationService.checkUp(idsDTO.getIds());
+        return success(list);
+    }
 }

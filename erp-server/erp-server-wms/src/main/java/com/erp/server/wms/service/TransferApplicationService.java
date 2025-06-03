@@ -219,4 +219,8 @@ public interface TransferApplicationService extends SuperService<TransferApplica
     Boolean saveGenerateMachineInfo(List<TransferApplicationDTO.ViewGenerateMachineInfo> list);
 
     PagingVO<TransferApplicationDTO.ListDTO> exportTransferApplication(PagingDTO<TransferApplicationDTO.SearchParamDTO> dto);
+
+    List<TransferApplicationEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(TransferApplicationDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

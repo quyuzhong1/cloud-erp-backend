@@ -72,11 +72,11 @@ public class CfgThirdProcessController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "三方审批生成修改")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "workflow:cfgThirdProcess:update",
-            serviceClass = CfgThirdProcessService.class,
-            keyIdName = "id")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "workflow:cfgThirdProcess:update",
+//            serviceClass = CfgThirdProcessService.class,
+//            keyIdName = "id")
     public ApiResult<?> update(@RequestBody @Validated CfgThirdProcessDTO.UpdateDTO dto) {
         cfgThirdProcessService.update(dto);
         return success();
@@ -90,11 +90,11 @@ public class CfgThirdProcessController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "workflow:cfgThirdProcess:paging",
-            tableAlias = "ctp"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "workflow:cfgThirdProcess:paging",
+//            tableAlias = "ctp"
+//    )
     @WebAdvanceQuery(handler = CfgThirdProcessQueryHandler.class)
     public ApiResult<PagingVO<CfgThirdProcessDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgThirdProcessDTO.PagingParamDTO> dto) {
         return success(cfgThirdProcessService.paging(dto));
@@ -108,11 +108,11 @@ public class CfgThirdProcessController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/tabList")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "workflow:cfgThirdProcess:paging",
-            tableAlias = "ctp"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "workflow:cfgThirdProcess:paging",
+//            tableAlias = "ctp"
+//    )
     public ApiResult<List<CfgThirdProcessDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(cfgThirdProcessService.tabList(dto));
     }
@@ -125,11 +125,11 @@ public class CfgThirdProcessController extends BaseController {
      * @return ApiResult
      */
     @GetMapping("/view")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "workflow:cfgThirdProcess:view",
-            serviceClass = CfgThirdProcessService.class,
-            keyIdName = "id")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "workflow:cfgThirdProcess:view",
+//            serviceClass = CfgThirdProcessService.class,
+//            keyIdName = "id")
     @LogViewService
     public ApiResult<CfgThirdProcessDTO.ViewDTO> view(@RequestParam("id") String id) {
         return success(cfgThirdProcessService.view(id));
@@ -143,11 +143,11 @@ public class CfgThirdProcessController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/delete")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "workflow:cfgThirdProcess:delete",
-            serviceClass = CfgThirdProcessService.class,
-            keyIdName = "ids")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "workflow:cfgThirdProcess:delete",
+//            serviceClass = CfgThirdProcessService.class,
+//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.DELETE, desc = "三方审批生成删除")
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
@@ -181,11 +181,11 @@ public class CfgThirdProcessController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/enable")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "workflow:cfgThirdProcess:enable",
-            serviceClass = CfgThirdProcessService.class,
-            keyIdName = "ids")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "workflow:cfgThirdProcess:enable",
+//            serviceClass = CfgThirdProcessService.class,
+//            keyIdName = "ids")
     @LogAction(value = LogActionEnum.UPDATE, desc = "三方审批生成启用/停用")
     public ApiResult<List<BatchResultDTO>> enable(@RequestBody @Validated  CfgThirdProcessDTO.EnableStatusDTO dto) {
         List<String> ids = dto.getIds();
@@ -219,11 +219,11 @@ public class CfgThirdProcessController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "workflow:cfgThirdProcess:export",
-            tableAlias = "ctp"
-    )
+//    @DataPermission(operationType = DataAttributeEnum.LIST,
+//            tableField = "create_user_id",
+//            menuCode = "workflow:cfgThirdProcess:export",
+//            tableAlias = "ctp"
+//    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
     @WebAdvanceQuery
     public ApiResult<Object> exportList(@RequestBody @Validated CfgThirdProcessDTO.PagingParamDTO dto, HttpServletResponse response) {

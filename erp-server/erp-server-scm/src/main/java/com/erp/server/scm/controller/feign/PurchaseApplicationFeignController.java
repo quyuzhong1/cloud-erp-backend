@@ -80,4 +80,19 @@ public class PurchaseApplicationFeignController {
     List<PurchaseApplicationDTO.ListDTO> listStockInQty(@RequestBody List<PurchaseApplicationDTO.ListDTO> purchaseList){
         return purchaseApplicationService.listStockInQty(purchaseList);
     }
+
+     @PostMapping("/listByCodes")
+    List<PurchaseApplicationEntity> listByCodes(@RequestBody List<String> list){
+        return purchaseApplicationService.listByCodes(list);
+    }
+
+    @PostMapping("/updateApproveStatus")
+    void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus){
+         purchaseApplicationService.updateApproveStatus(one, approveStatus);
+    }
+
+     @PostMapping ("/updatePA")
+     void updatePA(PurchaseApplicationDTO.updatePADTO updateDTO){
+          purchaseApplicationService.updatePA(updateDTO);
+     }
 }

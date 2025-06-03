@@ -3852,10 +3852,35 @@ public class SoB2cDTO implements Serializable {
     @NoArgsConstructor
     public static class PushPurchaseApplicationDTO{
         /**
+         * 下推数据不能为空
+         */
+        @NotEmpty(message = "下推数据不能为空")
+        @Valid
+        private List<PushDetailDTO> detailList;
+
+        /**
+         * 是否提交
+         */
+        @NotNull(message = "是否提交不能为空")
+        private Boolean isSubmit;
+    }
+
+    /**
+     * 采购申请下推数据显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PushDetailDTO{
+        /**
          * 销售订单id
          */
         @NotBlank(message = "销售订单id不能为空")
         private String soId;
+        /**
+         * 销售订单编码
+         */
+        @NotBlank(message = "销售订单编码不能为空")
+        private String soCode;
         /**
          * 销售订单明细id
          */

@@ -97,4 +97,9 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 .in(CfgQueryOptionEntity::getConditionField,sysFieldList)
                 .list();
     }
+
+    @Override
+    public List<CfgQueryOptionEntity> listByMqParams(CfgQueryOptionDTO.MqParamsDTO mqParamsDTO) {
+        return baseMapper.listByMqParams(mqParamsDTO);
+    }
 }

@@ -343,6 +343,11 @@ public class RocketMqConsumerGroup {
     /**
      *
      */
+    public static final String SYS_RECEIVE_DDL_TO_MQ_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-sys_receive_ddl_to_mq_consumer";
+
+    /**
+     *
+     */
     public static final String WORKFLOW_FS_APPROVALS_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-workflow_fs_approvals_consumer";
 
     /**

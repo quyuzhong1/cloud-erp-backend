@@ -8,6 +8,7 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -2023,6 +2024,27 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
         }
         transferInfoDetailService.updateBatchById(transferInfoDetailList);
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"修复直接调拨单明细成功");
+    }
+
+    @Override
+    public List<TransferInfoEntity> listByCodes(List<String> list) {
+        if (CollUtil.isNotEmpty(list)) {
+            return this.list(new LambdaQueryWrapper<TransferInfoEntity>().in(TransferInfoEntity::getCode, list).eq(TransferInfoEntity::getIsDeleted, false));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public void updateApproveStatus(TransferInfoDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
+        String approveStatus = updateApprovalStatusDTO.getApproveStatus();
+        TransferInfoEntity transferInfoEntity = updateApprovalStatusDTO.getTransferInfoEntity();
+        //更新审核状态
+        lambdaUpdate().eq(TransferInfoEntity::getId, transferInfoEntity.getId())
+                .set( TransferInfoEntity::getApproveUserId, transferInfoEntity.getApproveUserId())
+                .set(TransferInfoEntity::getApproveStatus, approveStatus)
+                .update();
     }
 
     /**

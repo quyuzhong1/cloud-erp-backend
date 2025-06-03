@@ -4,6 +4,7 @@ package com.erp.server.workflow.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -190,7 +191,7 @@ public class ProcessDelegateController extends BaseController {
      * @return ApiResult<ProcessDelegateEntity>
      */
     @GetMapping("/listStartUserId")
-    public ApiResult<List<String>> listStartUserId() {
+    public ApiResult<List<FindUserDTO>> listStartUserId() {
         return success(processDelegateService.listStartUserId());
     }
 }

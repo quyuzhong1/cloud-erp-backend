@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -323,5 +324,18 @@ public class CfgQueryOptionDTO implements Serializable {
         private String remoteLabel;
 
         private String valueType;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class MqParamsDTO  {
+
+        private String tableName;
+
+        private String sysClassify;
+
     }
 }

@@ -235,4 +235,8 @@ public interface OtherInstockService extends SuperService<OtherInstockEntity> {
      * 其他入库
      */
     PagingVO<OtherInstockDTO.ListDTO> exportOtherInStock(PagingDTO<OtherInstockDTO.SearchParamDTO> dto);
+
+    List<OtherInstockEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(OtherInstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

@@ -230,4 +230,8 @@ public interface OtherOutstockService extends SuperService<OtherOutstockEntity> 
     void checkAndAdd(OtherOutstockDTO.AddDTO generateDTO);
 
     PagingVO<OtherOutstockDTO.ListDTO> exportOtherOutStock(PagingDTO<OtherOutstockDTO.SearchParamDTO> dto);
+
+    List<OtherOutstockEntity> listByCodes(List<String> list);
+
+    void updateApproveStatus(OtherOutstockDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

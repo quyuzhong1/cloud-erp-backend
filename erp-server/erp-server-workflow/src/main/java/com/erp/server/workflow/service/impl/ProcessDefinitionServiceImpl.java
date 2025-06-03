@@ -115,7 +115,8 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
      * @param id
      * @return ProcessDefinitionEntity
      */
-    private ProcessDefinitionEntity getProcessVersionEntity(String id,Integer processVersion) {
+    @Override
+    public  ProcessDefinitionEntity getProcessVersionEntity(String id,Integer processVersion) {
         return lambdaQuery().eq(ProcessDefinitionEntity::getId,id)
                 .eq(ObjectUtil.isNotNull(processVersion),ProcessDefinitionEntity::getProcessVersion,processVersion)
                 .last("limit 1")
