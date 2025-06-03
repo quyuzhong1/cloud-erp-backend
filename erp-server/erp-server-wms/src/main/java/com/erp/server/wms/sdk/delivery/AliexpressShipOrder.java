@@ -1,5 +1,6 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -82,7 +83,10 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         List<String> platformCodeList = sourceOrderList.stream().map(SoB2cEntity::getPlatformCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SoB2cEntity> samePlatformCodeEntityList = FeignQuery.create(SoB2cEntity.class).in(SoB2cEntity::getPlatformCode,platformCodeList).eq(SoB2cEntity::getInvalidStatus,false).list();
         List<String> mainIds = samePlatformCodeEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<SoB2cDetailEntity> allDetailList = FeignQuery.create(SoB2cDetailEntity.class).in(SoB2cDetailEntity::getMainId,mainIds).list();
+        List<SoB2cDetailEntity> allDetailList = new ArrayList<>();
+        if(CollUtil.isNotEmpty(mainIds)) {
+        	allDetailList = FeignQuery.create(SoB2cDetailEntity.class).in(SoB2cDetailEntity::getMainId,mainIds).list();
+        }
 
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
@@ -170,11 +174,12 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 aliExpressOrderService.subDeclareDeliver(request);
                 signShippedDetailList.addAll(currentDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ServiceException e){
-                if (-353 == e.getCode()) {
+                if (Integer.valueOf(-353).equals(e.getCode())) {
                     log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                     return signShippedDetailList;
                 }
-                if (-999 == e.getCode() && e.getMessage().contains("系统已经重新路由")){
+                if (Integer.valueOf(-999).equals(e.getCode()) && e.getMsg().contains("系统已经重新路由")){
+                    log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示系统已经重新路由(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                     //更新跟踪号，重新申明下单
                     return reShipOrder(e, currentDetailEntityList, request, signShippedDetailList, mainEntity);
                 }
@@ -228,7 +233,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                                      DeclareDeliverRequest request,List<String> signShippedDetailList,SoB2cEntity mainEntity) {
         //重置参数 更新物流记录
         //系统已经重新路由，旧单号[CNG00665032598857]暂无法使用，请使用新单号[UN055958577MU]声明发货
-        String message = serviceException.getMessage();
+        String message = serviceException.getMsg();
         // 正则表达式，匹配方括号及其内部的内容
         String regex = "\\[(.*?)\\]";
         Pattern pattern = Pattern.compile(regex);
@@ -257,7 +262,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             return signShippedDetailList;
         } catch (ServiceException e){
-            if (-353 == e.getCode()) {
+            if (Integer.valueOf(-353).equals(e.getCode())) {
                 log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 return signShippedDetailList;
             }

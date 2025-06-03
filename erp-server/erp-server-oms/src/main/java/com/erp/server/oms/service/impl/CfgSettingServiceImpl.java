@@ -1,29 +1,28 @@
 package com.erp.server.oms.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.CfgSettingDTO;
 import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.CfgSettingEntity;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.oms.enums.CfgSettingEnum;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.oms.mapper.CfgSettingMapper;
 import com.erp.server.oms.service.CfgSettingService;
-import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.oms.service.DictBasicService;
-import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.oms.dto.CfgSettingDTO;
-import java.util.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.util.*;
 
 /**
  * <p>
@@ -89,6 +88,14 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
             return null;
         }
         return this.lambdaQuery().eq(CfgSettingEntity::getKey, key).one();
+    }
+
+    @Override
+    public List<CfgSettingEntity> listSettingByKey(String key) {
+        if (CharSequenceUtil.isBlank(key)){
+            return null;
+        }
+        return this.lambdaQuery().eq(CfgSettingEntity::getKey, key).eq(CfgSettingEntity::getDisabled,Boolean.FALSE).list();
     }
 
     private void handleViewEnum(CfgSettingEntity cfgSetting, CfgSettingDTO.ViewDTO viewDTO) {

@@ -625,7 +625,7 @@ public interface SoB2cFeign {
      * @param soId
      * @param trackNo
      */
-    @PostMapping("/feign/soB2c/updateLogisticsBySoId")
+    @GetMapping("/feign/soB2c/updateLogisticsBySoId")
     void updateLogisticsBySoId(@RequestParam("soId") String soId, @RequestParam("trackNo") String trackNo);
 
     /**

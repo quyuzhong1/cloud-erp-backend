@@ -142,4 +142,12 @@ public class FirstMileSkuCostAllocationDetailServiceImpl extends SuperServiceImp
         return baseMapper.listByReportMonth(sourceId,businessCode,transportNo,skuId,platformSkuNo,reportPeriodId);
     }
 
+    @Override
+    public List<FirstMileSkuCostAllocationDetailEntity> listByCostIdList(List<String> costIdList) {
+        if (CollUtil.isEmpty(costIdList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(FirstMileSkuCostAllocationDetailEntity::getCostMainId,costIdList).list();
+    }
+
 }
