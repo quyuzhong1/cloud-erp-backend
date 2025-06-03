@@ -24,4 +24,6 @@ public interface SysUserThirdMapper extends BaseMapper<SysUserThirdEntity> {
     SysUserInfoEntity getUserIdByThird(@Param("params") FindUserByThirdDTO thirdDTO);
 
     List<FindUserDTO> listThirdBindUser();
+
+    SysUserThirdEntity getUserByThird(@Param("platform")String platform, @Param("thirdId")String thirdId);
 }

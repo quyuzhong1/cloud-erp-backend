@@ -26,4 +26,6 @@ public interface ApproveSyncRecordService extends SuperService<ApproveSyncRecord
     void exportList(ApproveSyncRecordDTO.PagingParamDTO dto, HttpServletResponse response);
 
     BatchResultDTO repush(String id);
+
+    void insertBatch(List<ApproveSyncRecordEntity> list);
 }

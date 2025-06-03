@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BatchResultDTO;
@@ -14,16 +15,23 @@ import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeTypeEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
+import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.model.workflow.dto.FsBotParamsDTO;
 import com.erp.model.workflow.entity.ApproveSyncRecordEntity;
 import com.erp.model.workflow.enums.ApproveSyncRecordNoticeTypeEnum;
 import com.erp.model.workflow.enums.ApproveSyncRecordStatusEnum;
 import com.erp.model.workflow.enums.CfgApproveNoticeNoticeTypeEnum;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.sdk.fs.service.FsService;
+import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
+import com.erp.server.workflow.handler.CfgApproveSyncSendHandler;
 import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
 import com.erp.server.workflow.service.ApproveSyncRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.workflow.service.OperateLogService;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ApproveSyncRecordDTO;
@@ -49,6 +57,11 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+
+    @Resource
+    private CfgApproveSyncBuildHandler cfgApproveSyncBuildHandler;
+    @Resource
+    private FsService fsService;
 
     @Override
     public List<ApproveSyncRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -100,7 +113,46 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     @Override
     public BatchResultDTO repush(String id) {
         ApproveSyncRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方推送记录数据"));
+        Map<String, Object> dataJson = entity.getDataJson();
+        FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
+        BeanUtils.copyProperties(dataJson,params);
+        String userId = params.getUserId();
+        String titleUserId = params.getTitleUserId();
+        List<String> allUserIds = new ArrayList<>();
+        if(StringUtils.isNotBlank(userId)){
+            allUserIds.add( userId);
+        }
+        if(StringUtils.isNotBlank(titleUserId)){
+            allUserIds.add( titleUserId);
+        }
+        Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
+        if(CollUtil.isEmpty(thirdUnionMap)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), "");
+        }
+        if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
+            params.setThirdUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
+        }
+        if(thirdUnionMap.containsKey(userId) && Objects.nonNull(thirdUnionMap.get(userId))){
+            params.setThirdUserId(thirdUnionMap.get(userId).getThirdUserId());
+
+            //构建请求体
+            Map<String, Object> bodyMap = fsService.buildCcBodyMap(params);
+            //发送消息
+            String messageId = fsService.sendErpApproveSyncMessage(bodyMap);
+            if(StringUtils.isNotBlank(messageId)){//发送失败
+                entity.setErrorReason(String.format("飞书消息发送成功messsageId：%s",messageId));
+                entity.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
+                updateById( entity);
+            }
+        }else {
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), "");
+        }
         return BatchResultDTO.success(entity.getId(), entity.getId(), "");
+    }
+
+    @Override
+    public void insertBatch(List<ApproveSyncRecordEntity> list) {
+        baseMapper.insertBatch(list);
     }
 
 }

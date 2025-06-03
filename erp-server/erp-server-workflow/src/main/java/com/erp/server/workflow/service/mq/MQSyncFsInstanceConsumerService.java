@@ -75,7 +75,7 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
         ProcessManagementEntity processManagementEntity = processManagementService.getById(dto.getProcessManagementId());
         if(Objects.isNull(processManagementEntity)){
             //主流程不存在
-            errorReason = String.format("【%s】类型【%s】流程不存在",dto.getBusinessName(),dto.getBusinessCode());
+            errorReason = String.format("【%s】流程不存在",dto.getBusinessCode());
             syncRecordEntity.setErrorReason(errorReason);
             approveSyncRecordService.save(syncRecordEntity);
             return;
@@ -142,10 +142,10 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
                 .collect(Collectors.toList());
         fieldMapEntities.sort(Comparator.comparingInt(CfgApproveSyncFieldMapEntity::getSort));
 
-        CreateExternalInstanceReq req = cfgApproveSyncBuildHandler.buildExternalInstanceReq(dto,processManagementEntity, processTaskManagementEntities, processTaskCcEntities, fieldMapEntities, thirdUnionMap,errorReason);
+        CreateExternalInstanceReq req = cfgApproveSyncBuildHandler.buildExternalInstanceReq(dto,processManagementEntity, processTaskManagementEntities, processTaskCcEntities, fieldMapEntities, thirdUnionMap,syncRecordEntity);
         if(Objects.isNull(req)){
-            syncRecordEntity.setErrorReason(errorReason);
-            approveSyncRecordService.save(syncRecordEntity);
+//            syncRecordEntity.setErrorReason(errorReason);
+//            approveSyncRecordService.save(syncRecordEntity);
             return ;
         }
         log.info("MQSyncFsInstanceConsumerService 同步三方审批实例请求参数: {}" ,  new Gson().toJson(req.getExternalInstance()));

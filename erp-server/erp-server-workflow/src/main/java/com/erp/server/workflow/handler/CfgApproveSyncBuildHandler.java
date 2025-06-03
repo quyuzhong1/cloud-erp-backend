@@ -10,10 +10,7 @@ import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.server.workflow.service.CfgApproveSyncService;
-import com.erp.server.workflow.service.CfgSettingService;
-import com.erp.server.workflow.service.ProcessManagementService;
-import com.erp.server.workflow.service.ProcessTaskManagementService;
+import com.erp.server.workflow.service.*;
 import com.lark.oapi.service.approval.v4.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -46,7 +43,8 @@ public class CfgApproveSyncBuildHandler {
     private ProcessManagementService processManagementService;
     @Resource
     private ProcessTaskManagementService processTaskManagementService;
-
+    @Resource
+    private ApproveSyncRecordService approveSyncRecordService;
     /**
      * 构建三方审批同步
      * @author jack
@@ -58,9 +56,11 @@ public class CfgApproveSyncBuildHandler {
                                                               List<ProcessTaskCcEntity> processTaskCcEntities,
                                                               List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
                                                               Map<String, ThirdUnionDTO> thirdUnionMap,
-                                                              String errorReason){
+                                                              ApproveSyncRecordEntity syncRecordEntity){
+        String errorReason= "";
         //pc地址
         String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
+//        String pcLinkByEnv = "http://erptest.ulanzi.cn:9000/";
         //erp审批同步配置表
         CfgApproveSyncEntity cfgApproveSyncEntity = mqDto.getCfgApproveSyncEntity();
         //process_task_management表id
@@ -89,11 +89,15 @@ public class CfgApproveSyncBuildHandler {
             userName = "";
             //todo 推送记录  失败  创建人未绑定飞书
             errorReason= "创建人未绑定飞书";
+            syncRecordEntity.setErrorReason( errorReason);
+            approveSyncRecordService.save( syncRecordEntity);
             return null;
         }else{
             if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenId())){
                 //todo 推送记录  失败  创建人未绑定飞书
                 errorReason= "创建人未绑定飞书";
+                syncRecordEntity.setErrorReason( errorReason);
+                approveSyncRecordService.save( syncRecordEntity);
             }
             thirdOpenUserId = thirdUnionDTO.getThirdOpenId();
             values.put("@i18n@userName", thirdUnionDTO.getUserName());
@@ -135,10 +139,14 @@ public class CfgApproveSyncBuildHandler {
         if(CollUtil.isEmpty(processTaskManagementEntities)){
             //todo 推送记录  失败
             errorReason= "审批任务不能为空";
+            syncRecordEntity.setErrorReason( errorReason);
+            approveSyncRecordService.save( syncRecordEntity);
         }else {
             if(processTaskManagementEntities.size() > 300){
                 //todo 推送记录  失败
                 errorReason= "飞书平台任务列表数不能超过300";
+                syncRecordEntity.setErrorReason( errorReason);
+                approveSyncRecordService.save( syncRecordEntity);
             }
 
             AtomicReference<Integer> num = new AtomicReference<>(0);
@@ -187,6 +195,9 @@ public class CfgApproveSyncBuildHandler {
             if(processTaskCcEntities.size() > 200){
                 //todo 推送记录  失败
                 errorReason= "飞书平台抄送列表数不能超过200";
+                syncRecordEntity.setErrorReason( errorReason);
+                approveSyncRecordService.save( syncRecordEntity);
+                return null;
             }
             String ccTitle = StrUtil.format("抄送通知：【{}】提交的审核名称({})抄送给你",userName,businessName);
             CcNode[] ccList = processTaskCcEntities.stream()
