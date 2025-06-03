@@ -79,16 +79,13 @@ public class DeclareDeliverRequest implements Serializable {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SubTradeOrderDTO {
-
-        /**
-         * 发货类型
-         */
-        private String sendType;
-
         /**
          * 下标
          */
         private String subTradeOrderIndex;
-
+        /**
+         * 发货类型
+         */
+        private String sendType;
     }
 }

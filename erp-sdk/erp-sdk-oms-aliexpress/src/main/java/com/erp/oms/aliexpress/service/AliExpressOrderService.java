@@ -484,7 +484,7 @@ public class AliExpressOrderService {
         List<QueryShipmentOrder.SubTradeOrder> subTradeOrders = new LinkedList<>();
         for (DeclareDeliverRequest.SubTradeOrderDTO subTradeOrderDTO : declareDeliverRequest.getSubTradeOrderDTOList()) {
             QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
-                    .sub_trade_order_index(subTradeOrderDTO.getSubTradeOrderIndex())
+                    .sub_trade_order_index(Integer.valueOf(subTradeOrderDTO.getSubTradeOrderIndex()))
                     .send_type(subTradeOrderDTO.getSendType())
                     .shipment_list(Collections.singletonList(shipment))
                     .build();
@@ -502,21 +502,29 @@ public class AliExpressOrderService {
         String apiName = AliexpressConstants.SUB_DECLARE_DELIVER;
         String token = shopInfoDTO.getToken();
         IopClient client = new IopClientImpl(baseUrl, appKey, appSecret);
-
-        IopRequest request = new IopRequest();
-        request.setApiName(apiName);
-        request.addApiParameter("param_aeop_seller_shipment_sub_trade_order_request", JSONUtil.toJsonStr(requestParams));
-        log.warn("【{}】速卖通子声明标记发货:请求参数={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(request));
-        IopResponse response = client.execute(request, token, Protocol.TOP);
-        log.warn("【{}】速卖通子声明标记发货:响应结果={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(response));
-        String body = response.getBody();
-        JSONObject jsonObject = JSONUtil.parseObj(body);
-        JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_logistics_order_shipment_response");
-        JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
-        boolean success = resultJson.getBool("success", Boolean.FALSE);
+        boolean success;
+        String errorMsg;
+        Integer errorCode;
+        String body;
+        try {
+            IopRequest request = new IopRequest();
+            request.setApiName(apiName);
+            request.addApiParameter("param_aeop_seller_shipment_sub_trade_order_request", JSONUtil.toJsonStr(requestParams));
+            log.warn("【{}】速卖通子声明标记发货:请求参数={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(request));
+            IopResponse response = client.execute(request, token, Protocol.TOP);
+            log.warn("【{}】速卖通子声明标记发货:响应结果={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(response));
+            body = response.getBody();
+            JSONObject jsonObject = JSONUtil.parseObj(body);
+            JSONObject resultJsONObject = jsonObject.getJSONObject("aliexpress_logistics_order_shipment_response");
+            JSONObject resultJson = JSONUtil.parseObj(resultJsONObject.get("result"));
+            success = resultJson.getBool("success", Boolean.FALSE);
+            errorMsg = resultJson.getStr("error_msg", "");
+            errorCode = resultJson.getInt("error_code", -1000000);
+        }catch (Exception e){
+            log.error("【{}】速卖通子声明标记发货:请求参数={}", declareDeliverRequest.getOutRef(), JSONUtil.toJsonStr(requestParams), e);
+            throw new ServiceException("速卖通子订单声明发货请求参数异常");
+        }
         if (!success){
-            String errorMsg = resultJson.getStr("error_msg", "");
-            Integer errorCode = resultJson.getInt("error_code", -1000000);
             if (StringUtils.isNotBlank(errorMsg)){
                 ServiceException.runError(errorCode, errorMsg);
             } else {
