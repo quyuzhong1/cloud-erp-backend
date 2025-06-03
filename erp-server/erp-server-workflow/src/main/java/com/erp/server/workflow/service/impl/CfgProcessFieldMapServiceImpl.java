@@ -134,9 +134,19 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         try {
             GetApprovalResp approval = fsService.getApproval(processDefinitionId);
             String formStr = JSONUtil.toJsonStr(approval.getData());
-            ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(type).name());
+            CfgProcessRuleTypeEnum ruleTypeEnum = CfgProcessRuleTypeEnum.getByCode(type);
+            ProcessFormHandler handler = null;
+            if (ruleTypeEnum != null) {
+                handler = processFormFactory.getAssembleFormHandler(ruleTypeEnum.name());
+            }
             if (handler == null) {
-                handler = processFormFactory.getConstructBillHandler(DictBasicEnum.getByCode(type).name());
+                DictBasicEnum dictEnum = DictBasicEnum.getByCode(type);
+                if (dictEnum != null) {
+                    handler = processFormFactory.getConstructBillHandler(dictEnum.name());
+                }
+            }
+            if (handler == null) {
+                throw new ServiceException("无法获取对应的表单处理器，type参数无效: " + type);
             }
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = handler.parseForm(formStr);
             viewDTOList.forEach(e -> {
