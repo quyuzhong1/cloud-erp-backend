@@ -232,9 +232,8 @@ public class CamundaGlobalListener {
     }
     ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(proList.get(0), userInfo.getUid());
     if (ObjectUtil.isNotEmpty(processDelegateEntity)) {
-      candidateUsers.remove(processDelegateEntity.getStartUserId());
-      candidateUsers.add(processDelegateEntity.getDelegateUserId());
+      candidateUsers =  candidateUsers.stream().map(obj -> CharSequenceUtil.equals(obj,processDelegateEntity.getStartUserId()) ?  processDelegateEntity.getDelegateUserId() : obj).collect(Collectors.toList());
     }
-    return candidateUsers;
+    return candidateUsers.stream().distinct().collect(Collectors.toList());
   }
 }
