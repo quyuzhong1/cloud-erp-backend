@@ -66,6 +66,11 @@ public class ProcessDelegateEntity extends BaseEntity<ProcessDelegateEntity> {
     @TableField("closed_time")
     private LocalDateTime closedTime;
 
+    /**
+     * 是否自动终止
+     */
+    @TableField("is_auto")
+    private Boolean isAuto;
 
     public static final String CODE = "code";
 
