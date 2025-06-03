@@ -18,7 +18,7 @@ public enum ProcessDelegateStatusEnum {
     // 运行中
     RUNNING("running", "运行中"),
     // 已结束
-    ENDED("ended", "已结束"),
+    ENDED("ended", "已结束[终止]"),
     ;
     @EnumValue
     @JsonValue

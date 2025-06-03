@@ -52,6 +52,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_DELEGATE;
+import static com.erp.rpc.sys.feign.aspect.DataPermissionAspect.DATA_SCOPE_ALL;
 
 /**
  * <p>
@@ -199,6 +200,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateStatusJob(ProcessDelegateEntity entity, LocalDateTime now) {
         String status = "";
         /**
@@ -213,7 +215,10 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
             //无需更新状态
             return;
         }
+        //添加操作日志
+        String msg = CharSequenceUtil.format("状态由【{}】变更为【{}】 ", ProcessDelegateStatusEnum.getName(entity.getStatus()),ProcessDelegateStatusEnum.getName(status));
         entity.setStatus(status);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PROCESS_DELEGATE.getCode(), entity.getId(), "定时更新");
         this.updateById(entity);
     }
 
@@ -221,13 +226,19 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     public List<FindUserDTO> listStartUserId() {
         //当前登陆人
         LoginUser userInfo = UserContext.getDefaultLoginUser();
+        List<String> roleIdList = sysUserFeign.getRoleIdList(userInfo.getUid());
+
         List<UserRequestPermissionsDTO> requestPermissionsList = sysUserFeign.getRequestPermissionsList(userInfo.getUid());
         Map<String,List<UserRequestPermissionsDTO>> map = CollUtil.isEmpty(requestPermissionsList) ? new HashMap<>() : requestPermissionsList.stream().collect(Collectors.groupingBy(UserRequestPermissionsDTO::getPermissionsCode));
         List<UserRequestPermissionsDTO> userRequestPermissionsList = map.get("workflow:processDelegate:add");
-        if (CollUtil.isEmpty(userRequestPermissionsList)) {
+        if (CollUtil.isEmpty(userRequestPermissionsList) && !roleIdList.contains("1")) {
             throw new ServiceException("当前登陆人未找到新增权限");
         }
-        UserRequestPermissionsDTO userRequestPermissionsDTO = userRequestPermissionsList.get(0);
+        UserRequestPermissionsDTO userRequestPermissionsDTO = CollUtil.isEmpty(userRequestPermissionsList) ? new UserRequestPermissionsDTO() : userRequestPermissionsList.get(0);
+        if (roleIdList.contains("1")) {
+            userRequestPermissionsDTO.setDataScope(DATA_SCOPE_ALL);
+            userRequestPermissionsDTO.setPermissionsCode("workflow:processDelegate:add");
+        }
         if (DataPermissionAspect.DATA_SCOPE_SELF.equals(userRequestPermissionsDTO.getDataScope())) {
             //个人权限
             return  sysUserFeign.getUserListByUserIds(Collections.singletonList(userInfo.getUid()));

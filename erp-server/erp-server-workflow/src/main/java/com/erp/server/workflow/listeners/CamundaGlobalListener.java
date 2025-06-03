@@ -212,7 +212,8 @@ public class CamundaGlobalListener {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(proList.get(0),userInfo.getUid());
         if (ObjectUtil.isNotEmpty(processDelegateEntity)) {
-          candidateUsers = Collections.singletonList(processDelegateEntity.getDelegateUserId());
+          candidateUsers.remove(processDelegateEntity.getStartUserId());
+          candidateUsers.add(processDelegateEntity.getDelegateUserId());
         }
       }
       if (Boolean.TRUE.equals(isMultiInstance) || CharSequenceUtil.equals(nextActType, "multiInstanceBody")) {
