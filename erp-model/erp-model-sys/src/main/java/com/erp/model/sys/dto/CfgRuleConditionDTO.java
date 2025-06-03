@@ -35,6 +35,7 @@ public class CfgRuleConditionDTO implements Serializable {
         private String logic;
         private String name;
         private Integer index;
+        private String valueType;
 
     }
 
