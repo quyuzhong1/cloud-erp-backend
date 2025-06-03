@@ -1119,6 +1119,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (!save) {
             throw new ServiceException("B2C销售订单表保存失败");
         }
+        //清空付款时间
+        cleanTime(soB2cEntity);
+
         String dictPlatform = soB2cEntity.getDictPlatform();
         if (isFullyManagedOrder(dictPlatform)){
             soB2cExtendService.update(updateDTO.getExtendDTO(), soB2cEntity);
@@ -1169,6 +1172,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         operateLogService.addModuleOperateLogByObj(old, soB2cEntity, ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), msg);
 
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), OperationTypeEnum.SUBMIT);
+    }
+
+    /**
+     * 清空时间
+     */
+    private void cleanTime (SoB2cEntity soB2cEntity) {
+        if (ObjectUtil.isNotEmpty(soB2cEntity.getPayTime())) {
+            return;
+        }
+        lambdaUpdate().eq(SoB2cEntity::getId,soB2cEntity.getId()).set(SoB2cEntity::getPayTime,null).update();
     }
 
     @Transactional(rollbackFor = Exception.class)
