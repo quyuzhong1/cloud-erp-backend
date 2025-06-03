@@ -27,6 +27,7 @@ import java.util.Objects;
 public class GoodCangService {
 
     public static final String GOOG_CANG_RESPONSE = "谷仓接口返回为空";
+    public static final String GOOG_CANG_RESPONSE_ERROR = "谷仓接口返回格式错误";
     public static final String RECEIVING_CODE = "receiving_code";
 
     /**
@@ -239,7 +240,14 @@ public class GoodCangService {
     public GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> getCalculateDeliveryFee(@Valid GoodCangCalculateDeliveryFeeReq goodCangCalculateDeliveryFeeReq){
         String json = JSON.toJSONString(goodCangCalculateDeliveryFeeReq);
         String response = GoodCangUtils.sendPost(GoodCangConstants.METHOD_POST_CALCULATE_DELIVERY_FEE,json);
-        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>>>() {}.getType());
+        GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>> respDto = null;
+        try {
+            respDto = JSON.parseObject(response,new TypeReference<GoodCangResponse<List<GoodCangCalculateDeliveryFeeResp>>>() {}.getType());
+        }catch (Exception e){
+            // 可能是返回的不是json格式
+            log.error("谷仓运费试算返回数据异常,返回值:{}", response, e);
+            return GoodCangResponse.error(GOOG_CANG_RESPONSE_ERROR + ":" +response);
+        }
         if(Objects.isNull(respDto)){
             return GoodCangResponse.error(GOOG_CANG_RESPONSE + ":" +response);
         }

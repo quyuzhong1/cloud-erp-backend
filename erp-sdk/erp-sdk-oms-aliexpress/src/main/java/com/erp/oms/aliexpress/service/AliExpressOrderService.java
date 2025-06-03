@@ -478,14 +478,14 @@ public class AliExpressOrderService {
         if (StringUtils.isNotBlank(declareDeliverRequest.getTrackingWebSite())){
             shipment.setTracking_web_site(declareDeliverRequest.getTrackingWebSite());
         }
-        if (CollectionUtils.isEmpty(declareDeliverRequest.getSubTradeOrderIndexList())){
+        if (CollectionUtils.isEmpty(declareDeliverRequest.getSubTradeOrderDTOList())){
             ServiceException.runError("提交的子订单小标不能为空");
         }
         List<QueryShipmentOrder.SubTradeOrder> subTradeOrders = new LinkedList<>();
-        for (String subOrderIndex : declareDeliverRequest.getSubTradeOrderIndexList()) {
+        for (DeclareDeliverRequest.SubTradeOrderDTO subTradeOrderDTO : declareDeliverRequest.getSubTradeOrderDTOList()) {
             QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
-                    .send_type(declareDeliverRequest.getSendType())
-                    .sub_trade_order_index(subOrderIndex)
+                    .sub_trade_order_index(subTradeOrderDTO.getSubTradeOrderIndex())
+                    .send_type(subTradeOrderDTO.getSendType())
                     .shipment_list(Collections.singletonList(shipment))
                     .build();
             subTradeOrders.add(tradeOrder);

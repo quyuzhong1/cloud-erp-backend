@@ -77,12 +77,13 @@ public class SyncSdyJob {
             if (StringUtils.isNotBlank(queryParamsStr)) {
                 List<QueryParam> queryParams = JSONUtil.toList(queryParamsStr, QueryParam.class);
                 QueryWrapper<LogisticsBillEntity> queryWrapper = (QueryWrapper<LogisticsBillEntity>) QueryParam.getQueryWrapper(queryParams);
-                Page<LogisticsBillEntity> page = logisticsBillService.page(new Page<>(currentPage, pageSize), queryWrapper);
+                Page<LogisticsBillEntity> page = logisticsBillService.page(new Page<>(currentPage + 1, pageSize), queryWrapper);
                 list = page.getRecords();
             } else {
                 list = logisticsBillService.queryToSdy(createStartTime, createEndTime, pageSize, offset);
             }
             if (CollUtil.isEmpty(list)) {
+                XxlJobHelper.log("===========当前页数：" + currentPage + "， 结果为空结束时间：" + LocalDateTime.now());
                 return;
             }
 
@@ -99,7 +100,7 @@ public class SyncSdyJob {
                 }
             }
             currentPage++;
-            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "处理数量："+ list.size() +" 结束时间：" + LocalDateTime.now());
         }
     }
 }

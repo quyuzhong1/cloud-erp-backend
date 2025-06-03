@@ -118,13 +118,14 @@ public class SyncSdyJob {
             if (StringUtils.isNotBlank(queryParamsStr)){
                 List<QueryParam> queryParams = JSONUtil.toList(queryParamsStr, QueryParam.class);
                 QueryWrapper<SoB2cEntity> queryWrapper = (QueryWrapper<SoB2cEntity>) QueryParam.getQueryWrapper(queryParams);
-                Page<SoB2cEntity> page = soB2cService.page(new Page<>(currentPage, pageSize), queryWrapper);
+                Page<SoB2cEntity> page = soB2cService.page(new Page<>(currentPage + 1, pageSize), queryWrapper);
                 list = page.getRecords();
             } else {
                 list = soB2cService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset, platformList);
             }
 
             if (CollUtil.isEmpty(list)) {
+                XxlJobHelper.log("===========当前页数：" + currentPage + "， 结果为空结束时间：" + LocalDateTime.now());
                 return;
             }
 
@@ -222,6 +223,7 @@ public class SyncSdyJob {
             // 出库单
             List<SoOutstockEntity> outstockEntityList = FeignQuery.create(SoOutstockEntity.class)
                     .in(SoOutstockEntity::getSoId, soIds)
+                    .eq(SoOutstockEntity::getInvalidStatus, false)
                     .list();
 
             //产品信息
@@ -278,7 +280,9 @@ public class SyncSdyJob {
                 }
                 // 不出库发货虚拟商品推送
                 if (soB2cEntity.getIsNotOutbound()){
-                    List<SoB2cDetailEntity> noInventorySkuDetailList = soB2cDetailEntityList.stream().filter(e -> noInventorySkuIdList.contains(e.getSkuId())).collect(Collectors.toList());
+                    List<SoB2cDetailEntity> noInventorySkuDetailList = soB2cDetailEntityList.stream()
+                            .filter(e -> noInventorySkuIdList.contains(e.getSkuId()) && e.getMainId().equals(soB2cEntity.getId()))
+                            .collect(Collectors.toList());
                     if (CollectionUtils.isNotEmpty(noInventorySkuDetailList)) {
                         // 原始同步数帝云
                         syncSoB2cService.syncDataToSdy(soB2cEntity,
@@ -413,7 +417,7 @@ public class SyncSdyJob {
                 }
             }
             currentPage++;
-            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "处理数量："+ list.size() +" 结束时间：" + LocalDateTime.now());
         }
     }
 
@@ -548,12 +552,13 @@ public class SyncSdyJob {
             if (StringUtils.isNotBlank(queryParamsStr)) {
                 List<QueryParam> queryParams = JSONUtil.toList(queryParamsStr, QueryParam.class);
                 QueryWrapper<SoInfoEntity> queryWrapper = (QueryWrapper<SoInfoEntity>) QueryParam.getQueryWrapper(queryParams);
-                Page<SoInfoEntity> page = soInfoService.page(new Page<>(currentPage, pageSize), queryWrapper);
+                Page<SoInfoEntity> page = soInfoService.page(new Page<>(currentPage + 1, pageSize), queryWrapper);
                 list = page.getRecords();
             } else {
                 list = soInfoService.queryToSdy(createStartTime.toLocalDate(), createEndTime.toLocalDate(), pageSize, offset);
             }
             if (CollUtil.isEmpty(list)) {
+                XxlJobHelper.log("===========当前页数：" + currentPage + "， 结果为空结束时间：" + LocalDateTime.now());
                 return;
             }
             List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
@@ -636,7 +641,7 @@ public class SyncSdyJob {
                 );
             }
             currentPage++;
-            XxlJobHelper.log("===========当前页数：" + currentPage + "结束时间：" + LocalDateTime.now());
+            XxlJobHelper.log("===========当前页数：" + currentPage + "处理数量："+ list.size() +" 结束时间：" + LocalDateTime.now());
         }
     }
 }
