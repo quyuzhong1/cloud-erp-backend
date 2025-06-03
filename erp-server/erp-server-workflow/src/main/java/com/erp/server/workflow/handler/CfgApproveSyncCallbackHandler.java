@@ -1,33 +1,18 @@
 package com.erp.server.workflow.handler;
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
-import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.entity.SysUserThirdEntity;
-import com.erp.model.sys.vo.ThirdUnionDTO;
-import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.EndProcessDTO;
 import com.erp.model.workflow.dto.FsCallbackApiReqDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.*;
-import com.erp.model.workflow.enums.FSApprovalStatusEnum;
-import com.erp.model.workflow.enums.SysClassifyEnum;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.workflow.handle.OmsWorkflowFeign;
-import com.erp.rpc.workflow.handle.PlmWorkflowFeign;
-import com.erp.rpc.workflow.handle.ScmWorkflowFeign;
-import com.erp.rpc.workflow.handle.WmsWorkflowFeign;
 import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.gson.Gson;
-import com.lark.oapi.service.approval.v4.model.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -36,11 +21,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.MessageDigest;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * 构建ERP审批同步的请求体
@@ -69,7 +50,6 @@ public class CfgApproveSyncCallbackHandler {
      * @date 2025-05-22
      */
     public Boolean quickApproveCallbackHandler(FsCallbackApiReqDTO req ) {
-
         Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
         if(Objects.nonNull(dataJson)){
             String str = CBCDecrypter(String.valueOf(dataJson.get("actionCallbackKey")), req.getEncrypt());
@@ -86,7 +66,7 @@ public class CfgApproveSyncCallbackHandler {
                     String actionType = callbackData.getActionType();
 
                     String thirdUserId = callbackData.getUserId();
-                    SysUserThirdEntity sysUserThirdEntity = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode(), thirdUserId);
+                    SysUserThirdEntity sysUserThirdEntity = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), thirdUserId);
                     if(Objects.isNull(sysUserThirdEntity)){
                         //todo 记录失败 返回失败
                         return Boolean.FALSE;
@@ -214,8 +194,8 @@ public class CfgApproveSyncCallbackHandler {
             String source ="{\n" +
                     "  \"action_type\": \"APPROVE\",\n" +
                     "  \"user_id\": \"1319c76g\",\n" +
-                    "  \"approval_code\": \"0F625108-DBA7-4B25-B85D-0BBE76CD8ABC\",\n" +
-                    "  \"message_id\": \"7511274081787150364\",\n" +
+                    "  \"approval_code\": \"233CA06F-68C6-48CB-9B37-8C1B6AD4E504\",\n" +
+                    "  \"message_id\": \"7511621386474717203\",\n" +
                     "  \"reason\": \"ok\"\n" +
                     "}";
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");

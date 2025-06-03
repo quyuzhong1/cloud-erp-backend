@@ -1461,7 +1461,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         ApproveStatusEnum approveStatus = updateApproveStatusDTO.getApproveStatus();
         SupplierEntity supplierEntity = updateApproveStatusDTO.getSupplierEntity();
         if (approveStatus == ApproveStatusEnum.APPROVE_ING){
-            supplierEntity.setApproveUserId(sysUserFeign.getThirdByUserIds( "FS",supplierEntity.getApproveUserId()).getUserId());
+            supplierEntity.setApproveUserId(sysUserFeign.getUserByThird( ThirdpartyPlatformEnum.FS.getCode(),supplierEntity.getApproveUserId()).getUserId());
         }
         updateApproveStatus( Collections.singletonList(supplierEntity), approveStatus);
     }

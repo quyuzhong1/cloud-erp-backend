@@ -10,7 +10,6 @@ import org.apache.commons.lang3.StringUtils;
 public enum ContractStampStatusEnum {
     WAIT_SUBMIT("waitSubmit", "待申请"),
     APPROVE_ING("approveIng", "已申请"),
-    REJECT("reject", "未完成"),
     APPROVE("approve", "已完成")
     ;
 

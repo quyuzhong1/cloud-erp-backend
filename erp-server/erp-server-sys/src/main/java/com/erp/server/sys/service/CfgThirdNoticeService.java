@@ -50,5 +50,7 @@ public interface CfgThirdNoticeService extends SuperService<CfgThirdNoticeEntity
 
     void exportList(CfgThirdNoticeDTO.PagingParamDTO dto, HttpServletResponse response);
 
-    void testPush(MqConsumerRecordDTO.MqDTO dto);
+    void testPush(String jsonStr);
+
+    List<CfgThirdNoticeEntity> listByMethod(String method);
 }

@@ -1,11 +1,10 @@
 package com.erp.server.sys.rocketmq.consumer;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.entity.ConditionElement;
@@ -17,24 +16,16 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.plm.dto.ProductShowDTO;
-import com.erp.model.plm.entity.NoticeMessageEntity;
-import com.erp.model.plm.entity.PlmCfgSettingEntity;
 import com.erp.model.plm.entity.ProjectTaskEntity;
 import com.erp.model.plm.entity.TaskFollowerEntity;
 import com.erp.model.plm.enums.NoticeItemPeopleEnum;
-import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import com.erp.model.sys.dto.MqConsumerRecordDTO;
-import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeTypeEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
-import com.erp.model.sys.vo.FsBatchSendMessageDTO;
 import com.erp.model.sys.vo.SendThirdNoticeConsumerDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
-import com.erp.model.wms.dto.pickingstrategy.CfgRuleConditionDTO;
-import com.erp.model.wms.entity.CfgRulePickingEntity;
 import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
@@ -53,13 +44,13 @@ import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -71,20 +62,18 @@ import java.util.stream.Collectors;
 @RocketMQMessageListener(topic = RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC,
         selectorExpression = "sys_receive_ddl_to_mq_tag",
         consumerGroup = RocketMqConsumerGroup.SYS_RECEIVE_DDL_TO_MQ_CONSUMER)
-public class MqRecordConsumerService implements RocketMQListener<MqConsumerRecordDTO.MqDTO> {
+public class MqRecordConsumerService implements RocketMQListener<String> {
     /*
     //------plm------
-    新建产品  com.erp.server.plm.service.impl.NoticeMessageServiceImpl.newProductNotice  productInfo
-    产品信息变更 com.erp.server.plm.service.impl.ProductDetailServiceImpl.handleProductChangeNotification productDetail
-    模具审核 com.erp.server.plm.service.impl.MouldInfoServiceImpl.sendApproveNotice  mouldinfo
+    新建产品  com.erp.server.plm.service.impl.NoticeMessageServiceImpl.newProductNotice  productInfo  product_info
+    产品信息变更 com.erp.server.plm.service.impl.ProductDetailServiceImpl.handleProductChangeNotification product_detail
+    模具审核 com.erp.server.plm.service.impl.MouldInfoServiceImpl.sendApproveNotice  mould_info
     模具提交 com.erp.server.plm.service.impl.MouldInfoServiceImpl.submit
     模具创建 com.erp.server.plm.service.impl.MouldInfoServiceImpl.add
     返还确认 com.erp.server.plm.service.impl.MouldInfoServiceImpl.returnConfirm
     返还达量 com.erp.server.plm.service.impl.MouldRefCalcQtyServiceImpl.calcRefundQty MouldRefCalcQty
 
     //------wms------
-    质检通知 -新品 com.erp.server.wms.service.impl.QcResultServiceImpl.sendQcResultMsg
-    质检通知 -老品 com.erp.server.wms.service.impl.QcResultServiceImpl.sendQcResultMsg
     首次质检 -产品尺寸变更 com.erp.server.wms.service.impl.QcResultServiceImpl.sendQcBackFillPackaging
     质检通知 com.erp.server.wms.schedule.CfgSettingJob.fsQcNotice
     仓位补货通知 com.erp.server.wms.schedule.CfgSettingJob.fsWlrNotice
@@ -102,9 +91,8 @@ public class MqRecordConsumerService implements RocketMQListener<MqConsumerRecor
     生成发货建议 com.erp.server.mrp.schedule.CfgNoticeJob.sendMrpNotice
 
     //------tms------
-    在途异常 com.erp.server.tms.schedule.FmLogisticWarnJob.sendFmLogisticWarnJob
     渠道更换 com.erp.server.tms.service.impl.TmsFirstMileLogisticServiceImpl.updateChannel  / com.erp.server.tms.service.impl.TmsFirstMileLogisticServiceImpl.batchUpdateChannel
-    备案通知 com.erp.server.tms.service.impl.ProductRegistrationServiceImpl.sendMsgWhenNotRegistration
+
     组包预报生成【新增】
     物流单下单成功【新增】
 */
@@ -151,14 +139,27 @@ public class MqRecordConsumerService implements RocketMQListener<MqConsumerRecor
     private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 
     @Override
-    public void onMessage(MqConsumerRecordDTO.MqDTO dto) {
+    @Transactional(rollbackFor = Exception.class)
+    public void onMessage(String jsonStr) {
         log.info("MqRecordConsumerService 开始");
+        if(StringUtils.isBlank(jsonStr)){
+            return ;
+        }
+
+        MqConsumerRecordDTO.MqDTO dto = new MqConsumerRecordDTO.MqDTO();
+        // 创建 Gson 实例
+        Gson gson = new Gson();
+        Map<String, Object> jsonMap = gson.fromJson(jsonStr, Map.class);
+        dto.setDb(jsonMap.get("db") == null ? "" : String.valueOf(jsonMap.get("db")));
+        dto.setTable(jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table")));
+        dto.setOperationType(jsonMap.get("P_TAG_IUD") == null ? "" : String.valueOf(jsonMap.get("P_TAG_IUD")));
+        dto.setDataJson(jsonMap);
+
         //接收中台发送的ddl变更
         //参数不能为空
-        if (StringUtils.isNotBlank(dto.getDb()) && StringUtils.isNotBlank(dto.getTable()) && StringUtils.isNotBlank(dto.getIud()) && Objects.nonNull(dto.getDataJson())) {
+        if (StringUtils.isNotBlank(dto.getDb()) && StringUtils.isNotBlank(dto.getTable()) && StringUtils.isNotBlank(dto.getOperationType()) && Objects.nonNull(dto.getDataJson())) {
             //保存mq消费记录
-            // 创建 Gson 实例
-            Gson gson = new Gson();
+
             // 将 Map 转换为 JSON 字符串
             MqConsumerRecordEntity mqConsumerRecord = new MqConsumerRecordEntity();
             mqConsumerRecord.setTopic(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace));
@@ -243,7 +244,7 @@ public class MqRecordConsumerService implements RocketMQListener<MqConsumerRecor
                         for (String str : noticeMethodList) {
                             //获取飞书的unionid 与用户关系
                             if (CfgApproveSyncSyncPlatformEnum.FEISHU.getCode().equals(str)) {
-                                unionList = sysUserFeign.getThirdByUserIds(ThirdConstants.FS_PLATFORM, userIdList);
+                                unionList = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode() , userIdList);
 
                                 if (CollUtil.isEmpty(unionList)) {
                                     continue;

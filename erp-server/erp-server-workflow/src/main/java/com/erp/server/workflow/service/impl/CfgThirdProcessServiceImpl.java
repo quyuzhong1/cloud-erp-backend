@@ -95,7 +95,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
             }
             return e.getThirdFieldId();
         }).collect(Collectors.toList());
-        Map<String, String> collect = view.stream().collect(Collectors.toMap(CfgProcessFieldMapDTO.ViewDTO::getThirdFieldId, CfgProcessFieldMapDTO.ViewDTO::getThirdField));
+        Map<String, List<CfgProcessFieldMapDTO.ViewDTO>> collect = view.stream().collect(Collectors.groupingBy(CfgProcessFieldMapDTO.ViewDTO::getThirdFieldId));
         //分离必填
         if (CollUtil.isNotEmpty(ids)) {
             //删除飞书审批定义字段
@@ -109,7 +109,18 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         }
         if (ids.size() > 0) {
             //使用ids获取collect中的value
-            List<String> names = ids.stream().map(collect::get).collect(Collectors.toList());
+            List<String> names = new ArrayList<>();
+                    ids.stream()
+                    .map(id -> {
+                        List<CfgProcessFieldMapDTO.ViewDTO> dtos = collect.get(id);
+                        if (CollUtil.isNotEmpty(dtos)) {
+                            for (int i = 0; i < dtos.size(); i++) {
+                                names.add(dtos.get(Integer.valueOf(i)).getThirdField());
+                            }
+                        }
+                        return id;
+                    })
+                    .collect(Collectors.toList());
             throw new ServiceException("三方审批生成保存失败,缺少飞书必填字段："+StrUtil.join(","+names));
         }
         //新增明细：field->cfg_type、cfg_id thirdCfg

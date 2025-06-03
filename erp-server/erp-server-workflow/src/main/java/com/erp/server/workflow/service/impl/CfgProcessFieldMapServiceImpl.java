@@ -16,6 +16,7 @@ import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.handler.ProcessFormHandler;
@@ -129,18 +130,31 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     }
 
     @Override
-    public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId,String type) {
+    public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId, String type) {
         try {
             GetApprovalResp approval = fsService.getApproval(processDefinitionId);
             String formStr = JSONUtil.toJsonStr(approval.getData());
-            ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(type).name());
+            CfgProcessRuleTypeEnum ruleTypeEnum = CfgProcessRuleTypeEnum.getByCode(type);
+            ProcessFormHandler handler = null;
+            if (ruleTypeEnum != null) {
+                handler = processFormFactory.getAssembleFormHandler(ruleTypeEnum.name());
+            }
+            if (handler == null) {
+                DictBasicEnum dictEnum = DictBasicEnum.getByCode(type);
+                if (dictEnum != null) {
+                    handler = processFormFactory.getConstructBillHandler(dictEnum.name());
+                }
+            }
+            if (handler == null) {
+                throw new ServiceException("无法获取对应的表单处理器，type参数无效: " + type);
+            }
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = handler.parseForm(formStr);
             viewDTOList.forEach(e -> {
                 e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
             });
             return viewDTOList;
         } catch (Exception e) {
-            throw new ServiceException("获取指定飞书审批定义失败:{}",  e);
+            throw new ServiceException("获取指定飞书审批定义失败:{}", e);
         }
     }
 
@@ -165,6 +179,8 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
      * 新增修改处理数据
      */
     private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
+        //过滤addDto，thirdField为空的数据
+        List<CfgProcessFieldMapDTO.AddOrUpdateDTO> thirdFieldNotEmptyDTO = addDTO.stream().filter(dto -> StrUtil.isNotBlank(dto.getThirdField())).collect(Collectors.toList());
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
         Map<String, CfgQueryOptionEntity> fieldToEntityMap = cfgQueryOptionEntities.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, e -> e));
         //筛选出eq(CfgQueryOptionEntity::getIsRequired, true)
@@ -173,8 +189,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         // 遍历 addDTO，id 为空的保存，id 不为空的更新
         // 先校验所有 DTO，收集需要新增和更新的实体
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = new ArrayList<>();
-
-        for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
+        for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : thirdFieldNotEmptyDTO) {
             if (dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.DEFAULT.getCode()) || dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.NULLVALUE.getCode())) {
                 // 校验通过后，进行保存或更新操作
                 if (StrUtil.isEmpty(dto.getId())) {

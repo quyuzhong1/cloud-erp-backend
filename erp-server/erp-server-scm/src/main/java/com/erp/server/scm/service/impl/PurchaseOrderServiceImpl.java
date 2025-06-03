@@ -42,7 +42,6 @@ import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.entity.ProductPurchaseEntity;
-import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProductVO;
@@ -3364,7 +3363,7 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void updatePurchaseOrder(PurchaseOrderEntity purchaseOrderEntity) {
-        SysUserThirdEntity fs = sysUserFeign.getThirdByUserIds("FS", purchaseOrderEntity.getApproveUserId());
+        SysUserThirdEntity fs = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), purchaseOrderEntity.getApproveUserId());
         purchaseOrderEntity.setApproveUserId(fs.getUserId());
         this.updateById(purchaseOrderEntity);
     }
