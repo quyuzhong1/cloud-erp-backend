@@ -3,6 +3,7 @@ package com.common.business.wrapper;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.aspect.DictCore;
@@ -241,6 +242,12 @@ public class FeignBuilder {
 	public <T extends BaseEntity<T>> List<T> list() {
 		if(clazz == null) {
 			throw new RuntimeException("实体类名未设置");
+		}
+		if(CollUtil.isNotEmpty(queryParams)) {
+			List<QueryParam> inEmptyValues = queryParams.stream().filter(q -> q.getType() == QueryTypeEnum.IN && CollUtil.isEmpty(q.getValues())).collect(Collectors.toList());
+			if(CollUtil.isNotEmpty(inEmptyValues)) {
+				throw new RuntimeException(clazz.getName() + "的如下字段in条件为空：" + inEmptyValues.stream().map(QueryParam::getName).collect(Collectors.joining("、")));
+			}
 		}
 		DictCore dictCore = ApplicationContextUtils.getBean(DictCore.class);
 		String serviceCode = clazz.getName().split("\\.")[3];
