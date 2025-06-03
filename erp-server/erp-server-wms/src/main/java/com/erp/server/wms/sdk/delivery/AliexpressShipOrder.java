@@ -170,11 +170,11 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                 aliExpressOrderService.subDeclareDeliver(request);
                 signShippedDetailList.addAll(currentDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             } catch (ServiceException e){
-                if (-353 == e.getCode()) {
+                if (Integer.valueOf(-353).equals(e.getCode())) {
                     log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                     return signShippedDetailList;
                 }
-                if (-999 == e.getCode() && e.getMessage().contains("系统已经重新路由")){
+                if (Integer.valueOf(-999).equals(e.getCode()) && e.getMsg().contains("系统已经重新路由")){
                     //更新跟踪号，重新申明下单
                     return reShipOrder(e, currentDetailEntityList, request, signShippedDetailList, mainEntity);
                 }
@@ -228,7 +228,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
                                      DeclareDeliverRequest request,List<String> signShippedDetailList,SoB2cEntity mainEntity) {
         //重置参数 更新物流记录
         //系统已经重新路由，旧单号[CNG00665032598857]暂无法使用，请使用新单号[UN055958577MU]声明发货
-        String message = serviceException.getMessage();
+        String message = serviceException.getMsg();
         // 正则表达式，匹配方括号及其内部的内容
         String regex = "\\[(.*?)\\]";
         Pattern pattern = Pattern.compile(regex);
@@ -257,7 +257,7 @@ public class AliexpressShipOrder extends AbstractShipOrder {
             signShippedDetailList.addAll(detailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList()));
             return signShippedDetailList;
         } catch (ServiceException e){
-            if (-353 == e.getCode()) {
+            if (Integer.valueOf(-353).equals(e.getCode())) {
                 log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
                 return signShippedDetailList;
             }
