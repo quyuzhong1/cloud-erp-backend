@@ -30,6 +30,7 @@ import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
 import com.erp.server.workflow.service.ApproveSyncRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.workflow.service.OperateLogService;
+import com.erp.server.workflow.service.ProcessManagementService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -60,6 +61,8 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
 
     @Resource
     private CfgApproveSyncBuildHandler cfgApproveSyncBuildHandler;
+    @Resource
+    private ProcessManagementService processManagementService;
     @Resource
     private FsService fsService;
 
@@ -129,9 +132,11 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         if(CollUtil.isEmpty(thirdUnionMap)) {
             return BatchResultDTO.fail(entity.getId(), entity.getId(), "");
         }
+
         if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
             params.setThirdUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
         }
+
         if(thirdUnionMap.containsKey(userId) && Objects.nonNull(thirdUnionMap.get(userId))){
             params.setThirdUserId(thirdUnionMap.get(userId).getThirdUserId());
 

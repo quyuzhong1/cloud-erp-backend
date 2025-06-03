@@ -227,8 +227,8 @@ public class CfgThirdNoticeController extends BaseController {
     }
 
     @PostMapping("/testPush")
-    public ApiResult<Object> testPush(@RequestBody MqConsumerRecordDTO.MqDTO dto) {
-        cfgThirdNoticeService.testPush(dto);
+    public ApiResult<Object> testPush(@RequestBody String jsonStr) {
+        cfgThirdNoticeService.testPush(jsonStr);
         return success();
     }
 

@@ -17,8 +17,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -76,22 +78,25 @@ public class SendThirdNoticeConsumerService implements RocketMQListener<SendThir
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void onMessage(SendThirdNoticeConsumerDTO dto) {
         log.info("SendThirdNoticeConsumerService 开始");
-
+        LocalDateTime now = LocalDateTime.now();
         //发送消息的结果
         Boolean sendResult = fsService.sendMessage(dto);
         //当发送成功后
         if (Boolean.TRUE.equals(sendResult)) {
             String messageId = dto.getMessageId();
-            thirdNoticePushRecordService.lambdaUpdate().
-                    set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
+            thirdNoticePushRecordService.lambdaUpdate()
+                    .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
+                    .set(ThirdNoticePushRecordEntity::getSendTime,now)
                     .eq(ThirdNoticePushRecordEntity::getId, messageId)
                     .update();
         }else {
             String messageId = dto.getMessageId();
-            thirdNoticePushRecordService.lambdaUpdate().
-                    set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
+            thirdNoticePushRecordService.lambdaUpdate()
+                    .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.FAILED.getCode())
+                    .set(ThirdNoticePushRecordEntity::getSendTime,now)
                     .eq(ThirdNoticePushRecordEntity::getId, messageId)
                     .update();
         }

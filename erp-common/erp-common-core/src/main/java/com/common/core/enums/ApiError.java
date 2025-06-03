@@ -179,6 +179,10 @@ public enum ApiError implements Serializable {
     MOBILE_IS_EXIST(9054,"手机号已注册"),
 
 
+    ERROR_CRON(9055, "cron表达式不合法"),
+    ERROR_EXPLAIN_CRON(9056, "解析Cron表达式失败"),
+
+
     /**
      * DMP服务错误
      * 80001开始

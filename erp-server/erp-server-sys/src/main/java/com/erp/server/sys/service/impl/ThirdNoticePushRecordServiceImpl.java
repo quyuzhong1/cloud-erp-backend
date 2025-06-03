@@ -3,6 +3,7 @@ package com.erp.server.sys.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -29,12 +30,16 @@ import com.common.business.threadlocal.UserContext;
 import com.erp.server.sys.service.OperateLogService;
 import com.erp.server.sys.service.CommonService;
 import com.common.core.exception.ServiceException;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
@@ -116,6 +121,37 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
 
         return BatchResultDTO.success(entity.getId(), entity.getId(), "");
+    }
+
+    @Override
+    public List<ThirdNoticePushRecordEntity> listSendingRecord(ThirdNoticePushRecordDTO.ParamsDTO paramsDTO) {
+        if(Objects.isNull(paramsDTO)){
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<ThirdNoticePushRecordEntity> queryWrapper = new LambdaQueryWrapper<>();
+        //ThirdNoticePushRecordDTO.ParamsDTO paramsDTO里的所有参数如果不为空，则添加到queryWrapper中
+        if(StringUtils.isNotBlank(paramsDTO.getBusinessType())){
+            queryWrapper.eq(ThirdNoticePushRecordEntity::getBusinessType, paramsDTO.getBusinessType());
+        }
+        if(StringUtils.isNotBlank(paramsDTO.getNoticeType())){
+            queryWrapper.eq(ThirdNoticePushRecordEntity::getNoticeType, paramsDTO.getNoticeType());
+        }
+        if(StringUtils.isNotBlank(paramsDTO.getNoticeMethod())){
+            queryWrapper.eq(ThirdNoticePushRecordEntity::getNoticeMethod, paramsDTO.getNoticeMethod());
+        }
+        if(StringUtils.isNotBlank(paramsDTO.getStatus())){
+            queryWrapper.eq(ThirdNoticePushRecordEntity::getStatus, paramsDTO.getStatus());
+        }
+        if(CollUtil.isNotEmpty(paramsDTO.getUserIds())){
+            queryWrapper.in(ThirdNoticePushRecordEntity::getReceiverId, paramsDTO.getUserIds());
+        }
+        if (paramsDTO.getSendTime() != null) {
+            // 获取起始时间和结束时间
+            LocalDateTime startOfDay = paramsDTO.getSendTime().with(LocalTime.MIN);
+            LocalDateTime endOfDay = paramsDTO.getSendTime().with(LocalTime.MAX);
+            queryWrapper.between(ThirdNoticePushRecordEntity::getSendTime, startOfDay, endOfDay);
+        }
+        return this.list(queryWrapper);
     }
 
 }
