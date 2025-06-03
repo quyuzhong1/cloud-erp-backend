@@ -1,5 +1,6 @@
 package com.erp.server.wms.sdk.delivery;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.lang.Tuple;
 import cn.hutool.core.text.CharSequenceUtil;
@@ -82,7 +83,10 @@ public class AliexpressShipOrder extends AbstractShipOrder {
         List<String> platformCodeList = sourceOrderList.stream().map(SoB2cEntity::getPlatformCode).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
         List<SoB2cEntity> samePlatformCodeEntityList = FeignQuery.create(SoB2cEntity.class).in(SoB2cEntity::getPlatformCode,platformCodeList).eq(SoB2cEntity::getInvalidStatus,false).list();
         List<String> mainIds = samePlatformCodeEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
-        List<SoB2cDetailEntity> allDetailList = FeignQuery.create(SoB2cDetailEntity.class).in(SoB2cDetailEntity::getMainId,mainIds).list();
+        List<SoB2cDetailEntity> allDetailList = new ArrayList<>();
+        if(CollUtil.isNotEmpty(mainIds)) {
+        	allDetailList = FeignQuery.create(SoB2cDetailEntity.class).in(SoB2cDetailEntity::getMainId,mainIds).list();
+        }
 
         List<String> signShippedDetailList = new ArrayList<>();
         for (SoB2cEntity mainEntity : sourceOrderList) {
