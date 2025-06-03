@@ -165,6 +165,8 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
      * 新增修改处理数据
      */
     private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
+        //过滤addDto，thirdField为空的数据
+        List<CfgProcessFieldMapDTO.AddOrUpdateDTO> thirdFieldNotEmptyDTO = addDTO.stream().filter(dto -> StrUtil.isNotBlank(dto.getThirdField())).collect(Collectors.toList());
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
         Map<String, CfgQueryOptionEntity> fieldToEntityMap = cfgQueryOptionEntities.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, e -> e));
         //筛选出eq(CfgQueryOptionEntity::getIsRequired, true)
@@ -173,8 +175,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         // 遍历 addDTO，id 为空的保存，id 不为空的更新
         // 先校验所有 DTO，收集需要新增和更新的实体
         List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = new ArrayList<>();
-
-        for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : addDTO) {
+        for (CfgProcessFieldMapDTO.AddOrUpdateDTO dto : thirdFieldNotEmptyDTO) {
             if (dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.DEFAULT.getCode()) || dto.getSysField().equals(CfgQueryOptionFieldTypeEnum.NULLVALUE.getCode())) {
                 // 校验通过后，进行保存或更新操作
                 if (StrUtil.isEmpty(dto.getId())) {
