@@ -16,6 +16,7 @@ import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
 import com.erp.server.workflow.handler.ProcessFormHandler;
@@ -129,18 +130,21 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
     }
 
     @Override
-    public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId,String type) {
+    public List<CfgProcessFieldMapDTO.ViewDTO> view(String processDefinitionId, String type) {
         try {
             GetApprovalResp approval = fsService.getApproval(processDefinitionId);
             String formStr = JSONUtil.toJsonStr(approval.getData());
             ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(type).name());
+            if (handler == null) {
+                handler = processFormFactory.getConstructBillHandler(DictBasicEnum.getByCode(type).name());
+            }
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = handler.parseForm(formStr);
             viewDTOList.forEach(e -> {
                 e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
             });
             return viewDTOList;
         } catch (Exception e) {
-            throw new ServiceException("获取指定飞书审批定义失败:{}",  e);
+            throw new ServiceException("获取指定飞书审批定义失败:{}", e);
         }
     }
 
