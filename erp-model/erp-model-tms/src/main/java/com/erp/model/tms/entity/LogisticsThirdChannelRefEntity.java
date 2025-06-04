@@ -64,6 +64,11 @@ public class LogisticsThirdChannelRefEntity extends BaseEntity<LogisticsThirdCha
     @TableField("third_supplier_name")
     private String thirdSupplierName;
 
+    /**
+     * 平台类型 TRACK123
+     */
+    @TableField("platform_type")
+    private String platformType;
 
     public static final String REMARK = "remark";
 
