@@ -44,7 +44,7 @@ public class RegularValidator implements ConstraintValidator<RegularValid, Objec
                 return Pattern.matches(urlRegex, value.toString());
             //邮箱
             case FieldFormatPatternTypeEnum.MAILBOX:
-                if (value.toString().length() > 30) {
+                if (value.toString().length() > 50) {
                     return false;
                 }
                 String mailRegex = FieldFormatPatternTypeEnum.getRegularByCode(FieldFormatPatternTypeEnum.MAILBOX);
