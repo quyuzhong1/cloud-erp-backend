@@ -1614,9 +1614,51 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     public List<ProcessManagementDTO.DetailPagingResultDTO> listDetail(ProcessManagementDTO.DetailSearchDTO dto) {
         if (ProcessSourcePlatformEnum.ERP.getCode().equals(dto.getSourcePlatform())) {
-            baseMapper.listErpDetail(dto);
+            return baseMapper.listErpDetail(dto);
         }
-        return baseMapper.listFsDetail(dto);
+        List<ProcessManagementDTO.DetailPagingResultDTO> detailPagingResultList = baseMapper.listFsDetail(dto);
+        handleFsDetailPaging(detailPagingResultList);
+        return detailPagingResultList;
+    }
+
+    /**
+     * 飞书数据处理
+     * @author will
+     * @date 2025/6/4 14:57
+     * @param detailPagingResultList
+     * @return void
+     */
+    private void handleFsDetailPaging(List<ProcessManagementDTO.DetailPagingResultDTO> detailPagingResultList) {
+        if (CollUtil.isEmpty(detailPagingResultList)) {
+            return;
+        }
+        List<String> userIdList = detailPagingResultList.stream().map(ProcessManagementDTO.DetailPagingResultDTO::getCurApproveId).distinct().collect(Collectors.toList());
+        List<FindUserDTO> userList = sysUserFeign.getUserListByUserIds(userIdList);
+        if (CollUtil.isEmpty(userList)) {
+            return;
+        }
+        Map<String, String> map = userList.stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName));
+        for (ProcessManagementDTO.DetailPagingResultDTO resultDTO : detailPagingResultList) {
+            resultDTO.setCurApproveName(map.get(resultDTO.getCurApproveId()));
+        }
+    }
+
+    @Override
+    public PagingVO<ProcessManagementDTO.MainPagingResultDTO> mainPaging(PagingDTO<ProcessManagementDTO.SearchDTO> pageDTO) {
+        pageDTO.getParams().setPermissionSql(pageDTO.getPermissionSql());
+        // 查询流程实例
+        Page<ProcessManagementDTO.MainPagingResultDTO> query = new Page<>(pageDTO.getCurrPage(), pageDTO.getPageSize());
+        IPage<ProcessManagementDTO.MainPagingResultDTO> pageData = baseMapper.mainPaging(query, pageDTO.getParams());
+        pageData.getRecords().forEach(record -> {
+            if (record.getProcessStatus() != null) {
+                record.setProcessStatusName(record.getProcessStatus().getName());
+            }
+            if (record.getSourcePlatform() != null) {
+                record.setSourcePlatformName(ProcessSourcePlatformEnum.getName(record.getSourcePlatform()));
+            }
+            record.setBusinessKeyName(SourceTypeEnum.getName(record.getBusinessKey()));
+        });
+        return new PagingVO<>(pageData);
     }
 
     /**

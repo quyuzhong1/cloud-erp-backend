@@ -227,9 +227,6 @@ public class CamundaGlobalListener {
 
     // 获取当前登录用户
     LoginUser userInfo = UserContext.getDefaultLoginUser();
-    if (!candidateUsers.contains(userInfo.getUid())) {
-      return candidateUsers;
-    }
 
     // 查询委托关系
     ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(processDefinitionId, userInfo.getUid());

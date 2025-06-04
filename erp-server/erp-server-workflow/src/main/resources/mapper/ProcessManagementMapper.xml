@@ -248,7 +248,8 @@
             ptm.cur_approve_id,
             ptm.cur_approve_name,
             ptm.task_status,
-            ptm.approve_time
+            ptm.approve_time,
+            ptm.label_json
         from process_task_management ptm
         inner join process_management pm on pm.process_instance_id = ptm.process_instance_id and pm.is_deleted = false
         <where>
@@ -259,7 +260,68 @@
     <!--查询FS明细 -->
     <select id="listFsDetail"
             resultType="com.erp.model.workflow.dto.ProcessManagementDTO$DetailPagingResultDTO">
+        select
+            tptm.id,
+            tpm.process_instance_name as process_name ,
+            tptm.sys_user_id as cur_approve_id ,
+            tptm.node_id as  cur_activity_id,
+            tptm.node_name as cur_activity_name,
+            '' AS cur_approve_name,
+            null as label_json,
+            tpm.end_time as approveTime
+        from third_process_task_management tptm
+        inner join third_process_management tpm on tptm.main_id = tpm.id and tpm.is_deleted = false
+        where tptm.is_deleted = false  and tptm.node_id = #{params.curActivityId}
+    </select>
 
+    <!-- 主表分页查询 -->
+    <select id="mainPaging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$MainPagingResultDTO">
+        select * from (
+          SELECT
+              pm.id,
+              pm.process_instance_id,
+              pm.process_definition_id,
+              pm.process_version ,
+              pm.process_status ,
+              pm.process_name ,
+              pm.business_id ,
+              pm.business_code ,
+              pm.business_name ,
+              pm.business_key,
+              pm.act_process_definition_id ,
+              concat(wm.detail_url,pm.business_id) as detail_url,
+              pm.create_time as createTime,
+              pm.update_time as updateTime,
+              pm.create_user_id as createUserId,
+              pm.end_time,
+              'erp' as sourcePlatform
+          FROM process_management AS pm
+          LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
+          LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
+          where  pm.is_deleted = false
+          union all
+          select
+              tpm.id,
+              tpm.process_instance_id,
+              tpm.process_definition_id,
+              null as process_version ,
+              tpm.status as process_status ,
+              tpm.process_instance_name as process_name ,
+              tpm.business_id ,
+              tpm.business_code ,
+              '' as business_name ,
+              tpm.business_key,
+              '' as act_process_definition_id ,
+              '' as detail_url,
+              tpm.create_time as createTime,
+              tpm.update_time as updateTime,
+              tpm.create_user_id as createUserId,
+              tpm.end_time,
+              'fs' as sourcePlatform
+          from third_process_management tpm
+          where tpm.is_deleted = false
+                      ) pp
+        where ${params.sqlMap.default} order by pp.createTime desc
     </select>
 
 </mapper>

@@ -731,7 +731,9 @@ public class ProcessManagementDTO {
     @Data
     @NoArgsConstructor
     public static class PagingResultDTO {
-
+        /**
+         * 任务id
+         */
         private String id;
         /**
          * 流程节点id
@@ -872,6 +874,111 @@ public class ProcessManagementDTO {
 
     @Data
     @NoArgsConstructor
+    public static class MainPagingResultDTO {
+
+        /**
+         * 流程节点id
+         */
+        private String id;
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+
+        /**
+         * 流程定义ID
+         */
+        private String processDefinitionId;
+
+        /**
+         * 流程定义版本
+         */
+        private Integer processVersion;
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 业务ID
+         */
+        private String businessId;
+
+        /**
+         * 业务编码
+         */
+        private String businessCode;
+
+        /**
+         * 业务名称
+         */
+        private String businessName;
+
+        /**
+         * 业务类型KEY
+         */
+        private String businessKey;
+        /**
+         * 单据名称
+         */
+        private String businessKeyName;
+        /**
+         * 审核来源
+         */
+        private String sourcePlatform;
+        /**
+         * 审核来源名称
+         */
+        private String sourcePlatformName;
+        /**
+         * 当前节点id
+         */
+        private String curActivityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String curActivityName;
+
+        /**
+         * 流程状态
+         */
+        private ProcessStatusEnum processStatus;
+
+        /**
+         * 流程状态
+         */
+        private String processStatusName;
+
+        /**
+         * 流程引擎流程实例ID
+         */
+        private String actProcessDefinitionId;
+
+        /**
+         * 详情地址
+         */
+        private String detailUrl;
+
+        /**
+         * 项目名称
+         */
+        private String sysClassify;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 流程节点结束时间
+         */
+        private LocalDateTime endTime;
+    }
+
+    @Data
+    @NoArgsConstructor
     public static class DetailPagingResultDTO {
         /**
          * 任务表id
@@ -902,6 +1009,11 @@ public class ProcessManagementDTO {
          * 审批人名称
          */
         private String curApproveName;
+
+        /**
+         * 标签标识,isDelegate委托
+         */
+        private JSONObject labelJson;
 
         /**
          * 任务状态

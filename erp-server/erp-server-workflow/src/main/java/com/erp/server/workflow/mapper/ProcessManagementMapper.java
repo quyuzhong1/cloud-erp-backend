@@ -98,4 +98,13 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @return List<DetailPagingResultDTO>
      */
     List<ProcessManagementDTO.DetailPagingResultDTO> listFsDetail(@Param("params") ProcessManagementDTO.DetailSearchDTO params);
+    /**
+     * 主表分页查询
+     * @author will
+     * @date 2025/6/4 14:45
+     * @param query
+     * @param params
+     * @return IPage<MainPagingResultDTO>
+     */
+    IPage<ProcessManagementDTO.MainPagingResultDTO> mainPaging(Page query, @Param("params")ProcessManagementDTO.SearchDTO params);
 }
