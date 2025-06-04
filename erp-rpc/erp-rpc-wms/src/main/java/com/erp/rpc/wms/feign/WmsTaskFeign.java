@@ -382,4 +382,11 @@ public interface WmsTaskFeign {
      */
     @PostMapping("/feign/wmsSyncTask/newFindDataSendSyncTask")
     Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+
+
+    /**
+     *
+     */
+    @PostMapping("/feign/qcBill/getFsQcNoticeTitle")
+    String getFsQcNoticeTitle(@RequestParam("title") String title);
 }
