@@ -23,6 +23,7 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param dto
      * @return Boolean
      */
+    @Deprecated
     Boolean batchAuth(ShopSysUserAuthDTO.BatchAuthDTO dto);
     /**
      * @description: 查看详情
@@ -31,6 +32,7 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @param dto
      * @return ViewDTO
      */
+    @Deprecated
     ShopSysUserAuthDTO.ViewDTO view(ShopSysUserAuthDTO.ViewParamDTO dto);
     /**
      * @description: 根据用户id集合查询店铺权限设置
@@ -40,14 +42,6 @@ public interface ShopSysUserAuthService extends SuperService<ShopSysUserAuthEnti
      * @return List<ViewDTO>
      */
     List<ShopSysUserAuthDTO.ViewDTO> listShopSysUserAuthByUserIdList(List<String> userIdList);
-    /**
-     * @description:根据店铺id查询已关联用户id
-     * @author Will
-     * @date: 2023/9/7 9:36
-     * @param shopIdList
-     * @return List<String>
-     */
-    List<String> listUserIdByShopIdList(List<String> shopIdList);
 
     /**
      * 下拉用户拥有权限的店铺

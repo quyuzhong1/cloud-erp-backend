@@ -114,7 +114,6 @@ public interface SyncSoB2cService {
                                                             List<ShopInfoEntity> shopInfoList,
                                                             List<CustomerInfoEntity> customerInfoList,
                                                             List<BaseIdDTO.CodeDTO> companyEntities,
-                                                            Map<String, Pair<BigDecimal, BigDecimal>> deliveryDetailPriceMap,
                                                             SoB2cReceiverEntity receiverEntity,
                                                             List<DictBasicEntity> omsAllDictList,
                                                             List<DictPartitionEntity> partitionEntityList,
@@ -133,11 +132,6 @@ public interface SyncSoB2cService {
 
     void syncSdyCancelOrder(SoB2cEntity mainEntity, List<SoB2cDetailEntity> detailList, String code);
 
-
-    Map<String, Pair<BigDecimal, BigDecimal>> convertAllAliExpressDeliveryDetailPrice(List<AliexpressDeliveryDetailEntity> deliveryDetailList,
-                                                                                      List<SoB2cDetailEntity> soB2cDetailEntityList,
-                                                                                      List<SkuVO> skuVOList
-    );
 
     Map<String, Pair<BigDecimal, BigDecimal>> convertAllDeliveryDetailPrice(List<SoB2cDeliveryDetailEntity> deliveryDetailList,
                                                           List<SoB2cDetailEntity> soB2cDetailEntityList,

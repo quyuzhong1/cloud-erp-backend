@@ -1,5 +1,8 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -18,10 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +58,7 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
             return;
         }
         List<SupplierAccountEntity> addList = BeanMapper.copyList(bankAccountList, SupplierAccountEntity.class);
+        checkSupplierAccount(addList);
         List<String> bankIdList = addList.stream().map(SupplierAccountEntity::getBankId).collect(Collectors.toList());
         List<BaseIdDTO> bankList = sysUserFeign.getBankList(bankIdList);
         for (SupplierAccountEntity item : addList) {
@@ -66,8 +67,19 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
             item.setSupplierId(supplierId);
             item.setBankName(bankName);
         }
+
         this.saveBatch(addList);
 
+    }
+
+    private void checkSupplierAccount(List<SupplierAccountEntity> addList) {
+        //供应商有且只能有一条默认账户
+        long count = addList.stream().filter(e -> Objects.nonNull(e.getIsDefault()) && e.getIsDefault()).count();
+        if (count > 1) {
+            throw new RuntimeException("供应商只能有一条默认账户");
+        }else if (count == 0){
+            throw new RuntimeException("供应商必须有一条默认账户");
+        }
     }
 
     /**
@@ -111,11 +123,12 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
         for (SupplierAccountEntity item : saveOrUpdateList) {
             String bankName = bankList.stream().filter(b -> b.getId().equals(item.getBankId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setBankId(ObjectUtil.isEmpty(item.getBankId()) ? "" : item.getBankId());
             item.setSupplierId(supplierId);
             item.setBankName(bankName);
         }
-
-
+        //校验
+        checkSupplierAccount(saveOrUpdateList);
         //这是要修改
         List<SupplierAccountEntity> updateList = saveOrUpdateList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
 
@@ -198,6 +211,36 @@ public class SupplierAccountServiceImpl extends SuperServiceImpl<SupplierAccount
             addList.add(account);
         }
         return addList;
+    }
+
+    @Override
+    public List<SupplierAccountEntity> getSupplierAccountList(String supplierId) {
+        List<SupplierAccountEntity> list = this.lambdaQuery().eq(SupplierAccountEntity::getSupplierId, supplierId).orderByDesc(SupplierAccountEntity::getIsDefault).list();
+        if (CollUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+        List<String> bankIds = list.stream().map(SupplierAccountEntity::getBankId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(bankIds)){
+            return list;
+        }
+        List<BaseIdDTO> bankList = sysUserFeign.getBankList(bankIds);
+        for (SupplierAccountEntity item : list) {
+            String bankName = bankList.stream().filter(b -> b.getId().equals(item.getBankId())).
+                    findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            item.setBankName(bankName);
+        }
+        return list;
+    }
+
+    @Override
+    public List<SupplierAccountEntity> getDefaultBySupplierIdList(List<String> supplierIds) {
+        if (CollectionUtils.isEmpty(supplierIds)) {
+            return Collections.emptyList();
+        }
+        LambdaQueryWrapper<SupplierAccountEntity> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(SupplierAccountEntity::getSupplierId, supplierIds);
+        queryWrapper.eq(SupplierAccountEntity::getIsDefault, true);
+        return this.list(queryWrapper);
     }
 
 

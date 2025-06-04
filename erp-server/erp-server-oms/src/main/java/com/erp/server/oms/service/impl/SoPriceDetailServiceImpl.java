@@ -136,16 +136,16 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
      * @param list
      */
     @Override
-    public void checkSoPriceDetail (String customerId,String SoOrgId,List<SoPriceDetailEntity> list) {
+    public void checkSoPriceDetail (String customerId,String soOrgId,List<SoPriceDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
         //查询客户信息
         List<String> skuIdList = list.stream().map(SoPriceDetailEntity::getSkuId).collect(Collectors.toList());
-        List<SoPriceDetailDTO.ViewDTO> SoDetailList = listCheckSoPriceDetail(customerId, SoOrgId, skuIdList);
-        if (CollectionUtils.isNotEmpty(SoDetailList)) {
+        List<SoPriceDetailDTO.ViewDTO> soDetailList = listCheckSoPriceDetail(Collections.singletonList(customerId), soOrgId, skuIdList);
+        if (CollectionUtils.isNotEmpty(soDetailList)) {
             List<String> oldIdList = list.stream().map(SoPriceDetailEntity::getId).collect(Collectors.toList());
-            SoDetailList = SoDetailList.stream().filter(obj -> !oldIdList.contains(obj.getId())).collect(Collectors.toList());
+            soDetailList = soDetailList.stream().filter(obj -> !oldIdList.contains(obj.getId())).collect(Collectors.toList());
         }
 
         for (int i = 0;i < list.size();i++) {
@@ -155,7 +155,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
                 throw new ServiceException(ApiError.ERROR_SO_PRICE_DATE,entity.getSkuNo());
             }
             //校验区间到需要大于区间从
-            if (entity.getMaxQty().compareTo(entity.getMinQty()) < MathUtil.ZERO) {
+            if (entity.getMaxQty().compareTo(entity.getMinQty()) <= MathUtil.ZERO) {
                 throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
             }
             //校验录入数据是否存在时间重叠
@@ -168,7 +168,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
                 checkOverlap(entity,detailEntity);
             }
 
-            List<SoPriceDetailEntity> oldList = SoDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())).map(obj -> BeanMapperUtils.map(SoPriceDetailEntity.class,obj) ).collect(Collectors.toList());
+            List<SoPriceDetailEntity> oldList = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getSkuId(), entity.getSkuId())).map(obj -> BeanMapperUtils.map(SoPriceDetailEntity.class,obj) ).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(oldList)) {
                 continue;
             }
@@ -185,6 +185,7 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
      * @param detailEntity
      */
     private void checkOverlap (SoPriceDetailEntity entity,SoPriceDetailEntity detailEntity) {
+
         //区间重叠时
         if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
                 && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
@@ -555,7 +556,8 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
                 continue;
             }
             String effectiveDateStr = excelDTO.getEffectiveDateStr();
-            addDTO.setExpireDate(LocalDateUtil.parseStrToLocalDate(effectiveDateStr));
+            String expireDateStr = excelDTO.getExpireDateStr();
+            addDTO.setExpireDate(LocalDateUtil.parseStrToLocalDate(expireDateStr));
             addDTO.setEffectiveDate(LocalDateUtil.parseStrToLocalDate(effectiveDateStr));
             addDTO.setMinQty(Integer.valueOf(excelDTO.getMinQty()));
             addDTO.setMaxQty(Integer.valueOf(excelDTO.getMaxQty()));
@@ -601,19 +603,19 @@ public class SoPriceDetailServiceImpl extends SuperServiceImpl<SoPriceDetailMapp
     /**
      * 查询客户的 已有的sku信息
      *
-     * @param customerId
+     * @param customerIdList
      * @return java.util.List<com.erp.model.scm.dto.SoPriceDetailDTO.AddDTO>
      * @author yl
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(String customerId, String SoOrgId, List<String> skuIdList) {
+    public List<SoPriceDetailDTO.ViewDTO> listCheckSoPriceDetail(List<String> customerIdList, String SoOrgId, List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<SoPriceDetailDTO.ViewDTO> list = baseMapper.listCheckSoPriceDetail(customerId, statusList, SoOrgId, skuIdList);
+        List<SoPriceDetailDTO.ViewDTO> list = baseMapper.listCheckSoPriceDetail(customerIdList, statusList, SoOrgId, skuIdList);
         return list;
     }
     /**

@@ -73,4 +73,19 @@ public interface SupplierAccountService extends SuperService<SupplierAccountEnti
      * @return java.util.List<com.erp.model.scm.entity.SupplierAccountEntity>
      */
     List<SupplierAccountEntity> transform(String supplierId, List<SupplierAccountDTO.ImportAddDTO> accountList);
+    /**
+     * 根据供应商id 获取到账户信息
+     * @author yl
+     * @date 2023-03-20 10:12
+     * @param supplierId
+     * @return java.util.List<com.erp.model.scm.dto.SupplierAccountDTO.UpdateDTO>
+     */
+    List<SupplierAccountEntity> getSupplierAccountList(String supplierId);
+
+    /**
+     * 获取供应商默认账户
+     * @param supplierIds
+     * @return
+     */
+    List<SupplierAccountEntity> getDefaultBySupplierIdList(List<String> supplierIds);
 }

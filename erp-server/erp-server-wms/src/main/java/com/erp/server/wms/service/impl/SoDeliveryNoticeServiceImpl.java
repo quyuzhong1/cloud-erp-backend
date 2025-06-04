@@ -377,6 +377,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         ruleDTO.setReceiveCountry(customerDTO.getCountryId());
         ruleDTO.setFromWarehouse(soDeliveryNoticeEntity.getWarehouseId());
         ruleDTO.setSalesOrgId(soInfoEntity.getSalesOrgId());
+        ruleDTO.setDictPlatform("");
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(ruleDTO);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
             if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){
@@ -1679,7 +1680,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
             //扣减可用
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(paramList);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_LESS.getCode());
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_APPROVE.getCode());
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
         }
@@ -1720,7 +1721,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
 
     @Override
     public PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoDeliveryNoticeDTO.PagingView> pagingViews = baseMapper.soDeliveryNoticeExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         //获取sku的id集合
         List<String> skuIdList = pagingViews.getRecords().stream().map(SoDeliveryNoticeDTO.PagingView::getSkuId).collect(Collectors.toList());
@@ -1849,7 +1850,7 @@ public class SoDeliveryNoticeServiceImpl extends SuperServiceImpl<SoDeliveryNoti
         for (SoDeliveryNoticeEntity soDeliveryNoticeEntity : soDeliveryNoticeEntityList) {
             MachineInfoDTO.AddDTO addDTO = new MachineInfoDTO.AddDTO();
             addDTO.setType(MachineTypeEnum.ORDINARY.getCode());
-            addDTO.setBillDate(LocalDate.now());
+            addDTO.setBillDate(soDeliveryNoticeEntity.getApproveTime().toLocalDate());
 
             addDTO.setReceiverId(userInfo.getUid());
             addDTO.setWarehouseKeeperId(userInfo.getUid());

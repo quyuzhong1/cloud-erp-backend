@@ -83,6 +83,10 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
         ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
 
@@ -114,18 +118,29 @@
         sm.create_time,
         sm.expire_time,
         sm.effective_time,
-        ci.seller_name
+        ci.seller_name,
+        it.invoice_hs_code,
+        it.unit,
+        it.diff_state_tax_code,
+        it.same_state_tax_code,
+        it.dict_origin,
+        it.invoice_product_name
         FROM sku_mapping sm
         LEFT JOIN shop_info si
         ON sm.shop_id=si.id AND si.is_deleted=FALSE
         LEFT JOIN listing_info li
         ON sm.listing_id=li.id AND li.is_deleted=FALSE
         LEFT join customer_info ci on si.customer_id = ci.id and ci.is_deleted = false
+        left join invoice_tax it on li.id = it.listing_id and it.is_deleted = false
         WHERE
         ${params.sqlMap.default}
-        and sm.is_deleted=FALSE
+        and sm.is_deleted=FALSE AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>
@@ -142,7 +157,7 @@
             AND sm.type=#{params.type}
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
-            ${permissionSql}
+            ${params.permissionSql}
         </if>
         GROUP BY match_result
     </select>
@@ -213,6 +228,10 @@
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
         </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
         ORDER BY li.platform_sku_no,sm.create_time DESC
 
     </select>
@@ -249,6 +268,10 @@
         AND sm.is_expire = FALSE
         <if test="params.type !=null and params.type!=''">
             AND sm.type =#{params.type}
+        </if>
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
         </if>
         ORDER BY li.platform_sku_no,sm.create_time DESC
     </select>

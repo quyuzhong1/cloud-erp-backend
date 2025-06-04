@@ -407,8 +407,13 @@ public class QcResultServiceImpl extends SuperServiceImpl<QcResultMapper, QcResu
             String skuName = skuVOList.stream().filter(s -> s.getSkuId().equals(item.getSkuId())).
                     findFirst().flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
             item.setSkuName(skuName);
-            PurchaseOrderDetailEntity entity = purchaseOrderDetailEntities.stream().filter(v -> v.getId().equals(item.getPurchaseOrderDetailId())).findFirst().orElse(new PurchaseOrderDetailEntity());
-            item.setFirstMassProduct(entity.getFirstMassProduct());
+            PurchaseOrderDetailEntity entity = purchaseOrderDetailEntities.stream().filter(v -> v.getId().equals(item.getPurchaseOrderDetailId())).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                //默认非首批
+                item.setFirstMassProduct(FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode());
+            }else{
+                item.setFirstMassProduct(entity.getFirstMassProduct());
+            }
         }
         //以新 老品分组
         Map<Boolean, List<QcResultDTO.QcNoticeDTO>> map = list.stream().collect(Collectors.groupingBy(v -> !FirstMassProductTypeEnum.SUBSEQUENT_BATCH.getCode().equals(v.getFirstMassProduct())));

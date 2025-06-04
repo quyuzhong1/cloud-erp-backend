@@ -1,19 +1,23 @@
 package com.erp.server.scm.listener;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.SalesDemandDetailDTO;
 import com.erp.model.scm.dto.excel.SalesDemandImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -56,14 +60,14 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
     /**
      * 仓库数据
      */
-    private List<WarehouseDTO.UpdateDTO> warehouseList;
+    private WmsTaskFeign wmsTaskFeign;
 
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public SalesDemandExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds) {
+    public SalesDemandExcelListener(List<SkuVO> skuList, WmsTaskFeign wmsTaskFeign, List<String> skuIds) {
         this.skuList = skuList;
-        this.warehouseList = warehouseList;
+        this.wmsTaskFeign = wmsTaskFeign;
         this.skuIds = CollectionUtils.isNotEmpty(skuIds) ? skuIds : new ArrayList<>();
     }
 
@@ -104,18 +108,18 @@ public class SalesDemandExcelListener extends AnalysisEventListener<SalesDemandI
             }
         }
         //仓库验证
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            errorMsgList.add("系统中未发现已启用仓库");
-        } else {
+//        if (CollectionUtils.isEmpty(warehouseList)) {
+//            errorMsgList.add("系统中未发现已启用仓库");
+//        } else {
             if (StringUtils.isNotBlank(salesDemandImportExcelDTO.getDestWarehouseName())) {
-                WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(salesDemandImportExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(warehouseDTO)) {
-                    errorMsgList.add("请录入已审核并且启用的仓库");
+                List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(Collections.singletonList(salesDemandImportExcelDTO.getDestWarehouseName()));
+                if (CollUtil.isEmpty(warehouseList)) {
+                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 } else {
-                    excelDTO.setDestWarehouseId(warehouseDTO.getId());
+                    excelDTO.setDestWarehouseId(warehouseList.get(0).getId());
                 }
             }
-        }
+//        }
         //存在错误数据则直接返回
         if (errorMsgList.size() > 0) {
             salesDemandImportExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));

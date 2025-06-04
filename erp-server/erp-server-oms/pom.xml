@@ -104,6 +104,12 @@
         </dependency>
         <dependency>
             <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-oms-temu</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-oms-amz-spapi</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
@@ -183,6 +189,18 @@
         <dependency>
             <groupId>com.cloud.erp</groupId>
             <artifactId>erp-sdk-oms-mercado-local</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-third-tf</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.cloud.erp</groupId>
+            <artifactId>erp-sdk-wms-antu</artifactId>
             <version>0.0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

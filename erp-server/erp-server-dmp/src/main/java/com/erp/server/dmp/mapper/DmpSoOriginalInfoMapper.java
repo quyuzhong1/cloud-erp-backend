@@ -1,8 +1,11 @@
 package com.erp.server.dmp.mapper;
+import com.erp.model.dmp.dto.AfterSaleDTO;
 import com.erp.model.dmp.entity.DmpSoOriginalInfoEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 import org.apache.ibatis.annotations.Mapper;
+
+import java.util.List;
 
 
 /**
@@ -16,4 +19,5 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface DmpSoOriginalInfoMapper extends BaseMapper<DmpSoOriginalInfoEntity> {
 
+    List<AfterSaleDTO.DropDownDTO> listDetailByPlatformCode(String platformCode);
 }

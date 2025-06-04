@@ -164,6 +164,11 @@ public enum RocketMqTagEnum {
      */
     WMS_VIRTUAL_DETAIL_MSG_TAG(30,RocketMqTagEnum.SYNC_WMS,"wms_virtual_detail_msg_tag"),
 
+    /**
+     * 虚拟仓明细信息tag DMP_WECHAT_SUBSCRIBE_MSG
+     */
+    DMP_WECHAT_SUBSCRIBE_MSG_TAG(31,RocketMqTagEnum.WECHAT_SUBSCRIBE,"dmp_wechat_subscribe_msg_tag"),
+
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
     /**
@@ -332,6 +337,16 @@ public enum RocketMqTagEnum {
      * 业务员同步金蝶
      */
     KINGDEE_OPERATOR_TAG(1033, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_operator_tag"),
+
+    /**
+     * 分步式调出单同步金蝶
+     */
+    KINGDEE_TRANSFER_OUT_TAG(1034, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_out_tag"),
+
+    /**
+     * 分步式调入单同步金蝶
+     */
+    KINGDEE_TRANSFER_IN_TAG(1035, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_in_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
@@ -625,7 +640,10 @@ public enum RocketMqTagEnum {
     public static final String FBA_SHIPMENT = "fba_shipment";
 
     public static final String SYNC_WANGDIAN = "sync_wangdian";
+
     public static final String SYNC_LINGXING = "sync_lingxing";
+
+    public static final String WECHAT_SUBSCRIBE = "wechat_subscribe";
 
     private Integer code;
 

@@ -298,7 +298,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         for (PoReconciliationDetailDTO.ListDTO listDTO : list) {
             listDTO.setSourceTypeName(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? ReturnOrderSourceEnum.getName(listDTO.getReturnSourceType()) : SourceTypeEnum.getName(listDTO.getSourceType()));
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
-            listDTO.setTaxRate(MathUtil.multiply(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
+            listDTO.setTaxRate(MathUtil.multiplyWithTwo(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
             listDTO.setTaxRateStr( CharSequenceUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
             listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
             //产品名称
@@ -414,7 +414,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
 
     @Override
     public PagingVO<PoReconciliationDetailDTO.ListDTO> exportPoReconciliationDetailScm(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto) {
-                Page<PoReconciliationDetailDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        Page<PoReconciliationDetailDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理
             fillList(page.getRecords());
@@ -585,7 +586,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                     detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
                 }
-                detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
+                detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
             } else {
                 PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(poDetailEntity)) {
@@ -593,7 +594,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     detailEntity.setTaxRate(poDetailEntity.getTaxRate());
                     detailEntity.setCurrency(poDetailEntity.getCurrency());
                 }
-                detailEntity.setTaxAmount(MathUtil.multiply(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
+                detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
             }
             resultList.add(detailEntity);
         }

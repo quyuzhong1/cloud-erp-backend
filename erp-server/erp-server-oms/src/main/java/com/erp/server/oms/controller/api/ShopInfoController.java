@@ -1,11 +1,13 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -18,7 +20,9 @@ import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.ShopDTO.ShopBatchUpdateDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.server.oms.query.ShopQueryHandler;
 import com.erp.server.oms.service.CustomerInfoService;
 import com.erp.server.oms.service.ShopCostService;
@@ -32,8 +36,10 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 
 /**
@@ -59,6 +65,8 @@ public class ShopInfoController extends BaseController {
 
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
     /**
      * 店铺 分页
      *
@@ -67,11 +75,31 @@ public class ShopInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "si.id",
             menuCode = "oms:shop:paging",
             tableAlias = "si"
     )
     @WebAdvanceQuery(handler = ShopQueryHandler.class)
     public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
+        return success(pagingVO);
+    }
+
+    /**
+     * 店铺自定义分页查询
+     *
+     * @return
+     */
+    @PostMapping("/pagingCustom")
+    @WebAdvanceQuery(handler = ShopQueryHandler.class)
+    public ApiResult<PagingVO<ShopDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())){
+            List<SysUserDTO.ShopDTO> shopUserList = authDataFeign.getShopUserList(dto.getParams().getUserId());
+            //设置店铺权限列表
+            if (CollUtil.isNotEmpty(shopUserList)){
+                dto.getParams().setShopIdList(shopUserList.stream().map(SysUserDTO.ShopDTO::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
+            }
+        }
         PagingVO<ShopDTO.PagingViewDTO> pagingVO = shopInfoService.paging(dto);
         return success(pagingVO);
     }
@@ -161,7 +189,7 @@ public class ShopInfoController extends BaseController {
      */
     @GetMapping("/list")
     public ApiResult<List<ShopInfoEntity>> list() {
-        List<ShopInfoEntity> list = shopInfoService.list();
+        List<ShopInfoEntity> list = shopInfoService.listAuth(null);
         return success(list);
     }
 
@@ -192,8 +220,11 @@ public class ShopInfoController extends BaseController {
      * 获取店铺列表(树状级联)
      */
     @GetMapping("/listTree")
-    public ApiResult<List<ShopDTO.ListTreeDTO>> listTree() {
-        List<ShopDTO.ListTreeDTO> list = shopInfoService.listTree();
+    public ApiResult<List<ShopDTO.ListTreeDTO>> listTree(@RequestParam(required = false) Boolean showByAuth) {
+        if (Objects.isNull(showByAuth)){
+            showByAuth = Boolean.TRUE;
+        }
+        List<ShopDTO.ListTreeDTO> list = shopInfoService.listTree(showByAuth);
         return success(list);
     }
 
@@ -379,7 +410,20 @@ public class ShopInfoController extends BaseController {
      **/
     @GetMapping("/listShopByAmazon")
     public ApiResult<List<ShopInfoEntity>> listShopByAmazon() {
-        List<ShopInfoEntity> result = shopInfoService.listShopByAmazon();
+        List<ShopInfoEntity> result = shopInfoService.listAuthPlatform(Collections.singletonList(PlatformDictEnum.AMAZON.getCode()));
+        return success(result);
+    }
+
+    /**
+     * 根据平台集合查询店铺
+     * @author will
+     * @date 2025/4/25 10:28
+     * @param dto
+     * @return ApiResult<List<ShopInfoEntity>>
+     */
+    @PostMapping("/listByPlatformList")
+    public ApiResult<List<ShopInfoEntity>> listByPlatformList(@RequestBody @Validated ShopDTO.PlatformParamDTO dto) {
+        List<ShopInfoEntity> result = shopInfoService.listByPlatformList(dto.getPlatformList(),"");
         return success(result);
     }
 
@@ -508,6 +552,9 @@ public class ShopInfoController extends BaseController {
      */
     @PostMapping("/listSelect")
     public ApiResult<List<ShopDTO.ListDTO>> listSelect(@RequestBody ShopDTO.SelectDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
+        }
         List<ShopDTO.ListDTO> list = shopInfoService.listSelect(dto);
         return success(list);
     }
@@ -533,5 +580,19 @@ public class ShopInfoController extends BaseController {
     public ApiResult<List<ShopInfoEntity>> listAuthPlatform(@RequestBody List<String> platformDTO) {
         List<ShopInfoEntity> list = shopInfoService.listAuthPlatform(platformDTO);
         return success(list);
+    }
+
+    /**
+     * 店铺分页查询-高级搜索
+     *
+     * @return ApiResult<PagingVO <ShopDTO.ListDTO>>
+     * @author zdy
+     */
+    @PostMapping("/pagingSelect")
+    public PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
+        if (Objects.isNull(dto.getParams().getShowByAuth())){
+            dto.getParams().setShowByAuth(Boolean.TRUE);//默认查询已授权的店铺
+        }
+        return shopInfoService.pagingSelect(dto);
     }
 }

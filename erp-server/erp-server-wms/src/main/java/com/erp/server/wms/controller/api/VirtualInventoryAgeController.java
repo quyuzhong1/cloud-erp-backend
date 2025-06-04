@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
@@ -52,6 +54,10 @@ public class VirtualInventoryAgeController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "vidh.warehouse_id",
+            menuCode = "wms:virtualInventoryAge:paging"
+    )
     @WebAdvanceQuery(handler = VirtualInventoryAgeQueryHandler.class)
     public ApiResult<PagingVO<VirtualInventoryAgeDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualInventoryAgeDTO.SearchParamDTO> dto) {
         return success(virtualInventoryDetailService.paging(dto));

@@ -18,11 +18,7 @@ public interface WmsOverseasWarehouseInboundConverter {
 
     WmsOverseasWarehouseInboundConverter INSTANCE = Mappers.getMapper(WmsOverseasWarehouseInboundConverter.class);
 
-    @Mappings({
-            @Mapping(target = "receiveUser", source = "receiveUser"),
-            @Mapping(target = "receiveQty", source = "receiveQty"),
-            @Mapping(target = "receiveTime", source = "receiveTime"),
-    })
+    @Mapping(target = "sourceTypeName", expression = "java(com.erp.model.wms.enums.SignSourceTypeEnum.getName(entity.getSourceType()))")
     OverseasWarehouseInboundDTO.ReceiveRecordView receivedEntityToView(OverseasWarehouseInboundReceivedEntity entity);
 
 }

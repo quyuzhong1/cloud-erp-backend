@@ -247,6 +247,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.PagingView> paging(PagingDTO<CalcSalesInfoDimDTO.PagingParamDTO> params) {
+        params.getParams().setPermissionSql(params.getPermissionSql());
         Page<CalcSalesInfoDimDTO.PagingView> pagingVO = baseMapper.paging(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams());
         if (!CollectionUtils.isEmpty(pagingVO.getRecords())) {
             processData(pagingVO.getRecords());
@@ -359,7 +360,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<CalcSalesInfoDimDTO.ExportDTO> page = baseMapper.exportData(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
             return new PagingVO<>();
@@ -370,6 +371,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.DetailViewDTO> pagingDetail(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params) {
+        params.getParams().setPermissionSql(params.getPermissionSql());
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<CalcSalesInfoDimDTO.DetailViewDTO> page = baseMapper.pagingDetail(new Page<>(params.getCurrPage(), params.getPageSize()), params.getParams(), user.getUid());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
@@ -636,6 +638,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> page = baseMapper.exportMrpSalesCalcList(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), user.getUid());
         if (CollectionUtils.isEmpty(page.getRecords())) {
@@ -714,6 +717,7 @@ public class CalcSalesInfoDimServiceImpl extends SuperServiceImpl<CalcSalesInfoD
 
     @Override
     public PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         LoginUser user = UserContext.getDefaultLoginUser();
         Page<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> page = baseMapper.exportMrpSalesCalcTemplateList(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams(), user.getUid());
         if (!CollectionUtils.isEmpty(page.getRecords())) {

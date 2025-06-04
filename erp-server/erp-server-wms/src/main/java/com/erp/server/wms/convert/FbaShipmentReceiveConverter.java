@@ -40,7 +40,8 @@ public interface FbaShipmentReceiveConverter {
             @Mapping(target = "skuNo", constant = ""),
             @Mapping(target = "skuId", constant = ""),
             @Mapping(target = "detailId", constant = ""),
-            @Mapping(target = "sourceType", constant = "lingxing"),
+            @Mapping(target = "sourcePlatform", constant = "lingxing"),
+            @Mapping(target = "sourceType", constant = "api"),
     })
     FbaShipmentReceiveEntity sourceToTargetEntity(FbaReceiveDetailEntity entity);
 

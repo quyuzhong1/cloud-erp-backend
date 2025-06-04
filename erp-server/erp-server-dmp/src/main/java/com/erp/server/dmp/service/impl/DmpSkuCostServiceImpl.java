@@ -1,6 +1,7 @@
 package com.erp.server.dmp.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -19,6 +20,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -189,6 +191,8 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         }
         //根据sku编码查询bom数据
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuNos(skuNoList);
+        //仅销售套装bom查子件
+        bomChildrenSkuList = CollUtil.isEmpty(bomChildrenSkuList) ? Collections.emptyList() : bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(BomTypeEnum.COMBINATION.getType(),obj.getType())).collect(Collectors.toList());
 
         List<String> allSkuIdList = new ArrayList<>(skuNoList);
         if (CollUtil.isNotEmpty(bomChildrenSkuList)) {
@@ -223,10 +227,10 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
             for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuDTOS) {
                 DmpSkuCostEntity childCostEntity = costMap.get(childrenSkuDTO.getSkuNo());
                 //含税成本
-                BigDecimal childCost = ObjectUtil.isEmpty(childCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(childCostEntity.getCostPrice(), childrenSkuDTO.getQuantity());
+                BigDecimal childCost = ObjectUtil.isEmpty(childCostEntity) ? BigDecimal.ZERO : MathUtil.multiplyWithTwo(childCostEntity.getCostPrice(), childrenSkuDTO.getQuantity());
                 totalCost = totalCost.add(childCost);
                 //不含税成本
-                BigDecimal childNotTaxCost = ObjectUtil.isEmpty(childCostEntity) ? BigDecimal.ZERO : MathUtil.multiply(childCostEntity.getNotTaxCostPrice(), childrenSkuDTO.getQuantity());
+                BigDecimal childNotTaxCost = ObjectUtil.isEmpty(childCostEntity) ? BigDecimal.ZERO : MathUtil.multiplyWithTwo(childCostEntity.getNotTaxCostPrice(), childrenSkuDTO.getQuantity());
                 totalNotTaxCost = totalNotTaxCost.add(childNotTaxCost);
             }
             parentCostEntity.setCostPrice(totalCost);
@@ -401,14 +405,14 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                         //取自定义成本数据
                         DmpSkuCostCustomEntity costCustomEntity = dmpSkuCostCustomService.getBySkuNo(childSkuLevelDTO.getSkuNo());
                         if (ObjectUtil.isNotEmpty(costCustomEntity)) {
-                            parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiply(costCustomEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
-                            parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiply(costCustomEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
+                            parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiplyWithTwo(costCustomEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
+                            parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiplyWithTwo(costCustomEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
                         }
                     }
                     continue;
                 }
-                parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
-                parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiply(dmpSkuCostEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
+                parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiplyWithTwo(dmpSkuCostEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
+                parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiplyWithTwo(dmpSkuCostEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
             }
         }
 
@@ -452,9 +456,9 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                     continue;
                 }
                 //含税成本
-                totalCostAmount = MathUtil.add(totalCostAmount,MathUtil.multiply(MathUtil.multiply(skuCostDTO.getCostPrice(), exchangeRate),skuCostDTO.getQty()) );
+                totalCostAmount = MathUtil.add(totalCostAmount,MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(skuCostDTO.getCostPrice(), exchangeRate),skuCostDTO.getQty()) );
                 //未含税成本
-                totalNoTaxCostAmount = MathUtil.add(totalNoTaxCostAmount,MathUtil.multiply(MathUtil.multiply(skuCostDTO.getNotTaxCostPrice(), exchangeRate),skuCostDTO.getQty()));
+                totalNoTaxCostAmount = MathUtil.add(totalNoTaxCostAmount,MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(skuCostDTO.getNotTaxCostPrice(), exchangeRate),skuCostDTO.getQty()));
                 size++;
             }
             //总数量

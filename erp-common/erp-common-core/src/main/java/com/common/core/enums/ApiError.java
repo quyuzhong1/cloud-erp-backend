@@ -240,7 +240,8 @@ public enum ApiError implements Serializable {
     PROCESS_NOT_START_USER(94030,"非流程发起人无法撤销"),
     // 下级节点无审核人，无法提交
     PROCESS_NOT_APPROVER(94031,"下级节点无审核人，无法提交，请联系管理员"),
-
+    // 流程未完成部署，请先完成流程部署
+    PROCESS_NOT_DEPLOY(94032,"流程未完成部署，请先完成流程部署"),
 
     /**
      * PLM 错误
@@ -412,6 +413,7 @@ public enum ApiError implements Serializable {
     ERROR_95160(95160,"文件不可超过{}m"),
     REJECT_COMMENT_NOT_EMPTY(95161, "审核不通过必须填写审核意见"),
     ERROR_95162(95162, "SKU【{}】记录不存在"),
+    SO_B2C_DETAIL_PRICE_NOT_EXIST(95162, "销售订单【{}】SKU【{}】单价不能为0"),
 
 
 
@@ -741,6 +743,7 @@ public enum ApiError implements Serializable {
     ERROR_PURCHASE_WH_REQUIRED(98105,"采购订单【{}】交货仓库不能为空"),
     ERROR_PURCHASE_ORG_REQUIRED(98105,"采购订单【{}】收料组织不能为空"),
     ERROR_PURCHASE_DETAIL_DATE(98105,"采购订单【{}】SKU【{}】预计交货日期不能为空"),
+    ERROR_PURCHASE_SUPPLIER_ACCOUNT(98105,"采购订单【{}】供应商账户信息不能为空"),
     ERROR_PURCHASE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购单中未找到"),
     ERROR_RECEIVE_DETAIL_SKU_NOT_EXIST(98106,"sku【{}】在采购收货单中未找到"),
     ERROR_SOOUTSTOCK_DETAIL_SKU_NOT_EXIST(98107,"SKU【{}】在发货通知单中未找到"),
@@ -1108,7 +1111,7 @@ public enum ApiError implements Serializable {
     ERROR_92264(92264,"目的国家不能为空"),
     ERROR_92265(92265,"重量不能为空"),
     ERROR_92267(92267,"邮编不能为空"),
-
+    WAREHOUSE_NOT_EXIST_NO_PERMISSION(92268,"仓库不存在或没有仓库权限"),
     ERROR_SUBCONTRACT_ISSUE_NOT_EXIST(92124,"委外发料单不存在"),
     ERROR_SUBCONTRACT_ISSUE_DETAIL_NOT_EXIST(92125,"委外发料单明细不存在"),
     ERROR_SUBCONTRACT_ISSUE_QTY_EXCEED(92126,"委外发料单SKU【{}】数量不能大于【{}】"),
@@ -1213,6 +1216,18 @@ public enum ApiError implements Serializable {
     WAREHOUSE_LOCATION_NOT_EXIST(92252, "仓位信息不存在"),
     WAREHOUSE_AREA_USED(92253, "库区被使用后，库存类型禁止修改"),
     WAREHOUSE_NOT_EDIT(92253, "所属仓库禁止修改"),
+    ERROR_92268(92268, "【{}】库存不足,质检通知数量{}，可用库存{}"),
+    ERROR_92269(92269, "【{}】已质检完成，不允许操作反审核"),
+    ERROR_92270(92270, "请先审核通过质检通知单"),
+    ERROR_92271(92271, "请至少选择一条明细"),
+    ERROR_92272(92272, "【{}】包装信息不存在"),
+    ERROR_92273(92273, "SKU库存不足,质检通知数量{}，可用库存{}，请确认是否继续创建"),
+    ERROR_92274(92274, "【{}】良品和不良品不能都为0"),
+
+    ERROR_92275(92275, "【{}】质检单没有下推的分步式调出单"),
+    ERROR_92276(92276, "【{}】质检单【{}】调出单已生成分步式调出单审核，不允许撤销质检"),
+    ERROR_92277(92277, "【{}】质检单【{}】未质检不能撤销"),
+    ERROR_92278(92278, "【{}】质检单【{}】调出单下sku未全部勾选"),
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1277,6 +1292,7 @@ public enum ApiError implements Serializable {
     ERROR_92056(92056,"同步金蝶B2C销售退货单未找到对应的仓库【{}】"),
     ERROR_92057(92057,"同步金蝶B2C销售退货单未找到对应的sku【{}】"),
     ERROR_92058(92058,"店铺不存在"),
+    SHOP_NOT_EXIST_NO_PERMISSION(92058,"店铺不存在或没有店铺权限"),
     ERROR_92059(92059,"要货日期必须大于单据日期"),
     ERROR_KINGDEE_CODE_NOT_EXIST(92059,"金蝶单号不存在"),
     ERROR_SO_B2C_SPLIT_PRICE(92059, "未找到订单【{}】对应客户下SKU【{}】销售价格"),
@@ -1316,6 +1332,8 @@ public enum ApiError implements Serializable {
     ERROR_SO_B2C_CHILD_HAS_INVALID(92083,"拆分后B2C销售订单【{}】已作废不支持取消拆分"),
     ERROR_SO_B2C_CHILD_HAS_APPROVE(92084,"拆分后B2C销售订单【{}】已审核不支持取消拆分"),
     ERROR_SO_B2C_NOT_LOGISTICS_CODE(92085,"B2C销售订单【{}】只有配货中支持获取物流单号"),
+    ERROR_SO_B2C_LOGISTICS_BLACKLIST(92085,"物流渠道【{}】不允许发【{}+{}{}{}】，请修改物流渠道"),
+    ERROR_SO_B2C_LOGISTICS_COUNTRY_BLACKLIST(92085,"物流渠道【{}】不允许发【{}】，请修改物流渠道"),
     ERROR_SO_B2C_NOT_SUBMIT_DELIVERY(92086,"B2C销售订单【{}】只有配货中支持提交发货"),
     ERROR_SO_B2C_NOT_MERGE(92087,"B2C销售订单【{}】只有待提交和审核不通过支持合并"),
     ERROR_SO_B2C_STATE_NOT_SPLIT(92088,"B2C销售订单【{}】只有待提交和审核不通过支持拆分"),
@@ -1465,8 +1483,27 @@ public enum ApiError implements Serializable {
     SO_ORG_NOT_REPEAT(98113,"只有相同的销售组织可以批量变更报价"),
     ERROR_INTERVAL_CUSTOMER_OVERLAP(98047,"该客户SKU区间存在重叠，不可提交"),
     ERROR_INTERVAL_CUSTOMER_CHANGE_OVERLAP(98048,"与该客户SKU变更区间存在重叠，不可提交"),
-    ERROR_SO_PRICE_INTERVAL_SIZE(98050,"SKU【{}】区间从值不能大于区间到值"),
+    ERROR_SO_PRICE_INTERVAL_SIZE(98050,"SKU【{}】区间从值不能大于等于区间到值"),
     ERROR_92175(92175,"存在下游单据不允许作废"),
+    ERROR_INVOICE_NOT_EXIST(92175,"发票信息不存在"),
+    ERROR_INVOICE_DETAIL_NOT_EXIST(92176,"发票明细不存在"),
+    ERROR_INVOICE_TAX_NOT_EXIST(92177,"税务信息不存在"),
+    ERROR_INVOICE_NFE_GENERATE(92178,"只有美客多和速卖通平台支持生成NF-e发票"),
+    ERROR_INVOICE_NFE_SHOP_BIND(92179,"店铺【{}】未配置公司账号"),
+    ERROR_INVOICE_SUCCESS(92180,"发票未开票成功不支持此操作"),
+    ERROR_INVOICE_NOT_NEED(92181,"仅待开票和开票失败的订单允许无开票"),
+    ERROR_INVOICE_NFE_OPTION(92182,"仅NF-E发票支持此操作"),
+    ERROR_SKU_INVOICE_TAX_NOT_EXIST(92183,"平台SKU【{}】、店铺【{}】未找到税务信息"),
+    ERROR_INVOICE_NFE_CANCEL(92184,"取消发票失败，原因：{}"),
+    ERROR_INVOICE_NFE_UPLOAD_XML_NOT_EXIST(92185,"XML文件不存在"),
+    ERROR_INVOICE_COMPANY_TOKEN_NOT_EXIST(92186,"公司token不存在"),
+    ERROR_INVOICE_NFE_UPDATE_CCE(92187,"更新Cce发票失败，原因：{}"),
+    ERROR_INVOICE_NFE_CREATE_INVOICE(92188,"创建发票失败，原因：{}"),
+    ERROR_INVOICE_NFE_UPLOAD_NOT_EXIST(92189,"发票上传文件不存在"),
+    ERROR_INVOICE_NFE_CREATE_JSON_HANDLE(92190,"NF-e创建发票json解析失败"),
+    ERROR_INVOICE_NFE_UPDATE_CCE_JSON_HANDLE(92191,"发票修改Cce结果json解析失败"),
+    ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST(92192,"选择订单不支持生成NF-e发票"),
+
 
 
     /**
@@ -1580,6 +1617,10 @@ public enum ApiError implements Serializable {
     ERROR_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"箱规宽度必须大于等于包装宽度"),
     ERROR_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"箱规高度必须大于等于包装高度"),
     ERROR_WEIGHT_GROSS_LITTER_THAN_NET(94204,"毛重必须大于等于净重"),
+
+    ERROR_SKU_LENGTH_BOX_LITTER_THAN_PRODUCT(94201,"【{}】箱规长度必须大于等于包装长度"),
+    ERROR_SKU_WIDTH_BOX_LITTER_THAN_PRODUCT(94202,"【{}】箱规宽度必须大于等于包装宽度"),
+    ERROR_SKU_HEIGHT_BOX_LITTER_THAN_PRODUCT(94203,"【{}】箱规高度必须大于等于包装高度"),
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 

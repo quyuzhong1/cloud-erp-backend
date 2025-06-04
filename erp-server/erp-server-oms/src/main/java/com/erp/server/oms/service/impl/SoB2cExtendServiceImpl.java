@@ -136,13 +136,15 @@ public class SoB2cExtendServiceImpl extends SuperServiceImpl<SoB2cExtendMapper, 
             soB2cExtendEntity.setWarningCount(MathUtil.ZERO);
         }
         String shopId = soB2cEntity.getShopId();
+        String partitionId = "";
         if (CharSequenceUtil.isNotBlank(shopId)){
             ShopInfoEntity shopInfo = shopInfoService.getById(shopId);
             if (Objects.nonNull(shopInfo) && CharSequenceUtil.isNotBlank(shopInfo.getDictCountryCode())){
                 String partitionByCountry = sysPartitionFeign.getPartitionByCountry(shopInfo.getDictCountryCode());
-                soB2cExtendEntity.setPartitionId(Objects.nonNull(partitionByCountry) ? partitionByCountry : "");
+                partitionId = Objects.nonNull(partitionByCountry) ? partitionByCountry : "";
             }
         }
+        soB2cExtendEntity.setPartitionId(partitionId);
     }
 
     @Override

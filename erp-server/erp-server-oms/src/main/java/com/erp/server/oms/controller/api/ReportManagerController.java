@@ -1,7 +1,9 @@
 package com.erp.server.oms.controller.api;
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -38,6 +40,10 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesPaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sb.shop_id",
+            menuCode = "oms:reportManager:productSalesPaging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<ReportDTO.ProductSalesPagingViewDTO>> queryProductSalesByPage(@RequestBody @Validated PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
         PagingVO<ReportDTO.ProductSalesPagingViewDTO> pagingVO = reportManagerService.productSalesPaging(dto);
@@ -50,7 +56,6 @@ public class ReportManagerController extends BaseController {
      * @return
      */
     @PostMapping("/productSalesExport")
-    @WebAdvanceQuery
     public ApiResult<Object> productSalesExport(@RequestBody @Validated ReportDTO.ProductSalesPagingParamDTO dto) {
         Boolean result = reportManagerService.productSalesExport(dto);
         return Boolean.TRUE.equals(result) ? success() : failure();

@@ -82,6 +82,10 @@
         left join virtual_warehouse vw on vm.virtualWarehouseId = vw.id and vw.is_deleted = false
         <where>
             ${params.sqlMap.default}
+            <!--权限-->
+            <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         </where>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">

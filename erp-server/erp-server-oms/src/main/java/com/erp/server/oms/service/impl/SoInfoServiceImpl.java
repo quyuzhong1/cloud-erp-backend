@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
 import com.common.business.constant.FileTemplateConstant;
@@ -988,15 +989,15 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             BigDecimal price = item.getPrice();
 
             //销售单价(本位币)
-            item.setPriceLc(MathUtil.multiply(price, exchangeRate));
+            item.setPriceLc(MathUtil.multiplyWithTwo(price, exchangeRate));
 
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
             //含税单价(本位币)
-            item.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
+            item.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate));
 
             //是否是组合SKU
             if (CollectionUtils.isNotEmpty(bomChildrenList)) {
@@ -1244,6 +1245,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "dto.id")
     public String updateSo(SoInfoDTO.UpdateDTO dto) {
         String id = dto.getId();
         SoInfoEntity soInfo = this.getById(id);
@@ -2276,7 +2278,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setReturnAmount(view.getAmount());
             view.setTaxReturnAmount(view.getTaxAmount());
             //限制销售组织下的
-            if(soWarehouseDTO.getOrgId().equals(view.getSalesOrgId())){
+            if(soWarehouseDTO.getOrgId().equals(view.getWarehouseOrgId())){
                 view.setWarehouseId(soWarehouseDTO.getWarehouseId());
                 view.setWarehouseName(soWarehouseDTO.getWarehouseName());
             }
@@ -2785,7 +2787,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(item.getPrice(), multiplyTax);
+            BigDecimal taxPrice = item.getTaxPrice();
+            if (Objects.isNull(taxPrice)) {
+                taxPrice = MathUtil.multiplyWithTwo(item.getPrice(), multiplyTax,4);
+            }
             item.setTaxPrice(taxPrice);
 
             // 计算毛利成本
@@ -2796,7 +2801,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             }
             SoDetailDTO.CalDetailResultDTO result = new SoDetailDTO.CalDetailResultDTO();
             BeanMapper.copy(item, result);
-            result.setTaxPriceLc(MathUtil.multiply(taxPrice, exchangeRate));
+            result.setTaxPriceLc(MathUtil.multiplyWithTwo(taxPrice, exchangeRate,4));
             resultList.add(result);
         }
         return resultList;
@@ -2824,7 +2829,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
                 continue;
             }
             BigDecimal rate = dmpTaskFeign.getRate(billDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), skuCostDTO.getCurrency());
-            skuVO.setNotTaxCostPrice(MathUtil.multiply(rate,skuCostDTO.getProductCost(),4));
+            skuVO.setNotTaxCostPrice(MathUtil.multiplyWithTwo(rate,skuCostDTO.getProductCost(),4));
             skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
         }
     }
@@ -2953,13 +2958,13 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
             //含税单价
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
-            taxPrice = MathUtil.multiply(taxPrice, exchangeRate);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
+            taxPrice = MathUtil.multiplyWithTwo(taxPrice, exchangeRate);
             item.setTaxPrice(taxPrice);
             viewPi.setSkuNo(item.getSkuNo());
             Integer qty = item.getQty();
             viewPi.setQty(qty);
-            BigDecimal taxAmountBefore = MathUtil.multiply(taxPrice, qty);
+            BigDecimal taxAmountBefore = MathUtil.multiplyWithTwo(taxPrice, qty);
             viewPi.setAmount(taxAmountBefore);
             viewPi.setTaxPriceStr(symbol + taxPrice);
             viewPi.setAmountStr(symbol + taxAmountBefore);
@@ -3267,6 +3272,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @DistributeLocker(keyName = "id")
     public Boolean unLockVirtualInventory(String id) {
         SoInfoEntity soInfoEntity = getById(id);
         if (ObjectUtil.isEmpty(soInfoEntity)) {
@@ -3292,7 +3298,7 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
 
     @Override
     public PagingVO<SoInfoDTO.PagingViewDTO> exportSo(PagingDTO<SoInfoDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         //获取导出数据
         List<String> fieldList = CollectionUtils.isEmpty(dto.getParams().getAdvanceQueryDTOList()) ? new ArrayList<>() :  dto.getParams().getAdvanceQueryDTOList().stream().map(AdvanceQueryDTO::getField).collect(Collectors.toList());
         dto.getParams().setFieldList(fieldList);
@@ -3454,7 +3460,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //金蝶业务员列表
         List<KingdeeOperatorRefPostDTO.OperatorDTO> kingdeeBusinessOperatorList = kingdeeFeign.listBusinessOperatorByUserIdList(new ArrayList<>());
         //仓库
-        List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
+        List<String> warehouseNameList = successList.stream().map(B2BSoImportExcelDTO::getWarehouseName).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(warehouseNameList);
         //收款账号
         List<String> receiveAccountList = successList.stream().map(B2BSoImportExcelDTO::getReceiveAccount).distinct().collect(Collectors.toList());
         //根据收款账号获取数据
@@ -3584,12 +3591,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             addSo.setIsCollectShippingFee(isCollectShippingFee);
             //仓库
             String warehouseName = mainInfo.getWarehouseName();
-            WarehouseDTO.UpdateDTO warehouse = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
+            WarehouseDTO.ListDTO warehouse = warehouseList.stream().filter(w -> w.getName().equals(warehouseName)).findFirst().
                     orElse(null);
             String warehouseId = "";
             String warehouseOrgId = "";
             if (Objects.isNull(warehouse)) {
-                errorMsgList.add("仓库不存在");
+                errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
             } else {
                 warehouseId = warehouse.getId();
                 warehouseOrgId = warehouse.getOrgId();

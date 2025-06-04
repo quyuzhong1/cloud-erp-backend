@@ -27,14 +27,17 @@ import com.erp.model.mrp.entity.CfgRuleStockUpEntity;
 import com.erp.model.mrp.entity.ReplenishmentSuggestionEntity;
 import com.erp.model.mrp.enums.*;
 import com.erp.model.oms.dto.DictBasicDTO;
+import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.oms.feign.CustomerFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.mrp.listener.*;
 import com.erp.server.mrp.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.bcel.generic.IF_ACMPEQ;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,6 +85,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
     @Resource
     private SalesEstimateManualService salesEstimateManualService;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
 
     private static  final String SALE_ERROR_MSG = "平台【{}】、店铺【{}】、SKU【{}】未找到对应的销量设置数据";
 
@@ -245,8 +250,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
         //店铺
         List<String> shopNameList = successList.stream().map(StockUpImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
-        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        List<ShopInfoDTO.ListDTO> shopInfoList = shopInfoFeign.listShopByName(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoDTO.ListDTO::getId).collect(Collectors.toList());
 
         //SKU
         List<String> skuNoList = successList.stream().map(StockUpImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -263,7 +268,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //平台信息
             String platformCode = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
             //店铺信息
-            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(shopId)){
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+            }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
@@ -495,8 +503,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
         //店铺
         List<String> shopNameList = successList.stream().map(StockingRatioImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
-        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        List<ShopInfoDTO.ListDTO> shopInfoList = shopInfoFeign.listShopByName(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoDTO.ListDTO::getId).collect(Collectors.toList());
 
         //SKU
         List<String> skuNoList = successList.stream().map(StockingRatioImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -524,7 +532,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //平台信息
             String platformCode = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
             //店铺信息
-            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(shopId)){
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+            }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
@@ -636,8 +647,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
         //店铺
         List<String> shopNameList = successList.stream().map(DefaultSalesQtyImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
-        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        List<ShopInfoDTO.ListDTO> shopInfoList = shopInfoFeign.listShopByName(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoDTO.ListDTO::getId).collect(Collectors.toList());
 
         //SKU
         List<String> skuNoList = successList.stream().map(DefaultSalesQtyImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -658,7 +669,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //平台信息
             String platformCode = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
             //店铺信息
-            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(shopId)){
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+            }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
@@ -813,8 +827,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
         //店铺
         List<String> shopNameList = successList.stream().map(DynamicSalesQtyImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
-        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        List<ShopInfoDTO.ListDTO> shopInfoList = shopInfoFeign.listShopByName(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoDTO.ListDTO::getId).collect(Collectors.toList());
 
         //SKU
         List<String> skuNoList = successList.stream().map(DynamicSalesQtyImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -836,7 +850,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //平台信息
             String platformCode = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
             //店铺信息
-            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(shopId)){
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+            }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
@@ -939,8 +956,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
         //店铺
         List<String> shopNameList = successList.stream().map(FixedSalesQtyImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
-        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        List<ShopInfoDTO.ListDTO> shopInfoList = shopInfoFeign.listShopByName(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoDTO.ListDTO::getId).collect(Collectors.toList());
 
         //SKU
         List<String> skuNoList = successList.stream().map(FixedSalesQtyImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -962,7 +979,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //平台信息
             String platformCode = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
             //店铺信息
-            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(shopId)){
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+            }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
@@ -1066,8 +1086,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
         //店铺
         List<String> shopNameList = successList.stream().map(SalesDenoisingImportExcelDTO::getShopName).distinct().collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
-        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        List<ShopInfoDTO.ListDTO> shopInfoList = shopInfoFeign.listShopByName(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoDTO.ListDTO::getId).collect(Collectors.toList());
 
         //SKU
         List<String> skuNoList = successList.stream().map(SalesDenoisingImportExcelDTO::getSkuNo).distinct().collect(Collectors.toList());
@@ -1089,7 +1109,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //平台信息
             String platformCode = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
             //店铺信息
-            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(shopId)){
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+            }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 
@@ -1314,8 +1337,8 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
 
         //店铺
         List<String> shopNameList = successList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.get("2"))).map(obj -> obj.get("2").toString()).collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = FeignQuery.create(ShopInfoEntity.class).in(ShopInfoEntity::getName, shopNameList).list();
-        List<String> shopIdList = shopInfoList.stream().map(ShopInfoEntity::getId).collect(Collectors.toList());
+        List<ShopInfoDTO.ListDTO> shopInfoList = shopInfoFeign.listShopByName(shopNameList);
+        List<String> shopIdList = shopInfoList.stream().map(ShopInfoDTO.ListDTO::getId).collect(Collectors.toList());
 
 
         //根据平台、店铺、skuId查询补货建议数据
@@ -1352,7 +1375,10 @@ public class ReplenishmentSuggestionImportServiceImpl implements ReplenishmentSu
             //平台信息
             String platformCode = platformViewList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getPlatform())).map(DictBasicDTO.ViewDTO::getValue).findFirst().orElse("");
             //店铺信息
-            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoEntity::getId).findFirst().orElse("");
+            String shopId = shopInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getName(), excelDTO.getShopName()) && CharSequenceUtil.equals(obj.getDictPlatform(), platformCode)).map(ShopInfoDTO.ListDTO::getId).findFirst().orElse("");
+            if (CharSequenceUtil.isBlank(shopId)){
+                errorMsgList.add(ApiError.SHOP_NOT_EXIST_NO_PERMISSION.msg);
+            }
             //SKU
             String skuId = productDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuNo(), excelDTO.getSkuNo())).map(ProductDetailEntity::getId).findFirst().orElse("");
 

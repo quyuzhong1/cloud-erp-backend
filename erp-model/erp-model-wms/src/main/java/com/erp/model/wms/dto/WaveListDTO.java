@@ -215,6 +215,14 @@ public class WaveListDTO implements Serializable {
          */
         private String pickingPrintTime;
         /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
          * 是否全托管订单 是true 否false
          */
         private Boolean isFullyManaged;

@@ -322,6 +322,13 @@ public class RocketMqConsumerGroup {
      * 同步虚拟仓库存明细
      */
     public static final String WMS_VIRTUAL_DETAIL_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_consumer";
+
+
+    /**
+     * 异步组包发货
+     */
+    public static final String DMP_WECHAT_SUBSCRIBE_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-dmp_wechat_subscribe_msg_consumer";
+
     //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
     /**
      * 旺店通推送货品资料

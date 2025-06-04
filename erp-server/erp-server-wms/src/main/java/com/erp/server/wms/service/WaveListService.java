@@ -67,7 +67,7 @@ public interface WaveListService extends SuperService<WaveListEntity> {
     /**
      * tabList
      */
-    List<WaveListDTO.TabDTO> tabList();
+    List<WaveListDTO.TabDTO> tabList(WaveListDTO.SearchParamDTO paramDTO);
 
     /**
      * 取消波次

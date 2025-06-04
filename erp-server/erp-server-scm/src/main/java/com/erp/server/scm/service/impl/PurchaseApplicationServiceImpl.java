@@ -138,6 +138,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private PilotApplicationFeign pilotApplicationFeign;
+    @Resource
+    private SupplierAccountService supplierAccountService;
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> paging(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> pagingDTO) {
@@ -395,7 +397,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 dto.setTaxRate(viewDTO.getTaxRate());
                 dto.setCurrency(viewDTO.getCurrency());
                 dto.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                dto.setTaxAmount(MathUtil.multiply(viewDTO.getTaxPrice(),qty).setScale(4, RoundingMode.DOWN));
+                dto.setTaxAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),qty).setScale(4, RoundingMode.DOWN));
             }
             resultList.add(dto);
         }
@@ -433,6 +435,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         //供应商默认联系人
         List<String> supplierIds = list.stream().map(PurchaseApplicationDTO.GeneratePurchaseOrderDTO::getSupplierId).collect(Collectors.toList());
         List<SupplierContactEntity> defaultSupplierContactList = supplierContactService.getDefaultBySupplierIdList(supplierIds);
+        List<SupplierAccountEntity> defaultSupplierAccountList = supplierAccountService.getDefaultBySupplierIdList(supplierIds);
 
         //供应商
         List<SupplierEntity> supplierList = supplierService.listByIds(supplierIds);
@@ -475,6 +478,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     supplierDTO.setContactTelNumber(supplierContactEntity.getTelNumber());
                 }
             }
+            //供应商默认账户
+            if (CollectionUtils.isNotEmpty(defaultSupplierAccountList)) {
+                SupplierAccountEntity supplierAccountEntity = defaultSupplierAccountList.stream().filter(obj -> obj.getSupplierId().equals(value.get(0).getSupplierId())).findFirst().orElse(null);
+                if (Objects.nonNull(supplierAccountEntity)) {
+                    addDTO.setSupplierAccountId(supplierAccountEntity.getId());
+                }
+            }
             addDTO.setPurchaseOrderSupplierDTO(supplierDTO);
 
             //采购订单明细信息
@@ -500,7 +510,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 //采购数量
                 addDetailDTO.setPurchaseQty(generatePurchaseOrderDTO.getPurchaseQty());
                 //采购金额
-                addDetailDTO.setPurchaseAmount(MathUtil.multiply(addDetailDTO.getTaxPrice(), addDetailDTO.getPurchaseQty()));
+                addDetailDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(addDetailDTO.getTaxPrice(), addDetailDTO.getPurchaseQty()));
                 //是否加急
                 addDetailDTO.setIsGift(generatePurchaseOrderDTO.getIsGift());
                 addDetailDTO.setPurchaseApplicationId(generatePurchaseOrderDTO.getId());
@@ -532,7 +542,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         List<WarehouseDTO.UpdateDTO> warehouseList = wmsTaskFeign.listApproveWarehouse();
         //查询所有启用核算公司
         List<BaseIdDTO> companyList = sysUserFeign.listAccountingCompany();
-        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,warehouseList,skuIds,companyList);
+        PurchaseApplicationExcelListener excelListenerUtil = new PurchaseApplicationExcelListener(skuList,wmsTaskFeign,skuIds,companyList);
 
         try {
             EasyExcelFactory.read(excelFile.getInputStream(), PurchaseApplicationImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
@@ -801,7 +811,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 viewDTO.setTaxRate(priceDTO.getTaxRate());
                 viewDTO.setCurrency(priceDTO.getCurrency());
                 viewDTO.setCurrencySymbol(priceDTO.getCurrencySymbol());
-                viewDTO.setAmount(MathUtil.multiply(viewDTO.getPrice(),viewDTO.getQty()));
+                viewDTO.setAmount(MathUtil.multiplyWithTwo(viewDTO.getPrice(),viewDTO.getQty()));
             }
             viewDTO.setIndex(index);
             index++;
@@ -872,7 +882,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                         viewGenerateDTO.setTaxRate(priceDTO2.getTaxRate());
                         viewGenerateDTO.setCurrency(priceDTO2.getCurrency());
                         viewGenerateDTO.setCurrencySymbol(priceDTO2.getCurrencySymbol());
-                        viewGenerateDTO.setAmount(MathUtil.multiply(viewGenerateDTO.getPrice(),viewGenerateDTO.getQty()));
+                        viewGenerateDTO.setAmount(MathUtil.multiplyWithTwo(viewGenerateDTO.getPrice(),viewGenerateDTO.getQty()));
                     }
                 }
             }
@@ -974,8 +984,8 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
             }
             //数量
             int waitQty = v.getApplyQty() - purchaseQty;
-            if(waitQty == 0 || waitQty >= v.getApplyQty()){
-                throw new ServiceException("只有SKU剩余数量小于申请数量，且不为0时，可以提交关闭");
+            if(waitQty == 0 || waitQty > v.getApplyQty()){
+                throw new ServiceException("只有SKU剩余数量小于等于申请数量，且不为0时，可以提交关闭");
             }
             v.setCloseReason(dto.getCloseReason());
             v.setCreatePoType(CreatePoTypeEnum.CLOSED.getStatus());
@@ -990,6 +1000,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public PagingVO<PurchaseApplicationDTO.ListDTO> exportPurchaseApplication(PagingDTO<PurchaseApplicationDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<PurchaseApplicationDTO.ListDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理
@@ -1052,7 +1063,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                     //sku是组合品时，不计算采购单价
                     BigDecimal price = Objects.nonNull(updateDTO.getPrice()) ? updateDTO.getPrice():BigDecimal.ZERO;
                     Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
-                    updateDTO.setAmount(MathUtil.multiply(price,qty));
+                    updateDTO.setAmount(MathUtil.multiplyWithTwo(price,qty));
                     continue;
                 }
                 //获取sku汇总数量
@@ -1064,7 +1075,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                         .findFirst().orElse(null);
                 if (Objects.nonNull(viewDTO)){
                     updateDTO.setPrice(viewDTO.getTaxPrice());
-                    updateDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(),updateDTO.getQty()));
+                    updateDTO.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),updateDTO.getQty()));
                 }else {
                     SkuVO skuVO = skuVOList.stream().filter(f -> f.getSkuId().equals(updateDTO.getSkuId())).findFirst().orElse(null);
                     if (Objects.isNull(skuVO)){

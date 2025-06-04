@@ -98,6 +98,10 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
 
     @Override
     public Boolean handleSoOutStock(PlatformOrderDTO dto, SoB2cDTO.PullOrderResultDTO resultDTO, SoB2cEntity mainEntity) {
+        if (Objects.isNull(dto)){
+            //没有推送数据，直接返回
+            return Boolean.TRUE;
+        }
         //平台仓订单
         Boolean hasPlatformWarehouse = mainEntity.hasPlatformWarehouseOrder();
         // 非平台仓由发货单生成销售出库单--不用实现
@@ -109,9 +113,12 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             return Boolean.TRUE;
         }
         List<String> deliveryStatusNameList = AliexpressDeliveryOrderStatusEnum.getOutStockStatusList();
-        deliveryDTOList = deliveryDTOList.stream().filter(e -> deliveryStatusNameList.contains(e.getOrderStatus())).collect(Collectors.toList());
+        deliveryDTOList = deliveryDTOList.stream()
+                .filter(e -> deliveryStatusNameList.contains(e.getOrderStatus()) && null != e.getDeliveryWarehouseTime() )
+                .sorted(Comparator.comparing(PlatformDeliveryDTO::getDeliveryWarehouseTime))
+                .collect(Collectors.toList());
         if (CollUtil.isEmpty(deliveryDTOList)){
-            return Boolean.TRUE;//不需要生成销售出库单
+            return Boolean.FALSE;//不需要生成销售出库单
         }
         dto.setDeliveryDTOList(deliveryDTOList);
         try {
@@ -180,6 +187,11 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             addDTO.setPlatformDeliveryStatus(AliexpressDeliveryOrderStatusEnum.getCode(deliveryDTO.getOrderStatus()));
             addDTO.setPlatformDeliveryCode(deliveryDTO.getSourceCode());
             addDTO.setIsOutstock(Boolean.FALSE);
+            addDTO.setActualAmount(deliveryDTO.getActualAmount());
+            addDTO.setOrderAmount(deliveryDTO.getOrderAmount());
+            addDTO.setOrderAfterTaxAmount(deliveryDTO.getOrderAfterTaxAmount());
+
+            addDTO.setActualCurrency(deliveryDTO.getActualCurrency());
             List<PlatformDeliveryDetailDTO> detailDTOList = deliveryDTO.getDetailDTOList();
             List<AliexpressDeliveryDetailDTO.AddDTO> detailAddList = new ArrayList<>();
             if (CollUtil.isNotEmpty(detailDTOList)){
@@ -211,10 +223,13 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
                     detailAddDTO.setPlatformSkuId(detailDTO.getPlatformSkuId());
                     // 平台产品ID
                     detailAddDTO.setPlatformSpuNo(detailDTO.getPlatformSpuNo());
+                    // 平台销售订单明细状态
+                    detailAddDTO.setOrderDetailPlatformStatus(detailDTO.getOrderDetailPlatformStatus());
                     detailAddList.add(detailAddDTO);
                 }
             }
             addDTO.setDetailList(detailAddList);
+            addDTO.setAllSourceDeliveryList(deliveryDTOList);
             aliexpressDeliveryFeign.addOrUpdate(addDTO);
         }
 

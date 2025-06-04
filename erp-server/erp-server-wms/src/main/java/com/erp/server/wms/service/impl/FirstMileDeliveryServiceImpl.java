@@ -237,6 +237,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         matchRuleDTO.setDestWarehouse(entity.getDestWarehouseId());
         matchRuleDTO.setFromWarehouse(entity.getDeliveryWarehouseId());
         matchRuleDTO.setSalesOrgId(entity.getInventoryOrgId());
+        matchRuleDTO.setDictPlatform("");
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(matchRuleDTO);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
             if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){
@@ -1714,6 +1715,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             //库存sku
             if(FbaDemandTypeEnum.DEMAND_OVERSEAS_WAREHOUSE.getCode().equals(data.getDemandType())){
                 data.setStockSku(data.getPlatformSkuNo());
+            }else{
+                data.setStockSku("");
             }
 
             long count = bomChildrenList.stream().filter(e -> e.getParentSkuId().equals(data.getSkuId())&& bomType.equals(e.getType())).count();
@@ -2047,6 +2050,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
     @Override
     public PagingVO<FirstMileDeliveryDTO.ListDTO> exportFbaDelivery(PagingDTO<FirstMileDeliveryDTO.PagingParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<FirstMileDeliveryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理
@@ -2266,12 +2270,15 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
             return new ArrayList<>();
         }
         List<String> sourceIds = result.stream().map(TmsDeclareBillDTO.DeliveryDTO::getSourceId).collect(Collectors.toList());
+
         List<FirstMileDeliveryDetailEntity> allDetailEntityList = firstMileDeliveryDetailService.listByMainIds(sourceIds);
         //查询物流产品信息
         List<String> skuIds = allDetailEntityList.stream().map(FirstMileDeliveryDetailEntity::getSkuId).distinct().collect(Collectors.toList());
         List<ProductDetailDTO.ProductLogisticDTO> allProductLogisticDTOList = plmTaskFeign.listProductLogisticsByIds(skuIds);
         //装箱信息
+        List<String> requisitionIds = result.stream().map(TmsDeclareBillDTO.DeliveryDTO::getRequisitionId).collect(Collectors.toList());
         List<String> ids = result.stream().map(TmsDeclareBillDTO.DeliveryDTO::getSourceId).collect(Collectors.toList());
+        ids.addAll(requisitionIds);
         //箱子明细信息
         List<WmsCartonDetailDTO.ListPackingDetailDTO> packingDetailList = baseMapper.listPackingDetail(ids);
         Map<String,List<WmsCartonDetailDTO.ListPackingDetailDTO>> packingDetailMap = packingDetailList.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId));
@@ -2315,6 +2322,9 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
 
             //设置装箱信息
             List<WmsCartonDetailDTO.ListPackingDetailDTO> list = packingDetailMap.getOrDefault(deliveryDTO.getSourceId(),new ArrayList<>());
+            if(CollectionUtils.isEmpty(list)){
+                list = packingDetailMap.getOrDefault(deliveryDTO.getRequisitionId(),new ArrayList<>());
+            }
             if(CollectionUtils.isNotEmpty(list)){
                 List<TmsDeclareBillDTO.PackingDTO> packingDTOList = BeanUtil.copyToList(list,TmsDeclareBillDTO.PackingDTO.class);
                 packingDTOList.forEach(t->t.setCode(deliveryDTO.getSourceCode()));

@@ -106,9 +106,13 @@ public enum BusinessNoTypeEnum {
     CODE_N(81, "N","库龄批次号",BusinessNoConstant.N),
     CODE_INV(82, "INV","发票号",BusinessNoConstant.INV),
     CODE_XSBH(83, "XSBH","全托管订单",BusinessNoConstant.XSBH),
+    CODE_SHSQ(83, "SHSQ","售后",BusinessNoConstant.SHSQ),
 
     CODE_XSJM(83, "xsjm","销售价目编号", BusinessNoConstant.XSJM),
     CODE_XSTJ(84, "xstj","销售价目调价编号", BusinessNoConstant.XSTJ),
+    CODE_ZJTZ(86, "ZJTZ","质检通知",BusinessNoConstant.ZJTZ),
+    CODE_TCTZ(87, "TCTZ","头程调整记录",BusinessNoConstant.TCTZ),
+
     ;
 
 

@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -10,6 +11,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.tms.dto.FirstMileSkuCostAllocationDetailDTO;
 import com.erp.model.tms.entity.FirstMileSkuCostAllocationDetailEntity;
+import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
 import com.erp.server.tms.mapper.FirstMileSkuCostAllocationDetailMapper;
 import com.erp.server.tms.service.FirstMileSkuCostAllocationDetailService;
 import com.erp.server.tms.service.OperateLogService;
@@ -20,8 +22,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -98,6 +102,52 @@ public class FirstMileSkuCostAllocationDetailServiceImpl extends SuperServiceImp
             return Collections.emptyList();
         }
         return baseMapper.listByMainIds(mainIds);
+    }
+
+    @Override
+    public void updateEndPeriodTransitCost(String detailId, String newEndPeriodTransitCost) {
+        if (CharSequenceUtil.isBlank(detailId) || Objects.isNull(newEndPeriodTransitCost)){
+            return;
+        }
+        this.lambdaUpdate().set(FirstMileSkuCostAllocationDetailEntity::getEndPeriodTransitCost, new BigDecimal(newEndPeriodTransitCost)).eq(FirstMileSkuCostAllocationDetailEntity::getId, detailId).update();
+    }
+
+    @Override
+    public void updateEndPeriodEstimatedCost(String detailId, String newEndPeriodEstimatedCost) {
+        if (CharSequenceUtil.isBlank(detailId) || Objects.isNull(newEndPeriodEstimatedCost)){
+            return;
+        }
+        this.lambdaUpdate().set(FirstMileSkuCostAllocationDetailEntity::getEndPeriodEstimatedCost, new BigDecimal(newEndPeriodEstimatedCost)).eq(FirstMileSkuCostAllocationDetailEntity::getId, detailId).update();
+    }
+
+    @Override
+    public List<FirstMileSkuCostAllocationDetailEntity> listBySourceCodeList(List<String> businessCodeList, List<String> sourceCodeList, List<String> transportNoList) {
+        if (CollUtil.isEmpty(businessCodeList) && CollUtil.isEmpty(sourceCodeList) && CollUtil.isEmpty(transportNoList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listBySourceCodeList(businessCodeList,sourceCodeList,transportNoList);
+    }
+
+    @Override
+    public void updateDetailRemark(String detailId, String newDetailRemark) {
+        if (CharSequenceUtil.isBlank(detailId) || Objects.isNull(newDetailRemark)){
+            return;
+        }
+        this.lambdaUpdate().set(FirstMileSkuCostAllocationDetailEntity::getRemark, newDetailRemark).eq(FirstMileSkuCostAllocationDetailEntity::getId, detailId).update();
+
+    }
+
+    @Override
+    public List<FirstMileSkuCostAllocationDetailEntity> listByReportMonth(String sourceId, String businessCode, String transportNo, String skuId, String platformSkuNo, String reportPeriodId) {
+        return baseMapper.listByReportMonth(sourceId,businessCode,transportNo,skuId,platformSkuNo,reportPeriodId);
+    }
+
+    @Override
+    public List<FirstMileSkuCostAllocationDetailEntity> listByCostIdList(List<String> costIdList) {
+        if (CollUtil.isEmpty(costIdList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(FirstMileSkuCostAllocationDetailEntity::getCostMainId,costIdList).list();
     }
 
 }

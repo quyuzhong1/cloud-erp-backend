@@ -117,6 +117,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     @Resource
     private SoPriceService soPriceService;
 
+    @Resource
+    @Lazy
+    private SoB2cCoreService soB2cCoreService;
+
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
         List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listContainDeleted(ids);
@@ -249,12 +253,12 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
             BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
             BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+            skuVO.setNotTaxCostPrice(MathUtil.multiplyWithTwo(skuCostDTO.getProductCost(),rate,4));
             BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
-            skuVO.setActualTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
-            skuVO.setProductCost(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
-            skuVO.setFirstMileShippingCost(MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),rate,4));
-            skuVO.setClearanceCustomsTax(MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),rate,4));
+            skuVO.setActualTaxCost(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+            skuVO.setProductCost(MathUtil.multiplyWithTwo(skuCostDTO.getProductCost(),rate,4));
+            skuVO.setFirstMileShippingCost(MathUtil.multiplyWithTwo(skuCostDTO.getFirstMileShippingCost(),rate,4));
+            skuVO.setClearanceCustomsTax(MathUtil.multiplyWithTwo(skuCostDTO.getClearanceCustomsTax(),rate,4));
             skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
         }
     }
@@ -301,12 +305,12 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
         BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
         BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-        skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+        skuVO.setNotTaxCostPrice(MathUtil.multiplyWithTwo(skuCostDTO.getProductCost(),rate,4));
         BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
-        skuVO.setActualTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
-        skuVO.setProductCost(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
-        skuVO.setFirstMileShippingCost(MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),rate,4));
-        skuVO.setClearanceCustomsTax(MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),rate,4));
+        skuVO.setActualTaxCost(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+        skuVO.setProductCost(MathUtil.multiplyWithTwo(skuCostDTO.getProductCost(),rate,4));
+        skuVO.setFirstMileShippingCost(MathUtil.multiplyWithTwo(skuCostDTO.getFirstMileShippingCost(),rate,4));
+        skuVO.setClearanceCustomsTax(MathUtil.multiplyWithTwo(skuCostDTO.getClearanceCustomsTax(),rate,4));
         skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
     }
 
@@ -808,6 +812,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         Integer flag = MathUtil.ONE;
         //分组金额
         BigDecimal groupAmount = BigDecimal.ZERO;
+        //速卖通税后分组金额
+        BigDecimal groupAfterTaxAmount = BigDecimal.ZERO;
         //分组预估费用
         BigDecimal groupEstimatedShippingCost = BigDecimal.ZERO;
         //分组实际费用
@@ -894,7 +900,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 }
                 detailList.add(addDetailDTO);
                 //累加拆分金额
-                splitTotalAmount = MathUtil.add(splitTotalAmount, MathUtil.multiply(detailEntity.getPrice(), splitDetailSaveDTO.getQty()));
+                splitTotalAmount = MathUtil.add(splitTotalAmount, MathUtil.multiplyWithTwo(detailEntity.getPrice(), splitDetailSaveDTO.getQty()));
 
             }
             addDTO.setDetailList(detailList);
@@ -908,14 +914,16 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
             //拆分金额所占比例
             BigDecimal rate = MathUtil.divide(splitTotalAmount, totalAmount);
-            BigDecimal amount = MathUtil.multiply(rate, entity.getAmount());
-            BigDecimal estimatedShippingCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getEstimatedShippingCost());
-            BigDecimal actualShippingCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getActualShippingCost());
-            BigDecimal accessoriesCost = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesCost());
-            BigDecimal accessoriesNw = MathUtil.multiply(rate, soB2cLogisticsEntity.getAccessoriesNw());
+            BigDecimal amount = MathUtil.multiplyWithTwo(rate, entity.getAmount());
+            BigDecimal afterTaxAmount = MathUtil.multiplyWithTwo(rate, entity.getAfterTaxAmount());
+            BigDecimal estimatedShippingCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getEstimatedShippingCost());
+            BigDecimal actualShippingCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getActualShippingCost());
+            BigDecimal accessoriesCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesCost());
+            BigDecimal accessoriesNw = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesNw());
             //最后一条根据减法计算金额
             if (i == splitList.size() - 1) {
                 amount = MathUtil.subtract(entity.getAmount(), groupAmount);
+                afterTaxAmount = MathUtil.subtract(entity.getAfterTaxAmount(), groupAfterTaxAmount);
                 estimatedShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getEstimatedShippingCost(), groupEstimatedShippingCost);
                 actualShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getActualShippingCost(), groupActualShippingCost);
                 accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(), groupAccessoriesCost);
@@ -923,6 +931,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             }
             //基本信息金额
             addDTO.setAmount(amount);
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(entity.getDictPlatform())) {
+                // 速卖通记录分摊的税后金额
+                addDTO.setAfterTaxAmount(afterTaxAmount);
+            }
             //预估费用
             logisticsAddDTO.setEstimatedShippingCost(estimatedShippingCost);
             //实际费用
@@ -959,12 +971,17 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 this.updateById(add);
             }
             //用于同步到TikTok拆分数据的入参
-            List<String> sourceDetailIds = detailList.stream().map(req -> req.getPlatformLineNumber()).collect(Collectors.toList());
+            List<String> sourceDetailIds = detailList.stream()
+                    .map(SoB2cDetailDTO.AddDTO::getPlatformLineNumber)
+                    .flatMap(numbers -> Arrays.stream(numbers.split(",")))
+                    .collect(Collectors.toList());
             groupsBean.setOrderLineItemIds(sourceDetailIds);
             groupsBean.setId(add.getId());
             splittableGroups.add(groupsBean);
             //计算已生成金额
             groupAmount = MathUtil.add(addDTO.getAmount(), groupAmount);
+            // 计算已已生成的速卖通税后金额
+            groupAfterTaxAmount = MathUtil.add(addDTO.getAfterTaxAmount(), groupAfterTaxAmount);
             groupEstimatedShippingCost = MathUtil.add(logisticsAddDTO.getEstimatedShippingCost(), groupEstimatedShippingCost);
             groupActualShippingCost = MathUtil.add(logisticsAddDTO.getActualShippingCost(), groupActualShippingCost);
             groupAccessoriesCost = MathUtil.add(logisticsAddDTO.getAccessoriesCost(), groupAccessoriesCost);
@@ -1041,10 +1058,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
 
         //未付款数据不能操作
-        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
-        }
-
+        soB2cCoreService.checkPayMent(entity);
         //查询订单是否是合并订单
         List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> CharSequenceUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(thisRefList)) {
@@ -1098,10 +1112,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 viewSplitDetailDTO.setProductName(skuVO.getSkuName());
                 viewSplitDetailDTO.setSourceAmount(detailEntity.getAmount());
                 viewSplitDetailDTO.setSourceCurrency(detailEntity.getCurrency());
-                viewSplitDetailDTO.setAmount(MathUtil.multiply(detailEntity.getAmount(), detailEntity.getExchangeRate()));
+                viewSplitDetailDTO.setAmount(MathUtil.multiplyWithTwo(detailEntity.getAmount(), detailEntity.getExchangeRate()));
                 viewSplitDetailDTO.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
                 //产品包装重量 = SKU毛重 * 数量
-                viewSplitDetailDTO.setWeight(MathUtil.multiply(skuVO.getGrossWeight(), detailEntity.getQty()));
+                viewSplitDetailDTO.setWeight(MathUtil.multiplyWithTwo(skuVO.getGrossWeight(), detailEntity.getQty()));
                 viewSplitDetailList.add(viewSplitDetailDTO);
             }
             viewSplitDTO.setDetailList(viewSplitDetailList);

@@ -27,4 +27,15 @@ public interface SoPriceChangeDetailMapper extends BaseMapper<SoPriceChangeDetai
      * @return java.util.List<com.erp.model.scm.entity.SoPriceChangeDetailEntity>
      **/
     List<SoPriceChangeDetailEntity> listBySoPriceDetailIds(@Param("soPriceDetailIds") List<String> soPriceDetailIds);
+    /**
+     * 查询需要验证的数据
+     * @author will
+     * @date 2025/5/7 12:11
+     * @param customerIdList
+     * @param statusList
+     * @param soOrgId
+     * @param skuIdList
+     * @return List<SoPriceChangeDetailEntity>
+     */
+    List<SoPriceChangeDetailEntity> listCheckSoPriceChangeDetail(@Param("customerIdList") List<String> customerIdList,@Param("statusList") List<String> statusList,@Param("soOrgId") String soOrgId,@Param("skuIdList") List<String> skuIdList);
 }

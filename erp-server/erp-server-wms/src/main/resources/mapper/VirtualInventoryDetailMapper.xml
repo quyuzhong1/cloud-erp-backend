@@ -112,6 +112,10 @@
         left join virtual_warehouse vw on vidh.virtual_warehouse_id = vw.id and vw.is_deleted = false
         <where>
             ${params.sqlMap.default}
+            <!--权限 -->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
             order by
             <if test="params.sortList != null and params.sortList.size > 0">
                 <foreach collection="params.sortList" item="item" separator="," close=",">

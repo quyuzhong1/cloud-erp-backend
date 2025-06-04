@@ -81,7 +81,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        spc.create_time DESC,spcd.id DESC
+        spc.id DESC,spcd.id DESC
     </select>
 
     <!-- 导出 -->

@@ -353,7 +353,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
             entity.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
             entity.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
             entity.setPrice(BigDecimal.ZERO);
-            entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+            entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
             return;
         }
         //供应商报价信息
@@ -366,7 +366,7 @@ public class SubcontractChangeDetailServiceImpl extends SuperServiceImpl<Subcont
         if (isChild) {
             entity.setPrice(viewDTO.getTaxPrice());
         }
-        entity.setAmount(MathUtil.multiply(entity.getPrice(),entity.getQty()));
+        entity.setAmount(MathUtil.multiplyWithTwo(entity.getPrice(),entity.getQty()));
     }
 
 }

@@ -1,8 +1,11 @@
 package com.erp.oms.aliexpress.dto.response;
 
+import com.alibaba.fastjson.annotation.JSONField;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.gson.annotations.SerializedName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.io.Serializable;
@@ -13,6 +16,7 @@ import java.util.List;
  * @Author yl
  * @Date 2023-11-29 10:27
  */
+@NoArgsConstructor
 @Data
 @ToString(callSuper = true)
 @EqualsAndHashCode(callSuper = false)
@@ -112,4 +116,46 @@ public class OrderItemDetail implements Serializable {
     @SerializedName("order_sort_id")
     private String orderSortId;
 
+    @JsonProperty("sku")
+    private List<SkuDTO> sku;
+
+    @NoArgsConstructor
+    @Data
+    public static class SkuDTO {
+        @JsonProperty("skuImg")
+        private String skuImg;
+        @JsonProperty("selfDefineValue")
+        private String selfDefineValue;
+        @JsonProperty("pName")
+        private String pName;
+        @JsonProperty("pValueId")
+        private Integer pValueId;
+        @JsonProperty("pValue")
+        private String pValue;
+        @JsonProperty("pId")
+        private Integer pId;
+        @JsonProperty("order")
+        private Integer order;
+    }
+
+    @JSONField(name = "product_attributes")
+    private String productAttributes;
+
+    @NoArgsConstructor
+    @Data
+    public static class ChildAttributes {
+        @JSONField(name ="sku")
+        private List<ChildSku> childSkus;
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class ChildSku {
+
+        @JSONField(name ="pName")
+        private String pName;
+
+        @JSONField(name ="pValue")
+        private String pValue;
+    }
 }

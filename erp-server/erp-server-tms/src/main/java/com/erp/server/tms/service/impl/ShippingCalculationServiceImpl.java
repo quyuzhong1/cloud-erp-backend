@@ -169,8 +169,8 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             return;
         }
         //订单金额本位币 -预估运费最大值
-        BigDecimal orderAmount = MathUtil.divide(MathUtil.multiply(shipmentOverLimitRate, MathUtil.multiply(amount, exchangeRate)), MathUtil.BigDecimal_100);
-        BigDecimal estimatedShippingCost = MathUtil.multiply(totalShippingCost, estimatedExchangeRate);
+        BigDecimal orderAmount = MathUtil.divide(MathUtil.multiplyWithTwo(shipmentOverLimitRate, MathUtil.multiplyWithTwo(amount, exchangeRate)), MathUtil.BigDecimal_100);
+        BigDecimal estimatedShippingCost = MathUtil.multiplyWithTwo(totalShippingCost, estimatedExchangeRate);
         Boolean estimatedShippingCostFlag = estimatedShippingCost.compareTo(orderAmount) > 0 ? Boolean.TRUE : Boolean.FALSE;
         if (!Objects.equals(isOverEstimatedShipCost,estimatedShippingCostFlag)){
             //超过订单金额比例
@@ -387,9 +387,9 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             }
 
             //体积重
-            BigDecimal volumeWeight = MathUtil.multiply(MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight()), new BigDecimal(listDTO.getVolumeSetting())), volumeRatio, 4);
+            BigDecimal volumeWeight = MathUtil.multiplyWithTwo(MathUtil.divide(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight()), new BigDecimal(listDTO.getVolumeSetting())), volumeRatio, 4);
             //重量
-            BigDecimal weight = MathUtil.multiply(params.getWeight(), ratio, 4);
+            BigDecimal weight = MathUtil.multiplyWithTwo(params.getWeight(), ratio, 4);
             if (ShippingFeeRuleEnum.BILLING_WEIGHT.getCode().equals(listDTO.getFeeRule())) {
                 weight = MathUtil.compareTo(volumeWeight, weight) > MathUtil.ZERO ? volumeWeight : weight;
             }
@@ -564,7 +564,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
                 //续重比例（进一）
                 BigDecimal weightRatio = MathUtil.divide(MathUtil.subtract(weight, shippingTemplateRule.getFirstWeight()), shippingTemplateRule.getAdditionalUnitWeight(), 0, BigDecimal.ROUND_UP);
                 //续重费用
-                additionalWeightShippingCost = MathUtil.multiply(weightRatio, shippingTemplateRule.getAdditionalPrice(), 4);
+                additionalWeightShippingCost = MathUtil.multiplyWithTwo(weightRatio, shippingTemplateRule.getAdditionalPrice(), 4);
             }
             shippingCost = MathUtil.add(firstWeightShippingCost, additionalWeightShippingCost);
         } else {
@@ -572,7 +572,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
             if (MathUtil.compareTo(shippingTemplateRule.getStartWeight(), weight) >= MathUtil.ZERO || MathUtil.compareTo(weight, shippingTemplateRule.getEndWeight()) > MathUtil.ZERO) {
                 throw new ServiceException(ApiError.ERROR_SHIPPING_WEIGHT_NOT_INTERVAL, weight, shippingTemplateRule.getStartWeight(), shippingTemplateRule.getEndWeight());
             }
-            shippingCost = MathUtil.multiply(shippingTemplateRule.getShippingPrice(), weight, 4);
+            shippingCost = MathUtil.multiplyWithTwo(shippingTemplateRule.getShippingPrice(), weight, 4);
         }
         shippingCost = MathUtil.compareTo(shippingCost, shippingTemplateRule.getMinCost()) > MathUtil.ZERO ? shippingCost : shippingTemplateRule.getMinCost();
         return shippingCost;
@@ -692,7 +692,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         //费用合计值
         BigDecimal totalOtherCost = costSettingList.stream().map(obj -> (BigDecimal) jsonObject.get(obj.getCode())).reduce(BigDecimal.ZERO, BigDecimal::add);
         //燃油附加费率
-        BigDecimal fuelSurchargeCost = MathUtil.multiply(totalOtherCost, MathUtil.divide(otherCostEntity.getCostSettingValue(), MathUtil.BigDecimal_100), 4);
+        BigDecimal fuelSurchargeCost = MathUtil.multiplyWithTwo(totalOtherCost, MathUtil.divide(otherCostEntity.getCostSettingValue(), MathUtil.BigDecimal_100), 4);
 
         return fuelSurchargeCost;
     }
@@ -715,7 +715,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         //费用合计值
         BigDecimal totalOtherCost = costSettingList.stream().map(obj -> MathUtil.valueOf(jsonObject.get(obj.getCode()))).reduce(BigDecimal.ZERO, BigDecimal::add);
         //折扣费
-        BigDecimal discountCost = MathUtil.multiply(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1, MathUtil.divide(otherCostEntity.getCostSettingValue(), MathUtil.BigDecimal_100)), 4);
+        BigDecimal discountCost = MathUtil.multiplyWithTwo(totalOtherCost, MathUtil.subtract(MathUtil.BigDecimal_1, MathUtil.divide(otherCostEntity.getCostSettingValue(), MathUtil.BigDecimal_100)), 4);
 
         return discountCost;
     }
@@ -744,7 +744,7 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
         String weightUnit = params.getWeightUnit();
         resultDTO.setWeightUnit(weightUnit);
         //体积
-        BigDecimal volume = MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight());
+        BigDecimal volume = MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight());
         params.setVolume(volume);
         List<ShippingCalculationDTO.ListDTO> listAll = shippingTemplateOtherCostService.listRefCost(params);
         List<ShippingCalculationDTO.ChannelCostDTO> channelCostList = new ArrayList<>(listAll.size());
@@ -792,9 +792,9 @@ public class ShippingCalculationServiceImpl implements ShippingCalculationServic
                 volumeRatio = new BigDecimal(1000);
             }
             //体积重
-            BigDecimal volumeWeight = MathUtil.multiply(MathUtil.divide(MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight()), new BigDecimal(item.getVolumeSetting())), volumeRatio, 4);
+            BigDecimal volumeWeight = MathUtil.multiplyWithTwo(MathUtil.divide(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight()), new BigDecimal(item.getVolumeSetting())), volumeRatio, 4);
             //重量
-            BigDecimal weight = MathUtil.multiply(params.getWeight(), ratio, 4);
+            BigDecimal weight = MathUtil.multiplyWithTwo(params.getWeight(), ratio, 4);
             if (billingWeightCode.equals(item.getFeeRule())) {
                 weight = MathUtil.compareTo(volumeWeight, weight) > MathUtil.ZERO ? volumeWeight : weight;
             }

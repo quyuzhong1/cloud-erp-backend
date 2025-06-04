@@ -42,6 +42,13 @@
             <if test="params.moduleType !=null and params.moduleType!=''">
                 AND ol.module_type = #{params.moduleType}
             </if>
+            <if test="params.searchKey !=null and params.searchKey!=''">
+                and (
+                ol.content ILIKE concat('%',#{params.searchKey}::text,'%') or
+                ol.operation ILIKE concat('%',#{params.searchKey}::text,'%') or
+                ol.create_user_name ILIKE concat('%',#{params.searchKey}::text,'%')
+                )
+            </if>
         </where>
         group by ol.module_type,ol.business_id,ol.create_time,ol.field_name
         order by ol.create_time desc

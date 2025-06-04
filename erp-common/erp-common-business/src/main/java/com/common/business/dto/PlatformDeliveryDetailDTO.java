@@ -105,4 +105,9 @@ public class PlatformDeliveryDetailDTO {
      * 速卖通=中台明细ID
      */
     private String uniqueId;
+
+    /**
+     * 平台订单明细状态
+     */
+    private String orderDetailPlatformStatus;
 }

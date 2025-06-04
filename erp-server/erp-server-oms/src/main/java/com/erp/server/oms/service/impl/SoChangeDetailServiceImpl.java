@@ -12,6 +12,7 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
@@ -140,9 +141,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, qty);
             soChangeDetail.setIsGift(isGift);
             soChangeDetail.setPrice(price);
             soChangeDetail.setCurrency(currency);
@@ -212,7 +213,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
 
             BigDecimal oldPrice = item.getOldPrice();
@@ -221,7 +222,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+            BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
             item.setOldPrice(oldPrice);
             item.setOldTaxPrice(oldTaxPrice);
         }
@@ -267,7 +268,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 view.setOldTaxRate(oldTaxRate);
                 //含税单价=销售单价*（税率+1）
                 BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-                BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+                BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
                 view.setOldTaxPrice(oldTaxPrice);
                 view.setQty(0);
                 view.setTaxPrice(zero);
@@ -350,7 +351,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             view.setWarehouseOrgName(warehouseOrgName);
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+            BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
             view.setOldTaxPrice(oldTaxPrice);
             view.setQty(0);
             view.setTaxPrice(zero);
@@ -558,6 +559,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap, closeSoDetailIdList);
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+                saveOrUpdateList.forEach(item -> {
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOList.stream().filter(b -> b.getParentSkuId().equals(item.getSkuId())).findFirst().orElse(null);
+                    if(Objects.nonNull(bomChildrenSkuDTO)){
+                        item.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+                    }
+                });
                 Map<String, List<SoDetailEntity>> soDetailSaveMap = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
                 for (Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
                     // 金额信息加上折扣额计算
@@ -841,9 +849,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, qty);
             item.setPrice(price);
             item.setCurrencySymbol(symbol);
             item.setAmount(amount);

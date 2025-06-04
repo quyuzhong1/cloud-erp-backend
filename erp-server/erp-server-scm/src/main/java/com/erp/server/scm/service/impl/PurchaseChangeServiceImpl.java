@@ -458,6 +458,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
 
     @Override
     public PagingVO<PurchaseChangeExportExcelDTO> exportPurchaseChange(PagingDTO<PurchaseChangeDTO.SearchParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<PurchaseChangeExportExcelDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         return new PagingVO<>(page);
     }
@@ -494,7 +495,7 @@ public class PurchaseChangeServiceImpl extends SuperServiceImpl<PurchaseChangeMa
                 BigDecimal returnPrice = Objects.nonNull(poReturnDetailEntity.getReturnPrice()) ? poReturnDetailEntity.getReturnPrice() : BigDecimal.ZERO;
                 updateDTO.setPrice(returnPrice);
                 Integer qty = Objects.nonNull(updateDTO.getQty()) ? updateDTO.getQty() : MathUtil.ZERO;
-                updateDTO.setAmount(MathUtil.multiply(returnPrice,qty));
+                updateDTO.setAmount(MathUtil.multiplyWithTwo(returnPrice,qty));
             }
         }
         purchasePriceDTO.setBatchResultDTOList(batchResultDTOList);

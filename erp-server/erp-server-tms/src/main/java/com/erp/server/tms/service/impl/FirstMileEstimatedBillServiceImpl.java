@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.alibaba.excel.exception.ExcelCommonException;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -25,7 +24,6 @@ import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.tms.dto.FirstMileEstimatedBillDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO;
-import com.erp.model.tms.dto.FirstMileEstimatedBillDTO.LogisticsInfoDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.CostViewDTO;
 import com.erp.model.tms.dto.TmsCostDetailDTO.UpdateDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
@@ -51,7 +49,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -91,6 +88,7 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 
     @Override
     public PagingVO<FirstMileEstimatedBillDTO.View> paging(PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<FirstMileEstimatedBillDTO.View> pageData = baseMapper.paging(query, dto.getParams());
         fillData(pageData.getRecords());
@@ -105,8 +103,9 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
         List<DictCountryEntity> countryList = sysDictFeign.listCountryByNames(countryCodeList);
         Map<String, String> countryMap = countryList.stream().collect(Collectors.toMap(item -> item.getNameCn(), item2 -> item2.getId()));
 
-        //预计费用
+        //物流信息
         List<String> logisticsBillIds = records.stream().map(item -> item.getLogisticsBillId()).distinct().collect(Collectors.toList());
+        List<TmsFirstMileLogisticDTO.ReconciliationDTO> reconciliationDTOList = tmsFirstMileReconciliationService.listReconciliationAndCostByBillIds(logisticsBillIds);        //预计费用
         List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCostList = this.baseMapper.listEstimatedCost(logisticsBillIds);
         Map<String, List<FirstMileEstimatedBillDTO.EstimatedCost>> estimatedCostMap = estimatedCostList.stream().collect(Collectors.groupingBy(item -> item.getLogisticsBillId()));
         List<String> currencyIds = estimatedCostList.stream().map(FirstMileEstimatedBillDTO.EstimatedCost::getCurrency).collect(Collectors.toList());
@@ -115,12 +114,17 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
 		Map<String, BigDecimal> rateMap = new HashMap<>();
         for (FirstMileEstimatedBillDTO.View item : records) {
             item.setStatusName(ConfirmStatusEnum.getName(item.getStatus()));
-            item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
             item.setToCountryName(item.getToCountry());
             item.setToCountry(countryMap.getOrDefault(item.getToCountryName(), ""));
             item.setFeeRuleName(ShippingFeeRuleEnum.getName(item.getFeeRule()));
-            item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
-
+            //对账单信息填充
+            TmsFirstMileLogisticDTO.ReconciliationDTO reconciliationDTO = reconciliationDTOList.stream().filter(e -> CharSequenceUtil.isNotBlank(e.getLogisticsBillId()) && Objects.equals(e.getLogisticsBillId(), item.getLogisticsBillId())).findFirst().orElse(null);
+            if (Objects.nonNull(reconciliationDTO)){
+                item.setActualBillStatus(reconciliationDTO.getReconciliationStatus());
+                item.setActualBillStatusName(ReconciliationStatusEnum.getName(item.getActualBillStatus()));
+                item.setCurrency(reconciliationDTO.getCurrency());
+                item.setCurrencySymbol(StringUtils.isBlank(item.getCurrency()) ? "" : CurrencyEnum.getSymbolByCode(item.getCurrency()));
+            }
             //预计费用
             if(estimatedCostMap.containsKey(item.getLogisticsBillId())){
                 List<FirstMileEstimatedBillDTO.EstimatedCost> estimatedCosts = estimatedCostMap.get(item.getLogisticsBillId());
@@ -282,20 +286,20 @@ public class FirstMileEstimatedBillServiceImpl extends SuperServiceImpl<FirstMil
     }
 
     @Override
-    public List<FirstMileEstimatedBillDTO.Tab> tabList() {
+    public List<FirstMileEstimatedBillDTO.Tab> tabList(FirstMileEstimatedBillDTO.PagingParam dto) {
         List<FirstMileEstimatedBillDTO.Tab> list = new ArrayList<>();
-        list.add(getTabCount(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), "物流商待确认"));
-        list.add(getTabCount(ConfirmStatusEnum.CONFIRM.getCode(), "物流商已确认"));
+        list.add(getTabCount(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), "物流商待确认", dto.getPermissionSql()));
+        list.add(getTabCount(ConfirmStatusEnum.CONFIRM.getCode(), "物流商已确认", dto.getPermissionSql()));
         return list;
     }
 
-    private FirstMileEstimatedBillDTO.Tab getTabCount(String status, String tabFlagName) {
+    private FirstMileEstimatedBillDTO.Tab getTabCount(String status, String tabFlagName, String permissionSql) {
         int count = 0;
         if(ConfirmStatusEnum.WAIT_CONFIRM.getCode().equals(status)){
-            count = this.baseMapper.countByParam(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode());
+            count = this.baseMapper.countByParam(ConfirmStatusEnum.WAIT_CONFIRM.getCode(), ReconciliationStatusEnum.TO_BE_CONFIRM.getCode(),permissionSql);
         }
         if(ConfirmStatusEnum.CONFIRM.getCode().equals(status)){
-            count = this.baseMapper.countByParam(null, ReconciliationStatusEnum.CONFIRMED.getCode());
+            count = this.baseMapper.countByParam(null, ReconciliationStatusEnum.CONFIRMED.getCode(), permissionSql);
         }
 
         return new FirstMileEstimatedBillDTO.Tab(status, tabFlagName, count);

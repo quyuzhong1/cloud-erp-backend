@@ -2,11 +2,15 @@ package com.erp.rpc.tms.feign;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
+import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @FeignClient(name = "erp-tms", contextId = "tmsFirstMileLogistic")
@@ -27,4 +31,20 @@ public interface TmsFirstMileLogisticFeign {
      **/
     @PostMapping("/feign/tmsFirstMileLogistic/autoGenerateFirstMileLogistic")
     BatchResultDTO autoGenerateFirstMileLogistic(@RequestBody AutoGenerateBillDTO autoGenerateBillDTO);
+
+    /**
+     * 根据来源id和业务类型查询头程费用分摊记录
+     * @param detailDTO
+     * @return
+     */
+    @PostMapping("/feign/tmsFirstMileLogistic/getRecordBySourceIdAndCode")
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySourceIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO);
+
+    /**
+     * 根据skuId和业务类型查询头程费用分摊记录
+     * @param detailDTO
+     * @return
+     */
+    @PostMapping("/feign/tmsFirstMileLogistic/getRecordBySkuIdAndCode")
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO);
 }

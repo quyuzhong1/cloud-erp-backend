@@ -75,8 +75,12 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                 }
             }
 
-            if (dmpSoReturnEntity.getReturnTime() != null) {
-                sdyDTO.setBiz_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
+            LocalDateTime returnTime = dmpSoReturnEntity.getReturnTime();
+            if("WDT".equals(dmpSoReturnEntity.getSourceSystem()) && returnTime == null) {
+            	returnTime = dmpSoReturnEntity.getPlatformCreateTime();
+            }
+			if (returnTime != null) {
+                sdyDTO.setBiz_time(localDateTime.format(returnTime));
             } else {
                 return result;
             }
@@ -108,6 +112,10 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             sdyDTO.setPrice(dmpSoReturnDetailEntity.getSellPrice());
             sdyDTO.setGoods_transaction_quantity(dmpSoReturnDetailEntity.getQty());
             sdyDTO.setGoods_transaction_amount(dmpSoReturnDetailEntity.getAmount());
+            BigDecimal totalAmount = dmpSoReturnDetailEntity.getTotalAmount();
+            if(totalAmount != null) {
+            	sdyDTO.setTotal_goods_transaction_amount(totalAmount);
+            }
 
             int qtyTotal = dmpSoReturnDetailEntityList.stream().filter(d -> d.getQty() != null).mapToInt(DmpSoReturnDetailEntity::getQty).sum();
             sdyDTO.setOnline_appled_return_quanty(qtyTotal);
@@ -141,10 +149,6 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                     return result;
                 }
             	
-            	if("10".equals(dmpSoReturnEntity.getStatus())) {
-            		sdyDTO.setStatus("已删除");
-            	}
-
                 sdyDTO.setBiz_no(dmpSoReturnEntity.getPlatformCode());
                 
                 Map<String, Object> shopListMap = cacheMap.get("shopList");
@@ -274,7 +278,9 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
                     cacheMap.put("subPlatformType", subPlatformTypeMap);
                     
                     if(subPlatformTypeDict != null) {
-                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getName());
+                        sdyDTO.setPlatform_id(subPlatformTypeDict.getRemark());
+                        sdyDTO.setPlatform_name(subPlatformTypeDict.getRemark());
+                        sdyDTO.setSubplatform_no(subPlatformTypeDict.getValue());
                         sdyDTO.setSubplatform_name(subPlatformTypeDict.getValue());
                     }
                 }
@@ -305,20 +311,22 @@ public class DmpOutputSdyReturnHandler extends DmpOutputSdyBaseTaskHandler {
             sdyDTO.setSettlement_currency_code(shopInfo.getSettlementCurrency());
 
             sdyDTO.setUnit("PCS");
-            sdyDTO.setPlatform_id(dmpSoReturnEntity.getSourceSystem());
-            sdyDTO.setPlatform_name(PlatformDictEnum.getNameByCode(dmpSoReturnEntity.getSourceSystem()));
             if (StringUtils.isNotBlank(dmpSoReturnEntity.getPlatformOrderCode())){
                 sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformOrderCode());
             } else {
                 sdyDTO.setRoot_node_no(dmpSoReturnEntity.getPlatformCode());
             }
 
-            if (dmpSoReturnEntity.getReturnTime() != null) {
-                sdyDTO.setRoot_node_create_time(localDateTime.format(dmpSoReturnEntity.getReturnTime()));
+            if (returnTime != null) {
+                sdyDTO.setRoot_node_create_time(localDateTime.format(returnTime));
             }
             sdyDTO.setRoot_node_modify_time(localDateTime.format(dmpSoReturnEntity.getPlatformUpdateTime()));
 
-            sdyDTO.setGoods_status("已退货");
+            if("10".equals(dmpSoReturnEntity.getStatus())) {
+            	sdyDTO.setGoods_status("已取消");
+        	}else {
+        		sdyDTO.setGoods_status("已退货");
+        	}
             sdyDTO.setMsku_code(dmpSoReturnDetailEntity.getSkuNo());
             if (CharSequenceUtil.isBlank(dmpSoReturnDetailEntity.getSkuName())) {
                 sdyDTO.setMsku_name(dmpSoReturnDetailEntity.getSkuNo());

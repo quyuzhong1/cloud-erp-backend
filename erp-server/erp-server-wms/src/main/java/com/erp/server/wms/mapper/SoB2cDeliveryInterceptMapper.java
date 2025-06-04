@@ -26,10 +26,10 @@ public interface SoB2cDeliveryInterceptMapper extends BaseMapper<SoB2cDeliveryIn
      * 获取状态统计
      * @Author Luo_WG
      * @Date 2023/12/25 14:38
-     * @param searchParam
+     * @param params
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO.TabListDTO>
      **/
-    List<SoB2cDeliveryInterceptDTO.TabListDTO> tabList(SoB2cDeliveryInterceptDTO.PagingParamDTO searchParam);
+    List<SoB2cDeliveryInterceptDTO.TabListDTO> tabList(@Param("params") SoB2cDeliveryInterceptDTO.PagingParamDTO params);
 
     /**
      * 分页查询

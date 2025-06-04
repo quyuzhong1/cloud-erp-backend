@@ -55,6 +55,7 @@ public class MachineInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "mi.warehouse_id",
             menuCode = "wms:machineInfo:paging",
             tableAlias = "mi"
     )
@@ -73,6 +74,7 @@ public class MachineInfoController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "mi.warehouse_id",
             menuCode = "wms:machineInfo:paging",
             tableAlias = "mi"
     )
@@ -249,6 +251,14 @@ public class MachineInfoController extends BaseController {
         return success(list);
     }
 
+    /**
+     * 批量通过SKU查询BOM子集
+     */
+    @PostMapping("/batchViewBomSubComponents")
+    public ApiResult<List<List<MachineSubComponentsDTO.ViewDTO>>> batchViewBomSubComponents(@RequestBody @Validated MachineSubComponentsDTO.BatchViewBomParamDTO dto) {
+        List<List<MachineSubComponentsDTO.ViewDTO>> list = machineInfoService.batchViewBomSubComponents(dto);
+        return success(list);
+    }
 
     /**
      * 删除

@@ -62,6 +62,7 @@ public class LogisticsBillCostController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsBillCost:paging",
             tableAlias = "lbc"
     )
@@ -80,6 +81,7 @@ public class LogisticsBillCostController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsBillCost:paging",
             tableAlias = "lbc"
     )
@@ -290,11 +292,6 @@ public class LogisticsBillCostController extends BaseController {
       */
      @PostMapping("/editView")
      @LogAction(value = LogActionEnum.UPDATE, desc = "编辑付款/退款")
-     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-     tableField = "create_user_id",
-     menuCode = "tms:logisticsBillCost:editView",
-     serviceClass = LogisticsBillCostService.class,
-     keyIdName = "id")
      public ApiResult<List<EditViewDTO>> editView(@RequestBody @Validated BaseIdDTO dto) {
      	return success(logisticsBillCostService.editView(dto.getId()));
      }

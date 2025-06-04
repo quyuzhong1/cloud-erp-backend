@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -69,4 +70,28 @@ public interface FirstMileCostAllocationMapper extends BaseMapper<FirstMileCostA
     List<FirstMileCostAllocationDTO.LastedAllocMonthDTO> listLastedAllocationMonth(@Param("logisticsBillIds") List<String> logisticsBillIds);
 
     List<FirstMileCostAllocationEntity> listBySourceIdsAndReportPeriodId(@Param("sourceIds") List<String> sourceIds,@Param("reportPeriodId")  String reportPeriodId);
+    /**
+     * 根据业务信息查询分摊记录
+     * @param sourceId
+     * @param businessCode
+     * @param reportMonth
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySourceIdAndCode(@Param("sourceId") String sourceId, @Param("businessCode") String businessCode, @Param("reportMonth") LocalDate reportMonth);
+    /**
+     * 根据skuId和业务类型查询头程费用分摊记录
+     * @param skuId
+     * @param businessCode
+     * @param reportMonth
+     * @return
+     */
+    List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@Param("skuId") String skuId, @Param("businessCode") String businessCode, @Param("reportMonth") LocalDate reportMonth);
+
+    /**
+     * 根据核算期间查询分摊记录
+     * @param reportPeriodMonth
+     * @param reportStatus
+     * @return
+     */
+    List<FirstMileCostAllocationEntity> listByReportPeriodMonth(@Param("reportPeriodMonth") LocalDate reportPeriodMonth, @Param("reportStatus") String reportStatus);
 }

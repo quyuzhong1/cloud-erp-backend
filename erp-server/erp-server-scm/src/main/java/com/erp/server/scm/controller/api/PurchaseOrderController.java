@@ -77,6 +77,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
@@ -95,6 +96,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/purchaseCodePaging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     public ApiResult<PagingVO<PurchaseOrderDTO.SourceCodeDTO>> purchaseCodePaging(@RequestBody @Validated PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> dto) {
@@ -111,6 +113,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     @WebAdvanceQuery(handler = PurchaseOrderQueryHandler.class)
@@ -128,6 +131,7 @@ public class PurchaseOrderController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "purchase_user_id",
+            warehouseTableField = "po.delivery_warehouse_id",
             menuCode = "scm:purchaseOrder:paging",
             tableAlias = "po")
     public ApiResult<List<ListStatusCountDTO.PurchaseOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
@@ -835,15 +839,15 @@ public class PurchaseOrderController extends BaseController {
     }
 
     /**
-     * 导出Srm采购合同PDF
+     * 查询Srm采购合同信息
      * @author zdy
      * @date: 2023/3/15 17:59
      * @param id
      * @return ApiResult
      */
-    @LogAction(value = LogActionEnum.EXPORT, desc = "导出Srm采购合同PDF")
-    @GetMapping("/exportSrmPurchaseContractPdf")
-    public ApiResult<PurchaseOrderDTO.ExportPdfDTO> exportSrmPurchaseContractPdf(@RequestParam("id") String id) {
+    @LogAction(value = LogActionEnum.EXPORT, desc = "查询Srm采购合同信息")
+    @GetMapping("/listSrmPurchaseContractPdf")
+    public ApiResult<PurchaseOrderDTO.ExportPdfDTO> listSrmPurchaseContractPdf(@RequestParam("id") String id) {
         SupplierUserInfoVO info = purchaseOrderService.getSrmSupplierUserInfo();
         //采购订单是否是该供应商合同
         PurchaseOrderSupplierEntity orderSupplier = purchaseOrderSupplierService.getByPurchaseOrderId(id);
@@ -856,4 +860,28 @@ public class PurchaseOrderController extends BaseController {
         PurchaseOrderDTO.ExportPdfDTO exportPdfDTO = purchaseOrderService.listPurchaseContractPdf(id);
         return success(exportPdfDTO);
     }
+
+    /**
+     * 导出SRM采购合同PDF
+     * @author zdy
+     * @date: 2023/3/15 17:59
+     * @param dto
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出SRM采购合同PDF")
+    @PostMapping("/exportSrmPurchaseContractPdf")
+    public void exportSrmPurchaseContractPdf(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+        SupplierUserInfoVO info = purchaseOrderService.getSrmSupplierUserInfo();
+        //采购订单是否是该供应商合同
+        PurchaseOrderSupplierEntity orderSupplier = purchaseOrderSupplierService.getByPurchaseOrderId(dto.getId());
+        if (ObjectUtils.isEmpty(orderSupplier)) {
+            throw new ServiceException(ApiError.ERROR_98036);
+        }
+        if (StringUtils.isEmpty(orderSupplier.getSupplierId()) || !orderSupplier.getSupplierId().equals(info.getSupplierId())){
+            throw new ServiceException(ApiError.ERROR_98120, info.getSupplierName());
+        }
+        purchaseOrderService.exportPurchaseContractPdf(dto.getId(),response);
+    }
+
 }

@@ -111,6 +111,8 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SoPriceService soPriceService;
 
     @Override
     public Boolean add(SoB2cDTO.AddDTO addDTO, String mainId) {
@@ -352,12 +354,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                 if (Objects.isNull(rate)){
                     continue;
                 }
-                detailEntity.setProductCost(MathUtil.multiply(rate,productCost,4));
-                detailEntity.setFirstMileShippingCost(MathUtil.multiply(rate,firstMileShippingCost,4));
-                detailEntity.setClearanceCustomsTax(MathUtil.multiply(rate,clearanceCustomsTax,4));
-                detailEntity.setTaxCost(MathUtil.multiply(rate,productCost,4));
+                detailEntity.setProductCost(MathUtil.multiplyWithTwo(rate,productCost,4));
+                detailEntity.setFirstMileShippingCost(MathUtil.multiplyWithTwo(rate,firstMileShippingCost,4));
+                detailEntity.setClearanceCustomsTax(MathUtil.multiplyWithTwo(rate,clearanceCustomsTax,4));
+                detailEntity.setTaxCost(MathUtil.multiplyWithTwo(rate,productCost,4));
                 BigDecimal actualTaxCost = MathUtil.add(productCost, firstMileShippingCost).add(clearanceCustomsTax);
-                detailEntity.setTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+                detailEntity.setTaxCost(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
                 detailEntity.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
             }
 
@@ -568,7 +570,22 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void consumerHandleDetailList(List<SoB2cDetailEntity> list, SoB2cEntity mainEntity, List<SkuInfoSimpleVO> skuList) {
+        List<SoPriceDTO.PriceDTO> priceDTOS = new ArrayList<>();
+        boolean fullyManagedOrder = soB2cService.isFullyManagedOrder(mainEntity.getDictPlatform());
+        if (fullyManagedOrder){
+            //重算真实售价和金额
+            List<SoPriceDTO.PriceParamDTO> soPriceParams = new ArrayList<>();
 
+            list.forEach(detailEntity -> {
+                SoPriceDTO.PriceParamDTO priceParamDTO = new SoPriceDTO.PriceParamDTO();
+                priceParamDTO.setSkuId(detailEntity.getSkuId());
+                priceParamDTO.setDate(mainEntity.getPlatformOrderCreateTime().toLocalDate());
+                priceParamDTO.setQty(detailEntity.getQty());
+                priceParamDTO.setShopId(mainEntity.getShopId());
+                soPriceParams.add(priceParamDTO);
+            });
+            priceDTOS = soPriceService.batchGetSoPrice(soPriceParams);
+        }
         for (SoB2cDetailEntity detailEntity :list) {
             //产品信息
             SkuInfoSimpleVO skuVO = skuList.stream().filter(obj -> obj.getSkuId().equals(detailEntity.getSkuId())).findFirst()
@@ -584,10 +601,21 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             //含税单价
             BigDecimal costPrice = null == skuVO ? BigDecimal.ZERO : ObjectUtils.isEmpty(skuVO.getActualTaxCost()) ? skuVO.getTargetTaxCost() : skuVO.getActualTaxCost();
             detailEntity.setTaxCost(costPrice);
-            detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
+            detailEntity.setAmount(MathUtil.multiplyWithTwo(detailEntity.getPrice(),detailEntity.getQty()));
             // 产品图片
             detailEntity.setImageUrl(null == skuVO ? "" : skuVO.getSkuImagesUrl());
+            if (fullyManagedOrder){
+                SoPriceDTO.PriceDTO priceDTO = priceDTOS.stream().filter(priceDTO1 -> priceDTO1.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
+                detailEntity.setPrice(Objects.nonNull(priceDTO) ? priceDTO.getTaxPrice() : BigDecimal.ZERO);
+                detailEntity.setTaxRate(Objects.nonNull(priceDTO) ?  priceDTO.getTaxRate() : BigDecimal.ZERO);
+            }
         }
+        if (fullyManagedOrder){
+            BigDecimal amount = list.stream().map(detailEntity -> MathUtil.multiplyWithTwo(detailEntity.getPrice(), detailEntity.getQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
+            mainEntity.setAmount(amount);//重置主单金额
+            soB2cService.updateAmount(mainEntity.getId(),amount);
+        }
+
     }
 
     @Override
@@ -1002,7 +1030,9 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             if(StringUtils.isBlank(detailEntity.getSplitDetailId())){
                 //建议售价
                 detailEntity.setAdvicePrice(skuVO.getRetailPrice());
-                detailEntity.setAmount(MathUtil.multiply(detailEntity.getPrice(),detailEntity.getQty()));
+            }
+            if(Objects.isNull(detailEntity.getAmount())){
+                detailEntity.setAmount(MathUtil.multiplyWithTwo(detailEntity.getPrice(),detailEntity.getQty()));
             }
             //虚拟仓信息
             String virtualWarehouseId = virtualWarehouseList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
@@ -1077,12 +1107,12 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
             }
             BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
             BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+            skuVO.setNotTaxCostPrice(MathUtil.multiplyWithTwo(skuCostDTO.getProductCost(),rate,4));
             BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
-            skuVO.setActualTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
-            skuVO.setProductCost(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
-            skuVO.setFirstMileShippingCost(MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),rate,4));
-            skuVO.setClearanceCustomsTax(MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),rate,4));
+            skuVO.setActualTaxCost(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+            skuVO.setProductCost(MathUtil.multiplyWithTwo(skuCostDTO.getProductCost(),rate,4));
+            skuVO.setFirstMileShippingCost(MathUtil.multiplyWithTwo(skuCostDTO.getFirstMileShippingCost(),rate,4));
+            skuVO.setClearanceCustomsTax(MathUtil.multiplyWithTwo(skuCostDTO.getClearanceCustomsTax(),rate,4));
             skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
         }
     }

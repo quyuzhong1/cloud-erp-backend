@@ -3,12 +3,14 @@ package com.erp.server.oms.controller.api;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.AddGroup;
 import com.common.business.validator.UpdateGroup;
 import com.common.business.validator.ValidList;
@@ -70,6 +72,10 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sm.shop_id",
+            menuCode = "oms:skuMaping:platformPaging"
+    )
     public ApiResult<List<SkuMappingDTO.TabListDTO>> tabList(@Validated @RequestBody SkuMappingDTO.FindTabDTO dto) {
         List<SkuMappingDTO.TabListDTO> list = skuMappingService.tabList(dto);
         return success(list);
@@ -98,6 +104,10 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/platformPaging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sm.shop_id",
+            menuCode = "oms:skuMaping:platformPaging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<SkuMappingDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SkuMappingDTO.PagingParamDTO> dto) {
         PagingVO<SkuMappingDTO.PagingViewDTO> pagingVO = skuMappingService.paging(dto);
@@ -374,7 +384,7 @@ public class SkuMappingController extends BaseController {
      * @return
      */
     @PostMapping("/getLog")
-    public ApiResult<PagingVO<OperateLogDTO.ListDTO>> getLog(@RequestBody @Validated PagingDTO<BaseIdDTO> dto) {
+    public ApiResult<PagingVO<OperateLogDTO.ListDTO>> getLog(@RequestBody @Validated PagingDTO<BaseIdDTO.SearchDTO> dto) {
         PagingVO<OperateLogDTO.ListDTO> pagingVO = skuMappingService.getLog(dto);
         return success(pagingVO);
     }

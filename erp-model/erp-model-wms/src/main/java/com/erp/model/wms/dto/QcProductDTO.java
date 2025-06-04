@@ -40,6 +40,10 @@ public class QcProductDTO {
          * sku
          */
         private String skuId;
+        /**
+         * sku
+         */
+        private String skuNo;
 
 
         /**

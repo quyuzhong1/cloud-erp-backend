@@ -32,4 +32,6 @@ public interface SysPostService extends IService<SysPostEntity> {
     List<SysPostEntity> listByRequisitionSetting();
 
     List<SysPostEntity> listByRequisitionChangeSetting();
+
+    List<SysPostEntity> listByNameList(List<String> nameList);
 }

@@ -194,6 +194,10 @@ public class TmsDeclareBillDTO implements Serializable {
          * 业务id（发货单id或销售出库单id）
          */
         private String sourceId;
+        /**
+         * 要货申请id
+         */
+        private String requisitionId;
 
         /**
          * 业务code（发货单code或销售出库单code）

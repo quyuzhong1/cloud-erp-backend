@@ -340,15 +340,18 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
                 SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
                 if (ObjectUtil.isEmpty(soReturnReceiveDetailEntity)) {
-                    throw new ServiceException(ApiError.SO_RETURN_RECEIVE_SKU_NOT_EXIST, skuVO.getSkuNo());
+                    soReturnReceiveDetailEntity = new SoReturnReceiveDetailEntity();
                 }
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
                 //实退数量
                 Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
-                //签收单数量
-                Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-                if (receiveQty < detailDto.getRealQty() + realQty) {
-                    throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+
+                if (CollUtil.isNotEmpty(soReturnReceiveDetailEntities)) {
+                    //签收单数量
+                    Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
+                    if (receiveQty < detailDto.getRealQty() + realQty) {
+                        throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
+                    }
                 }
                 detailEntity.setMainId(id);
                 detailEntity.setSkuId(detailDto.getSkuId());
@@ -409,15 +412,12 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
         for (SoReturnInstockDetailDTO.Add detailDto : dto.getDetailList()) {
             SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
             SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(null);
-            if (ObjectUtil.isEmpty(soReturnReceiveDetailEntity)) {
-                throw new ServiceException(ApiError.SO_RETURN_RECEIVE_SKU_NOT_EXIST, skuVO.getSkuNo());
-            }
             SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
             //实退数量
             Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             //签收单数量
             Integer receiveQty = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).map(SoReturnReceiveDetailEntity::getReceiveQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (receiveQty < detailDto.getRealQty() + realQty) {
+            if (CollUtil.isNotEmpty(soReturnReceiveDetailEntities) && receiveQty < detailDto.getRealQty() + realQty) {
                 throw new ServiceException(ApiError.ERROR_92045, skuVO.getSkuNo());
             }
             detailEntity.setMainId(id);
@@ -425,8 +425,8 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             detailEntity.setSkuNo(skuVO.getSkuNo());
             detailEntity.setRealQty(detailDto.getRealQty());
             detailEntity.setReceiveQty(detailDto.getReceiveQty());
-            detailEntity.setReturnTypeDict(soReturnReceiveDetailEntity.getReturnTypeDict());
-            detailEntity.setReturnReasonDict(soReturnReceiveDetailEntity.getReturnReasonDict());
+            detailEntity.setReturnTypeDict(ObjectUtil.isEmpty(soReturnReceiveDetailEntity) ? "" : soReturnReceiveDetailEntity.getReturnTypeDict());
+            detailEntity.setReturnReasonDict(ObjectUtil.isEmpty(soReturnReceiveDetailEntity) ? "" : soReturnReceiveDetailEntity.getReturnReasonDict());
             detailEntity.setWarehouseLocation(detailDto.getWarehouseLocation());
             detailEntity.setRemark(detailDto.getRemark());
             detailEntity.setSourceDetailId(detailDto.getSourceDetailId());
@@ -721,7 +721,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setId(detailDto.getId());
                     realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSoReturnDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
-                if (receiveQty < detailDto.getRealQty() + realQty) {
+                if (receiveQty > 0 &&  receiveQty < detailDto.getRealQty() + realQty) {
                     throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
                 }
                 detailEntity.setMainId(dto.getId());
@@ -789,10 +789,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
             }
             for (SoReturnInstockDetailDTO.Update detailDto : dto.getDetailList()) {
                 SkuVO skuVO = skuInfoByIds.stream().filter(req -> req.getSkuId().equals(detailDto.getSkuId())).findFirst().orElse(new SkuVO());
-                SoReturnReceiveDetailEntity soReturnReceiveDetailEntity = soReturnReceiveDetailEntities.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoReturnReceiveDetailEntity());
-                if (ObjectUtil.isEmpty(soReturnReceiveDetailEntity)) {
-                    throw new ServiceException(ApiError.SO_RETURN_RECEIVE_SKU_NOT_EXIST, skuVO.getSkuNo());
-                }
+
                 SoReturnInstockDetailEntity detailEntity = new SoReturnInstockDetailEntity();
                 //实退 入库数量
                 Integer realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -802,7 +799,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                     detailEntity.setId(detailDto.getId());
                     realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
-                if (receiveQty < detailDto.getRealQty() + realQty) {
+                if (receiveQty > 0 &&  receiveQty < detailDto.getRealQty() + realQty) {
                     throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
                 }
                 detailEntity.setMainId(dto.getId());
@@ -901,7 +898,7 @@ public class SoReturnInstockDetailServiceImpl extends SuperServiceImpl<SoReturnI
                 detailEntity.setId(detailDto.getId());
                 realQty = soReturnInstockDetailEntities.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoReturnInstockDetailEntity::getRealQty).reduce(MathUtil.ZERO, Integer::sum);
             }
-            if (receiveQty >0 && receiveQty < detailDto.getRealQty() + realQty) {
+            if (receiveQty > 0 && receiveQty < detailDto.getRealQty() + realQty) {
                 throw new ServiceException(ApiError.ERROR_92026, skuVO.getSkuNo());
             }
             detailEntity.setMainId(dto.getId());

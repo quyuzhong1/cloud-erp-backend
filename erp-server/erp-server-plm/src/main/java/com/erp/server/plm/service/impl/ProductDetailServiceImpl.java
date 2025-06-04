@@ -2653,9 +2653,9 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
                     BigDecimal taxRate = productCostEntityList.stream().filter(e -> e.getSkuId().equals(skuId)).map(ProductCostEntity::getTaxRate).findFirst().orElse(null);
                     if (Objects.nonNull(rate) && Objects.nonNull(taxRate)){
                         //本位币
-                        BigDecimal actualNoTaxCost =  MathUtil.multiply(rate,skuCostDTO2.getProductCost(),4);
+                        BigDecimal actualNoTaxCost =  MathUtil.multiplyWithTwo(rate,skuCostDTO2.getProductCost(),4);
                         BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-                        actualTaxCost = MathUtil.multiply(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), percentRate));
+                        actualTaxCost = MathUtil.multiplyWithTwo(actualNoTaxCost, MathUtil.add(BigDecimal.valueOf(1), percentRate));
                     }
                 }else {
                     DmpSkuCostEntity skuCostDTO = skuCostList.stream().filter(e -> e.getSkuId().equals(skuId)).findFirst().orElse(null);
@@ -4620,6 +4620,8 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
             ProductSearchDTO.SkuListDTO finalSkuListDTO = skuListDTO;
             String supplierName = supplierList.stream().filter(obj -> obj.getId().equals(finalSkuListDTO.getMainSupplier())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             skuListDTO.setMainSupplierName(supplierName);
+            //标准零售价
+            skuListDTO.setRetailPrice(Objects.isNull(skuListDTO.getRetailPrice()) ? BigDecimal.ZERO : skuListDTO.getRetailPrice());
             resultList.add(skuListDTO);
         }
         return resultList;

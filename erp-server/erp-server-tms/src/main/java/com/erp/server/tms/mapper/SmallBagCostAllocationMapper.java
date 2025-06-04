@@ -27,5 +27,6 @@ public interface SmallBagCostAllocationMapper extends BaseMapper<SmallBagCostAll
 	IPage<ListDTO> paging(Page query,@Param("params") PagingParamDTO params);
 	
 	List<SmallBagCostAllocationDTO.TabListDTO> tabList(@Param("params") com.common.business.dto.base.PermissionsDTO params);
-	
+
+    List<SmallBagCostAllocationEntity> listByReportPeriodStr(@Param("reportPeriodStr") String reportPeriodStr, @Param("reportStatus") String reportStatus);
 }

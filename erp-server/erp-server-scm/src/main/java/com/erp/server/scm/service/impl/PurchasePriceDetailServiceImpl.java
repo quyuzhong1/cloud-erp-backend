@@ -7,15 +7,12 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
@@ -24,7 +21,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
@@ -42,7 +38,6 @@ import com.erp.server.scm.service.ModuleOperateLogService;
 import com.erp.server.scm.service.PurchasePriceDetailService;
 import com.erp.server.scm.service.PurchasePriceService;
 import com.erp.server.scm.service.SupplierService;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -52,8 +47,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -62,7 +55,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -161,7 +153,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         //查询供应商信息
         List<String> skuIdList = list.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
-        List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = listCheckPurchasePriceDetail(supplierId, purchaseOrgId, skuIdList);
+        List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = listCheckPurchasePriceDetail(Collections.singletonList(supplierId), purchaseOrgId, skuIdList);
         if (CollectionUtils.isNotEmpty(purchaseDetailList)) {
             List<String> oldIdList = list.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
             purchaseDetailList = purchaseDetailList.stream().filter(obj -> !oldIdList.contains(obj.getId())).collect(Collectors.toList());
@@ -482,19 +474,19 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 查询供应商的 已有的sku信息
      *
-     * @param supplierId
+     * @param supplierIdList
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      * @author yl
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(String supplierId, String purchaseOrgId, List<String> skuIdList) {
+    public List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(List<String> supplierIdList, String purchaseOrgId, List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<PurchasePriceDetailDTO.ViewDTO> list = baseMapper.listCheckPurchasePriceDetail(supplierId, statusList, purchaseOrgId, skuIdList);
+        List<PurchasePriceDetailDTO.ViewDTO> list = baseMapper.listCheckPurchasePriceDetail(supplierIdList, statusList, purchaseOrgId, skuIdList);
         return list;
     }
 

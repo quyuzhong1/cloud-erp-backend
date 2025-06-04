@@ -10,7 +10,6 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -79,6 +78,7 @@ import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.FileTemplateFeign;
 import com.erp.rpc.tms.feign.LogisticsAuthFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
@@ -212,6 +212,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
     @Resource
+    private AuthDataFeign authDataFeign;
+    @Resource
     private TikTokFullService tikTokFullService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -270,6 +272,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
         dto.setReceiveCountry(receiverList.get(0).getCountry());
         dto.setFromWarehouse(soB2cDeliveryDetailList.get(0).getWarehouseId());
         dto.setSalesOrgId(soB2cEntity.getOrgId());
+        dto.setDictPlatform(soB2cEntity.getDictPlatform());
         CfgRuleOutDTO.MatchTransferResultDTO matchTransferResultDTO = cfgRuleOutService.matchTransferRule(dto);
         if (Objects.nonNull(matchTransferResultDTO) && Objects.nonNull(matchTransferResultDTO.getIsTransit()) && matchTransferResultDTO.getIsTransit()){
             if (CollectionUtils.isNotEmpty(matchTransferResultDTO.getTransferWarehouseIdList())){
@@ -282,7 +285,8 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
     @Override
     public List<SoB2cDeliveryDTO.TabListDTO> tabList(PermissionsDTO param) {
         SoB2cDeliveryDTO.PagingParamDTO searchParam = new SoB2cDeliveryDTO.PagingParamDTO();
-        searchParam.setPermissionSql(param.getPermissionSql());
+        String permissionSql = param.getPermissionSql();
+        searchParam.setPermissionSql(permissionSql);
         List<SoB2cDeliveryDTO.TabListDTO> list = baseMapper.tabList(searchParam);
         // 获取状态列表
         List<String> statusList = SoB2cDeliveryStatusEnum.getStatusList();
@@ -294,16 +298,27 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         });
         //拦截中 (处理中的拦截单)
+        param.setPermissionSql(getPermissionSql());
         List<SoB2cDeliveryInterceptDTO.TabListDTO> interceptTabList = soB2cDeliveryInterceptService.tabList(param);
         SoB2cDeliveryInterceptDTO.TabListDTO interceptDTO = interceptTabList.stream().filter(v->SoB2cDeliveryInterceptStatusEnum.WAIT_HANDLE.getCode().equals(v.getTabFlag())).findFirst().orElse(null);
         Integer interceptCount = interceptDTO == null?0:interceptDTO.getCount();
         list.add(new SoB2cDeliveryDTO.TabListDTO("intercepting", interceptCount));
         // 手动标发
+        param.setPermissionSql(permissionSql);
         int falseShipment = baseMapper.countShipmentMark(param);
         list.add(new SoB2cDeliveryDTO.TabListDTO("falseShipment", falseShipment));
         list.add(new SoB2cDeliveryDTO.TabListDTO("all", list.stream().mapToInt(SoB2cDeliveryDTO.TabListDTO::getCount).sum()));
         // 计算合计数量
         return list;
+    }
+
+    private String getPermissionSql() {
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sbdid.warehouse_id");
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("sbd.shop_id");
+        if (CharSequenceUtil.isAllBlank(warehousePermissionSql, shopPermissionSql)) {
+            return null;
+        }
+        return CharSequenceUtil.format("{} {}", CharSequenceUtil.isNotBlank(warehousePermissionSql) ? warehousePermissionSql : " and 1=1 ", CharSequenceUtil.isNotBlank(shopPermissionSql) ? shopPermissionSql : " and 1=1 ");
     }
 
     @Override
@@ -644,7 +659,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //更新单据状态和拣货状态
-        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus(), Boolean.FALSE,Boolean.FALSE,Boolean.FALSE);
+        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.GENERATE_WAVE.getStatus(), Boolean.FALSE,Boolean.FALSE);
         if (!update) {
             throw new ServiceException("取消打印拣货单");
         }
@@ -1011,7 +1026,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
                 .scanLength(dto.getLength())
                 .scanWidth(dto.getWidth())
                 .scanHeight(dto.getHeight())
-                .scanWeight(MathUtil.multiply(dto.getWeight(),new BigDecimal(1000)))
+                .scanWeight(MathUtil.multiplyWithTwo(dto.getWeight(),new BigDecimal(1000)))
                 .orderLength(soB2cLogisticsEntity.getLength())
                 .orderWidth(soB2cLogisticsEntity.getWidth())
                 .orderHeight(soB2cLogisticsEntity.getHeight())
@@ -1674,7 +1689,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
             }
         }
         //更新单据状态和拣货状态
-        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE, Boolean.TRUE, Boolean.TRUE);
+        Boolean update = updateStatusByIdList(Collections.singletonList(id), SoB2cDeliveryStatusEnum.PICKING.getStatus(), Boolean.TRUE, Boolean.TRUE );
         if (!update) {
             throw new ServiceException("完成打印失败");
         }
@@ -2317,7 +2332,7 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
 
     @Override
     public PagingVO<SoB2cDeliveryDTO.ListDTO> exportB2cDelivery(PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
-        dto.setPermissionSql(dto.getPermissionSql());
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<SoB2cDeliveryDTO.ListDTO> page = this.baseMapper.list(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollUtil.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
@@ -2470,14 +2485,13 @@ public class SoB2cDeliveryServiceImpl extends SuperServiceImpl<SoB2cDeliveryMapp
      * @param status
      * @return Boolean
      */
-    private Boolean updateStatusByIdList(List<String> idList,String status,Boolean isPrintPicking,Boolean isPrintLogistics,Boolean isPrintSkuBarcode) {
+    private Boolean updateStatusByIdList(List<String> idList,String status,Boolean isPrintPicking,Boolean isPrintLogistics) {
         if (CollectionUtils.isEmpty(idList)) {
             return Boolean.FALSE;
         }
         return lambdaUpdate().in(SoB2cDeliveryEntity::getId,idList).set(SoB2cDeliveryEntity::getStatus,status)
                 .set(SoB2cDeliveryEntity::getIsPrintPicking,isPrintPicking)
                 .set(SoB2cDeliveryEntity::getIsPrintLogistic,isPrintLogistics)
-                .set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,isPrintSkuBarcode)
                 .set(isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,LocalDateTime.now())
                 .set(!isPrintPicking,SoB2cDeliveryEntity::getFinishPrintTime,null)
                 .update();

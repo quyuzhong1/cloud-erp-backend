@@ -66,6 +66,16 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
     @Resource
     private SubcontractIssueService subcontractIssueService;
 
+    @Resource
+    private TransferInService transferInService;
+    @Resource
+    private TransferInDetailService transferInDetailService;
+
+    @Resource
+    private TransferOutService transferOutService;
+    @Resource
+    private TransferOutDetailService transferOutDetailService;
+
     @Override
     public void updateBusinessSyncKingdeeStatus(Map<String, Object> params) {
         //模块类型编码
@@ -147,6 +157,24 @@ public class SyncKingdeeServiceImpl implements SyncKingdeeService {
         //委外发料单
         if (ApiModuleTypeEnum.SUBCONTRACT_ISSUE.getCode().toString().equals(code)) {
             subcontractIssueService.updateSyncKingdeeId(businessId,syncKingdeeId);
+        }
+        //分步式调入单
+        if (ApiModuleTypeEnum.TRANSFER_IN.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                transferInDetailService.updateKingdeeDetailId(list);
+                return;
+            }
+            transferInService.updateSyncKingdeeId(businessId, syncKingdeeId);
+        }
+        //分步式调出单
+        if (ApiModuleTypeEnum.TRANSFER_OUT.getCode().toString().equals(code)) {
+            if (ObjectUtils.isNotEmpty(details)) {
+                JSONArray list = JSONUtil.parseArray(JSONUtil.toJsonStr(params.get("details")));
+                transferOutDetailService.updateKingdeeDetailId(list);
+                return;
+            }
+            transferOutService.updateSyncKingdeeId(businessId, syncKingdeeId);
         }
     }
 }

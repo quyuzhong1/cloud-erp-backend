@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
@@ -36,6 +37,7 @@ import com.erp.model.oms.dto.excel.SkuMappingWarehouseImportExcelDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductUnitEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -51,6 +53,7 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.BomSkuFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
@@ -154,7 +157,11 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     private VirtualInventoryFeign virtualInventoryFeign;
     @Resource
     private InventoryFeign inventoryFeign;
+    @Resource
+    private AuthDataFeign authDataFeign;
 
+    @Resource
+    private InvoiceTaxService invoiceTaxService;
 
     @Override
     public void downloadTemplate(String type, HttpServletResponse response) {
@@ -228,8 +235,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             List<ListingInfoEntity> list = listingInfoService.list();
             String key = DictBasicTypeEnum.SALES_PLATFORM.getType();
             List<DictBasicDTO.ViewDTO> dictBasicList = dictBasicService.getByKey(key);
-            List<ShopInfoEntity> shopInfoList = shopInfoService.list();
-            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this, skuList, shopInfoList, skuMappingList, dictBasicList, list, listingInfoService,operateLogService);
+            //单位
+            List<ProductUnitEntity> unitList = FeignQuery.create(ProductUnitEntity.class).list();
+            //原产地
+            String originKey = DictBasicTypeEnum.INVOICE_TAX_NFE_ORIGIN.getType();
+            List<DictBasicDTO.ViewDTO> originList = dictBasicService.getByKey(originKey);
+
+            SkuMappingExcelListener excelListenerUtil = new SkuMappingExcelListener(this,unitList,originList, skuList, shopInfoService, skuMappingList, dictBasicList, list, listingInfoService,operateLogService,invoiceTaxService);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
@@ -255,7 +267,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if (CollectionUtils.isNotEmpty(overseasWarehouseList)) {
                 overseasWarehouseMap = overseasWarehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getId, Function.identity()));
             }
-            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener( warehouseList, overseasWarehouseMap);
+            SkuMappingWarehouseExcelListener excelListenerUtil = new SkuMappingWarehouseExcelListener(overseasWarehouseMap);
             try {
                 EasyExcel.read(excelFile.getInputStream(), SkuMappingWarehouseImportExcelDTO.class, excelListenerUtil).sheet(0).doRead();
             } catch (Exception e) {
@@ -340,6 +352,13 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public List<SkuMappingDTO.TabListDTO> tabList(SkuMappingDTO.FindTabDTO dto) {
         List<SkuMappingDTO.TabListDTO> resultList = new ArrayList<>(3);
+        if("warehouse".equals(dto.getType())){
+            //重置权限
+            dto.setPermissionSql(getWarehousePermissionSql());
+        }else if ("customer".equals(dto.getType())){
+            //重置权限
+            dto.setPermissionSql("");
+        }
         List<SkuMappingDTO.MatchCountDTO> matchCountList = baseMapper.listMatchCount(dto);
         //所有
         SkuMappingDTO.TabListDTO all = new SkuMappingDTO.TabListDTO();
@@ -443,6 +462,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (!listingInfoService.updateById(listing)) {
             throw new ServiceException("[listing] 更新失败");
         }
+        //更新发票税务信息
+        if (ObjectUtil.isNotEmpty(dto.getTaxCodeDTO())) {
+            dto.getTaxCodeDTO().setListingId(listing.getId());
+            InvoiceTaxDTO.UpdateDTO updateDTO = BeanUtil.toBean(dto.getTaxCodeDTO(), InvoiceTaxDTO.UpdateDTO.class);
+            invoiceTaxService.addOrUpdate(updateDTO);
+        }
         // 无修改
         if (skuMapping.getProductSkuId().equalsIgnoreCase(productSkuId) && dto.getEffectiveTime().equals(skuMapping.getEffectiveTime())) {
             // 检查仓库发货配置
@@ -496,6 +521,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if(PlatformDictEnum.ALI_EXPRESS.getCode().equals(skuMapping.getDictPlatform())){
             listingInfoService.handleAliExpress(addSkuMaping,skuVOList.get(0),listing);
         }
+
         operateLogService.addModuleOperateLogByObj(skuMapping, addSkuMaping, ModuleTypeEnum.LISTING_INFO.getCode(), addSkuMaping.getListingId(),  CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
         return BatchResultDTO.success(addSkuMaping.getId(), addSkuMaping.getId(), "更改sku对照表成功");
     }
@@ -882,12 +908,12 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             }
             BigDecimal taxRate = Objects.nonNull(skuVO.getTaxRate()) ? skuVO.getTaxRate() : BigDecimal.ZERO;
             BigDecimal percentRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
-            skuVO.setNotTaxCostPrice(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
+            skuVO.setNotTaxCostPrice(MathUtil.multiplyWithTwo(skuCostDTO.getProductCost(),rate,4));
             BigDecimal actualTaxCost = MathUtil.add(skuCostDTO.getProductCost(), skuCostDTO.getFirstMileShippingCost()).add(skuCostDTO.getClearanceCustomsTax());
-            skuVO.setActualTaxCost(MathUtil.multiply(MathUtil.multiply(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
-            skuVO.setProductCost(MathUtil.multiply(skuCostDTO.getProductCost(),rate,4));
-            skuVO.setFirstMileShippingCost(MathUtil.multiply(skuCostDTO.getFirstMileShippingCost(),rate,4));
-            skuVO.setClearanceCustomsTax(MathUtil.multiply(skuCostDTO.getClearanceCustomsTax(),rate,4));
+            skuVO.setActualTaxCost(MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(actualTaxCost,rate,4), MathUtil.add(BigDecimal.valueOf(1), percentRate),4));
+            skuVO.setProductCost(MathUtil.multiplyWithTwo(skuCostDTO.getProductCost(),rate,4));
+            skuVO.setFirstMileShippingCost(MathUtil.multiplyWithTwo(skuCostDTO.getFirstMileShippingCost(),rate,4));
+            skuVO.setClearanceCustomsTax(MathUtil.multiplyWithTwo(skuCostDTO.getClearanceCustomsTax(),rate,4));
             skuVO.setCostSource(skuCostDTO.getAllocatedMonth().format(DateTimeFormatter.ofPattern("yyyy-MM")) + "财务导入成本");
         }
     }
@@ -995,7 +1021,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> warehousePaging(PagingDTO<SkuMappingDTO.WarehousePagingParamDTO> dto) {
         SkuMappingDTO.WarehousePagingParamDTO params = dto.getParams();
-        params.setPermissionSql(dto.getPermissionSql());
+        params.setPermissionSql(getWarehousePermissionSql());
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         params.setType(RuleTypeEnum.WAREHOUSE.getCode());
         IPage pageData = baseMapper.warehousePaging(query, params);
@@ -1005,6 +1031,18 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         }
         fillWarehouseDb(list);
         return new PagingVO<>(pageData);
+    }
+
+    /**
+     * 如果没有仓库时，默认所有人可以查看
+     * @return
+     */
+    private String getWarehousePermissionSql() {
+        String warehousePermissionSql = authDataFeign.getWarehousePermissionSql("sm.warehouse_id");
+        if (StringUtils.isBlank(warehousePermissionSql)) {
+            return "";
+        }
+        return " AND ( (sm.warehouse_id = '') OR " + " (1=1 " +warehousePermissionSql+ " ) ) ";
     }
 
 
@@ -1109,6 +1147,10 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         //子件信息
         List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
 
+        //原产地名称
+        List<DictBasicDTO.ViewDTO> originList = dictBasicService.getByKey(DictBasicTypeEnum.INVOICE_TAX_NFE_ORIGIN.getType());
+        Map<String, String> originMap = originList.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+
         for (SkuMappingDTO.PagingViewDTO item : list) {
             String skuId = item.getProductSkuId();
             String skuName = skuList.stream().filter(s -> s.getSkuId().equals(skuId)).
@@ -1128,6 +1170,8 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 List<SkuMappingExtendDTO.ListDTO> listDTO = extendMap.getOrDefault(item.getId(), Collections.emptyList());
                 item.setExtendList(listDTO);
             }
+            //原产地名称
+            item.setDictOriginName(originMap.get(item.getDictOrigin()));
         }
     }
 
@@ -1325,7 +1369,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     }
 
     @Override
-    public PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<OperateLogDTO.ListDTO> getLog(PagingDTO<BaseIdDTO.SearchDTO> dto) {
         SkuMappingEntity skuMappingEntity = this.getById(dto.getParams().getId());
         if (Objects.isNull(skuMappingEntity)) {
             throw new ServiceException("sku对照表为空");
@@ -1340,6 +1384,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isNotBlank(skuMappingEntity.getListingId())) {
             logSearchDTO.setBusinessId(skuMappingEntity.getListingId());
             logSearchDTO.setModuleType(ModuleTypeEnum.LISTING_INFO.getCode());
+            logSearchDTO.setSearchKey(dto.getParams().getSearchKey());
             listDTOPagingVO = operateLogService.paging(logDTO);
         }
 
@@ -1349,6 +1394,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             if(allList.size() < listDTOPagingVO.getPageSize()){
                 logSearchDTO.setBusinessId(skuMappingEntity.getId());
                 logSearchDTO.setModuleType(ModuleTypeEnum.SKU_MAPPING.getCode());
+                logSearchDTO.setSearchKey(dto.getParams().getSearchKey());
                 logDTO.setCurrPage(1);
                 PagingVO<OperateLogDTO.ListDTO> skuMappingPagingVO = operateLogService.paging(logDTO);
                 List<OperateLogDTO.ListDTO> skuLogList = (List<OperateLogDTO.ListDTO>) skuMappingPagingVO.getList();
@@ -1461,6 +1507,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
 
     @Override
     public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(PagingDTO<SkuMappingDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         dto.getParams().setType(RuleTypeEnum.PLATFORM.getCode());
         Page<SkuMappingDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
 
@@ -1471,6 +1518,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
     @Override
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
         dto.getParams().setType(RuleTypeEnum.WAREHOUSE.getCode());
+        dto.getParams().setPermissionSql(getWarehousePermissionSql());
         Page<SkuMappingDTO.WarehousePagingViewDTO> page = baseMapper.listWarehouseExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         fillWarehouseDb(page.getRecords());
         return new PagingVO<>(page);
@@ -1666,6 +1714,9 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
             // 亚马逊指定正常任务类型兼容限流重试
             if (PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(shopInfoEntity.getDictPlatform())){
                 dto.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+                // 手动指定创建报告
+                Map<String, Boolean> map = Collections.singletonMap("hasCreateReport",true);
+                dto.setDetailExtendJson(JSON.toJSONString(map));
             }
             createDTOList.add(dto);
         }

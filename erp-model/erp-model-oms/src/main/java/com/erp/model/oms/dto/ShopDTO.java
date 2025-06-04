@@ -1,22 +1,21 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.dto.base.UpdateStateDTO.BatchUpdateDTO;
 import com.common.business.enums.ServiceCodeNameEnum;
 import com.erp.model.oms.enums.ShopTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.DecimalMin;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Size;
+import javax.validation.constraints.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -202,6 +201,15 @@ public class ShopDTO implements Serializable {
          */
          private String returnWarehouse;
          private String returnWarehouseName;
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
+        /**
+         * 是否存在授权
+         */
+        private Boolean isAuth;
     }
 
 
@@ -210,64 +218,9 @@ public class ShopDTO implements Serializable {
     public static class PagingParamDTO  extends SortDTO {
 
         /**
-         * 店铺名称
-         */
-        private String name;
-
-        /**
          * 平台
          */
         private String dictPlatform;
-
-        /**
-         * 账号
-         */
-        private String account;
-
-        /**
-         * 国家
-         */
-        private String dictCountryCode;
-
-        /**
-         * 禁用状态集合
-         */
-        private List<Boolean> disabledList;
-
-        /**
-         * 授权状态集合
-         */
-        private List<String> authStatusList;
-
-        /**
-         * 创建人id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间集合
-         */
-        private List<LocalDateTime> createTimeList;
-
-
-        /**
-         * 授权时间
-         */
-        private List<LocalDateTime> authTimeList;
-
-        /**
-         * 修改人id 集合
-         */
-        private List<String> updateUserIdList;
-
-        /**
-         * 修改时间
-         */
-        private List<LocalDateTime> updateTimeList;
-        /**
-         * 销售组织id
-         */
-        private List<String> salesOrgIdList;
         /**
          * 页面高级查询
          */
@@ -276,6 +229,14 @@ public class ShopDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+        /**
+         * 展示对应用的的权限集合
+         */
+        private String userId;
+        /**
+         * 店铺ID集合【后端使用】
+         */
+        private List<String> shopIdList = new ArrayList<>();
 
     }
 
@@ -287,7 +248,8 @@ public class ShopDTO implements Serializable {
         /**
          * 平台
          */
-        @NotBlank(message = "平台不能为空")
+        @NotBlank(message = "平台不能为空"
+        )
         private String dictPlatform;
 
 
@@ -388,6 +350,24 @@ public class ShopDTO implements Serializable {
          * 平台经营模式
          */
         private String businessModel;
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
+
+        /**
+         * 授权token
+         */
+        private String token;
+        /**
+         * app key
+         */
+        private String clientId;
+        /**
+         * app secret
+         */
+        private String clientSecret;
     }
 
 
@@ -577,6 +557,25 @@ public class ShopDTO implements Serializable {
          * 平台经营模式名称
          */
         private String businessModelName;
+
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
+
+        /**
+         * 授权token
+         */
+        private String token;
+        /**
+         * app key
+         */
+        private String clientId;
+        /**
+         * app secret
+         */
+        private String clientSecret;
     }
 
     @Data
@@ -587,6 +586,10 @@ public class ShopDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+        /**
+         * 权限接口【后端时间】
+         */
+        private String permissionSql;
     }
 
     @Data
@@ -720,6 +723,29 @@ public class ShopDTO implements Serializable {
          */
         private String businessModel;
 
+
+
+        /**
+         * 授权过期时间
+         */
+        private LocalDate authExpireDate;
+
+        /**
+         * 授权token
+         */
+        private String token;
+        /**
+         * app key
+         */
+        private String clientId;
+        /**
+         * app secret
+         */
+        private String clientSecret;
+        /**
+         * dictAreaCode
+         */
+        private String dictAreaCode;
     }
     @Data
     @NoArgsConstructor
@@ -993,9 +1019,10 @@ public class ShopDTO implements Serializable {
         private List<String> ids;
     }
 
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    public static class SelectDTO {
+    public static class SelectDTO extends SortDTO{
 
         /**
          * 关键词
@@ -1014,9 +1041,9 @@ public class ShopDTO implements Serializable {
          */
         private String dictAreaCode;
         /**
-         * 是否已授权
+         * 是否过滤权限
          */
-        private Boolean showByAuth = false;
+        private Boolean showByAuth;
         /**
          * 平台
          */
@@ -1038,6 +1065,14 @@ public class ShopDTO implements Serializable {
          * 账号
          */
         private String account;
+        /***
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台名称
+         */
+        private String dictPlatformName;
         /**
          * 禁用状态
          */
@@ -1148,5 +1183,15 @@ public class ShopDTO implements Serializable {
          * 平台
          */
         private String dictPlatform;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformParamDTO {
+        /**
+         * 平台集合
+         */
+        @NotEmpty(message = "平台集合不能为空")
+        private List<String> platformList;
     }
 }

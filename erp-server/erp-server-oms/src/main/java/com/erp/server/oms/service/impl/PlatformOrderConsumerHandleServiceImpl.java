@@ -1,5 +1,7 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
@@ -11,7 +13,6 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.LengthConverterUtil;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -19,8 +20,6 @@ import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.dto.SplitSkuDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
-import com.erp.model.plm.dto.BomChildrenSkuDTO;
-import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuInfoSimpleVO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
@@ -40,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -110,6 +108,12 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private InvoiceInfoService invoiceInfoService;
+
+    @Resource
+    private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -225,14 +229,39 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             List<InvoiceInfoEntity> invoiceInfoEntities = invoiceInfoService.listBySoIds(Collections.singletonList(mainEntity.getId()));
             if (CollectionUtils.isEmpty(invoiceInfoEntities)){
                 try {
-                    invoiceInfoService.batchGenerateInvoice(Collections.singletonList(mainEntity.getId()));
+                    invoiceInfoService.batchGenerateVatInvoice(Collections.singletonList(mainEntity.getId()));
                 }catch (Exception e){
                     log.error("亚马逊订单已发货生成发票异常：{}",e.getMessage());
                 }
             }
         }
+        //生成nf-e发票
+        generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
     }
 
+    /**
+     * 生成NF-e发票
+     * @author will
+     * @date 2025/4/14 15:52
+     * @param soB2cEntity
+     * @param type
+     * @return void
+     */
+    private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
+        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
+            return;
+        }
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
+            return;
+        }
+        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
+            return;
+        }
+        if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
+            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+        }
+    }
 
     /**
      * 检查亚马逊卖家自发货订单无地址
@@ -264,9 +293,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String payStatus = mainEntity.getPayStatus();
         //已付款
         String paid = SoB2cPayStatusEnum.ENUM_PAID.getCode();
+
+        //查询支付方式是否支持继续发货
+        Boolean isFlag = soB2cCoreService.listPayMethodSetting(mainEntity);
+
         //自动匹配订单规则 待配貨和已付款 就要订单规则
         if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)
-                && paid.equalsIgnoreCase(payStatus)
+                && (paid.equalsIgnoreCase(payStatus) || isFlag)
                 && !mainEntity.getInvalidStatus()) {
             List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
             Map<String, Object> map = soB2cService.handleMatchJson(id, detailList, new HashMap<>());
@@ -389,6 +422,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
             receiverEntity.setCustomerId(customerB2cEntity.getId());
             soB2cReceiverService.buildPartitionId(receiverEntity,shopInfo);
+            if(PlatformDictEnum.TE_MU.getCode().equals(dto.getDictPlatform()) && StringUtils.isBlank(receiverEntity.getCountry()) && StringUtils.isNotBlank(shopInfo.getDictCountryCode())){
+                receiverEntity.setCountry(shopInfo.getDictCountryCode());
+            }
             soB2cReceiverService.saveOrUpdate(receiverEntity);
         }
 
@@ -409,6 +445,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
+        //生成Nf-e发票
+        generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
         return resultDTO;
     }
 
@@ -554,6 +592,34 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         return soB2cEntityList.size() <= 1;
     }
 
+    @Override
+    public void updateTikTokDetail(PlatformOrderDTO dto) {
+        List<SoB2cEntity> soB2cEntityList = soB2cService.getByPlatformCodeList(Arrays.asList(dto.getPlatformCode()),dto.getDictPlatform(),dto.getShopId(),"");
+        if(CollectionUtils.isEmpty(soB2cEntityList)){
+            return ;
+        }
+        List<String> ids = soB2cEntityList.stream().map(SoB2cEntity::getId).collect(Collectors.toList());
+        List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainIds(ids);
+        detailList = detailList.stream().filter(v->StringUtils.isBlank(v.getSplitDetailId()) && StringUtils.isBlank(v.getPlatformPackageId()) && StringUtils.isNotBlank(v.getPlatformLineNumber())).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailList)){
+            return;
+        }
+        List<SoB2cDetailEntity> updateList = new ArrayList<>();
+        List<PlatformOrderDetailDTO> platformOrderDetailDTOS = dto.getDetails();
+        detailList.forEach(v->{
+            PlatformOrderDetailDTO platformOrderDetailDTO = platformOrderDetailDTOS.stream().filter(e->e.getPlatformLineNumber().equals(v.getPlatformLineNumber())).findFirst().orElse(null);
+            if(Objects.nonNull(platformOrderDetailDTO)){
+                v.setPlatformPackageId(platformOrderDetailDTO.getPlatformPackageId());
+                v.setSourceDetailId(v.getPlatformSkuNo()+platformOrderDetailDTO.getPlatformPackageId());
+                updateList.add(v);
+            }
+        });
+        if(CollectionUtils.isNotEmpty(updateList)){
+            log.warn("[B2C订单消费] TIKTOK平台订单【{}】：更新包裹号", dto.getPlatformCode());
+            soB2cDetailService.updateBatchById(updateList);
+        }
+    }
+
     /**
      * 自发货订单不存在地址
      */
@@ -563,6 +629,9 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         }
         if (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
             return this.aliExpressNotPlatformOrderNotExistAddress(dto);
+        }
+        if (PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dto.getDictPlatform())) {
+            return this.temuPlatformOrderNotExistAddress(dto);
         }
         return false;
     }
@@ -585,5 +654,20 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         return false;
     }
 
+
+    /**
+     * 速卖通自发货订单未解密地址
+     */
+    private boolean temuPlatformOrderNotExistAddress(PlatformOrderDTO dto) {
+        if (StrUtil.isNotBlank(dto.getLabelJson())) {
+            SoB2cDTO.LabelDTO labelJsonDTO = JSONUtil.toBean(dto.getLabelJson(), SoB2cDTO.LabelDTO.class);
+            Boolean isTemuPlatformWarehouseOrder = labelJsonDTO.getIsPlatformWarehouseOrder();
+            if (isTemuPlatformWarehouseOrder){
+                return false;
+            }
+            return null != dto.getReceiver().getIsUpdateError() && dto.getReceiver().getIsUpdateError();
+        }
+        return false;
+    }
 
 }

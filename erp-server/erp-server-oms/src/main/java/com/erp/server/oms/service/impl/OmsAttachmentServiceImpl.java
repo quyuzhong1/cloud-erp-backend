@@ -1,5 +1,8 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.utils.BeanMapper;
@@ -16,6 +19,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Collectors;
 
 /**
@@ -49,6 +54,58 @@ public class OmsAttachmentServiceImpl extends SuperServiceImpl<OmsAttachmentMapp
             this.saveBatch(addList);
         }
 
+    }
+
+    @Override
+    public void batchAddOrUpdate(List<OmsAttachmentDTO.UpdateDTO> addOrUpdateList) {
+        if (CollUtil.isEmpty(addOrUpdateList)) {
+            return;
+        }
+        List<OmsAttachmentEntity> omsAttachmentList = BeanUtil.copyToList(addOrUpdateList, OmsAttachmentEntity.class);
+        //id赋值
+        handleAddOrUpdate(omsAttachmentList);
+        this.saveOrUpdateBatch(omsAttachmentList);
+    }
+
+    /**
+     * 新增数据处理
+     * @author will
+     * @date 2025/4/23 11:29
+     * @param omsAttachmentList
+     * @return void
+     */
+    private void handleAddOrUpdate(List<OmsAttachmentEntity> omsAttachmentList) {
+        if (CollUtil.isEmpty(omsAttachmentList)) {
+            return;
+        }
+        List<String> businessIdList = omsAttachmentList.stream().map(OmsAttachmentEntity::getBusinessId).distinct().collect(Collectors.toList());
+        List<String> typeList = omsAttachmentList.stream().map(OmsAttachmentEntity::getType).distinct().collect(Collectors.toList());
+        List<String> attachUrlList = omsAttachmentList.stream().map(OmsAttachmentEntity::getAttachUrl).distinct().collect(Collectors.toList());
+        List<OmsAttachmentEntity> oldList = this.listByBusinessIdAndType(businessIdList, typeList, attachUrlList);
+        if (CollUtil.isEmpty(oldList)) {
+            return;
+        }
+        Map<String, OmsAttachmentEntity> map = oldList.stream().collect(Collectors.toMap(obj -> obj.getBusinessId() + obj.getType() + obj.getAttachUrl(), obj -> obj));
+        for (OmsAttachmentEntity entity :omsAttachmentList) {
+            OmsAttachmentEntity attachmentEntity = map.get(entity.getBusinessId() + entity.getType() + entity.getAttachUrl());
+            if (ObjUtil.isNotEmpty(attachmentEntity)) {
+                entity.setId(attachmentEntity.getId());
+            }
+        }
+    }
+
+    /**
+     * 批量查询
+     * @param businessIdList
+     * @param typeList
+     * @param attachUrlList
+     * @return List<OmsAttachmentEntity>
+     */
+    private List<OmsAttachmentEntity> listByBusinessIdAndType(List<String> businessIdList,List<String> typeList,List<String> attachUrlList) {
+        return lambdaQuery().in(OmsAttachmentEntity::getBusinessId,businessIdList)
+                .in(OmsAttachmentEntity::getType,typeList)
+                .in(OmsAttachmentEntity::getAttachUrl,attachUrlList)
+                .list();
     }
 
     /**

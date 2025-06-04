@@ -289,7 +289,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
 
             entity.setPurchaseOrderId(purchaseOrderId);
             entity.setTaxRate(MathUtil.divide(entity.getTaxRate(), MathUtil.BigDecimal_100));
-            entity.setPurchaseAmount(MathUtil.multiply(entity.getTaxPrice(),entity.getPurchaseQty()));
+            entity.setPurchaseAmount(MathUtil.multiplyWithTwo(entity.getTaxPrice(),entity.getPurchaseQty()));
             //操作日志
             if (StringUtils.isNotBlank(entity.getId())) {
                 PurchaseOrderDetailEntity old = this.getById(entity.getId());
@@ -402,7 +402,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                         addDTO.setTaxRate(subcontractOrderDetailEntity.getTaxRate());
                         addDTO.setCurrency(subcontractOrderDetailEntity.getCurrency());
                         addDTO.setCurrencySymbol(subcontractOrderDetailEntity.getCurrencySymbol());
-                        addDTO.setPurchaseAmount(MathUtil.multiply(price,qty));
+                        addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(price,qty));
                     }
                     //成品直接返回
                     continue;
@@ -412,7 +412,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
                     addDTO.setTaxPrice(viewDTO.getTaxPrice());
                     addDTO.setTaxRate(viewDTO.getTaxRate());
-                    addDTO.setPurchaseAmount(MathUtil.multiply(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
+                    addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(),addDTO.getPurchaseQty()));
                 }
             }else if (PurchaseOrderTypeEnum.ENUM_RETURN.getCode().equals(entity.getType())){
                 if(!addDTO.getIsRevalueTaxRate()){
@@ -427,7 +427,7 @@ public class PurchaseOrderDetailServiceImpl extends SuperServiceImpl<PurchaseOrd
                     addDTO.setCurrency(poReturnDetailEntity.getCurrency());
                     addDTO.setCurrencySymbol(poReturnDetailEntity.getCurrencySymbol());
                     Integer qty = Objects.nonNull(addDTO.getPurchaseQty()) ? addDTO.getPurchaseQty() : MathUtil.ZERO;
-                    addDTO.setPurchaseAmount(MathUtil.multiply(returnPrice,qty));
+                    addDTO.setPurchaseAmount(MathUtil.multiplyWithTwo(returnPrice,qty));
                     if (Objects.nonNull(viewDTO)){
                         addDTO.setTaxRate(viewDTO.getTaxRate());
                     }

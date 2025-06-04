@@ -59,6 +59,31 @@ public class PlatformDeliveryDTO {
      */
     private String sourcePlatform = "thirdPlatform";
     /**
+     * (速卖通)买家视角订单金额
+     */
+    private BigDecimal actualAmount = BigDecimal.ZERO;
+
+    /**
+     * (速卖通)买家视角订单金额币种
+     */
+    private String actualCurrency = "";
+
+    /**
+     * (速卖通)订单明细结算币种总价
+     */
+    private BigDecimal orderAmount = BigDecimal.ZERO;
+
+    /**
+     * (速卖通)订单明细结算币种
+     */
+    private String orderCurrency = "";
+
+    /**
+     * (速卖通)订单整单税后金额
+     */
+    private BigDecimal orderAfterTaxAmount = BigDecimal.ZERO;
+
+    /**
      * 发货单明细
      */
     private List<PlatformDeliveryDetailDTO> detailDTOList;

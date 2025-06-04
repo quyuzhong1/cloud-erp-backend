@@ -113,6 +113,25 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
     @TableField("platform_spu_no")
     private String platformSpuNo;
 
+    /**
+     * 平台销售订单明细id
+     * 根据平台产品ID和明细单价匹配
+     */
+    @TableField("platform_detail_id")
+    private String platformDetailId;
+
+
+    /**
+     * 计算后的发货明细单价
+     */
+    @TableField("prorated_unit_price")
+    private BigDecimal proratedUnitPrice;
+
+    /**
+     * 计算后的发货明细总价
+     */
+    @TableField("prorated_amount")
+    private BigDecimal proratedAmount;
 
     public static final String MAIN_ID = "main_id";
 

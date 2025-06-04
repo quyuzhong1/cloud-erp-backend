@@ -33,6 +33,7 @@ import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.*;
+import com.erp.model.sys.dto.AuthUserShopDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.sys.entity.DictCurrencyEntity;
 import com.erp.model.sys.entity.DictGlobalAreaEntity;
@@ -43,6 +44,7 @@ import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.AuthDataFeign;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.LogisticsBillCostFeign;
@@ -65,8 +67,8 @@ import com.sdk.oms.shopee.service.ShopeeShopService;
 import com.sdk.oms.shopify.api.dto.AssociatedUserBean;
 import com.sdk.oms.shopify.constant.ShopifyConstant;
 import com.sdk.oms.shopify.dto.ShopifyShopInfoDTO;
-import com.sdk.oms.shopify.service.ShopSdkServer;
 import com.sdk.oms.shopify.utils.HmacVerificationUtils;
+import com.sdk.oms.temu.enums.TemuEnum;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -85,6 +87,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -111,9 +114,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private DictBasicService dictBasicService;
-
-    @Resource
-    private ShopSdkServer shopSdkServer;
 
     @Resource
     private DmpTaskFeign dmpTaskFeign;
@@ -153,6 +153,8 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Resource
     private ShopChannelRefService shopChannelRefService;
+    @Resource
+    private AuthDataFeign authDataFeign;
     /**
      * 添加店铺
      *
@@ -224,8 +226,31 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shop.setWarehouseName(updateDTO.getName());
             shop.setWarehouseId(dto.getWarehouseId());
         }
+        //处理扩展字段
+        if(StringUtils.isNotBlank(dto.getClientId()) || StringUtils.isNotBlank(dto.getClientSecret())) {
+            Map<String, Object> extendData = new HashMap<>();
+            extendData.put("clientId", dto.getClientId());
+            extendData.put("clientSecret", dto.getClientSecret());
+            shop.setExtendData(extendData);
+        }
+        if(Objects.nonNull(dto.getAuthExpireDate()) && dto.getAuthExpireDate().isBefore(LocalDate.now())) {
+            throw new ServiceException("授权过期时间不能小于当前时间");
+        }
         Boolean result = this.save(shop);
+        //如果token不为空，新增授权表
+        if(StringUtils.isNotBlank(dto.getToken())) {
+            ShopAuthEntity shopAuthEntity = new ShopAuthEntity();
+            shopAuthEntity.setShopId(shop.getId());
+            shopAuthEntity.setToken(dto.getToken());
+            shopAuthEntity.setAccessToken(dto.getToken());
+            shopAuthService.saveOrUpdate(shopAuthEntity);
+        }
         shopChannelRefService.batchUpdate(shop,dto.getChannelIdList());
+        //添加用户权限
+        AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
+        addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        addUserShopAuthDTO.setShopIdList(Collections.singletonList(shop.getId()));
+        authDataFeign.addUserShopAuth(addUserShopAuthDTO);
         return Collections.singletonList(shop);
 
     }
@@ -460,6 +485,11 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 throw new ServiceException("批量保存失败");
             }
         }
+        //添加用户权限
+        AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
+        addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        addUserShopAuthDTO.setShopIdList(addList.stream().map(ShopInfoEntity::getId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
+        authDataFeign.addUserShopAuth(addUserShopAuthDTO);
         return addList;
 
     }
@@ -472,8 +502,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         ShopAuthorizeUrlDTO authorizeUrlDTO = new ShopAuthorizeUrlDTO();
         authorizeUrlDTO.setShopId(entity.getId());
         authorizeUrlDTO.setPlatformCode(entity.getDictPlatform());
-
-        String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        String shopAuthorizeUrl = "";
+        //temu全托管通过用户输入的信息检验授权
+        if(entity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+            ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
+            shopAuthorizeDTO.setShopId(entity.getId());
+            shopAuthorizeDTO.setPlatformCode(entity.getDictPlatform());
+            this.shopAuthorize(shopAuthorizeDTO,null);
+        }else{
+            shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        }
         return new ShopDTO.RedirectDTO(entity.getId(), shopAuthorizeUrl);
     }
 
@@ -598,8 +636,25 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
             shopInfo.setWarehouseName("");
             shopInfo.setWarehouseId("");
         }
+        if(StringUtils.isNotBlank(dto.getDictAreaCode())){
+            shopInfo.setDictAreaCode(dto.getDictAreaCode());
+        }
+        shopInfo.setAuthExpireDate(dto.getAuthExpireDate());
         //设置用户信息
         setCustom(dto.getCustomerId(), shopInfo);
+        //如果token不为空，新增授权表
+        if(StringUtils.isNotBlank(dto.getToken())) {
+            ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(shopInfo.getId());
+            if(Objects.isNull(shopAuthEntity)){
+                shopAuthEntity = new ShopAuthEntity();
+                shopAuthEntity.setShopId(shopInfo.getId());
+                shopAuthEntity.setToken(dto.getToken());
+                shopAuthEntity.setAccessToken(dto.getToken());
+                shopAuthService.saveOrUpdate(shopAuthEntity);
+            }
+        }
+        //修改授权信息进行校验
+        checkAuthInfo(dto,shopInfo);
         Boolean result = this.updateById(shopInfo);
         if (!result) {
             throw new ServiceException("更新失败");
@@ -613,6 +668,48 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shopChannelRefService.batchUpdate(shopInfo,dto.getChannelIdList());
         return shopInfo;
     }
+
+    private void checkAuthInfo(ShopDTO.UpdateDTO dto, ShopInfoEntity shopInfo) {
+        if(!PlatformDictEnum.TE_MU.getCode().equals(shopInfo.getDictPlatform())){
+            return;
+        }
+        if(Objects.nonNull(dto.getAuthExpireDate()) && dto.getAuthExpireDate().isBefore(LocalDate.now())) {
+            throw new ServiceException("授权过期时间不能小于当前时间");
+        }
+        ShopAuthEntity shopAuthEntity = shopAuthService.getByShopId(shopInfo.getId());
+        if(StringUtils.isBlank(dto.getToken())){
+            if(Objects.nonNull(shopAuthEntity) && StringUtils.isNotBlank(shopAuthEntity.getAccessToken())){
+                if(shopInfo.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
+                    throw new ServiceException("已授权不能修改授权信息");
+                }
+                shopAuthEntity.setAccessToken("");
+                shopAuthEntity.setToken("");
+            }
+        }else{
+            if(Objects.nonNull(shopAuthEntity) && !shopAuthEntity.getAccessToken().equals(dto.getToken()) && shopInfo.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
+                throw new ServiceException("已授权不能修改授权信息");
+            }
+            if(Objects.isNull(shopAuthEntity)){
+                shopAuthEntity = new ShopAuthEntity();
+            }
+            shopAuthEntity.setToken(dto.getToken());
+            shopAuthEntity.setAccessToken(dto.getToken());
+            shopAuthService.saveOrUpdate(shopAuthEntity);
+        }
+
+        Map<String,Object> extendMap = Objects.isNull(shopInfo.getExtendData())?new HashMap<>():shopInfo.getExtendData();
+        String clientId = (String) extendMap.getOrDefault("clientId","");
+        String clientSecret = (String) extendMap.getOrDefault("clientSecret","");
+        if(!clientId.equals(dto.getClientId()) || !clientSecret.equals(dto.getClientSecret())) {
+            if(shopInfo.getAuthStatus().equals(AuthStatusEnum.ALREADY.getCode())){
+                throw new ServiceException("已授权不能修改授权信息");
+            }
+            extendMap.put("clientId",dto.getClientId());
+            extendMap.put("clientSecret",dto.getClientSecret());
+            shopInfo.setExtendData(extendMap);
+        }
+    }
+
     /**
      * 修改店铺
      *
@@ -792,6 +889,12 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 }
                 item.setPlatformShopType(jsonObject.getString("sellerType"));
             }
+            if (PlatformDictEnum.TE_MU.getCode().equals(item.getDictPlatform())) {
+                TemuEnum temuEnum = TemuEnum.getByCode(item.getDictAreaCode());
+                if(Objects.nonNull(temuEnum)){
+                    item.setAreaName(temuEnum.getName());
+                }
+            }
             //客户名称
             CustomerInfoEntity customerInfoEntity = customerInfoService.getById(item.getCustomerId());
             if (Objects.nonNull(customerInfoEntity)) {
@@ -898,6 +1001,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
                 view.setBusinessModelName(mercadolibreBusinessModel.getName());
             }
         }
+        if(PlatformDictEnum.TE_MU.getCode().equals(dictPlatform)){
+            Map<String,Object> extendMap = Objects.isNull(shop.getExtendData())?new HashMap<>():shop.getExtendData();
+            String clientId = (String) extendMap.getOrDefault("clientId","");
+            String clientSecret = (String) extendMap.getOrDefault("clientSecret","");
+            view.setClientId(clientId);
+            view.setClientSecret(clientSecret);
+            ShopAuthEntity shopAuth = shopAuthService.getByShopId(shop.getId());
+            if(Objects.nonNull(shopAuth)){
+                view.setToken(shopAuth.getAccessToken());
+            }
+        }
         //客户名称
         CustomerInfoEntity customerInfoEntity = customerInfoService.getById(shop.getCustomerId());
         if (ObjectUtil.isNotEmpty(customerInfoEntity)) {
@@ -988,13 +1102,17 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public List<ShopDTO.ListTreeDTO> listTree() {
+    public List<ShopDTO.ListTreeDTO> listTree(Boolean showByAuth) {
         List<DictBasicDTO.ViewDTO> list = dictBasicService.getByKey(DictBasicTypeEnum.SALES_PLATFORM.getType());
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<String> platformList = list.stream().map(DictBasicDTO.ViewDTO::getValue).collect(Collectors.toList());
-        List<ShopInfoEntity> shopInfoList = this.listByPlatformList(platformList);
+        String permissionSql = null;
+        if (Objects.nonNull(showByAuth) && showByAuth){
+            permissionSql = authDataFeign.getShopPermissionSql("si.id");
+        }
+        List<ShopInfoEntity> shopInfoList = this.listByPlatformList(platformList,permissionSql);
 
         List<ShopDTO.ListTreeDTO> resultList = new ArrayList<>();
         for (DictBasicDTO.ViewDTO viewDTO : list) {
@@ -1042,22 +1160,9 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     @Override
     public List<ShopInfoEntity> listAuth(ShopDTO.PlatformDTO platformDTO) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-            return Collections.EMPTY_LIST;
-        }
-        ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-        List<String> shopIdList;
-        if (StringUtils.isNotBlank(platformDTO.getDictPlatform())) {
-            shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(platformDTO.getDictPlatform())).map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-        } else {
-            shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-        }
-        if (CollectionUtils.isEmpty(shopIdList)) {
-            return Collections.EMPTY_LIST;
-        }
-        return this.listByIds(shopIdList);
+        String dictPlatform = Objects.nonNull(platformDTO) ? platformDTO.getDictPlatform() : "";
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("si.id");
+        return baseMapper.listByParam(CharSequenceUtil.isNotBlank(dictPlatform) ? Collections.singletonList(dictPlatform) : null, shopPermissionSql);
     }
 
     @Override
@@ -1355,17 +1460,18 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
 
     /**
      * @param platformList
+     * @param permissionSql
      * @return List<ShopInfoEntity>
      * @description: 根据平台集合查询
      * @author Will
      * @date: 2023/9/7 16:39
      */
-    private List<ShopInfoEntity> listByPlatformList(List<String> platformList) {
+    @Override
+    public List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql) {
         if (CollectionUtils.isEmpty(platformList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
-        List<ShopInfoEntity> list = lambdaQuery().in(ShopInfoEntity::getDictPlatform, platformList).list();
-        return list;
+        return baseMapper.listByParam(platformList,permissionSql);
     }
 
     @Override
@@ -1388,17 +1494,6 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         return lambdaQuery().select(ShopInfoEntity::getAccount).
                 groupBy(ShopInfoEntity::getAccount).list().stream().map(ShopInfoEntity::getAccount).collect(Collectors.toList());
     }
-
-    @Override
-    public boolean checkExist(String dictCountryCode, String dictPlatform, String authStatus) {
-        Integer count = lambdaQuery()
-                .eq(StringUtils.isNotBlank(dictCountryCode), ShopInfoEntity::getDictCountryCode, dictCountryCode)
-                .eq(StringUtils.isNotBlank(dictPlatform), ShopInfoEntity::getDictPlatform, dictPlatform)
-                .eq(StringUtils.isNotBlank(authStatus), ShopInfoEntity::getAuthStatus, authStatus)
-                .count();
-        return count > 0;
-    }
-
     @Override
     public List<ShopInfoEntity> listShopInfoByWarehouseIds(List<String> warehouseIds) {
         if (CollectionUtils.isEmpty(warehouseIds)) {
@@ -1424,7 +1519,16 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         authorizeUrlDTO.setPlatformCode(infoEntity.getDictPlatform());
         authorizeUrlDTO.setShopInfoEntityList(list);
 
-        String shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        String shopAuthorizeUrl = "";
+        //temu全托管通过用户输入的信息检验授权
+        if(infoEntity.getDictPlatform().equals(PlatformDictEnum.TE_MU.getCode())){
+            ShopAuthorizeDTO shopAuthorizeDTO = new ShopAuthorizeDTO();
+            shopAuthorizeDTO.setShopId(infoEntity.getId());
+            shopAuthorizeDTO.setPlatformCode(infoEntity.getDictPlatform());
+            this.shopAuthorize(shopAuthorizeDTO,null);
+        }else{
+            shopAuthorizeUrl = this.getShopAuthorizeUrl(authorizeUrlDTO);
+        }
         for (ShopInfoEntity shop : list) {
             this.saveCustom(shop);
         }
@@ -1579,36 +1683,29 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     @Override
     public PagingVO<ShopDTO.ListDTO> pagingSelect(PagingDTO<ShopDTO.SelectDTO> dto) {
         ShopDTO.SelectDTO params = dto.getParams();
-        if (params.getShowByAuth()){
-            LoginUser userInfo = UserContext.getDefaultLoginUser();
-            List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Arrays.asList(userInfo.getUid()));
-            if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-                return new PagingVO<>();
-            }
-
-            ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-            List<String> shopIdList;
-            if (StringUtils.isNotBlank(params.getDictPlatform())) {
-                shopIdList = viewDTO.getDetailList().stream().filter(obj -> obj.getDictPlatform().equals(params.getDictPlatform()))
-                        .map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            } else {
-                shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-            }
-            if (CollectionUtils.isEmpty(shopIdList)) {
-                return new PagingVO<>();
-            }
-            params.setShopIdList(shopIdList);
+        if (Objects.nonNull(params.getShowByAuth()) && params.getShowByAuth()){
+            params.setPermissionSql(authDataFeign.getShopPermissionSql("si.id"));
         }
         Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<ShopDTO.ListDTO> pagResult = baseMapper.pagingSelect(query, params);
         List<ShopDTO.ListDTO> records = pagResult.getRecords();
-        //排序
-        pagResult.setRecords(records);
+        //填充
+        fillData(records);
         return new PagingVO<>(pagResult);
+    }
+
+    private void fillData(List<ShopDTO.ListDTO> records) {
+        if (CollUtil.isEmpty(records)){
+            return;
+        }
+        records.forEach(e ->{
+            e.setDictPlatformName(PlatformDictEnum.getNameByCode(e.getDictPlatform()));
+        });
     }
 
     @Override
     public PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<ShopDTO.PagingViewDTO> page = baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (CollectionUtils.isNotEmpty(page.getRecords())) {
             //填充数据
@@ -1779,15 +1876,19 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
         shop.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
         shop.setAuthTime(LocalDateTime.now());
         Boolean result = this.save(shop);
+        //添加用户权限
+        AuthUserShopDTO.AddUserShopAuthDTO addUserShopAuthDTO = new AuthUserShopDTO.AddUserShopAuthDTO();
+        addUserShopAuthDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
+        addUserShopAuthDTO.setShopIdList(Collections.singletonList(shop.getId()));
+        authDataFeign.addUserShopAuth(addUserShopAuthDTO);
         return Collections.singletonList(shop);
     }
 
 
     @Override
     public List<BaseDropDownDTO.DisabledDTO> listShopSelect() {
-        List<ShopInfoEntity> list = this.list();
-        List<BaseDropDownDTO.DisabledDTO> resultList = ShopInfoConverter.INSTANCE.ShopInfoEntityToDisabledDTO(list);
-        return resultList;
+        List<ShopInfoEntity> list = this.listAuth(null);
+        return ShopInfoConverter.INSTANCE.ShopInfoEntityToDisabledDTO(list);
     }
     /**
      * 如果没有选客户，就进行绑定
@@ -1849,31 +1950,24 @@ public class ShopInfoServiceImpl extends SuperServiceImpl<ShopInfoMapper, ShopIn
     }
 
     @Override
-    public List<ShopInfoEntity> listAuthPlatform(List<String> platformDTO) {
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<ShopSysUserAuthDTO.ViewDTO> shopSysUserAuthList = shopSysUserAuthService.listShopSysUserAuthByUserIdList(Collections.singletonList(userInfo.getUid()));
-        if (CollectionUtils.isEmpty(shopSysUserAuthList)) {
-            return Collections.emptyList();
-        }
-        ShopSysUserAuthDTO.ViewDTO viewDTO = shopSysUserAuthList.get(0);
-        List<String> shopIdList;
-        if (CollectionUtils.isNotEmpty(platformDTO)) {
-            shopIdList = viewDTO.getDetailList().stream().filter(obj -> platformDTO.contains(obj.getDictPlatform())).map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-        } else {
-            shopIdList = viewDTO.getDetailList().stream().map(ShopSysUserAuthDTO.ViewShopDTO::getShopId).collect(Collectors.toList());
-        }
-        if (CollectionUtils.isEmpty(shopIdList)) {
-            return Collections.emptyList();
-        }
-        return this.listByIds(shopIdList);
+    public List<ShopInfoEntity> listAuthPlatform(List<String> platformList) {
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("si.id");
+        return baseMapper.listByParam(platformList,shopPermissionSql);
     }
 
     @Override
-    public List<ShopInfoEntity> listShopByName(List<String> shopNameList) {
+    public List<ShopInfoDTO.ListDTO> listShopByName(List<String> shopNameList) {
         if (CollUtil.isEmpty(shopNameList)) {
             return Collections.emptyList();
         }
-        return this.lambdaQuery().in(ShopInfoEntity::getName, shopNameList).list();
+        String permissionSql = authDataFeign.getShopPermissionSql("id");
+        return baseMapper.listShopByName(shopNameList,permissionSql);
+    }
+
+    @Override
+    public List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(String dictPlatform) {
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("si.id");
+        return baseMapper.listUserAuthShop(shopPermissionSql, dictPlatform);
     }
 
     @Override

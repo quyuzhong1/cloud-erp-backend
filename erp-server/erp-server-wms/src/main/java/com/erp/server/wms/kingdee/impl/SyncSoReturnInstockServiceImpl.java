@@ -118,7 +118,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         // 字典分组
         Map<String, List<DictBasicEntity>> dictGroupMap = omsAllDictList.stream().collect(Collectors.groupingBy(DictBasicEntity::getType));
         // 销售平台
-        List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SALES_PLATFORM.getType(), Collections.emptyList());
+        List<DictBasicEntity> dictBasicEntityList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_SUB_PLATFORM.getType(), Collections.emptyList());
         // 数帝云军区一级部门映射
         List<DictBasicEntity> sdyPartitionDeptList = dictGroupMap.getOrDefault(DictBasicTypeEnum.SDY_PARTITION_LEVEL1_DEPT.getType(), Collections.emptyList());
         // 数帝云平台二级部门映射
@@ -166,9 +166,16 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
                 shudiyunB2cOrderDTO.setTransaction_currency_code(customerInfo.getTradeCurrency());
             }
 
-            shudiyunB2cOrderDTO.setPlatform_id(customerInfo.getPlatformType());
-            String platformName = dictBasicEntityList.stream().filter(req -> req.getValue().equals(customerInfo.getPlatformType())).map(DictBasicEntity::getName).findFirst().orElse("");
-            shudiyunB2cOrderDTO.setPlatform_name(platformName);
+            String subPlatformType = customerInfo.getPlatformType();
+            if (StringUtils.isNotBlank(subPlatformType)) {
+                DictBasicEntity dictBasicEntity = dictBasicEntityList.stream().filter(req -> req.getName().equals(subPlatformType)).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(dictBasicEntity)) {
+                	shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
+                	shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
+                    shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+                    shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
+                }
+            }
             shudiyunB2cOrderDTO.setShop_no(customerInfo.getCode());
             shudiyunB2cOrderDTO.setShop_name(customerInfo.getName());
         }

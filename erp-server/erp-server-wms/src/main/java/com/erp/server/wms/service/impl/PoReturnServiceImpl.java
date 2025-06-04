@@ -245,9 +245,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             record.setReturnOrderSourceName(returnOrderSourceEnum.getName());
             BigDecimal deductAmountAmount ;
             if (ReturnModeEnum.DEDUCTION.getCode().equals(record.getReturnMode())) {
-                deductAmountAmount = MathUtil.multiply(record.getReturnPrice(),record.getDeductAmountQty());
+                deductAmountAmount = MathUtil.multiplyWithTwo(record.getReturnPrice(),record.getDeductAmountQty());
             } else {
-                deductAmountAmount = MathUtil.multiply(record.getReturnPrice(),record.getReturnQty());
+                deductAmountAmount = MathUtil.multiplyWithTwo(record.getReturnPrice(),record.getReturnQty());
             }
             record.setDeductAmountAmount(deductAmountAmount);
 
@@ -580,9 +580,9 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
             detailView.setHasStockInQty(stockInQty);
             BigDecimal deductAmountAmount;
             if (ReturnModeEnum.DEDUCTION.getCode().equals(poReturnEntity.getReturnMode())) {
-                deductAmountAmount = MathUtil.multiply(detailView.getReturnPrice(), poReturnDetailEntity.getDeductAmountQty());
+                deductAmountAmount = MathUtil.multiplyWithTwo(detailView.getReturnPrice(), poReturnDetailEntity.getDeductAmountQty());
             } else {
-                deductAmountAmount = MathUtil.multiply(detailView.getReturnPrice(), poReturnDetailEntity.getReturnQty());
+                deductAmountAmount = MathUtil.multiplyWithTwo(detailView.getReturnPrice(), poReturnDetailEntity.getReturnQty());
             }
             detailView.setTotalPrice(deductAmountAmount);
             //获取sku信息
@@ -2952,7 +2952,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
 
     @Override
     public PagingVO<PurchaseReturnOrderDTO.PagingViewDTO> exportPurchaseReturnOrder(PagingDTO<PurchaseReturnOrderDTO.PagingParamDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<PurchaseReturnOrderDTO.PagingViewDTO> page = this.baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理
@@ -3038,7 +3038,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     priceDTO.setTaxRate(viewDTO.getTaxRate());
                     priceDTO.setCurrency(viewDTO.getCurrency());
                     priceDTO.setCurrencySymbol(viewDTO.getCurrencySymbol());
-                    priceDTO.setAmount(MathUtil.multiply(viewDTO.getTaxPrice(), priceDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
+                    priceDTO.setAmount(MathUtil.multiplyWithTwo(viewDTO.getTaxPrice(), priceDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
                 }
             }
             if (Objects.isNull(viewDTO) && CollectionUtils.isNotEmpty(scmViewList)){
@@ -3053,7 +3053,7 @@ public class PoReturnServiceImpl extends SuperServiceImpl<PoReturnMapper, PoRetu
                     priceDTO.setTaxRate(priceDTO2.getTaxRate());
                     priceDTO.setCurrency(priceDTO2.getCurrency());
                     priceDTO.setCurrencySymbol(priceDTO2.getCurrencySymbol());
-                    priceDTO.setAmount(MathUtil.multiply(priceDTO2.getTaxPrice(), priceDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
+                    priceDTO.setAmount(MathUtil.multiplyWithTwo(priceDTO2.getTaxPrice(), priceDTO.getQty()).setScale(4, RoundingMode.DOWN).stripTrailingZeros().toPlainString());
                 }
             }
         }

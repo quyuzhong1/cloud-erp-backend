@@ -1,6 +1,8 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.PlatformDeliveryDTO;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +12,7 @@ import lombok.NoArgsConstructor;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -97,6 +100,8 @@ public class AliexpressDeliveryDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         private List<AliexpressDeliveryDetailDTO.AddDTO> detailList;
+
+        private List<PlatformDeliveryDTO> allSourceDeliveryList;
     }
 
     @Data
@@ -178,7 +183,25 @@ public class AliexpressDeliveryDTO implements Serializable {
         */
         private String warehouseName;
 
+        /**
+         * (速卖通)买家视角订单金额
+         */
+        private BigDecimal actualAmount;
 
+        /**
+         * (速卖通)买家视角订单金额币种
+         */
+        private String actualCurrency;
+
+        /**
+         *  平台订单整单金额
+         */
+        private BigDecimal orderAmount;
+
+        /**
+         * 平台订单整单税后金额
+         */
+        private BigDecimal orderAfterTaxAmount;
     }
 
     /**

@@ -74,6 +74,8 @@ public class ExportTmsFeignController {
     private RemotePostcodeService remotePostcodeService;
     @Resource
     private LogisticsLargeService logisticsLargeService;
+    @Resource
+    private FirstMileChangeRecordService firstMileChangeRecordService;
 
     @PostMapping("/b2BDeclareBill")
     @WebAdvanceQuery(handler = TmsB2BDeclareQueryHandler.class)
@@ -139,6 +141,7 @@ public class ExportTmsFeignController {
     @PostMapping("/logisticsBillCost")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsBillCost:paging",
             tableAlias = "lbc"
     )
@@ -148,20 +151,20 @@ public class ExportTmsFeignController {
     }
     @PostMapping("/smallBagCostAllocation")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-    tableField = "create_user_id",
-    menuCode = "tms:smallBagCostAllocation:paging",
-    tableAlias = "t"
-    		)
+            tableField = "create_user_id",
+            shopTableField = "k.shop_id",
+            menuCode = "tms:smallBagCostAllocation:paging",
+            tableAlias = "t")
     @WebAdvanceQuery(handler = SmallBagCostAllocationQueryHandler.class)
     public PagingVO<SmallBagCostAllocationDTO.ListDTO> exportSmallBagCostAllocation(@RequestBody PagingDTO<SmallBagCostAllocationDTO.PagingParamDTO> dto) {
     	return smallBagCostAllocationService.paging(dto);
     }
     @PostMapping("/transferDeclareCostAllocation")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-    tableField = "create_user_id",
-    menuCode = "tms:transferDeclareCostAllocation:paging",
-    tableAlias = "t"
-    		)
+            tableField = "create_user_id",
+            shopTableField = "j.shop_id",
+            menuCode = "tms:transferDeclareCostAllocation:paging",
+            tableAlias = "t")
     @WebAdvanceQuery(handler = TransferDeclareCostAllocationQueryHandler.class)
     public PagingVO<TransferDeclareCostAllocationDTO.ListDTO> exportTransferDeclareCostAllocation(@RequestBody PagingDTO<TransferDeclareCostAllocationDTO.PagingParamDTO> dto) {
     	return transferDeclareCostAllocationService.paging(dto);
@@ -170,6 +173,7 @@ public class ExportTmsFeignController {
     @PostMapping("/logisticsBill")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsBill:paging",
             tableAlias = "lb"
     )
@@ -181,6 +185,7 @@ public class ExportTmsFeignController {
     @PostMapping("/logisticsLastMileCost")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "shop_charge_id",
+            shopTableField = "lb.shop_id",
             menuCode = "tms:logisticsLastMileCost:paging",
             tableAlias = "lbc"
     )
@@ -240,6 +245,7 @@ public class ExportTmsFeignController {
     @PostMapping("/warehouseMapping")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "twm.erp_warehouse_id",
             menuCode = "tms:tmsWarehouseMapping:paging",
             tableAlias = "twm"
     )
@@ -254,6 +260,13 @@ public class ExportTmsFeignController {
      * @return
      */
     @PostMapping("/exportFirstMileCostAllocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "a.shop_id",
+            warehouseTableField = "a.from_warehouse_id,a.to_warehouse_id",
+            menuCode = "tms:firstMileCostAllocation:paging",
+            tableAlias = "a"
+    )
     @WebAdvanceQuery(handler = FirstMileCostAllocationQueryHandler.class)
     public PagingVO<FirstMileCostAllocationDTO.PagingVO> exportFirstMileCostAllocation(@RequestBody PagingDTO<FirstMileCostAllocationDTO.PagingParamDTO> params) {
         return firstMileCostAllocationService.paging(params);
@@ -265,6 +278,14 @@ public class ExportTmsFeignController {
      * @return
      */
     @PostMapping("/exportInitFirstMileAllocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "ad.shop_id",
+            warehouseTableField = "ad.warehouse_id",
+            menuCode = "tms:initFirstMileAllocation:paging",
+            tableAlias = "a"
+    )
+    @WebAdvanceQuery(handler = InitFirstMileAllocationQueryHandler.class)
     PagingVO<InitFirstMileAllocationDTO.PagingVO> exportInitFirstMileAllocation(@RequestBody PagingDTO<InitFirstMileAllocationDTO.PagingParamDTO> params){
         return initFirstMileAllocationService.paging(params);
     }
@@ -283,6 +304,10 @@ public class ExportTmsFeignController {
      * 暂估账单
      */
     @PostMapping("/exportFirstMileEstimatedBill")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "lb.shop_id",
+            menuCode = "tms:firstMileEstimatedBill:paging"
+    )
     @WebAdvanceQuery(handler = FirstMileEstimatedQueryHandler.class)
     public PagingVO<FirstMileEstimatedBillDTO.View> exportFirstMileEstimatedBill(@RequestBody PagingDTO<FirstMileEstimatedBillDTO.PagingParam> dto){
         return firstMileEstimatedBillService.paging(dto);
@@ -292,6 +317,13 @@ public class ExportTmsFeignController {
      * 重量分摊
      */
     @PostMapping("/exportFirstMileWeightAllocation")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "wa.shop_id",
+            warehouseTableField = "wa.from_warehouse_id",
+            menuCode = "tms:firstMileWeightAllocation:paging",
+            tableAlias = "a"
+    )
     @WebAdvanceQuery(handler = FirstMileWeightAllocationQueryHandler.class)
     public PagingVO<FirstMileWeightAllocationDTO.ViewDTO> exportFirstMileWeightAllocation(@RequestBody @Valid PagingDTO<FirstMileWeightAllocationDTO.PagingParamDTO> dto) {
         return firstMileWeightAllocationService.paging(dto);
@@ -324,5 +356,21 @@ public class ExportTmsFeignController {
     public PagingVO<TmsDeclareBillDTO.PagingVO> exportFmDeclareBill(@RequestBody PagingDTO<TmsDeclareBillDTO.PagingParamDTO> dto){
         dto.getParams().setType(SourceTypeEnum.FM_DECLARE_BILL.getCode());
         return tmsDeclareBillService.export(dto);
+    }
+
+    /**
+     * 头程调整记录导出
+     * @param dto
+     * @return
+     */
+    @PostMapping("/exportFirstMileChangeRecord")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            menuCode = "tms:firstMileChangeRecord:paging",
+            tableAlias = "fmcr"
+    )
+    @WebAdvanceQuery(handler = FirstMileChangeRecordQueryHandler.class)
+    public PagingVO<FirstMileChangeRecordDTO.PagingVO> exportFirstMileChangeRecord(@RequestBody PagingDTO<FirstMileChangeRecordDTO.PagingParamDTO> dto){
+        return firstMileChangeRecordService.paging(dto);
     }
 }

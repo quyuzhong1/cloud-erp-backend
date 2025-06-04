@@ -46,19 +46,15 @@ import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
-import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.PurchaseOrderFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.mapper.PoInstockMapper;
 import com.erp.server.wms.service.*;
-import com.erp.server.wms.wdt.SyncWdtOtherInStockService;
-import com.erp.server.wms.wdt.SyncWdtOtherOutStockService;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
@@ -150,21 +146,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     @Resource
     private DmpMqFeign dmpMqFeign;
     @Resource
-    private SyncWdtOtherInStockService syncWdtOtherInStockService;
-
-    @Resource
-    private SyncWdtOtherOutStockService syncWdtOtherOutStockService;
-    @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
-    private DmpPushWdtFeign dmpPushWdtFeign;
-    @Resource
     private AbstractWdtService abstractWdtService;
-    @Resource
-    private PurchaseOrderFeign purchaseOrderFeign;
-
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
@@ -553,11 +539,11 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
                 //入库数量 就是实收数量
                 Integer stockInQty = obj.getStockInQty();
                 //金额=未税价格*实收数量
-                BigDecimal amount = MathUtil.multiply(price, stockInQty);
+                BigDecimal amount = MathUtil.multiplyWithTwo(price, stockInQty);
                 obj.setAmount(amount);
                 //价税合计=含税单价*实收数量
-                BigDecimal taxAmount = MathUtil.multiply(taxPrice, stockInQty);
-                taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
+                BigDecimal taxAmount = MathUtil.multiplyWithTwo(taxPrice, stockInQty);
+                taxRate = MathUtil.multiplyWithTwo(taxRate, MathUtil.BigDecimal_100);
                 obj.setTaxPrice(taxPrice);
                 String taxRateStr = taxRate.toString().concat("%");
                 obj.setTaxRate(taxRate);
@@ -581,7 +567,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         supplierDTO.setSupplierContactId(purchaseOrderSupplierEntity.getSupplierContactId());
         if (CharSequenceUtil.isNotBlank(purchaseOrderSupplierEntity.getSupplierContactId())) {
             SupplierContactEntity supplierContactById = scmTaskFeign.getSupplierContactById(purchaseOrderSupplierEntity.getSupplierContactId());
-            supplierDTO.setSupplierContactName(supplierContactById.getPerson());
+            if (ObjectUtil.isNotEmpty(supplierContactById)) {
+                supplierDTO.setSupplierContactName(supplierContactById.getPerson());
+            }
         }
 
         //查询供应商信息
@@ -1450,12 +1438,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             Integer stockInQty = obj.getStockInQty();
             //金额=未税价格*实收数量
             BigDecimal qty = new BigDecimal(stockInQty);
-            BigDecimal amount = MathUtil.multiply(price, qty, 4);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, qty, 4);
             obj.setAmount(amount);
             //价税合计=含税单价*实收数量
-            BigDecimal taxAmount = MathUtil.multiply(taxPrice, qty, 4);
+            BigDecimal taxAmount = MathUtil.multiplyWithTwo(taxPrice, qty, 4);
             obj.setTaxAmount(taxAmount);
-            taxRate = MathUtil.multiply(taxRate, MathUtil.BigDecimal_100);
+            taxRate = MathUtil.multiplyWithTwo(taxRate, MathUtil.BigDecimal_100);
             String taxRateStr = taxRate.toString().concat("%");
             obj.setTaxRateStr(taxRateStr);
             //仓位名称
@@ -1665,6 +1653,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> exportPoInStock(PagingDTO<PoInstockDTO.ExportParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         IPage<PoInstockDTO.ListDTO> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             doOpHandlePurchaseStockIn(page.getRecords());

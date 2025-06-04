@@ -1,7 +1,9 @@
 package com.erp.server.oms.sdk.sob2c;
 
+import com.alibaba.fastjson.JSON;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.enums.BusinessTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
 import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
@@ -12,6 +14,7 @@ import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.oms.service.PlatformOrderConsumerHandleService;
+import com.erp.server.oms.service.SoB2cCoreService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +23,9 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -33,6 +39,7 @@ import java.util.stream.Collectors;
 @PlatformSoB2cAnnotate(method = PlatformDictEnum.RAKUTEN)
 public class RakutenSoB2cHandle extends AbstractSoB2cHandle  {
 
+    public static final String HISTORY = "history";
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
     @Resource
@@ -42,6 +49,8 @@ public class RakutenSoB2cHandle extends AbstractSoB2cHandle  {
     @Resource
     private SoB2cService soB2cService;
 
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
     @Override
     public Boolean handleRule(SoB2cEntity mainEntity) {
         //平台仓订单不走任何规则
@@ -68,7 +77,10 @@ public class RakutenSoB2cHandle extends AbstractSoB2cHandle  {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-                soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
+
+                //平台仓拆分
+                List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = soB2cCoreService.splitB2cSoOutstock(mainEntity,generateB2cDTO);
+                generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
             } catch (Exception e) {
                 log.error("[乐天生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
@@ -85,9 +97,34 @@ public class RakutenSoB2cHandle extends AbstractSoB2cHandle  {
 
     @Override
     public List<DmpInoutDTO.CreateInputDTO> convertCreateInputDTOList(List sourceList) {
-        Map<String, List<SoB2cEntity>> shopGroupMap = ((List<SoB2cEntity>) sourceList).stream().collect(Collectors.groupingBy(SoB2cEntity::getShopId));
-        return shopGroupMap.values().stream()
-                .map(this::createInputDTO)
-                .collect(Collectors.toList());
+        List<String> orderStatusList = Arrays.asList("4","9","6","5","7");
+        List<SoB2cEntity> soB2cEntityList = (List<SoB2cEntity>) sourceList;
+        List<DmpInoutDTO.CreateInputDTO> createInputDTOS = new ArrayList<>();
+        for (SoB2cEntity soB2cEntity : soB2cEntityList) {
+            for (String orderStatus : orderStatusList) {
+                DmpInoutDTO.CreateInputDTO dto = createAliExpressInputDTO(soB2cEntity,orderStatus);
+                createInputDTOS.add(dto);
+            }
+        }
+        return createInputDTOS;
+    }
+
+    private DmpInoutDTO.CreateInputDTO createAliExpressInputDTO(SoB2cEntity e,String orderStatus) {
+        DmpInoutDTO.CreateInputDTO dto = new DmpInoutDTO.CreateInputDTO();
+        dto.setNextLevelId(orderStatus);
+        dto.setSystemCode(PlatformDictEnum.LING_XING.getCode());
+        dto.setBillType(BusinessTypeEnum.ORDER.getCode());
+        dto.setTaskType(HISTORY);
+
+        LocalDateTime startTime = e.getPlatformOrderCreateTime().minusSeconds(1);
+        LocalDateTime endTime = e.getPlatformOrderCreateTime().plusSeconds(1);
+        dto.setStartTime(startTime);
+        dto.setEndTime(endTime);
+        Map<String,Object> map = new HashMap<>();
+        map.put("length", 200);
+        map.put("date_type", "global_purchase_time");
+        map.put("order_status", Integer.valueOf(orderStatus));
+        dto.setDetailExtendJson(JSON.toJSONString(map));
+        return dto;
     }
 }

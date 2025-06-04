@@ -52,6 +52,7 @@
         select
         count( lbc.id)
         from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and lbc.is_deleted = false

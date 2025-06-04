@@ -135,7 +135,7 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
-            grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
+            grossProfitRateValue = MathUtil.multiplyWithTwo(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
@@ -183,7 +183,7 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
-            grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
+            grossProfitRateValue = MathUtil.multiplyWithTwo(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
@@ -229,7 +229,7 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
-            grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
+            grossProfitRateValue = MathUtil.multiplyWithTwo(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
