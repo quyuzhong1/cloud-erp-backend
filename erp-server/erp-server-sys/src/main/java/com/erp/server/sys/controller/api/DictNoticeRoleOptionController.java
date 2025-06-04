@@ -24,7 +24,7 @@ import java.util.List;
 
 /**
  * 
- *
+ * 三方通知--通知角色字典
  * @author jack
  * @since 2025-06-04
  */
@@ -38,7 +38,7 @@ public class DictNoticeRoleOptionController extends BaseController {
     private DictNoticeRoleOptionService dictNoticeRoleOptionService;
 
     /**
-    * 新增
+    * 根据单据类型查询下拉
     * @author jack
     * @date:  2025-06-04
     * @param businessType

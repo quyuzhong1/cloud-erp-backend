@@ -52,8 +52,17 @@ public class CfgApproveSyncSendHandler {
 
 
     public void updateNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
+                                String curTaskId,
                                 List<ProcessTaskManagementEntity> processTaskManagementEntities,
                                 ApproveSyncRecordEntity syncRecordEntity) {
+
+        if(StringUtils.isNotBlank(curTaskId)){
+            processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskId(), curTaskId)).collect(Collectors.toList());
+
+        }else {
+            processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE )).collect(Collectors.toList());
+        }
+
         //审批状态
         String approveType = dto.getApproveType();
         if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())){//审核通过
@@ -147,7 +156,7 @@ public class CfgApproveSyncSendHandler {
 
     //更新审批 Bot 消息
     private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status,ApproveSyncRecordEntity syncRecordEntity) {
-        processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE )).collect(Collectors.toList());
+
         if(CollUtil.isNotEmpty(processTaskManagementEntities)){
             List<String> messsageIds = processTaskManagementExtService.listByProcessTaskManagementIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
             if(CollUtil.isNotEmpty(messsageIds)){

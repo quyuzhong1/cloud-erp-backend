@@ -164,20 +164,13 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-//        String processDefinitionId = getProcessDefinitionId(dto);
-//        if (CharSequenceUtil.isBlank(processDefinitionId)) {
-//            // 业务无已启用的Erp流程配置
-//            return new ProcessManagementDTO.StartResultDTO(dto);
-//        }
-//        //启动流程
-//        return startProcess(dto, processDefinitionId);
-        // 查询业务数据和关联流程定义
-        ProcessBusinessEntity processBusiness = processBusinessService.getProcessBusiness(dto.getBusinessKey(), "", Boolean.FALSE);
-        if (null == processBusiness) {
-            // 业务未绑定流程定义
+        String processDefinitionId = getProcessDefinitionId(dto);
+        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+            // 业务无已启用的Erp流程配置
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
-        return startProcess(dto, processBusiness.getProcessDefinitionId());
+        //启动流程
+        return startProcess(dto, processDefinitionId);
     }
 
 
@@ -325,7 +318,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessName(insertManagementEntity.getBusinessName());
                 mqDto.setBusinessCode(insertManagementEntity.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
-//                mqDto.setTaskId(taskId);
+                mqDto.setCurTaskId(taskId);
                 mqDto.setOperator(dto.getUserId());
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
@@ -450,7 +443,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessName(managementTask.getBusinessName());
                 mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
-//                mqDto.setTaskId(managementTask.getTaskId());
+                mqDto.setCurTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
@@ -753,7 +746,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessName(managementTask.getBusinessName());
                 mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(managementTask.getProcessInstanceId());
-//                mqDto.setTaskId(managementTask.getTaskId());
+                mqDto.setCurTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(managementTask.getBusinessKey());
@@ -828,7 +821,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessName(managementTask.getBusinessName());
                 mqDto.setBusinessCode(managementTask.getBusinessCode());
                 mqDto.setInstanceId(processInstanceId);
-//                mqDto.setTaskId(managementTask.getTaskId());
+                mqDto.setCurTaskId(managementTask.getTaskId());
                 mqDto.setOperator(dto.getUserId());
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(dto.getBusinessKey());
@@ -1194,7 +1187,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                     mqDto.setBusinessName(managementTask.getBusinessName());
                     mqDto.setInstanceId(managementTask.getProcessInstanceId());
                     mqDto.setBusinessCode(managementTask.getBusinessCode());
-//                mqDto.setTaskId(managementTask.getTaskId());
+                    mqDto.setCurTaskId(managementTask.getTaskId());
                     mqDto.setOperator(userInfo.getUid());
                     mqDto.setVariablesMap(variables);
                     mqDto.setBusinessKey(managementTask.getBusinessKey());
@@ -1457,7 +1450,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessName(entity.getBusinessName());
                 mqDto.setBusinessCode(entity.getBusinessCode());
                 mqDto.setInstanceId(entity.getProcessInstanceId());
-//                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(entity.getBusinessKey());
@@ -1534,7 +1526,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 mqDto.setBusinessName(entity.getBusinessName());
                 mqDto.setInstanceId(entity.getProcessInstanceId());
                 mqDto.setBusinessCode(entity.getBusinessCode());
-//                mqDto.setTaskId(managementTask.getTaskId());
                 mqDto.setOperator(userInfo.getUid());
                 mqDto.setVariablesMap(variables);
                 mqDto.setBusinessKey(entity.getBusinessKey());
