@@ -27,15 +27,12 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
-import com.erp.model.sys.dto.SysUserDeptDTO;
 import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.entity.ProcessDelegateEntity;
 import com.erp.model.workflow.enums.ProcessDelegateStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.sys.feign.aspect.DataPermissionAspect;
-import com.erp.server.workflow.convert.ProcessDelegateConvert;
 import com.erp.server.workflow.mapper.ProcessDelegateMapper;
 import com.erp.server.workflow.service.OperateLogService;
 import com.erp.server.workflow.service.ProcessDelegateService;
@@ -246,17 +243,15 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
             return  sysUserFeign.getUserListByUserIds(Collections.singletonList(userInfo.getUid()));
         } else if (DataPermissionAspect.DATA_SCOPE_DEPT.equals(userRequestPermissionsDTO.getDataScope())) {
             //部门权限
-            SysDepartmentUserNumberDTO departmentUserNumberDTO = sysUserFeign.getDeptByUserId(userInfo.getUid());
-            if (ObjectUtil.isEmpty(departmentUserNumberDTO)) {
-                throw new ServiceException("当前登陆人未找到部门信息");
+            List<String> userIdList = sysUserFeign.getDepUserList(userInfo.getUid());
+            if (CollUtil.isEmpty(userIdList)) {
+                return Collections.emptyList();
             }
-            List<SysUserDeptDTO> userDeptList = sysUserFeign.getUserDeptList();
-            Map<String, List<SysUserDeptDTO>> deptMap = userDeptList.stream().filter(obj -> ObjectUtil.isNotEmpty(obj.getDeptId()) && MathUtil.ONE.equals(obj.getUserState())).collect(Collectors.groupingBy(SysUserDeptDTO::getDeptId));
-            List<SysUserDeptDTO> sysUserDeptList = deptMap.get(departmentUserNumberDTO.getDepartmentId());
-            if (CollUtil.isEmpty(userDeptList)){
-                throw new ServiceException("当前登陆人未找到部门信息");
+            List<FindUserDTO> userList = sysUserFeign.getUserList();
+            if (CollUtil.isEmpty(userList)) {
+                return Collections.emptyList();
             }
-            return ProcessDelegateConvert.INSTANCE.sysUserDeptToFindUser(sysUserDeptList);
+            return userList.stream().filter(obj -> userIdList.contains(obj.getUserId())).collect(Collectors.toList());
         } else {
             //全部权限
             return sysUserFeign.getUserList();

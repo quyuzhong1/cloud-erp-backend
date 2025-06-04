@@ -1611,6 +1611,14 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return list;
     }
 
+    @Override
+    public List<ProcessManagementDTO.DetailPagingResultDTO> listDetail(ProcessManagementDTO.DetailSearchDTO dto) {
+        if (ProcessSourcePlatformEnum.ERP.getCode().equals(dto.getSourcePlatform())) {
+            baseMapper.listErpDetail(dto);
+        }
+        return baseMapper.listFsDetail(dto);
+    }
+
     /**
      * @description: 根据业务key和业务id查询
      * @author Will

@@ -189,6 +189,19 @@ public class ProcessManagementController extends BaseController {
     }
 
     /**
+     * 明细数据
+     * @author will
+     * @date 2025/6/4 10:48
+     * @param dto
+     * @return ApiResult<PagingVO<DetailPagingResultDTO>>
+     */
+    @PostMapping("/listDetail")
+    public ApiResult<List<ProcessManagementDTO.DetailPagingResultDTO>> listDetail(@RequestBody @Valid ProcessManagementDTO.DetailSearchDTO dto) {
+        List<ProcessManagementDTO.DetailPagingResultDTO> resultList = processManagementService.listDetail(dto);
+        return success(resultList);
+    }
+
+    /**
      * 流程管理导出
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "流程管理导出")

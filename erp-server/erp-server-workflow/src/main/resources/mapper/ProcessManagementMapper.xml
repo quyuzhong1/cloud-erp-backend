@@ -238,4 +238,28 @@
         group by pm.process_status
     </select>
 
+    <!-- 查询ERP明细 -->
+    <select id="listErpDetail" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$DetailPagingResultDTO">
+        select
+            ptm.id,
+            pm.process_name,
+            ptm.cur_activity_id,
+            ptm.cur_activity_name,
+            ptm.cur_approve_id,
+            ptm.cur_approve_name,
+            ptm.task_status,
+            ptm.approve_time
+        from process_task_management ptm
+        inner join process_management pm on pm.process_instance_id = ptm.process_instance_id and pm.is_deleted = false
+        <where>
+            ptm.is_deleted = false and ptm.process_instance_id = #{params.processInstanceId} and ptm.cur_activity_id = #{params.curActivityId}
+        </where>
+    </select>
+
+    <!--查询FS明细 -->
+    <select id="listFsDetail"
+            resultType="com.erp.model.workflow.dto.ProcessManagementDTO$DetailPagingResultDTO">
+
+    </select>
+
 </mapper>
