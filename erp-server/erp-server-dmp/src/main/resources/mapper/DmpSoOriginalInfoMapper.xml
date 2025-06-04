@@ -75,9 +75,7 @@
         LEFT JOIN dmp_so_original_detail sd ON sd.main_id = si.ID and sd.is_deleted = FALSE
         where
         si.is_deleted = FALSE
-        <if test="null != platformCode and platformCode != ''">
-            AND (si.platform_code  = #{platformCode} or si.third_code = #{platformCode})
-        </if>
+        AND si.platform_code  = #{platformCode}
         order by detailId desc
     </select>
 
