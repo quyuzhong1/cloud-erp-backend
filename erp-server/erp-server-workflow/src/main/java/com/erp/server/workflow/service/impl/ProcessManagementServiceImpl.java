@@ -1040,18 +1040,21 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @return Boolean
      */
     private Boolean isDelegate (String userId,Map<String, Object> variables) {
+        Boolean isDelegate = Boolean.FALSE;
         // 获取当前登录用户
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        Map<String, String> delegateInfo = (Map<String, String>) variables.get("DELEGATE_INFO_"+ userInfo.getUid());
-        if (ObjectUtil.isEmpty(delegateInfo)) {
-            return Boolean.FALSE;
+        List<Map<String, String>> delegateInfoList = (List<Map<String, String>>) variables.get("DELEGATE_INFO_"+ userInfo.getUid());
+        if (CollUtil.isEmpty(delegateInfoList)) {
+            return isDelegate;
         }
-        String delegateUser = delegateInfo.get("delegateUser");
-        String delegateType = delegateInfo.get("delegateType");
-        if (CamundaGlobalListener.AUTO_DELEGATE.equals(delegateType) && CharSequenceUtil.equals(userId,delegateUser)) {
-            return Boolean.TRUE;
+        for (Map<String, String> delegateInfo : delegateInfoList) {
+            String delegateUser = delegateInfo.get("delegateUser");
+            String delegateType = delegateInfo.get("delegateType");
+            if (CamundaGlobalListener.AUTO_DELEGATE.equals(delegateType) && CharSequenceUtil.equals(userId,delegateUser)) {
+                isDelegate = Boolean.TRUE;
+            }
         }
-        return Boolean.FALSE;
+        return isDelegate;
     }
 
     /**

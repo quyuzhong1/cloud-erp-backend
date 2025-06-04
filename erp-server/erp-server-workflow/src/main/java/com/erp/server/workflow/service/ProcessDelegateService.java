@@ -82,9 +82,9 @@ public interface ProcessDelegateService extends SuperService<ProcessDelegateEnti
      * @author will
      * @date 2025/5/19 17:47
      * @param processDefinitionId
-     * @return ProcessDelegateEntity
+     * @return List<ProcessDelegateEntity>
      */
-    ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId,String startUserId);
+    List<ProcessDelegateEntity> getByProcessDefinitionId(String processDefinitionId);
     /**
      * 查询未结束数据
      * @author will
