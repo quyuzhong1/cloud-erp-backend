@@ -14,8 +14,8 @@ import java.util.stream.Stream;
  * @Created by zdy
  */
 public enum LogisticsThirdSupplierEnum implements EnumMessage {
-    SF_EXPRESS("waitOrder","顺丰", TrackPlatformTypeEnum.TRACK123.getCode()),
-    JT_EXPRESS("ordered","急兔",TrackPlatformTypeEnum.TRACK123.getCode()),
+    SF_EXPRESS("sfExpress","顺丰", TrackPlatformTypeEnum.TRACK123.getCode()),
+    JT_EXPRESS("jtExpress","急兔",TrackPlatformTypeEnum.TRACK123.getCode()),
     ;
 
 

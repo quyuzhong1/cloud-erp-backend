@@ -327,6 +327,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             if (Objects.nonNull(refEntity)){
                 record.setIsPushMobile(refEntity.getIsPushMobile());
                 record.setThirdSupplierCode(refEntity.getThirdSupplierCode());
+            }else {
+                record.setIsPushMobile(Boolean.FALSE);
             }
         });
     }

@@ -13,8 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @Created by yl
  */
 public enum TrackPlatformTypeEnum implements EnumMessage {
-    TRACK123("track123", "track123"),
-    TRACK17("17track", "17track"),
+    TRACK123("TRACK123", "track123"),
+    TRACK17("TRACK17", "17track"),
     ;
 
     /**
