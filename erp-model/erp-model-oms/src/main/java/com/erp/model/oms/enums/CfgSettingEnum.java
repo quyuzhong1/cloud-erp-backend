@@ -14,6 +14,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 public enum CfgSettingEnum implements EnumMessage {
 
     TIME_OUT_CONFIG("timeOutConfig",  "超时设置"),
+    PAY_METHOD("payMethod",  "付款方式设置"),
+
     ;
 
     /**

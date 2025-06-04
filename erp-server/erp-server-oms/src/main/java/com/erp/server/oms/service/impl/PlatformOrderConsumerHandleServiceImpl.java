@@ -112,6 +112,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
     @Resource
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
 
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -291,9 +293,13 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         String payStatus = mainEntity.getPayStatus();
         //已付款
         String paid = SoB2cPayStatusEnum.ENUM_PAID.getCode();
+
+        //查询支付方式是否支持继续发货
+        Boolean isFlag = soB2cCoreService.listPayMethodSetting(mainEntity);
+
         //自动匹配订单规则 待配貨和已付款 就要订单规则
         if (SoB2cBillStatusEnum.ENUM_WAIT_DISTRIBUTION.getCode().equalsIgnoreCase(billStatus)
-                && paid.equalsIgnoreCase(payStatus)
+                && (paid.equalsIgnoreCase(payStatus) || isFlag)
                 && !mainEntity.getInvalidStatus()) {
             List<SoB2cDetailEntity> detailList = soB2cDetailService.listByMainId(id);
             Map<String, Object> map = soB2cService.handleMatchJson(id, detailList, new HashMap<>());
