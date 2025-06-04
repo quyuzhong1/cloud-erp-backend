@@ -150,6 +150,10 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             }
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = handler.parseForm(formStr);
             viewDTOList.forEach(e -> {
+                if (ObjectUtil.isNotEmpty(ruleTypeEnum)){
+                    e.setCfgType(DictBasicEnum.THIRDCFG.getCode());
+                }
+                e.setCfgType(DictBasicEnum.SYSCFG.getCode());
                 e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
             });
             return viewDTOList;
@@ -180,7 +184,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
      */
     private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
         //过滤addDto，thirdField为空的数据
-        List<CfgProcessFieldMapDTO.AddOrUpdateDTO> thirdFieldNotEmptyDTO = addDTO.stream().filter(dto -> StrUtil.isNotBlank(dto.getThirdField())).collect(Collectors.toList());
+        List<CfgProcessFieldMapDTO.AddOrUpdateDTO> thirdFieldNotEmptyDTO = addDTO.stream().filter(dto -> StrUtil.isNotBlank(dto.getThirdFieldId())).collect(Collectors.toList());
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
         Map<String, CfgQueryOptionEntity> fieldToEntityMap = cfgQueryOptionEntities.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, e -> e));
         //筛选出eq(CfgQueryOptionEntity::getIsRequired, true)
@@ -198,7 +202,6 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
                 CfgProcessFieldMapEntity entity = new CfgProcessFieldMapEntity();
                 BeanMapperUtils.copy(dto, entity);
                 entity.setCfgId(ruleId); // 设置关联的 ruleId
-                entity.setCfgType("sysCfg"); //TODO 缺少枚举
                 entitiesToAddOrUpdate.add(entity);
                 continue;
             }

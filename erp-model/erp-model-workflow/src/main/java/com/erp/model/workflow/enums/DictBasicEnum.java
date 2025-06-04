@@ -88,6 +88,8 @@ public enum DictBasicEnum {
     FSAPPROVE("fsApprove", "sourcePlatform", "飞书审核", "审核来源平台"),
     SUCEESS("success",  "taskInfoStatus", "成功", "三方生成查询状态"),
     FAIL("fail",  "taskInfoStatus", "失败", "三方生成查询状态"),
+    SYSCFG("sysCfg","cfgType","系统配置","配置类型"),
+    THIRDCFG("thirdCfg","cfgType","第三方配置","配置类型"),
     ;
 
     @EnumValue
