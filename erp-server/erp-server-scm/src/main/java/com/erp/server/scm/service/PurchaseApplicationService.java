@@ -229,4 +229,12 @@ public interface PurchaseApplicationService extends SuperService<PurchaseApplica
     void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus);
 
     void updatePA(PurchaseApplicationDTO.updatePADTO updateDTO);
+    /**
+     * 查询数量
+     * @author will
+     * @date 2025/6/4 14:33
+     * @param soIds
+     * @return Integer
+     */
+    Integer getPushDownBySourceIds(List<String> soIds);
 }

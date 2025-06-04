@@ -34,6 +34,7 @@ import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
 import jodd.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
+import org.redisson.executor.CronExpression;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -46,7 +47,6 @@ import com.common.core.enums.ApiError;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.ConstraintViolation;
-import javax.validation.ConstraintViolationException;
 import javax.validation.Validator;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE;
@@ -84,6 +84,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgThirdNoticeDTO.AddDTO addDTO) {
+
         String method = addDTO.getMethod();
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addDTO.getPushMsgList();
         //可能存在一条空数据，需要排除掉
@@ -119,6 +120,12 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         //单据均为即时推送
         if(Objects.equals(cfgThirdNoticeEntity.getMethod(),CfgThirdNoticeMethodEnum.SINGLE.getCode())){
             cfgThirdNoticeEntity.setCron("");
+        }else {
+            // 校验cron表达式
+            boolean isValid = CronExpression.isValidExpression(addDTO.getCron());
+            if(Boolean.FALSE.equals(isValid)){
+                throw new ServiceException("cron表达式不合法");
+            }
         }
 
         log.info("开始新增三方通知配置");
@@ -254,6 +261,12 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         //单据均为即时推送
         if(Objects.equals(cfgThirdNoticeEntity.getMethod(),CfgThirdNoticeMethodEnum.SINGLE.getCode())){
             cfgThirdNoticeEntity.setCron("");
+        }else {
+            // 校验cron表达式
+            boolean isValid = CronExpression.isValidExpression(addOrUpdateDTO.getCron());
+            if(Boolean.FALSE.equals(isValid)){
+                throw new ServiceException("cron表达式不合法");
+            }
         }
 
         log.info("编辑 开始修改三方通知配置数据，id：【{}】", old.getId());
@@ -491,7 +504,16 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     }
 
     @Override
-    public void testPush(MqConsumerRecordDTO.MqDTO dto) {
-        mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(),dto , IdUtil.simpleUUID(),1);
+    public void testPush(String jsonStr) {
+        mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.RECEIVE_DDL_TO_MQ_SYS_TOPIC, RocketMqTagEnum.SYS_RECEIVE_DDL_TO_MQ_TAG.getName(),jsonStr , IdUtil.simpleUUID(),1);
+    }
+
+    @Override
+    public List<CfgThirdNoticeEntity> listByMethod(String method){
+        return lambdaQuery()
+                .eq(CfgThirdNoticeEntity::getMethod,method)
+                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
+                .list();
+
     }
 }

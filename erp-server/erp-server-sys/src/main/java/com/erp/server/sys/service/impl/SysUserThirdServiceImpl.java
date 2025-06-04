@@ -15,6 +15,7 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.server.sys.mapper.SysUserThirdMapper;
 import com.erp.server.sys.service.SysUserInfoService;
 import com.erp.server.sys.service.SysUserThirdService;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -190,6 +191,9 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
 
     @Override
     public List<ThirdUnionDTO> getThirdByUserIds(String platform, List<String> userIds) {
+        if(StringUtils.isBlank(platform) || CollUtil.isEmpty(userIds)){
+            return Collections.emptyList();
+        }
         List<SysUserThirdEntity> list = lambdaQuery().eq(SysUserThirdEntity::getThirdPartyType, platform)
                 .in(SysUserThirdEntity::getUserId, userIds)
                 .ne(SysUserThirdEntity::getThirdOpenId, "")
@@ -211,6 +215,9 @@ public class SysUserThirdServiceImpl extends ServiceImpl<SysUserThirdMapper, Sys
 
     @Override
     public SysUserThirdEntity getUserByThird(String platform, String thirdId) {
+        if(StringUtils.isBlank(platform) || StringUtils.isBlank(thirdId)){
+            return null;
+        }
         return baseMapper.getUserByThird(platform, thirdId);
     }
 

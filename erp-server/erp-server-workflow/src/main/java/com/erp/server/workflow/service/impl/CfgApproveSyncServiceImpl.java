@@ -91,6 +91,9 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Resource
     private SysUserFeign sysUserFeign;
 
+    @Resource
+    private CfgSettingService cfgSettingService;
+
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -219,11 +222,13 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
 
     //三方审批相关信息
     private ExternalApproval getExternalApproval(CfgApproveSyncEntity cfgApproveSyncEntity) {
-        List<SysRefererConfigEntity> refererConfig = sysRefereConfigFeign.getByReferer(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
-        String referer = "";
-        if(CollUtil.isNotEmpty(refererConfig)){
-            referer = refererConfig.get(0).getReferer();
-        }
+//        List<SysRefererConfigEntity> refererConfig = sysRefereConfigFeign.getByReferer(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+//        String referer = "";
+//        if(CollUtil.isNotEmpty(refererConfig)){
+//            referer = refererConfig.get(0).getReferer();
+//        }
+
+        Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
 
         return ExternalApproval.newBuilder()
                 .approvalName("@i18n@1")
@@ -242,8 +247,8 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                         .enableMarkReaded(false)
                         .allowBatchOperate(false)
                         .actionCallbackUrl(cfgApproveSyncEntity.getWebhookUrl())
-                        .actionCallbackToken(referer)
-                        .actionCallbackKey(referer)
+                        .actionCallbackToken(String.valueOf(dataJson.get("actionCallbackToken")))
+                        .actionCallbackKey(String.valueOf(dataJson.get("actionCallbackKey")))
                         .build())
                 .build();
     }

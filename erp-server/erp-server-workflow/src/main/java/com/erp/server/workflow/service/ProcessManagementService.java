@@ -273,4 +273,12 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return List<TabListDTO>
      */
     List<ProcessManagementDTO.TabListDTO> tabList(PermissionsDTO dto);
+    /**
+     * 查询明细信息
+     * @author will
+     * @date 2025/6/4 10:48
+     * @param dto
+     * @return List<DetailPagingResultDTO>
+     */
+    List<ProcessManagementDTO.DetailPagingResultDTO> listDetail(ProcessManagementDTO.DetailSearchDTO dto);
 }

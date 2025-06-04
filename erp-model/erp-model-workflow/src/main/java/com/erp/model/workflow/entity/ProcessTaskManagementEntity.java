@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import org.apache.ibatis.type.JdbcType;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -31,7 +32,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @Accessors(chain = true)
-@TableName("process_task_management")
+@TableName(value = "process_task_management")
 @NoArgsConstructor
 public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagementEntity> {
 
@@ -139,7 +140,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
     /**
      * 标识json
      */
-    @TableField("label_json")
+    @TableField(value = "label_json", jdbcType = JdbcType.OTHER)
     private JSONObject labelJson;
 
     public static final String PROCESS_INSTANCE_ID = "process_instance_id";
@@ -167,7 +168,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
 
 
-    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, FindUserDTO findUserDTO, String executionId, String activityName) {
+    public ProcessTaskManagementEntity(String processInstanceId, String activityId, String taskId, LocalDateTime startTime, ApproveStatusEnum approveStatus, CamundaDTO.PropertiesDTO propertiesDTO, FindUserDTO findUserDTO, String executionId, String activityName,JSONObject labelJson) {
         this.processInstanceId = processInstanceId;
         this.curActivityId = activityId;
         this.taskId = taskId;
@@ -180,6 +181,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         this.curApproveName = findUserDTO.getUserName();
         this.executionId = executionId;
         this.curActivityName = activityName;
+        this.labelJson = labelJson;
     }
 
     public static ProcessTaskManagementEntity getByEntity(ProcessTaskManagementEntity entity, String targetUserId, String targetUserName) {

@@ -363,7 +363,7 @@ public interface SysUserFeign {
      * @return
      */
     @PostMapping("feign/user/getUserByThird")
-    SysUserThirdEntity getThirdByUserIds(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdId")String thirdId);
+    SysUserThirdEntity getUserByThird(@RequestParam(value = "platform") String platform, @RequestParam(value = "thirdId")String thirdId);
 
     /**
      * 根据主键获取消息配置信息

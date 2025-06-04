@@ -1540,7 +1540,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
 
     @Override
     public void updateApproveStatus(PurchaseApplicationEntity one, String approveStatus) {
-        String userId = sysUserFeign.getThirdByUserIds("fs", one.getApproveUserId()).getUserId();
+        String userId = sysUserFeign.getUserByThird(ThirdpartyPlatformEnum.FS.getCode(), one.getApproveUserId()).getUserId();
         //更新审核状态
         lambdaUpdate().in(PurchaseApplicationEntity::getId,Arrays.asList(one.getId()))
                 .set(PurchaseApplicationEntity::getApproveUserId,userId)
@@ -1556,5 +1556,13 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         }
         BeanUtil.copyProperties(updateDTO,one);
         this.updateById(one);
+    }
+
+    @Override
+    public Integer getPushDownBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return 0;
+        }
+        return this.lambdaQuery().in(PurchaseApplicationEntity::getSourceId,sourceIds).count();
     }
 }

@@ -196,9 +196,19 @@ public class ThirdNoticePushRecordDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class MqDTO  {
+    public static class ParamsDTO  {
 
+        private String businessType;
 
+        private String noticeMethod;
+
+        private String noticeType;
+
+        private String Status;
+
+        private LocalDateTime sendTime;
+
+        private List<String> userIds;
     }
 
 }
