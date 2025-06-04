@@ -66,4 +66,16 @@ public enum CfgQueryOptionFieldTypeEnum implements EnumMessage {
         }
         return "";
     }
+
+    public static CfgQueryOptionFieldTypeEnum getByCode(String code) {
+        if (StringUtils.isBlank(code)) {
+            return null;
+        }
+        for (CfgQueryOptionFieldTypeEnum statusEnum : CfgQueryOptionFieldTypeEnum.values()) {
+            if (code.equals(statusEnum.getCode())) {
+                return statusEnum;
+            }
+        }
+        return null;
+    }
 }

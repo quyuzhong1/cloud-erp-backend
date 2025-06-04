@@ -19,6 +19,7 @@ import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.CfgThirdProcessSourcePlatformEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -168,6 +169,10 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
     public CfgThirdProcessDTO.ViewDTO view(String id) {
         CfgThirdProcessEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到ERP审批同步配置数据"));
         CfgThirdProcessDTO.ViewDTO view = baseMapper.getView(id);
+        view.getFieldMapList().forEach(cfgProcessFieldMapDTO -> {
+            cfgProcessFieldMapDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getByCode(cfgProcessFieldMapDTO.getThirdFieldType()).getName());
+            cfgProcessFieldMapDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getByCode(cfgProcessFieldMapDTO.getSysFieldType()).getName());
+        });
         return view;
     }
 

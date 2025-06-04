@@ -144,8 +144,6 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
 
         CreateExternalInstanceReq req = cfgApproveSyncBuildHandler.buildExternalInstanceReq(dto,processManagementEntity, processTaskManagementEntities, processTaskCcEntities, fieldMapEntities, thirdUnionMap,syncRecordEntity);
         if(Objects.isNull(req)){
-//            syncRecordEntity.setErrorReason(errorReason);
-//            approveSyncRecordService.save(syncRecordEntity);
             return ;
         }
         log.info("MQSyncFsInstanceConsumerService 同步三方审批实例请求参数: {}" ,  new Gson().toJson(req.getExternalInstance()));
@@ -160,8 +158,10 @@ public class MQSyncFsInstanceConsumerService implements RocketMQListener<CfgAppr
             syncRecordEntity.setErrorReason(msg);
             approveSyncRecordService.save(syncRecordEntity);
         } else {
+            //获取操作的taskId
+            String curTaskId = dto.getCurTaskId();
             //更新消息
-            cfgApproveSyncSendHandler.updateNotice(dto, processTaskManagementEntities,syncRecordEntity);
+            cfgApproveSyncSendHandler.updateNotice(dto,curTaskId,processTaskManagementEntities,syncRecordEntity);
 
             //消息推送
             cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);

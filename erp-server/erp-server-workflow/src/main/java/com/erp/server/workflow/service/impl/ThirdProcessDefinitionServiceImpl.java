@@ -3,10 +3,18 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.config.DocNoGenHelper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
+import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.entity.ThirdProcessDefinitionEntity;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ThirdProcessDefinitionMapper;
 import com.erp.server.workflow.service.ThirdProcessDefinitionService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -24,6 +32,12 @@ import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+import javax.servlet.http.HttpServletResponse;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PROCESS_THIRD_PROCESS;
+
 /**
  * <p>
  * 三方审批定义 服务实现类
@@ -35,8 +49,11 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdProcessDefinitionMapper, ThirdProcessDefinitionEntity> implements ThirdProcessDefinitionService {
-    @Autowired
-    private OperateLogService operateLogService;
+    @Resource
+    private DocNoGenHelper docNoGenHelper;
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -44,7 +61,6 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
     public BaseResultDTO.AddDTO add(ThirdProcessDefinitionDTO.AddDTO addDTO) {
         ThirdProcessDefinitionEntity thirdProcessDefinitionEntity = new ThirdProcessDefinitionEntity();
         BeanMapperUtils.copy(addDTO, thirdProcessDefinitionEntity);
-
         // 数据处理
         handleData(thirdProcessDefinitionEntity);
 
@@ -53,12 +69,6 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         if(!save) {
             throw new ServiceException("三方审批定义保存失败");
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "三方审批定义" , thirdProcessDefinitionEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLog(msg, null, thirdProcessDefinitionEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
 
         return new BaseResultDTO.AddDTO(thirdProcessDefinitionEntity.getId(), thirdProcessDefinitionEntity.getId());
     }
@@ -80,13 +90,6 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
         if(!save) {
             throw new ServiceException("三方审批定义保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录三方审批定义日志数据，id：【{}】", thirdProcessDefinitionEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), thirdProcessDefinitionEntity.getId(), "三方审批定义");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-//        operateLogService.addModuleOperateLogByObj(old, thirdProcessDefinitionEntity, null, thirdProcessDefinitionEntity.getId(), msg);
         return Boolean.TRUE;
     }
 
@@ -105,6 +108,44 @@ public class ThirdProcessDefinitionServiceImpl extends SuperServiceImpl<ThirdPro
             return dropDownDTO;
         }).collect(Collectors.toList());
         return dropDownDTOS;
+    }
+
+    @Override
+    public PagingVO<ThirdProcessDefinitionDTO.ListDTO> paging(PagingDTO<ThirdProcessDefinitionDTO.PagingParamDTO> pagingParamDTO) {
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
+        Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
+        IPage<ThirdProcessDefinitionDTO.ListDTO> pageData = baseMapper.paging(query,  pagingParamDTO.getParams());
+        return new PagingVO<>(pageData);
+    }
+
+    @Override
+    public ThirdProcessDefinitionDTO.ViewDTO view(String id) {
+        ThirdProcessDefinitionEntity thirdProcessDefinitionEntity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方审批定义"));
+        ThirdProcessDefinitionDTO.ViewDTO viewDTO = BeanMapperUtils.map(ThirdProcessDefinitionDTO.ViewDTO.class, thirdProcessDefinitionEntity);
+        return viewDTO;
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        ThirdProcessDefinitionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方审批定义"));
+        super.removeById(id);
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
+    }
+
+    @Override
+    public BatchResultDTO enable(String id, Boolean enableStatus) {
+        ThirdProcessDefinitionEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方审批定义"));
+        if (!entity.getEnableStatus().equals(enableStatus)) {
+            lambdaUpdate().set(ThirdProcessDefinitionEntity::getEnableStatus, enableStatus)
+                    .eq(ThirdProcessDefinitionEntity::getId, id)
+                    .update();
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.UPDATE);
+    }
+
+    @Override
+    public void exportList(ThirdProcessDefinitionDTO.PagingParamDTO dto, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("三方审批生成导出", EXPORT_PROCESS_THIRD_PROCESS.getCode(), dto);
     }
 
 
