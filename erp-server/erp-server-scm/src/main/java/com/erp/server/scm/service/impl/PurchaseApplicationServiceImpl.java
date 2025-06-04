@@ -1558,4 +1558,12 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         BeanUtil.copyProperties(updateDTO,one);
         this.updateById(one);
     }
+
+    @Override
+    public Integer getPushDownBySourceIds(List<String> sourceIds) {
+        if (CollectionUtils.isEmpty(sourceIds)) {
+            return 0;
+        }
+        return this.lambdaQuery().in(PurchaseApplicationEntity::getSourceId,sourceIds).count();
+    }
 }
