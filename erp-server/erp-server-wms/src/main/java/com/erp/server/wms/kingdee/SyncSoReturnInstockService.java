@@ -39,32 +39,29 @@ public interface SyncSoReturnInstockService {
                                                   List<DictGlobalAreaEntity> dictGlobalEntityList,
                                                   List<SysDepartmentEntity> deptList,
                                                   List<CfgCountryPartitionEntity> countryPartitionEntityList);
+    
+    Map<String, Object> syncNewDataToSdyFieldHandler(SoReturnInstockEntity entity,
+    		SoReturnInstockDetailEntity detailEntity,
+    		String operate,
+    		List<SkuVO> skuVOList,
+    		List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
+    		List<CurrencyDTO.ViewDTO> currencyList,
+    		List<ProductDetailEntity> parentSkuList,
+    		List<CustomerInfoEntity> customerInfoList,
+    		List<BaseIdDTO.CodeDTO> companyEntities,
+    		List<SoReturnEntity> soReturnEntityList,
+    		List<SoReturnReceiveEntity> soReturnReceiveEntityList,
+    		List<SoReturnEntity> receiveReturnList,
+    		String country,
+    		String partitionId,
+    		String dictPlatform,
+    		List<DictBasicEntity> omsAllDictList,
+    		List<DictPartitionEntity> partitionEntityList,
+    		List<DictCountryEntity> countryEntityList,
+    		List<DictGlobalAreaEntity> dictGlobalEntityList,
+    		List<SysDepartmentEntity> deptList,
+    		List<CfgCountryPartitionEntity> countryPartitionEntityList);
 
-    /**
-     * 同步数帝云
-     */
-    void syncDataToSdy(SoReturnInstockEntity entity,
-                       List<SoReturnInstockDetailEntity> detailEntities,
-                       String operate,
-                       List<SkuVO> skuVOList,
-                       List<BomChildrenSkuDTO> bomChildrenSkuDTOS,
-                       List<CurrencyDTO.ViewDTO> currencyList,
-                       List<ProductDetailEntity> parentSkuList,
-                       List<CustomerInfoEntity> customerInfoList,
-                       List<BaseIdDTO.CodeDTO> companyEntities,
-                       List<SoReturnEntity> soReturnEntityList,
-                       List<SoReturnReceiveEntity> soReturnReceiveEntityList,
-                       List<SoReturnEntity> receiveReturnList,
-                       String country,
-                       String partitionId,
-                       String dictPlatform,
-                       List<DictBasicEntity> omsAllDictList,
-                       List<DictPartitionEntity> partitionEntityList,
-                       List<DictCountryEntity> countryEntityList,
-                       List<DictGlobalAreaEntity> dictGlobalEntityList,
-                       List<SysDepartmentEntity> deptList,
-                       List<CfgCountryPartitionEntity> countryPartitionEntityList
-    );
 
     /**
      * 同步数帝云
@@ -72,4 +69,8 @@ public interface SyncSoReturnInstockService {
     void syncDataToSdy(SoReturnInstockEntity entity,
                        List<SoReturnInstockDetailEntity> detailEntities,
                        String operate);
+    
+    Map<String ,Map<String, Object>> syncBatchDataToSdy(List<SoReturnInstockEntity> list,
+            List<SoReturnInstockDetailEntity> detailEntityList,
+            String operate  , boolean isSavePush, boolean isNewQuerySync);
 }

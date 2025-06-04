@@ -91,7 +91,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticInfoMaps));
+            if(syncParamDetailDTO.isNewQuerySync()) {
+            	resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncNewDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticInfoMaps));
+            }else {
+            	resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticInfoMaps));
+            }
         }
         return resultList;
     }

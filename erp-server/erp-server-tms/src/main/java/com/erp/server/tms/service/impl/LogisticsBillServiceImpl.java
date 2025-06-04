@@ -1297,7 +1297,7 @@ public class LogisticsBillServiceImpl extends SuperServiceImpl<LogisticsBillMapp
                 .filter(req -> CharSequenceUtil.isNotBlank(req.getTrackStatus()))
                 .collect(Collectors.toList());
         if (CollUtil.isNotEmpty(detailEntities)) {
-            syncLogisticsBillService.syncDataToSdy(entity, detailEntities, operateEnum);
+            syncLogisticsBillService.syncDataToSdy(entity, detailEntities, operateEnum , syncLogisticsBillService.getLogisticInfo(Arrays.asList(entity)) , true);
         }
     }
 

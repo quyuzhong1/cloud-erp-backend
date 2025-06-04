@@ -269,8 +269,22 @@ public class DmpInoutController extends BaseController {
                 String systemId = dmpCfgInputEntity.getSystemId();
                 String systemCode = dmpHandlerCache.getDmpBasicSystemEntityList(d -> d.getId().equals(systemId)).get(0).getCode();
 
+                String propertie = "id";
+                boolean erpFlag = true;
+                String extendJson = dmpCfgOutputEntity.getExtendJson();
+                if(StringUtils.isNotBlank(extendJson)) {
+                	JSONObject parseObject = JSON.parseObject(extendJson);
+                	String cfgPropertie = parseObject.getString("propertie");
+                	if(StringUtils.isNotBlank(cfgPropertie)) {
+                		propertie = cfgPropertie;
+                	}
+                	Boolean erpFlagValue = parseObject.getBoolean("erpFlag");
+                	if(erpFlagValue != null) {
+                		erpFlag = erpFlagValue;
+                	}
+                }
                 List<DmpOutputTaskRecordEntity> list = cfgOutputRecordEntityListMap.getValue();
-                if (DmpBasicSystemCodeEnum.ERP.getCode().equals(systemCode)) {
+                if (erpFlag && DmpBasicSystemCodeEnum.ERP.getCode().equals(systemCode)) {
                     List<DmpOutputTaskRecordEntity> erpQuerySync = dmpOutputTaskRecordService.erpQuerySync(dmpCfgOutputEntity, list);
                     if (CollUtil.isNotEmpty(erpQuerySync)) {
                     	dmpOutputTaskRecordMergeService.querySyncMergeDeal(dmpCfgOutputEntity , dmpOutputTaskRecordService.listByIds(erpQuerySync.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList())));
@@ -279,15 +293,6 @@ public class DmpInoutController extends BaseController {
                     List<String> dataIds = list.stream().map(DmpOutputTaskRecordEntity::getDataId).collect(Collectors.toList());
                     DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
                     dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
-                    String propertie = "id";
-                    String extendJson = dmpCfgOutputEntity.getExtendJson();
-                    if(StringUtils.isNotBlank(extendJson)) {
-                    	JSONObject parseObject = JSON.parseObject(extendJson);
-                    	String cfgPropertie = parseObject.getString("propertie");
-                    	if(StringUtils.isNotBlank(cfgPropertie)) {
-                    		propertie = cfgPropertie;
-                    	}
-                    }
                     dmpOutputHotfixCreateRequest.setQueryParams(Arrays.asList(new QueryParam(QueryTypeEnum.IN, propertie, dataIds)));
                     try {
                         Map<String, String> queryPushData = dmpOutputCreateFactory.getQueryPushData(dmpOutputHotfixCreateRequest);
