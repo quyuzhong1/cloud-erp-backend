@@ -108,18 +108,6 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     private CfgThirdNoticeService cfgThirdNoticeService;
 
     @Resource
-    private ThirdNoticePushRecordService thirdNoticePushRecordService;
-
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
-
-    @Resource
-    private WorkflowFeign workflowFeign;
-
-    @Resource
-    private ProcessTaskManagementFeign processTaskManagementFeign;
-
-    @Resource
     private MQProducerService mqProducerService;
 
     @Resource
@@ -188,11 +176,69 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO repush(String id) {
         ThirdNoticePushRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方通知推送记录数据"));
+        if(entity.getStatus().equals(ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())){
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推仅限推送失败的记录");
+        }
 
+        //判断提醒方式
+        if (CfgApproveSyncSyncPlatformEnum.FEISHU.getCode().equals(entity.getNoticeMethod())) {
+            LocalDateTime now = LocalDateTime.now();
+            List<String> userIdList = Collections.singletonList(entity.getReceiverId());
+            List<ThirdUnionDTO> unionList = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode(), userIdList);
+            Map<String, ThirdUnionDTO> unionMap = unionList.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e));
 
-        return BatchResultDTO.success(entity.getId(), entity.getId(), "");
+            //根据用户id + businessType + noticeMethod + noticeType 判断是否已经在发送中。
+            ThirdNoticePushRecordDTO.ParamsDTO paramsDTO = new ThirdNoticePushRecordDTO.ParamsDTO();
+            paramsDTO.setBusinessType(entity.getBusinessType());
+            paramsDTO.setNoticeMethod(entity.getNoticeMethod());
+            paramsDTO.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
+            paramsDTO.setStatus(ThirdNoticePushRecordStatusEnum.SENDING.getCode());
+            paramsDTO.setUserIds(userIdList);
+            paramsDTO.setSendTime(now);//只查询当天日期的
+            List<ThirdNoticePushRecordEntity> listSendingRecord = listSendingRecord(paramsDTO);
+            Map<String, ThirdNoticePushRecordEntity> sendingMap = listSendingRecord.stream().collect(Collectors.toMap(ThirdNoticePushRecordEntity::getReceiverId, e -> e, (o1, o2) -> o1));
+            for (String userId : userIdList) {
+                //上一次的发送中，则跳过
+                if(sendingMap.containsKey(userId)){
+                    continue;
+                }
+                if(unionMap.containsKey(userId) &&  StringUtils.isNotBlank(unionMap.get(userId).getUserName())){
+                    entity.setReceiverName(unionMap.get(userId).getUserName());
+                }
+                entity.setSendTime(now);
+                entity.setStatus(ThirdNoticePushRecordStatusEnum.SENDING.getCode());
+                if(!(unionMap.containsKey(userId) &&  StringUtils.isNotBlank(unionMap.get(userId).getThirdUnionId()))){
+                    entity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
+                    entity.setErrorReason("飞书未绑定");
+                }
+                boolean save = this.updateById(entity);
+                if(Boolean.TRUE.equals(save)){
+                    if(unionMap.containsKey(userId) &&  StringUtils.isNotBlank(unionMap.get(userId).getThirdUnionId())){
+                        String messageId = entity.getId();
+                        SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
+                        sendMessage.setUnionIds(Collections.singletonList(unionMap.get(userId).getThirdUnionId()));
+
+                        //跳转URL
+                        String url = "";
+                        String cfgThirdNoticeId = entity.getCfgThirdNoticeId();
+                        if(StringUtils.isNotBlank(cfgThirdNoticeId)){
+                            CfgThirdNoticeEntity cfgThirdNoticeEntity = cfgThirdNoticeService.getById(cfgThirdNoticeId);
+                            if(Objects.nonNull(cfgThirdNoticeEntity)){
+                                url = cfgThirdNoticeEntity.getUrl();
+                            }
+                        }
+                        Map<String, Object> contentMap = fsService.getCardMessageMap(entity.getTitle(), entity.getContent(), url);
+                        sendMessage.setContentMap(contentMap);
+                        sendMessage.setMessageId(messageId);
+                        mqProducerService.syncClassMsg(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID());
+                    }
+                }
+            }
+        }
+        return BatchResultDTO.success(entity.getId(), entity.getId(), "执行成功");
     }
 
     @Override
@@ -300,7 +346,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             return;
         }
         title = wmsTaskFeign.getFsQcNoticeTitle(title);
-        content = CharSequenceUtil.format(content,"质检通知", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        content = content + "质检通知时间：" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         foreachSendByNoticeMethod(noticeEntity, userIdList, now, title, content, delayLevel);
 
     }
@@ -396,7 +442,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     paramsDTO.setStatus(ThirdNoticePushRecordStatusEnum.SENDING.getCode());
                     paramsDTO.setUserIds(userIdList);
                     paramsDTO.setSendTime(now);//只查询当天日期的
-                    List<ThirdNoticePushRecordEntity> listSendingRecord = thirdNoticePushRecordService.listSendingRecord(paramsDTO);
+                    List<ThirdNoticePushRecordEntity> listSendingRecord = listSendingRecord(paramsDTO);
                     Map<String, ThirdNoticePushRecordEntity> sendingMap = listSendingRecord.stream().collect(Collectors.toMap(ThirdNoticePushRecordEntity::getReceiverId, e -> e, (o1, o2) -> o1));
 
                     for (String userId : userIdList) {
@@ -421,7 +467,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                             recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
                             recordEntity.setErrorReason("飞书未绑定");
                         }
-                        boolean save = thirdNoticePushRecordService.save(recordEntity);
+                        boolean save = save(recordEntity);
                         if(Boolean.TRUE.equals(save)){
                             if(unionMap.containsKey(userId) &&  StringUtils.isNotBlank(unionMap.get(userId).getThirdUnionId())){
                                 String messageId = recordEntity.getId();
