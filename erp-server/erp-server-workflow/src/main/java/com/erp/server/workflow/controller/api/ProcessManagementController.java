@@ -178,6 +178,7 @@ public class ProcessManagementController extends BaseController {
         List<ProcessManagementDTO.HistoryActivityResultDTO> resultList = processManagementService.historyActivity(dto);
         return success(resultList);
     }
+
     /**
      * 流程管理分页列表
      */
@@ -185,6 +186,20 @@ public class ProcessManagementController extends BaseController {
     @WebAdvanceQuery(handler = ProcessManagementQueryHandler.class)
     public ApiResult<PagingVO<ProcessManagementDTO.PagingResultDTO>> paging(@RequestBody @Valid PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
         PagingVO<ProcessManagementDTO.PagingResultDTO> resultList = processManagementService.paging(dto);
+        return success(resultList);
+    }
+
+    /**
+     * 流程管理分页列表
+     * @author will
+     * @date 2025/6/4 14:15
+     * @param dto
+     * @return ApiResult<PagingVO<MainPagingResultDTO>>
+     */
+    @PostMapping("/mainPaging")
+    @WebAdvanceQuery(handler = ProcessManagementQueryHandler.class)
+    public ApiResult<PagingVO<ProcessManagementDTO.MainPagingResultDTO>> mainPaging(@RequestBody @Valid PagingDTO<ProcessManagementDTO.SearchDTO> dto) {
+        PagingVO<ProcessManagementDTO.MainPagingResultDTO> resultList = processManagementService.mainPaging(dto);
         return success(resultList);
     }
 

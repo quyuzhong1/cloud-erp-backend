@@ -281,4 +281,12 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return List<DetailPagingResultDTO>
      */
     List<ProcessManagementDTO.DetailPagingResultDTO> listDetail(ProcessManagementDTO.DetailSearchDTO dto);
+    /**
+     * 主表分页信息
+     * @author will
+     * @date 2025/6/4 14:43
+     * @param dto
+     * @return PagingVO<MainPagingResultDTO>
+     */
+    PagingVO<ProcessManagementDTO.MainPagingResultDTO> mainPaging(PagingDTO<ProcessManagementDTO.SearchDTO> dto);
 }

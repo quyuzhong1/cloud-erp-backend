@@ -291,7 +291,7 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
         if (entity.getEffectiveTime().isAfter(entity.getExpireTime()) || entity.getEffectiveTime().equals(entity.getExpireTime())) {
             throw new ServiceException(ApiError.PROCESS_DELEGATE_TIME_ERROR);
         }
-        List<ProcessDelegateEntity> processDelegateList = this.listByBusinessKeyList(Collections.singletonList(entity.getBusinessKey()));
+        List<ProcessDelegateEntity> processDelegateList = this.listByBusinessKeyList(Collections.singletonList(entity.getBusinessKey()),entity.getStartUserId());
 
         for ( ProcessDelegateEntity detailEntity : processDelegateList) {
             //单据类型不能重复
@@ -312,8 +312,8 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
      * @param businessKeyList
      * @return List<ProcessDelegateEntity>
      */
-    private List<ProcessDelegateEntity> listByBusinessKeyList (List<String> businessKeyList) {
-        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode()).list();
+    private List<ProcessDelegateEntity> listByBusinessKeyList (List<String> businessKeyList,String startUserId) {
+        return lambdaQuery().in(ProcessDelegateEntity::getBusinessKey,businessKeyList).eq(ProcessDelegateEntity::getStartUserId,startUserId).ne(ProcessDelegateEntity::getStatus,ProcessDelegateStatusEnum.ENDED.getCode()).list();
     }
 
     /**
