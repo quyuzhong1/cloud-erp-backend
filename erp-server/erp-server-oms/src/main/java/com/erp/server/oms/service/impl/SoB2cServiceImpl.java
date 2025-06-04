@@ -8128,6 +8128,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.SHOPEE.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(entity.getDictPlatform())
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(entity.getDictPlatform())) {
             platformSpuList = detailList.stream()
                     .map(SoB2cDetailEntity::getPlatformSpuNo)

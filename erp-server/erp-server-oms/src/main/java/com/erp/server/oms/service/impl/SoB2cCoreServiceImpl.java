@@ -182,6 +182,8 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         List<String> platformList = soB2cEntityList.stream().map(SoB2cEntity::getDictPlatform).distinct().collect(Collectors.toList());
         //平台sku
         List<String> platformSkuNoList = soB2cDetailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).distinct().collect(Collectors.toList());
+        //平台产品ID
+        List<String> platformSpuNoList = soB2cDetailList.stream().map(SoB2cDetailEntity::getPlatformSpuNo).distinct().collect(Collectors.toList());
 
         // 查询该店铺所有平台sku
         ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
@@ -189,6 +191,7 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
         paramDTO.setPlatformList(platformList);
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
         paramDTO.setPlatformSkuNoList(platformSkuNoList);
+        paramDTO.setPlatformSpuNoList(platformSpuNoList);
         // 所有包含历史映射关系
         List<ListingInfoWithSkuMappingDTO> listingInfoEntityList = skuMappingService.findListDto(paramDTO);
         Map<String, List<ListingInfoWithSkuMappingDTO>> listingMap = listingInfoEntityList.stream().distinct().collect(Collectors.groupingBy(obj -> CharSequenceUtil.format("{}-{}-{}",obj.getPlatform(),obj.getPlatformSkuNo(),obj.getShopId())));

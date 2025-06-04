@@ -1499,6 +1499,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
         if (StringUtils.isBlank(platformSpuNo) && (PlatformDictEnum.ALI_EXPRESS.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dictPlatform)
         )){
             throw new ServiceException("来源平台SPU为空");
         }
@@ -1616,6 +1617,7 @@ public class SkuMappingServiceImpl extends SuperServiceImpl<SkuMappingMapper, Sk
                 || PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.TIK_TOK.getCode().equalsIgnoreCase(dictPlatform)
+                || PlatformDictEnum.TE_MU.getCode().equalsIgnoreCase(dictPlatform)
                 || PlatformDictEnum.SHOPIFY.getCode().equalsIgnoreCase(dictPlatform)
         ){
             paramDTO.setPlatformSpuNoList(platformSpuList);
