@@ -253,7 +253,7 @@
         from process_task_management ptm
         inner join process_management pm on pm.process_instance_id = ptm.process_instance_id and pm.is_deleted = false
         <where>
-            ptm.is_deleted = false and ptm.process_instance_id = #{params.processInstanceId} and ptm.cur_activity_id = #{params.curActivityId}
+            ptm.is_deleted = false and pm.id = #{params.id}
         </where>
     </select>
 
@@ -271,7 +271,7 @@
             tpm.end_time as approveTime
         from third_process_task_management tptm
         inner join third_process_management tpm on tptm.main_id = tpm.id and tpm.is_deleted = false
-        where tptm.is_deleted = false  and tptm.node_id = #{params.curActivityId}
+        where tptm.is_deleted = false  and tpm.id = #{params.id}
     </select>
 
     <!-- 主表分页查询 -->

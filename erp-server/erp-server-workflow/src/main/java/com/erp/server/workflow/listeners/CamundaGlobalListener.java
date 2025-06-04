@@ -1,5 +1,6 @@
 package com.erp.server.workflow.listeners;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
@@ -24,10 +25,7 @@ import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -225,29 +223,34 @@ public class CamundaGlobalListener {
     // 获取流程定义ID（去除版本号）
     String processDefinitionId = executionDelegate.getProcessDefinitionId().split(":")[0];
 
-    // 获取当前登录用户
-    LoginUser userInfo = UserContext.getDefaultLoginUser();
-
     // 查询委托关系
-    ProcessDelegateEntity processDelegateEntity = processDelegateService.getByProcessDefinitionId(processDefinitionId, userInfo.getUid());
-    if (ObjectUtil.isNotEmpty(processDelegateEntity)) {
+    List<ProcessDelegateEntity> processDelegateList = processDelegateService.getByProcessDefinitionId(processDefinitionId);
+    if (CollUtil.isEmpty(processDelegateList)) {
+      return candidateUsers;
+    }
+    //需要委托的人员
+      List<ProcessDelegateEntity> needDelegateList = processDelegateList.stream().filter(obj -> candidateUsers.contains(obj.getStartUserId())).collect(Collectors.toList());
+    // 替换候选人
+   List<String> userIdList = candidateUsers.stream()
+            .map(obj -> needDelegateList.stream().filter(e -> CharSequenceUtil.equals(obj,e.getStartUserId())).map(ProcessDelegateEntity::getDelegateUserId).findFirst().orElse(obj))
+            .filter(CharSequenceUtil::isNotBlank)
+            .distinct()
+            .collect(Collectors.toList());
+
+   //存委托标识
+    List<Map<String, String>> delegateInfoList = new ArrayList<>();
+    for (ProcessDelegateEntity processDelegateEntity : needDelegateList) {
       // 存储委托关系（用于后续任务标记）
       Map<String, String> delegateInfo = new HashMap<>();
       delegateInfo.put("originalUser", processDelegateEntity.getStartUserId());
       delegateInfo.put("delegateUser", processDelegateEntity.getDelegateUserId());
       delegateInfo.put("delegateType", AUTO_DELEGATE); // 委托类型标识
-
-      // 将委托信息存入流程变量
-      executionDelegate.setVariable("DELEGATE_INFO_" + userInfo.getUid(), delegateInfo);
-
-      // 替换候选人
-      candidateUsers = candidateUsers.stream()
-              .map(obj -> CharSequenceUtil.equals(obj, processDelegateEntity.getStartUserId())
-                      ? processDelegateEntity.getDelegateUserId()
-                      : obj)
-              .collect(Collectors.toList());
+      delegateInfoList.add(delegateInfo);
     }
+    // 将委托信息存入流程变量
+    LoginUser userInfo = UserContext.getDefaultLoginUser();
+    executionDelegate.setVariable("DELEGATE_INFO_" + userInfo.getUid(), delegateInfoList);
 
-    return candidateUsers.stream().distinct().collect(Collectors.toList());
+    return userIdList;
   }
 }

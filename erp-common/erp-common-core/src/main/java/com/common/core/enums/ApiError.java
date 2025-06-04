@@ -269,7 +269,7 @@ public enum ApiError implements Serializable {
     PROCESS_APPROVE_TASK_NOT_EXIST(94049,"三方生成查询不存在"),
     PROCESS_APPROVE_TASK_DETAIL_NOT_EXIST(94050,"三方生成查询明细不存在"),
     PROCESS_DEFINITION_CHANGE_EXIST_NOT_DEPLOY(94051,"流程定义已存在未发布数据不支持再次变更"),
-    PROCESS_PROCESS_DELEGATE_OVERLAP(94052,"委托审批单区间重复不支持操作"),
+    PROCESS_PROCESS_DELEGATE_OVERLAP(94052,"委托审批单发起人+委托流程+时间区间重复不支持操作"),
 
 
 

@@ -1041,14 +1041,9 @@ public class ProcessManagementDTO {
         private String sourcePlatform;
 
         /**
-         * 流程实例ID
+         * 主键id
          */
-        private String processInstanceId;
-
-        /**
-         * 当前节点ID
-         */
-        private String curActivityId;
+        private String id;
     }
 
 

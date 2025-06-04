@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.sys.mapper.DictNoticeRoleOptionMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.sys.entity.DictNoticeRoleOptionEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="business_type" property="businessType" />
+       <result column="table_type" property="tableType" />
+       <result column="table_name" property="tableName" />
+       <result column="sys_classify" property="sysClassify" />
+       <result column="class_path" property="classPath" />
+       <result column="field" property="field" />
+       <result column="field_name" property="fieldName" />
+       <result column="ref_field" property="refField" />
+       <result column="disabled" property="disabled" />
+       <result column="remark" property="remark" />
+       <result column="index" property="index" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        business_type, table_type, table_name, sys_classify, class_path, field, field_name, ref_field, disabled, remark, index
+    </sql>
+
+
+</mapper>

@@ -185,8 +185,8 @@ public class ProcessDelegateServiceImpl extends SuperServiceImpl<ProcessDelegate
     }
 
     @Override
-    public ProcessDelegateEntity getByProcessDefinitionId(String processDefinitionId,String startUserId) {
-        return  baseMapper.getByProcessDefinitionId(processDefinitionId,startUserId);
+    public List<ProcessDelegateEntity> getByProcessDefinitionId(String processDefinitionId) {
+        return  baseMapper.getByProcessDefinitionId(processDefinitionId);
     }
 
     @Override
