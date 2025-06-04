@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.DictNoticeRoleOptionDTO;
 
+import java.util.List;
+
 /**
  * <p>
  *  服务类
@@ -14,23 +16,5 @@ import com.erp.model.sys.dto.DictNoticeRoleOptionDTO;
  */
 public interface DictNoticeRoleOptionService extends SuperService<DictNoticeRoleOptionEntity> {
 
-    /**
-    * 新增
-    * @author jack
-    * @date: 2025-06-04
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(DictNoticeRoleOptionDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author jack
-    * @date: 2025-06-04
-    * @param dto
-    * @return
-    */
-    Boolean update(DictNoticeRoleOptionDTO.UpdateDTO dto);
-
-
+    List<DictNoticeRoleOptionDTO.DropDownDTO> dropDownList(String businessType);
 }

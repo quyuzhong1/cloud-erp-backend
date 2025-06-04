@@ -20,6 +20,8 @@ import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.sys.dto.DictNoticeRoleOptionDTO;
 
+import java.util.List;
+
 /**
  * 
  *
@@ -39,34 +41,13 @@ public class DictNoticeRoleOptionController extends BaseController {
     * 新增
     * @author jack
     * @date:  2025-06-04
-    * @param dto
-    * @return ApiResult<String>
+    * @param businessType
+    * @return ApiResult<List<DictNoticeRoleOptionDTO.DropDownDTO>>
     */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated DictNoticeRoleOptionDTO.AddDTO dto) {
-        return success(dictNoticeRoleOptionService.add(dto));
+    @GetMapping("/dropDownList")
+    public ApiResult<List<DictNoticeRoleOptionDTO.DropDownDTO>> dropDownList(@RequestParam("businessType")String businessType) {
+        return success(dictNoticeRoleOptionService.dropDownList(businessType));
     }
-
-    /**
-    * 修改
-    * @author jack
-    * @date:  2025-06-04
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "sys:dictNoticeRoleOption:update",
-        serviceClass = DictNoticeRoleOptionService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated DictNoticeRoleOptionDTO.UpdateDTO dto) {
-        dictNoticeRoleOptionService.update(dto);
-        return success();
-    }
-
 
 
 }

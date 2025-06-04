@@ -22,7 +22,7 @@
        <result column="ref_field" property="refField" />
        <result column="disabled" property="disabled" />
        <result column="remark" property="remark" />
-       <result column="sort" property="sort" />
+       <result column="index" property="index" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -36,7 +36,7 @@
         update_time,
         version,
         is_deleted,
-        business_type, table_type, table_name, sys_classify, class_path, field, field_name, ref_field, disabled, remark, sort
+        business_type, table_type, table_name, sys_classify, class_path, field, field_name, ref_field, disabled, remark, index
     </sql>
 
 

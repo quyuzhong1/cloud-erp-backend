@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * </p>
  *
  * @author jack
- * @since 2025-06-04 16:31:12
+ * @since 2025-06-04 17:06:58
  */
 public enum DictNoticeRoleOptionTableTypeEnum implements EnumMessage {
 	TABLE("table", "主表"),

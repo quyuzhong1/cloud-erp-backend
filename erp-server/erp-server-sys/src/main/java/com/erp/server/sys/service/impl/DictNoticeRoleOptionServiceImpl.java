@@ -31,66 +31,20 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class DictNoticeRoleOptionServiceImpl extends SuperServiceImpl<DictNoticeRoleOptionMapper, DictNoticeRoleOptionEntity> implements DictNoticeRoleOptionService {
-    @Autowired
-    private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
+
     @Override
-    public BaseResultDTO.AddDTO add(DictNoticeRoleOptionDTO.AddDTO addDTO) {
-        DictNoticeRoleOptionEntity dictNoticeRoleOptionEntity = new DictNoticeRoleOptionEntity();
-        BeanMapperUtils.copy(addDTO, dictNoticeRoleOptionEntity);
-
-        // 数据处理
-        handleData(dictNoticeRoleOptionEntity);
-
-        log.info("开始新增");
-        boolean save = super.save(dictNoticeRoleOptionEntity);
-        if(!save) {
-            throw new ServiceException("保存失败");
+    public List<DictNoticeRoleOptionDTO.DropDownDTO> dropDownList(String businessType) {
+        //1.判断businessType 未空着返回空集合
+        if (StrUtil.isBlank(businessType)) {
+            return Collections.emptyList();
         }
-
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "" , dictNoticeRoleOptionEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, dictNoticeRoleOptionEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
-
-        return new BaseResultDTO.AddDTO(dictNoticeRoleOptionEntity.getId(), dictNoticeRoleOptionEntity.getId());
+        //2.使用lambdaQuery查询数据 查询出businessType，并且disabled为false的数据，根据index进行排序
+        List<DictNoticeRoleOptionEntity> list = lambdaQuery().eq(DictNoticeRoleOptionEntity::getBusinessType, businessType)
+                .eq(DictNoticeRoleOptionEntity::getDisabled, Boolean.FALSE)
+                .orderByAsc(DictNoticeRoleOptionEntity::getIndex)
+                .list();
+        return BeanMapper.copyList(list,DictNoticeRoleOptionDTO.DropDownDTO.class);
     }
 
-    /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(DictNoticeRoleOptionDTO.UpdateDTO addOrUpdateDTO) {
-        DictNoticeRoleOptionEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, ""));
-        DictNoticeRoleOptionEntity dictNoticeRoleOptionEntity =  BeanMapperUtils.map(DictNoticeRoleOptionEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(dictNoticeRoleOptionEntity);
-        log.info("编辑 开始修改数据，id：【{}】", old.getId());
-        boolean save = super.updateById(dictNoticeRoleOptionEntity);
-        if(!save) {
-            throw new ServiceException("保存失败");
-        }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录日志数据，id：【{}】", dictNoticeRoleOptionEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dictNoticeRoleOptionEntity.getId(), "");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, dictNoticeRoleOptionEntity, null, dictNoticeRoleOptionEntity.getId(), msg);
-        return Boolean.TRUE;
-    }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(DictNoticeRoleOptionEntity dictNoticeRoleOptionEntity) {
-    // TODO 验证数据 & 数据赋值
-    }
 }

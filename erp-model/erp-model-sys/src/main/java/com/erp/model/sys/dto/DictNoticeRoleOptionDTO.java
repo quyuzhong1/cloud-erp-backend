@@ -22,6 +22,40 @@ import javax.validation.constraints.Size;
 public class DictNoticeRoleOptionDTO implements Serializable {
 
 
+    /**
+     * 下拉值
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DropDownDTO {
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 单据类型
+         */
+        private String businessType;
+
+        /**
+         * 字段（驼峰命名）
+         */
+        private String field;
+
+        /**
+         * 字段名
+         */
+        private String fieldName;
+
+        /**
+         * 排序
+         */
+        private Integer index;
+
+
+    }
 
 
     /**
@@ -89,7 +123,7 @@ public class DictNoticeRoleOptionDTO implements Serializable {
         /**
         * 排序
         */
-        private Integer sort;
+        private Integer index;
 
 
     }
@@ -196,7 +230,7 @@ public class DictNoticeRoleOptionDTO implements Serializable {
         * 排序
         */
         @NotNull(message = "排序不能为空")
-        private Integer sort;
+        private Integer index;
 
 
     }

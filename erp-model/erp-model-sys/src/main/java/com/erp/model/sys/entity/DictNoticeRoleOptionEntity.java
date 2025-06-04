@@ -77,8 +77,8 @@ public class DictNoticeRoleOptionEntity extends BaseEntity<DictNoticeRoleOptionE
     /**
     * 排序
     */
-    @TableField("sort")
-    private Integer sort;
+    @TableField("index")
+    private Integer index;
 
 
     public static final String BUSINESS_TYPE = "business_type";
@@ -101,7 +101,7 @@ public class DictNoticeRoleOptionEntity extends BaseEntity<DictNoticeRoleOptionE
 
     public static final String REMARK = "remark";
 
-    public static final String SORT = "sort";
+    public static final String INDEX = "index";
 
     @Override
     public Serializable pkVal() {
