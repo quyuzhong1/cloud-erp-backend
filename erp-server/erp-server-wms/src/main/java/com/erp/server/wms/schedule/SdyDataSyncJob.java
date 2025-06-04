@@ -88,12 +88,14 @@ public class SdyDataSyncJob {
         LocalDateTime createEndTime = null;
         Integer pageSize = 1000;// 每页记录数
         String queryParamsStr = "";
+        boolean isNewQuerySync = true;
         if (StrUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             createStartTime = jsonParam.getLocalDateTime("createStartTime", LocalDateTime.now().minusMonths(1));
             createEndTime = jsonParam.getLocalDateTime("createEndTime", LocalDateTime.now());
             jsonParam.getInt("pageSize", 1000);
             queryParamsStr = jsonParam.getStr("queryParams");
+            isNewQuerySync = jsonParam.getBool("isNewQuerySync", true);
         }
 
         //总条数
@@ -122,7 +124,7 @@ public class SdyDataSyncJob {
                 return;
             }
             List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByMainIds(ids);
-            syncKingdeeSoOutstockService.syncBatchDataToSdy(list, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode() , true, true);
+            syncKingdeeSoOutstockService.syncBatchDataToSdy(list, soOutstockDetailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode() , true, isNewQuerySync);
             
             currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "处理数量："+ list.size() +" 结束时间：" + LocalDateTime.now());
@@ -136,12 +138,14 @@ public class SdyDataSyncJob {
         LocalDateTime createEndTime = null;
         Integer pageSize = 1000;// 每页记录数
         String queryParamsStr = "";
+        boolean isNewQuerySync = true;
         if (StrUtil.isNotBlank(jobParam)) {
             JSONObject jsonParam = JSONUtil.parseObj(jobParam);
             createStartTime = jsonParam.getLocalDateTime("createStartTime", LocalDateTime.now().minusMonths(1));
             createEndTime = jsonParam.getLocalDateTime("createEndTime", LocalDateTime.now());
             jsonParam.getInt("pageSize", 1000);
             queryParamsStr = jsonParam.getStr("queryParams");
+            isNewQuerySync = jsonParam.getBool("isNewQuerySync", true);
         }
         //总条数
         int currentPage = 0;
@@ -166,7 +170,7 @@ public class SdyDataSyncJob {
             List<String> ids = list.stream().map(req -> req.getId()).collect(Collectors.toList());
             List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listDetailByMainIds(ids);
 
-            syncSoReturnInstockService.syncBatchDataToSdy(list, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode() , true, true);
+            syncSoReturnInstockService.syncBatchDataToSdy(list, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode() , true, isNewQuerySync);
             
             currentPage++;
             XxlJobHelper.log("===========当前页数：" + currentPage + "处理数量："+ list.size() +" 结束时间：" + LocalDateTime.now());

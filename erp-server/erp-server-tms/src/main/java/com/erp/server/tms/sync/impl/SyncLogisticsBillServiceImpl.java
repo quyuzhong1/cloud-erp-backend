@@ -188,34 +188,12 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
     public void syncDataToSdy(LogisticsBillEntity entity,
                               List<LogisticsBillDetailEntity> detailEntityList,
                               String operate,
-                              Map<String, Pair<String, String>> logisticInfoMaps) {
+                              Map<String, Pair<String, String>> logisticInfoMaps , boolean isNewQuerySync) {
 
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
-            if (CharSequenceUtil.isBlank(sourceCode)) {
+            if (CharSequenceUtil.isBlank(sourceCode) && !isNewQuerySync) {
                 continue;
-            }
-            TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
-            tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-            tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
-            tmsPushMsgEntity.setSourceId(billDetailEntity.getId());
-            tmsPushMsgEntity.setSourceCode(sourceCode);
-            tmsPushMsgEntity.setSyncOperate(operate);
-            tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps)));
-            tmsPushMsgService.save(tmsPushMsgEntity);
-        }
-    }
-
-
-    @Override
-    public void syncDataToSdy(LogisticsBillEntity entity,
-                              List<LogisticsBillDetailEntity> detailEntityList,
-                              String operate) {
-
-        for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
-            String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
-            if (CharSequenceUtil.isBlank(sourceCode)) {
-//                continue;
             }
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
@@ -229,7 +207,11 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
                 map.put("detailId", billDetailEntity.getId());
                 map.put("operate", operate);
             }else {
-            	map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, this.getLogisticInfo(Arrays.asList(entity)));
+            	if(isNewQuerySync) {
+            		map = this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps);
+            	}else {
+            		map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps);
+            	}
             }
             tmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             tmsPushMsgService.save(tmsPushMsgEntity);
