@@ -246,7 +246,8 @@ public class FeignBuilder {
 		if(CollUtil.isNotEmpty(queryParams)) {
 			List<QueryParam> inEmptyValues = queryParams.stream().filter(q -> q.getType() == QueryTypeEnum.IN && CollUtil.isEmpty(q.getValues())).collect(Collectors.toList());
 			if(CollUtil.isNotEmpty(inEmptyValues)) {
-				throw new RuntimeException(clazz.getName() + "的如下字段in条件为空：" + inEmptyValues.stream().map(QueryParam::getName).collect(Collectors.joining("、")));
+//				throw new RuntimeException(clazz.getName() + "的如下字段in条件为空：" + inEmptyValues.stream().map(QueryParam::getName).collect(Collectors.joining("、")));
+				return new ArrayList<>();
 			}
 		}
 		DictCore dictCore = ApplicationContextUtils.getBean(DictCore.class);

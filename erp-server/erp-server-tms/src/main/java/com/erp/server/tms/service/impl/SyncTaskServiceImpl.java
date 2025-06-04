@@ -92,6 +92,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
                 continue;
             }
             resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticInfoMaps));
+            if(syncParamDetailDTO.isNewQuerySync()) {
+            	resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncNewDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticInfoMaps));
+            }else {
+            	resultList.put(syncParamDetailDTO.getDataId(), syncLogisticsBillService.syncDataToSdyFieldHandler(entity, detailEntity, syncParamDetailDTO.getSyncOperate(), logisticInfoMaps));
+            }
         }
         return resultList;
     }

@@ -9,17 +9,21 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSON;
 import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.Tools;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockDetailEntity;
 import com.erp.model.dmp.entity.DmpReturnInstockEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 
@@ -83,10 +87,15 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
             }
         }
 
+        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class)
+                .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
+                .list();
+        Map<String, DictBasicEntity> dictMaps = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getName, d -> d , (d1 , d2) -> d1));
+        
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpReturnInstockEntityMap.get(changId), dmpReturnInstockDetailEntityMap.get(changId) , cfgOutputId , dictMaps);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -96,7 +105,7 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpReturnInstockEntity dmpReturnInstockEntity , List<DmpReturnInstockDetailEntity> dmpReturnInstockDetailEntityList , String cfgOutputId , Map<String, DictBasicEntity> dictMaps){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpReturnInstockEntity != null && CollUtil.isNotEmpty(dmpReturnInstockDetailEntityList)) {
     		if(validateDataBlack(dmpReturnInstockEntity, cfgOutputId)) {
@@ -149,8 +158,13 @@ public class DmpOutputSdyReturnInstockHandler extends DmpOutputSdyBaseTaskHandle
                 shudiyunB2cOrderDTO.setOrganization_code(organizationCode);
                 shudiyunB2cOrderDTO.setOrganization_name(organizationName);
                 
-                shudiyunB2cOrderDTO.setPlatform_id(sourcePlatform);
-	            shudiyunB2cOrderDTO.setPlatform_name(platformName);
+                DictBasicEntity dictBasicEntity = dictMaps.get(sourcePlatform);
+                if(dictBasicEntity != null) {
+                	shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
+    	            shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
+    	            shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+    	            shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
+                }
 	            shudiyunB2cOrderDTO.setShop_no(shopNo);
 	            shudiyunB2cOrderDTO.setShop_name(shopName);
                 

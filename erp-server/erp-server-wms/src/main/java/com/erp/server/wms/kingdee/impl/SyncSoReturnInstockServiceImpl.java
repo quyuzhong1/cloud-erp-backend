@@ -472,11 +472,12 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         viewDto.setPlatformOrderCode(platformOrderCode);
         SkuVO skuVO = skuVOList.stream().filter(req -> req.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(new SkuVO());
 
-        if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
-        	detailViewDto.setIsGift(1);
-        } else {
-        	detailViewDto.setIsGift(0);
-        }
+//        if (detailEntity.getReturnAmount().compareTo(BigDecimal.ZERO) <= 0) {
+//        	detailViewDto.setIsGift(1);
+//        } else {
+//        	detailViewDto.setIsGift(0);
+//        }
+        detailViewDto.setIsGift(0);
 
         BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOS.stream().filter(req -> req.getParentSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(bomChildrenSkuDTO) && BomTypeEnum.COMBINATION.getType().equals(bomChildrenSkuDTO.getType())) {

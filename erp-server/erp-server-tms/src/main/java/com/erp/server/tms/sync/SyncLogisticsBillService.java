@@ -22,8 +22,7 @@ public interface SyncLogisticsBillService {
     Map<String, Object> syncNewDataToSdyFieldHandler(LogisticsBillEntity entity,
     		LogisticsBillDetailEntity logisticsBillDetailEntity,
     		String operate,
-    		List<LogisticsChannelEntity> logisticsChannelEntities,
-    		List<LogisticsSupplierEntity> logisticsSupplierEntities);
+    		Map<String, Pair<String, String>> logisticInfoMaps);
 
     void syncDataToSdy(LogisticsBillEntity entity, List<LogisticsBillDetailEntity> detailEntityList, String operate, Map<String, Pair<String, String>> logisticInfoMaps);
 

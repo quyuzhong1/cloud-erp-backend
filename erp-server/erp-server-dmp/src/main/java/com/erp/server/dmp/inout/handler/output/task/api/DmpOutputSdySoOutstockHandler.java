@@ -154,10 +154,13 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
                     .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
                     .in(DictBasicEntity::getName, platformTypeIds)
                     .list();
+        	Map<String, String> platformMap = new HashMap<>();
         	Map<String, String> subPlatformMap = new HashMap<>();
         	if(CollUtil.isNotEmpty(dictBasicEntityList)) {
+        		platformMap = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getName, DictBasicEntity::getRemark , (d1 , d2) -> d1));
         		subPlatformMap = dictBasicEntityList.stream().collect(Collectors.toMap(DictBasicEntity::getName, DictBasicEntity::getValue , (d1 , d2) -> d1));
         	}
+        	cfgMaps.put("platform", platformMap);
         	cfgMaps.put("subPlatform", subPlatformMap);
         }
         for (String changId : changeIds) {
@@ -285,17 +288,17 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 					shudiyunB2cOrderDTO.setTransaction_currency(transaction_currency);
 				}
                 String platformType = dmpSoOutstockDetailEntity.getPlatformType();
-				shudiyunB2cOrderDTO.setPlatform_id(platformType);
-	            shudiyunB2cOrderDTO.setPlatform_name(dmpSoOutstockDetailEntity.getPlatformName());
+				
 	            shudiyunB2cOrderDTO.setShop_no(shopId);
 	            shudiyunB2cOrderDTO.setShop_name(shopName);
-	            shudiyunB2cOrderDTO.setSubplatform_no(platformType);
 	            if(platformType != null) {
-	            	String subplatform_name = cfgMaps.get("subPlatform").get(platformType);
-	            	if(subplatform_name == null) {
-	            		subplatform_name = "";
-	            	}
-					shudiyunB2cOrderDTO.setSubplatform_name(subplatform_name);
+	            	String platform = cfgMaps.get("platform").get(platformType);
+	            	shudiyunB2cOrderDTO.setPlatform_id(platform);
+		            shudiyunB2cOrderDTO.setPlatform_name(platform);
+		            
+	            	String subplatform = cfgMaps.get("subPlatform").get(platformType);
+	            	shudiyunB2cOrderDTO.setSubplatform_no(subplatform);
+					shudiyunB2cOrderDTO.setSubplatform_name(subplatform);
 	            }
                 
     	        shudiyunB2cOrderDTO.setRoot_node_no(dmpSoOutstockDetailEntity.getThirdOrderCode());
