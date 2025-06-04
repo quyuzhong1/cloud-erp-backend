@@ -290,6 +290,11 @@ public class VirtualTransFlowDetailDTO implements Serializable {
          * 结束日期
          */
         private LocalDate endDate;
+
+        /**
+         * 是否清除数据
+         */
+        private Boolean isClean;
     }
 
     /**
