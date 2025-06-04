@@ -150,6 +150,10 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             }
             List<CfgProcessFieldMapDTO.ViewDTO> viewDTOList = handler.parseForm(formStr);
             viewDTOList.forEach(e -> {
+                if (ObjectUtil.isNotEmpty(ruleTypeEnum)){
+                    e.setCfgType(DictBasicEnum.THIRDCFG.getCode());
+                }
+                e.setCfgType(DictBasicEnum.SYSCFG.getCode());
                 e.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(e.getThirdFieldType().toUpperCase()).getName());
             });
             return viewDTOList;

@@ -88,13 +88,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
 
         List<CfgProcessFieldMapDTO.ViewDTO> view = cfgProcessFieldMapService.view(addDTO.getThirdProcessDefinitionCode(), addDTO.getSourcePlatform());
         //筛选出必填的飞书审批定义字段,并转为map
-        List<String> ids = view.stream().map(e -> {
-            if (e.getThirdFieldRequired()) {
-                //跳过本次
-                return null;
-            }
-            return e.getThirdFieldId();
-        }).collect(Collectors.toList());
+        List<String> ids = view.stream().filter(e -> e.getThirdFieldRequired()).map(CfgProcessFieldMapDTO.ViewDTO::getThirdField).collect(Collectors.toList());
         Map<String, List<CfgProcessFieldMapDTO.ViewDTO>> collect = view.stream().collect(Collectors.groupingBy(CfgProcessFieldMapDTO.ViewDTO::getThirdFieldId));
         //分离必填
         if (CollUtil.isNotEmpty(ids)) {
