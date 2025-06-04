@@ -1,8 +1,13 @@
 package com.erp.model.workflow.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 
@@ -39,9 +44,9 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         private String approvalCode;
 
         /**
-        * 状态
+        * 启用状态
         */
-        private String status;
+        private String enableStatus;
 
         /**
         * 单据名称
@@ -68,7 +73,10 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         */
         private String type;
 
-
+        /**
+         * 单据编码
+         */
+        private String code;
     }
 
     /**
@@ -108,31 +116,12 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         private String approvalCode;
 
         /**
-        * 状态
-        */
-        @NotBlank(message = "状态不能为空")
-        private String status;
-
-        /**
         * 单据名称
         */
         @NotBlank(message = "单据名称不能为空")
         @Size(max = 30,message = "单据名称最大长度不能超过30位")
         private String name;
 
-        /**
-        * 归属平台
-        */
-        @NotBlank(message = "归属平台不能为空")
-        @Size(max = 30,message = "归属平台最大长度不能超过30位")
-        private String sourcePlatform;
-
-        /**
-        * 表单json
-        */
-        @NotBlank(message = "表单json不能为空")
-        @Size(max = 30,message = "表单json最大长度不能超过30位")
-        private String formJson;
 
         /**
         * 审批组
@@ -147,8 +136,6 @@ public class ThirdProcessDefinitionDTO implements Serializable {
         @NotBlank(message = "审批定义类型：发起/拉取不能为空")
         @Size(max = 30,message = "审批定义类型：发起/拉取最大长度不能超过30位")
         private String type;
-
-
     }
 
     @Data
@@ -163,5 +150,92 @@ public class ThirdProcessDefinitionDTO implements Serializable {
          * 单据名称
          */
         private String name;
+    }
+
+    /**
+     * 分页列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PagingParamDTO extends SortDTO {
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 主键id
+         */
+        private List<String> ids;
+
+    }
+
+    /**
+     * 分页列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListDTO {
+        /**
+         * 单据编码
+         */
+        private String code;
+
+        /**
+         * 主键id
+         */
+        private String  id;
+
+        /**
+         * 单据名称
+         */
+        private String name;
+
+        /**
+         * 审批组
+         */
+        private String dictApprovalGroup;
+
+        /**
+         * 审批组名
+         */
+        private String approvalGroupName;
+
+        /**
+         * 状态
+         */
+        private String enableStatus;
+
+        /**
+         * 创建时间
+         */
+        private String createTime;
+
+        /**
+         * 创建人
+         */
+        private String createUserName;
+
+        /**
+         * 更新时间
+         */
+        private String updateTime;
+
+        /**
+         * 更新人
+         */
+        private String updateUserName;
+
+        /**
+         * 定义类型 pull or push
+         */
+        private String type;
     }
 }

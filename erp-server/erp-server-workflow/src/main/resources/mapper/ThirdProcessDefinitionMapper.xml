@@ -13,12 +13,13 @@
        <result column="version" property="version" />
        <result column="is_deleted" property="isDeleted" />
        <result column="approval_code" property="approvalCode" />
-       <result column="status" property="status" />
+       <result column="enable_status" property="enableStatus" />
        <result column="name" property="name" />
        <result column="source_platform" property="sourcePlatform" />
        <result column="form_json" property="formJson" />
        <result column="dict_approval_group" property="dictApprovalGroup" />
        <result column="type" property="type" />
+        <result column="code" property="code" />
     </resultMap>
 
     <!-- 通用查询结果列 -->
@@ -32,8 +33,30 @@
         update_time,
         version,
         is_deleted,
-        approval_code, status, name, source_platform, form_json, dict_approval_group, type
+        approval_code, enable_status, name, source_platform, form_json, dict_approval_group, type,code
     </sql>
+    <select id="paging" resultType="com.erp.model.workflow.dto.ThirdProcessDefinitionDTO$ListDTO">
+        select
+        tpd.code,
+        tpd.id,
+        tpd.name,
+        tpd.dict_approval_group,
+        db.name as approval_group_name,
+        tpd.enable_status,
+        tpd.create_time,
+        tpd.create_user_name,
+        tpd.update_time,
+        tpd.update_user_name
+        from public.third_process_definition as tpd
+        left join public.dict_basic as db on tpd.dict_approval_group = db.value and db.is_delete = false
+        where ${params.sqlMap.default}
+        and tpd.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by tpd.create_time desc
+    </select>
 
 
 </mapper>

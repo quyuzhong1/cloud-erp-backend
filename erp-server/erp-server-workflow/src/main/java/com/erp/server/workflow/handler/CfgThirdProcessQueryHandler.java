@@ -20,10 +20,10 @@ public class CfgThirdProcessQueryHandler extends AbstractQueryHandler {
                 return "";
             }
             if ("t".equals(value)) {
-                return "r.disabled ="+ Boolean.TRUE;
+                return "r.enable_status ="+ Boolean.TRUE;
             }
             if ("f".equals(value)) {
-                return "r.disabled ="+ Boolean.FALSE;
+                return "r.enable_status ="+ Boolean.FALSE;
             }
             return "";
         }
