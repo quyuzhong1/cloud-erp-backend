@@ -6,6 +6,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.erp.model.dmp.entity.DmpCfgApiEntity;
 import com.erp.model.dmp.entity.ThirdShopEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.model.dmp.enums.LingxingPlatformCodeEnum;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
@@ -65,7 +66,7 @@ public class DmpInputLxCountListApiInitHandler extends DmpInputInitHandler {
         if (CollectionUtils.isEmpty(storeIds)){
             List<ThirdShopEntity> list = thirdShopService.lambdaQuery()
                     .eq(ThirdShopEntity::getSysType, DmpBasicSystemCodeEnum.LING_XING.getCode())
-                    .eq(ThirdShopEntity::getPlatformId, "10027")
+                    .eq(ThirdShopEntity::getPlatformId, LingxingPlatformCodeEnum.TEMU_FBP.getCode())
                     .eq(ThirdShopEntity::getDisabled, false)
                     .list();
             storeIds = list.stream().map(ThirdShopEntity::getShopId).collect(Collectors.toList());
