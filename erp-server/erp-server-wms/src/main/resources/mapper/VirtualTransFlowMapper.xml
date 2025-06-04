@@ -51,10 +51,10 @@
 
     <!-- 清空数据 -->
     <delete id="cleanALlData">
-        delete from virtual_trans_flow_detail;
-        delete from virtual_inventory_detail;
-        delete from virtual_inventory_detail_his;
-        delete from virtual_inventory_his;
+        TRUNCATE  virtual_trans_flow_detail;
+        TRUNCATE  virtual_inventory_detail;
+        TRUNCATE  virtual_inventory_detail_his;
+        TRUNCATE  virtual_inventory_his;
     </delete>
 
     <!-- 虚拟库存流水总数查询 -->
