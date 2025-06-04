@@ -138,17 +138,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
     public Map<String, Object> syncNewDataToSdyFieldHandler(LogisticsBillEntity entity,
                                                          LogisticsBillDetailEntity logisticsBillDetailEntity,
                                                          String operate,
-                                                         List<LogisticsChannelEntity> logisticsChannelEntities,
-                                                         List<LogisticsSupplierEntity> logisticsSupplierEntities) {
-
-        LogisticsChannelEntity channelEntity = logisticsChannelEntities.stream().filter(req -> req.getId().equals(entity.getChannelId())).findFirst().orElse(null);
-        String supplierName = "";
-        if (Objects.nonNull(channelEntity)) {
-            LogisticsSupplierEntity supplierEntity = logisticsSupplierEntities.stream().filter(req -> req.getId().equals(channelEntity.getMainId())).findFirst().orElse(null);
-            if (ObjectUtil.isNotEmpty(supplierEntity)) {
-                supplierName = supplierEntity.getSupplierName();
-            }
-        }
+                                                         Map<String, Pair<String, String>> logisticInfoMaps) {
 
         DmpSoLogisticsDTO.ViewDTO viewDto = new DmpSoLogisticsDTO.ViewDTO();
 
@@ -162,16 +152,24 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         viewDto.setOutstockCode(entity.getOutstockCode());
         viewDto.setSignTime(logisticsBillDetailEntity.getSignTime());
 
-        if (CharSequenceUtil.isBlank(supplierName)) {
+        String logisticCompanyCode = "";
+        String logisticCompany = "";
+        Pair<String, String> pair = logisticInfoMaps.get(entity.getId());
+        if(pair != null) {
+        	logisticCompanyCode = pair.getKey();
+        	logisticCompany = pair.getValue();
+        }
+        
+        if (CharSequenceUtil.isBlank(logisticCompanyCode)) {
+        	viewDto.setLogisticCompanyCode("无");
+        } else {
+        	viewDto.setLogisticCompanyCode(logisticCompanyCode);
+        }
+        
+        if (CharSequenceUtil.isBlank(logisticCompany)) {
         	viewDto.setLogisticCompanyName("无");
         } else {
-        	viewDto.setLogisticCompanyName(supplierName);
-        }
-
-        if (channelEntity != null && CharSequenceUtil.isNotBlank(channelEntity.getMainId())) {
-        	viewDto.setLogisticCompanyCode(channelEntity.getMainId());
-        } else {
-        	viewDto.setLogisticCompanyCode("无");
+        	viewDto.setLogisticCompanyName(logisticCompany);
         }
         
         DmpSoLogisticsDetailDTO.ViewDTO detail = new DmpSoLogisticsDetailDTO.ViewDTO();
@@ -195,7 +193,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
             if (CharSequenceUtil.isBlank(sourceCode)) {
-//                continue;
+                continue;
             }
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
             tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
@@ -214,21 +212,6 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
                               List<LogisticsBillDetailEntity> detailEntityList,
                               String operate) {
 
-    	List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
-    	List<LogisticsSupplierEntity> logisticsSupplierEntities = new ArrayList<>();
-    	
-    	if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
-    		String channelId = entity.getChannelId();
-            if (StringUtils.isNotBlank(channelId)) {
-                logisticsChannelEntities = logisticsChannelService.listByIds(Arrays.asList(channelId));
-            }
-
-            List<String> supplierIds = logisticsChannelEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(supplierIds)) {
-                logisticsSupplierEntities = logisticsSupplierService.listByIds(supplierIds);
-            }
-    	}
-        
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
             if (CharSequenceUtil.isBlank(sourceCode)) {
@@ -246,7 +229,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
                 map.put("detailId", billDetailEntity.getId());
                 map.put("operate", operate);
             }else {
-            	map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticsChannelEntities, logisticsSupplierEntities);
+            	map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, this.getLogisticInfo(Arrays.asList(entity)));
             }
             tmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             tmsPushMsgService.save(tmsPushMsgEntity);
