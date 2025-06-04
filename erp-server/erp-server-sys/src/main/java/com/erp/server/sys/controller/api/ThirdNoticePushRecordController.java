@@ -140,4 +140,15 @@ public class ThirdNoticePushRecordController extends BaseController {
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
+
+    /**
+     *
+     * @return
+     */
+    @PostMapping("/sendThirdNoticeJob")
+    public ApiResult<Object> sendThirdNoticeJob() {
+        thirdNoticePushRecordService.sendThirdNoticeJob();
+        return success();
+    }
+
 }

@@ -26,4 +26,6 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
     BatchResultDTO repush(String id);
 
     List<ThirdNoticePushRecordEntity> listSendingRecord(ThirdNoticePushRecordDTO.ParamsDTO paramsDTO);
+
+    void sendThirdNoticeJob();
 }

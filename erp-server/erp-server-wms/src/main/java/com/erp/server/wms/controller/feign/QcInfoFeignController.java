@@ -31,7 +31,7 @@ public class QcInfoFeignController extends BaseController {
         return qcInfoService.getQcReceiveResult(purchaseDetailIds);
     }
 
-    @PostMapping("/feign/qcBill/getFsQcNoticeTitle")
+    @PostMapping("/getFsQcNoticeTitle")
     public String getFsQcNoticeTitle(@RequestParam("title") String title){
         return qcInfoService.getFsQcNoticeTitle(title);
     }
