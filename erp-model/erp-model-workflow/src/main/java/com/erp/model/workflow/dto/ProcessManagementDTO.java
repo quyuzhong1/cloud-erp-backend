@@ -870,6 +870,75 @@ public class ProcessManagementDTO {
         private LocalDateTime approveTime;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class DetailPagingResultDTO {
+        /**
+         * 任务表id
+         */
+        private String id;
+
+        /**
+         * 流程名称
+         */
+        private String processName;
+
+        /**
+         * 当前节点id
+         */
+        private String curActivityId;
+
+        /**
+         * 当前节点名称
+         */
+        private String curActivityName;
+
+        /**
+         * 审批人id
+         */
+        private String curApproveId;
+
+        /**
+         * 审批人名称
+         */
+        private String curApproveName;
+
+        /**
+         * 任务状态
+         */
+        private String taskStatus;
+
+        /**
+         * 任务状态名称
+         */
+        private String taskStatusName;
+
+        /**
+         * 审核完成时间
+         */
+        private LocalDateTime approveTime;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DetailSearchDTO {
+        /**
+         * 审核来源
+         */
+        @NotBlank(message = "审核来源不能为空")
+        private String sourcePlatform;
+
+        /**
+         * 流程实例ID
+         */
+        private String processInstanceId;
+
+        /**
+         * 当前节点ID
+         */
+        private String curActivityId;
+    }
+
 
     @Data
     @NoArgsConstructor

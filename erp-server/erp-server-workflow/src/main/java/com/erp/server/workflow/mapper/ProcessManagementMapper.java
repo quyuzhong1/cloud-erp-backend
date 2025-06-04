@@ -82,4 +82,20 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @return List<TabListDTO>
      */
     List<ProcessManagementDTO.TabListDTO> tabList(@Param("params") PermissionsDTO params);
+    /**
+     * 查询ERP明细信息
+     * @author will
+     * @date 2025/6/4 10:50
+     * @param params
+     * @return List<DetailPagingResultDTO>
+     */
+    List<ProcessManagementDTO.DetailPagingResultDTO> listErpDetail(@Param("params") ProcessManagementDTO.DetailSearchDTO params);
+    /**
+     * 查询飞书明细信息
+     * @author will
+     * @date 2025/6/4 11:31
+     * @param params
+     * @return List<DetailPagingResultDTO>
+     */
+    List<ProcessManagementDTO.DetailPagingResultDTO> listFsDetail(@Param("params") ProcessManagementDTO.DetailSearchDTO params);
 }

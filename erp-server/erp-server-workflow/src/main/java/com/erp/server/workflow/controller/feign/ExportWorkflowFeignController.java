@@ -43,6 +43,13 @@ public class ExportWorkflowFeignController {
     public PagingVO<ProcessDefinitionDTO.ExportDTO> exportProcessDefinition(@RequestBody PagingDTO<ProcessDefinitionDTO.QueryExportDTO> dto){
         return processDefinitionService.exportProcessDefinition(dto);
     }
+/**
+     * 流程管理导出
+     * @author will
+     * @date 2025/5/13 12:01
+     * @param dto
+     * @return PagingVO<ListDTO>
+     */
     @PostMapping("/processManagement")
     public PagingVO<ProcessManagementDTO.PagingResultDTO> exportProcessManagement(@RequestBody PagingDTO<ProcessManagementDTO.SearchDTO> dto){
         return processManagementService.paging(dto);
