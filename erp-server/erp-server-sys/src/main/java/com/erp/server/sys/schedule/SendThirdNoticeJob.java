@@ -132,7 +132,7 @@ public class SendThirdNoticeJob {
                 String businessType = noticeEntity.getBusinessType();
                 if(SourceTypeEnum.QC_INFO.getCode().equals(businessType)
                         || SourceTypeEnum.LOGISTICS_BILL.getCode().equals(businessType)
-                        ||SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_PRODUCT.getCode().equals(businessType)){
+                        ||SourceTypeEnum.PRODUCT_REGISTRATION.getCode().equals(businessType)){
                 }else {
                     continue;
                 }
@@ -177,7 +177,7 @@ public class SendThirdNoticeJob {
                     sendFsQcNotice(noticeEntity, roleType, specificPerson, title, now, content, delayLevel);
                 } else if (SourceTypeEnum.LOGISTICS_BILL.getCode().equals(businessType)) { //物流单--在途异常
                     sendFmLogisticWarn(noticeEntity, roleType, specificPerson, title, now, content, delayLevel);
-                } else if (SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_PRODUCT.getCode().equals(businessType)) { //备案管理
+                } else if (SourceTypeEnum.PRODUCT_REGISTRATION.getCode().equals(businessType)) { //备案管理
                     sendWhenNotRegistration(noticeEntity, roleType, specificPerson, title, content, now, delayLevel);
                 }
             }
