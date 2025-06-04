@@ -4,12 +4,10 @@ import com.common.core.controller.BaseController;
 import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.server.wms.service.QcInfoService;
 import lombok.AllArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 质检单feign控制器
@@ -31,5 +29,10 @@ public class QcInfoFeignController extends BaseController {
     @PostMapping("/getQcReceiveResult")
     public List<QcInfoDTO.QcReceiveResultDTO> getQcReceiveResult(@RequestBody List<String> purchaseDetailIds) {
         return qcInfoService.getQcReceiveResult(purchaseDetailIds);
+    }
+
+    @PostMapping("/feign/qcBill/getFsQcNoticeTitle")
+    public String getFsQcNoticeTitle(@RequestParam("title") String title){
+        return qcInfoService.getFsQcNoticeTitle(title);
     }
 }

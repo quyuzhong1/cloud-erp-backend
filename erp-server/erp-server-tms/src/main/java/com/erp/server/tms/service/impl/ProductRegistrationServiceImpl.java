@@ -628,7 +628,6 @@ public class ProductRegistrationServiceImpl extends SuperServiceImpl<ProductRegi
             //发送消息
             fsService.sendMessage(sendMessage);
         });
-
     }
 
     @Override

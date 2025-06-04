@@ -3,6 +3,7 @@ package com.erp.rpc.tms.feign;
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,4 +48,11 @@ public interface TmsFirstMileLogisticFeign {
      */
     @PostMapping("/feign/tmsFirstMileLogistic/getRecordBySkuIdAndCode")
     List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO);
+
+
+    /**
+     * 获取有预警的物流单
+     **/
+    @PostMapping("/feign/tmsFirstMileLogistic/hasWarnPaging")
+    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO);
 }

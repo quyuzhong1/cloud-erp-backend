@@ -4,6 +4,7 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.core.anno.LogSystemModule;
 import com.erp.model.tms.dto.AutoGenerateBillDTO;
 import com.erp.model.tms.dto.FirstMileCostAllocationDTO;
+import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.server.tms.service.FirstMileCostAllocationService;
 import com.erp.server.tms.service.TmsFirstMileLogisticService;
@@ -62,4 +63,13 @@ public class TmsFirstMileLogisticFeignController {
     List<FirstMileCostAllocationDTO.DetailDTO> getRecordBySkuIdAndCode(@RequestBody FirstMileCostAllocationDTO.DetailDTO detailDTO){
         return firstMileCostAllocationService.getRecordBySkuIdAndCode(detailDTO.getSkuId(),detailDTO.getBusinessCode(),detailDTO.getReportMonth());
     }
+
+    /**
+     *获取有预警的物流单
+     **/
+    @PostMapping("/feign/tmsFirstMileLogistic/hasWarnPaging")
+    List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO){
+        return tmsFirstMileLogisticService.hasWarnPaging(pagingParamDTO);
+    }
+
 }
