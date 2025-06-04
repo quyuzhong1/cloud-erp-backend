@@ -50,7 +50,7 @@ public class TmsFirstMileLogisticFeignController {
     /**
      *获取有预警的物流单
      **/
-    @PostMapping("/feign/tmsFirstMileLogistic/hasWarnPaging")
+    @PostMapping("/hasWarnPaging")
     List<TmsFirstMileLogisticDTO.PagingVO> hasWarnPaging(@RequestBody TmsFirstMileLogisticDTO.PagingParamDTO pagingParamDTO){
         return tmsFirstMileLogisticService.hasWarnPaging(pagingParamDTO);
     }

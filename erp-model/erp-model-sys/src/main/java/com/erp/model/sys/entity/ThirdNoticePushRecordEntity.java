@@ -81,6 +81,11 @@ public class ThirdNoticePushRecordEntity extends BaseEntity<ThirdNoticePushRecor
     @TableField("title")
     private String title;
     /**
+    * 通知内容
+    */
+    @TableField("content")
+    private String content;
+    /**
     * 状态：success=推送成功, failed=推送失败  枚举：ThirdNoticePushRecordStatusEnum
     */
     @TableField("status")
