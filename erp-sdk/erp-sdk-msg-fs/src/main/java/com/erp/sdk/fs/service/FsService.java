@@ -22,6 +22,7 @@ import com.erp.model.workflow.enums.LocaleEnum;
 import com.erp.sdk.fs.config.FsProperties;
 import com.erp.sdk.fs.dto.LarkResultDTO;
 import com.erp.sdk.fs.enmu.DepartmentIdTypeEnum;
+import com.erp.sdk.fs.enmu.FsActionStatusEnum;
 import com.erp.sdk.fs.enmu.UserIdTypeEnum;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -584,14 +585,25 @@ public class FsService {
             headerMap.put(AUTHORIZATION, authorization);
             headerMap.put(CONTENT_TYPE, ThirdConstants.CONTENT_TYPE);
 
+
+            Map<String, Object> bodyMap = new HashMap<>();
             //国际化
             List<Map<String, Object>> i18nResources = new ArrayList<>();
             Map<String, Object> i18nResourcesMap = new HashMap<>();
             i18nResourcesMap.put("locale", LocaleEnum.LOCALE_ZH_CN.getCode());
             i18nResourcesMap.put("is_default", true);
-            i18nResources.add(i18nResourcesMap);
+            if(status.equals(FsActionStatusEnum.SUSPEND.getCode())){//暂停
+                status = FsActionStatusEnum.CUSTOM.getCode();
 
-            Map<String, Object> bodyMap = new HashMap<>();
+                Map<String, Object> texts = new HashMap<>();
+                texts.put("@i18n@statusname", "自定义-已暂停");
+                texts.put("@i18n@detailaction", "自定义-已暂停按钮");
+                i18nResourcesMap.put("texts", texts);
+
+                bodyMap.put("status_name", "@i18n@statusname");
+                bodyMap.put("detail_action_name", "@i18n@detailaction");
+            }
+            i18nResources.add(i18nResourcesMap);
             bodyMap.put("message_id", messageId);
             bodyMap.put("status", status);
             bodyMap.put("i18n_resources", i18nResources);
@@ -731,7 +743,7 @@ public class FsService {
         //接收审批 Bot 消息的目标用户的 user_id
         bodyMap.put("user_id", dto.getThirdUserId());
         //自定义的幂等 ID
-        bodyMap.put("uuid", dto.getUuid());
+//        bodyMap.put("uuid", dto.getUuid());
         //对应模板标题的 {approval_name}
         bodyMap.put("approval_name", "@i18n@approvalName");
         //对应模板标题的 {title_user_id}

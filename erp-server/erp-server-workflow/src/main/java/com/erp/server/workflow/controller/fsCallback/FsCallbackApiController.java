@@ -34,9 +34,9 @@ public class FsCallbackApiController {
     @PostMapping("/approve")
     @ResponseBody
     public ApiResult<Object> approve(@RequestBody FsCallbackApiReqDTO req, HttpServletRequest request){
-//    	log.warn("{}平台接口统一请求报文：{}" ,"fs", JSON.toJSONString(req));
-        handler.quickApproveCallbackHandler(req);
-//        log.warn("平台接口统一响应报文：{}" ,"fs");
+    	log.info("飞书回调开始：{}" ,"fs", JSON.toJSONString(req));
+        Boolean b = handler.quickApproveCallbackHandler(req);
+        log.info("飞书回调结束");
         return ApiResult.success();
     }
 

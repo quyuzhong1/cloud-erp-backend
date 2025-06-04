@@ -21,6 +21,12 @@ public enum FsActionStatusEnum implements EnumMessage {
     ADD("ADD", "已加签"),
     DELETED("DELETED", "已删除"),
     PROCESSED("PROCESSED", "已处理"),
+
+//    飞书没有恢复和暂停，因此要采用自定义按钮状态
+    CUSTOM("CUSTOM", "自定义按钮状态"),
+    SUSPEND("SUSPEND", "暂停操作"),
+    RESTORE("RESTORE", "恢复操作"),
+
     ;
     /**
      * 类型
