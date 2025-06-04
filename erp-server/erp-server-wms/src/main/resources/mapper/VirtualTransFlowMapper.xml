@@ -295,6 +295,9 @@
         <if test="dto.startDate != null">
             AND vtf.bill_date >= #{dto.startDate}::date
         </if>
+        <if test="dto.endDate != null">
+            AND #{dto.endDate}::date > vtf.bill_date
+        </if>
         ORDER BY vtf.trade_time ASC
     </select>
 </mapper>
