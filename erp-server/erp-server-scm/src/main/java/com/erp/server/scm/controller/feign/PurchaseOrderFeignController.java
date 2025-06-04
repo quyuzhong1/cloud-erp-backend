@@ -7,6 +7,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
@@ -16,8 +17,10 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.time.LocalDate;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * 采购订单feign
@@ -47,6 +50,9 @@ public class PurchaseOrderFeignController {
 
     @Resource
     private SalesDemandService salesDemandService;
+
+    @Resource
+    private PurchaseApplicationService purchaseApplicationService;
 
     /**
      * 根据id查询采购订单
@@ -251,7 +257,11 @@ public class PurchaseOrderFeignController {
 
     @PostMapping("/getPushDownBySourceIds")
     public Integer getPushDownBySoIds(@RequestBody List<String> soIds) {
-        return salesDemandService.getPushDownBySourceIds(soIds);
+        Integer pushDownBySourceIds = salesDemandService.getPushDownBySourceIds(soIds);
+        if (MathUtil.compareTo(pushDownBySourceIds,MathUtil.ZERO) > MathUtil.ZERO) {
+            return pushDownBySourceIds;
+        }
+       return purchaseApplicationService.getPushDownBySourceIds(soIds);
     }
 
     /**
