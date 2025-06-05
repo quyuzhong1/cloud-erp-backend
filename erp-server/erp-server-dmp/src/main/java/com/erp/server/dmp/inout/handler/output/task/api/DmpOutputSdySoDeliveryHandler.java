@@ -132,7 +132,6 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		String shopNo = dmpSoDeliveryEntity.getShopNo();
     		String shopName = dmpSoDeliveryEntity.getShopName();
     		String platformCode = dmpSoDeliveryEntity.getPlatformCode();
-    		String remark = dmpSoDeliveryEntity.getRemark();
     		
     		boolean isB2B = "B2B仓".equals(dmpSoDeliveryEntity.getDataSource());
     		String payTimeFormat = null;
@@ -229,7 +228,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	            }
 	            
 	            shudiyunB2cOrderDTO.setOrder_quantity_to_be_shipped(shippingQty);
-	            shudiyunB2cOrderDTO.setRemark(remark);
+	            shudiyunB2cOrderDTO.setRemark(dmpSoDeliveryDetailEntity.getRemark());
     	        shudiyunB2cOrderDTO.setRoot_node_modify_time(thirdUpdateTimeFormat);
     	        
     	        shudiyunB2cOrderDTO.setSku_code(skuNo);
