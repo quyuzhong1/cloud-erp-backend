@@ -701,6 +701,11 @@ public class ProcessManagementDTO {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+        /**
+         * 是否委托
+         */
+        private Boolean isDelegate;
     }
 
     @Data
