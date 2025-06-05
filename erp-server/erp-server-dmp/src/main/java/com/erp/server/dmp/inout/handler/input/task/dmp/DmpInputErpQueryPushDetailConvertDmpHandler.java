@@ -36,9 +36,13 @@ public class DmpInputErpQueryPushDetailConvertDmpHandler extends DmpInputDoNextD
 			JSONObject parseObject = JSON.parseObject(pushData);
 			if(parseObject.getBooleanValue("isQuerySync")) {
 				log.warn("明细查询同步标识存在：{}" , JSON.toJSONString(d));
-				return null;
+				return new JSONArray();
 			}
 			JSONArray jsonArray = parseObject.getJSONArray("detailList");
+			if(CollUtil.isEmpty(jsonArray)) {
+				log.warn("不存在明细节点：{}" , JSON.toJSONString(d));
+				return new JSONArray();
+			}
 			for(Object j : jsonArray) {
 				Map<String, Object> m = (Map<String, Object>)j;
 				m.put(DmpInputMongoHandler.MONGO_BASE_ID, d.get(DmpInputMongoHandler.MONGO_BASE_ID));
