@@ -188,7 +188,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
     public void syncDataToSdy(LogisticsBillEntity entity,
                               List<LogisticsBillDetailEntity> detailEntityList,
                               String operate,
-                              Map<String, Pair<String, String>> logisticInfoMaps , boolean isNewQuerySync) {
+                              Map<String, Pair<String, String>> logisticInfoMaps , boolean isHistory , boolean isNewQuerySync) {
 
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
@@ -202,7 +202,7 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             tmsPushMsgEntity.setSourceCode(sourceCode);
             tmsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
-            if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+            if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate) && !isHistory) {
             	map.put("isQuerySync", Boolean.TRUE);
                 map.put("detailId", billDetailEntity.getId());
                 map.put("operate", operate);
