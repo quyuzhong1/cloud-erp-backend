@@ -355,7 +355,7 @@
               WHERE tpm.is_deleted = false
                       ) pp
         WHERE ${params.sqlMap.default}
-        ORDER BY pp.createTime DESC;
+        ORDER BY pp.createTime DESC
     </select>
 
 </mapper>
