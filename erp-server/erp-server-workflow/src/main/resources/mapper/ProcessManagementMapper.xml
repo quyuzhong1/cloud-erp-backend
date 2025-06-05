@@ -301,8 +301,8 @@
                   pm.create_user_id AS createUserId,
                   pm.end_time,
                   'erp' AS sourcePlatform,
-                  latest_task.cur_activity_id,
-                  latest_task.cur_activity_name
+                  case when  pm.process_status = 'running' then latest_task.cur_activity_id else '' end as cur_activity_id,
+                  case when  pm.process_status = 'running' then latest_task.cur_activity_name else '' end as cur_activity_name
               FROM process_management pm
               LEFT JOIN (
                   SELECT DISTINCT ON (process_instance_id)
@@ -340,8 +340,8 @@
                   tpm.create_user_id AS createUserId,
                   tpm.end_time,
                   'fs' AS sourcePlatform,
-                  latest_third_task.cur_activity_id,
-                  latest_third_task.cur_activity_name
+                  case when   tpm.status = 'running' then latest_third_task.cur_activity_id else '' end as cur_activity_id,
+                  case when   tpm.status = 'running' then latest_third_task.cur_activity_name else '' end as cur_activity_name
               FROM third_process_management tpm
               LEFT JOIN (
                   SELECT DISTINCT ON (main_id)
