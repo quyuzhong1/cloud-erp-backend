@@ -202,6 +202,11 @@ public class DmpSoDeliveryDetailEntity extends BaseEntity<DmpSoDeliveryDetailEnt
     @TableField("data_status")
     private String dataStatus;
     /**
+     * 备注
+     */
+     @TableField("remark")
+     private String remark;
+    /**
     * 唯一字段md5值
     */
     @TableField("unique_encrypt")
