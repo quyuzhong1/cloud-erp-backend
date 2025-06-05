@@ -139,6 +139,8 @@ public class CfgQueryOptionExtDTO implements Serializable {
         private String tableName ;
         //条件设置
         private String condition;
+        //字典表的type
+        private String type;
     }
     @Data
     @NoArgsConstructor

@@ -19,11 +19,11 @@ public class CfgThirdProcessQueryHandler extends AbstractQueryHandler {
             if(value.equals("all") || value.equals("")){
                 return "";
             }
-            if ("t".equals(value)) {
-                return "r.enable_status ="+ Boolean.TRUE;
+            if ("true".equals(value)) {
+                return "ctp.enable_status ="+ Boolean.TRUE;
             }
-            if ("f".equals(value)) {
-                return "r.enable_status ="+ Boolean.FALSE;
+            if ("false".equals(value)) {
+                return "ctp.enable_status ="+ Boolean.FALSE;
             }
             return "";
         }
