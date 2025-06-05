@@ -126,7 +126,11 @@
             inner join third_process_management tpm on tptm.main_id = tpm.id and tpm.is_deleted = false
             where tptm.is_deleted = false
             ) pp
-        where ${param.sqlMap.default} order by pp.createTime desc
+        where ${param.sqlMap.default}
+        <if test="param.isDelegate != null and param.isDelegate == true">
+            and (pp.label_json ->> 'isDelegate')::boolean is true
+        </if>
+        order by pp.createTime desc
     </sql>
 
     <select id="getTaskByBusiness"
