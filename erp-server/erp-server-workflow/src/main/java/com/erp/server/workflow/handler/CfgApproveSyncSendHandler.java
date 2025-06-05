@@ -92,6 +92,7 @@ public class CfgApproveSyncSendHandler {
 
     public void sendNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
                            List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
+                           Map<String, String> remoteValues,
                            ProcessManagementEntity processManagementEntity,
                            CfgApproveSyncEntity cfgApproveSyncEntity,
                            String createUserId,
@@ -104,7 +105,7 @@ public class CfgApproveSyncSendHandler {
         String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
         //参数map
         Map<String, Object> variablesMap = dto.getVariablesMap();
-        List<String> summaries = cfgApproveSyncBuildHandler.getSummaries(fieldMapEntities, variablesMap);
+        List<String> summaries = cfgApproveSyncBuildHandler.getSummaries(fieldMapEntities, remoteValues);
 
         //审批状态
         String approveType = dto.getApproveType();

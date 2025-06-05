@@ -38,11 +38,8 @@ public class CfgApproveSyncBuildHandler {
     private CfgSettingService cfgSettingService;
     @Resource
     private CfgApproveSyncService configApproveSyncService;
-
     @Resource
-    private ProcessManagementService processManagementService;
-    @Resource
-    private ProcessTaskManagementService processTaskManagementService;
+    private CfgQueryOptionExtService cfgQueryOptionExtService;
     @Resource
     private ApproveSyncRecordService approveSyncRecordService;
     /**
@@ -55,6 +52,7 @@ public class CfgApproveSyncBuildHandler {
                                                               List<ProcessTaskManagementEntity> processTaskManagementEntities,
                                                               List<ProcessTaskCcEntity> processTaskCcEntities,
                                                               List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
+                                                              Map<String, String> remoteValues,
                                                               Map<String, ThirdUnionDTO> thirdUnionMap,
                                                               ApproveSyncRecordEntity syncRecordEntity){
         String errorReason= "";
@@ -211,7 +209,7 @@ public class CfgApproveSyncBuildHandler {
                                             .pcLink(pcLinkByEnv)
                                             .mobileLink(pcLinkByEnv)
                                             .build())
-//                                    .readStatus("UNREAD")
+                                    .readStatus("UNREAD")
                                     .createTime(createTimeMillis)
                                     .updateTime(updateTimeMillis)
                                     .displayMethod("BROWSER")
@@ -222,46 +220,53 @@ public class CfgApproveSyncBuildHandler {
 
         //推送消息 (快接审批)
         if(CollUtil.isNotEmpty(fieldMapEntities)){
-            AtomicReference<Integer> num = new AtomicReference<>(0);
-            //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
+//            //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
             int len = fieldMapEntities.size() > 3 ? 3 : fieldMapEntities.size();
-            ExternalInstanceForm[] externalInstanceForm = fieldMapEntities.subList(0, len).stream().map(entry -> {
-                num.updateAndGet(v -> v + 1);
-                return ExternalInstanceForm.newBuilder()
-                        .name("@i18n@name" + num.get())
-                        .value("@i18n@val" + num.get())
-                        .build();
-            }).toArray(ExternalInstanceForm[]::new);
-            num.set(0);
-            for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
-                num.updateAndGet(v -> v + 1);
-                values.put("@i18n@name"+num.get(),entry.getFieldName());
-                values.put("@i18n@val"+num.get(),"");
-                String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
-                if(StringUtils.isNotBlank(fieldSourceValueStr)){
-                    values.put("@i18n@val"+ num.get(),fieldSourceValueStr);
-                }else {
-                    if(variablesMap.containsKey("detailList")){
-                        List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
-                        if(CollUtil.isNotEmpty(detailList)){
-                            StringBuffer sb = new StringBuffer();
-                            for (Object object : detailList) {
-                                Map<String, Object> map = BeanUtil.beanToMap(object);
-                                String str = getFieldSourceValueStr(entry.getFieldSource(), map);
-                                if(StringUtils.isNotBlank(str)){
-                                    sb.append(str);
-                                    sb.append(";");
-                                }
-                            }
-                            String fieldSourceDetailValueStr = sb.toString();
-                            if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
-                                values.put("@i18n@val"+num.get(),fieldSourceDetailValueStr);
-                            }
-                        }
-                    }
+//            Map<String,String> handlerValueMap = new HashMap<>();
+//            for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
+//                String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
+//                if(StringUtils.isNotBlank(fieldSourceValueStr)){
+//                    handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
+//                }else {
+//                    if(variablesMap.containsKey("detailList")){
+//                        List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
+//                        if(CollUtil.isNotEmpty(detailList)){
+//                            StringBuffer sb = new StringBuffer();
+//                            for (Object object : detailList) {
+//                                Map<String, Object> map = BeanUtil.beanToMap(object);
+//                                String str = getFieldSourceValueStr(entry.getFieldSource(), map);
+//                                if(StringUtils.isNotBlank(str)){
+//                                    sb.append(str);
+//                                    sb.append(";");
+//                                }
+//                            }
+//                            String fieldSourceDetailValueStr = sb.toString();
+//                            if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
+//                                handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+            //需要进行值映射
+            if(Objects.nonNull(remoteValues) && remoteValues.size() > 0){
+//                Map<String, String> remoteValues = cfgQueryOptionExtService.getRemoteValues(handlerValueMap);
+                AtomicReference<Integer> num = new AtomicReference<>(0);
+                ExternalInstanceForm[] externalInstanceForm = fieldMapEntities.subList(0, len).stream().map(entry -> {
+                    num.updateAndGet(v -> v + 1);
+                    return ExternalInstanceForm.newBuilder()
+                            .name("@i18n@name" + num.get())
+                            .value("@i18n@val" + num.get())
+                            .build();
+                }).toArray(ExternalInstanceForm[]::new);
+                num.set(0);
+                for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
+                    num.updateAndGet(v -> v + 1);
+                    values.put("@i18n@name"+num.get(),entry.getFieldName());
+                    values.put("@i18n@val"+num.get(),remoteValues.getOrDefault(entry.getFieldId(),""));
                 }
+                externalInstance.setForm(externalInstanceForm);
             }
-            externalInstance.setForm(externalInstanceForm);
         }
 
         //国际化文案数组
@@ -347,36 +352,15 @@ public class CfgApproveSyncBuildHandler {
 
 
 
-    public List<String> getSummaries(List<CfgApproveSyncFieldMapEntity> fieldMapEntities, Map<String, Object> variablesMap) {
+    public List<String> getSummaries(List<CfgApproveSyncFieldMapEntity> fieldMapEntities, Map<String, String> remoteValues) {
         int len = fieldMapEntities.size() > 5 ? 5 : fieldMapEntities.size();
         List<String> summaries = new ArrayList<>();
+        fieldMapEntities.sort(Comparator.comparingInt(CfgApproveSyncFieldMapEntity::getSort));
         for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
             StringBuffer sb = new StringBuffer();
             sb.append(entry.getFieldName());
             sb.append(":");
-            String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
-            if(StringUtils.isNotBlank(fieldSourceValueStr)){
-                sb.append(fieldSourceValueStr);
-            }else {
-                if(variablesMap.containsKey("detailList")){
-                    List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
-                    if(CollUtil.isNotEmpty(detailList)){
-                        StringBuffer dsb = new StringBuffer();
-                        for (Object object : detailList) {
-                            Map<String, Object> map = BeanUtil.beanToMap(object);
-                            String str = getFieldSourceValueStr(entry.getFieldSource(), map);
-                            if(StringUtils.isNotBlank(str)){
-                                dsb.append(str);
-                                dsb.append(";");
-                            }
-                        }
-                        String fieldSourceDetailValueStr = dsb.toString();
-                        if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
-                            sb.append(fieldSourceDetailValueStr);
-                        }
-                    }
-                }
-            }
+            sb.append(remoteValues.getOrDefault(entry.getFieldId(),""));
             summaries.add(sb.toString());
         }
         return summaries;
