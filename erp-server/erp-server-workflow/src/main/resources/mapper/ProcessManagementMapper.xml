@@ -271,6 +271,7 @@
             tptm.node_id as  cur_activity_id,
             tptm.node_name as cur_activity_name,
             '' AS cur_approve_name,
+            tptm.task_status,
             null as label_json,
             tpm.end_time as approveTime
         from third_process_task_management tptm
@@ -280,52 +281,81 @@
 
     <!-- 主表分页查询 -->
     <select id="mainPaging" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$MainPagingResultDTO">
-        select * from (
-          SELECT
-              pm.id,
-              pm.process_instance_id,
-              pm.process_definition_id,
-              pm.process_version ,
-              pm.process_status ,
-              pm.process_name ,
-              pm.business_id ,
-              pm.business_code ,
-              pm.business_name ,
-              pm.business_key,
-              pm.act_process_definition_id ,
-              concat(wm.detail_url,pm.business_id) as detail_url,
-              pm.create_time as createTime,
-              pm.update_time as updateTime,
-              pm.create_user_id as createUserId,
-              pm.end_time,
-              'erp' as sourcePlatform
-          FROM process_management AS pm
-          LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
-          LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
-          where  pm.is_deleted = false
-          union all
-          select
-              tpm.id,
-              tpm.process_instance_id,
-              tpm.process_definition_id,
-              null as process_version ,
-              tpm.status as process_status ,
-              tpm.process_instance_name as process_name ,
-              tpm.business_id ,
-              tpm.business_code ,
-              '' as business_name ,
-              tpm.business_key,
-              '' as act_process_definition_id ,
-              '' as detail_url,
-              tpm.create_time as createTime,
-              tpm.update_time as updateTime,
-              tpm.create_user_id as createUserId,
-              tpm.end_time,
-              'fs' as sourcePlatform
-          from third_process_management tpm
-          where tpm.is_deleted = false
+        SELECT * FROM (
+              -- 第一部分：内部流程数据
+              SELECT
+                  pm.id,
+                  pm.process_instance_id,
+                  pm.process_definition_id,
+                  pm.process_version,
+                  pm.process_status,
+                  pm.process_name,
+                  pm.business_id,
+                  pm.business_code,
+                  pm.business_name,
+                  pm.business_key,
+                  pm.act_process_definition_id,
+                  CONCAT(wm.detail_url, pm.business_id) AS detail_url,
+                  pm.create_time AS createTime,
+                  pm.update_time AS updateTime,
+                  pm.create_user_id AS createUserId,
+                  pm.end_time,
+                  'erp' AS sourcePlatform,
+                  latest_task.cur_activity_id,
+                  latest_task.cur_activity_name
+              FROM process_management pm
+              LEFT JOIN (
+                  SELECT DISTINCT ON (process_instance_id)
+                      process_instance_id,
+                      cur_activity_id,
+                      cur_activity_name
+                  FROM process_task_management
+                  WHERE is_deleted = false
+                  ORDER BY process_instance_id, id DESC
+              ) latest_task ON pm.process_instance_id = latest_task.process_instance_id
+               LEFT JOIN work_menu wm
+               ON pm.business_key = wm.module_code AND wm.is_deleted = false
+               LEFT JOIN process_definition pd
+               ON pd.id = pm.process_definition_id AND pd.is_deleted = false
+              WHERE pm.is_deleted = false
+
+              UNION ALL
+
+              -- 第二部分：第三方流程数据
+              SELECT
+                  tpm.id,
+                  tpm.process_instance_id,
+                  tpm.process_definition_id,
+                  NULL AS process_version,
+                  tpm.status AS process_status,
+                  tpm.process_instance_name AS process_name,
+                  tpm.business_id,
+                  tpm.business_code,
+                  '' AS business_name,
+                  tpm.business_key,
+                  '' AS act_process_definition_id,
+                  '' AS detail_url,
+                  tpm.create_time AS createTime,
+                  tpm.update_time AS updateTime,
+                  tpm.create_user_id AS createUserId,
+                  tpm.end_time,
+                  'fs' AS sourcePlatform,
+                  latest_third_task.cur_activity_id,
+                  latest_third_task.cur_activity_name
+              FROM third_process_management tpm
+              LEFT JOIN (
+                  SELECT DISTINCT ON (main_id)
+                      main_id,
+                      node_id AS cur_activity_id,
+                      node_name AS cur_activity_name
+                  FROM third_process_task_management
+                  WHERE is_deleted = false
+                  ORDER BY main_id, id DESC
+              ) latest_third_task ON tpm.id = latest_third_task.main_id
+              WHERE tpm.is_deleted = false
                       ) pp
-        where ${params.sqlMap.default} order by pp.createTime desc
+        WHERE ${params.sqlMap.default}
+        ORDER BY pp.createTime DESC;
     </select>
 
 </mapper>
