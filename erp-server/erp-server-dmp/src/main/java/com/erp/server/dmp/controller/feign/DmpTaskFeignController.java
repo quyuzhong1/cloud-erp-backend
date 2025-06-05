@@ -54,11 +54,6 @@ public class DmpTaskFeignController {
         return platformApiTaskService.disabledPlatformTask(disabledDTO);
     }
 
-    @PostMapping("/createThirdWarehouseTask")
-    public Boolean createThirdWarehouseTask(@RequestBody @Valid ThirdWarehouseTaskDTO.AddDTO dto){
-        return platformApiTaskService.createThirdWarehouseTask(dto);
-    }
-
     @PostMapping("/getPullTaskById")
     public DmpPullTaskEntity getPullTaskById(@RequestBody String id){
         return dmpPullTaskService.getById(id);

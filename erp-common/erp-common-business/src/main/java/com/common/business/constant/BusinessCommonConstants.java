@@ -36,5 +36,12 @@ public class BusinessCommonConstants {
         return Stream.of(profiles).map(String::trim).anyMatch(p -> p.equals(profile));
     }
 
+    /**
+     * 效验当前环境
+     */
+    public static String  getEnvironment() {
+        String[] profiles = BusinessCommonConstants.SPRING_PROFILES_ACTIVE.split(",");
+        return profiles[0];
+    }
 
 }

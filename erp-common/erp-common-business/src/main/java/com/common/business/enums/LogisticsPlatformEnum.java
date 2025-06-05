@@ -37,6 +37,7 @@ public enum LogisticsPlatformEnum implements EnumMessage {
     BaTong("BaTong", "巴通", "巴通", "","",""),
     ANTU(OmsPlatformEnum.OMS_ANTU.getCode(), OmsPlatformEnum.OMS_ANTU.getName(), "安兔", "","",""),
     SPT(OmsPlatformEnum.OMS_SPT.getCode(), OmsPlatformEnum.OMS_SPT.getName(), "速派通", "","",""),
+    JIFENG(OmsPlatformEnum.JIFENG.getCode(), OmsPlatformEnum.JIFENG.getName(), "极风", "","",""),
 
 
     ;

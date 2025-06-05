@@ -497,6 +497,8 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                     .filter(e -> StringUtils.isNotBlank(e.getMainId()) && e.getMainId().equals(item.getId()))
                     .collect(Collectors.toList());
             if (CollectionUtils.isNotEmpty(warehouseEntityList)){
+                //封装仓库下的渠道
+                List<String> hasWarehouseChannelId = new ArrayList<>();
                 for(LogisticsWarehouseEntity logisticsWarehouseEntity: warehouseEntityList){
                     LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
                     channelView.setWarehouseId(logisticsWarehouseEntity.getOverseasWarehouseId());
@@ -504,7 +506,19 @@ public class LogisticsSupplierServiceImpl extends SuperServiceImpl<LogisticsSupp
                     List<LogisticsChannelDTO.BaseDTO> channelList = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getSourceId())
                                     && c.getSourceId().equals(logisticsWarehouseEntity.getId()) && c.getMainId().equals(item.getId()))
                             .collect(Collectors.toList());
+                    hasWarehouseChannelId.addAll(channelList.stream().map(v->v.getId()).collect(Collectors.toList()));
                     channelView.setChannelList(channelList);
+                    viewList.add(channelView);
+                }
+                //封装没有仓库的渠道
+                List<LogisticsChannelDTO.BaseDTO> otherChannel = allChannelList.stream().filter(c -> StringUtils.isNotEmpty(c.getMainId())
+                        && c.getMainId().equals(item.getId()) && !hasWarehouseChannelId.contains(c.getId()))
+                        .sorted(Comparator.comparing(LogisticsChannelDTO.BaseDTO::getDisabled)).collect(Collectors.toList());
+                if(CollectionUtils.isNotEmpty(otherChannel)){
+                    LogisticsSupplierDTO.ChannelViewDTO channelView = new LogisticsSupplierDTO.ChannelViewDTO();
+                    channelView.setWarehouseId("");
+                    channelView.setWarehouseName("");
+                    channelView.setChannelList(otherChannel);
                     viewList.add(channelView);
                 }
             }else {

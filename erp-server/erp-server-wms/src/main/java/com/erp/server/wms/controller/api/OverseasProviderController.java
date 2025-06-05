@@ -121,11 +121,11 @@ public class OverseasProviderController extends BaseController {
             menuCode = "wms:overseasProvider:authorize",
             serviceClass = OverseasProviderService.class,
             keyIdName = "id")
-//    @LogViewService
     public ApiResult authorize(@RequestBody @Validated OverseasProviderDTO.AuthorizeParamDTO dto) {
         Boolean flag = overseasProviderService.authorize(dto);
         return flag ? success() : failure();
     }
+
 
     /**
      * 取消授权
