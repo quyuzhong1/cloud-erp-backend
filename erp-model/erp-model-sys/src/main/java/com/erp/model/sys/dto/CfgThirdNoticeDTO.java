@@ -194,7 +194,6 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
         * cron
         */
-        @NotBlank(message = "通知时间不能为空")
         private String cron;
 
         /**
