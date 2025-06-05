@@ -144,6 +144,7 @@ public class LogisticsMappingServiceImpl extends SuperServiceImpl<LogisticsMappi
     @Transactional(rollbackFor = Exception.class)
     public void warehouseUpdate(String channelId, List<LogisticsMappingDTO.UpdateDTO> mappingList) {
         if (CollectionUtils.isEmpty(mappingList)) {
+            this.lambdaUpdate().eq(LogisticsMappingEntity::getLogisticsChannelId, channelId).eq(LogisticsMappingEntity::getType, LogisticsMappingTypeEnum.WAREHOUSE.getCode()).remove();
             return;
         }
         mappingList.forEach(v -> {
