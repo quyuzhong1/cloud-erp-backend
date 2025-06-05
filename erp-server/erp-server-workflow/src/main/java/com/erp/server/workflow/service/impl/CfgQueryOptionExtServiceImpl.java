@@ -1,25 +1,33 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.common.business.dto.base.BaseResultDTO;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.constant.EnumMessage;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionExtEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionExtTypeEnum;
 import com.erp.server.workflow.mapper.CfgQueryOptionExtMapper;
 import com.erp.server.workflow.service.CfgQueryOptionExtService;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
 import com.erp.server.workflow.service.OperateLogService;
-import com.erp.server.workflow.service.CommonService;
-import com.common.core.exception.ServiceException;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.CfgQueryOptionExtDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
+
 /**
  * <p>
  * cfg_query_option拓展表 服务实现类
@@ -34,63 +42,155 @@ public class CfgQueryOptionExtServiceImpl extends SuperServiceImpl<CfgQueryOptio
     @Autowired
     private OperateLogService operateLogService;
 
-    @GlobalTransactional(rollbackFor = Exception.class)
-    @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(CfgQueryOptionExtDTO.AddDTO addDTO) {
-        CfgQueryOptionExtEntity cfgQueryOptionExtEntity = new CfgQueryOptionExtEntity();
-        BeanMapperUtils.copy(addDTO, cfgQueryOptionExtEntity);
-
-        // 数据处理
-        handleData(cfgQueryOptionExtEntity);
-
-        log.info("开始新增cfg_query_option拓展单");
-        boolean save = super.save(cfgQueryOptionExtEntity);
-        if(!save) {
-            throw new ServiceException("cfg_query_option拓展单保存失败");
+    public Map<String,String> getRemoteValues(Map<String, String> map) {
+        if(null == map || map.isEmpty() || map.size() <= 0) {
+            return map;
         }
+        List<String> cfgQueryOptionIds = map.entrySet().stream().map(e -> e.getKey()).collect(Collectors.toList());
+        List<CfgQueryOptionExtEntity> list = lambdaQuery().in(CfgQueryOptionExtEntity::getCfgQueryOptionId, cfgQueryOptionIds).list();
+        if(CollUtil.isNotEmpty(list)){
+            Map<String,String> result = new HashMap<>();
 
-        // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "cfg_query_option拓展单" , cfgQueryOptionExtEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLog(msg, null, cfgQueryOptionExtEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
+            Map<String, CfgQueryOptionExtEntity> cfgQueryOptionExtMap = list.stream().collect(Collectors.toMap(CfgQueryOptionExtEntity::getCfgQueryOptionId, e -> e));
 
-        return new BaseResultDTO.AddDTO(cfgQueryOptionExtEntity.getId(), cfgQueryOptionExtEntity.getId());
+            for (Map.Entry<String, String> entry : map.entrySet()) {
+                CfgQueryOptionExtEntity extEntity = cfgQueryOptionExtMap.getOrDefault(entry.getKey(), null);
+                if(Objects.isNull(extEntity)){
+                    //设置原始值
+                    result.put(entry.getKey(), entry.getValue());
+                }else {
+                    String cfgQueryOptionId = extEntity.getCfgQueryOptionId();
+                    //设置原始值
+                    result.put(cfgQueryOptionId, map.get(cfgQueryOptionId));
+
+                    String type = extEntity.getType();
+                    String classPath = extEntity.getClassPath();
+                    String dataJson = extEntity.getDataJson();
+                    if(StringUtils.isBlank(type)){
+                        continue;
+                    }
+                    //文本
+                    if(CfgQueryOptionExtTypeEnum.TEXT.getCode().equals(type)){
+                        continue;
+                    }
+                    //布尔
+                    //示例list:  [{"label":"已作废","value":true},{"label":"未作废","value":false}]
+                    if(CfgQueryOptionExtTypeEnum.BOOL.getCode().equals(type)){
+                        if(StringUtils.isNotBlank(dataJson)){
+                            Gson gson = new Gson();
+                            List<CfgQueryOptionExtDTO.BooleanDTO> dtoList = gson.fromJson(dataJson, new TypeToken<List<CfgQueryOptionExtDTO.BooleanDTO>>(){}.getType());
+                            CfgQueryOptionExtDTO.BooleanDTO booleanDTO = dtoList.stream().filter(e -> e.getValue().equals(map.get(cfgQueryOptionId))).findFirst().orElse(null);
+                            if(Objects.nonNull(booleanDTO)){
+                                result.put(cfgQueryOptionId, booleanDTO.getLabel());
+                            }
+                        }else {
+                            if(map.get(cfgQueryOptionId).equals("t")){
+                                result.put(cfgQueryOptionId,"是" );
+                            }else {
+                                result.put(cfgQueryOptionId, "否");
+                            }
+                        }
+                    }
+                    //枚举
+                    if(CfgQueryOptionExtTypeEnum.ENUM.getCode().equals(type) && StringUtils.isNotBlank(dataJson)){
+                        Gson gson = new Gson();
+                        CfgQueryOptionExtDTO.EnumDTO enumDTO = gson.fromJson(dataJson, CfgQueryOptionExtDTO.EnumDTO.class);
+                        ApiResult enumSelect = FeignQuery.invoke(ApiResult.class, "com.erp.server."+enumDTO.getSysClassify()+".controller.api.CommonController", "enumSelect", Arrays.asList(enumDTO.getEnumName()));
+                        List<Map<String,Object>> data = (List<Map<String, Object>>) enumSelect.getData();
+                        for (Map<String, Object> datum : data) {
+                            String code = String.valueOf(datum.get("code"));
+                            String name = String.valueOf(datum.get("value"));
+                            if(code.equals(entry.getValue())){
+                                result.put(cfgQueryOptionId, name);
+                                break;
+                            }
+                        }
+                    }
+                    //类
+                    if(CfgQueryOptionExtTypeEnum.CLASS.getCode().equals(type) && StringUtils.isNotBlank(dataJson)){
+                        Gson gson = new Gson();
+                        CfgQueryOptionExtDTO.ClassDTO classDTO = gson.fromJson(dataJson, CfgQueryOptionExtDTO.ClassDTO.class);
+                        try {
+                            List<String> keyList = Arrays.asList(map.get(cfgQueryOptionId).split(","));
+                            Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
+                            List<BaseEntity> baseEntityList = FeignQuery.create(clazz)
+                                    .in(classDTO.getCondition(), keyList)
+                                    .list();
+
+                            if(CollUtil.isNotEmpty(baseEntityList)){
+                                Map<String, String> baseEntityMap = baseEntityList.stream()
+                                        .collect(Collectors.toMap(
+                                                entity -> String.valueOf(ReflectUtil.getFieldValue(entity, classDTO.getCondition())), // 获取 condition 字段的值作为 key
+                                                entity -> String.valueOf(ReflectUtil.getFieldValue(entity, classDTO.getSelect())),   // 获取 select 字段的值作为 value
+                                                (existing, replacement) -> existing // 如果有重复 key，可以选择保留第一个或合并
+                                        ));
+
+                                StringBuffer sb = new StringBuffer();
+                                for (String key : keyList) {
+                                    String orDefault = baseEntityMap.getOrDefault(key, "");
+                                    if(StringUtils.isNotBlank(orDefault)){
+                                        sb.append(orDefault);
+                                        sb.append(";");
+                                    }
+                                }
+                                if(StringUtils.isNotBlank(sb.toString())){
+                                    result.put(cfgQueryOptionId,sb.toString());
+                                }
+                            }
+                        } catch (ClassNotFoundException e) {
+
+                        }
+                    }
+                }
+            }
+            return result;
+        }else {
+            return map;
+        }
     }
 
     /**
-    * 修改
-    */
-    @Transactional(rollbackFor = Exception.class)
-    @Override
-    public Boolean update(CfgQueryOptionExtDTO.UpdateDTO addOrUpdateDTO) {
-        CfgQueryOptionExtEntity old = super.getById(addOrUpdateDTO.getId());
-        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "cfg_query_option拓展单"));
-        CfgQueryOptionExtEntity cfgQueryOptionExtEntity =  BeanMapperUtils.map(CfgQueryOptionExtEntity.class, addOrUpdateDTO);
-
-        // 数据处理
-        handleData(cfgQueryOptionExtEntity);
-        log.info("编辑 开始修改cfg_query_option拓展单数据，id：【{}】", old.getId());
-        boolean save = super.updateById(cfgQueryOptionExtEntity);
-        if(!save) {
-            throw new ServiceException("cfg_query_option拓展单保存失败");
+     * 设置枚举值
+     */
+    private String setEnumValue(String classPath, String key) {
+        Class<?> aClass;
+        try {
+            aClass = Class.forName(classPath);
+        } catch (ClassNotFoundException e) {
+            return "";
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
-        // 记录主单操作日志
-            log.info("编辑 开始记录cfg_query_option拓展单日志数据，id：【{}】", cfgQueryOptionExtEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), cfgQueryOptionExtEntity.getId(), "cfg_query_option拓展单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
-        operateLogService.addModuleOperateLogByObj(old, cfgQueryOptionExtEntity, null, cfgQueryOptionExtEntity.getId(), msg);
-        return Boolean.TRUE;
+        boolean anEnum = aClass.isEnum();
+        if (!anEnum) {
+            return "";
+        }
+        String value = handleEnumVale(key, aClass);
+        return value;
     }
 
-
     /**
-    * 新增修改处理数据
-    */
-    private void handleData(CfgQueryOptionExtEntity cfgQueryOptionExtEntity) {
-    // TODO 验证数据 & 数据赋值
+     * @description: 处理枚举数据
+     * @author Will
+     * @date: 2023/11/24 18:44
+     * @param str
+     * @param aClass
+     * @return String
+     */
+    private String handleEnumVale (String str,Class<?> aClass) {
+        if (StrUtil.isBlank(str)) {
+            return "";
+        }
+        List<String> resultList = new ArrayList<>();
+        String[] split = str.split(",");
+        for (String value : split) {
+            EnumMessage enumObject = EnumsUtil.getEnumObject(value, aClass);
+            if (ObjectUtils.isNotEmpty(enumObject)) {
+                resultList.add(enumObject.getName());
+            }
+        }
+        if (CollectionUtils.isEmpty(resultList)) {
+            return "";
+        }
+        return resultList.stream().collect(Collectors.joining(","));
     }
 }

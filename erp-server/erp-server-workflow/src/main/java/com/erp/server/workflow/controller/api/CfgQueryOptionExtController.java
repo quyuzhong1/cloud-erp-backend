@@ -32,41 +32,4 @@ import com.erp.model.workflow.dto.CfgQueryOptionExtDTO;
 @RequestMapping("/cfgQueryOptionExt")
 public class CfgQueryOptionExtController extends BaseController {
 
-    @Resource
-    private CfgQueryOptionExtService cfgQueryOptionExtService;
-
-    /**
-    * 新增
-    * @author jack
-    * @date:  2025-06-04
-    * @param dto
-    * @return ApiResult<String>
-    */
-    @PostMapping("/add")
-    @LogAction(value = LogActionEnum.INSERT, desc = "cfg_query_option拓展表新增")
-    public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated CfgQueryOptionExtDTO.AddDTO dto) {
-        return success(cfgQueryOptionExtService.add(dto));
-    }
-
-    /**
-    * 修改
-    * @author jack
-    * @date:  2025-06-04
-    * @param dto
-    * @return ApiResult
-    */
-    @PostMapping("/update")
-    @LogAction(value = LogActionEnum.UPDATE, desc = "cfg_query_option拓展表修改")
-        @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-        tableField = "create_user_id",
-        menuCode = "workflow:cfgQueryOptionExt:update",
-        serviceClass = CfgQueryOptionExtService.class,
-        keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated CfgQueryOptionExtDTO.UpdateDTO dto) {
-        cfgQueryOptionExtService.update(dto);
-        return success();
-    }
-
-
-
 }

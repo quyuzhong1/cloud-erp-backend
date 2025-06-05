@@ -17,10 +17,7 @@ import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import com.lark.oapi.service.approval.v4.model.CheckExternalInstanceReq;
-import com.lark.oapi.service.approval.v4.model.CheckExternalInstanceResp;
-import com.lark.oapi.service.approval.v4.model.CreateExternalInstanceReq;
-import com.lark.oapi.service.approval.v4.model.CreateExternalInstanceResp;
+import com.lark.oapi.service.approval.v4.model.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -28,6 +25,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -55,6 +53,8 @@ public class MQSyncFsHandler {
     private ProcessManagementService processManagementService;
     @Resource
     private ApproveSyncRecordService approveSyncRecordService;
+    @Resource
+    private CfgQueryOptionExtService cfgQueryOptionExtService;
 
     public boolean handler(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto) {
         CfgApproveSyncEntity cfgApproveSyncEntity = dto.getCfgApproveSyncEntity();
@@ -130,8 +130,46 @@ public class MQSyncFsHandler {
                 .filter(e -> e.getIsQuick().equals(Boolean.TRUE))
                 .collect(Collectors.toList());
         fieldMapEntities.sort(Comparator.comparingInt(CfgApproveSyncFieldMapEntity::getSort));
+        //值映射
+        Map<String, String> remoteValues = new HashMap<>();
+        if(CollUtil.isNotEmpty(fieldMapEntities)){
+            //参数map
+            Map<String, Object> variablesMap = dto.getVariablesMap();
+            //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
+            int len = fieldMapEntities.size() > 5 ? 5 : fieldMapEntities.size();
+            Map<String,String> handlerValueMap = new HashMap<>();
+            for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
+                String fieldSourceValueStr = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
+                if(StringUtils.isNotBlank(fieldSourceValueStr)){
+                    handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
+                }else {
+                    if(variablesMap.containsKey("detailList")){
+                        List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
+                        if(CollUtil.isNotEmpty(detailList)){
+                            StringBuffer sb = new StringBuffer();
+                            for (Object object : detailList) {
+                                Map<String, Object> map = BeanUtil.beanToMap(object);
+                                String str = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entry.getFieldSource(), map);
+                                if(StringUtils.isNotBlank(str)){
+                                    sb.append(str);
+                                    sb.append(";");
+                                }
+                            }
+                            String fieldSourceDetailValueStr = sb.toString();
+                            if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
+                                handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
+                            }
+                        }
+                    }
+                }
+            }
+            //需要进行值映射
+            if(handlerValueMap.size() > 0) {
+                remoteValues = cfgQueryOptionExtService.getRemoteValues(handlerValueMap);
+            }
+        }
 
-        CreateExternalInstanceReq req = cfgApproveSyncBuildHandler.buildExternalInstanceReq(dto,processManagementEntity, processTaskManagementEntities, processTaskCcEntities, fieldMapEntities, thirdUnionMap,syncRecordEntity);
+        CreateExternalInstanceReq req = cfgApproveSyncBuildHandler.buildExternalInstanceReq(dto,processManagementEntity, processTaskManagementEntities, processTaskCcEntities, fieldMapEntities,remoteValues, thirdUnionMap,syncRecordEntity);
         if(Objects.isNull(req)){
             return true;
         }
@@ -153,7 +191,7 @@ public class MQSyncFsHandler {
             cfgApproveSyncSendHandler.updateNotice(dto,curTaskId,processTaskManagementEntities,syncRecordEntity);
 
             //消息推送
-            cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
+            cfgApproveSyncSendHandler.sendNotice(dto, fieldMapEntities,remoteValues, processManagementEntity, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, processTaskManagementEntities,syncRecordEntity);
 
             //校验三方审批实例
             CheckExternalInstanceReq checkExternalInstanceReq = cfgApproveSyncBuildHandler.buildExternalInstanceReq(processManagementEntity, processTaskManagementEntities);
