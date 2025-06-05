@@ -1962,7 +1962,7 @@ public class FbaShipmentServiceImpl extends SuperServiceImpl<FbaShipmentMapper, 
             if (Objects.isNull(entity)){
                 throw new ServiceException(ApiError.FBA_SHIPMENT_NOT_EXIST);
             }
-            if (detailEntity.getDeliveryQty() < (detailEntity.getReceiveQty() + dto.getReceivedQty())){
+            if (detailEntity.getDeclareQty() < (detailEntity.getReceiveQty() + dto.getReceivedQty())){
                 throw new ServiceException("当前签收数量大于剩余签收数量");
             }
             //时间校验 货件名称+SKU在填写月关联的头程分摊已生成，不可修改
