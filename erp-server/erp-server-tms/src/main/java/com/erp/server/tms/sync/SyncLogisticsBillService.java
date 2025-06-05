@@ -5,6 +5,8 @@ import java.util.Map;
 
 import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.entity.LogisticsBillEntity;
+import com.erp.model.tms.entity.LogisticsChannelEntity;
+import com.erp.model.tms.entity.LogisticsSupplierEntity;
 
 import cn.hutool.core.lang.Pair;
 
@@ -16,10 +18,13 @@ public interface SyncLogisticsBillService {
                                                   LogisticsBillDetailEntity logisticsBillDetailEntity,
                                                   String operate,
                                                   Map<String, Pair<String, String>> logisticInfoMaps);
+    
+    Map<String, Object> syncNewDataToSdyFieldHandler(LogisticsBillEntity entity,
+    		LogisticsBillDetailEntity logisticsBillDetailEntity,
+    		String operate,
+    		Map<String, Pair<String, String>> logisticInfoMaps);
 
-    void syncDataToSdy(LogisticsBillEntity entity, List<LogisticsBillDetailEntity> detailEntityList, String operate, Map<String, Pair<String, String>> logisticInfoMaps);
-
-    void syncDataToSdy(LogisticsBillEntity entity, List<LogisticsBillDetailEntity> detailEntityList, String operate);
+    void syncDataToSdy(LogisticsBillEntity entity, List<LogisticsBillDetailEntity> detailEntityList, String operate, Map<String, Pair<String, String>> logisticInfoMaps , boolean isHistory , boolean isNewQuerySync);
 
     Map<String, Pair<String, String>> getLogisticInfo(List<LogisticsBillEntity> entitys);
 }

@@ -4,6 +4,8 @@ import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpThirdWarehouseInfoDTO;
 
+import java.util.List;
+
 /**
  * <p>
  * 第三方仓库 服务类
@@ -32,5 +34,5 @@ public interface DmpThirdWarehouseInfoService extends SuperService<DmpThirdWareh
     */
     Boolean update(DmpThirdWarehouseInfoDTO.UpdateDTO dto);
 
-
+    List<DmpThirdWarehouseInfoEntity> listByAuthId(String authId);
 }

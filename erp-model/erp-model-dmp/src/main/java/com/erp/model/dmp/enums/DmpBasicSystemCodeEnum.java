@@ -30,6 +30,7 @@ public enum DmpBasicSystemCodeEnum implements EnumMessage {
     SHOPEE("Shopee", "虾皮"),
     SDY("sdy", "数帝云"),
     LING_XING("lingxing", "领星"),
+    JIFENG("jifeng", "极风"),
     ;
     /**
      * 类型

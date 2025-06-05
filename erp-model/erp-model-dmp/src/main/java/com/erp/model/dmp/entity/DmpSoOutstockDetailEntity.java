@@ -215,6 +215,36 @@ public class DmpSoOutstockDetailEntity extends BaseEntity<DmpSoOutstockDetailEnt
      */
     @TableField("discount_currency")
     private String discountCurrency;
+    
+    /**
+     * 明细状态
+     */
+    @TableField("data_status")
+    private String dataStatus;
+    
+    /**
+     * 平台类型
+     */
+    @TableField("platform_type")
+    private String platformType;
+    
+    /**
+     * 是否组合品
+     */
+    @TableField("is_comb")
+    private Integer isComb;
+    
+    /**
+     * 组合装编码
+     */
+    @TableField("suite_no")
+    private String suiteNo;
+    
+    /**
+     * 组合装名称
+     */
+    @TableField("suite_name")
+    private String suiteName;
 
 
     public static final String MAIN_ID = "main_id";

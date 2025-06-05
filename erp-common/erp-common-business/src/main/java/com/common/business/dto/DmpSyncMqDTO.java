@@ -96,6 +96,11 @@ public class DmpSyncMqDTO extends DmpSyncTaskIdDTO implements Serializable {
          * 数据id
          */
         private String dataId;
+        
+        /**
+         * 是否为新查询同步
+         */
+        private boolean newQuerySync;
 
 		public SyncParamDetailDTO(@NotBlank(message = "来源id不能为空") String sourceId,
 				@NotBlank(message = "同步操作不能为空") String syncOperate) {
