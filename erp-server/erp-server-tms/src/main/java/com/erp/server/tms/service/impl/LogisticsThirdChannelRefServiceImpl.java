@@ -92,9 +92,6 @@ public class LogisticsThirdChannelRefServiceImpl extends SuperServiceImpl<Logist
             return Collections.emptyList();
         }
         return this.lambdaQuery()
-                .select(LogisticsThirdChannelRefEntity::getIsPushMobile)
-                .select(LogisticsThirdChannelRefEntity::getLogisticsChannelId)
-                .select(LogisticsThirdChannelRefEntity::getThirdSupplierCode)
                 .in(LogisticsThirdChannelRefEntity::getLogisticsChannelId, channelIds).list();
     }
 
