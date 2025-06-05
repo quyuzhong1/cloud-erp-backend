@@ -161,7 +161,7 @@ public class DmpOutputTaskJob {
 		log.warn("归档中台输入任务数据结束");
 		
 		beforeDay = 60;
-		size = 50000;
+		size = 100000;
 		if(parseObject != null) {
 			beforeDay = parseObject.getInteger("relationDay");
 			size = parseObject.getInteger("relationSize");

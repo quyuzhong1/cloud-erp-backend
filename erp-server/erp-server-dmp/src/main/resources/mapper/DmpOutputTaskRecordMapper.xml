@@ -279,6 +279,10 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
 		delete from dmp_input_task where id in (${conditionSql});
 	</delete>
 	
+	<select id="getDmpRelationMoveToHistoryTable" resultType="java.lang.String">
+		select id from dmp_input_mongo_dmp_relation where update_time <![CDATA[ < ]]> #{beforeUpdateTime} limit #{size};
+	</select>
+	
     <delete id="dmpRelationMoveToHistoryTable">
     	<if test="fileConditionSql != null and fileConditionSql != ''">
     		insert into dmp_input_file_mongo_relation_his select * from dmp_input_file_mongo_relation where id in (${fileConditionSql});

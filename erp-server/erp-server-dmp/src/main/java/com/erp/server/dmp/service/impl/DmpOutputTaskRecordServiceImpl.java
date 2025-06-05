@@ -750,11 +750,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 			}
 		}
 		
-		List<String> dmpInputMongoDmpRelationList = dmpInputMongoDmpRelationService.lambdaQuery()
-				.lt(DmpInputMongoDmpRelationEntity::getUpdateTime, beforeUpdateTime)
-				.last(" limit " + size + " ")
-				.select(DmpInputMongoDmpRelationEntity::getId)
-				.list().stream().map(DmpInputMongoDmpRelationEntity::getId).collect(Collectors.toList());
+		List<String> dmpInputMongoDmpRelationList = this.getBaseMapper().getDmpRelationMoveToHistoryTable(beforeUpdateTime, size);
 		if(CollUtil.isNotEmpty(dmpInputMongoDmpRelationList)) {
 			List<List<String>> dmpPartition = Lists.partition(dmpInputMongoDmpRelationList, 50000);
 			for(List<String> dmpP : dmpPartition) {
