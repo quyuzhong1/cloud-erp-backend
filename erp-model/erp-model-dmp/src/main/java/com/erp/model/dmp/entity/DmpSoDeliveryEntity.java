@@ -177,11 +177,6 @@ public class DmpSoDeliveryEntity extends BaseEntity<DmpSoDeliveryEntity> {
     @TableField("data_source")
     private String dataSource;
     /**
-    * 备注
-    */
-    @TableField("remark")
-    private String remark;
-    /**
     * 唯一字段md5值
     */
     @TableField("unique_encrypt")
