@@ -17,6 +17,9 @@ public enum CfgQueryOptionExtTypeEnum implements EnumMessage {
 	BOOL("bool", "布尔值"),
 	CLASS("class", "类"),
 	ENUM("enum", "枚举"),
+	USER("user", "用户"),
+	DEPT("dept", "部门"),
+	DICT("dict", "字典"),
     ;
     /**
      * 类型
