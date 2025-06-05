@@ -98,7 +98,7 @@ public class SyncSdyJob {
                         .filter(req -> req.getMainId().equals(entity.getId()) && CharSequenceUtil.isNotBlank(req.getTrackStatus()))
                         .collect(Collectors.toList());
                 if (CollUtil.isNotEmpty(detailEntityList)) {
-                    syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), logisticInfoMaps , isNewQuerySync);
+                    syncLogisticsBillService.syncDataToSdy(entity, detailEntityList, SyncOperateEnum.OPERATE_APPROVE.getCode(), logisticInfoMaps , true , isNewQuerySync);
                 }
             }
             currentPage++;

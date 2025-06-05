@@ -24,7 +24,7 @@ public interface SyncLogisticsBillService {
     		String operate,
     		Map<String, Pair<String, String>> logisticInfoMaps);
 
-    void syncDataToSdy(LogisticsBillEntity entity, List<LogisticsBillDetailEntity> detailEntityList, String operate, Map<String, Pair<String, String>> logisticInfoMaps , boolean isNewQuerySync);
+    void syncDataToSdy(LogisticsBillEntity entity, List<LogisticsBillDetailEntity> detailEntityList, String operate, Map<String, Pair<String, String>> logisticInfoMaps , boolean isHistory , boolean isNewQuerySync);
 
     Map<String, Pair<String, String>> getLogisticInfo(List<LogisticsBillEntity> entitys);
 }
