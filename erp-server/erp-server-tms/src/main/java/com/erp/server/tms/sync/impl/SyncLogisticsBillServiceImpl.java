@@ -208,9 +208,9 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
                 map.put("operate", operate);
             }else {
             	if(isNewQuerySync) {
-            		map = this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps);
-            	}else {
             		map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps);
+            	}else {
+            		map = this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps);
             	}
             }
             tmsPushMsgEntity.setPushData(JSON.toJSONString(map));
