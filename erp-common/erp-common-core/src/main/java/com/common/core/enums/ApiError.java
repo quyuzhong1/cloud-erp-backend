@@ -1522,6 +1522,7 @@ public enum ApiError implements Serializable {
     ERROR_INVOICE_NFE_CREATE_JSON_HANDLE(92190,"NF-e创建发票json解析失败"),
     ERROR_INVOICE_NFE_UPDATE_CCE_JSON_HANDLE(92191,"发票修改Cce结果json解析失败"),
     ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST(92192,"选择订单不支持生成NF-e发票"),
+    ERROR_SO_INFO_EXIST_REF_BILL(92193,"销售订单已存在关联单据【{}】，不支持该操作"),
 
     ERROR_92175(92175,"存在下游单据不允许作废"),
 

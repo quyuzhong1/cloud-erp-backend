@@ -38,6 +38,7 @@ import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.SkuPurchaseDTO;
 import com.erp.model.plm.entity.PilotApplicationDetailEntity;
+import com.erp.model.plm.entity.ProductPackEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.enums.FirstMassProductTypeEnum;
 import com.erp.model.plm.enums.PilotPushPurchaseStatusEnum;
@@ -1431,6 +1432,11 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
         if (ObjectUtils.isEmpty(findUserDTO)) {
             throw new ServiceException(ApiError.USER_NOT_EXIST);
         }
+
+        //产品包装信息
+        List<String> skuIdList = soDetailList.stream().map(SoDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        List<ProductPackEntity> list = FeignQuery.create(ProductPackEntity.class).in(ProductPackEntity::getSkuId, skuIdList).list();
+
         Map<String, List<SoB2cDTO.PushDetailDTO>> map = detailList.stream().collect(Collectors.groupingBy(SoB2cDTO.PushDetailDTO::getSoId));
         for (Map.Entry<String, List<SoB2cDTO.PushDetailDTO>> entry : map.entrySet()) {
             List<SoB2cDTO.PushDetailDTO> value = entry.getValue();
@@ -1450,15 +1456,20 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 Integer hasPushQty = purchaseApplicationDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSourceDetailId(), addDetailDTO.getSourceDetailId())).map(PurchaseApplicationDetailEntity::getApplyQty).reduce(MathUtil.ZERO, Integer::sum);
                 //销售订单数量
                 SoDetailEntity soDetailEntity = soDetailMap.get(detailDTO.getSoDetailId());
-                if (ObjUtil.isEmpty(soDetailEntity)) {
+                if (ObjectUtil.isEmpty(soDetailEntity)) {
                     throw new ServiceException(ApiError.ERROR_SO_DETAIL_NOT_EXIST);
                 }
                 if (hasPushQty + detailDTO.getApplyQty() > soDetailEntity.getQty()) {
                     throw new ServiceException(CharSequenceUtil.format("销售订单【{}】SKU【{}】的申请数量【{}】和已下推数量【{}】之和不能大于销售订单数量【{}】",value.get(0).getSoCode(),soDetailEntity.getSkuNo(),detailDTO.getApplyQty(), hasPushQty, soDetailEntity.getQty()));
                 }
+                ProductPackEntity packEntity = list.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), soDetailEntity.getSkuId())).findFirst().orElse(null);
+                if (ObjectUtil.isNotEmpty(packEntity) && ObjectUtil.isNotEmpty(packEntity.getBoxQty())) {
+                    addDetailDTO.setUnitQty(packEntity.getBoxQty().intValue());
+                }
                 addDetailDTO.setSkuId(soDetailEntity.getSkuId());
                 addDetailDTO.setSkuNo(soDetailEntity.getSkuNo());
                 addDetailDTO.setDestWarehouseId(detailDTO.getWarehouseId());
+                addDetailDTO.setPurchaseOrgId(detailDTO.getOrgId());
                 addDetailList.add(addDetailDTO);
             }
             dto.setDetails(addDetailList);
@@ -1519,7 +1530,7 @@ public class PurchaseApplicationServiceImpl extends SuperServiceImpl<PurchaseApp
                 PilotApplicationDetailEntity pilotApplicationDetailEntity = pilotApplicationDetailMap.get(detailEntity.getSourceDetailId());
                 checkUpDTO.setOldQty(ObjectUtil.isEmpty(pilotApplicationDetailEntity) ? MathUtil.ZERO : pilotApplicationDetailEntity.getApplyQty());
             } else {
-                throw new ServiceException("未找到上查单据");
+               continue;
             }
             //采购申请量
             List<PurchaseApplicationDetailEntity> purchaseApplicationDetailList = allDetailMap.get(detailEntity.getSourceDetailId());
