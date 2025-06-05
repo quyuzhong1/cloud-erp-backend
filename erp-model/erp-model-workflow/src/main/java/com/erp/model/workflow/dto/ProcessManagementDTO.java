@@ -2,6 +2,7 @@ package com.erp.model.workflow.dto;
 
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -701,6 +702,11 @@ public class ProcessManagementDTO {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+
+        /**
+         * 是否委托
+         */
+        private Boolean isDelegate;
     }
 
     @Data
@@ -1018,12 +1024,8 @@ public class ProcessManagementDTO {
         /**
          * 任务状态
          */
-        private String taskStatus;
-
-        /**
-         * 任务状态名称
-         */
-        private String taskStatusName;
+        @Dict
+        private ApproveStatusEnum taskStatus;
 
         /**
          * 审核完成时间

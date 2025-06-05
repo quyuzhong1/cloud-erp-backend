@@ -13,6 +13,8 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-06-04 16:36:08
  */
 public enum CfgQueryOptionExtTypeEnum implements EnumMessage {
+	TEXT("text", "文字"),
+	BOOL("bool", "布尔值"),
 	CLASS("class", "类"),
 	ENUM("enum", "枚举"),
     ;

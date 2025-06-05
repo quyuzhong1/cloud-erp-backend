@@ -119,4 +119,36 @@ public class CfgQueryOptionExtDTO implements Serializable {
     }
 
 
+
+    @Data
+    @NoArgsConstructor
+    public static class BooleanDTO {
+        private String label;
+        private String value;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class ClassDTO {
+        //系统归属
+        private String sysClassify;
+        //查询的值
+        private String select;
+        //表名
+        private String tableName ;
+        //条件设置
+        private String condition;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class EnumDTO {
+        //系统归属
+        private String sysClassify;
+        //系统归属
+        private String enumName;
+
+    }
+
+
 }

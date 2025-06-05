@@ -50,18 +50,19 @@ public class CfgApproveSyncSendHandler {
     @Resource
     private ApproveSyncRecordService approveSyncRecordService;
 
-
     public void updateNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
                                 String curTaskId,
                                 List<ProcessTaskManagementEntity> processTaskManagementEntities,
                                 ApproveSyncRecordEntity syncRecordEntity) {
-
-        if(StringUtils.isNotBlank(curTaskId)){
-            processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskId(), curTaskId)).collect(Collectors.toList());
-
-        }else {
-            processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE )).collect(Collectors.toList());
+        if(StringUtils.isBlank(curTaskId)){
+            //根据创建时间来判断最近的节点的taskId
+            //使用stream根据创建时间进行倒序
+            processTaskManagementEntities = processTaskManagementEntities.stream().sorted(Comparator.comparing(ProcessTaskManagementEntity::getCreateTime).reversed())
+                    .collect(Collectors.toList());
+            curTaskId = processTaskManagementEntities.get(0).getTaskId();
         }
+        String finalCurTaskId = curTaskId;
+        processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> item.getTaskId().equals(finalCurTaskId)).collect(Collectors.toList());
 
         //审批状态
         String approveType = dto.getApproveType();
@@ -83,11 +84,15 @@ public class CfgApproveSyncSendHandler {
         } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
             //更新审批结果通知
             commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.ROLLBACK.getCode(),syncRecordEntity);
+        } else if(Objects.equals(approveType, FsActionStatusEnum.SUSPEND.getCode())){ //暂停
+            //更新审批结果通知
+            commonUpdateNotice(processTaskManagementEntities,FsActionStatusEnum.SUSPEND.getCode(),syncRecordEntity);
         }
     }
 
     public void sendNotice(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto,
                            List<CfgApproveSyncFieldMapEntity> fieldMapEntities,
+                           Map<String, String> remoteValues,
                            ProcessManagementEntity processManagementEntity,
                            CfgApproveSyncEntity cfgApproveSyncEntity,
                            String createUserId,
@@ -98,10 +103,9 @@ public class CfgApproveSyncSendHandler {
                            ApproveSyncRecordEntity syncRecordEntity) {
         //pc地址
         String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
-//        String pcLinkByEnv = "http://erptest.ulanzi.cn:9000/";
         //参数map
         Map<String, Object> variablesMap = dto.getVariablesMap();
-        List<String> summaries = cfgApproveSyncBuildHandler.getSummaries(fieldMapEntities, variablesMap);
+        List<String> summaries = cfgApproveSyncBuildHandler.getSummaries(fieldMapEntities, remoteValues);
 
         //审批状态
         String approveType = dto.getApproveType();
@@ -134,6 +138,9 @@ public class CfgApproveSyncSendHandler {
         } else if(Objects.equals(approveType, FsActionStatusEnum.ROLLBACK.getCode())){//强制驳回
             //发送审批结果通知
             commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_REJECT,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+        } else if(Objects.equals(approveType, FsActionStatusEnum.RESTORE.getCode())){    //恢复
+            //默认发送审核人
+            sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
         }
     }
 
@@ -155,9 +162,7 @@ public class CfgApproveSyncSendHandler {
     }
 
     //更新审批 Bot 消息
-    private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status,ApproveSyncRecordEntity syncRecordEntity) {
-
-        if(CollUtil.isNotEmpty(processTaskManagementEntities)){
+    private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status,ApproveSyncRecordEntity syncRecordEntity) {if(CollUtil.isNotEmpty(processTaskManagementEntities)){
             List<String> messsageIds = processTaskManagementExtService.listByProcessTaskManagementIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
             if(CollUtil.isNotEmpty(messsageIds)){
                 List<ApproveSyncRecordEntity> list = new ArrayList<>();
@@ -251,6 +256,7 @@ public class CfgApproveSyncSendHandler {
                         }
                         params.setThirdUserId(thirdUnionMap.get(userId).getThirdUserId());
                         map.put(params.getThirdUserId(),newRecord);
+                        sendParams.add(params);
                     }
                 }else{
                     newRecord.setReceiverName("");
