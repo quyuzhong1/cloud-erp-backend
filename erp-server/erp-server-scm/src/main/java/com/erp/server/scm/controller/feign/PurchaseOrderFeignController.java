@@ -7,7 +7,6 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.MathUtil;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
@@ -257,11 +256,7 @@ public class PurchaseOrderFeignController {
 
     @PostMapping("/getPushDownBySourceIds")
     public Integer getPushDownBySoIds(@RequestBody List<String> soIds) {
-        Integer pushDownBySourceIds = salesDemandService.getPushDownBySourceIds(soIds);
-        if (MathUtil.compareTo(pushDownBySourceIds,MathUtil.ZERO) > MathUtil.ZERO) {
-            return pushDownBySourceIds;
-        }
-       return purchaseApplicationService.getPushDownBySourceIds(soIds);
+        return salesDemandService.getPushDownBySourceIds(soIds);
     }
 
     /**

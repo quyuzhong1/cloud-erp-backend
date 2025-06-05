@@ -53,6 +53,7 @@ import com.erp.model.plm.entity.ProductSaleEntity;
 import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
+import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.DictCurrencyEntity;
@@ -1586,6 +1587,12 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
      * @date 2023-05-29 16:08
      */
     private void checkRefBill(List<String> soIds) {
+        //采购申请
+        List<PurchaseApplicationEntity> purchaseApplicationList = scmTaskFeign.listPurchaseApplicationBySourceIds(soIds);
+        if (CollUtil.isNotEmpty(purchaseApplicationList)) {
+            String codes = purchaseApplicationList.stream().map(PurchaseApplicationEntity::getCode).distinct().collect(Collectors.joining(","));
+            throw new ServiceException(ApiError.ERROR_SO_INFO_EXIST_REF_BILL,codes);
+        }
         Integer wmsCount = wmsTaskFeign.getPushDownBySourceIds(soIds);
         if (wmsCount > 0) {
             throw new ServiceException(ApiError.ERROR_92040);
