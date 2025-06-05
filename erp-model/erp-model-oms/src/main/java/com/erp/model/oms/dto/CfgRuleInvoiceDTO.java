@@ -110,7 +110,7 @@ public class CfgRuleInvoiceDTO implements Serializable {
         /**
         * 禁用状态 false 未禁用
         */
-        @NotNull(message = "禁用状态 false 未禁用不能为空")
+        @NotNull(message = "禁用状态不能为空")
         private Boolean disabled;
 
         /**
@@ -128,8 +128,8 @@ public class CfgRuleInvoiceDTO implements Serializable {
         /**
         * 发票类型:vat=VAT发票,nfe=NF-e发票
         */
-        @NotBlank(message = "发票类型:vat=VAT发票,nfe=NF不能为空")
-        @Size(max = 30,message = "发票类型:vat=VAT发票,nfe=NF最大长度不能超过30位")
+        @NotBlank(message = "发票类型不能为空")
+        @Size(max = 30,message = "发票类型最大长度不能超过30位")
         private String invoiceType;
 
 
