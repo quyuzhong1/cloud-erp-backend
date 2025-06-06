@@ -50,7 +50,7 @@
             s.name as supplierName,
             pad.close_reason as closeReason,
             pa.source_id,
-            pa.source_code,
+            pa.source_code as sourceCode,
             pa.source_type,
             pad.source_json,
             pad.first_mass_product as firstMassProduct,

@@ -2,8 +2,10 @@ package com.erp.server.scm.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.scm.dto.DictBasicDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
 import com.erp.model.scm.entity.PurchasePriceEntity;
@@ -17,6 +19,7 @@ import com.erp.server.scm.service.PurchaseSkuOrgRefService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -43,6 +46,7 @@ import javax.annotation.Resource;
 public class PurchaseSkuOrgRefServiceImpl extends SuperServiceImpl<PurchaseSkuOrgRefMapper, PurchaseSkuOrgRefEntity> implements PurchaseSkuOrgRefService {
     @Resource
     private ModuleOperateLogService moduleOperateLogService;
+    @Lazy
     @Resource
     private PurchasePriceDetailService purchasePriceDetailService;
     @Resource
@@ -101,6 +105,9 @@ public class PurchaseSkuOrgRefServiceImpl extends SuperServiceImpl<PurchaseSkuOr
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addByPurchasePrice(PurchasePriceEntity entity) {
+        if (!ApproveStatusEnum.APPROVE.equals(entity.getApproveStatus())){
+            return;
+        }
         //获取采购价目表明细
         List<PurchasePriceDetailEntity> detailEntityList = purchasePriceDetailService.listDetailByMainId(entity.getId());
         if (CollUtil.isEmpty(detailEntityList)){
@@ -151,6 +158,24 @@ public class PurchaseSkuOrgRefServiceImpl extends SuperServiceImpl<PurchaseSkuOr
             }
         });
         return resultList;
+    }
+
+    @Override
+    public void removeByPrice(PurchasePriceEntity entity) {
+        if (Objects.isNull(entity) || CharSequenceUtil.isBlank(entity.getPurchaseOrgId())){
+            return;
+        }
+        //获取采购价目表明细
+        List<PurchasePriceDetailEntity> detailEntityList = purchasePriceDetailService.listDetailByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailEntityList)){
+            return;
+        }
+        List<String> skuIdList = detailEntityList.stream().map(PurchasePriceDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIdList)){
+            return;
+        }
+        //清空sku对应的关联关系
+        this.lambdaUpdate().in(PurchaseSkuOrgRefEntity::getSkuId, skuIdList).eq(PurchaseSkuOrgRefEntity::getPurchaseOrgId, entity.getPurchaseOrgId()).remove();
     }
 
 

@@ -39,4 +39,6 @@ public interface PurchaseSkuOrgRefService extends SuperService<PurchaseSkuOrgRef
     void addByPurchasePrice(PurchasePriceEntity entity);
 
     List<PurchaseSkuOrgRefEntity> getBySkuIdList(List<String> skuIdList);
+
+    void removeByPrice(PurchasePriceEntity entity);
 }

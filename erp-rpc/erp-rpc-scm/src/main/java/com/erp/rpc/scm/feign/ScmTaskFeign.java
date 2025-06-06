@@ -6,10 +6,7 @@ import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BatchResultDTO;
-import com.erp.model.scm.dto.PurchaseOrderDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
-import com.erp.model.scm.dto.SkuCostDTO;
-import com.erp.model.scm.dto.SubcontractOrderDTO;
+import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.*;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import org.springframework.cloud.openfeign.FeignClient;
@@ -454,4 +451,12 @@ public interface ScmTaskFeign {
      */
     @PostMapping("feign/purchasePrice/batchGetPurchasePrice")
     List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(@RequestBody List<PurchasePriceDTO.PriceDTO> list);
+
+    /**
+     * 根据sku获取采购组织列表
+     * @param querySkuDTO
+     * @return
+     */
+    @PostMapping("feign/purchasePrice/getBySkuIdList")
+    public List<PurchaseSkuOrgRefEntity> getBySkuIdList(@RequestBody @Validated PurchaseSkuOrgRefDTO.QuerySkuDTO querySkuDTO);
 }
