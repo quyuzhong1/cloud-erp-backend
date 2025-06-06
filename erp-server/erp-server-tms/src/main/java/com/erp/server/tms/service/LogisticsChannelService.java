@@ -258,4 +258,6 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto);
 
     List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
+
+    List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(List<String> platformCodeList);
 }
