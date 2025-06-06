@@ -23,6 +23,8 @@ import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.scm.dto.PurchaseSkuOrgRefDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
 
@@ -104,22 +106,22 @@ public class PurchaseSkuOrgRefServiceImpl extends SuperServiceImpl<PurchaseSkuOr
         if (CollUtil.isEmpty(detailEntityList)){
             return;
         }
+        List<String> skuIdList = detailEntityList.stream().map(PurchasePriceDetailEntity::getSkuId).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(skuIdList)){
+            return;
+        }
         List<PurchaseSkuOrgRefEntity> addList = new ArrayList<>();
-        List<PurchaseSkuOrgRefEntity> list = this.lambdaQuery()
-                .eq(PurchaseSkuOrgRefEntity::getPurchaseOrgId, entity.getPurchaseOrgId()).list();
+        //清空sku对应的关联关系
+         this.lambdaUpdate().in(PurchaseSkuOrgRefEntity::getSkuId, skuIdList).remove();
         //遍历采购价目表明细
         for (PurchasePriceDetailEntity detailEntity : detailEntityList) {
-            //sku+采购组织是否存在记录
-            PurchaseSkuOrgRefEntity one = list.stream().filter(e -> e.getSkuId().equals(detailEntity.getSkuId())).findFirst().orElse(null);
-            if (Objects.isNull(one)) {
-                //新增采购价目表明细
-                PurchaseSkuOrgRefEntity purchaseSkuOrgRefEntity = new PurchaseSkuOrgRefEntity();
-                purchaseSkuOrgRefEntity.setSkuId(detailEntity.getSkuId());
-                purchaseSkuOrgRefEntity.setSkuNo(detailEntity.getSkuNo());
-                purchaseSkuOrgRefEntity.setPurchaseOrgId(entity.getPurchaseOrgId());
-                purchaseSkuOrgRefEntity.setPurchaseOrgName(entity.getPurchaseOrgName());
-                addList.add(purchaseSkuOrgRefEntity);
-            }
+            //新增采购价目表明细
+            PurchaseSkuOrgRefEntity purchaseSkuOrgRefEntity = new PurchaseSkuOrgRefEntity();
+            purchaseSkuOrgRefEntity.setSkuId(detailEntity.getSkuId());
+            purchaseSkuOrgRefEntity.setSkuNo(detailEntity.getSkuNo());
+            purchaseSkuOrgRefEntity.setPurchaseOrgId(entity.getPurchaseOrgId());
+            purchaseSkuOrgRefEntity.setPurchaseOrgName(entity.getPurchaseOrgName());
+            addList.add(purchaseSkuOrgRefEntity);
         }
         if (CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
