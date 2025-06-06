@@ -91,10 +91,10 @@ public class ProcessTaskManagementServiceImpl extends SuperServiceImpl<ProcessTa
                 }
             }
         }
-        // 发送抄送消息
-        String title = CharSequenceUtil.format("【流程管理中心】审批结果抄送");
-        String content = CharSequenceUtil.format("**单据名称: **{}\n**审批人：** {} \n**审批结果：**{}！", managementEntity.getProcessName(), entity.getCurApproveName(), approveType.getName());
-        processTaskCcService.sendCcMsg(entity, title, content);
+//        // 发送抄送消息
+//        String title = CharSequenceUtil.format("【流程管理中心】审批结果抄送");
+//        String content = CharSequenceUtil.format("**单据名称: **{}\n**审批人：** {} \n**审批结果：**{}！", managementEntity.getProcessName(), entity.getCurApproveName(), approveType.getName());
+//        processTaskCcService.sendCcMsg(entity, title, content);
         return Boolean.TRUE;
     }
 
