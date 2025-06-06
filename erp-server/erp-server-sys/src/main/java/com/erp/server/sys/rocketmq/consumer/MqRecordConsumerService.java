@@ -1,9 +1,10 @@
 package com.erp.server.sys.rocketmq.consumer;
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.common.business.constant.ThirdConstants;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
@@ -16,23 +17,21 @@ import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
-import com.erp.model.plm.entity.ProjectTaskEntity;
-import com.erp.model.plm.entity.TaskFollowerEntity;
-import com.erp.model.plm.enums.NoticeItemPeopleEnum;
 import com.erp.model.sys.dto.MqConsumerRecordDTO;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
+import com.erp.model.sys.enums.DictNoticeRoleOptionTableTypeEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeTypeEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
 import com.erp.model.sys.vo.SendThirdNoticeConsumerDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
-import com.erp.model.workflow.dto.AuditorHandleDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
-import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
@@ -47,9 +46,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -136,10 +135,19 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     @Resource
     private ThirdNoticePushRecordService thirdNoticePushRecordService;
 
+    @Resource
+    private SysPostFeign sysPostFeign;
+
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+
+    @Resource
+    private DictNoticeRoleOptionService dictNoticeRoleOptionService;
+
     private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public void onMessage(String jsonStr) {
         log.info("MqRecordConsumerService 开始");
         if(StringUtils.isBlank(jsonStr)){
@@ -153,219 +161,257 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         dto.setDb(jsonMap.get("db") == null ? "" : String.valueOf(jsonMap.get("db")));
         dto.setTable(jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table")));
         dto.setOperationType(jsonMap.get("P_TAG_IUD") == null ? "" : String.valueOf(jsonMap.get("P_TAG_IUD")));
-        dto.setDataJson(jsonMap);
+        dto.setDataJson((Map<String, Object> )jsonMap.get("dataJson"));
 
         //接收中台发送的ddl变更
         //参数不能为空
         if (StringUtils.isNotBlank(dto.getDb()) && StringUtils.isNotBlank(dto.getTable()) && StringUtils.isNotBlank(dto.getOperationType()) && Objects.nonNull(dto.getDataJson())) {
+
             //保存mq消费记录
-
             // 将 Map 转换为 JSON 字符串
-            MqConsumerRecordEntity mqConsumerRecord = new MqConsumerRecordEntity();
-            mqConsumerRecord.setTopic(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace));
-            mqConsumerRecord.setTag(RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.name());
-            mqConsumerRecord.setConsumerGroup(RocketMqConsumerGroup.SYS_SEND_THIRD_NOTICE_CONSUMER.replace("${spring.cloud.nacos.discovery.namespace}", namespace));
-            mqConsumerRecord.setDataJson(gson.toJson(dto.getDataJson()));
-            boolean flag = mqConsumerRecordService.save(mqConsumerRecord);
-            if (flag) {
-                String id = mqConsumerRecord.getId();
-                //根据参数判断一下通知的单据类型
-                CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
-                mqParamsDTO.setTableName(dto.getTable());
-                mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
-                List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
-                if (CollUtil.isEmpty(cfgQueryOptionList)) {
-                    //todo
-                    return;
-                }
-                CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionList.get(0);
-                //单据类型
-                String bussinessKey = cfgQueryOptionEntity.getBussinessKey();
+            String id = addMqRecord(gson, dto);
+            if (StringUtils.isNotBlank(id)) {
+                // 异步执行 sendMsg，不阻塞当前事务
+                new Thread(() -> {
+                    try {
+                        sendMsg(dto, gson);
+                    } catch (Exception e) {
+                        log.error("sendMsg 异常", e);
+                    }
+                }).start();
+            }
+        }
+        log.info("MqRecordConsumerService 结束");
+    }
 
-                //获取三方通知配置的信息--单条--即时通知
-                List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
-                        .eq(CfgThirdNoticeEntity::getBusinessType, bussinessKey)
-                        .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
-                        .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
-                        .list();
-                if (CollUtil.isEmpty(cfgThirdNoticeList)) {
-                    return;
-                }
+    private boolean sendMsg(MqConsumerRecordDTO.MqDTO dto, Gson gson) {
+        //根据参数判断一下通知的单据类型
+        CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
+        mqParamsDTO.setTableName(dto.getTable());
+        mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
+        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
+        if (CollUtil.isEmpty(cfgQueryOptionList)) {
+            return true;
+        }
+        CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionList.get(0);
+        //单据类型
+        String bussinessKey = cfgQueryOptionEntity.getBussinessKey();
 
-                List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
-                //三方通知配置--推送消息
-                List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeIdList).list();
-                Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap = fieldMapList.stream().collect(Collectors.groupingBy(CfgApproveSyncFieldMapEntity::getMainId));
-                //三方通知配置--规则条件
-                List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeIdList).list();
-                Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
+        //获取三方通知配置的信息--单条--即时通知
+        List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
+                .eq(CfgThirdNoticeEntity::getBusinessType, bussinessKey)
+                .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
+                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
+                .list();
+        if (CollUtil.isEmpty(cfgThirdNoticeList)) {
+            return true;
+        }
 
-                Map<String, Object> dataJson = dto.getDataJson();
-                for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeList) {
-                    //校验规则条件
-                    Boolean match = Boolean.FALSE;
-                    List<CfgRuleConditionEntity> cfgRuleConditionEntities = ruleConditionMap.get(noticeEntity.getId());
-                    if (CollUtil.isNotEmpty(cfgRuleConditionEntities)) {
-                        //封装条件参数
-                        Map<String, Object> map = new HashMap<>();
-                        for (CfgRuleConditionEntity cfgRuleConditionEntity : cfgRuleConditionEntities) {
-                            map.put(cfgRuleConditionEntity.getField(), dataJson.get(cfgRuleConditionEntity.getField()));
+        List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
+        //三方通知配置--推送消息
+        List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeIdList).list();
+        Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap = fieldMapList.stream().collect(Collectors.groupingBy(CfgApproveSyncFieldMapEntity::getMainId));
+        //三方通知配置--规则条件
+        List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeIdList).list();
+        Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
+
+        //主表map
+        Map<String, Object> variablesMap = dto.getDataJson();
+        for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeList) {
+
+            //校验规则条件
+            if (!checkRule(noticeEntity, ruleConditionMap, variablesMap)) continue;
+
+            String roleType = noticeEntity.getRoleType();
+            String specificPerson = noticeEntity.getSpecificPerson();
+            String post = noticeEntity.getPost();
+            if (StringUtils.isBlank(post) && StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
+                continue;
+            }
+
+            String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
+            List<String> userIdList = getUserList(post,roleType, specificPerson, businessId);
+            if (CollUtil.isEmpty(userIdList)) {
+                continue;
+            }
+
+            //根据通知方式查找人员 目前只有飞书
+            String noticeMethod = noticeEntity.getNoticeMethod();
+            if (StringUtils.isNotBlank(noticeMethod)) {
+                List<String> noticeMethodList = Arrays.asList(noticeMethod.split(","));
+                for (String str : noticeMethodList) {
+                    //获取飞书的unionid 与用户关系
+                    if (CfgApproveSyncSyncPlatformEnum.FEISHU.getCode().equals(str)) {
+                        List<ThirdUnionDTO> unionList  = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode() , userIdList);
+                        if (CollUtil.isEmpty(unionList)) {
+                            continue;
                         }
-                        // 获取所有符合条件的规则
-                        List<CfgRuleConditionEntity> conditionList = cfgRuleConditionEntities.stream()
-                                .sorted(Comparator.comparing(CfgRuleConditionEntity::getIndex))
+                        //组装推送消息请求体
+                        List<CfgApproveSyncFieldMapEntity> fieldList = fieldMap.get(noticeEntity.getId()).stream()
+                                .sorted(Comparator.comparing(CfgApproveSyncFieldMapEntity::getSort))
                                 .collect(Collectors.toList());
-                        List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
-                        //获取到表达式,判断表达式是否匹配
-                        match = spElServer.matchExpressionByConditionList(conditionElementList, map);
 
-                    }
-                    if (Boolean.FALSE.equals(match)) {
-                        continue;
-                    }
+                        List<String> fieldId = fieldList.stream().map(CfgApproveSyncFieldMapEntity::getFieldId).collect(Collectors.toList());
 
-                    String roleType = noticeEntity.getRoleType();
-                    String specificPerson = noticeEntity.getSpecificPerson();
-                    if (StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
-                        continue;
-                    }
-                    String createUserId = String.valueOf(dataJson.getOrDefault("createUserId", ""));
-                    String businessId = String.valueOf(dataJson.getOrDefault("id", ""));
-                    List<String> userIdList = getSetNotice(roleType, specificPerson, businessId, createUserId);
-                    if (CollUtil.isEmpty(userIdList)) {
-                        continue;
-                    }
+                        Map<String, CfgQueryOptionEntity> cfgQueryOptionMap = cfgQueryOptionList.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getId, e -> e));
 
-                    //根据通知方式查找人员 目前只有飞书
-                    List<ThirdUnionDTO> unionList = new ArrayList<>();
-                    String noticeMethod = noticeEntity.getNoticeMethod();
-                    if (StringUtils.isNotBlank(noticeMethod)) {
-                        List<String> noticeMethodList = Arrays.asList(noticeMethod.split(","));
-                        for (String str : noticeMethodList) {
-                            //获取飞书的unionid 与用户关系
-                            if (CfgApproveSyncSyncPlatformEnum.FEISHU.getCode().equals(str)) {
-                                unionList = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode() , userIdList);
+                        CfgQueryOptionEntity cfgQueryOptionDetail = cfgQueryOptionList.stream().filter(e -> fieldId.contains(e.getId()) && e.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode())).findFirst().orElse(null);
 
-                                if (CollUtil.isEmpty(unionList)) {
-                                    continue;
-                                }
-                                //组装推送消息请求体
-                                List<CfgApproveSyncFieldMapEntity> fieldList = fieldMap.get(noticeEntity.getId()).stream()
-                                        .sorted(Comparator.comparing(CfgApproveSyncFieldMapEntity::getSort))
-                                        .collect(Collectors.toList());
+                        List<BaseEntity> detailList = new ArrayList<>();
+                        if (Objects.nonNull(cfgQueryOptionDetail)) {//存在明细表，则需要查出来
+                            CfgQueryOptionEntity detailEntity = cfgQueryOptionList.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
+                            if (Objects.isNull(detailEntity)) {
+                                break;
+                            }
+                            String classpath = cfgQueryOptionDetail.getClasspath();
+                            classpath = classpath.replace("class ", "");
+                            Class<BaseEntity> clazz = null;
+                            try {
+                                clazz = (Class<BaseEntity>) Class.forName(classpath);
+                            } catch (ClassNotFoundException e) {
+                                throw new ServiceException(classpath + "实体不存在");
+                            }
+                            String conditionField = StrUtils.underlineByhump(detailEntity.getConditionField());
+                            detailList = FeignQuery.create(clazz)
+                                    .eq(conditionField, businessId)
+                                    .list();
 
-                                List<String> fieldId = fieldList.stream().map(CfgApproveSyncFieldMapEntity::getFieldId).collect(Collectors.toList());
-                                Map<String, CfgQueryOptionEntity> cfgQueryOptionMap = cfgQueryOptionList.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getId, e -> e));
+                            if (CollUtil.isEmpty(detailList)) {
+                                break;
+                            }
+                            //明细数据
+                            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+                        }
 
-                                CfgQueryOptionEntity cfgQueryOptionDetail = cfgQueryOptionList.stream().filter(e -> fieldId.contains(e.getId()) && e.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode())).findFirst().orElse(null);
+                        //进行值映射处理
+                        Map<String,String> handlerValueMap = new HashMap<>();
+                        Map<String,String> remoteValues = new HashMap<>();
+                        for (CfgApproveSyncFieldMapEntity entity : fieldList) {
+                            //设置原始值
+                            handlerValueMap.put(entity.getFieldId(),String.valueOf(variablesMap.getOrDefault(entity.getFieldSource(), "")));
 
-                                List<BaseEntity> detailList = new ArrayList<>();
-                                if (Objects.nonNull(cfgQueryOptionDetail)) {//存在明细表，则需要查出来
-
-                                    CfgQueryOptionEntity mainIdEntity = cfgQueryOptionList.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
-                                    if (Objects.isNull(mainIdEntity)) {
-                                        break;
-                                    }
-                                    String classpath = cfgQueryOptionDetail.getClasspath();
-                                    classpath = classpath.replace("class ", "");
-                                    Class<BaseEntity> clazz = null;
-                                    try {
-                                        clazz = (Class<BaseEntity>) Class.forName(classpath);
-                                    } catch (ClassNotFoundException e) {
-                                        throw new ServiceException(classpath + "实体不存在");
-                                    }
-                                    String conditionField = StrUtils.underlineByhump(mainIdEntity.getConditionField());
-                                    detailList = FeignQuery.create(clazz)
-                                            .eq(conditionField, businessId)
-                                            .list();
-
-                                    if (CollUtil.isEmpty(detailList)) {
-                                        break;
-                                    }
-                                }
-
-                                List<String> receiverName = unionList.stream().map(ThirdUnionDTO::getUserName).distinct().collect(Collectors.toList());
-                                ThirdNoticePushRecordEntity recordEntity = new ThirdNoticePushRecordEntity();
-                                recordEntity.setCfgThirdNoticeId(noticeEntity.getId());
-                                recordEntity.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
-                                recordEntity.setBusinessId(businessId);
-                                recordEntity.setBusinessType(bussinessKey);
-                                recordEntity.setBusinessCode(String.valueOf(dataJson.getOrDefault("code", "")));
-                                recordEntity.setNoticeMethod(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
-                                recordEntity.setReceiverId(String.join(",", userIdList));
-                                recordEntity.setReceiverName(String.join(",", receiverName));
-                                recordEntity.setSendTime(LocalDateTime.now());
-                                recordEntity.setTitle(noticeEntity.getTitle());
-                                recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.SENDING.getCode());
-                                boolean save = thirdNoticePushRecordService.save(recordEntity);
-                                if(Boolean.TRUE.equals(save)){
-                                    SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
-                                    List<String> unionIds = unionList.stream().map(ThirdUnionDTO::getThirdUnionId).distinct().collect(Collectors.toList());
-                                    sendMessage.setUnionIds(unionIds);
-                                    //通知标题
-                                    String title = noticeEntity.getTitle();
-                                    //通知主题
-                                    StringBuffer sb = new StringBuffer();
-                                    String noticeType = noticeEntity.getNoticeType();
-                                    sb.append("通知类型：");
-                                    sb.append(noticeType);
-                                    sb.append("\n");
-                                    for (CfgApproveSyncFieldMapEntity entity : fieldList) {
-                                        sb.append(entity.getFieldName());
-                                        sb.append("：");
-
-                                        CfgQueryOptionEntity opt = cfgQueryOptionMap.getOrDefault(entity.getFieldId(), null);
-                                        if (Objects.isNull(opt)) {
-                                            sb.append(dataJson.getOrDefault(entity.getFieldSource(), ""));
-                                        } else {
-                                            String fieldBelongsType = opt.getFieldBelongsType();
-                                            //属于明细表
-                                            if (fieldBelongsType.equals(CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode())) {
-                                                StringBuffer detailSb = new StringBuffer();
-                                                for (BaseEntity baseEntity : detailList) {
-                                                    Map<String, Object> detailMap = gson.fromJson(gson.toJson(baseEntity), new TypeToken<Map<String, Object>>() {
-                                                    }.getType());
-                                                    detailSb.append(detailMap.getOrDefault(entity.getFieldSource(), ""));
-                                                    detailSb.append("；");
-                                                }
-                                                sb.append(detailSb.toString());
-                                            } else {
-                                                sb.append(dataJson.getOrDefault(entity.getFieldSource(), ""));
+                            String fieldSourceValueStr = getFieldSourceValueStr(entity.getFieldSource(), variablesMap);
+                            if(StringUtils.isNotBlank(fieldSourceValueStr)){
+                                handlerValueMap.put(entity.getFieldId(),fieldSourceValueStr);
+                            }else{
+                                if(variablesMap.containsKey(ThirdConstants.DETAIL_LIST)){
+                                    List<Object> detail =( List<Object> ) variablesMap.get(ThirdConstants.DETAIL_LIST);
+                                    if(CollUtil.isNotEmpty(detailList)){
+                                        StringBuffer sb = new StringBuffer();
+                                        for (Object object : detail) {
+                                            Map<String, Object> map = BeanUtil.beanToMap(object);
+                                            String string = getFieldSourceValueStr(entity.getFieldSource(), map);
+                                            if(StringUtils.isNotBlank(string)){
+                                                sb.append(string);
+                                                sb.append(";");
                                             }
                                         }
-                                        sb.append("\n");
+                                        String fieldSourceDetailValueStr = sb.toString();
+                                        if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
+                                            handlerValueMap.put(entity.getFieldId(),fieldSourceValueStr);
+                                        }
                                     }
-                                    String content = sb.toString();
-
-                                    //跳转URL
-                                    String url = noticeEntity.getUrl();
-                                    Map<String, Object> contentMap = fsService.getCardMessageMap(title, content, url);
-                                    sendMessage.setContentMap(contentMap);
-                                    sendMessage.setMessageId(recordEntity.getId());
-
-                                    mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID(), 1);
                                 }
+                            }
+                        }
+                        //需要进行值映射
+                        if(handlerValueMap.size() > 0) {
+                            remoteValues = cfgQueryOptionFeign.getRemoteValues(handlerValueMap);
+                        }
+
+                        for (ThirdUnionDTO unionDTO : unionList) {
+                            ThirdNoticePushRecordEntity recordEntity = new ThirdNoticePushRecordEntity();
+                            recordEntity.setCfgThirdNoticeId(noticeEntity.getId());
+                            recordEntity.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
+                            recordEntity.setBusinessId(businessId);
+                            recordEntity.setBusinessType(bussinessKey);
+                            recordEntity.setBusinessCode(String.valueOf(variablesMap.getOrDefault("code", "")));
+                            recordEntity.setNoticeMethod(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+                            recordEntity.setReceiverId(unionDTO.getUserId());
+                            recordEntity.setReceiverName(unionDTO.getUserName());
+                            recordEntity.setSendTime(LocalDateTime.now());
+                            recordEntity.setTitle(noticeEntity.getTitle());
+                            recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.SENDING.getCode());
+                            boolean save = thirdNoticePushRecordService.save(recordEntity);
+                            if(Boolean.TRUE.equals(save)){
+                                SendThirdNoticeConsumerDTO sendMessage = new SendThirdNoticeConsumerDTO();
+                                sendMessage.setUnionIds(Arrays.asList(unionDTO.getThirdUnionId()));
+                                //通知标题
+                                String title = noticeEntity.getTitle();
+                                //通知主题
+                                StringBuffer sb = new StringBuffer();
+                                String noticeType = noticeEntity.getNoticeType();
+                                sb.append("通知类型：");
+                                sb.append(noticeType);
+                                sb.append("\n");
+                                for (CfgApproveSyncFieldMapEntity entity : fieldList) {
+                                    sb.append(entity.getFieldName());
+                                    sb.append("：");
+                                    sb.append(remoteValues.getOrDefault(entity.getFieldId(),""));
+                                    sb.append("\n");
+                                }
+                                String content = sb.toString();
+
+                                //跳转URL
+                                String url = noticeEntity.getUrl();
+                                Map<String, Object> contentMap = fsService.getCardMessageMap(title, content, url);
+                                sendMessage.setContentMap(contentMap);
+                                sendMessage.setMessageId(recordEntity.getId());
+
+                                mqProducerService.asyncClassMsgByDelayLevel(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC, RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.getName(), sendMessage, IdUtil.simpleUUID(), 1);
                             }
                         }
                     }
                 }
             }
         }
-        log.info("MqRecordConsumerService 结束");
+        return false;
+    }
+
+    //校验规则条件
+    private boolean checkRule(CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, Map<String, Object> dataJson) {
+        Boolean match = Boolean.FALSE;
+        List<CfgRuleConditionEntity> cfgRuleConditionEntities = ruleConditionMap.get(noticeEntity.getId());
+        if (CollUtil.isNotEmpty(cfgRuleConditionEntities)) {
+            //封装条件参数
+            Map<String, Object> map = new HashMap<>();
+            for (CfgRuleConditionEntity cfgRuleConditionEntity : cfgRuleConditionEntities) {
+                map.put(cfgRuleConditionEntity.getField(), dataJson.get(cfgRuleConditionEntity.getField()));
+            }
+            // 获取所有符合条件的规则
+            List<CfgRuleConditionEntity> conditionList = cfgRuleConditionEntities.stream()
+                    .sorted(Comparator.comparing(CfgRuleConditionEntity::getIndex))
+                    .collect(Collectors.toList());
+            List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
+            //获取到表达式,判断表达式是否匹配
+            match = spElServer.matchExpressionByConditionList(conditionElementList, map);
+
+        }
+        return match;
+    }
+
+    private String addMqRecord(Gson gson, MqConsumerRecordDTO.MqDTO dto) {
+        MqConsumerRecordEntity mqConsumerRecord = new MqConsumerRecordEntity();
+        mqConsumerRecord.setTopic(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace));
+        mqConsumerRecord.setTag(RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.name());
+        mqConsumerRecord.setConsumerGroup(RocketMqConsumerGroup.SYS_SEND_THIRD_NOTICE_CONSUMER.replace("${spring.cloud.nacos.discovery.namespace}", namespace));
+        mqConsumerRecord.setDataJson(gson.toJson(dto.getDataJson()));
+        boolean flag = mqConsumerRecordService.save(mqConsumerRecord);
+        if(flag){
+            return mqConsumerRecord.getId();
+        }
+        return "";
     }
 
 
     /**
-     * 获取系统设置的通知人员
+     * 获取系统设置的岗位人员(去重)
      * @param
      * @return java.util.List<java.lang.String>
      * @author jack
      * @date 2025-05-30
      */
-    private List<String> getSetNotice(String roleType,
-                                      String specificPerson,
-                                      String businessId,
-                                      String createUserId) {
+    private List<String> getUserList(String post, String roleType, String specificPerson, String businessId) {
         List<String> resultList = new ArrayList<>();
 
         //具体人员
@@ -374,87 +420,85 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             resultList.addAll(otherPeopleIds);
         }
 
-        if(StringUtils.isNotBlank(roleType)){
-            List<String> itemPeopleList = Arrays.asList(roleType.split(","));
-            //创建人
-            if (itemPeopleList.contains(NoticeItemPeopleEnum.CREATOR.getFlag()) && StringUtils.isNotBlank(createUserId)){
-                resultList.add(createUserId);
-            }
-            //这个是审核人
-            if (itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag())) {
-                List<ProcessTaskManagementDTO.ApproveHistoryDTO> approveHistoryList = processTaskManagementFeign.listApproveHistory(businessId);
-                List<String> collect = approveHistoryList.stream().filter(v -> v.getApproveStatus().equals(ApproveStatusEnum.APPROVE_ING.getStatus())).map(ProcessTaskManagementDTO.ApproveHistoryDTO::getCurApproveId).collect(Collectors.toList());
-                resultList.addAll(collect);
+        if(StringUtils.isNotBlank(post)){
+            List<String> postIdList = Arrays.asList(post.split(","));
+
+            //岗位id
+            List<SysPostUserEntity> userEntityList = sysPostFeign.getUserIdByPostIds(postIdList);
+            if(CollectionUtils.isNotEmpty(userEntityList)){
+                resultList.addAll(userEntityList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList()));
             }
         }
-        resultList = resultList.stream().distinct().collect(Collectors.toList());
-        return resultList;
-    }
-    /**
-     * 获取系统设置的通知人员
-     * @param
-     * @return java.util.List<java.lang.String>
-     * @author jack
-     * @date 2025-05-30
-     */
-    private List<String> getSetProductNotice(String roleType,
-                                      String specificPerson,
-                                      String projectChargeId ,
-                                      String productChargeId,
-                                      List<String> taskIdList,
-                                      String businessId,
-                                      String createUserId) {
-        List<String> resultList = new ArrayList<>();
-
-        //具体人员
-        if(StringUtils.isNotBlank(specificPerson)){
-            List<String> otherPeopleIds = Arrays.asList(specificPerson.split(","));
-            resultList.addAll(otherPeopleIds);
-        }
-
+        //
         if(StringUtils.isNotBlank(roleType)){
-            List<String> itemPeopleList = Arrays.asList(roleType.split(","));
+            List<String> roleId = Arrays.asList(roleType.split(","));
+            List<DictNoticeRoleOptionEntity> list = dictNoticeRoleOptionService.lambdaQuery().in(DictNoticeRoleOptionEntity::getId, roleId).list();
+            if(CollUtil.isNotEmpty(list)){
+                for (DictNoticeRoleOptionEntity optionEntity : list) {
+                    String field = optionEntity.getField();
+                    String classPath = optionEntity.getClassPath();
+                    String refField = optionEntity.getRefField();
+                    if(StringUtils.isNotBlank(field) && StringUtils.isNotBlank(classPath)){
+                        try {
+                            String ref = "id";
+                            Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
+                            if(StringUtils.isNotBlank(refField) && optionEntity.getTableType().equals(DictNoticeRoleOptionTableTypeEnum.DETAIL.getCode())){
+                                ref = refField;
+                            }
+                            List<BaseEntity> baseEntityList = FeignQuery.create(clazz)
+                                    .eq(ref, businessId)
+                                    .list();
+                            if(CollUtil.isNotEmpty(baseEntityList)){
+                                // 获取字段值
+                                String result = baseEntityList.stream()
+                                        .map(item -> String.valueOf(ReflectUtil.getFieldValue(item, field)))
+                                        .filter(value -> StringUtils.isNotBlank(value))
+                                        .collect(Collectors.joining(","));
+                                if (StringUtils.isNotBlank(result)) {
+                                    resultList.add(result);
+                                }
+                            }
+                        } catch (ClassNotFoundException e) {
 
-            //这个是项目经理
-            if (itemPeopleList.contains(NoticeItemPeopleEnum.ITEM_MANAGER.getFlag()) && StringUtils.isNotBlank(projectChargeId)) {
-                //项目负责人
-                List<String> projectChargeIdList = Arrays.asList(projectChargeId.split(","));
-                resultList.addAll(projectChargeIdList);
-            }
-
-            //这个是产品经理
-            if (itemPeopleList.contains(NoticeItemPeopleEnum.PRODUCT_MANAGER.getFlag()) && StringUtils.isNotBlank(productChargeId)) {
-                List<String> productChargeIdList = Arrays.asList(productChargeId.split(","));
-                resultList.addAll(productChargeIdList);
-            }
-
-            //这个是关注人
-            if (itemPeopleList.contains(NoticeItemPeopleEnum.FOLLOWER.getFlag()) && CollectionUtils.isNotEmpty(taskIdList)) {
-                List<TaskFollowerEntity> taskConcernEntities = plmTaskFeign.listTaskFollowerByTaskIds(taskIdList);
-                if (CollectionUtils.isNotEmpty(taskConcernEntities)) {
-                    List<String> userIdList = taskConcernEntities.stream().map(TaskFollowerEntity::getUserId).distinct().collect(Collectors.toList());
-                    resultList.addAll(userIdList);
-                }
-            }
-
-            //这个是审核人
-            if (itemPeopleList.contains(NoticeItemPeopleEnum.AUDITOR.getFlag()) && CollectionUtils.isNotEmpty(taskIdList)) {
-                List<ProjectTaskEntity> taskEntityList = plmTaskFeign.listProjectTaskByTaskIds(taskIdList);
-                if (CollectionUtils.isNotEmpty(taskEntityList)) {
-                    for (ProjectTaskEntity taskEntity : taskEntityList) {
-                        List<AuditorHandleDTO> historyTaskByProcessId = workflowFeign.getHistoryTaskByProcessId(taskEntity.getProcessId());
-                        List<String> userIdList = historyTaskByProcessId.stream().map(AuditorHandleDTO::getHandleUserId).distinct().collect(Collectors.toList());
-                        resultList.addAll(userIdList);
+                        }
                     }
                 }
             }
+        }
+        return resultList.stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+    }
 
+    public String getFieldSourceValueStr(String fieldSource, Map<String, Object> variablesMap) {
+        Object fieldSourceValue = variablesMap.getOrDefault(fieldSource,null);
+        if(Objects.nonNull(fieldSourceValue)){
+            return getFieldSourceValueStr(fieldSourceValue);
+        }
+        return "";
+    }
 
-            //店铺负责人
-            if (itemPeopleList.contains(NoticeItemPeopleEnum.SHOP_CHARGE.getFlag())){
-
+    public  String getFieldSourceValueStr(Object fieldSourceValue) {
+        String fieldSourceValueStr = "";
+        if (fieldSourceValue != null) {
+            if (fieldSourceValue instanceof String) {
+                fieldSourceValueStr = (String) fieldSourceValue;
+            } else if (fieldSourceValue instanceof Integer) {
+                fieldSourceValueStr = String.valueOf(fieldSourceValue);
+            } else if (fieldSourceValue instanceof Date) {
+                // 假设日期格式为 yyyy-MM-dd HH:mm:ss
+                fieldSourceValueStr = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format((Date) fieldSourceValue);
+            } else if (fieldSourceValue instanceof java.time.LocalDate) {
+                fieldSourceValueStr = ((java.time.LocalDate) fieldSourceValue).toString();
+            } else if (fieldSourceValue instanceof java.time.LocalDateTime) {
+                fieldSourceValueStr = ((java.time.LocalDateTime) fieldSourceValue).toString();
+            } else if (fieldSourceValue instanceof Boolean) {
+                fieldSourceValueStr = String.valueOf(fieldSourceValue);
+            } else if (fieldSourceValue instanceof Double || fieldSourceValue instanceof Float || fieldSourceValue instanceof Long) {
+                fieldSourceValueStr = String.valueOf(fieldSourceValue);
+            } else {
+                // 其他类型，尝试直接调用 toString()
+                fieldSourceValueStr = fieldSourceValue.toString();
             }
         }
-        return resultList;
+        return fieldSourceValueStr;
     }
 }

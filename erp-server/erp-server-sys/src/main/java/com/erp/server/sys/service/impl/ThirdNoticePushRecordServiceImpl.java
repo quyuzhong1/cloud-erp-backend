@@ -4,32 +4,27 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
-import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.oms.entity.ShopInfoEntity;
-import com.erp.model.plm.enums.NoticeItemPeopleEnum;
-import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
-import com.erp.model.sys.entity.CfgApproveSyncFieldMapEntity;
-import com.erp.model.sys.entity.CfgThirdNoticeEntity;
-import com.erp.model.sys.entity.SysPostUserEntity;
-import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
+import com.erp.model.sys.enums.DictNoticeRoleOptionTableTypeEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeTypeEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
 import com.erp.model.sys.vo.SendThirdNoticeConsumerDTO;
@@ -40,32 +35,23 @@ import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.tms.feign.TmsProductRegistrationFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
-import com.erp.rpc.workflow.ProcessTaskManagementFeign;
-import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.mapper.ThirdNoticePushRecordMapper;
-import com.erp.server.sys.service.CfgThirdNoticeService;
-import com.erp.server.sys.service.ThirdNoticePushRecordService;
+import com.erp.server.sys.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.erp.server.sys.service.OperateLogService;
-import com.erp.server.sys.service.CommonService;
 import com.common.core.exception.ServiceException;
+import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.executor.CronExpression;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
-import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -74,13 +60,9 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
-
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
-import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SYS_THIRD_NOTICE_RECORD;
 
 /**
@@ -124,6 +106,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     private TmsProductRegistrationFeign tmsProductRegistrationFeign;
     @Resource
     private WmsTaskFeign wmsTaskFeign;
+    @Resource
+    private DictNoticeRoleOptionService dictNoticeRoleOptionService;
 
     @Override
     public List<ThirdNoticePushRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -280,7 +264,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeEntities) {
                 String roleType = noticeEntity.getRoleType();
                 String specificPerson = noticeEntity.getSpecificPerson();
-                if (StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
+                String post = noticeEntity.getPost();
+                if (StringUtils.isBlank(post) && StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
                     continue;
                 }
                 //目前只支持3种单据
@@ -329,19 +314,19 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 sb.append("\n");
                 String content = sb.toString();
                 if (SourceTypeEnum.QC_INFO.getCode().equals(businessType)) {//质检单--质检通知
-                    sendFsQcNotice(noticeEntity, roleType, specificPerson, title, now, content, delayLevel);
+                    sendFsQcNotice(noticeEntity,post, roleType, specificPerson, title, now, content, delayLevel);
                 } else if (SourceTypeEnum.LOGISTICS_BILL.getCode().equals(businessType)) { //物流单--在途异常
-                    sendFmLogisticWarn(noticeEntity, roleType, specificPerson, title, now, content, delayLevel);
+                    sendFmLogisticWarn(noticeEntity,post, roleType, specificPerson, title, now, content, delayLevel);
                 } else if (SourceTypeEnum.PRODUCT_REGISTRATION.getCode().equals(businessType)) { //备案管理
-                    sendWhenNotRegistration(noticeEntity, roleType, specificPerson, title, content, now, delayLevel);
+                    sendWhenNotRegistration(noticeEntity,post, roleType, specificPerson, title, content, now, delayLevel);
                 }
             }
         }
     }
 
 
-    private void sendFsQcNotice(CfgThirdNoticeEntity noticeEntity, String roleType, String specificPerson, String title, LocalDateTime now, String content, int delayLevel) {
-        List<String> userIdList = getPostUserList(roleType, specificPerson);
+    private void sendFsQcNotice(CfgThirdNoticeEntity noticeEntity, String post,String roleType, String specificPerson, String title, LocalDateTime now, String content, int delayLevel) {
+        List<String> userIdList = getUserList(post, specificPerson);
         if (CollUtil.isEmpty(userIdList)) {
             return;
         }
@@ -351,9 +336,9 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
     }
 
-    private void sendWhenNotRegistration(CfgThirdNoticeEntity noticeEntity, String roleType, String specificPerson, String title, String content, LocalDateTime now, int delayLevel) {
+    private void sendWhenNotRegistration(CfgThirdNoticeEntity noticeEntity, String post, String roleType, String specificPerson, String title, String content, LocalDateTime now, int delayLevel) {
         List<ProductRegistrationEntity> registrationEntities = tmsProductRegistrationFeign.listByRegistered();
-        List<String> userIdList = getPostUserList(roleType, specificPerson);
+        List<String> userIdList = getUserList(post, specificPerson);
         if (CollUtil.isEmpty(userIdList)) {
             return;
         }
@@ -374,11 +359,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
     }
 
-    private void sendFmLogisticWarn(CfgThirdNoticeEntity noticeEntity, String roleType, String specificPerson, String title, LocalDateTime now, String content, int delayLevel) {
+    private void sendFmLogisticWarn(CfgThirdNoticeEntity noticeEntity, String post, String roleType, String specificPerson, String title, LocalDateTime now, String content, int delayLevel) {
         List<TmsFirstMileLogisticDTO.PagingVO> pagingVOS = tmsFirstMileLogisticFeign.hasWarnPaging(new TmsFirstMileLogisticDTO.PagingParamDTO());
         pagingVOS = pagingVOS.stream().filter(v-> Objects.nonNull(v.getWarnHour()) && v.getWarnHour() < 0 && !FmLogisticTrackStatusEnum.SIGN.getCode().equals(v.getLogisticsStatus())).collect(Collectors.toList());
         if(CollectionUtils.isNotEmpty(pagingVOS)){
-            List<String> userIdList = getPostUserList(roleType, specificPerson);
+            List<String> userIdList = getUserList(post, specificPerson);
             if (CollUtil.isEmpty(userIdList)) {
                 return;
             }
@@ -392,33 +377,35 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             foreachSendByNoticeMethod(noticeEntity, userIdList, now, title, content, delayLevel);
 
             //处理店铺负责人消息推送
-            List<String> shopIdList = pagingVOS.stream().map(TmsFirstMileLogisticDTO.PagingVO::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(shopIdList)){
-                return;
-            }
-            //封装负责人id
-            List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIdList);
-            for (TmsFirstMileLogisticDTO.PagingVO pagingVO : pagingVOS) {
-                TmsFirstMileLogisticDTO.MsgDTO msgDTO = new TmsFirstMileLogisticDTO.MsgDTO();
-                ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(pagingVO.getShopId())).findFirst().orElse(null);
-                if(Objects.nonNull(shopInfoEntity) && StringUtils.isNotBlank(shopInfoEntity.getChargeId())){
-                    pagingVO.setChargeId(shopInfoEntity.getChargeId());
+            if(StringUtil.isNotBlank(roleType) && roleType.equals("shopCharge")){
+                List<String> shopIdList = pagingVOS.stream().map(TmsFirstMileLogisticDTO.PagingVO::getShopId).filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(shopIdList)){
+                    return;
                 }
-            }
-            pagingVOS = pagingVOS.stream().filter(v->StringUtils.isNotBlank(v.getChargeId())).collect(Collectors.toList());
-            if(CollectionUtils.isEmpty(pagingVOS)){
-                return;
-            }
-            Map<String,List<TmsFirstMileLogisticDTO.PagingVO>> pagingMap = pagingVOS.stream().collect(Collectors.groupingBy(TmsFirstMileLogisticDTO.PagingVO::getChargeId));
+                //封装负责人id
+                List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIdList);
+                for (TmsFirstMileLogisticDTO.PagingVO pagingVO : pagingVOS) {
+                    TmsFirstMileLogisticDTO.MsgDTO msgDTO = new TmsFirstMileLogisticDTO.MsgDTO();
+                    ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(v->v.getId().equals(pagingVO.getShopId())).findFirst().orElse(null);
+                    if(Objects.nonNull(shopInfoEntity) && StringUtils.isNotBlank(shopInfoEntity.getChargeId())){
+                        pagingVO.setChargeId(shopInfoEntity.getChargeId());
+                    }
+                }
+                pagingVOS = pagingVOS.stream().filter(v->StringUtils.isNotBlank(v.getChargeId())).collect(Collectors.toList());
+                if(CollectionUtils.isEmpty(pagingVOS)){
+                    return;
+                }
+                Map<String,List<TmsFirstMileLogisticDTO.PagingVO>> pagingMap = pagingVOS.stream().collect(Collectors.groupingBy(TmsFirstMileLogisticDTO.PagingVO::getChargeId));
 
-            for (Map.Entry<String, List<TmsFirstMileLogisticDTO.PagingVO>> entry : pagingMap.entrySet()) {
-                String chargeId = entry.getKey();
-                List<TmsFirstMileLogisticDTO.PagingVO> value = entry.getValue();
-                List<TmsFirstMileLogisticDTO.PagingVO> todayWarnByCharge = value.stream().filter(v-> v.getWarnHour() > -24).collect(Collectors.toList());
-                int totalWarnCountByCharge = value.size();
-                int todayCountByCharge = todayWarnByCharge.size();
-                title = CharSequenceUtil.format(title, totalWarnCountByCharge,todayCountByCharge);
-                foreachSendByNoticeMethod(noticeEntity, Collections.singletonList(chargeId), now, title, content, delayLevel);
+                for (Map.Entry<String, List<TmsFirstMileLogisticDTO.PagingVO>> entry : pagingMap.entrySet()) {
+                    String chargeId = entry.getKey();
+                    List<TmsFirstMileLogisticDTO.PagingVO> value = entry.getValue();
+                    List<TmsFirstMileLogisticDTO.PagingVO> todayWarnByCharge = value.stream().filter(v-> v.getWarnHour() > -24).collect(Collectors.toList());
+                    int totalWarnCountByCharge = value.size();
+                    int todayCountByCharge = todayWarnByCharge.size();
+                    title = CharSequenceUtil.format(title, totalWarnCountByCharge,todayCountByCharge);
+                    foreachSendByNoticeMethod(noticeEntity, Collections.singletonList(chargeId), now, title, content, delayLevel);
+                }
             }
         }
     }
@@ -508,13 +495,13 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
 
     /**
-     * 获取系统设置的岗位人员(未去重)
+     * 获取系统设置的人员(去重)
      * @param
      * @return java.util.List<java.lang.String>
      * @author jack
      * @date 2025-05-30
      */
-    private List<String> getPostUserList(String post,String specificPerson) {
+    private List<String> getUserList(String post, String specificPerson) {
         List<String> resultList = new ArrayList<>();
 
         //具体人员
@@ -532,32 +519,54 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 resultList.addAll(userEntityList.stream().map(SysPostUserEntity::getUserId).distinct().collect(Collectors.toList()));
             }
         }
-        return resultList;
+        return resultList.stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
     }
 
-
-
     /**
-     * 获取系统设置的店铺负责人(未去重)
+     * 获取系统设置的人员(去重)
      * @param
      * @return java.util.List<java.lang.String>
      * @author jack
      * @date 2025-05-30
      */
-    private List<String> getShopChargeList(String roleType , List<String> shopIdList) {
+    private List<String> getShopUserList(String roleType, List<String> businessIds) {
         List<String> resultList = new ArrayList<>();
+        //
         if(StringUtils.isNotBlank(roleType)){
-            List<String> itemPeopleList = Arrays.asList(roleType.split(","));
-            //店铺负责人
-            if (itemPeopleList.contains(NoticeItemPeopleEnum.SHOP_CHARGE.getFlag()) && CollUtil.isNotEmpty(shopIdList)) {
-                //封装负责人id
-                List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listShopInfoByIds(shopIdList);
-                if (CollUtil.isNotEmpty(shopInfoEntityList)) {
-                    shopInfoEntityList.stream().filter(v -> StringUtils.isNotBlank(v.getChargeId())).forEach(v -> resultList.add(v.getChargeId()));
+            List<String> roleId = Arrays.asList(roleType.split(","));
+            List<DictNoticeRoleOptionEntity> list = dictNoticeRoleOptionService.lambdaQuery().in(DictNoticeRoleOptionEntity::getId, roleId).list();
+            if(CollUtil.isNotEmpty(list)){
+                for (DictNoticeRoleOptionEntity optionEntity : list) {
+                    String field = optionEntity.getField();
+                    String classPath = optionEntity.getClassPath();
+                    String refField = optionEntity.getRefField();
+                    if(StringUtils.isNotBlank(field) && StringUtils.isNotBlank(classPath)){
+                        try {
+                            String ref = "id";
+                            Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
+                            if(StringUtils.isNotBlank(refField) && optionEntity.getTableType().equals(DictNoticeRoleOptionTableTypeEnum.DETAIL.getCode())){
+                                ref = refField;
+                            }
+                            List<BaseEntity> baseEntityList = FeignQuery.create(clazz)
+                                    .in(ref, businessIds)
+                                    .list();
+                            if(CollUtil.isNotEmpty(baseEntityList)){
+                                // 获取字段值
+                                List<String> userIds = baseEntityList.stream()
+                                        .map(item -> String.valueOf(ReflectUtil.getFieldValue(item, field)))
+                                        .filter(value -> StringUtils.isNotBlank(value))
+                                        .collect(Collectors.toList());
+                                resultList.addAll(userIds);
+                            }
+                        } catch (ClassNotFoundException e) {
+
+                        }
+                    }
                 }
             }
         }
-        return resultList;
+        return resultList.stream().filter(StringUtils::isNotBlank).distinct().collect(Collectors.toList());
     }
+
 
 }

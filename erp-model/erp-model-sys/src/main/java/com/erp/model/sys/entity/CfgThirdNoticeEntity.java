@@ -65,6 +65,11 @@ public class CfgThirdNoticeEntity extends BaseEntity<CfgThirdNoticeEntity> {
     @TableField("cron")
     private String cron;
     /**
+     * 岗位
+     */
+    @TableField("post")
+    private String post;
+    /**
     * 通知人员
     */
     @TableField("role_type")
