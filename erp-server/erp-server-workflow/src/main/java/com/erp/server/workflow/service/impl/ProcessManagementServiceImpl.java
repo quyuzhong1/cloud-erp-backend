@@ -212,25 +212,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         Map<String, List<CfgProcessExpEntity>> expMap = cfgProcessExpList.stream().collect(Collectors.groupingBy(CfgProcessExpEntity::getRuleId));
         //查询传入数据是否有符合条件的流程
-        String processDefinitionId = "";
+        List<String> processDefinitionIdList = new ArrayList<>();
         for (CfgProcessRuleEntity cfgProcessRuleEntity : cfgProcessRuleList) {
-            //对应规则
+            //对应规则,未发现规则则直接通过
             List<CfgProcessExpEntity> processExpList = expMap.get(cfgProcessRuleEntity.getId());
             if (CollUtil.isEmpty(processExpList)) {
-                continue;
-            }
-            List<ConditionElement> conditionElementList = BeanMapper.copyList(processExpList, ConditionElement.class);
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, dto.getVariablesMap());
-            //存在一条以上的规则都匹配数据的时候直接报错
-            if (CharSequenceUtil.isNotBlank(processDefinitionId) && matchResult) {
-                throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
-            }
-            //匹配上则直接赋值
-            if (matchResult) {
-                processDefinitionId = cfgProcessRuleEntity.getProcessDefinitionId();
+                processDefinitionIdList.add(cfgProcessRuleEntity.getProcessDefinitionId());
+            } else {
+                List<ConditionElement> conditionElementList = BeanMapper.copyList(processExpList, ConditionElement.class);
+                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, dto.getVariablesMap());
+                //匹配上则直接赋值
+                if (matchResult) {
+                    processDefinitionIdList.add(cfgProcessRuleEntity.getProcessDefinitionId());
+                }
             }
         }
-        return processDefinitionId;
+        //存在一条以上的规则都匹配数据的时候直接报错
+        if (CollUtil.isNotEmpty(processDefinitionIdList) && processDefinitionIdList.size() > MathUtil.ONE) {
+            throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
+        }
+        return processDefinitionIdList.get(0);
     }
 
 
