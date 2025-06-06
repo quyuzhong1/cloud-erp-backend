@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * cfgQueryOption Feign
@@ -29,4 +30,10 @@ public interface CfgQueryOptionFeign {
      */
     @PostMapping("/feign/cfgQueryOption/listByIds")
     List<CfgQueryOptionEntity> listByIds(@RequestBody List<String> ids);
+
+    /**
+     * 值映射处理
+     */
+    @PostMapping("/feign/cfgQueryOption/getRemoteValues")
+    Map<String,String> getRemoteValues(@RequestBody Map<String,String> handlerValueMap);
 }

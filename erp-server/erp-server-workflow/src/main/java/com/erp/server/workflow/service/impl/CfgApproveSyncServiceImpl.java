@@ -466,6 +466,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                     String removeMsg = StrUtil.format("用户【{}】删除通知配置【{}】", UserContext.getDefaultLoginUser().getUserName(), CfgApproveNoticeNoticeTypeEnum.getName(e.getNoticeType()));
                     operateLogService.addModuleOperateLog(removeMsg, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgApproveSyncEntity.getId(), "编辑信息");
                 });
+                cfgApproveNoticeService.removeByIds(removeList.stream().map(CfgApproveNoticeEntity::getId).collect(Collectors.toList()));
             }
 
             List<CfgApproveNoticeEntity> newList = list.stream().filter(e -> StringUtils.isBlank(e.getId())).collect(Collectors.toList());
@@ -475,6 +476,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                     String newMsg = StrUtil.format("用户【{}】新增通知配置【{}】", UserContext.getDefaultLoginUser().getUserName(), CfgApproveNoticeNoticeTypeEnum.getName(e.getNoticeType()));
                     operateLogService.addModuleOperateLog(newMsg, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgApproveSyncEntity.getId(), "编辑信息");
                 });
+                cfgApproveNoticeService.saveBatch(newList);
             }
 
             List<CfgApproveNoticeEntity> updateList = list.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
@@ -487,8 +489,8 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                         operateLogService.addModuleOperateLogByObj(cfgApproveNoticeEntity, e, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgApproveSyncEntity.getId(), updateMsg);
                     }
                 });
+                cfgApproveNoticeService.updateBatchById(updateList);
             }
-            cfgApproveNoticeService.saveOrUpdateBatch(list);
         }
 
         //组装请求体并创建（飞书的）三方审批定义

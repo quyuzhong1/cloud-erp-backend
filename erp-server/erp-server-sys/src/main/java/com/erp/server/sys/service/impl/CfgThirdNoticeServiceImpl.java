@@ -20,12 +20,11 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
-import com.erp.model.sys.entity.CfgApproveSyncFieldMapEntity;
-import com.erp.model.sys.entity.CfgRuleConditionEntity;
-import com.erp.model.sys.entity.CfgThirdNoticeEntity;
+import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
 import com.erp.model.sys.enums.RuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.sys.mapper.CfgThirdNoticeMapper;
 import com.erp.server.sys.service.*;
@@ -79,6 +78,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     private Validator validator;
     @Resource
     private MQProducerService mqProducerService;
+    @Resource
+    private SysPostFeign sysPostFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -97,6 +98,12 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         CfgThirdNoticeEntity cfgThirdNoticeEntity = new CfgThirdNoticeEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdNoticeEntity);
 
+        if(CollUtil.isNotEmpty(addDTO.getPostIdList())){
+            String post = String.join(",", addDTO.getPostIdList());
+            cfgThirdNoticeEntity.setPost(post);
+        }else {
+            cfgThirdNoticeEntity.setPost("");
+        }
         if(CollUtil.isNotEmpty(addDTO.getRoleTypeList())){
             String roleType = String.join(",", addDTO.getRoleTypeList());
             cfgThirdNoticeEntity.setRoleType(roleType);
@@ -238,6 +245,12 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方通知配置"));
         CfgThirdNoticeEntity cfgThirdNoticeEntity =  BeanMapperUtils.map(CfgThirdNoticeEntity.class, addOrUpdateDTO);
 
+        if(CollUtil.isNotEmpty(addOrUpdateDTO.getPostIdList())){
+            String post = String.join(",", addOrUpdateDTO.getPostIdList());
+            cfgThirdNoticeEntity.setPost(post);
+        }else {
+            cfgThirdNoticeEntity.setPost("");
+        }
         if(CollUtil.isNotEmpty(addOrUpdateDTO.getRoleTypeList())){
             String roleType = String.join(",", addOrUpdateDTO.getRoleTypeList());
             cfgThirdNoticeEntity.setRoleType(roleType);
@@ -301,6 +314,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                     String removeMsg = StrUtil.format("用户【{}】删除推送消息【{}】", UserContext.getDefaultLoginUser().getUserName(), e.getFieldName());
                     operateLogService.addModuleOperateLog(removeMsg, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgThirdNoticeEntity.getId(), "编辑信息");
                 });
+                cfgApproveSyncFieldMapService.removeByIds(removeList.stream().map(CfgApproveSyncFieldMapEntity::getId).collect(Collectors.toList()));
             }
 
             List<CfgApproveSyncFieldMapEntity> newList = list.stream().filter(e -> StringUtils.isBlank(e.getId())).collect(Collectors.toList());
@@ -310,6 +324,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                     String newMsg = StrUtil.format("用户【{}】新增推送消息【{}】", UserContext.getDefaultLoginUser().getUserName(), e.getFieldName());
                     operateLogService.addModuleOperateLog(newMsg, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgThirdNoticeEntity.getId(), "编辑信息");
                 });
+                cfgApproveSyncFieldMapService.saveBatch(newList);
             }
 
             List<CfgApproveSyncFieldMapEntity> updateList = list.stream().filter(e -> StringUtils.isNotBlank(e.getId())).collect(Collectors.toList());
@@ -322,8 +337,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                         operateLogService.addModuleOperateLogByObj(cfgApproveSyncFieldMapEntity, e, ModuleTypeEnum.CFG_APPROVE_SYNC.getCode(), cfgThirdNoticeEntity.getId(), updateMsg);
                     }
                 });
+                cfgApproveSyncFieldMapService.updateBatchById(updateList);
             }
-            cfgApproveSyncFieldMapService.saveOrUpdateBatch(list);
         }
 
         //规则条件
@@ -425,6 +440,16 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
 
         String method = data.getMethod();
         data.setMethodName(CfgThirdNoticeMethodEnum.getName(method));
+        if(StringUtils.isNotBlank(data.getPost())){
+            //岗位id
+            List<String> postIdList = Arrays.asList(data.getPost().split(","));
+            List<SysPostEntity> userEntityList = sysPostFeign.listById(postIdList);
+            Map<String, String> postMap = userEntityList.stream().collect(Collectors.toMap(SysPostEntity::getId, SysPostEntity::getPostName));
+            if(CollUtil.isNotEmpty(postIdList)){
+                data.setPostIdList(postIdList);
+                data.setPostNameList(postIdList.stream().map(e -> postMap.get(e)).collect(Collectors.toList()));
+            }
+        }
 
         if(StringUtils.isNotBlank(data.getRoleType())){
             List<DictBasicDTO.ViewDTO> noticeItemPeople = dictBasicService.listByType("noticeItemPeople");

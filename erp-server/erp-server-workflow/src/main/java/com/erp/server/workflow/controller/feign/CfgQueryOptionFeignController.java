@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.Map;
 
 /**
  * cfgQueryOption Feign
@@ -25,6 +26,8 @@ public class CfgQueryOptionFeignController extends BaseController {
 
     @Resource
     public CfgQueryOptionService cfgQueryOptionService;
+    @Resource
+    public CfgQueryOptionExtService cfgQueryOptionExtService;
 
     /**
      */
@@ -38,6 +41,11 @@ public class CfgQueryOptionFeignController extends BaseController {
     @PostMapping("/listByIds")
     public List<CfgQueryOptionEntity> listByIds(@RequestBody List<String> ids) {
         return cfgQueryOptionService.lambdaQuery().in(CfgQueryOptionEntity::getId, ids).list();
+    }
+
+    @PostMapping("/getRemoteValues")
+    public Map<String,String> getRemoteValues(@RequestBody Map<String,String> handlerValueMap){
+        return cfgQueryOptionExtService.getRemoteValues(handlerValueMap);
     }
 
 }

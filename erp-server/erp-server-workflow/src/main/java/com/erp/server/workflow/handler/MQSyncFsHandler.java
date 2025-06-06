@@ -3,6 +3,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
 import com.common.core.utils.BeanMapper;
@@ -143,8 +144,8 @@ public class MQSyncFsHandler {
                 if(StringUtils.isNotBlank(fieldSourceValueStr)){
                     handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
                 }else {
-                    if(variablesMap.containsKey("detailList")){
-                        List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
+                    if(variablesMap.containsKey(ThirdConstants.DETAIL_LIST)){
+                        List<Object> detailList =( List<Object> ) variablesMap.get(ThirdConstants.DETAIL_LIST);
                         if(CollUtil.isNotEmpty(detailList)){
                             StringBuffer sb = new StringBuffer();
                             for (Object object : detailList) {

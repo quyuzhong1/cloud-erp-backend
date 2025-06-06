@@ -83,6 +83,12 @@ public class CfgThirdNoticeDTO implements Serializable {
         private String cron;
 
         /**
+         * 岗位
+         */
+        private String post;
+        private List<String> postIdList;
+        private List<String> postNameList;
+        /**
         * 通知人员
         */
         private String roleType;
@@ -201,6 +207,11 @@ public class CfgThirdNoticeDTO implements Serializable {
         */
         @NotEmpty(message = "通知人员不能为空")
         private List<String> roleTypeList;
+
+        /**
+         * 岗位
+         */
+        private List<String> postIdList;
 
         /**
         * 具体人员
