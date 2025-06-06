@@ -229,8 +229,26 @@ public class ApproveTaskInfoDTO implements Serializable {
         /**
          * 明细
          */
+        private List<ViewDetailDTO> detailList;
+    }
+
+    /**
+     * 详情
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ViewDetailDTO {
+        /**
+         * 实体名称
+         */
+        private String entityName;
+
+        /**
+         * 明细字段映射数据
+         */
         private List<ApproveTaskDetailDTO.ViewDTO> detailList;
     }
+
 
     /**
     * 新增

@@ -98,6 +98,18 @@ public class ApproveTaskDetailDTO implements Serializable {
         * 数大臣字段值
         */
         private String sysFieldValue;
+        /**
+         *排序
+         */
+        private Integer index;
+        /**
+         * 实体编码
+         */
+        private String entityCode;
+        /**
+         * 实体名称
+         */
+        private String entityName;
 
         /**
          * 字段信息
@@ -214,7 +226,18 @@ public class ApproveTaskDetailDTO implements Serializable {
         @Size(max = 32,message = "数大臣字段值最大长度不能超过32位")
         private String sysFieldValue;
 
-
+        /**
+         * 排序字段
+         */
+        private Integer index;
+        /**
+         * 实体名称
+         */
+        private String entityName;
+        /**
+         * 实体编码
+         */
+        private String entityCode;
     }
 
 
