@@ -1128,4 +1128,10 @@ public class LogisticsChannelDTO implements Serializable {
             private String platformLogisticsChannelName;
         }
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class PlatformChannelDTO extends WarehouseChannelDTO.ChannelDTO {
+        private String platformCode;
+    }
 }

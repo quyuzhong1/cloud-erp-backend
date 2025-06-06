@@ -2,6 +2,7 @@ package com.erp.server.tms.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -100,7 +101,9 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
     private LogisticsChannelRemotePostcodeService logisticsChannelRemotePostcodeService;
 
     @Resource
-    private WmsOverseasWarehouseFeign overseasWarehouseFeign;
+    private DictBasicService dictBasicService;
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -853,12 +856,15 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
         if(CollectionUtils.isEmpty(overseasProviderWarehouseEntityList)){
             return new ArrayList<>();
         }
-        List<String> overseasWarehouseIds = overseasProviderWarehouseEntityList.stream()
-                .map(OverseasProviderWarehouseEntity::getId)
-                .distinct()
-                .collect(Collectors.toList());
-        //查询物流渠道
-        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS = baseMapper.listWarehouseChannel(overseasWarehouseIds);
+        //查询物流渠道(存在物流-仓库-渠道配置数据)
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS = baseMapper.listWarehouseChannel();
+        //查询配置物流平台
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS1 = getDictChannel(overseasProviderEntityList, overseasProviderWarehouseEntityList);
+        if (Objects.isNull(warehouseChannelDTOS)){
+            warehouseChannelDTOS = warehouseChannelDTOS1;
+        }else {
+            warehouseChannelDTOS.addAll(warehouseChannelDTOS1);
+        }
         if (CollectionUtils.isEmpty(warehouseChannelDTOS)) {
             return Collections.emptyList();
         }
@@ -886,5 +892,35 @@ public class LogisticsChannelServiceImpl extends SuperServiceImpl<LogisticsChann
             return true;
         }).collect(Collectors.toList());
         return warehouseChannelDTOS;
+    }
+
+    private List<LogisticsChannelDTO.WarehouseChannelDTO> getDictChannel(List<OverseasProviderEntity> overseasProviderEntityList, List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntityList) {
+        List<LogisticsChannelDTO.WarehouseChannelDTO> warehouseChannelDTOS1 = new ArrayList<>();
+        List<DictBasicEntity> dictBasicEntityList = dictBasicService.getByKeyList(Collections.singletonList("thirdWarehouseChannel"));
+        if (CollUtil.isNotEmpty(dictBasicEntityList)){
+            List<String> platformCodeList = dictBasicEntityList.stream().map(DictBasicEntity::getCode).distinct().collect(Collectors.toList());
+            //根据物流平台查询渠道列表
+            List<LogisticsChannelDTO.PlatformChannelDTO> platformChannelDTOS = logisticsChannelService.listByPlatformCode(platformCodeList);
+            List<OverseasProviderEntity> dictProviderList = overseasProviderEntityList.stream().filter(e -> platformCodeList.contains(e.getCode())).collect(Collectors.toList());
+            dictProviderList.forEach(e ->{
+                //海外仓列表
+                List<OverseasProviderWarehouseEntity> warehouseEntityList = overseasProviderWarehouseEntityList.stream().filter(f -> e.getId().equals(f.getMainId())).collect(Collectors.toList());
+                warehouseEntityList.forEach(f ->{
+                    LogisticsChannelDTO.WarehouseChannelDTO warehouseChannelDTO = new LogisticsChannelDTO.WarehouseChannelDTO();
+                    warehouseChannelDTO.setOverseasWarehouseId(f.getId());
+                    warehouseChannelDTO.setChannelDTOList(platformChannelDTOS.stream().filter(g -> g.getPlatformCode().equals(e.getCode())).collect(Collectors.toList()));
+                    warehouseChannelDTOS1.add(warehouseChannelDTO);
+                });
+            });
+        }
+        return warehouseChannelDTOS1;
+    }
+
+    @Override
+    public List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(List<String> platformCodeList) {
+        if (CollUtil.isEmpty(platformCodeList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listByPlatformCode(platformCodeList);
     }
 }
