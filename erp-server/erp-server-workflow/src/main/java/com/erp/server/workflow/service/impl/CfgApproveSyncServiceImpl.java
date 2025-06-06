@@ -93,6 +93,8 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
 
     @Resource
     private CfgSettingService cfgSettingService;
+    @Resource
+    private ApproveSyncRecordService approveSyncRecordService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -568,6 +570,12 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     @Override
     public BatchResultDTO delete(String id) {
         CfgApproveSyncEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到ERP审批同步配置数据"));
+
+        Integer count = approveSyncRecordService.lambdaQuery().eq(ApproveSyncRecordEntity::getCfgApproveSyncId, id).count();
+        if(count > 0 ){
+            throw new ServiceException("ERP审批同步配置已引用，不可删除");
+        }
+
         // 删除主单数据
         super.removeById(id);
         // 删除子表
