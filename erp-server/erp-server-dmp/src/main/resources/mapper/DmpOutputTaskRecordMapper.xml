@@ -81,7 +81,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     <select id="paging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
         SELECT
         t.id,
-        l."name" AS sourcePlatformName,
+        l.name AS sourcePlatformName,
         i.name AS targetPlatformName,
         k.name AS sourceTypeName,
         t.source_code AS sourceCode,
@@ -119,7 +119,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     <select id="hisPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
         SELECT
         t.id,
-        l."name" AS sourcePlatformName,
+        l.name AS sourcePlatformName,
         i.name AS targetPlatformName,
         k.name AS sourceTypeName,
         t.source_code AS sourceCode,
@@ -157,7 +157,7 @@ LEFT JOIN dmp_cfg_output h ON t.main_id = h.id
     <select id="blackPaging" resultType="com.erp.model.dmp.dto.DmpOutputTaskRecordDTO$PagingDTO">
         select 
 	t.id,t.create_time,
-        l."name" AS sourcePlatformName,
+        l.name AS sourcePlatformName,
         i.name AS targetPlatformName,
         k.name AS sourceTypeName,
         t.field_value AS sourceCode,

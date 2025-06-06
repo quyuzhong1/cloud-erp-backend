@@ -8,6 +8,7 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
@@ -184,6 +185,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         // TODO 验证数据 & 数据赋值
     }
 
+    @DS("doris")
     @Override
     public List<DmpOutputTaskRecordDTO.TabListDTO> tabList(PermissionsDTO dto) {
         List<DmpOutputTaskRecordDTO.TabListDTO> result = new ArrayList<>(8);
@@ -315,6 +317,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         return result;
     }
 
+    @DS("doris")
     @Override
     public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> paging(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
         DmpOutputTaskRecordDTO.PagingParamDTO params = dto.getParams();
