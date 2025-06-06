@@ -169,12 +169,12 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
 
             //保存mq消费记录
             // 将 Map 转换为 JSON 字符串
-            String id = addMqRecord(gson, dto);
+            String id = addMqRecord( dto);
             if (StringUtils.isNotBlank(id)) {
                 // 异步执行 sendMsg，不阻塞当前事务
                 new Thread(() -> {
                     try {
-                        sendMsg(dto, gson);
+                        sendMsg(dto);
                     } catch (Exception e) {
                         log.error("sendMsg 异常", e);
                     }
@@ -184,7 +184,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         log.info("MqRecordConsumerService 结束");
     }
 
-    private boolean sendMsg(MqConsumerRecordDTO.MqDTO dto, Gson gson) {
+    private boolean sendMsg(MqConsumerRecordDTO.MqDTO dto) {
         //根据参数判断一下通知的单据类型
         CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
         mqParamsDTO.setTableName(dto.getTable());
@@ -390,7 +390,8 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         return match;
     }
 
-    private String addMqRecord(Gson gson, MqConsumerRecordDTO.MqDTO dto) {
+    private String addMqRecord(MqConsumerRecordDTO.MqDTO dto) {
+        Gson gson = new Gson();
         MqConsumerRecordEntity mqConsumerRecord = new MqConsumerRecordEntity();
         mqConsumerRecord.setTopic(RocketMqTopic.SEND_THIRD_NOTICE_SYS_TOPIC.replace("${spring.cloud.nacos.discovery.namespace}", namespace));
         mqConsumerRecord.setTag(RocketMqTagEnum.SYS_SEND_THIRD_NOTICE_TAG.name());
