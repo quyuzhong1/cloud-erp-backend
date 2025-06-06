@@ -92,7 +92,6 @@
             FROM process_task_management AS ptm
              LEFT JOIN process_management AS pm  on pm.process_instance_id = ptm.process_instance_id AND pm.is_deleted = false
              LEFT JOIN work_menu AS wm on pm.business_key = wm.module_code AND wm.is_deleted = false
-             LEFT JOIN process_definition pd on pd.id = pm.process_definition_id and pd.is_deleted = false
             where  ptm.is_deleted = false
             union all
             select
@@ -315,8 +314,6 @@
               ) latest_task ON pm.process_instance_id = latest_task.process_instance_id
                LEFT JOIN work_menu wm
                ON pm.business_key = wm.module_code AND wm.is_deleted = false
-               LEFT JOIN process_definition pd
-               ON pd.id = pm.process_definition_id AND pd.is_deleted = false
               WHERE pm.is_deleted = false
 
               UNION ALL
