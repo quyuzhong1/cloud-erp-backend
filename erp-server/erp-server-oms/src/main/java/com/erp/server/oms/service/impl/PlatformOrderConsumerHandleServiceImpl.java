@@ -114,6 +114,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private SoB2cCoreService soB2cCoreService;
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @Override
     public void handleAll(PlatformOrderDTO dto) {
@@ -248,9 +250,6 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
      * @return void
      */
     private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
-//        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
-//            return;
-//        }
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
         if (ObjUtil.isEmpty(invoiceSettingDetail)) {
             return;
@@ -446,6 +445,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
+        //校验发票开票规则
+        cfgRuleInvoiceService.invoiceCfgRule(mainEntity,detailList,new HashMap<>());
         //生成Nf-e发票
         generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
         return resultDTO;

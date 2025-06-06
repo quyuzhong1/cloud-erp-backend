@@ -3,6 +3,8 @@ package com.erp.model.scm.dto;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.experimental.Accessors;
+
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;

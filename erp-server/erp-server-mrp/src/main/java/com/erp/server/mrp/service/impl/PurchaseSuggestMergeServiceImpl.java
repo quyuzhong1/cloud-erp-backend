@@ -49,12 +49,15 @@ import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDTO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
+import com.erp.model.scm.dto.PurchaseSkuOrgRefDTO;
+import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.PurchaseApplicationDetailFeign;
 import com.erp.rpc.scm.feign.PurchaseApplicationFeign;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.mrp.convert.PurchaseSuggestConverter;
 import com.erp.server.mrp.handler.PurchaseSuggestionMergeQueryHandler;
 import com.erp.server.mrp.listener.PurchaseSuggestMergeImportExcelListener;
@@ -68,6 +71,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -123,6 +127,8 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
     @Autowired
     private CfgRuleOrderStrategyService cfgRuleOrderStrategyService;
+    @Resource
+    private ScmTaskFeign scmTaskFeign;
 
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -576,6 +582,10 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
         //产品信息
         List<String> skuIdList = purchaseSuggestMergeList.stream().map(PurchaseSuggestMergeEntity::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuPackByIds(skuIdList);
+        //采购组织-sku关系
+        PurchaseSkuOrgRefDTO.QuerySkuDTO querySkuDTO = new PurchaseSkuOrgRefDTO.QuerySkuDTO();
+        querySkuDTO.setSkuIdList(skuIdList);
+        List<PurchaseSkuOrgRefEntity> orgSkuRefList = scmTaskFeign.getBySkuIdList(querySkuDTO);
 
         List<PurchaseApplicationDetailDTO.PurchaseApplicationDTO> purchaseApplicationList = purchaseApplicationDetailFeign.listByMergeIdList(ids);
         if (CollectionUtils.isNotEmpty(purchaseApplicationList)) {
@@ -585,6 +595,7 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
 
         List<PurchaseSuggestMergeDTO.ViewPushDetailDTO> detailList = new ArrayList<>();
         Map<String, List<PurchaseSuggestMergeEntity>> map = purchaseSuggestMergeList.stream().collect(Collectors.groupingBy(PurchaseSuggestMergeEntity::getSkuId));
+
         for (Map.Entry<String, List<PurchaseSuggestMergeEntity>> entry : map.entrySet()) {
             List<PurchaseSuggestMergeEntity> value = entry.getValue();
             PurchaseSuggestMergeDTO.ViewPushDetailDTO viewPushDetailDTO = new PurchaseSuggestMergeDTO.ViewPushDetailDTO();
@@ -593,6 +604,11 @@ public class PurchaseSuggestMergeServiceImpl extends SuperServiceImpl<PurchaseSu
             if (ObjectUtil.isNull(skuVO)) {
                 throw new ServiceException(ApiError.ERROR_95084);
             }
+            //赋值采购组织id和名称
+            orgSkuRefList.stream().filter(e -> e.getSkuId().equals(entry.getKey())).findFirst().ifPresent(f ->{
+                viewPushDetailDTO.setPurchaseOrgId(f.getPurchaseOrgId());
+                viewPushDetailDTO.setPurchaseOrgName(f.getPurchaseOrgName());
+            });
             Integer purchaseStockUpQty = value.stream().map(PurchaseSuggestMergeEntity::getPurchaseStockUpQty).reduce(MathUtil.ZERO, Integer::sum);
             viewPushDetailDTO.setSkuNo(skuVO.getSkuNo());
             viewPushDetailDTO.setProductName(skuVO.getSkuName());
