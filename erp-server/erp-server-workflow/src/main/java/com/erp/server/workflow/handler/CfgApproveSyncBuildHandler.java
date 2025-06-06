@@ -58,28 +58,24 @@ public class CfgApproveSyncBuildHandler {
         String errorReason= "";
         //pc地址
         String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
-//        String pcLinkByEnv = "http://erptest.ulanzi.cn:9000/";
         //erp审批同步配置表
         CfgApproveSyncEntity cfgApproveSyncEntity = mqDto.getCfgApproveSyncEntity();
         //process_task_management表id
         String processManagementId = mqDto.getProcessManagementId();
-        //任务id
-//        String taskId = mqDto.getTaskId();
         //实例id
         String instanceId = mqDto.getInstanceId();
         //创建人id
         String createUserId = mqDto.getOperator();
         //单据名称
         String businessName = mqDto.getBusinessName();
-        //参数map
-        Map<String, Object> variablesMap = mqDto.getVariablesMap();
+        //当前流程操作动作
+        String approveType = mqDto.getApproveType();
         //国际化文案
         Map<String,String> values = new HashMap<>();
         //标题
         values.put("@i18n@title",cfgApproveSyncEntity.getTitle());
 
         //查询飞书的用户信息
-//        String thirdUserId = "";
         String thirdOpenUserId = "";
         String userName;
         ThirdUnionDTO thirdUnionDTO = thirdUnionMap.getOrDefault(createUserId, null);
@@ -130,7 +126,7 @@ public class CfgApproveSyncBuildHandler {
                 .endTime(endTimeMillis) //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
                 .updateTime(updateTimeMillis)//审批实例最近更新时间
                 .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
-                .updateMode("UPDATE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
+                .updateMode("REPLACE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
                 .build();
 
         //任务列表数组  最大长度：300
@@ -147,42 +143,48 @@ public class CfgApproveSyncBuildHandler {
                 approveSyncRecordService.save( syncRecordEntity);
             }
 
-            AtomicReference<Integer> num = new AtomicReference<>(0);
-            ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
-                    .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
-                    .map(e -> {
-                                num.updateAndGet(v -> v + 1);
-                                //任务标题
-                                String taskTitle = StrUtil.format("审核通知：【{}】提交的审核名称({})待你审核", userName, cfgApproveSyncEntity.getTitle());
-                                values.put("@i18n@taskTitle:"+num.get(), taskTitle);
-                                String status = FSApprovalStatusEnum.PENDING.getCode();
-                                if (e.getTaskStatus().equals(ApproveStatusEnum.APPROVE)) {
-                                    status = FSApprovalStatusEnum.APPROVED.getCode();
-                                    values.put("@i18n@taskTitle:"+num.get(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已通过", userName, cfgApproveSyncEntity.getTitle()));
-                                } else if (e.getTaskStatus().equals(ApproveStatusEnum.REJECT)) {
-                                    status = FSApprovalStatusEnum.REJECTED.getCode();
-                                    values.put("@i18n@taskTitle:"+num.get(), StrUtil.format("结果通知：【{}】提交的【审核名称({})已拒绝", userName, cfgApproveSyncEntity.getTitle()));
-                                }
-                                return ExternalInstanceTaskNode.newBuilder()
-                                        .taskId(e.getId())
-                                        .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
-                                        .title("@i18n@taskTitle:"+num)
-                                        .links(ExternalInstanceLink.newBuilder()
-                                                .pcLink(pcLinkByEnv)
-                                                .mobileLink(pcLinkByEnv)
-                                                .build())
-                                        .status(status)
-                                        .createTime(createTimeMillis)
-                                        .endTime(endTimeMillis)
-                                        .updateTime(updateTimeMillis)
-                                        .actionConfigs(getActionConfigs())
-                                        .displayMethod("BROWSER")
-                                        .excludeStatistics(false)
-                                        .build();
-                            }
-                    ).toArray(ExternalInstanceTaskNode[]::new);
+            String status = mqDto.getFSApprovalStatusEnum().getCode();
+            //撤销操作
+            if(FSApprovalStatusEnum.CANCELED.getCode().equals(status)){
 
-            externalInstance.setTaskList(taskList);
+            }else {
+                AtomicReference<Integer> num = new AtomicReference<>(0);
+                ExternalInstanceTaskNode[] taskList = processTaskManagementEntities.stream()
+                        .filter(e -> isThirdUnionValid(e.getCurApproveId(), thirdUnionMap))
+                        .map(e -> {
+                                    num.updateAndGet(v -> v + 1);
+                                    Integer i = num.get();
+                                    String taskTitle = "@i18n@taskTitle" + i;
+                                    //撤销操作
+                                    if(e.getTaskStatus().equals(ApproveStatusEnum.APPROVE_ING)){
+                                        values.put(taskTitle, StrUtil.format("审核通知：【{}】提交的审核名称({})待你审核", userName, cfgApproveSyncEntity.getTitle()));
+                                    }else if (e.getTaskStatus().equals(ApproveStatusEnum.APPROVE)) {
+                                        values.put(taskTitle, StrUtil.format("结果通知：【{}】提交的【审核名称({})已通过", userName, cfgApproveSyncEntity.getTitle()));
+                                    }else if (e.getTaskStatus().equals(ApproveStatusEnum.REJECT)) {
+                                        values.put(taskTitle, StrUtil.format("结果通知：【{}】提交的【审核名称({})已拒绝", userName, cfgApproveSyncEntity.getTitle()));
+                                    }
+
+                                    return ExternalInstanceTaskNode.newBuilder()
+                                            .taskId(e.getId())
+                                            .openId(thirdUnionMap.get(e.getCurApproveId()).getThirdOpenId())
+                                            .title(taskTitle)
+                                            .links(ExternalInstanceLink.newBuilder()
+                                                    .pcLink(pcLinkByEnv)
+                                                    .mobileLink(pcLinkByEnv)
+                                                    .build())
+                                            .status(status)
+                                            .createTime(createTimeMillis)
+                                            .endTime(endTimeMillis)
+                                            .updateTime(updateTimeMillis)
+                                            .actionConfigs(getActionConfigs())
+                                            .displayMethod("BROWSER")
+                                            .excludeStatistics(false)
+                                            .build();
+                                }
+                        ).toArray(ExternalInstanceTaskNode[]::new);
+
+                externalInstance.setTaskList(taskList);
+            }
         }
 
 
@@ -197,60 +199,40 @@ public class CfgApproveSyncBuildHandler {
                 approveSyncRecordService.save( syncRecordEntity);
                 return null;
             }
-            String ccTitle = StrUtil.format("抄送通知：【{}】提交的审核名称({})抄送给你",userName,businessName);
-            CcNode[] ccList = processTaskCcEntities.stream()
-                    .filter(e -> isThirdUnionValid(e.getCcUserId(), thirdUnionMap))
-                    .map(e ->
-                            CcNode.newBuilder()
-                                    .ccId(e.getId())
-                                    .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenId())
-                                    .title(ccTitle)
-                                    .links(ExternalInstanceLink.newBuilder()
-                                            .pcLink(pcLinkByEnv)
-                                            .mobileLink(pcLinkByEnv)
-                                            .build())
-                                    .readStatus("UNREAD")
-                                    .createTime(createTimeMillis)
-                                    .updateTime(updateTimeMillis)
-                                    .displayMethod("BROWSER")
-                                    .build()
-                    ).toArray(CcNode[]::new);
-            externalInstance.setCcList(ccList);
+
+            String status = mqDto.getFSApprovalStatusEnum().getCode();
+            //撤销操作
+            if(FSApprovalStatusEnum.CANCELED.getCode().equals(status)){
+
+            }else{
+                String ccTitle = StrUtil.format("抄送通知：【{}】提交的审核名称({})抄送给你",userName,businessName);
+                CcNode[] ccList = processTaskCcEntities.stream()
+                        .filter(e -> isThirdUnionValid(e.getCcUserId(), thirdUnionMap))
+                        .map(e ->
+                                CcNode.newBuilder()
+                                        .ccId(e.getId())
+                                        .openId(thirdUnionMap.get(e.getCcUserId()).getThirdOpenId())
+                                        .title(ccTitle)
+                                        .links(ExternalInstanceLink.newBuilder()
+                                                .pcLink(pcLinkByEnv)
+                                                .mobileLink(pcLinkByEnv)
+                                                .build())
+                                        .readStatus("UNREAD")
+                                        .createTime(createTimeMillis)
+                                        .updateTime(updateTimeMillis)
+                                        .displayMethod("BROWSER")
+                                        .build()
+                        ).toArray(CcNode[]::new);
+                externalInstance.setCcList(ccList);
+            }
         }
 
         //推送消息 (快接审批)
         if(CollUtil.isNotEmpty(fieldMapEntities)){
-//            //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
+            //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
             int len = fieldMapEntities.size() > 3 ? 3 : fieldMapEntities.size();
-//            Map<String,String> handlerValueMap = new HashMap<>();
-//            for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
-//                String fieldSourceValueStr = getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
-//                if(StringUtils.isNotBlank(fieldSourceValueStr)){
-//                    handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
-//                }else {
-//                    if(variablesMap.containsKey("detailList")){
-//                        List<Object> detailList =( List<Object> ) variablesMap.get("detailList");
-//                        if(CollUtil.isNotEmpty(detailList)){
-//                            StringBuffer sb = new StringBuffer();
-//                            for (Object object : detailList) {
-//                                Map<String, Object> map = BeanUtil.beanToMap(object);
-//                                String str = getFieldSourceValueStr(entry.getFieldSource(), map);
-//                                if(StringUtils.isNotBlank(str)){
-//                                    sb.append(str);
-//                                    sb.append(";");
-//                                }
-//                            }
-//                            String fieldSourceDetailValueStr = sb.toString();
-//                            if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
-//                                handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
-//                            }
-//                        }
-//                    }
-//                }
-//            }
             //需要进行值映射
             if(Objects.nonNull(remoteValues) && remoteValues.size() > 0){
-//                Map<String, String> remoteValues = cfgQueryOptionExtService.getRemoteValues(handlerValueMap);
                 AtomicReference<Integer> num = new AtomicReference<>(0);
                 ExternalInstanceForm[] externalInstanceForm = fieldMapEntities.subList(0, len).stream().map(entry -> {
                     num.updateAndGet(v -> v + 1);
