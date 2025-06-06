@@ -1,13 +1,13 @@
 package com.erp.model.workflow.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -79,6 +79,21 @@ public class ApproveTaskDetailEntity extends BaseEntity<ApproveTaskDetailEntity>
     */
     @TableField("sys_field_value")
     private String sysFieldValue;
+    /**
+     * 排序字段
+     */
+    @TableField("index")
+    private Integer index;
+    /**
+     * 实体名称
+     */
+    @TableField("entity_name")
+    private String entityName;
+    /**
+     * 实体编码
+     */
+    @TableField("entity_code")
+    private String entityCode;
 
 
     public static final String MIAN_ID = "mian_id";

@@ -1406,7 +1406,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if(ApproveTypeEnum.REJECT.equals(dto.getApproveType())) {
             return;
         }
-        ProcessDefinitionEntity processDefinition = processDefinitionService.getById(processDefinitionId);
+        ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId);
         DictBasicEnum reviewSetting = processDefinition.getReviewSetting();
         // 审核节点不去重不处理
         if(DictBasicEnum.NO_DEDUPE.equals(reviewSetting)) {

@@ -237,7 +237,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 
     @Override
     public String getVersion(String processDefinitionId) {
-        ProcessDefinitionEntity entity = processDefinitionService.getById(processDefinitionId);
+        ProcessDefinitionEntity entity = processDefinitionService.getIsDeployEntityById(processDefinitionId);
         return entity.getProcessVersion().toString();
     }
 
