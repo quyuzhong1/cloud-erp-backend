@@ -3,6 +3,7 @@ package com.erp.server.dmp.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.constant.DorisQueryCfg;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.QueryParam;
 import com.common.business.wrapper.QueryTypeEnum;
@@ -26,6 +27,7 @@ import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
+import com.erp.server.dmp.service.CfgSettingService;
 import com.erp.server.dmp.service.DmpOutputTaskRecordService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
@@ -50,6 +52,9 @@ public class DmpOutputTaskRecordController extends BaseController {
 
     @Resource
     private DmpOutputTaskRecordService dmpOutputTaskRecordService;
+    
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     /**
     * 新增
@@ -92,7 +97,12 @@ public class DmpOutputTaskRecordController extends BaseController {
      **/
     @PostMapping("/tabList")
     public ApiResult<List<DmpOutputTaskRecordDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
-        List<DmpOutputTaskRecordDTO.TabListDTO> tabList = dmpOutputTaskRecordService.tabList(dto);
+    	List<DmpOutputTaskRecordDTO.TabListDTO> tabList = null;
+    	if(cfgSettingService.getQueryDoris(DorisQueryCfg.DMP_OUTPUT_TASK_RECORD)) {
+    		tabList = dmpOutputTaskRecordService.dorisTabList(dto);
+    	}else {
+    		tabList = dmpOutputTaskRecordService.tabList(dto);
+    	}
         return success(tabList);
     }
 
@@ -106,7 +116,12 @@ public class DmpOutputTaskRecordController extends BaseController {
     @PostMapping("/paging")
     @WebAdvanceQuery(handler = DmpOutputTaskRecordQueryHandler.class)
     public ApiResult<PagingVO<DmpOutputTaskRecordDTO.PagingDTO>> paging(@RequestBody @Validated PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
-        PagingVO<DmpOutputTaskRecordDTO.PagingDTO> pagingVO = dmpOutputTaskRecordService.paging(dto);
+        PagingVO<DmpOutputTaskRecordDTO.PagingDTO> pagingVO = null;
+        if(cfgSettingService.getQueryDoris(DorisQueryCfg.DMP_OUTPUT_TASK_RECORD)) {
+        	pagingVO = dmpOutputTaskRecordService.dorisPaging(dto);
+        }else {
+        	pagingVO = dmpOutputTaskRecordService.paging(dto);
+        }
         return success(pagingVO);
     }
 

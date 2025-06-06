@@ -9,6 +9,10 @@ import com.common.core.constant.EnumMessage;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.date.DateUtil;
+
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateTime;
+
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -142,12 +146,10 @@ public class QueryUtils {
             String endDate = list.get(1).toString();
             if(DateUtil.isDateOrTimeValid(list.get(0).toString()) && DateUtil.isDateOrTimeValid(list.get(1).toString())){
                 String interval = QueryUtils.getDateStr(endDate);
-                startDate = "'"+startDate+"'";
-                endDate = "'"+endDate+"'";
                 if(StringUtils.isNotBlank(interval)){
-                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < (to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1"+ interval+"')  ";
+                    val = " >= '"+formatChineseDateTime(startDate)+"' and " + dto.getField()+" < '"+getAddDate(endDate, interval)+"' ";
                 }else{
-                    val = " >= to_timestamp("+startDate+",'yyyy-MM-DD HH24:MI:SS')  and " + dto.getField()+" < to_timestamp("+endDate+",'yyyy-MM-DD HH24:MI:SS') ";
+                    val = " >= '"+formatChineseDateTime(startDate)+"' and " + dto.getField()+" < '"+formatChineseDateTime(endDate)+"' ";
                 }
             }else{
                 throw new ServiceException(ApiError.QUERY_ILLEGAL_DATE_FORMAT);
@@ -165,12 +167,12 @@ public class QueryUtils {
         }else if (queryDataTypeEnum.equals(QueryDataTypeEnum.DATE)){
             if(DateUtil.isDateOrTimeValid(fieldVal.toString())){
                 String interval = QueryUtils.getDateStr(result);
-                result = "'"+ fieldVal + "'";
                 if(condEnum.equals(QueryConditionEnum.LE) && StringUtils.isNotBlank(interval)){
-                    result = " (to_timestamp("+ result + ",'yyyy-MM-DD HH24:MI:SS')::TIMESTAMP + INTERVAL '1 "+interval+"')";
+                    result = getAddDate(result, interval);
                 }else{
-                    result = "to_timestamp(" + result + ",'yyyy-MM-DD HH24:MI:SS')";
+                    result = formatChineseDateTime(result);
                 }
+                result = "'"+ result + "'";
             }else{
                 throw new ServiceException(ApiError.QUERY_ILLEGAL_DATE_FORMAT);
             }
@@ -200,6 +202,35 @@ public class QueryUtils {
             }
         }
         return null;
+    }
+    
+    public static String getAddDate(String input , String interval) {
+    	String formatChineseDateTime = formatChineseDateTime(input);
+    	DateTime parse = cn.hutool.core.date.DateUtil.parse(formatChineseDateTime , "yyyy-MM-dd HH:mm:ss");
+    	if("YEAR".equals(interval)) {
+    		parse = cn.hutool.core.date.DateUtil.offsetMonth(parse, 12);
+    	}else if("MONTH".equals(interval)) {
+    		parse = cn.hutool.core.date.DateUtil.offsetMonth(parse, 1);
+    	}else if("DAY".equals(interval)) {
+    		parse = cn.hutool.core.date.DateUtil.offsetDay(parse, 1);
+    	}
+    	return cn.hutool.core.date.DateUtil.format(parse , "yyyy-MM-dd HH:mm:ss");
+    }
+    
+    public static String formatChineseDateTime(String dateTime) {
+    	String[] patterns = {"yyyy-MM-dd HH:mm:ss" , "yyyy-MM-dd" , "yyyy-MM" , "yyyy" };
+
+        for (String pattern : patterns) {
+        	DateTime parse = null;
+            try {
+				parse = cn.hutool.core.date.DateUtil.parse(dateTime , pattern);
+			} catch (Exception e) {
+			}
+            if(parse != null) {
+            	return cn.hutool.core.date.DateUtil.format(parse, "yyyy-MM-dd HH:mm:ss");
+            }
+        }
+        return dateTime;
     }
 
     public static String listToStringValue(List<?> list, QueryDataTypeEnum dataTypeEnum){
