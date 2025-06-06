@@ -213,17 +213,19 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync) {
+    public BatchResultDTO batchGenerateNfeInvoice(String id,Boolean isAsync,Boolean isCheckRule) {
         SoB2cEntity soB2cEntity = soB2cService.getById(id);
         if(ObjUtil.isEmpty(soB2cEntity)){
             throw new ServiceException(ApiError.NOT_EXIST_BILL, "b2c订单");
         }
         //校验发票开票规则
-        SoB2cDTO.InvoiceResult invoiceResult = cfgRuleInvoiceService.invoiceRule(soB2cEntity);
-        if (Objects.isNull(invoiceResult) || Objects.isNull(invoiceResult.getIsPass()) || !invoiceResult.getIsPass()){
-            throw new ServiceException("开票规则未匹配通过，开票失败");
+        if (Objects.nonNull(isCheckRule) && isCheckRule){
+            SoB2cDTO.InvoiceResult invoiceResult = cfgRuleInvoiceService.invoiceRule(soB2cEntity);
+            if (Objects.isNull(invoiceResult) || Objects.isNull(invoiceResult.getIsPass()) || !invoiceResult.getIsPass()){
+                throw new ServiceException("开票规则未匹配通过，开票失败");
+            }
+            soB2cEntity = invoiceResult.getSoB2cEntity();
         }
-        soB2cEntity = invoiceResult.getSoB2cEntity();
         if (CharSequenceUtil.isBlank(soB2cEntity.getNfeInvoiceStatus()) || SoB2cNfeStatusEnum.INVOICING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST);
         }

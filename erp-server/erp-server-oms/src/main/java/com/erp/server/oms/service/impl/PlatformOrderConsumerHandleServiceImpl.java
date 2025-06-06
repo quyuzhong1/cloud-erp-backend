@@ -257,7 +257,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             return;
         }
         if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
-            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE,Boolean.TRUE);
         }
     }
 
