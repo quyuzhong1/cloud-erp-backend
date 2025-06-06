@@ -209,7 +209,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         if (CollUtil.isEmpty(cfgProcessExpList)) {
             // 业务无已启用的Erp流程配置
             log.warn("业务无规则对应的条件设置, businessKey={}", dto.getBusinessKey());
-            return "";
+            //存在一条以上的规则都匹配数据的时候直接报错
+            if (cfgProcessRuleList.size() > MathUtil.ONE) {
+                throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
+            }
+            return cfgProcessRuleList.get(0).getProcessDefinitionId();
         }
         Map<String, List<CfgProcessExpEntity>> expMap = cfgProcessExpList.stream().collect(Collectors.groupingBy(CfgProcessExpEntity::getRuleId));
         //查询传入数据是否有符合条件的流程
