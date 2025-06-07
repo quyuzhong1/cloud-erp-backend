@@ -499,6 +499,12 @@ public class ProcessDefinitionDTO {
          * 单据名称
          */
         private String name;
+
+
+        /**
+         * 禁用
+         */
+        private Boolean disabled;
     }
 
     /**

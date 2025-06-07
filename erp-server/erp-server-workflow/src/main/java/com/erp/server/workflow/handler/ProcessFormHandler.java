@@ -8,6 +8,8 @@ package com.erp.server.workflow.handler;
 
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
+import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
@@ -28,8 +30,8 @@ public interface ProcessFormHandler {
      * 构造流程表单结构
      */
     JSONArray assembleForm(JSONArray formArray, Map<String, Object> variablesMap,
-                            List<CfgProcessFieldMapEntity> fieldMapList,
-                            List<CfgProcessValueMapEntity> valueMapList);
+                           List<CfgProcessFieldMapEntity> fieldMapList,
+                           List<CfgProcessValueMapEntity> valueMapList);
 
     default boolean isMatch(String event) {
         return getEvent().name().equals(event);
@@ -50,6 +52,9 @@ public interface ProcessFormHandler {
 
     /**
      * 构造单据
+     * Map<String, Object> variablesMap
+     *
+     * JSONArray formArray
      */
     Map<String, Object> constructBill(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
 

@@ -75,18 +75,10 @@ public class PAUpdateBillStatusHandler implements UpdateBillStatusHandler {
     }
 
     @Override
-    public void updateBillStatus(JSONObject jsonObject, String billId) throws Exception {
-    }
-
-    @Override
-    public void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity) {
+    public void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity,List<CfgProcessFieldMapEntity> fieldMapList,List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
 
-        List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
-
-        List<String> fieldIdList = fieldMapList.stream().map(e -> e.getId()).collect(Collectors.toList());
-        List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
         ObjectMapper mapper = new ObjectMapper();
         if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
             //找到集合中unique为true的元素
@@ -112,7 +104,7 @@ public class PAUpdateBillStatusHandler implements UpdateBillStatusHandler {
                 purchaseApplicationFeign.add(addDTO);
             }
         }
-        //TODO
+
         thirdProcessManagementService.insert(jsonObject);
     }
 }

@@ -53,13 +53,7 @@ public class POUpdateBillStatusHandler implements UpdateBillStatusHandler {
     ThirdProcessManagementService thirdProcessManagementService;
 
     @Resource
-    CfgProcessFieldMapService cfgProcessFieldMapService;
-
-    @Resource
     ProcessFormFactory processFormFactory;
-
-    @Resource
-    CfgProcessValueMapService  cfgProcessValueMapService;
 
     @Override
     public boolean isMatch(String event) {
@@ -73,51 +67,9 @@ public class POUpdateBillStatusHandler implements UpdateBillStatusHandler {
 
     @Override
     @GlobalTransactional
-    public void updateBillStatus(JSONObject jsonObject, String billId) throws Exception {
-        List<PurchaseOrderEntity> purchaseOrderEntityList = purchaseOrderFeign.getPurchaseOrderByIds(new HashSet<>(Arrays.asList(billId)));
-        if (CollUtil.isEmpty(purchaseOrderEntityList)) {
-            return;
-        }
-        PurchaseOrderEntity purchaseOrderEntity = purchaseOrderEntityList.get(0);
-        //更新审核状态
-        if (jsonObject.getStr("status").equalsIgnoreCase("pending")) {
-            //更新单据状态和审核人的信息
-            purchaseOrderEntity.setApproveStatus("approveIng");
-            JSONArray taskList = jsonObject.getJSONArray("taskList");
-            //遍历taskList，找到元素status为pending，将该元素的userId设置到purchaseOrderEntity中
-            for (Object task : taskList) {
-                JSONObject taskJson = (JSONObject) task;
-                if (taskJson.getStr("status").equalsIgnoreCase("pending")) {
-                    purchaseOrderEntity.setApproveUserId(taskJson.getStr("userId"));
-                    break;
-                }
-            }
-            purchaseOrderFeign.updatePurchaseOrder(purchaseOrderEntity);
-        } else if (jsonObject.getStr("status").equalsIgnoreCase("rejected")) {
-            //更新单据状态为不通过，并创建一个third_process_mnagement记录
-            purchaseOrderEntity.setApproveStatus("reject");
-            thirdProcessManagementService.insert(jsonObject);
-        } else if (jsonObject.getStr("status").equalsIgnoreCase("approved")) {
-            //更新单据状态为已审核，并创建一个third_process_mnagement记录
-            purchaseOrderEntity.setApproveStatus("approve");
-            thirdProcessManagementService.insert(jsonObject);
-        } else if (jsonObject.getStr("status").equalsIgnoreCase("canceled")||jsonObject.getStr("status").equalsIgnoreCase("deleted")|| (jsonObject.getStr("status").equalsIgnoreCase("OVERTIME_RECOVER") || jsonObject.getStr("status").equalsIgnoreCase("OVERTIME_CLOSE"))) {
-            //更新单据状态为待提交
-            purchaseOrderEntity.setApproveStatus("waitSubmit");
-            purchaseOrderFeign.updatePurchaseOrder(purchaseOrderEntity);
-        }
-    }
-
-    @Override
-    @GlobalTransactional
-    public void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity) {
+    public void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
-
-        List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
-
-        List<String> fieldIdList = fieldMapList.stream().map(e -> e.getId()).collect(Collectors.toList());
-        List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 
         if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
             //找到集合中unique为true的元素
@@ -127,12 +79,12 @@ public class POUpdateBillStatusHandler implements UpdateBillStatusHandler {
             PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
             purchaseOrderEntity.setApproveStatus(jsonObject.getStr("status"));
 
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
-            String uniqueValue = (String) map.get(uniqueField.getSysField());
+//            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
+//            String uniqueValue = (String) map.get(uniqueField.getSysField());
 //            purchaseOrderFeign.updatePurchaseOrderByUnique(uniqueField.getSysField(),  uniqueValue,purchaseOrderEntity);
         }
         if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum)) {
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
+//            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
             //创建 TODO 转entiy
             PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
             purchaseOrderFeign.save(purchaseOrderEntity);
@@ -140,7 +92,7 @@ public class POUpdateBillStatusHandler implements UpdateBillStatusHandler {
         if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
             //更新单据状态为待审核
             if (FSApprovalStatusEnum.APPROVED.getCode().equals(jsonObject.getStr("status"))) {
-                Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
+//                Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
                 //创建 TODO 转entiy
                 PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
                 purchaseOrderFeign.saveAndUpdate(purchaseOrderEntity);

@@ -75,54 +75,13 @@ public class SupplierUpdateBillStatusHandler implements UpdateBillStatusHandler 
     }
 
     @Override
-    public void updateBillStatus(JSONObject jsonObject, String billId) throws Exception {
-        List<SupplierEntity> supplierEntityList = supplierFeign.listByCodes(Arrays.asList(billId));
-        if (CollUtil.isEmpty(supplierEntityList)) {
-            throw new ServiceException("未找到供应商信息，请检查三方生成查询的单据编号是否正确，{}", billId);
-        }
-        SupplierEntity supplierEntity = supplierEntityList.get(0);
-        //更新审核状态
-        if (jsonObject.getStr("status").equalsIgnoreCase("pending")) {
-            //更新单据状态和审核人的信息
-            supplierEntity.setApproveStatus(ApproveStatusEnum.APPROVE_ING);
-            JSONArray taskList = jsonObject.getJSONArray("taskList");
-            //遍历taskList，找到元素status为pending，将该元素的userId设置到purchaseOrderEntity中
-            for (Object task : taskList) {
-                JSONObject taskJson = (JSONObject) task;
-                if (taskJson.getStr("status").equalsIgnoreCase("pending")) {
-                    supplierEntity.setApproveUserId(taskJson.getStr("userId"));
-                    break;
-                }
-            }
-        } else if (jsonObject.getStr("status").equalsIgnoreCase("rejected")) {
-            supplierEntity.setApproveStatus(ApproveStatusEnum.REJECT);
-            thirdProcessManagementService.insert(jsonObject);
-        } else if (jsonObject.getStr("status").equalsIgnoreCase("approved")) {
-            supplierEntity.setApproveStatus(ApproveStatusEnum.APPROVE);
-            thirdProcessManagementService.insert(jsonObject);
-        } else if (jsonObject.getStr("status").equalsIgnoreCase("canceled")||jsonObject.getStr("status").equalsIgnoreCase("deleted")|| (jsonObject.getStr("status").equalsIgnoreCase("OVERTIME_RECOVER") || jsonObject.getStr("status").equalsIgnoreCase("OVERTIME_CLOSE"))) {
-            //更新单据状态为待提交
-            supplierEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
-        }
-        SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO = new SupplierDTO.UpdateApproveStatusDTO(supplierEntity, supplierEntity.getApproveStatus());
-        supplierFeign.updateApproveStatus(updateApproveStatusDTO);
-    }
-
-    @Override
-    public void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity) {
+    public void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
-
-        List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
-
-        List<String> fieldIdList = fieldMapList.stream().map(e -> e.getId()).collect(Collectors.toList());
-        List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 
         if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
             //找到集合中unique为true的元素
             CfgProcessFieldMapEntity uniqueField = fieldMapList.stream().filter(req -> req.getIsUnique()).findFirst().orElse(null);
-            //更新合同状态
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
         }
         if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum)) {
             Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
@@ -132,7 +91,6 @@ public class SupplierUpdateBillStatusHandler implements UpdateBillStatusHandler 
             supplierFeign.add(addDTO);
         }
         if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
-
             //更新单据状态为待审核
             if (FSApprovalStatusEnum.APPROVED.getCode().equals(jsonObject.getStr("status"))) {
                 Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);

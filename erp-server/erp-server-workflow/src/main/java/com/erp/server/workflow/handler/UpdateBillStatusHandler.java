@@ -7,8 +7,12 @@ package com.erp.server.workflow.handler;
  */
 
 import cn.hutool.json.JSONObject;
+import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
+import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+
+import java.util.List;
 
 /**
  * @Author: hcg
@@ -24,7 +28,6 @@ public interface UpdateBillStatusHandler {
 
     CfgQueryOptionBussinessKeyEnum getEvent();
 
-    void updateBillStatus(JSONObject jsonObject,String billId) throws Exception;
 
-    void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity);
+    void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
 }
