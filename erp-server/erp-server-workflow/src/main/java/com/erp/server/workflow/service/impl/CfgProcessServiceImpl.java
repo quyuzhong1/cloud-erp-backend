@@ -4,6 +4,7 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -18,9 +19,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.workflow.dto.CfgProcessDTO;
-import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
-import com.erp.model.workflow.dto.CfgProcessRuleDTO;
+import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
@@ -28,6 +27,7 @@ import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.context.ProcessFormFactory;
+import com.erp.server.workflow.handler.FsProcessFormHandler;
 import com.erp.server.workflow.handler.ProcessFormHandler;
 import com.erp.server.workflow.mapper.CfgProcessMapper;
 import com.erp.server.workflow.service.*;
@@ -84,11 +84,18 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     private FsService  fsService;
 
     @Resource
-    private ThirdProcessInstanceService processInstanceService;
+    private ApproveTaskInfoService  approveTaskInfoService;
+
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
+        //
+        CfgProcessEntity one = this.getOne(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
+        CfgProcessRuleEntity rule = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getCfgProcessId, one.getId()).eq(CfgProcessRuleEntity::getType, CfgProcessRuleTypeEnum.ERPPROCESS.getCode()).eq(CfgProcessRuleEntity::getIsDeleted, false));
+        if (ObjectUtil.isNotEmpty(rule)){
+            throw new ServiceException("{}已配置流程，不可重复配置",one.getName());
+        }
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
         // 生成单号
@@ -175,7 +182,17 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     public void delete(List<String> ids) {
         // 操作日志 TODO删除返回主表，然后根据主表id判断下是否存在rule，不存在主表同时删除
         cfgProcessRuleService.delete(ids);
-        //TODO 删除日志，不知道在哪里加
+        List<CfgProcessRuleEntity> processRuleEntityList = cfgProcessRuleService.list(new LambdaQueryWrapper<CfgProcessRuleEntity>().in(CfgProcessRuleEntity::getId, ids).eq(CfgProcessRuleEntity::getIsDeleted, false));
+        Map<String, List<CfgProcessRuleEntity>> collect = processRuleEntityList.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getCfgProcessId));
+        ArrayList<String> processIds = new ArrayList<>();
+        collect.forEach((k, v) -> {
+            if (v.size()==0){
+                processIds.add(k);
+            }
+        });
+        if (processIds.size()>0){
+            cfgProcessRuleService.removeByIds(processIds);
+        }
     }
 
     @Override
@@ -231,7 +248,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
      * 创建飞书审批实例
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void startThirdProcess(CfgProcessDTO.StartDTO dto) {
+        log.info("开始创建飞书审批实例,启动参数为:{}", dto);
         //查询approvalCode
 //        CfgProcessRuleEntity cfgProcessRuleEntity = cfgProcessRuleService.getById(dto.getBusinessId());
 //        String code = cfgProcessRuleEntity.getProcessDefinitionId();
@@ -244,33 +263,47 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
         //组装form，1、实时获取 2、查询流程定义表
-//        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "E02ECBC5-7BD1-4C11-B23D-1ED678F3806F").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
-//        JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
+        ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, "E02ECBC5-7BD1-4C11-B23D-1ED678F3806F").eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+        JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
         ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(dto.getRuleType()).name());
-//        formArray = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
-//        String form = JSONUtil.toJsonStr(formArray);
-//        CreateInstanceReq req = CreateInstanceReq.newBuilder()
-//                .instanceCreate(InstanceCreate.newBuilder()
-//                        .approvalCode("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F")
-//                        .userId("af4eg757")
-//                        .form(form)
-//                        .build())
-//                .build();
+        JSONArray objects = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
+        List<ApproveTaskDetailDTO.AddDTO> addDTOS = generateAddDTO(objects, fieldMapList, dto.getVariablesMap());
+        //插入记录
+        ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
+        addDTO.setDetailList(addDTOS);
+        approveTaskInfoService.add(addDTO);
+        String form = JSONUtil.toJsonStr(objects);
+        CreateInstanceReq req = CreateInstanceReq.newBuilder()
+                .instanceCreate(InstanceCreate.newBuilder()
+                        .approvalCode("E02ECBC5-7BD1-4C11-B23D-1ED678F3806F")
+                        .userId("af4eg757")
+                        .form(form)
+                        .build())
+                .build();
 
         try {
 //            String instanceCode = fsService.createInstance(req);
             //生成三方查询记录
-            ThirdProcessInstanceEntity id = processInstanceService.getById("1");
-            String form = id.getForm();
-            JSONArray objects = JSONUtil.parseArray(form);
-            Map<String, Object> map = handler.constructBill(objects, fieldMapList, valueMapList);
-            System.out.println(map);
+//            ThirdProcessInstanceEntity id = processInstanceService.getById("1");
+//            String form = id.getForm();
+//            JSONArray objects = JSONUtil.parseArray(form);
+//            Map<String, Object> map = handler.constructBill(dto.getVariablesMap(), fieldMapList, valueMapList);
+//            ApproveTaskInfoDTO.AddDTO addDTO = handler.generateAddDTO(objects, fieldMapList, valueMapList);
+//            System.out.println(map);
+//            System.out.println(addDTO);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
 
-
+    private List<ApproveTaskDetailDTO.AddDTO> generateAddDTO(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, Map<String,Object> variablesMap) {
+        List<ApproveTaskDetailDTO.AddDTO> list = new ArrayList<>();
+        for (int i = 0; i < formArray.size(); i++) {
+            JSONObject jsonObject = formArray.getJSONObject(i);
+//            if ()
+        }
+        return list;
     }
 
 }

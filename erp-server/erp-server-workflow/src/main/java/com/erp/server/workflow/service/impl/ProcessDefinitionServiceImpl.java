@@ -27,6 +27,7 @@ import com.erp.model.workflow.dto.ThirdProcessDefinitionDTO;
 import com.erp.model.workflow.entity.CfgProcessRuleEntity;
 import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.model.workflow.entity.ProcessDefinitionEntity;
+import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.ProcessDefinitionMapper;
 import com.erp.server.workflow.service.CfgProcessRuleService;
@@ -315,10 +316,12 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
 
     @Override
     public List<ProcessDefinitionDTO.DropDownDTO> proDropDown() {
+        List<String> ids = cfgProcessRuleService.lambdaQuery().eq(CfgProcessRuleEntity::getType, CfgProcessRuleTypeEnum.ERPPROCESS.getCode()).eq(CfgProcessRuleEntity::getIsDeleted, false).list().stream().map(CfgProcessRuleEntity::getProcessDefinitionId).collect(Collectors.toList());
         List<ProcessDefinitionDTO.DropDownDTO> downDTOList = this.list(new LambdaQueryWrapper<ProcessDefinitionEntity>().eq(ProcessDefinitionEntity::getIsDeploy, true).eq(ProcessDefinitionEntity::getIsDeleted, false)).stream().map(processDefinitionEntity -> {
             ProcessDefinitionDTO.DropDownDTO dropDownDTO = new ProcessDefinitionDTO.DropDownDTO();
             dropDownDTO.setCode(processDefinitionEntity.getId());
             dropDownDTO.setName(processDefinitionEntity.getProcessName());
+            dropDownDTO.setDisabled(ids.contains(processDefinitionEntity.getId())?true:false);
             return dropDownDTO;
         }).collect(Collectors.toList());
         return downDTOList;

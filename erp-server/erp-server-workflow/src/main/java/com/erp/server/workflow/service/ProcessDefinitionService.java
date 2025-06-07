@@ -83,9 +83,19 @@ public interface ProcessDefinitionService extends SuperService<ProcessDefinition
      */
     List<ProcessDefinitionDTO.TabListDTO> tabList(PermissionsDTO dto);
 
+    /**
+     *  高级查询下拉
+     * @param type
+     * @return
+     */
     List<ProcessDefinitionDTO.DropDownDTO> dropDown(String type);
 
+    /**
+     * 界面下拉
+     * @return
+     */
     List<ProcessDefinitionDTO.DropDownDTO> proDropDown();
+
     /**
      * 变更流程
      * @author will
