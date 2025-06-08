@@ -56,4 +56,6 @@ public interface CfgApproveSyncService extends SuperService<CfgApproveSyncEntity
 
     //构建I18nResource数组
     I18nResource[] mapToI18nResouceArray(Map<String, String> values);
+
+    void cleanFeishuTest();
 }

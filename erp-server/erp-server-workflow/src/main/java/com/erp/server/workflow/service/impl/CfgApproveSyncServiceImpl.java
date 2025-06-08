@@ -10,6 +10,7 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
@@ -40,7 +41,11 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import com.common.core.utils.*;
@@ -95,6 +100,11 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     private CfgSettingService cfgSettingService;
     @Resource
     private ApproveSyncRecordService approveSyncRecordService;
+    @Resource
+    private CfgApproveSyncService configApproveSyncService;
+
+    @Resource
+    private ProcessManagementService processManagementService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -611,6 +621,7 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
     }
 
     @Override
+
     public void exportList(CfgApproveSyncDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("ERP审批同步配置导出", EXPORT_PROCESS_CFG_APPROVE_SYNC.getCode(), param);
     }
@@ -716,9 +727,73 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         };
     }
 
+    @Override
+    public void cleanFeishuTest() {
+
+        List<CfgApproveSyncEntity> list = lambdaQuery().in(CfgApproveSyncEntity::getBusinessType,Arrays.asList( "pilotApplication", "purchaseOrder")).list();
+        for (CfgApproveSyncEntity cfgApproveSyncEntity : list) {
+            String businessType = cfgApproveSyncEntity.getBusinessType();
+            List<String> ids = processManagementService.getTestList(businessType);
+            del( cfgApproveSyncEntity,ids);
+
+        }
 
 
 
+    }
 
+    public void del(CfgApproveSyncEntity cfgApproveSyncEntity,List<String> ids){
+            String errorReason= "";
+            //pc地址
+            String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
+            //erp审批同步配置表
+            //国际化文案
+            Map<String,String> values = new HashMap<>();
+            //标题
+            values.put("@i18n@title",cfgApproveSyncEntity.getTitle());
+            values.put("@i18n@userName","测试");
+
+            //获取创建时间以及更新时间
+            LocalDateTime createTime = LocalDateTime.now();
+            LocalDateTime updateTime = LocalDateTime.now();
+            // 转换为毫秒时间戳
+            String createTimeMillis = String.valueOf(createTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+            String updateTimeMillis = String.valueOf(updateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+            String endTimeMillis = String.valueOf(updateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+            ExternalInstance externalInstance = ExternalInstance.newBuilder()
+                    .approvalCode(cfgApproveSyncEntity.getApprovalCode())
+                    .status("TERMINATED")
+                    .links(ExternalInstanceLink.newBuilder()
+                            .pcLink(pcLinkByEnv)
+                            .mobileLink(pcLinkByEnv)
+                            .build())
+                    .title("@i18n@title")
+                    .userName("@i18n@userName")
+                    .openId("ou_bf8736201fd34d971a12c65d966251ec")
+                    .startTime(createTimeMillis)//审批发起时间
+                    .endTime(endTimeMillis) //审批实例结束时间。未结束的审批为 0，Unix 毫秒时间戳。
+                    .updateTime(updateTimeMillis)//审批实例最近更新时间
+                    .displayMethod("BROWSER")//列表页打开审批实例的方式。 BROWSER：跳转系统默认浏览器打开, SIDEBAR：飞书中侧边抽屉打开, NORMAL：飞书内嵌页面打开
+                    .updateMode("REPLACE")//更新方式。 REPLACE：全量替换, UPDATE：增量更新
+                    .build();
+
+            //国际化文案数组
+            I18nResource[] i18nResources = configApproveSyncService.mapToI18nResouceArray(values);
+            externalInstance.setI18nResources(i18nResources);
+        for (String id : ids) {
+            externalInstance.setInstanceId(id);
+
+            // 创建请求对象
+            CreateExternalInstanceReq req = CreateExternalInstanceReq.newBuilder()
+                    .externalInstance(externalInstance)
+                    .build();
+
+            CreateExternalInstanceResp resp = fsService.createExternalInstance(req);
+            if (!resp.success()) {
+                String msg = String.format("同步三方审批实例失败:id：%s,code:%s,msg:%s,reqId:%s", id,resp.getCode(), resp.getMsg(), resp.getRequestId());
+                log.error("{}", msg);
+            }
+        }
+    }
 
 }

@@ -1761,5 +1761,9 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }).filter(StrUtil::isNotBlank).collect(Collectors.toList());
     }
 
+    @Override
+    public List<String> getTestList(String businessType) {
+        return baseMapper.getTestList(businessType);
+    }
 
 }

@@ -243,4 +243,10 @@ public class CfgApproveSyncController extends BaseController {
     }
 
 
+    @PostMapping("/cleanFeishuTest")
+    public void cleanFeishuTest() {
+//        cfgApproveSyncService.cleanFeishuTest();
+    }
+
+
 }

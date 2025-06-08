@@ -289,4 +289,6 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
      * @return PagingVO<MainPagingResultDTO>
      */
     PagingVO<ProcessManagementDTO.MainPagingResultDTO> mainPaging(PagingDTO<ProcessManagementDTO.SearchDTO> dto);
+
+    List<String> getTestList(String businessType);
 }
