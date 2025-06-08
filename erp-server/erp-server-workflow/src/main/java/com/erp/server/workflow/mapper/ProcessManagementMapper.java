@@ -107,4 +107,6 @@ public interface ProcessManagementMapper extends BaseMapper<ProcessManagementEnt
      * @return IPage<MainPagingResultDTO>
      */
     IPage<ProcessManagementDTO.MainPagingResultDTO> mainPaging(Page query, @Param("params")ProcessManagementDTO.SearchDTO params);
+
+    List<String> getTestList( @Param("businessType")String businessType);
 }

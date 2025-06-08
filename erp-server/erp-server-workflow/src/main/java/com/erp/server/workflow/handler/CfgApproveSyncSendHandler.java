@@ -103,8 +103,6 @@ public class CfgApproveSyncSendHandler {
                            ApproveSyncRecordEntity syncRecordEntity) {
         //pc地址
         String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
-        //参数map
-        Map<String, Object> variablesMap = dto.getVariablesMap();
         List<String> summaries = cfgApproveSyncBuildHandler.getSummaries(fieldMapEntities, remoteValues);
 
         //审批状态
@@ -129,9 +127,6 @@ public class CfgApproveSyncSendHandler {
         } else if (Objects.equals(approveType, FsActionStatusEnum.FORWARDED.getCode())) {//转办
             //默认发送审核人
             sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
-
-            //发送抄送通知
-            commonSendNotice(NoticeTemplateEnum.CC,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
         } else if(Objects.equals(approveType, FsActionStatusEnum.PROCESSED.getCode())){//强制通过
             //发送审批结果通知
             commonSendNotice(NoticeTemplateEnum.APPROVE_RESULT_PASS,cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
