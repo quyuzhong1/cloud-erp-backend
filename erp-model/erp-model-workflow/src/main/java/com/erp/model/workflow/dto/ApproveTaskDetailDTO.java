@@ -238,6 +238,10 @@ public class ApproveTaskDetailDTO implements Serializable {
          * 实体编码
          */
         private String entityCode;
+        /**
+         * 上级数据id
+         */
+        private String parentId;
     }
 
 

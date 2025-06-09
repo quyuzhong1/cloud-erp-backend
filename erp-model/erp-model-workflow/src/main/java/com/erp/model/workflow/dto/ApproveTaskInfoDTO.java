@@ -337,7 +337,12 @@ public class ApproveTaskInfoDTO implements Serializable {
         @Size(max = 64,message = "数大臣单号，单据号最大长度不能超过64位")
         private String bussinessCode;
 
-
+        /**
+         * 数大臣单据id，单据id
+         */
+        @NotBlank(message = "数大臣单据id，单据id不能为空")
+        @Size(max = 19,message = "数大臣单据id，单据id最大长度不能超过19位")
+        private String bussinessId;
     }
     @Data
     @NoArgsConstructor
