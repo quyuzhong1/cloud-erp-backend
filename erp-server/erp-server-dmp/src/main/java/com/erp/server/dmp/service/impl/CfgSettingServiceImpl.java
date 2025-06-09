@@ -92,6 +92,6 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
 
 	@Override
 	public boolean getQueryDoris(String key) {
-		return CollUtil.isNotEmpty(this.lambdaQuery().eq(CfgSettingEntity::getType, "doris_query_cfg").eq(CfgSettingEntity::getKey, key).eq(CfgSettingEntity::getValue, "1").list());
+		return CollUtil.isNotEmpty(this.lambdaQuery().eq(CfgSettingEntity::getType, SettingEnum.DORIS_QUERY_CFG).eq(CfgSettingEntity::getKey, key).eq(CfgSettingEntity::getValue, "1").list());
 	}
 }
