@@ -28,6 +28,7 @@ import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.plm.entity.PilotApplicationEntity;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.dto.excel.SupplierExportExcelDTO;
 import com.erp.model.scm.dto.excel.SupplierImportExcelDTO;
@@ -41,7 +42,9 @@ import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.dto.TransferLogisticsSupplierDTO;
 import com.erp.model.wms.dto.SupplierCountDTO;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.srm.feign.SrmCfgSettingFeign;
@@ -52,6 +55,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TransferLogisticsFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
 import com.erp.server.scm.listener.SupplierExcelListener;
 import com.erp.server.scm.mapper.SupplierMapper;
@@ -162,6 +166,8 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
     /**
      * 保存供应商信息
      *
@@ -672,7 +678,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(type));
         approveDTO.setComment(comment);
         approveDTO.setUserId(userInfo.getUid());
-        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        approveDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.ApproveResultDTO> result = workflowFeign.approve(approveDTO);
         Integer code = result.getCode();
         if (200 != code) {
@@ -1590,11 +1596,25 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         startDTO.setBusinessKey(SourceTypeEnum.SUPPLIER.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(userInfo.getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> listApiResult = workflowFeign.start(startDTO);
         if (!listApiResult.isSuccess()) {
             throw new ServiceException(listApiResult.getMsg());
         }
+    }
+
+    /**
+     * variablesMap值赋值
+     * @author jack
+     * @date 2025-06-09
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SupplierEntity entity) {
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.SUPPLIER.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        return cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
     }
 
     /**
