@@ -157,6 +157,12 @@ public class SoB2bProcessingEntity extends BaseEntity<SoB2bProcessingEntity> {
     @TableField(exist = false)
     private Boolean isDiff;
 
+    /**
+     * 是否需要出库
+     */
+    @TableField(exist = false)
+    private Boolean isOutstock;
+
     public static final String SO_ID = "so_id";
 
     public static final String SO_CODE = "so_code";
