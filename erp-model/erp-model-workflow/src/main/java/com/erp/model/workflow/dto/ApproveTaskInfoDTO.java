@@ -229,7 +229,7 @@ public class ApproveTaskInfoDTO implements Serializable {
         /**
          * 明细
          */
-        private List<ViewDetailDTO> detailList;
+        private List<ApproveTaskDetailDTO.ViewDTO> detailList;
     }
 
     /**

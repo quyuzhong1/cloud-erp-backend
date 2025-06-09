@@ -3,7 +3,6 @@ package com.erp.server.workflow.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -165,32 +164,21 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
             throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_DETAIL_NOT_EXIST);
         }
         List<ApproveTaskDetailDTO.ViewDTO> viewDetailList = BeanUtil.copyToList(approveTaskDetailList, ApproveTaskDetailDTO.ViewDTO.class);
-        Map<String, List<ApproveTaskDetailDTO.ViewDTO>> detailMap = viewDetailList.stream().collect(Collectors.groupingBy(ApproveTaskDetailDTO.ViewDTO::getEntityCode));
 
 
         List<String> sysFieldList = approveTaskDetailList.stream().map(ApproveTaskDetailEntity::getSysField).distinct().collect(Collectors.toList());
         List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionService.listBySysFieldList(entity.getBussinessKey(), sysFieldList);
         Map<String, CfgQueryOptionEntity> cfgQueryOptionMap = CollUtil.isEmpty(cfgQueryOptionList) ? new HashMap<>() : cfgQueryOptionList.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, Function.identity()));
 
-        List<ApproveTaskInfoDTO.ViewDetailDTO> detailList = new ArrayList<>();
-        for (Map.Entry<String, List<ApproveTaskDetailDTO.ViewDTO>> entry : detailMap.entrySet()) {
-            String key = entry.getKey();
-            List<ApproveTaskDetailDTO.ViewDTO> value = entry.getValue();
-            for (ApproveTaskDetailDTO.ViewDTO detailDTO : value) {
-                //第三方类型名称
-                detailDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getThirdFieldType()));
-                //数大臣类型名称
-                detailDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getSysFieldType()));
-                //数大臣单据字段信息
-                detailDTO.setCfgQueryOptionEntity(cfgQueryOptionMap.get(detailDTO.getSysField()));
-            }
-            ApproveTaskInfoDTO.ViewDetailDTO viewDetailDTO = new ApproveTaskInfoDTO.ViewDetailDTO();
-            String entityName = CharSequenceUtil.isBlank(key) ? "基础信息" : value.get(0).getEntityName();
-            viewDetailDTO.setEntityName(entityName);
-            viewDetailDTO.setDetailList(value);
-            detailList.add(viewDetailDTO);
+        for (ApproveTaskDetailDTO.ViewDTO detailDTO : viewDetailList) {
+            //第三方类型名称
+            detailDTO.setThirdFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getThirdFieldType()));
+            //数大臣类型名称
+            detailDTO.setSysFieldTypeName(CfgQueryOptionFieldTypeEnum.getName(detailDTO.getSysFieldType()));
+            //数大臣单据字段信息
+            detailDTO.setCfgQueryOptionEntity(cfgQueryOptionMap.get(detailDTO.getSysField()));
         }
-        viewDTO.setDetailList(detailList);
+        viewDTO.setDetailList(viewDetailList);
         return viewDTO;
     }
 
