@@ -141,8 +141,7 @@ public class SoB2cRetryJob {
                             soB2cErrorEntity.setRetryCount(soB2cErrorEntity.getRetryCount() + 1);
                             soB2cErrorService.updateById(soB2cErrorEntity);
                             continue;
-                        }
-                        ;
+                        };
 
                         List<BatchResultDTO> resultDTOS = soB2cAbnormalService.batchRetry(soB2cErrorEntity.getMainId());
                         try {
@@ -214,8 +213,8 @@ public class SoB2cRetryJob {
                 XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单作废={}", soB2cErrorEntity.getMainId());
                 return true;
             }
-            if (!SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus()) ||
-                    !ApproveStatusEnum.APPROVE.equals(soB2cEntity.getApproveStatus())
+            if (!(SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(soB2cEntity.getBillStatus()) ||
+                    ApproveStatusEnum.APPROVE.equals(soB2cEntity.getApproveStatus()))
             ) {
                 soB2cErrorEntity.setVersion(soB2cErrorEntity.getVersion() + 1);
                 soB2cErrorService.updateById(soB2cErrorEntity);
