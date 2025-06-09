@@ -235,28 +235,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         }
         //生成nf-e发票
-        generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
-    }
-
-    /**
-     * 生成NF-e发票
-     * @author will
-     * @date 2025/4/14 15:52
-     * @param soB2cEntity
-     * @param type
-     * @return void
-     */
-    private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
-        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
-        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
-            return;
-        }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
-            return;
-        }
-        if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
-            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
-        }
+        cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
     }
 
     /**
@@ -440,7 +419,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         //校验发票开票规则
         cfgRuleInvoiceService.invoiceCfgRule(mainEntity,detailList,new HashMap<>());
         //生成Nf-e发票
-        generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
+        cfgInvoiceSettingDetailService.generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
         return resultDTO;
     }
 

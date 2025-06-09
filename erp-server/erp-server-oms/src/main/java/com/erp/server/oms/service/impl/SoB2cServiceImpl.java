@@ -385,6 +385,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private SoB2cRuleService soB2cRuleService;
+    @Lazy
+    @Resource
+    private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
 
     @Override
     public PagingVO<SoB2cDTO.ListDTO> paging(PagingDTO<SoB2cDTO.PagingParamDTO> pagingParamDTO) {
@@ -1362,7 +1365,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus(), isMatch);
-
+        if (ApproveStatusEnum.APPROVE.getCode().equals(approveStatus.getStatus())){
+            //生成nf-e发票
+            cfgInvoiceSettingDetailService.generateNfeInvoice (entity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
+        }
 
         //推送到DMP
         soB2cService.syncOrderToDmp(entity.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode());

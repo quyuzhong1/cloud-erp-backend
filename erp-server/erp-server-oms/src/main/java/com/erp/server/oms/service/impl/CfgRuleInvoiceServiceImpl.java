@@ -235,12 +235,21 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
         CfgInvoiceSettingDTO.RuleMatchDTO result = this.getRuleInvoiceMatchResult(map);
         Boolean isPass = Objects.nonNull(result) && Objects.nonNull(result.getIsPass()) && result.getIsPass() ? Boolean.TRUE : Boolean.FALSE;
         //匹配通过修改销售订单开票状态
-        if (isPass && CharSequenceUtil.isBlank(entity.getNfeInvoiceStatus())) {
-            entity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.PENDING.getCode());
-            soB2cService.lambdaUpdate().eq(SoB2cEntity::getId, entity.getId())
-                    .set(SoB2cEntity::getNfeInvoiceStatus, entity.getNfeInvoiceStatus())
-                    .update();
+        String nfeInvoiceStatus = "";
+        if (isPass) {
+            if (CharSequenceUtil.isBlank(entity.getNfeInvoiceStatus()) || SoB2cNfeStatusEnum.PENDING.getCode().equals(entity.getNfeInvoiceStatus()) || SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode().equals(entity.getNfeInvoiceStatus())){
+                nfeInvoiceStatus = SoB2cNfeStatusEnum.PENDING.getCode();
+            }else {
+                nfeInvoiceStatus = entity.getNfeInvoiceStatus();
+            }
+        }else {
+            nfeInvoiceStatus = SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode();
         }
+        entity.setNfeInvoiceStatus(nfeInvoiceStatus);
+        soB2cService.lambdaUpdate().eq(SoB2cEntity::getId, entity.getId())
+                .set(SoB2cEntity::getNfeInvoiceStatus, nfeInvoiceStatus)
+                .update();
+        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新平台nfe开票状态：【{}】", SoB2cNfeStatusEnum.getName(nfeInvoiceStatus)),ModuleTypeEnum.SO_B2C.getCode(),entity.getId(),"开票规则匹配");
         //规则是否通过
         resultMap.put("isPass", isPass);
         return resultMap;
