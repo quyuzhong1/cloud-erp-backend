@@ -574,6 +574,14 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         return new PagingVO<>(pageData);
     }
 
+    @Override
+    public List<VirtualWarehouseDTO.ViewWarehouseDTO> listWarehouseInfoByIds(List<String> virtualWarehouseIdList) {
+        if (CollUtil.isEmpty(virtualWarehouseIdList)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listWarehouseInfoByIds(virtualWarehouseIdList);
+    }
+
     /**
      * 导出数据处理
      * @param list
