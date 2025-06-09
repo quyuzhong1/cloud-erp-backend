@@ -1,6 +1,8 @@
 package com.erp.server.dmp.inout.handler.output.task.api;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +13,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.erp.model.dmp.entity.*;
+import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
+import com.erp.server.dmp.service.CfgTimezoneService;
+import com.erp.server.dmp.service.DmpAmzSoOutstockDetailService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
@@ -22,9 +28,6 @@ import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.Tools;
-import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockDetailEntity;
-import com.erp.model.dmp.entity.DmpSoOutstockEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
 import com.erp.model.oms.enums.DictBasicTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO.ViewDTO;
@@ -39,6 +42,8 @@ import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.annotation.Resource;
+
 
 /**
  * 旺店通原始订单推送数帝云
@@ -50,6 +55,11 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	
 	@Autowired
 	private SysUserFeign sysUserFeign;
+	@Resource
+	private DmpAmzSoOutstockDetailService dmpAmzSoOutstockDetailService;
+	@Resource
+	private CfgTimezoneService cfgTimezoneService;
+
 	
     @Override
     public Map<String, String> getPushJsonDataMap(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
@@ -162,7 +172,12 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         	}
         	cfgMaps.put("platform", platformMap);
         	cfgMaps.put("subPlatform", subPlatformMap);
-        }
+
+			// 亚马逊出库单明细添加签收时间
+			Map<String, String> amzPlatformSignTimeInfo = queryAndConvertArrivalDate(changeDmpSoOutstockDetailEntity);
+			cfgMaps.put("amzPlatformSignTimeInfo", amzPlatformSignTimeInfo);
+
+		}
         for (String changId : changeIds) {
         	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOutstockEntityMap.get(changId), dmpSoOutstockDetailEntityMap.get(changId) , cfgOutputId , cfgMaps);
         	if(!result.isEmpty()) {
@@ -173,8 +188,8 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
         }
         return map;
     }
-    
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoOutstockEntity dmpSoOutstockEntity , List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList , String cfgOutputId , Map<String, Map<String, String>> cfgMaps){
+
+	private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoOutstockEntity dmpSoOutstockEntity , List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList , String cfgOutputId , Map<String, Map<String, String>> cfgMaps){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpSoOutstockEntity != null && CollUtil.isNotEmpty(dmpSoOutstockDetailEntityList)) {
     		if(validateDataBlack(dmpSoOutstockEntity, cfgOutputId)) {
@@ -299,7 +314,14 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	            	String subplatform = cfgMaps.get("subPlatform").get(platformType);
 	            	shudiyunB2cOrderDTO.setSubplatform_no(subplatform);
 					shudiyunB2cOrderDTO.setSubplatform_name(subplatform);
-	            }
+					String platformDetailId = dmpSoOutstockDetailEntity.getPlatformDetailId();
+					if (StringUtils.isNotBlank(platformDetailId) && DmpBasicSystemCodeEnum.AMAZON.getCode().equalsIgnoreCase(platformType)) {
+						String signTime = cfgMaps.get("amzPlatformSignTimeInfo").get(platformDetailId);
+						if (StringUtils.isNotBlank(signTime)) {
+							shudiyunB2cOrderDTO.setPlatform_signing_time(signTime);
+						}
+					}
+				}
                 
     	        shudiyunB2cOrderDTO.setRoot_node_no(dmpSoOutstockDetailEntity.getThirdOrderCode());
 
@@ -354,6 +376,46 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
     	}
     	return result;
     }
+
+
+	/**
+	 * 查询亚马逊平台的签收时间，并转换为所需格式
+	 */
+	private Map<String, String> queryAndConvertArrivalDate(List<DmpSoOutstockDetailEntity> changeDmpSoOutstockDetailEntity) {
+		List<String> amzPlatformDetailIdList = changeDmpSoOutstockDetailEntity.stream()
+				.filter(e -> e.getPlatformType().equalsIgnoreCase(DmpBasicSystemCodeEnum.AMAZON.getCode()) && StringUtils.isNotBlank(e.getPlatformDetailId()))
+				.map(DmpSoOutstockDetailEntity::getPlatformDetailId)
+				.collect(Collectors.toList());
+		if (CollUtil.isEmpty(amzPlatformDetailIdList)) {
+			return new HashMap<>();
+		}
+		List<DmpAmzSoOutstockDetailEntity> list = dmpAmzSoOutstockDetailService.lambdaQuery()
+				.in(DmpAmzSoOutstockDetailEntity::getShipmentItemId, amzPlatformDetailIdList)
+				.list();
+		if (CollUtil.isNotEmpty(list)) {
+			return new HashMap<>();
+		}
+		Map<String, String> resultMap = new HashMap<>();
+		// 渠道配置
+		List<CfgTimezoneEntity> timeList = cfgTimezoneService.listAndCache();
+
+		for (DmpAmzSoOutstockDetailEntity dmpAmzSoOutstockDetailEntity : list) {
+			// 解析后的时区(按销售渠道)
+			CfgTimezoneEntity timeZoneEntity = timeList.stream()
+					.filter(t -> t.getAndParseCondition().contains(dmpAmzSoOutstockDetailEntity.getSalesChannel()))
+					.findFirst()
+					.orElse(null);
+			if (null != timeZoneEntity) {
+				// 设置所有本地时区
+				if (StringUtils.isNotBlank(dmpAmzSoOutstockDetailEntity.getEstimatedArrivalDate())){
+					OffsetDateTime parseDate = OffsetDateTime.parse(dmpAmzSoOutstockDetailEntity.getEstimatedArrivalDate());
+					String lastTime = parseDate.atZoneSameInstant(ZoneId.of(timeZoneEntity.getTimeZone())).toString();
+					resultMap.put(dmpAmzSoOutstockDetailEntity.getShipmentItemId(), lastTime);
+				}
+			}
+		}
+		return resultMap;
+	}
     
     @Override
     protected List<String> getSourceCodeKeys() {
