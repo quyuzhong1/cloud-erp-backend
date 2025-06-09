@@ -122,7 +122,7 @@ public class CfgConditionServiceImpl extends SuperServiceImpl<CfgConditionMapper
 
     @Override
     public List<CfgConditionDTO.ListDTO> listInvoiceHandleCondition() {
-        List<String> typeList = Arrays.asList("dictPlatform", "shop", "destCountry", "nfeInvoiceStatus", "deliveryWarehouseId");
+        List<String> typeList = Arrays.asList("dictPlatform", "shop", "destCountry", "nfeInvoiceStatus");
         return baseMapper.listConditionByType(typeList, null);
     }
 
