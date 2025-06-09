@@ -119,8 +119,8 @@ public class MercadoLocalAuthorize implements IShopAuthorizeService<T> {
         //拼接授权地址
         String shopAuthorizeUrl = "";
         if (ObjectUtil.isNotEmpty(cfgAppClient)) {
-            //https://auth.mercadolivre.com.%s/authorization?response_type=code&client_id=%s&redirect_uri=%s&state=%s
-            shopAuthorizeUrl = String.format(cfgAppClient.getUrl(),businessModel.getRemark(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode()+state);
+            //https://auth.mercadolivre.com.br/authorization?response_type=code&client_id=%s&redirect_uri=%s&state=%s
+            shopAuthorizeUrl = String.format(businessModel.getRemark(), cfgAppClient.getClientId(), cfgAppClient.getRedirectUrl(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode()+state);
         }
         return shopAuthorizeUrl;
     }
