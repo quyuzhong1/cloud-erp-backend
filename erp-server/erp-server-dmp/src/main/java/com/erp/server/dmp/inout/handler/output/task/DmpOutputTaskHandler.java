@@ -179,6 +179,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 			if(StringUtils.isNotBlank(requestData)) {
 				JSONObject parseObject = JSON.parseObject(requestData);
 				if(this.validateDataBlack(parseObject, cfgOutputId, Boolean.TRUE)) {
+					log.warn("如下单据匹配到黑名单：类型{}，单据编号：{}" , cfgOutputId , next.getSourceCode());
 					iterator.remove();
 				}
 			}
