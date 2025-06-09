@@ -6,11 +6,14 @@ import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * cfgQueryOption Feign
@@ -49,10 +52,8 @@ public class CfgQueryOptionFeignController extends BaseController {
     /**
      * 根据单据类型查询配置(只查询明细类型)
      */
-    @GetMapping("/listByBusinessKey")
-    public List<CfgQueryOptionEntity> listByBusinessKey(@RequestParam("businessKey") String businessKey){
-        return cfgQueryOptionService.lambdaQuery()
-                .in(CfgQueryOptionEntity::getBussinessKey, businessKey)
-                .list();
+    @PostMapping("/getVariablesMapByBusinessKey")
+    public Map<String, Object> getVariablesMapByBusinessKey(@RequestBody CfgQueryOptionDTO.VariablesParamsDTO dto){
+        return cfgQueryOptionService.getVariablesMapByBusinessKey(dto);
     }
 }

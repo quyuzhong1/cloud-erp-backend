@@ -2,11 +2,16 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.RuleCompareEnum;
+import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
@@ -118,5 +123,62 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     @Override
     public List<CfgQueryOptionEntity> listByMqParams(CfgQueryOptionDTO.MqParamsDTO mqParamsDTO) {
         return baseMapper.listByMqParams(mqParamsDTO);
+    }
+
+    @Override
+    public Map<String, Object> getVariablesMapByBusinessKey(CfgQueryOptionDTO.VariablesParamsDTO dto) {
+        if(Objects.isNull(dto) || StringUtils.isBlank(dto.getBusinessKey()) || CollUtil.isEmpty(dto.getVariablesMap())){
+            return Collections.emptyMap();
+        }
+        //主表map
+        Map<String, Object> variablesMap = dto.getVariablesMap();
+        //获取配置明细
+        List<CfgQueryOptionEntity> cfgQueryOptionList = lambdaQuery()
+                .in(CfgQueryOptionEntity::getBussinessKey, dto.getBusinessKey())
+                .list();
+        if(CollUtil.isNotEmpty(cfgQueryOptionList)){
+            //根据fieldBelongsType 进行分组
+            Map<String, List<CfgQueryOptionEntity>> fieldBelongsTypeByMap = cfgQueryOptionList.stream().collect(Collectors.groupingBy(CfgQueryOptionEntity::getFieldBelongsType));
+            //获取主表字段配置
+            List<CfgQueryOptionEntity> mainCfgQueryOptionList = fieldBelongsTypeByMap.get(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode());
+
+            //遍历
+            for (Map.Entry<String, List<CfgQueryOptionEntity>> entry : fieldBelongsTypeByMap.entrySet()) {
+                //common和主表不需要再查询
+                if(entry.getKey().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()) || entry.getKey().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
+                    continue;
+                }
+                List<CfgQueryOptionEntity> value = entry.getValue();
+                //如果存在，则需要找对明细表里的关联字段，并根据该字段来进行FeignQuery查询出对应的明细列表
+                CfgQueryOptionEntity detailEntity = value.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
+                if (Objects.isNull(detailEntity)) {
+                    continue;
+                }
+                //获取关联记录
+                String parentId = detailEntity.getParentId();
+                CfgQueryOptionEntity refEntity = mainCfgQueryOptionList.stream().filter(e -> e.getId().equals(parentId)).findFirst().orElse(null);
+                String refField = refEntity.getConditionField();
+                String refValue = String.valueOf(variablesMap.get(refField));
+
+                String classpath = detailEntity.getClasspath();
+                classpath = classpath.replace("class ", "");
+                Class<BaseEntity> clazz = null;
+                try {
+                    clazz = (Class<BaseEntity>) Class.forName(classpath);
+                } catch (ClassNotFoundException e) {
+                    throw new ServiceException(classpath + "实体不存在");
+                }
+                List<BaseEntity> detailList = FeignQuery.create(clazz)
+                        .eq(detailEntity.getConditionField(), refValue)
+                        .list();
+
+                if (CollUtil.isEmpty(detailList)) {
+                    throw new ServiceException(entry.getKey() + "明细列表数据不存在");
+                }
+                //明细数据
+                variablesMap.put(entry.getKey() , BeanUtil.copyToList(detailList,Map.class));
+            }
+        }
+        return variablesMap;
     }
 }

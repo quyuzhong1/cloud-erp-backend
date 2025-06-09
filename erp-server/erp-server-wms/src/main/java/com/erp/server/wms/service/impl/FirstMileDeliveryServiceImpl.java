@@ -61,8 +61,10 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
@@ -73,6 +75,7 @@ import com.erp.rpc.tms.feign.LogisticsFeign;
 import com.erp.rpc.tms.feign.TmsDeclareBillFeign;
 import com.erp.rpc.tms.feign.TmsFirstMileLogisticFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.wms.convert.FirstMileDeliveryConverter;
 import com.erp.server.wms.mapper.FirstMileDeliveryMapper;
 import com.erp.server.wms.service.*;
@@ -190,6 +193,8 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -691,7 +696,11 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
      * @return Map<String,Object>
      */
     private Map<String,Object> getVariablesMap(FirstMileDeliveryEntity entity) {
-        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.FIRSTMILEDELIVERY.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+
         List<FirstMileDeliveryDetailEntity> detailList = firstMileDeliveryDetailService.lambdaQuery().eq(FirstMileDeliveryDetailEntity::getMainId,entity.getId()).list();
         if (CollUtil.isNotEmpty(detailList)) {
             variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
@@ -1191,7 +1200,7 @@ public class FirstMileDeliveryServiceImpl extends SuperServiceImpl<FirstMileDeli
         startDTO.setBusinessKey(SourceTypeEnum.FIRST_MILE_DELIVERY.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        startDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());

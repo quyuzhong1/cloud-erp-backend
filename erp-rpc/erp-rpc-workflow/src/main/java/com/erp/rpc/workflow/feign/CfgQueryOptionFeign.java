@@ -40,6 +40,6 @@ public interface CfgQueryOptionFeign {
     /**
      * 根据单据类型查询配置
      */
-    @GetMapping("/feign/cfgQueryOption/listByBusinessKey")
-    List<CfgQueryOptionEntity> listByBusinessKey(@RequestParam("businessKey") String businessKey);
+    @PostMapping("/feign/cfgQueryOption/getVariablesMapByBusinessKey")
+    Map<String, Object> getVariablesMapByBusinessKey(@RequestBody CfgQueryOptionDTO.VariablesParamsDTO dto);
 }

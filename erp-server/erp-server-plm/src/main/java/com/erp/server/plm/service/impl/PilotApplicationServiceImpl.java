@@ -49,6 +49,7 @@ import com.erp.model.scm.entity.PurchaseApplicationEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
@@ -505,59 +506,16 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
 
     /**
      * variablesMap值赋值
-     * @author will
-     * @date 2025/5/21 10:51
+     * @author jack
+     * @date 2025-06-09
      * @param entity
      * @return Map<String,Object>
      */
     private Map<String,Object> getVariablesMap(PilotApplicationEntity entity) {
-        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-        //获取配置明细
-        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
-        if(CollUtil.isNotEmpty(cfgQueryOptionList)){
-            //根据fieldBelongsType 进行分组
-            Map<String, List<CfgQueryOptionEntity>> fieldBelongsTypeByMap = cfgQueryOptionList.stream().collect(Collectors.groupingBy(CfgQueryOptionEntity::getFieldBelongsType));
-            //获取主表字段配置
-            List<CfgQueryOptionEntity> mainCfgQueryOptionList = fieldBelongsTypeByMap.get(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode());
-
-            //遍历
-            for (Map.Entry<String, List<CfgQueryOptionEntity>> entry : fieldBelongsTypeByMap.entrySet()) {
-                //common和主表不需要再查询
-                if(entry.getKey().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()) || entry.getKey().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
-                    continue;
-                }
-                List<CfgQueryOptionEntity> value = entry.getValue();
-                //如果存在，则需要找对明细表里的关联字段，并根据该字段来进行FeignQuery查询出对应的明细列表
-                CfgQueryOptionEntity detailEntity = value.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
-                if (Objects.isNull(detailEntity)) {
-                    continue;
-                }
-                //获取关联记录
-                String parentId = detailEntity.getParentId();
-                CfgQueryOptionEntity refEntity = mainCfgQueryOptionList.stream().filter(e -> e.getId().equals(parentId)).findFirst().orElse(null);
-                String refField = refEntity.getConditionField();
-                String refValue = String.valueOf(variablesMap.get(refField));
-
-                String classpath = detailEntity.getClasspath();
-                classpath = classpath.replace("class ", "");
-                Class<BaseEntity> clazz = null;
-                try {
-                    clazz = (Class<BaseEntity>) Class.forName(classpath);
-                } catch (ClassNotFoundException e) {
-                    throw new ServiceException(classpath + "实体不存在");
-                }
-                List<BaseEntity> detailList = FeignQuery.create(clazz)
-                        .eq(detailEntity.getConditionField(), refValue)
-                        .list();
-
-                if (CollUtil.isEmpty(detailList)) {
-                    continue;
-                }
-                //明细数据
-                variablesMap.put(entry.getKey() , BeanUtil.copyToList(detailList,Map.class));
-            }
-        }
-        return variablesMap;
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        return cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
     }
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -695,26 +653,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             throw new ServiceException(result.getMsg());
         }
     }
-
-    /**
-     * variablesMap值赋值
-     * @author will
-     * @date 2025/5/21 10:51
-     * @param entity
-     * @return Map<String,Object>
-     */
-    private Map<String,Object> getVariablesMap(SoB2cEntity entity) {
-        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-
-
-
-        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
-        if(CollUtil.isNotEmpty(detailList)){
-            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
-        }
-        return variablesMap;
-    }
-
 
     private PilotApplicationDTO.ViewDTO fillOne(PilotApplicationEntity pilotApplicationEntity) {
         if (ObjectUtil.isEmpty(pilotApplicationEntity)) {
