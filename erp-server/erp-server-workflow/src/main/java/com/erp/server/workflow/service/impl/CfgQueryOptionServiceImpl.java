@@ -43,6 +43,9 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         LambdaQueryWrapper<CfgQueryOptionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode());
         List<CfgQueryOptionEntity> common = baseMapper.selectList(queryWrapper);
+        common.stream().forEach(item -> {
+            item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.TABLE.getName()+"-"+item.getConditionFieldName());
+        });
 
         queryWrapper.clear();
         if (StringUtils.isNotBlank(fieldBelongsType)) {
@@ -54,10 +57,14 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         queryWrapper.eq(CfgQueryOptionEntity::getIsDeleted, false);
         queryWrapper.orderByDesc(CfgQueryOptionEntity::getFieldBelongsType);
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.selectList(queryWrapper);
-        cfgQueryOptionEntities = cfgQueryOptionEntities.stream()
-                .filter(e -> !e.getConditionField().endsWith("Id") && !e.getConditionField().endsWith("id"))
-                .collect(Collectors.toList());
+        cfgQueryOptionEntities.stream().forEach(item -> {
+            item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.getName(item.getFieldBelongsType())+"-"+item.getConditionFieldName());
+        });
+
         cfgQueryOptionEntities.addAll(common);
+        cfgQueryOptionEntities = cfgQueryOptionEntities.stream()
+                .filter(e -> !e.getConditionField().contains("id") && !e.getConditionField().contains("Id"))
+                .collect(Collectors.toList());
         return BeanUtil.copyToList(cfgQueryOptionEntities, CfgQueryOptionDTO.cfgApproveSyncDropDownDTO.class);
     }
 
