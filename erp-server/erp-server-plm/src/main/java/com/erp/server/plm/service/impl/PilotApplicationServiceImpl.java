@@ -40,10 +40,12 @@ import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.*;
+import com.erp.model.scm.dto.PurchaseApplicationDTO;
+import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
+import com.erp.model.scm.dto.PurchasePriceDetailDTO;
+import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseApplicationDetailEntity;
 import com.erp.model.scm.entity.PurchaseApplicationEntity;
-import com.erp.model.scm.entity.PurchaseSkuOrgRefEntity;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
@@ -54,7 +56,10 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.rpc.scm.feign.*;
+import com.erp.rpc.scm.feign.PurchaseApplicationDetailFeign;
+import com.erp.rpc.scm.feign.PurchaseApplicationFeign;
+import com.erp.rpc.scm.feign.PurchasePriceDetailFeign;
+import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
@@ -469,8 +474,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             noticeMessageService.approvePilotApplicationNotice(approvePilotNoticeDTO.getUserName(), approvePilotNoticeDTO, Boolean.TRUE);
         }
     }
-
-
 
     /**
      * 审核流程处理
@@ -1256,10 +1259,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         //sku信息
         List<String> skuIds = detailList.stream().map(item -> item.getSkuId()).distinct().collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.lambdaQuery().in(ProductDetailEntity::getId, skuIds).list();
-        //采购组织-sku关系记录
-        PurchaseSkuOrgRefDTO.QuerySkuDTO querySkuDTO = new PurchaseSkuOrgRefDTO.QuerySkuDTO();
-        querySkuDTO.setSkuIdList(skuIds);
-        List<PurchaseSkuOrgRefEntity> skuOrgRefList = scmTaskFeign.getBySkuIdList(querySkuDTO);
         Map<String, ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(item -> item.getId(), item2 -> item2));
         //根据试产量产单主键id查询采购申请单明细的集合
         List<PurchaseApplicationDetailDTO.PurchaseSkuQtyDTO> purchaseSkuQtyList = purchaseApplicationFeign.listSkuAndQty(ids);
@@ -1276,11 +1275,6 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
             dto.setApproveQty(detailEntity.getApproveQty());
             dto.setDetailId(detailEntity.getId());
             dto.setSkuId(detailEntity.getSkuId());
-            //赋值采购组织
-            skuOrgRefList.stream().filter(item -> item.getSkuId().equals(detailEntity.getSkuId())).findFirst().ifPresent(item -> {
-                dto.setPurchaseOrgId(item.getPurchaseOrgId());
-                dto.setPurchaseOrgName(item.getPurchaseOrgName());
-            });
             if (skuMap.containsKey(detailEntity.getSkuId())) {
                 ProductDetailEntity sku = skuMap.get(detailEntity.getSkuId());
                 dto.setProductName(sku.getName());
