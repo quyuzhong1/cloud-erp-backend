@@ -235,6 +235,22 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 								}
 							}
 						}
+						if(StringUtils.isNotBlank(code) && code.startsWith("POC")) {
+							JSONArray jsonArray = parseObject.getJSONArray("detailList");
+							if(CollUtil.isNotEmpty(jsonArray)) {
+								if(jsonArray.stream().allMatch(j -> {
+									JSONObject JSONObject = (JSONObject)j;
+									JSONArray refList = JSONObject.getJSONArray("refList");
+									return refList.stream().allMatch(f -> {
+										JSONObject link = (JSONObject)f;
+										String refDetailKingdeeId = link.getString("refKingdeeDetailId");
+										return StringUtils.isNotBlank(refDetailKingdeeId);
+									});
+								})) {
+									break;
+								}
+							}
+						}
 					} catch (Exception e) {
 						log.error("处理上游单据失败" , e);
 					}
@@ -348,6 +364,16 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 		String responseData = "";
 		String message = "";
 		if(StringUtils.isNotBlank(requestData) && !"null".equals(requestData)) {
+			if(requestData.trim().startsWith("{") && this.validateDataBlack(JSON.parseObject(requestData), dmpCfgOutputEntity.getId(), Boolean.TRUE)) {
+				dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getResponseData, "查询同步后报文属于黑名单")
+					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+					.set(DmpOutputTaskRecordEntity::getIsDeleted, true)
+					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.update();
+				return;
+			}
 			if(systemCode.equals(DmpBasicSystemCodeEnum.SDY.getCode())) {
 				Map<String, String> sdyObject = new HashMap<>();
 				sdyObject.put(SdyCommonService.REQUEST_URL, outputMethod);

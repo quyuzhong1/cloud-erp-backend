@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -107,6 +108,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 		}
 		List<DmpOutputTaskRecordEntity> outputData = this.outputData(dmpRequest, dmpResponse);
 		this.dealDeleteDmpBaseEntity(dmpRequest, dmpResponse, outputData);
+		this.filterBlack(dmpRequest, dmpResponse, outputData);
 		dmpResponse.setOutputData(outputData);
 		if(CollUtil.isNotEmpty(outputData)) {
 			dmpOutputTaskRecordService.saveBatch(outputData);
@@ -161,6 +163,24 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				parseObject.put("status", "已删除");
 				newValue.setRequestData(parseObject.toJSONString());
 				outputData.add(newValue);
+			}
+		}
+	}
+	
+	protected void filterBlack(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse, List<DmpOutputTaskRecordEntity> outputData) {
+		if(CollUtil.isEmpty(outputData)) {
+			return;
+		}
+		String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+		Iterator<DmpOutputTaskRecordEntity> iterator = outputData.iterator();
+		while(iterator.hasNext()) {
+			DmpOutputTaskRecordEntity next = iterator.next();
+			String requestData = next.getRequestData();
+			if(StringUtils.isNotBlank(requestData)) {
+				JSONObject parseObject = JSON.parseObject(requestData);
+				if(this.validateDataBlack(parseObject, cfgOutputId, Boolean.TRUE)) {
+					iterator.remove();
+				}
 			}
 		}
 	}
