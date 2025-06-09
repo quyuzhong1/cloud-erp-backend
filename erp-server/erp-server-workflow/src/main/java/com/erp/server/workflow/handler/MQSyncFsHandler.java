@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.lark.oapi.service.approval.v4.model.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -56,6 +57,8 @@ public class MQSyncFsHandler {
     private ApproveSyncRecordService approveSyncRecordService;
     @Resource
     private CfgQueryOptionExtService cfgQueryOptionExtService;
+    @Autowired
+    private CfgQueryOptionService cfgQueryOptionService;
 
     public boolean handler(CfgApproveSyncDTO.SyncFsProcessToMqDTO dto) {
         CfgApproveSyncEntity cfgApproveSyncEntity = dto.getCfgApproveSyncEntity();
@@ -134,33 +137,44 @@ public class MQSyncFsHandler {
         //值映射
         Map<String, String> remoteValues = new HashMap<>();
         if(CollUtil.isNotEmpty(fieldMapEntities)){
+            List<String> fieldIds = fieldMapEntities.stream().map(CfgApproveSyncFieldMapEntity::getFieldId).collect(Collectors.toList());
+            List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionService.listByIds(fieldIds);
             //参数map
             Map<String, Object> variablesMap = dto.getVariablesMap();
+            List<Object> detailList = new ArrayList<>();
+            if(variablesMap.containsKey(ThirdConstants.DETAIL_LIST)){
+                detailList =( List<Object> ) variablesMap.get(ThirdConstants.DETAIL_LIST);
+
+            }
             //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
             int len = fieldMapEntities.size() > 5 ? 5 : fieldMapEntities.size();
             Map<String,String> handlerValueMap = new HashMap<>();
             for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
-                String fieldSourceValueStr = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
-                if(StringUtils.isNotBlank(fieldSourceValueStr)){
-                    handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
-                }else {
-                    if(variablesMap.containsKey(ThirdConstants.DETAIL_LIST)){
-                        List<Object> detailList =( List<Object> ) variablesMap.get(ThirdConstants.DETAIL_LIST);
-                        if(CollUtil.isNotEmpty(detailList)){
-                            StringBuffer sb = new StringBuffer();
-                            for (Object object : detailList) {
-                                Map<String, Object> map = BeanUtil.beanToMap(object);
-                                String str = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entry.getFieldSource(), map);
-                                if(StringUtils.isNotBlank(str)){
-                                    sb.append(str);
-                                    sb.append(";");
-                                }
-                            }
-                            String fieldSourceDetailValueStr = sb.toString();
-                            if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
-                                handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
+                CfgQueryOptionEntity queryOptionEntity = cfgQueryOptionList.stream().filter(e -> Objects.equals(entry.getFieldId(), e.getId())).findFirst().orElse(null);
+                if(Objects.isNull(queryOptionEntity)){
+                    continue;
+                }
+                //判断是表头还是明细
+                if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode())){
+                    if(CollUtil.isNotEmpty(detailList)){
+                        StringBuffer sb = new StringBuffer();
+                        for (Object object : detailList) {
+                            Map<String, Object> map = BeanUtil.beanToMap(object);
+                            String str = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entry.getFieldSource(), map);
+                            if(StringUtils.isNotBlank(str)){
+                                sb.append(str);
+                                sb.append(";");
                             }
                         }
+                        String fieldSourceDetailValueStr = sb.toString();
+                        if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
+                            handlerValueMap.put(entry.getFieldId(),fieldSourceDetailValueStr);
+                        }
+                    }
+                }else{
+                    String fieldSourceValueStr = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
+                    if(StringUtils.isNotBlank(fieldSourceValueStr)){
+                        handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
                     }
                 }
             }
