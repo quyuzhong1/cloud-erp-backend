@@ -18,18 +18,14 @@ import java.util.Map;
 public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity> {
 
 
-    /**
-    * 新增
-    * @author hcg
-    * @date: 2025-05-15
-    * @param
-    * @return
-    */
     List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey);
 
     List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey,String fieldBelongsType);
 
+
     List<CfgQueryOptionDTO.TreeDTO> tree(String bussinessKey);
+
+    void genBySql(List<CfgQueryOptionDTO.GenListDTO>list);
 
     List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey);
 

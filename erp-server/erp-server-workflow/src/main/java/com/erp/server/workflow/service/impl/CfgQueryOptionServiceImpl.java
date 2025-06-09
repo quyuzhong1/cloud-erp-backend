@@ -11,16 +11,20 @@ import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
-import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
+import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
 import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.erp.server.workflow.service.WorkMenuService;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.sql.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,6 +40,8 @@ import java.util.stream.Collectors;
 @Service
 public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMapper, CfgQueryOptionEntity> implements CfgQueryOptionService {
 
+    @Resource
+    private WorkMenuService workMenuService;
 
     @Override
     public List<CfgQueryOptionDTO.ListDTO> proDropDown(String bussinessKey) {
@@ -181,4 +187,82 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         }
         return variablesMap;
     }
+
+    @Transactional(rollbackFor =Exception.class)
+    @Override
+    public void genBySql(List<CfgQueryOptionDTO.GenListDTO>list) {
+        if(CollUtil.isNotEmpty(list)){
+            for (CfgQueryOptionDTO.GenListDTO dto : list) {
+                String model = dto.getModel();
+                String tableName = dto.getTableName();
+                String fieldBelongsType = dto.getFieldBelongsType();
+                String bussinessKey = dto.getBussinessKey();
+
+                //判断同一个单据下的fieldBelongsType 是否已存在。 不存在才新增，存在则跳过
+                Integer count = lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey)
+                        .eq(CfgQueryOptionEntity::getFieldBelongsType,fieldBelongsType)
+                        .count();
+                if(count > 0){
+                    continue;
+                }
+                saveFromSql(bussinessKey, model,tableName,fieldBelongsType);
+            }
+        }
+    }
+
+
+    private void saveFromSql(String businessKey, String model , String tableName, String fieldBelongsType) {
+        String sql = "SELECT cls.relname, col.attnum AS ordinal_position, col.attname AS COLUMN_NAME, format_type(col.atttypid, col.atttypmod) AS data_type, NOT col.attnotnull AS is_nullable, des.description AS column_comment FROM pg_attribute col JOIN pg_class cls ON col.attrelid = cls.OID JOIN pg_namespace ns ON cls.relnamespace = ns.OID LEFT JOIN pg_description des ON des.objoid = col.attrelid AND des.objsubid = col.attnum WHERE cls.relname = '{}' AND col.attnum > 0 and col.attname not in ('create_user_id','create_user_name','create_time','update_user_id','update_user_name','update_time','version','is_deleted') AND NOT col.attisdropped ORDER BY col.attnum;";
+
+        String url = "jdbc:postgresql://172.16.100.60:32590/" + StrUtil.format("erp-{}", model) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
+        try {
+            List<CfgQueryOptionEntity> results = new ArrayList<>();
+            Connection conn = DriverManager.getConnection(url, "postgres", "admin@viji");
+            String format = StrUtil.format(sql, tableName);
+
+            PreparedStatement stmt = conn.prepareStatement(format);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String name = rs.getString("column_name");
+                String comment = rs.getString("column_comment");
+                CfgQueryOptionEntity cfgQueryOption = new CfgQueryOptionEntity();
+                cfgQueryOption.setConditionField(underlineToCamel(name));
+                cfgQueryOption.setConditionFieldName(Objects.isNull(comment) ? "" : comment);
+                cfgQueryOption.setBussinessKey(businessKey);
+                cfgQueryOption.setFieldBelongsType(fieldBelongsType);
+                cfgQueryOption.setValueType("String");
+                cfgQueryOption.setClasspath("class com.erp.model."+model+".entity."+underlineToCamel(tableName)+"Entity");
+                cfgQueryOption.setTableName(tableName);
+                cfgQueryOption.setSysClassify(model);
+                results.add(cfgQueryOption);
+            }
+            saveBatch(results);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    /**
+     * 下划线命名转驼峰命名
+     */
+    public String underlineToCamel(String underScore) {
+        StringBuilder camelCase = new StringBuilder();
+        boolean nextUpper = false;
+
+        for (int i = 0; i < underScore.length(); i++) {
+            char c = underScore.charAt(i);
+            if (c == '_') {
+                nextUpper = true;
+            } else {
+                if (nextUpper && i > 0) {
+                    camelCase.append(Character.toUpperCase(c));
+                    nextUpper = false;
+                } else {
+                    camelCase.append(Character.toLowerCase(c));
+                }
+            }
+        }
+
+        return camelCase.toString();
+    }
+
 }

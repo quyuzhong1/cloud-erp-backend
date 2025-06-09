@@ -350,4 +350,22 @@ public class CfgQueryOptionDTO implements Serializable {
         private String businessKey;
 
     }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class GenListDTO  {
+
+        //系统分类
+        private String model;
+        //表名
+        private String tableName;
+        //单据类型
+        private String bussinessKey;
+        //字段所属单据类型
+        private String fieldBelongsType;
+
+    }
 }
