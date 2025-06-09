@@ -50,14 +50,17 @@ import com.erp.model.sys.dto.SysUserSimpleDTO;
 import com.erp.model.sys.enums.NoticeNodeEnum;
 import com.erp.model.sys.enums.NoticePurItemRoleEnum;
 import com.erp.model.sys.enums.NoticeReceiverEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.scm.constant.ScmConstant;
 import com.erp.server.scm.kingdee.SyncKingdeePurchasePriceChangeService;
 import com.erp.server.scm.mapper.PurchasePriceChangeMapper;
@@ -149,6 +152,9 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
 
     @Resource
     private ProcessTaskManagementFeign processTaskManagementFeign;
+
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
 
     /**
      * 添加采购价目变更
@@ -997,12 +1003,15 @@ public class PurchasePriceChangeServiceImpl extends SuperServiceImpl<PurchasePri
      * @return Map<String,Object>
      */
     private Map<String,Object> getVariablesMap(PurchasePriceChangeEntity entity) {
-        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+        CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PURCHASEPRICECHANGE.getCode());
+        dto.setVariablesMap(BeanUtil.beanToMap(entity));
+        Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
+
         List<PurchasePriceChangeDetailEntity> detailList = purchasePriceChangeDetailService.listByPurchasePriceChangeId(entity.getId());
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.PRICE_NOT_EXIST);
         }
-        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
         //新品首批
         String skuNo = detailList.stream().map(PurchasePriceChangeDetailEntity::getSkuNo).collect(Collectors.joining(","));
         variablesMap.put("skuNo", skuNo);

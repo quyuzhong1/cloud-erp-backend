@@ -338,4 +338,16 @@ public class CfgQueryOptionDTO implements Serializable {
         private String sysClassify;
 
     }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class VariablesParamsDTO  {
+
+        private Map<String, Object> variablesMap;
+
+        private String businessKey;
+
+    }
 }

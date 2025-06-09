@@ -5,6 +5,7 @@ import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -43,4 +44,6 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     List<CfgQueryOptionEntity> listBySysFieldList(String bussinessKey,List<String> sysFieldList);
 
     List<CfgQueryOptionEntity> listByMqParams(CfgQueryOptionDTO.MqParamsDTO mqParamsDTO);
+
+    Map<String, Object> getVariablesMapByBusinessKey(CfgQueryOptionDTO.VariablesParamsDTO dto);
 }
