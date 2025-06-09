@@ -205,7 +205,6 @@ public class CfgThirdNoticeDTO implements Serializable {
         /**
         * 通知人员
         */
-        @NotEmpty(message = "通知人员不能为空")
         private List<String> roleTypeList;
 
         /**

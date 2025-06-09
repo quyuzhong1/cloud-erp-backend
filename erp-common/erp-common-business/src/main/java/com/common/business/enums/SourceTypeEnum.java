@@ -77,6 +77,7 @@ public enum SourceTypeEnum {
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
     PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
     QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
+    WAREHOUSE_LOCATION_REPLENISH("warehouseLocationReplenish", "仓位补货","warehouse_location_replenish"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),

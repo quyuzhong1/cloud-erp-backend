@@ -389,4 +389,13 @@ public interface WmsTaskFeign {
      */
     @PostMapping("/feign/qcBill/getFsQcNoticeTitle")
     String getFsQcNoticeTitle(@RequestParam("title") String title);
+    /**
+     *
+     */
+    @GetMapping("/feign/warehouseLocationReplenish/listTabInfo")
+    List<WarehouseLocationReplenishDTO.TabDTO> listTabInfo();
+
+
+
+
 }

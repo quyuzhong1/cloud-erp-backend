@@ -46,6 +46,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
@@ -147,7 +148,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 
     @Override
-//    @Transactional(rollbackFor = Exception.class)
+    @Transactional(rollbackFor = Exception.class)
     public void onMessage(String jsonStr) {
         log.info("MqRecordConsumerService 开始");
         if(StringUtils.isBlank(jsonStr)){
