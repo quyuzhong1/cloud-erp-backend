@@ -21,6 +21,10 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 订单参考号
      */
     private String referenceNo;
+    /**
+     * 平台
+     */
+    private String platform;
 
     /**
      * 平台订单号
@@ -33,6 +37,15 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
     private String shippingMethod;
 
     /**
+     * 配送方式名称
+     */
+    private String shippingMethodName;
+
+    /**
+     * 配送方式Id
+     */
+    private String shippingMethodId;
+    /**
      * 配送仓库
      */
     private String warehouseCode;
@@ -41,6 +54,23 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
      * 是否审核 默认1
      */
     private Integer verify;
+
+    /**
+     * 是否线上订单
+     */
+    private boolean onlineFlag;
+
+    /**
+     * 线上订单物流单号
+     */
+    private String trackingNo;
+    /**
+     * 线上面单url
+     */
+    private String labelUrl;
+
+    //配送商
+    private String carrierType;
 
     //收件人信息
     private ReceiverInfo receiverInfo;
@@ -175,5 +205,40 @@ public class ThirdWarehouseCreateOutboundReq extends ThirdWarehouseAuth {
          * 数量
          */
         private Integer quantity;
+
+        private String skuId;
+
+        private String skuNo;
+
+        private String sourceSkuNo;
+
+        private String sourceSkuId;
+
+        /**
+         * 海关编码
+         */
+        private String hsCode;
+
+        public Item(String productSku, Integer quantity,String hsCode) {
+            this.productSku = productSku;
+            this.quantity = quantity;
+            this.hsCode = hsCode;
+        }
+    }
+
+    /**
+     * 订单附件
+     */
+    private List<Attach> attach;
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Attach {
+
+        private String fileType;
+
+        private Integer attachId;
     }
 }

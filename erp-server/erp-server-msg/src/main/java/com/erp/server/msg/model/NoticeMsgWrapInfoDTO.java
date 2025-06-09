@@ -1,7 +1,7 @@
 package com.erp.server.msg.model;
 
+import com.erp.model.msg.dto.NoticeMsgCardButtonDTO;
 import com.erp.model.msg.enums.NoticeMessageTypeEnum;
-import com.erp.model.msg.enums.NoticeTypeEnum;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -42,5 +42,8 @@ public class NoticeMsgWrapInfoDTO implements Serializable {
      */
     private Boolean urgent = Boolean.FALSE;
 
-
+    /**
+     * 按钮信息
+     */
+    private NoticeMsgCardButtonDTO noticeMsgCardButtonDTO;
 }

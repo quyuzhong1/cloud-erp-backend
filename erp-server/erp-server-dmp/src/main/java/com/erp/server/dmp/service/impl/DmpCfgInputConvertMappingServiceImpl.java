@@ -68,7 +68,7 @@ public class DmpCfgInputConvertMappingServiceImpl extends SuperServiceImpl<DmpCf
     @Override
     public Boolean update(DmpCfgInputConvertMappingDTO.UpdateDTO updateDTO) {
         DmpCfgInputConvertMappingEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "转换映射"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "转换映射"));
         DmpCfgInputConvertMappingEntity dmpCfgInputConvertMappingEntity =  BeanMapperUtils.map(DmpCfgInputConvertMappingEntity.class, updateDTO);
 
         // 数据处理

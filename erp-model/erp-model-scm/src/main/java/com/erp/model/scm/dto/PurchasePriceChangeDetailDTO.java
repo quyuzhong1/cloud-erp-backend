@@ -30,7 +30,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO implements Serializable{
 
         /**
          * sku id
@@ -127,7 +127,7 @@ public class PurchasePriceChangeDetailDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO {
+    public static class UpdateDTO implements Serializable{
 
 
         @NotBlank(message = "id不能为空")

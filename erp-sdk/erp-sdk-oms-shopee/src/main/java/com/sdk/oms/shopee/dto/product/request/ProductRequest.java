@@ -25,5 +25,12 @@ public class ProductRequest implements Serializable {
     Integer offset;
     Long timeFrom;
     Long timeTo;
+    /**
+     * 列表参数
+     */
     String itemIdList;
+    /**
+     * getModelList参数
+     */
+    Long itemId;
 }

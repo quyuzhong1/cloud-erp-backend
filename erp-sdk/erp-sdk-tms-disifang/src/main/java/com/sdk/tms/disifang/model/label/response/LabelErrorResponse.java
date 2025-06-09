@@ -7,7 +7,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName LabelErrorResponse
- * @description: TODO
+
  * @date 2023年11月08日
  * @version: 1.0
  */

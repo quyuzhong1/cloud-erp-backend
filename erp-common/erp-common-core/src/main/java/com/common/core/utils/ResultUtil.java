@@ -1,6 +1,6 @@
 package com.common.core.utils;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
@@ -32,11 +32,11 @@ public class ResultUtil {
      */
     public static void checkRemoteResult(ApiResult result,String errorMsg) {
         if (result == null) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         boolean success = result.getCode() == 200;
         if (!success) {
-            log.error(StrUtil.format("远程调用获取数据失败:{}", JSONObject.toJSONString(result)));
+            log.error(CharSequenceUtil.format("远程调用获取数据失败:{}", JSONObject.toJSONString(result)));
             throw new ServiceException(result.getCode(), StrUtils.isEmpty(errorMsg) ? result.getMsg() : errorMsg);
         }
     }

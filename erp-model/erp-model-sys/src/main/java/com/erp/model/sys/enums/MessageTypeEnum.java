@@ -6,8 +6,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import java.util.Objects;
 
 public enum MessageTypeEnum {
-    qc("qc","质检通知", "请及时查收消息"),
-    sys("sys","系统通知", "版本升级通知"),
+    QC("qc","质检通知", "请及时查收消息"),
+    SYS("sys","系统通知", "版本升级通知"),
     ;
     /**
      * 类型

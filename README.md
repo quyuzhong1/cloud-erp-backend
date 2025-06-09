@@ -92,21 +92,23 @@ For open source projects, say how it is licensed.
 If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
 
 
-##项目端口
-erp-gateway    9000
-erp-admin      9010
-erp-sys        9020
-erp-auth       9030
-erp-workflow   9040
-erp-plm        9050
-erp-dmp        9060
-erp-bi         9070
-erp-scm        9080
-erp-wms        9090
-erp-msg        9100
-erp-oms        9110
-
-
+##项目端口-prod   serverport    xxl-prod
+erp-gateway     9000
+erp-admin       9010
+erp-sys         9020            9029
+erp-auth        9030
+erp-workflow    9040            9049
+erp-plm         9050            9059
+erp-dmp         9060            9069
+erp-bi          9070
+erp-scm         9080            9089
+erp-wms         9090            9099
+erp-msg         9100            9109
+erp-oms         9110            9119
+erp-tms         9120            9129
+erp-srm         9130            9139
+erp-file        9140
+erp-mrp         9150            9159
 其他中间件端口
 ElasticSearch   9200
 RocketMQ        9876

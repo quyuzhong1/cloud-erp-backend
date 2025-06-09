@@ -4,6 +4,7 @@ package com.erp.server.wms.controller.api;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -16,20 +17,19 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.FbaShipmentPackingDTO;
-import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentEntity;
+import com.erp.server.wms.query.FbaShipmentSyncQueryHandler;
 import com.erp.server.wms.service.FbaShipmentPackingService;
 import com.erp.server.wms.service.FbaShipmentService;
+import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,7 +44,7 @@ import java.util.List;
 @RequestMapping("/fbaShipment")
 public class FbaShipmentController extends BaseController {
 
-    @Autowired
+    @Resource
     private FbaShipmentService fbaShipmentService;
 
     @Resource
@@ -56,6 +56,10 @@ public class FbaShipmentController extends BaseController {
      * @return ApiResult<PagingVO<FbaDeliveryDTO.ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "fs.shop_id",
+            menuCode = "wms:fbaShipment:paging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<FbaShipmentDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaShipmentDTO.PagingParamDTO> dto) {
         PagingVO<FbaShipmentDTO.ListDTO> list = fbaShipmentService.paging(dto);
@@ -115,7 +119,7 @@ public class FbaShipmentController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/skuMappingBatch")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量更新sku映射：ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量更新sku映射：ids={ids}")
     public ApiResult<List<BatchResultDTO>> skuMappingBatch(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -353,7 +357,7 @@ public class FbaShipmentController extends BaseController {
             menuCode = "wms:fbaShipment:delete",
             serviceClass = FbaShipmentService.class,
             keyIdName = "ids")
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "重新生成调拨单:ids={ids}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "重新生成调拨单:ids={ids}")
     public ApiResult<List<BatchResultDTO>> regenerateTransferOut(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
@@ -380,7 +384,7 @@ public class FbaShipmentController extends BaseController {
      */
     @PostMapping("/getPacking")
     public ApiResult<List<FbaShipmentPackingDTO.ViewDTO>> getPacking(@RequestBody @Validated BaseIdDTO dto) {
-        return success(fbaShipmentPackingService.listPacking(Arrays.asList(dto.getId())));
+        return success(fbaShipmentPackingService.listPacking(Collections.singletonList(dto.getId())));
     }
 
     /**
@@ -400,4 +404,38 @@ public class FbaShipmentController extends BaseController {
         return success(fbaShipmentService.requisitionFbaQuickPaste(dto));
     }
 
+    /**
+     * FBA货件同步信息分页
+     */
+    @PostMapping("/syncPaging")
+    @WebAdvanceQuery(handler = FbaShipmentSyncQueryHandler.class)
+    public ApiResult<PagingVO<FbaShipmentDTO.SyncViewDTO>> syncWarehouseProductView(@RequestBody PagingDTO<AdvanceQueryContainer> advanceQueryDTO){
+        return success(fbaShipmentService.syncPaging(advanceQueryDTO));
+    }
+
+    /**
+     * 查询详情列表
+     *
+     * @return ApiResult<List < FbaShipmentDTO.ViewDTO>>
+     * @author zdy
+     * @date: 2025/05/09
+     */
+    @PostMapping("/viewList")
+    public ApiResult<List<FbaShipmentDTO.ListDTO>> view(@RequestBody @Validated FbaShipmentDTO.ViewListReqDTO dto) {
+        List<FbaShipmentDTO.ListDTO> resultList = fbaShipmentService.viewList(dto);
+        return success(resultList);
+    }
+    /**
+     * 调整签收
+     *
+     * @return ApiResult
+     * @author Jim
+     * @date: 2023-11-24
+     */
+    @PostMapping("/changeReceived")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "调整签收:{detailId}")
+    public ApiResult changeReceived(@RequestBody @Validated List<FbaShipmentDTO.ReceivedDTO> dtoList) {
+        List<BatchResultDTO> resultDTOS = fbaShipmentService.changeReceived(dtoList);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

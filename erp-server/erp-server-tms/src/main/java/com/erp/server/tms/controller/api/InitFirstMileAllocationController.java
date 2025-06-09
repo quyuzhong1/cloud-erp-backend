@@ -75,7 +75,7 @@ public class InitFirstMileAllocationController extends BaseController {
         menuCode = "tms:initFirstMileAllocation:update",
         serviceClass = InitFirstMileAllocationService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated InitFirstMileAllocationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated InitFirstMileAllocationDTO.UpdateDTO dto) {
         initFirstMileAllocationService.update(dto);
         return success();
     }
@@ -91,6 +91,8 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "ad.shop_id",
+            warehouseTableField = "ad.warehouse_id",
             menuCode = "tms:initFirstMileAllocation:paging",
             tableAlias = "a"
     )
@@ -110,6 +112,8 @@ public class InitFirstMileAllocationController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "ad.shop_id",
+            warehouseTableField = "ad.warehouse_id",
             menuCode = "tms:initFirstMileAllocation:paging",
             tableAlias = "a"
     )
@@ -309,8 +313,7 @@ public class InitFirstMileAllocationController extends BaseController {
      * @date 2024-8-15 10:54
      */
     @PostMapping("/exportExcel")
-    @WebAdvanceQuery(handler = InitFirstMileAllocationQueryHandler.class)
-    public ApiResult<?> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto) {
+    public ApiResult<Object> exportExcel(@RequestBody @Valid InitFirstMileAllocationDTO.PagingParamDTO dto) {
         initFirstMileAllocationService.exportExcel(dto);
         return success(Boolean.TRUE);
     }
@@ -321,7 +324,7 @@ public class InitFirstMileAllocationController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载期初导入模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
         initFirstMileAllocationService.downloadTemplate(response);
         return success();
     }

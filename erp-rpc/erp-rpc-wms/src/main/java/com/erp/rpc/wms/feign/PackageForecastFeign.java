@@ -2,7 +2,6 @@ package com.erp.rpc.wms.feign;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
-import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,7 +12,7 @@ import java.util.List;
 /**
  * @author Lambda
  * @Classname 组包预报feign
- * @Description TODO
+ * @Description 组包预报feign
  * @Date 2024-01-30 11:21
  * @Created by yl
  */

@@ -169,10 +169,10 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
      * 下推要货申请列表查询
      * @Author Luo_WG
      * @Date 2023/11/16 17:55
-     * @param ids
+     * @param detailIds
      * @return java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>
      **/
-    List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> ids);
+    List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> generateRequisitionApplicationView(List<String> detailIds);
 
     /**
      * 下推要货申请保存
@@ -242,4 +242,12 @@ public interface WmsDeliveryPlanService extends SuperService<WmsDeliveryPlanEnti
     Boolean updateDeliveryStatus(List<String> ids, String deliveryStatus);
 
     PagingVO<WmsDeliveryPlanDTO.ListDTO> exportOverseasDeliveryPlan(PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> dto);
+    /**
+     * 发货计划显示
+     * @author will
+     * @date 2024/10/23 14:43
+     * @param id
+     * @return WmsDeliveryPlanDTO.DeliverPlanViewDTO
+     */
+    WmsDeliveryPlanDTO.DeliverPlanViewDTO deliverPlanView(String id);
 }

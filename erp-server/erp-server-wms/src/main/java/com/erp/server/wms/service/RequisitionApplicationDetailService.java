@@ -81,7 +81,7 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
      * @date 2024/7/2 11:45
      * @param mainId
      */
-    void cleanVirtualWarehouseIdByMianId(String mainId);
+    void cleanVirtualFrozenQtyByMianId(String mainId);
     /**
      * 查询要货申请数据
      * @author will
@@ -89,4 +89,11 @@ public interface RequisitionApplicationDetailService extends SuperService<Requis
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualRequisitionApplicationDetail();
+
+    /**
+     * 根据来源明细id获取明细记录
+     * @param sourceDetailIds
+     * @return
+     */
+    List<RequisitionApplicationDetailEntity> listBySourceDetailIds(List<String> sourceDetailIds);
 }

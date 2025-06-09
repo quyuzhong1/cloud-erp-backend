@@ -37,9 +37,6 @@ import java.util.Map;
 @LogisticsPlatformType(LogisticsPlatformEnum.BAO_HONG)
 public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     @Resource
-    private DmpTaskFeign dmpTaskFeign;
-
-    @Resource
     private BaoHongService baoHongService;
 
     @Resource
@@ -53,7 +50,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
         //订单产品详情
         List<ProductDeatil> productDeatils = BaoHongCreateOrderConverter.INSTANCE.LogisticsProductVOToProductDeatil(logisticsOrderVO.getLogisticsProductVOList());
         createOrderInfo.setOrderProduct(productDeatils);
-
+        String iossNo = createOrderInfo.getIossNo();
         try {
             TransferLogisticsContext.setAuthMap(logisticsOrderVO.getAuthMap());
             //下单获取平台返回值
@@ -73,6 +70,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
                         .transportNo(result.getData())
                         .trackNo(result.getData())
                         .deliveryNo(logisticsOrderVO.getDeliveryNo())
+                        .iossTaxNo(iossNo)
                         .build();
 
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
@@ -178,7 +176,7 @@ public class BaoHongLogisticsHandlerImp extends AbstractLogisticsHandler {
     }
 
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             TransferLogisticsContext.setAuthMap(authMap);
 

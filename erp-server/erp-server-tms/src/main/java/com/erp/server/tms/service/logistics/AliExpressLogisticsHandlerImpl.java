@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
@@ -14,7 +14,6 @@ import com.erp.model.dmp.dto.CfgAppClientDTO;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
 import com.erp.model.dmp.enums.AppClientEnum;
 import com.erp.model.oms.entity.ShopAuthEntity;
-import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
 import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
@@ -48,6 +47,7 @@ import com.erp.tms.aliexpress.service.AliExpressShipperService;
 import com.erp.tms.aliexpress.util.ApiException;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.stereotype.Component;
@@ -55,13 +55,11 @@ import org.springframework.stereotype.Component;
 import javax.annotation.Resource;
 import java.io.IOException;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
  * @author zdy
  * @ClassName AliExpressLogisticsHandlerImpl
- * @description: TODO
  * @date 2023年11月17日
  * @version: 1.0
  */
@@ -70,6 +68,8 @@ import java.util.stream.Collectors;
 @RefreshScope
 @LogisticsPlatformType(LogisticsPlatformEnum.ALI_EXPRESS)
 public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
+    public static final String ORDER_ID = "orderId";
+    public static final String CHILD_ORDER_ID = "childOrderId";
     @Resource
     private DmpTaskFeign dmpTaskFeign;
     @Resource
@@ -121,8 +121,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             map.put("url", finalCfgAppClient.getUrl());
             map.put("token", shopAuthEntity.getToken());
             map.put("shopId", shopAuthEntity.getShopId());
-            map.put("orderId", orderId);
-            map.put("childOrderId",childOrderId);
+            map.put(ORDER_ID, orderId);
+            map.put(CHILD_ORDER_ID,childOrderId);
             mapList.add(map);
         });
         return mapList;
@@ -155,8 +155,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         map.put("clientSecret", cfgAppClient.getClientSecret());
         map.put("clientId", cfgAppClient.getClientId());
         map.put("url", cfgAppClient.getUrl());
-        map.put("orderId", orderId);
-        map.put("childOrderId",childOrderId);
+        map.put(ORDER_ID, orderId);
+        map.put(CHILD_ORDER_ID,childOrderId);
         if (org.apache.commons.lang3.StringUtils.isNotBlank(shopId)) {
             ShopAuthEntity shopAuth = shopInfoFeign.getShopAuthByShopId(shopId);
             if (Objects.nonNull(shopAuth)) {
@@ -173,6 +173,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param logisticsOrderVO
      * @return
      */
+    @Override
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
         LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
         OrderRequest orderRequest = processCreateOrderData(logisticsOrderVO);
@@ -182,17 +183,19 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             response = aliExpressShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
             //转换实体
-            if (!Objects.isNull(response) && !Objects.isNull(response.getResultSuccess()) && response.getResultSuccess()) {
+            if (!Objects.isNull(response) && !Objects.isNull(response.getResultSuccess()) && Boolean.TRUE.equals(response.getResultSuccess())) {
                 OrderResponse orderResponse = response.getResult();
                 responseVO.setDeliveryNo(orderResponse.getTradeOrderId());
                 responseVO.setTransportNo(orderResponse.getOutOrderCode());
-//                responseVO.setTrackNo(orderResponse.getIntlTrackingNo());
                 success = true;
                 responseVO.success();
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(response), false);
             } else {
+                if(Objects.isNull(response)){
+                    throw new ServiceException("创建订单失败，返回结果为空");
+                }
                 String msg = Objects.nonNull(response.getResult()) ? response.getResult().getErrorDesc() : response.getErrorResponse().getMsg();
                 responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), msg);
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
@@ -200,6 +203,9 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(response), false);
             }
         } catch (Exception e) {
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             responseVO.failure(getPlatForm().getName(), logisticsOrderVO.getDeliveryNo(), e.getMessage());
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                     logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
@@ -233,7 +239,6 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             Address refund = LogisticsOrderConverter.INSTANCE.orderRequestRefundUserByAliExpress(logisticsOrderVO);
             addressDTO.setRefund(refund);
         }
-//        addressDTO.setRefund(addressDTO.getSender());
         if (Objects.nonNull(logisticsOrderVO.getReceiverInfoVO())){
             Address receiver = LogisticsOrderConverter.INSTANCE.orderRequestReceiverUserByAliExpress(logisticsOrderVO);
             addressDTO.setReceiver(encryptByOrderType(orderType,receiver));
@@ -244,10 +249,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             addressDTO.getPickup().setMemberType("pickup");
         }
         String undeliverableDecision = "1";
-        if (!StringUtils.isBlank(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision())){
-            if (UnDeliverableDecisionEnum.RETURN.getCode().equals(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision())){
-                undeliverableDecision = "0";
-            }
+        if (!StringUtils.isBlank(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision()) && UnDeliverableDecisionEnum.RETURN.getCode().equals(logisticsOrderVO.getLogisticsChannelEntity().getUndeliverableDecision())){
+            undeliverableDecision = "0";
         }
         return OrderRequest.builder()
                 .oaid(oaid)
@@ -380,6 +383,23 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             return "*";
         }
         StringBuilder sb = new StringBuilder();
+        String sb1 = handleStr(str, length, sb);
+        if (sb1 != null) return sb1;
+        // 计算需要隐藏字符的起始位置
+        // 如果字符串长度减去8小于4，则从字符串开头隐藏到可能的最大位置
+        int start = Math.max(0, length - 8);
+        // 使用StringBuilder来构建结果字符串
+        sb.append(str, 0, start); // 添加前缀
+        if (length - 4 > start) { // 如果还有空间可以隐藏字符
+            for (int i = 0; i < 4; i++) {
+                sb.append('*'); // 添加四个*
+            }
+        }
+        sb.append(str, length - 4, length); // 添加最后四位
+        return sb.toString();
+    }
+
+    private static @Nullable String handleStr(String str, int length, StringBuilder sb) {
         if (length < 3) {
             // 添加第一个字符
             sb.append(str.charAt(0));
@@ -413,18 +433,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
             sb.append(str, length - 3, length); // 添加最后四位
             return sb.toString();
         }
-        // 计算需要隐藏字符的起始位置
-        // 如果字符串长度减去8小于4，则从字符串开头隐藏到可能的最大位置
-        int start = Math.max(0, length - 8);
-        // 使用StringBuilder来构建结果字符串
-        sb.append(str, 0, start); // 添加前缀
-        if (length - 4 > start) { // 如果还有空间可以隐藏字符
-            for (int i = 0; i < 4; i++) {
-                sb.append('*'); // 添加四个*
-            }
-        }
-        sb.append(str, length - 4, length); // 添加最后四位
-        return sb.toString();
+        return null;
     }
 
     public static String maskLastEightChars(String address) {
@@ -472,34 +481,9 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     isSuccess = false;
                     continue;
                 }
-                QueryResponse queryResponse = JSONObject.parseObject(iopResponse.getResult(), QueryResponse.class);
+                QueryResponse queryResponse = JSON.parseObject(iopResponse.getResult(), QueryResponse.class);
                 //失败
-                if (Objects.isNull(queryResponse) || Objects.isNull(queryResponse.getSuccess()) || !queryResponse.getSuccess()) {
-                    logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
-                            logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-                            RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(iopResponse));
-                    LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
-                    responseVO.failure(getPlatForm().getName(), logisticsQueryBaseVO.getDeliveryNo(), queryResponse.getErrorDesc());
-                    list.add(responseVO);
-                    isSuccess = false;
-                } else {
-                    List<QueryResult> responses = queryResponse.getResultList();
-                    if (CollectionUtils.isNotEmpty(responses)) {
-                        QueryResult queryResult = responses.stream().filter(e -> !StringUtils.isBlank(e.getLogistics_order_id()) && logisticsQueryBaseVO.getTransportNo().equals(e.getOut_order_code())).findFirst().orElse(null);
-                        if (Objects.nonNull(queryResult)){
-                            LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
-                                    .transportNo(queryResult.getOut_order_code())
-                                    .trackNo(queryResult.getInternational_logistics_num())
-                                    .deliveryNo(queryResult.getTrade_order_id())
-                                    .logisticsChannelNo(queryResult.getLogistics_service_list().get(0).getCode())
-                                    .build();
-                            logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
-                                    logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-                                    RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
-                            list.add(orderResponseVO);
-                        }
-                    }
-                }
+                isSuccess = handleQuery(logisticsQueryBaseVO, queryResponse, iopResponse, list, isSuccess);
             } catch (ApiException e) {
                 logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
                         logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
@@ -513,6 +497,38 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         return isSuccess? success(list):failure(list);
     }
 
+    private boolean handleQuery(LogisticsQueryBaseVO logisticsQueryBaseVO, QueryResponse queryResponse, BaseResult iopResponse, List<LogisticsOrderResponseVO> list, boolean isSuccess) {
+        if (Objects.isNull(queryResponse) || Objects.isNull(queryResponse.getSuccess()) || Boolean.TRUE.equals(!queryResponse.getSuccess())) {
+            logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
+                    logisticsQueryBaseVO.getDeliveryNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(iopResponse));
+            LogisticsOrderResponseVO responseVO = new LogisticsOrderResponseVO();
+            if(Objects.nonNull(queryResponse)){
+                responseVO.failure(getPlatForm().getName(), logisticsQueryBaseVO.getDeliveryNo(), queryResponse.getErrorDesc());
+                list.add(responseVO);
+            }
+            isSuccess = false;
+        } else {
+            List<QueryResult> responses = queryResponse.getResultList();
+            if (CollectionUtils.isNotEmpty(responses)) {
+                QueryResult queryResult = responses.stream().filter(e -> !StringUtils.isBlank(e.getLogistics_order_id()) && logisticsQueryBaseVO.getTransportNo().equals(e.getOut_order_code())).findFirst().orElse(null);
+                if (Objects.nonNull(queryResult)){
+                    LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
+                            .transportNo(queryResult.getOut_order_code())
+                            .trackNo(queryResult.getInternational_logistics_num())
+                            .deliveryNo(queryResult.getTrade_order_id())
+                            .logisticsChannelNo(queryResult.getLogistics_service_list().get(0).getCode())
+                            .build();
+                    logisticsOperateService.pullOperateLog(logisticsQueryBaseVO.getOrderId(),
+                            logisticsQueryBaseVO.getTransportNo(), BusinessTypeEnum.QUERY_ORDER.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
+                            RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(logisticsQueryBaseVO), JSONUtil.toJsonStr(responses));
+                    list.add(orderResponseVO);
+                }
+            }
+        }
+        return isSuccess;
+    }
+
     /**
      * 根据查询记录获取 面单编号 然后进行面单查询
      *
@@ -522,56 +538,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      */
     @Override
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
-        ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
-        return label;
-        //组装查询订单详情列表
-//        List<LogisticsQueryBaseVO> logisticsQueryVOList = new ArrayList<>(logisticsQueryVO.size());
-//        logisticsQueryVO.forEach(logisticsGetLabelVO -> {
-//            LogisticsQueryBaseVO logisticsQueryBaseVO = LogisticsQueryBaseVO.builder()
-//                    .authMap(logisticsGetLabelVO.getAuthMap())
-//                    .orderId(logisticsGetLabelVO.getOrderId())
-//                    .deliveryNo(logisticsGetLabelVO.getDeliveryNo())
-//                    .transportNo(logisticsGetLabelVO.getTransportNo())
-//                    .trackNo(logisticsGetLabelVO.getTrackNo())
-//                    .build();
-//            logisticsQueryVOList.add(logisticsQueryBaseVO);
-//        });
-//        ApiResult<List<LogisticsOrderResponseVO>> queryOrderList = this.queryOrderList(logisticsQueryVOList);
-        //根据查询结果进行打印
-//        if (queryOrderList.isSuccess() && CollectionUtils.isNotEmpty(queryOrderList.getData())){
-//            List<LogisticsOrderResponseVO> data = queryOrderList.getData();
-//            List<LogisticsBillDTO.TrackDTO> trackDTOS = new ArrayList<>(logisticsQueryVO.size());
-//            logisticsQueryVO.forEach(logisticsGetLabelVO -> {
-//                LogisticsOrderResponseVO vo = data.stream().filter(e -> e.getDeliveryNo().equals(logisticsGetLabelVO.getDeliveryNo()) &&  e.getTransportNo().equals(logisticsGetLabelVO.getTransportNo())).findFirst().orElse(null);
-//                if (Objects.nonNull(vo) && !StringUtils.isBlank(vo.getTrackNo())){
-//                    logisticsGetLabelVO.setTransportNo(vo.getTransportNo());
-//                    logisticsGetLabelVO.setTrackNo(vo.getTrackNo());
-//                    trackDTOS.add(LogisticsBillDTO.TrackDTO.builder().trackNo(vo.getTrackNo()).transportNo(vo.getTransportNo()).build());
-//                }
-//            });
-//            if (CollectionUtils.isNotEmpty(trackDTOS)){
-//                soB2cFeign.updateTrackNoByTransportNo(trackDTOS);
-//            }
-//            ApiResult<List<LogisticsPrintLabelResponse>> label = this.getLabel(logisticsQueryVO);
-//            return label;
-//        }else {
-//            //对查询数据问题进行转换
-//            List<LogisticsOrderResponseVO> data = queryOrderList.getData();
-//            if (CollectionUtils.isNotEmpty(data)){
-//                List<LogisticsPrintLabelResponse> responses = new ArrayList<>(data.size());
-//                data.forEach(logisticsOrderResponseVO -> {
-//                    LogisticsPrintLabelResponse build = LogisticsPrintLabelResponse.builder()
-//                            .deliveryNoList(Collections.singletonList(logisticsOrderResponseVO.getDeliveryNo()))
-//                            .transportNoList(Collections.singletonList(logisticsOrderResponseVO.getTransportNo()))
-//                            .build();
-//                    build.failure(LogisticsPlatformEnum.ALI_EXPRESS.getName(), logisticsOrderResponseVO.getDeliveryNo(), logisticsOrderResponseVO.getMessage());
-//                    responses.add(build);
-//                });
-//                return failure(responses);
-//            }else {
-//                return failure(queryOrderList.getMsg());
-//            }
-//        }
+        return this.getLabel(logisticsQueryVO);
     }
 
     /**
@@ -610,9 +577,8 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 responses.add(response);
                 return failure(responses);
             }
-            LabelResult labelList = JSONObject.parseObject(iopResponse.getBody(), LabelResult.class);
-//            LabelResponse labelResponse = labelList.getResult();
-            LabelResponse labelResponse = JSONObject.parseObject(labelList.getResult(), LabelResponse.class);
+            LabelResult labelList = JSON.parseObject(iopResponse.getBody(), LabelResult.class);
+            LabelResponse labelResponse = JSON.parseObject(labelList.getResult(), LabelResponse.class);
             //失败
             if (Objects.isNull(labelList.getResult()) || Objects.isNull(labelResponse) || !StringUtils.isBlank(labelResponse.getErrorDesc())) {
                 logisticsOperateService.pullOperateLog(logisticsGetLabelVO.getOrderId(),
@@ -650,32 +616,6 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @param chanelQueryVO
      * @return
      */
-//    @Override
-//    public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-//        try {
-//            ChannelResult responseMsg = aliExpressShipperService.getChanelList(chanelQueryVO.getAuthMap());
-//            //失败
-//            if (Objects.isNull(responseMsg) || !responseMsg.getResultSuccess()) {
-//                logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
-//                        chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-//                        RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
-//                return failure(getPlatForm().getName() + ":" + responseMsg.getErrorDesc());
-//            } else {
-//                List<ChannelResponse> chanelInfos = responseMsg.getResultList();
-//                logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
-//                        chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-//                        RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
-//                return success(LogisticsChannelConverter.INSTANCE.channelConvertByAliExpress(chanelInfos));
-//            }
-//        } catch (Exception e) {
-//            log.error("速卖通getChannel接口调用失败：{}", e.getMessage());
-//            logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
-//                    chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.ALI_EXPRESS.getCode(),
-//                    RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(e));
-//            return failure(e.getMessage());
-//        }
-//
-//    }
 
     /**
      * 订单可用服务列表
@@ -687,10 +627,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
         //为空时去授权找订单id--增加容错
         if (Objects.isNull(chanelQueryVO.getOrderId())){
-            chanelQueryVO.setOrderId(chanelQueryVO.getAuthMap().get("orderId"));
+            chanelQueryVO.setOrderId(chanelQueryVO.getAuthMap().get(ORDER_ID));
         }
         if (Objects.isNull(chanelQueryVO.getChildOrderId())){
-            chanelQueryVO.setChildOrderId(chanelQueryVO.getAuthMap().get("childOrderId"));
+            chanelQueryVO.setChildOrderId(chanelQueryVO.getAuthMap().get(CHILD_ORDER_ID));
         }
         if (Objects.isNull(chanelQueryVO.getOrderId()) || Objects.isNull(chanelQueryVO.getChildOrderId())){
             throw new ServiceException("速卖通：获取订单可用服务时，订单编号不能为空");
@@ -719,7 +659,7 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(iopResponse));
                 return failure(getPlatForm().getName() + ":" + iopResponse.getMessage());
             }
-            LogisticsServiceResponse responseMsg = JSONObject.parseObject(iopResponse.getBody(), LogisticsServiceResponse.class);
+            LogisticsServiceResponse responseMsg = JSON.parseObject(iopResponse.getBody(), LogisticsServiceResponse.class);
             //失败
             if (Objects.isNull(responseMsg) || !StringUtils.isEmpty(responseMsg.getErrorDesc())) {
                 logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
@@ -749,10 +689,10 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             ChannelResult responseMsg = aliExpressShipperService.getChanelList(authMap);
-            if (Objects.isNull(responseMsg) || Objects.isNull(responseMsg.getResultSuccess()) || !responseMsg.getResultSuccess()) {
+            if (Objects.isNull(responseMsg) || Objects.isNull(responseMsg.getResultSuccess()) || Boolean.TRUE.equals(!responseMsg.getResultSuccess())) {
                 //授权失败
                 return failure("授权失败");
             } else {
@@ -775,9 +715,9 @@ public class AliExpressLogisticsHandlerImpl extends AbstractLogisticsHandler {
         try {
             IopResponse  response= aliExpressShipperService.listLogisticsService(authMap);
             String body = response.getBody();
-            JSONObject jsonObject=JSONObject.parseObject(body);
+            JSONObject jsonObject= JSON.parseObject(body);
             if(jsonObject.containsKey("result_list")){
-                List<LogisticsServiceDTO> list = JSONObject.parseArray(jsonObject.getString("result_list"), LogisticsServiceDTO.class);
+                List<LogisticsServiceDTO> list = JSON.parseArray(jsonObject.getString("result_list"), LogisticsServiceDTO.class);
                 List<LogisticsServiceResponseVO> result=new ArrayList<>(list.size());
                 for (LogisticsServiceDTO item : list) {
                     LogisticsServiceResponseVO vo = new LogisticsServiceResponseVO();

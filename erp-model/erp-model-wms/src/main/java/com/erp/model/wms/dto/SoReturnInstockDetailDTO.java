@@ -1,22 +1,41 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.util.List;
 
 public class SoReturnInstockDetailDTO {
+    private SoReturnInstockDetailDTO() {
+        throw new IllegalStateException("Utility SoReturnInstockDetailDTO class");
+    }
     /**
      * 添加
      */
     @Data
     @NoArgsConstructor
-    public static class Add {
+    @AllArgsConstructor
+    public static class ClearSoReturnAndUpdateDTO {
+
+        private List<String> clearSoReturnDetailIds;
+
+        private List<SoReturnInstockEntity> updateMainList;
+
+        private List<SoReturnInstockDetailEntity> updateList;
+    }
+    /**
+     * 添加
+     */
+    @Data
+    @NoArgsConstructor
+    public static class Add  extends  Common{
         /**
          * skuId
          */
@@ -70,6 +89,15 @@ public class SoReturnInstockDetailDTO {
          * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
+
+        /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
     }
 
     /**
@@ -77,7 +105,7 @@ public class SoReturnInstockDetailDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class Update {
+    public static class Update  extends  Common{
         /**
          * id
          */
@@ -133,6 +161,14 @@ public class SoReturnInstockDetailDTO {
          * 退货原因 调用字典接口 类型=ReturnReason
          */
         private String returnReasonDict;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 是否子skuNo
+         */
+        private Boolean isChildSkuNo;
     }
 
     /**
@@ -140,7 +176,7 @@ public class SoReturnInstockDetailDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class View {
+    public static class View extends  Common{
         /**
          * id
          */
@@ -246,5 +282,47 @@ public class SoReturnInstockDetailDTO {
          * 币种
          */
         private String currency;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class Common {
+
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 是否子sku
+         */
+        private Boolean isChildSkuNo;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
+
     }
 }

@@ -88,7 +88,7 @@ public class CfgUserRangeServiceImpl extends SuperServiceImpl<CfgUserRangeMapper
         }
 
         // 删除当前用户设置的区间值
-        super.remove(new QueryWrapper<CfgUserRangeEntity>().eq(CfgUserRangeEntity.TYPE, userRangeDTO.getType())
+        super.remove(new QueryWrapper<CfgUserRangeEntity>().eq(CfgUserRangeEntity.FIELD_TYPE, userRangeDTO.getType())
                 .eq(CfgUserRangeEntity.USER_ID, userId));
 
         // 新增

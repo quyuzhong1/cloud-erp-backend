@@ -64,20 +64,14 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        if (StringUtils.isBlank(vo.getProductName())) {
-            errorMsgList.add("产品名称不能为空");
-        }
         if (!productName.equals(vo.getProductName())) {
             errorMsgList.add("产品名称有误");
         }
         String taskName = vo.getTaskName();
-        if (StringUtils.isBlank(taskName)) {
-            errorMsgList.add("任务名不能为空");
-        }
 
         ProjectTaskEntity task = null;
         if (StringUtils.isNotBlank(taskName)) {
-            task=projectTaskList.stream().filter(t -> t.getName().equals(taskName) &&
+            task = projectTaskList.stream().filter(t -> t.getName().equals(taskName) &&
                     t.getProductId().equals(productId)).findFirst().orElse(null);
         }
         if (Objects.isNull(task)) {
@@ -88,9 +82,6 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
             errorMsgList.add("子任务不能排期变更");
         }
         String chargeName = vo.getChargeName();
-        if (StringUtils.isBlank(chargeName)) {
-            errorMsgList.add("负责人不能为空");
-        }
         FindUserDTO user = null;
         if (StringUtils.isNotBlank(chargeName)) {
             user = sysUserList.stream().filter(u->chargeName.equals(u.getUserName())).
@@ -99,22 +90,12 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
                 errorMsgList.add("负责人不存在");
             }
         }
-
-        if (StringUtils.isBlank(vo.getPlanStartTime())) {
-            errorMsgList.add("计划开始时间 不能为空");
-        }
-        if (StringUtils.isBlank(vo.getPlanEndTime())) {
-            errorMsgList.add("计划结束时间 不能为空");
-        }
         if (StringUtils.isNotBlank(vo.getPlanStartTime()) && StringUtils.isNotBlank(vo.getPlanEndTime())) {
             Date startTime = DateUtil.strToDate(vo.getPlanStartTime(), DateUtil.fmt_year_month);
             Date endTime = DateUtil.strToDate(vo.getPlanEndTime(), DateUtil.fmt_year_month);
-            if (startTime != null && endTime != null) {
-                if (endTime.compareTo(startTime) < 0) {
-                    errorMsgList.add("结束时间必须大于开始时间");
-                }
+            if (startTime != null && endTime != null && endTime.compareTo(startTime) < 0) {
+               errorMsgList.add("结束时间必须大于开始时间");
             }
-
         }
 
         if (task != null) {
@@ -150,11 +131,8 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
         List<String> chargeIdList = new ArrayList<>();
         //当传过来的任务负责人不同的时候
         if (!chargeName.equals(taskChargeName)) {
-            if (!Objects.isNull(user)) {
-                String userId = user.getUserId();
-                if (StringUtils.isNotBlank(userId)) {
-                    chargeIdList = Arrays.asList(userId);
-                }
+            if (!Objects.isNull(user) && StringUtils.isNotBlank(user.getUserId())) {
+                chargeIdList = Arrays.asList(user.getUserId());
             }
         } else {
             if (StringUtils.isNotBlank(taskChargeId)) {
@@ -207,6 +185,7 @@ public class ChangeScheduleExcelListener extends AnalysisEventListener<ScheduleT
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
+
 }

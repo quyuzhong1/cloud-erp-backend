@@ -1,6 +1,8 @@
 package com.erp.rpc.tms.feign;
 
 import com.erp.model.tms.dto.LogisticsBillCostDTO;
+import com.erp.model.wms.entity.SoReturnInstockEntity;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,4 +27,8 @@ public interface LogisticsBillCostFeign {
      */
     @PostMapping("/feign/logisticsBillCost/getActualLogisticCost")
     BigDecimal getActualLogisticCost(@RequestBody String soId);
+    
+    
+    @PostMapping("/feign/logisticsBillCost/generateLogisticsBill")
+    void generateLogisticsBill(@RequestBody SoReturnInstockEntity entity);
 }

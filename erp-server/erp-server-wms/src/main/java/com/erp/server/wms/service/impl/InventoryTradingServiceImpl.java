@@ -2,8 +2,8 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -138,6 +138,10 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
      * @param transactionDTO    交易记录
      */
     private void checkHasApproved(InventoryTransactionDTO transactionDTO) {
+        //采购订单结束交货不需要校验
+        if (CharSequenceUtil.equals(transactionDTO.getDictBizType(),InventoryBusinessTypeEnum.PURCHASE_ORDER_FINISH.getCode())) {
+            return;
+        }
         TransactionFlowEntity transactionFlow;
         LambdaQueryWrapper<TransactionFlowEntity> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(TransactionFlowEntity::getSourceType, transactionDTO.getSourceType())
@@ -161,8 +165,8 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     private List<InventoryTransactionDTO> sortInventoryTransactionList(List<InventoryTransactionDTO> transactionList) {
         Comparator<InventoryTransactionDTO> comparing = Comparator.comparing(InventoryTransactionDTO::getSkuId)
                 .thenComparing(InventoryTransactionDTO::getWarehouseId)
-                .thenComparing(x -> StrUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "")
-                .thenComparing(x -> StrUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus() : "");
+                .thenComparing(x -> CharSequenceUtil.isNotEmpty(x.getWarehouseLocation()) ? x.getWarehouseLocation() : "")
+                .thenComparing(x -> CharSequenceUtil.isNotEmpty(x.getInventoryStatus()) ? x.getInventoryStatus() : "");
 
         transactionList = transactionList.stream().sorted(comparing).collect(Collectors.toList());
         return transactionList;
@@ -200,9 +204,9 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             LocalDate closeDate = closedDateMap.get(transactionDTO.getOrgId());
 
             // 存在关账时间并非在途库存
-            if(null != closeDate && !InventoryStatusEnum.IN_TRANSIT.getCode().equals(transactionDTO.getInventoryStatus())){
+            if(null != closeDate && !InventoryStatusEnum.WITHOUT_LIMIT_CLOSE_ACCOUNT_STATUS.contains(transactionDTO.getInventoryStatus())){
                 if (!billDate.isAfter(closeDate)) {
-                    errList.append(StrUtil.format("库存组织:[{}]交易时间:[{}]已关账目，sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}] 不允许交易\n"
+                    errList.append(CharSequenceUtil.format("库存组织:[{}]交易时间:[{}]已关账目，sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}] 不允许交易\n"
                             , transactionDTO.getOrgName()
                             , billDate.format(DateTimeFormatter.ISO_LOCAL_DATE)
                             , transactionDTO.getSkuNo()
@@ -225,7 +229,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
     private void checkStocktaking(List<InventoryTransactionDTO> transactionList) {
         StringBuilder errList = new StringBuilder();
         for(InventoryTransactionDTO transactionDTO:transactionList) {
-            String redisKey = StrUtil.format(RedisKeyConstant.INVENTORY_LOCK,
+            String redisKey = CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK,
                     "*"
                     , transactionDTO.getOrgId()
                     , transactionDTO.getWarehouseId()
@@ -239,7 +243,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             WarehouseDTO.UpdateDTO updateDTO = warehouseService.detailWithCache(transactionDTO.getWarehouseId());
             String warehouseName = ObjectUtil.isNotEmpty(updateDTO) ? updateDTO.getName() : transactionDTO.getWarehouseId();
 
-            errList.append(StrUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]正在盘点中,不允许交易\n"
+            errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]正在盘点中,不允许交易\n"
                     , transactionDTO.getSkuNo()
                     , warehouseName
                     , transactionDTO.getWarehouseLocationName()
@@ -286,7 +290,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
                         .orElse(null);
                 if (null != lastDTO && (billDate.isBefore(lastDTO.getBillDate()) || billDate.equals(lastDTO.getBillDate()))){
                     // 已有盘盈盘亏单【{}】不允许操作【{}】之前单据
-                    errList.append(StrUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘盈盘亏单【{}】不允许操作【{}】之前单据\n"
+                    errList.append(CharSequenceUtil.format("sku:[{}]仓库:[{}]仓位:[{}]库存状态：[{}]单据日期:[{}],已有盘盈盘亏单【{}】不允许操作【{}】之前单据\n"
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
                             , transactionDTO.getWarehouseLocationName()
@@ -362,13 +366,13 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             String skuId = value.get(0).getSkuId();
             String warehouseId = value.get(0).getWarehouseId();
             //虚拟库存校验
-            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),warehouseId) && StrUtil.equals(obj.getSkuId(),skuId))
+            Integer virtualQty = warehouseInventoryQtyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && CharSequenceUtil.equals(obj.getSkuId(),skuId))
                     .map(VirtualInventoryDTO.WarehouseInventoryQtyDTO::getQty).findFirst().orElse(MathUtil.ZERO);
             if(MathUtil.compareTo(virtualQty,MathUtil.ZERO) == MathUtil.ZERO) {
                 continue;
             }
             //仓库可用库存
-            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(),warehouseId) && StrUtil.equals(obj.getSkuId(),skuId))
+            Integer realInventoryTotal = skuInventoryTotalList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(),warehouseId) && CharSequenceUtil.equals(obj.getSkuId(),skuId))
                     .map(InventoryQtyDTO.SkuInventoryStatusTotalDTO::getInventoryTotal).reduce(MathUtil.ZERO,Integer::sum);
             //需要出库存数量
             Integer qty = value.stream().map(InventoryTransactionDTO::getQty).reduce(MathUtil.ZERO, Integer::sum);
@@ -389,8 +393,8 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         Map<String, InventoryTransactionDTO> checkMap = new HashMap<>();
         for (InventoryTransactionDTO item : transactionList) {
             // 未找到inventory_id的数据使用仓库id，skuID，仓位，库存状态作为唯一键进行合并。
-            String mapKey = StrUtil.isBlank(item.getInventoryId()) ?
-                    StrUtil.format("{}_{}_{}_{}", item.getWarehouseId(), item.getSkuId(),item.getWarehouseLocation(),item.getInventoryStatus()) :
+            String mapKey = CharSequenceUtil.isBlank(item.getInventoryId()) ?
+                    CharSequenceUtil.format("{}_{}_{}_{}", item.getWarehouseId(), item.getSkuId(),item.getWarehouseLocation(),item.getInventoryStatus()) :
                     item.getInventoryId();
             if(!checkMap.containsKey(mapKey)){
                 InventoryTransactionDTO itemCopy = new InventoryTransactionDTO();
@@ -445,7 +449,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
 
         }
         if(inventoryQty + transactionDTO.getQty() < 0) {
-            return StrUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
+            return CharSequenceUtil.format("库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}],库存:{},交易数:{},缺少数：{}\n"
                     , transactionDTO.getSkuNo()
                     , transactionDTO.getWarehouseName()
                     , transactionDTO.getWarehouseLocationName()
@@ -476,7 +480,7 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
             for (InventoryHisEntity inventoryHisEntity : inventoryHisList) {
                 int inventoryQty = inventoryHisEntity.getQty();
                 if (inventoryQty + transactionDTO.getQty() < 0) {
-                    return StrUtil.format("交易会导致[{}]库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}]，当日库存:{},交易数:{}\n"
+                    return CharSequenceUtil.format("交易会导致[{}]库存不足：sku=[{}],仓库=[{}],仓位=[{}],库存状态=[{}]，当日库存:{},交易数:{}\n"
                             , inventoryHisEntity.getBillDate()
                             , transactionDTO.getSkuNo()
                             , transactionDTO.getWarehouseName()
@@ -500,38 +504,24 @@ public class InventoryTradingServiceImpl implements InventoryTradingService {
         if(null != transactionDTO.getInventoryId()) {
             inventoryEntity = inventoryService.getById(transactionDTO.getInventoryId());
         }else{
-            inventoryEntity = inventoryService.getInventory(transactionDTO.getSkuId(), transactionDTO.getWarehouseId(), transactionDTO.getWarehouseLocation(), transactionDTO.getInventoryStatus());
+            inventoryEntity = inventoryService.getInventory(transactionDTO);
         }
 
         log.info("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
-        if(null == inventoryEntity) {
-            inventoryEntity=new InventoryEntity();
-            inventoryEntity.setSkuId(transactionDTO.getSkuId());
-            inventoryEntity.setSkuNo(transactionDTO.getSkuNo());
-            inventoryEntity.setOrgId(transactionDTO.getOrgId());
-            inventoryEntity.setWarehouseId(transactionDTO.getWarehouseId());
-            inventoryEntity.setWarehouseLocation(transactionDTO.getWarehouseLocation());
-            inventoryEntity.setDictInventoryStatus(transactionDTO.getInventoryStatus());
-            inventoryEntity.setQty(transactionDTO.getQty());
-            inventoryEntity.setCreateTime(LocalDateTime.now());
-            inventoryEntity.setCreateUserId(transactionDTO.getUserId());
-            inventoryEntity.setCreateUserName(transactionDTO.getUserName());
-            inventoryEntity.setUpdateTime(LocalDateTime.now());
-            inventoryEntity.setUpdateUserId(transactionDTO.getUserId());
-            inventoryEntity.setUpdateUserName(transactionDTO.getUserName());
-            inventoryService.save(inventoryEntity);
-        }else{
-            LambdaUpdateWrapper<InventoryEntity> wrapper = new LambdaUpdateWrapper<>();
-            wrapper.setSql("qty = qty + " +transactionDTO.getQty())
-                    .set(InventoryEntity::getSkuNo, transactionDTO.getSkuNo())
-                    .set(InventoryEntity::getUpdateTime, LocalDateTime.now())
-                    .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
-                    .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
-                    //条件
-                    .eq(InventoryEntity::getId, inventoryEntity.getId());
-
-            inventoryService.update(wrapper);
+        if(null == inventoryEntity || null == inventoryEntity.getId()) {
+            log.warn("####InventoryTradingServiceImpl===>updateInventory====>inventoryEntity = {}  transactionDTO={}", JSON.toJSONString(inventoryEntity), JSON.toJSONString(transactionDTO));
+            throw new ServiceException(ApiError.ERROR_INVENTORY_NOT_EXIST, transactionDTO.getWarehouseName(), transactionDTO.getSkuNo(), transactionDTO.getInventoryStatusName());
         }
+        LambdaUpdateWrapper<InventoryEntity> wrapper = new LambdaUpdateWrapper<>();
+        wrapper.setSql("qty = qty + " +transactionDTO.getQty())
+                .set(InventoryEntity::getSkuNo, transactionDTO.getSkuNo())
+                .set(InventoryEntity::getUpdateTime, LocalDateTime.now())
+                .set(InventoryEntity::getUpdateUserId, transactionDTO.getUserId())
+                .set(InventoryEntity::getUpdateUserName, transactionDTO.getUserName())
+                //条件
+                .eq(InventoryEntity::getId, inventoryEntity.getId());
+
+        inventoryService.update(wrapper);
 
         if(null == transactionDTO.getInventoryId()) {
             //方面后续记录流水与历史库存

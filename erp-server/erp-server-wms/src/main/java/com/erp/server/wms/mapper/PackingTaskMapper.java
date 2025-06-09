@@ -36,7 +36,7 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     IPage<PackingTaskDTO.PagingViewDTO> paging(@Param("query") Page<PackingTaskDTO.PagingViewDTO> query, @Param("params") PackingTaskDTO.PagingParamDTO params);
-    List<PackingTaskDTO.PagingViewDTO> pagingList(@Param("params") PackingTaskDTO.PagingParamDTO params);
+
     Page<PackingTaskDTO.PagingViewDTO> pagingList(@Param("page") Page<PackingTaskDTO.PagingViewDTO> page, @Param("params") PackingTaskDTO.PagingParamDTO params);
 
     /**
@@ -47,7 +47,7 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     List<PackingTaskDTO.StatusDTO> selectB2BPackingStatusByIds(@Param("taskIds") List<String> taskIds, @Param("sourceCodes") List<String> sourceCodes);
-    List<PackingTaskDTO.ProductNum> selectProductNumByIds(@Param("taskIds") List<String> taskIds);
+    List<PackingTaskDTO.ProductDTO> selectProductNumByIds(@Param("taskIds") List<String> taskIds);
 
     /**
      * 根据装箱任务进行sku分组
@@ -69,7 +69,6 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetail(@Param("params") PackingTaskDTO.PackedDetailDTO params);
-    List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
     Page<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailBySkuId(@Param("query") Page<PackingTaskDTO.ExportDTO> query,@Param("params") PackingTaskDTO.ExportDTO page, @Param("taskIds") List<String> taskIds, @Param("permissionSql") String permissionSql);
 
     /**
@@ -90,4 +89,6 @@ public interface PackingTaskMapper extends BaseMapper<PackingTaskEntity> {
      * @return
      */
     List<PackingTaskDTO.StatusDTO> selectRequisitionPackingStatusByIds(@Param("taskIds") List<String> taskIds, @Param("sourceCodes") List<String> sourceCodes);
+
+    List<PackingTaskEntity> listBySourceCodes(@Param("sourceCodeList") List<String> sourceCodeList, @Param("permissionSql") String permissionSql);
 }

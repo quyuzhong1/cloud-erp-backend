@@ -17,6 +17,8 @@ package com.common.core.security;
  */
 
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,6 +27,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+@Slf4j
 public class MD5 {
 
 	static final int S11 = 7;
@@ -151,16 +154,16 @@ public class MD5 {
 	public static void main(String args[]) {
 		MD5 m = new MD5();
 		if (Array.getLength(args) == 0) {
-			System.out.println("MD5 Test suite:");
-			System.out.println("MD5(\"\"):".concat(String.valueOf(String
+			log.info("MD5 Test suite:");
+			log.info("MD5(\"\"):".concat(String.valueOf(String
 					.valueOf(m.getMD5ofStr("")))));
-			System.out.println("MD5(\"a\"):".concat(String.valueOf(String
+			log.info("MD5(\"a\"):".concat(String.valueOf(String
 					.valueOf(m.getMD5ofStr("a")))));
-			System.out.println("MD5(\"abc\"):".concat(String.valueOf(String
+			log.info("MD5(\"abc\"):".concat(String.valueOf(String
 					.valueOf(m.getMD5ofStr("abc")))));
-			System.out.println("MD5(\"message digest\"):".concat(String
+			log.info("MD5(\"message digest\"):".concat(String
 					.valueOf(String.valueOf(m.getMD5ofStr("message digest")))));
-			System.out.println("MD5(\"abcdefghijklmnopqrstuvwxyz\"):"
+			log.info("MD5(\"abcdefghijklmnopqrstuvwxyz\"):"
 					.concat(String.valueOf(String.valueOf(m
 							.getMD5ofStr("abcdefghijklmnopqrstuvwxyz")))));
 			System.out
@@ -170,7 +173,7 @@ public class MD5 {
 											.valueOf(m
 													.getMD5ofStr("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789")))));
 		} else
-			System.out.println(String.valueOf(String.valueOf((new StringBuffer(
+			log.info(String.valueOf(String.valueOf((new StringBuffer(
 					"MD5(")).append(args[0]).append(")=").append(
 					m.getMD5ofStr(args[0])))));
 	}
@@ -203,7 +206,7 @@ public class MD5 {
 
 	}
 
-	private void Encode(byte output[], long input[], int len) {
+	private void encode(byte output[], long input[], int len) {
 		int i = 0;
 		for (int j = 0; j < len; j += 4) {
 			output[j] = (byte) (int) (input[i] & 255L);
@@ -275,12 +278,12 @@ public class MD5 {
 
 	private void md5Final() {
 		byte bits[] = new byte[8];
-		Encode(bits, count, 8);
+		encode(bits, count, 8);
 		int index = (int) (count[0] >>> 3) & 0x3f;
 		int padLen = index >= 56 ? 120 - index : 56 - index;
 		md5Update(PADDING, padLen);
 		md5Update(bits, 8);
-		Encode(digest, state, 16);
+		encode(digest, state, 16);
 	}
 
 	private void md5Init() {

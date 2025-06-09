@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -18,6 +19,16 @@ import java.io.Serializable;
 public class WmsAttachmentDTO  implements Serializable {
 
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class AddDTO {
+
+        private String fileName;
+
+        private String url;
+
+    }
 
     /**
      * 删除的

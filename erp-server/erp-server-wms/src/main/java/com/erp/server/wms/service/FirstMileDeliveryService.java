@@ -10,6 +10,7 @@ import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -343,4 +344,34 @@ public interface FirstMileDeliveryService extends SuperService<FirstMileDelivery
     PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> firstMilePackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 
     WmsCartonSpecDTO.ListPackingDTO listPacking(String id);
+
+    void exportBox(PackingTaskDTO.ExportDTO dto);
+
+    /**
+     * 更新中转仓库记录
+     * @param entity
+     * @param changeIds
+     * @return
+     */
+    BatchResultDTO updateTransferWarehouse(FirstMileDeliveryEntity entity, List<String> changeIds);
+    /**业务单号查询发货单号
+     *
+     * @param businessCodes
+     * @return
+     */
+    List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(List<String> businessCodes);
+
+    /**
+     * 获取当前月份内符合条件的发货列表
+     * @param approveStatus
+     * @param sourceType
+     * @param reportMonth
+     * @param shipmentCode
+     * @param asin
+     * @param msku
+     * @return
+     */
+    List<FbaTransitCalculateReportDTO.DeliveryDTO> listDeliveryByReportMonth(String approveStatus, String sourceType, LocalDate reportMonth, String shipmentCode, String asin, String msku);
+
+    List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(List<String> deliveryCodes);
 }

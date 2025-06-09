@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -112,7 +113,7 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
         for (StocktakingProfitLossDetailEntity item : updateList) {
             item.setMainId(mainId);
             String id = item.getId();
-            if (StringUtils.isNotBlank(id)) {
+            if (CharSequenceUtil.isNotBlank(id)) {
                 StocktakingProfitLossDetailEntity old = dbList.stream().
                         filter(d -> d.getId().equals(id)).findFirst().orElse(null);
                 if (Objects.isNull(old)) {
@@ -127,7 +128,7 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
                 operateLogService.addModuleOperateLogByObj(old, item, ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), mainId, "", String.format("【%s】", old.getSkuNo()));
             }
         }
-        List<StocktakingProfitLossDetailEntity> addList = updateList.stream().filter(u -> StringUtils.isBlank(u.getId())).collect(Collectors.toList());
+        List<StocktakingProfitLossDetailEntity> addList = updateList.stream().filter(u -> CharSequenceUtil.isBlank(u.getId())).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(addList)) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("添加了一个SKU【%s】", ModuleTypeEnum.STOCKTAKING_PROFIT_LOSS.getCode(), addPairList, "编辑操作");
@@ -154,7 +155,7 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
      * @date 2023-10-20 14:05
      */
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<StocktakingProfitLossDetailEntity> dbList) {
-        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
+        List<String> ids = pairList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getKey())).
                 map(obj -> obj.getKey()).collect(Collectors.toList());
         List<String> dbIds = dbList.stream().map(StocktakingProfitLossDetailEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
@@ -162,7 +163,7 @@ public class StocktakingProfitLossDetailServiceImpl extends SuperServiceImpl<Sto
 
 
     private List<StocktakingProfitLossDetailEntity> listBaseByMainId(String mainId) {
-        if (StringUtils.isNotBlank(mainId)) {
+        if (CharSequenceUtil.isNotBlank(mainId)) {
             return this.lambdaQuery().eq(StocktakingProfitLossDetailEntity::getMainId, mainId).orderByAsc(StocktakingProfitLossDetailEntity::getId).list();
         }
         return Collections.emptyList();

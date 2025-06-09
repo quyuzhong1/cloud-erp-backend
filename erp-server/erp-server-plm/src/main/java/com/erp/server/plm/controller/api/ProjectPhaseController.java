@@ -53,7 +53,7 @@ public class ProjectPhaseController extends BaseController {
     @LogAction(value = LogActionEnum.INSERT, desc = "批量保存或者修改阶段:产品ID={productId}")
     @PostMapping("/batchSaveOrUpdate")
     //@RequestPermissions("plm:task:phase:batchSaveOrUpdate")
-    public ApiResult batchSaveOrUpdate(@RequestBody @Validated BatchTaskPhaseDTO dto) {
+    public ApiResult<Object> batchSaveOrUpdate(@RequestBody @Validated BatchTaskPhaseDTO dto) {
         projectPhaseService.batchSaveOrUpdate(dto);
         return success();
     }
@@ -68,7 +68,7 @@ public class ProjectPhaseController extends BaseController {
     @PostMapping("/remove")
     //  @RequestPermissions("plm:task:phase:remove")
     //@DataPermission(operationType = "delete", tableField = "create_user_id", menuCode = "plm:task:phase:remove", serviceClass = ProductInfoServiceImpl.class)
-    public ApiResult remove(String id) {
+    public ApiResult<Object> remove(String id) {
         Boolean flag = projectPhaseService.removeTaskPhaseById(id);
         return flag == true ? success() : failure();
     }

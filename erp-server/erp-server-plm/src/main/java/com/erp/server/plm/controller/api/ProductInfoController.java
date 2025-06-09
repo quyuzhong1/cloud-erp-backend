@@ -2,7 +2,9 @@ package com.erp.server.plm.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -13,11 +15,14 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.entity.ProductInfoEntity;
 import com.erp.model.plm.enums.ApprovalStatusEnum;
 import com.erp.model.plm.enums.ProductProgressStatusEnum;
+import com.erp.server.plm.query.ProductProjectQueryHandler;
 import com.erp.server.plm.service.ProductInfoService;
 import com.erp.server.plm.service.ProjectInfoService;
 import com.erp.server.plm.service.SysCodeService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -27,6 +32,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * 产品开发管理
@@ -34,6 +40,7 @@ import java.util.*;
  * @author yl
  * @since 2022-09-13
  */
+@Slf4j
 @RestController
 @LogSystemModule("产品开发管理")
 @RequestMapping("product")
@@ -62,6 +69,7 @@ public class ProductInfoController extends BaseController {
             menuCode = "plm:product:paging",
             tableAlias = "pt"
     )
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<PagingVO<ProductShowDTO>> paging(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.paging(dto);
         return success(pagingVO);
@@ -76,6 +84,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/myProject")
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<PagingVO<ProductShowDTO>> myProject(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.myProject(dto);
         return success(pagingVO);
@@ -90,6 +99,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-06-12 14:54
      */
     @PostMapping("/collect")
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult<PagingVO<ProductShowDTO>> collect(@RequestBody @Validated PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         PagingVO<ProductShowDTO> pagingVO = productInfoService.collect(dto);
         return success(pagingVO);
@@ -144,6 +154,7 @@ public class ProductInfoController extends BaseController {
             tableAlias = "pt"
     )
     @PostMapping("/allExport")
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
     public ApiResult allExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
         Boolean result= productInfoService.allExport(dto);
         return result ? success() : failure();
@@ -157,9 +168,10 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理我的项目导出")
     @PostMapping("/myProjectExport")
-    public ApiResult myProjectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
-        Boolean result= productInfoService.myProjectExport(dto);
-        return result ? success() : failure();
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
+    public ApiResult<Object> myProjectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
+        productInfoService.myProjectExport(dto);
+        return success();
     }
 
 
@@ -170,7 +182,8 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品开发管理收藏项目导出")
     @PostMapping("/collectExport")
-    public ApiResult collectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
+    @WebAdvanceQuery(handler = ProductProjectQueryHandler.class)
+    public ApiResult<Object> collectExport(@RequestBody @Validated ProductSearchDTO.ExportDTO dto) {
         Boolean result= productInfoService.collectExport(dto);
         return result ? success() : failure();
     }
@@ -222,7 +235,7 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "产品列表-更改对应数据", keyIdName = "productId")
     @PostMapping("/updateProduct")
-    public ApiResult update(@RequestBody @Validated UpdateProductDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated UpdateProductDTO dto) {
         productInfoService.updateProduct(dto);
         return success();
     }
@@ -249,9 +262,40 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品列表-移动分类:产品ids={productIds},分类id={categoryId}")
     @PostMapping("/updateCategory")
-    public ApiResult updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
-        Boolean flag = productInfoService.updateCategory(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<Object> updateCategory(@RequestBody @Validated MoveCategoryDTO dto) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getProductIds())
+                .stream()
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
+        for (String id : dto.getProductIds()) {
+            ProductInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = productInfoService.updateCategory(new MoveCategoryDTO(Collections.singletonList(id), dto.getCategoryId()));
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id,entity.getName(),"移动分类成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id,entity.getName(),"移动分类失败"));
+                }
+            }catch (Exception e){
+                log.error("移动分类失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getName(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 产品列表-更新应用分类
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "产品列表-更新应用分类:产品ids={productIds},分类id={categoryId}")
+    @PostMapping("/updateApplicationCategory")
+    public ApiResult<Object> updateApplicationCategory(@RequestBody @Validated MoveApplicationCategoryDTO dto) {
+        Boolean flag = productInfoService.updateApplicationCategory(dto);
+        return flag ? success() : failure();
     }
 
     /**
@@ -259,9 +303,9 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "产品列表-删除产品")
     @PostMapping("/remove")
-    public ApiResult removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
+    public ApiResult<Object> removeProduct(@RequestBody @Validated RemoveProductDTO dto) {
         Boolean flag = productInfoService.removeProduct(dto);
-        return flag == true ? success() : failure();
+        return flag ? success() : failure();
     }
 
     @LogAction(value = LogActionEnum.EXPORT, desc = "产品列表-下载模板")
@@ -302,7 +346,7 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "产品列表-保存模板")
     @PostMapping("/saveTemplate")
-    public ApiResult projectInfo(@RequestBody @Validated SaveProductTemplateDTO dto) {
+    public ApiResult<Object> projectInfo(@RequestBody @Validated SaveProductTemplateDTO dto) {
         Boolean flag = productInfoService.saveTemplate(dto);
         return flag == true ? success() : failure();
     }
@@ -311,7 +355,7 @@ public class ProductInfoController extends BaseController {
      * 新建产品-获取关联产品
      */
     @GetMapping("/list")
-    public ApiResult list() {
+    public ApiResult<Object> list() {
         List<Map<String, Object>> list = productInfoService.getListObjs();
         return success(list);
     }
@@ -354,7 +398,7 @@ public class ProductInfoController extends BaseController {
      * @date: 2023/1/7 16:09
      */
     @GetMapping("/getSpuNo")
-    public ApiResult getSpuNo(@Param("categoryId") String categoryId) {
+    public ApiResult<Object> getSpuNo(@Param("categoryId") String categoryId) {
         String spuNo = sysCodeService.getSpuNo(categoryId);
         return success(spuNo);
     }
@@ -368,7 +412,7 @@ public class ProductInfoController extends BaseController {
      * @date 2023-02-23 18:01
      */
     @GetMapping("/getProgressStatus")
-    public ApiResult getProgressStatus() {
+    public ApiResult<Object> getProgressStatus() {
         int length = ProductProgressStatusEnum.values().length;
         List<Map<String, Object>> list = new ArrayList<>(length);
         for (ProductProgressStatusEnum status : ProductProgressStatusEnum.values()) {
@@ -389,7 +433,7 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置产品进度:产品id={productId},进展状态={progressStatus}(normal=正常;postpone=延期;risk=风险;no=暂无)")
     @PostMapping("/setProgressStatus")
-    public ApiResult setProgressStatus(@RequestBody @Validated SetProductProgressStatusDTO dto) {
+    public ApiResult<Object> setProgressStatus(@RequestBody @Validated SetProductProgressStatusDTO dto) {
         Boolean result = productInfoService.setProgressStatus(dto);
         return result == true ? success() : failure();
     }
@@ -402,7 +446,7 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "设置产品示意图:产品id={productId}")
     @PostMapping("/setSchematicImageUrl")
-    public ApiResult setSchematicImageUrl(@RequestBody @Validated SetSchematicImageUrlDTO dto) {
+    public ApiResult<Object> setSchematicImageUrl(@RequestBody @Validated SetSchematicImageUrlDTO dto) {
         Boolean result = productInfoService.setSchematicImageUrl(dto);
         return result == true ? success() : failure();
     }
@@ -419,9 +463,30 @@ public class ProductInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "确认立项:ids={ids}")
     @PostMapping("/batchEstablish")
-    public ApiResult batchArchive(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
-        boolean flag = productInfoService.batchEstablish(dto);
-        return flag ? success() : failure();
+    public ApiResult<Object> batchArchive(@RequestBody @Valid ProductInfoDTO.IdsDateDto dto) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        Map<String, ProductInfoEntity> entityMap = productInfoService.listByIds(dto.getIds())
+                .stream()
+                .collect(Collectors.toMap(ProductInfoEntity::getId, e -> e));
+        for (String id : dto.getIds()) {
+            ProductInfoEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"产品不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = productInfoService.batchEstablish(Collections.singletonList(id), dto.getLocalDate());
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getSpuNo(),"产品立项成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getSpuNo(),"产品立项失败"));
+                }
+            }catch (Exception e){
+                log.error("产品立项失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getSpuNo(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 }

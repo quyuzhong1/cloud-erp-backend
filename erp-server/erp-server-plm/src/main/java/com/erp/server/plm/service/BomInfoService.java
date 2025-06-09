@@ -28,7 +28,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
 
     String insert(AddBomDTO dto);
 
-    PagingVO<List<BomPagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
+    PagingVO<BomPagingVO> paging(PagingDTO<SearchPagingDTO> dto);
 
     BomDTO getBomDetails(String bomId);
 
@@ -102,7 +102,7 @@ public interface BomInfoService  extends IService<BomInfoEntity> {
      * @param dto
      * @return PagingVO<List<ListDTO>>
      */
-    PagingVO<List<BomSkuPageDTO.ListDTO>> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto);
+    PagingVO<BomSkuPageDTO.ListDTO> skuPaging(PagingDTO<BomSkuPageDTO.PagingParamDTO> dto);
 
     /**
      * bom导出数据

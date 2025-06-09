@@ -1,19 +1,20 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.SoB2cDeliveryInterceptStatusEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -286,65 +287,14 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 单据状态
+         * 页面高级查询
          */
-        private String tabFlag;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
         /**
-         * 单据编号
+         * sqlMap 默认key default
          */
-        private String code;
-        /**
-         * 销售单号
-         */
-        private String soCode;
-        /**
-         * 发货单号
-         */
-        private String soDeliveryCode;
-        /**
-         * 销售出库单号
-         */
-        private String soOutstockCode;
-        /**
-         * sku编号
-         */
-        private List<String> skuNoList;
-        /**
-         * 物流渠道名称
-         */
-        private List<String> logisticsChannelIdList;
-        /**
-         * 运单号
-         */
-        private String transportNo;
-        /**
-         * 取消状态：wms/common/enumDropDown?type=CancelStatus
-         * 描述：success:取消成功, failure:取消失败
-         */
-        private String cancelStatus;
-        /**
-         * 拦截状态：wms/common/enumDropDown?type=InterceptStatus
-         * 描述：success:拦截成功, failure:拦截失败
-         */
-        private String interceptStatus;
-        /**
-         * 处理状态：wms/common/enumDropDown?type=SoB2cDeliveryInterceptStatus
-         * 描述：waitHandle:待处理 handle:已处理 cancel:已取消
-         */
-        private String handleStatus;
-        /**
-         * 处理结果：wms/common/enumDropDown?type=HandleResult
-         * 描述：success:拦截成功, failure:拦截失败
-         */
-        private String handleResult;
-        /**
-         * 创建人
-         */
-        private List<String> createUserIdList;
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -397,6 +347,14 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
         /**
          * 物流渠道id
          */
@@ -469,6 +427,10 @@ public class SoB2cDeliveryInterceptDTO implements Serializable {
          * 处理时间
          */
         private LocalDateTime handleTime;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
     }
 
     /**

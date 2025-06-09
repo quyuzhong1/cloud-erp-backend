@@ -25,7 +25,7 @@ public class Package implements Serializable {
     @Alias( "shipping_carrier")
     private String shippingCarrier;
     @Alias( "item_list")
-    private List<OrderItemSimple> itemSimpleList;
+    private List<OrderItemSimple> itemList;
 
     @Alias( "parcel_chargeable_weight_graml")
     private Long parcelChargeableWeightGraml;

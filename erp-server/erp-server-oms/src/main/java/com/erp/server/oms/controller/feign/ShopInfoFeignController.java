@@ -1,15 +1,21 @@
 package com.erp.server.oms.controller.feign;
 
 
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.AmazonTokenUpdateDTO;
 import com.erp.model.oms.dto.ShopDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopAuthEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.server.oms.query.ShopQueryHandler;
 import com.erp.server.oms.service.ShopAuthService;
 import com.erp.server.oms.service.ShopInfoService;
 import lombok.extern.slf4j.Slf4j;
@@ -88,7 +94,15 @@ public class ShopInfoFeignController extends BaseController {
         if (CollectionUtils.isEmpty(ids)) {
             return Collections.emptyList();
         }
-        return shopInfoService.listByIds(ids);
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(ids);
+        List<ShopAuthEntity> shopAuthEntityList = shopAuthService.listShopAuthByShopIds(ids);
+        shopInfoEntityList.forEach(v->{
+            ShopAuthEntity shopAuthEntity = shopAuthEntityList.stream().filter(v1 -> v1.getShopId().equals(v.getId())).findFirst().orElse(null);
+            if (shopAuthEntity != null) {
+                v.setAccessToken(shopAuthEntity.getAccessToken());
+            }
+        });
+        return shopInfoEntityList;
     }
 
     /**
@@ -188,5 +202,63 @@ public class ShopInfoFeignController extends BaseController {
     @PostMapping("/pagingSelect")
     public PagingVO<ShopDTO.ListDTO> pagingSelect(@RequestBody @Validated PagingDTO<ShopDTO.SelectDTO> dto) {
         return shopInfoService.pagingSelect(dto);
+    }
+
+    /**
+     * 检查和更新亚马逊同账号店铺授权
+     */
+    @PostMapping("/checkAndSaveAllAmazonToken")
+    public Boolean checkAndSaveAllAmazonToken(@RequestBody @Validated AmazonTokenUpdateDTO updateDTO){
+        return shopInfoService.checkAndSaveAllAmazonToken(updateDTO);
+    }
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    @GetMapping("/listShopInfoByPlatform")
+    public List<String> listShopInfoByPlatform(@RequestParam String platform){
+        return shopInfoService.listShopInfoByPlatform(platform);
+    }
+
+    /**
+     * 获取店铺列表
+     *
+     * @return
+     */
+    @GetMapping("/getShopListByParam")
+    public ApiResult<List<ShopAuthEntity>> getShopListByParam(@RequestParam(value = "type") String type,
+                                                              @RequestParam(value = "status") String status,
+                                                              @RequestParam(value = "dictPlatform") String dictPlatform) {
+        return success(shopAuthService.getShopListByParam(type,status, dictPlatform));
+    }
+
+    /**
+     * 获取商铺详情
+     *
+     * @return
+     */
+    @GetMapping("/getShopAuthById")
+    public ApiResult<ShopAuthEntity> getShopAuthById(@RequestParam(value = "shopId") String shopId) {
+        return success(shopAuthService.getByShopId(shopId));
+    }
+
+    /**
+     * 高级查询分页店铺
+     */
+    @PostMapping("/paging")
+//    @WebAdvanceQuery(handler = ShopQueryHandler.class)
+    public PagingVO<ShopDTO.PagingViewDTO> paging(@RequestBody @Validated PagingDTO<ShopDTO.PagingParamDTO> dto) {
+        return shopInfoService.paging(dto);
+    }
+
+    /**
+     * 根据店铺名称查询店铺信息
+     * @param shopNameList
+     * @return
+     */
+    @PostMapping("/listShopByName")
+    public List<ShopInfoDTO.ListDTO> listShopByName(@RequestBody List<String> shopNameList){
+        return shopInfoService.listShopByName(shopNameList);
     }
 }

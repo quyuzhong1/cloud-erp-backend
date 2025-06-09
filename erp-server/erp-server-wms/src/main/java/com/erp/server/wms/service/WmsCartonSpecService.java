@@ -101,4 +101,12 @@ public interface WmsCartonSpecService extends SuperService<WmsCartonSpecEntity> 
      * @param cartonSpecEntity
      */
     void updateSizeDataEmpty(WmsCartonSpecEntity cartonSpecEntity);
+
+    /**
+     * 先校验 是否存在
+     *
+     * @param dto
+     * @param isDeleteCarton
+     */
+    void checkAndRemoveCartonInfo(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isDeleteCarton);
 }

@@ -1,7 +1,6 @@
 package com.erp.model.tms.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.business.enums.SourceTypeEnum;
 import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
@@ -16,6 +15,7 @@ public enum DictCostCategoryEnum implements EnumMessage {
 
     SHIPPING_COST("shippingCost", "物流运费"),
     DECLARE_COST("declareCost", "报关费"),
+    DEDUCTIBLE_TAX("deductibleTax", "可抵扣税金"),
     OTHER_TAX_FEE("otherTaxFee", "其他税费"),
     OTHER_COST("otherCost", "其他费用")
     ;

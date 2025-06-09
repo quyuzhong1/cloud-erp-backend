@@ -69,12 +69,6 @@ public class SalesDemandEntity extends BaseEntity<SalesDemandEntity> {
     private String applyDeptName;
 
     /**
-     * 新品首批（false否,true是）
-     */
-    @TableField("is_first_mass_product")
-    private Boolean isFirstMassProduct;
-
-    /**
      * 店铺id
      */
     @TableField("shop_id")
@@ -149,7 +143,7 @@ public class SalesDemandEntity extends BaseEntity<SalesDemandEntity> {
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String APPLY_DATE = "apply_date";
 
@@ -167,7 +161,7 @@ public class SalesDemandEntity extends BaseEntity<SalesDemandEntity> {
 
     public static final String SHOP_NAME = "shop_name";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String INVALID_STATUS = "invalid_status";
 

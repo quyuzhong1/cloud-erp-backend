@@ -65,7 +65,7 @@ public class DmpSoPrestockInfoServiceImpl extends SuperServiceImpl<DmpSoPrestock
     @Override
     public Boolean update(DmpSoPrestockInfoDTO.UpdateDTO updateDTO) {
         DmpSoPrestockInfoEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销售预入库主单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "销售预入库主单"));
         DmpSoPrestockInfoEntity dmpSoPrestockInfoEntity =  BeanMapperUtils.map(DmpSoPrestockInfoEntity.class, updateDTO);
 
         // 数据处理

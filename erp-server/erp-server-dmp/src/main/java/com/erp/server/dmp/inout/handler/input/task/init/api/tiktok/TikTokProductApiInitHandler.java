@@ -127,13 +127,15 @@ public class TikTokProductApiInitHandler implements DmpInputApiInitHandler {
                         url + path, params.toString(), JSONUtil.toJsonStr(apiResult)));
             }
 
-            pageToken = listingDTO.getData().getNextPageToken();
-
+            if (CollectionUtils.isEmpty(listingDTO.getData().getProducts())) {
+                break;
+            }
             DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
             dmpInputTaskInitDTO.setMsg(JSONArray.toJSONString(listingDTO.getData().getProducts()));
             dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
 
-            if (StringUtil.isBlank(listingDTO.getData().getNextPageToken())) {
+            pageToken = listingDTO.getData().getNextPageToken();
+            if (StringUtil.isBlank(pageToken)) {
                 break;
             }
 

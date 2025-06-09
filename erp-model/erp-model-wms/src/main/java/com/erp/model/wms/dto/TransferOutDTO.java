@@ -167,6 +167,10 @@ public class TransferOutDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 分步式调出单号(来源编号)
+         */
+        private String sourceCode;
     }
 
     @Data
@@ -541,6 +545,10 @@ public class TransferOutDTO implements Serializable {
          * 调出仓位
          */
         private String outWarehouseLocation;
+        /**
+         * 调出仓位名称
+         */
+        private String outWarehouseLocationName;
 
         /**
          * 备注（分步式调出单明细）
@@ -599,6 +607,12 @@ public class TransferOutDTO implements Serializable {
          */
         @NotNull(message = "调入仓库不能为空")
         private String  inWarehouseId;
+
+
+        /**
+         * 调入仓位
+         */
+        private String inWarehouseLocation;
 
         /**
          * skuId
@@ -713,6 +727,57 @@ public class TransferOutDTO implements Serializable {
          * 调出仓位
          */
         private String outWarehouseLocation;
+
+
+    }
+
+
+    /**
+     * 下推的分步式调入单选择产品结果
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PutawayDetailDTO implements Serializable {
+        /**
+         *
+         */
+        private String outCode;
+        /**
+         *
+         */
+        private LocalDateTime outApproveTime;
+        /**
+         *
+         */
+        private Integer outQty ;
+        /**
+         *
+         */
+        private String outWarehouseId;
+        private String outWarehouseName;
+        /**
+         *
+         */
+        private String inId;
+        /**
+         *
+         */
+        private String inCode;
+
+        /**
+         *
+         */
+        private LocalDateTime inApproveTime;
+        /**
+         *
+         */
+        private Integer inQty ;
+        /**
+         *
+         */
+        private String inWarehouseId;
+        private String inWarehouseName;
+
 
 
     }

@@ -6,7 +6,9 @@ import com.common.business.dto.DmpSyncMqDTO;
 import com.erp.model.dmp.dto.*;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.SettingEnum;
+import com.erp.model.wms.entity.OverseasProviderEntity;
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -72,6 +74,16 @@ public interface DmpTaskFeign {
      */
     @PostMapping("feign/getRate")
     BigDecimal getRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode);
+    
+    /**
+     * 获取月份汇率
+     *
+     * @param date
+     * @param sourceCurrencyCode
+     * @return
+     */
+    @PostMapping("feign/getMonthRate")
+    BigDecimal getMonthRate(@RequestParam(value = "date") String date, @RequestParam(value = "sourceCurrencyCode") String sourceCurrencyCode);
 
 
     /**
@@ -172,15 +184,6 @@ public interface DmpTaskFeign {
 
     /**
      * 创建第三方仓任务
-     * @param dto
-     * @return
-     */
-    @PostMapping("feign/dmp/createThirdWarehouseTask")
-    Boolean createThirdWarehouseTask(@RequestBody @Valid ThirdWarehouseTaskDTO.AddDTO dto);
-
-
-    /**
-     * 创建第三方仓任务
      * @return
      */
     @PostMapping("feign/dmp/getPullTaskById")
@@ -269,4 +272,27 @@ public interface DmpTaskFeign {
 
     @PostMapping("feign/dmp/push/deleteBySourceId")
     boolean deletePushTaskBySourceId(@RequestBody String sourceId);
+
+    /**
+     * 获取推送记录
+     * @author zdy
+     * @date: 2025/04/01 12:00
+     * @param sourceCode
+     * @param outputClass
+     * @return Boolean
+     */
+    @GetMapping("feign/outputTaskRecord/getOutputTaskRecord")
+    DmpOutputTaskRecordEntity getOutputTaskRecord(@RequestParam(value = "sourceCode",required = false) String sourceCode, @RequestParam(value = "outputClass",required = false) String outputClass);
+
+    /**
+     * 创建第三方任务
+     */
+    @PostMapping("feign/createThirdWarehouseTask")
+    void createThirdWarehouseTask(@RequestBody OverseasProviderEntity overseasProviderEntity);
+
+    /**
+     * 删除第三方任务
+     */
+    @PostMapping("feign/removeThirdWarehouseTask")
+    void removeThirdWarehouseTask(@RequestBody OverseasProviderEntity overseasProviderEntity);
 }

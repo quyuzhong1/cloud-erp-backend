@@ -54,7 +54,7 @@ public class BiTargetReportController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "业绩目标完成导出")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody @Validated TargetFinishDTO.ParamDTO dto, HttpServletResponse response) {
+    public ApiResult<Void> exportExcel(@RequestBody @Validated TargetFinishDTO.ParamDTO dto, HttpServletResponse response) {
         biTargetReportService.exportExcel(dto, response);
         return success();
     }

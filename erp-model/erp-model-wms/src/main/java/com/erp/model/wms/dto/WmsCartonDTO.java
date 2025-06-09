@@ -20,6 +20,9 @@ import java.util.List;
  * @version: 1.0
  */
 public class WmsCartonDTO {
+    private WmsCartonDTO() {
+        throw new IllegalStateException("Utility WmsCartonDTO class");
+    }
     /**
      * 调整装箱扫码
      */
@@ -47,6 +50,11 @@ public class WmsCartonDTO {
          * 产品信息(输入SKU/FNSKU/EAN码)
          */
         private String searchKey;
+        /**
+         * 匹配模式 默认精确 perfect
+         *精确 perfect 模糊 fuzzy
+         */
+        private String searchMode;
         /**
          * 调整装箱类型
          * 接口地址： http://172.16.100.11:3002/project/92/interface/api/13147 type=packingAdjustType
@@ -133,6 +141,19 @@ public class WmsCartonDTO {
          * 产品信息(输入SKU/FNSKU/EAN码)
          */
         private String searchKey;
+        /**
+         * 匹配模式 默认精确 perfect
+         *精确 perfect 模糊 fuzzy
+         */
+        private String searchMode;
+        /**
+         * 箱子ID
+         */
+        private String cartonId;
+        /**
+         * 是否过滤0数据 true:过滤 false:不过滤(默认false)
+         */
+        private Boolean isRemoveZero;
     }
     /**
      * 装箱详情
@@ -144,6 +165,10 @@ public class WmsCartonDTO {
          * 装箱任务id
          */
         private String taskId;
+        /**
+         * 装箱任务编码
+         */
+        private String taskCode;
         /**
          * 箱子id
          */
@@ -234,6 +259,8 @@ public class WmsCartonDTO {
          */
         private String fnSku;
         private String ean;
+        //唯一值
+        private String md5;
         /**
          * 发货数量
          */
@@ -381,7 +408,7 @@ public class WmsCartonDTO {
         /**
          * 箱号
          */
-        private String boxNo;
+        private Integer boxNo;
         /**
          * skuId
          */
@@ -390,6 +417,10 @@ public class WmsCartonDTO {
          * skuNo
          */
         private String skuNo;
+        /**
+         * fnSku
+         */
+        private String fnSku;
         /**
          * 装箱数量
          */
@@ -418,5 +449,107 @@ public class WmsCartonDTO {
          * 尺寸单位
          */
         private String sizeUnit;
+    }
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class OutBoxNoDTO {
+        /**
+         * 箱号
+         */
+        private String outBoxNo;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 装箱任务编码
+         */
+        private String taskCode;
+        /**
+         * 发货单号
+         */
+        private String deliveryNo;
+
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+        /**
+         * 长宽高
+         */
+        private String size;
+        /**
+         * 箱长
+         */
+        private BigDecimal boxLength = BigDecimal.ZERO;
+        /**
+         * 箱宽
+         */
+        private BigDecimal boxWidth = BigDecimal.ZERO;
+        /**
+         * 箱高
+         */
+        private BigDecimal boxHeight = BigDecimal.ZERO;
+        /**
+         * 箱子重量
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 箱子重量[展示使用]
+         */
+        private String packageWeightStr;
+        /**
+         * 重量单位
+         */
+        private String weightUnit;
+        /**
+         * 装箱总数量
+         */
+        private int packTotalQty;
+
+        /**
+         * 产品明细
+         */
+        private List<WmsCartonDetailDTO.BoxDetailDTO> detailList;
+    }
+
+    /**
+     * 装箱清单
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListPackingCartonDTO {
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+        /**
+         * 称重状态(全部)
+         */
+        private String weightingStatus;
+
+        private List<WmsCartonDetailDTO.BoxDTO> cartonDetailDTOList;
+
+        private List<WmsCartonSpecDTO.PackingCartonSpecDTO> cartonSpecDTOList;
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class CartonSkuDTO {
+        private String boxId;
+        /**
+         * 组合箱子sku明细 按照 sku*qty 组合
+         */
+        private String sku;
     }
 }

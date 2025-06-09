@@ -7,15 +7,12 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.validator.ValidList;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
-import com.common.core.enums.CurrencyEnum;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.*;
 import com.common.core.utils.date.LocalDateUtil;
@@ -24,7 +21,6 @@ import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDTO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
-import com.erp.model.scm.dto.PurchasePriceDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
 import com.erp.model.scm.dto.excel.PurchasePriceDetailImportExcelDTO;
 import com.erp.model.scm.entity.PurchasePriceDetailEntity;
@@ -51,8 +47,6 @@ import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronizationAdapter;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -61,7 +55,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -159,7 +153,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         }
         //查询供应商信息
         List<String> skuIdList = list.stream().map(PurchasePriceDetailEntity::getSkuId).collect(Collectors.toList());
-        List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = listCheckPurchasePriceDetail(supplierId, purchaseOrgId, skuIdList);
+        List<PurchasePriceDetailDTO.ViewDTO> purchaseDetailList = listCheckPurchasePriceDetail(Collections.singletonList(supplierId), purchaseOrgId, skuIdList);
         if (CollectionUtils.isNotEmpty(purchaseDetailList)) {
             List<String> oldIdList = list.stream().map(PurchasePriceDetailEntity::getId).collect(Collectors.toList());
             purchaseDetailList = purchaseDetailList.stream().filter(obj -> !oldIdList.contains(obj.getId())).collect(Collectors.toList());
@@ -388,7 +382,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -447,6 +441,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
      * @date 2023-03-28 10:03
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean updateDisabled(UpdateStateDTO.BatchUpdateDTO dto) {
         List<String> ids = dto.getIds();
         if (CollectionUtils.isEmpty(ids)) {
@@ -465,12 +460,13 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
         //金蝶更新分录禁用
         DmpPushTaskEntity pushTaskEntity = syncKingdeePurchasePriceService.syncDataDetailToKingdee(detailList, disabled);
         //推送金蝶
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
-            }
-        });
+        // 新中台不适用
+//        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+//            @Override
+//            public void afterCommit() {
+//                dmpMqFeign.sendTask(Arrays.asList(pushTaskEntity));
+//            }
+//        });
         return Boolean.TRUE;
     }
 
@@ -478,19 +474,19 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     /**
      * 查询供应商的 已有的sku信息
      *
-     * @param supplierId
+     * @param supplierIdList
      * @return java.util.List<com.erp.model.scm.dto.PurchasePriceDetailDTO.AddDTO>
      * @author yl
      * @date 2023-04-06 9:37
      */
     @Override
-    public List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(String supplierId, String purchaseOrgId, List<String> skuIdList) {
+    public List<PurchasePriceDetailDTO.ViewDTO> listCheckPurchasePriceDetail(List<String> supplierIdList, String purchaseOrgId, List<String> skuIdList) {
         List<String> statusList = new ArrayList<>(4);
         statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
         statusList.add(ApproveStatusEnum.APPROVE.getStatus());
         statusList.add(ApproveStatusEnum.REJECT.getStatus());
-        List<PurchasePriceDetailDTO.ViewDTO> list = baseMapper.listCheckPurchasePriceDetail(supplierId, statusList, purchaseOrgId, skuIdList);
+        List<PurchasePriceDetailDTO.ViewDTO> list = baseMapper.listCheckPurchasePriceDetail(supplierIdList, statusList, purchaseOrgId, skuIdList);
         return list;
     }
 
@@ -712,6 +708,7 @@ public class PurchasePriceDetailServiceImpl extends SuperServiceImpl<PurchasePri
     private List<PurchasePriceDetailEntity> getListByPurchasePriceId(String purchasePriceId) {
         LambdaQueryWrapper<PurchasePriceDetailEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(PurchasePriceDetailEntity::getPurchasePriceId, purchasePriceId);
+        queryWrapper.orderByDesc(PurchasePriceDetailEntity::getId);
         return this.list(queryWrapper);
 
     }

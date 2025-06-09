@@ -1,26 +1,23 @@
 package com.erp.model.plm.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.SortDTO;
-import java.util.List;
-
 import com.common.business.enums.ApproveStatusEnum;
 import com.erp.model.plm.entity.PlmAttachmentEntity;
 import com.erp.model.workflow.dto.ProcessTaskManagementAttachmentDTO;
-import com.erp.model.workflow.vo.ApproveNodeRecordVO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
-
-import com.common.business.dto.AdvanceQueryDTO;
-
+import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -116,6 +113,18 @@ public class PilotApplicationDTO implements Serializable {
          * 订单状态名称
          */
         private String orderStatusName;
+        /**
+         * 是否作废 【可排序】
+         */
+        private Boolean invalidStatus;
+        /**
+         * 是否作废 true 已作废 false 未作废
+         */
+        private String invalidStatusName;
+        /**
+         * 作废原因
+         */
+        private String invalidRemark;
 
         private String skuId;
 
@@ -212,7 +221,7 @@ public class PilotApplicationDTO implements Serializable {
         private String approveUserName;
 
         /**
-        * 审核时间
+        * 最新审核时间
         */
         private LocalDateTime approveTime;
 
@@ -441,7 +450,10 @@ public class PilotApplicationDTO implements Serializable {
          * 试产量产单号
          */
         private String code;
-
+        /**
+         * 申请数量
+         */
+        private int applyQty;
         /**
          * 明细ID
          */
@@ -501,6 +513,17 @@ public class PilotApplicationDTO implements Serializable {
          * 计划交期
          */
         private LocalDate planDeliveryDate;
+
+        /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
+
+        /**
+         * 备注
+         */
+        @Size(max = 255,message = "备注不能大于255字符")
+        private String remark;
     }
 
     /**
@@ -509,6 +532,7 @@ public class PilotApplicationDTO implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     public static class ApproveDTO extends BaseApproveParamDTO {
+
         /**
          * 附件
          */
@@ -651,7 +675,7 @@ public class PilotApplicationDTO implements Serializable {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
-    public static class AttachmentDTO{
+    public static class AttachmentDTO implements Serializable{
         /**
          * 文件名称
          */
@@ -718,5 +742,13 @@ public class PilotApplicationDTO implements Serializable {
          * 项目经理
          */
         private String projectChargeName;
+        /**
+         * 操作人
+         */
+        private String userName;
+        /**
+         * 审批状态
+         */
+        private ApproveStatusEnum approveStatus;
     }
 }

@@ -2,12 +2,14 @@ package com.erp.server.plm.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.ProjectPlanEntity;
 import com.erp.model.plm.vo.ProjectPlanDetailsVO;
 import com.erp.model.plm.vo.ProjectTaskPlanAutoVO;
 import com.erp.model.plm.vo.SchedulePagingVO;
+import com.erp.model.tms.dto.TmsFirstMileReconciliationDTO;
 import com.erp.model.workflow.dto.ProcessPassDTO;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,7 +74,7 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
      * @param dto
      * @return com.erp.common.vo.PagingVO<java.util.List<com.erp.model.plm.vo.SchedulePagingVO>>
      */
-    PagingVO<List<SchedulePagingVO>> paging(PagingDTO<SearchPagingDTO> dto);
+    PagingVO<SchedulePagingVO> paging(PagingDTO<SearchPagingDTO> dto);
 
     /**
      * 最终审核通过
@@ -104,4 +106,9 @@ public interface ProjectPlanService  extends IService<ProjectPlanEntity> {
      * @return Boolean
      */
     Boolean importProjectSchedule(MultipartFile excelFile, String productId);
+
+    /**
+     * Tab 统计
+     */
+    List<ProjectScheduleDTO.TabListDTO> tabList(PermissionsDTO dto);
 }

@@ -32,11 +32,25 @@
         FROM fba_shipment_detail fsd
         INNER JOIN fba_shipment fs ON fs.id = fsd.main_id AND fsd.is_deleted = FALSE
         WHERE
-        ${params.sqlMap.default}
-        and fs.is_deleted = FALSE
+        fs.is_deleted = FALSE
+        <if test="params.sqlMap != null and params.sqlMap.default != null and params.sqlMap.default != ''">
+            AND ${params.sqlMap.default}
+        </if>
         <!--数据权限-->
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
+        </if>
+        <if test="params.ids != null and params.ids.size > 0">
+            AND fs.id IN
+            <foreach collection="params.ids" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
+        </if>
+        <if test="params.detailIds != null and params.detailIds.size > 0">
+            AND fsd.id IN
+            <foreach collection="params.detailIds" item="item" open="(" close=")" separator=",">
+                #{item}
+            </foreach>
         </if>
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -163,6 +177,44 @@
         </if>
         <if test="params.shopId!=null and params.shopId!=''">
             and fs.shop_id = #{params.shopId}
+        </if>
+    </select>
+
+    <select id="listByReceiveAndReportMonth"
+            resultType="com.erp.model.wms.dto.FbaTransitCalculateReportDTO$FbaReceiveDTO"
+            parameterType="java.time.LocalDate">
+        select
+            fs.id as shipmentId,
+            fs.code as shipmentCode,
+            fs.shop_id,
+            fs.shop_name,
+            fs.platform_shipment_status,
+            fsd.id as detailId,
+            fsd.asin,
+            fsd.msku,
+            fsd.fn_sku,
+            fsd.sku_id,
+            fsd.sku_no,
+            fsr.id as receiveId,
+            fsr.declare_qty,
+            fsr.delivery_qty,
+            fsr.diff_qty,
+            fsr.receive_qty,
+            fsr.receive_date,
+            fsr.source_platform
+        from fba_shipment_receive fsr
+                 LEFT JOIN fba_shipment_detail fsd on fsd.id = fsr.detail_id and fsd.is_deleted = FALSE
+                 LEFT JOIN fba_shipment fs on fs.id = fsd.main_id and fs.is_deleted = FALSE
+        where fsr.is_deleted = FALSE
+          and fsr.receive_date BETWEEN (DATE_TRUNC('month', #{reportMonth})) AND (DATE_TRUNC('month', #{reportMonth}) + INTERVAL '1 month - 1 day')
+        <if test="shipmentCode != null and shipmentCode != ''">
+            AND fs.code = #{shipmentCode}
+        </if>
+        <if test="asin != null and asin != ''">
+            AND fsd.asin = #{asin}
+        </if>
+        <if test="msku != null and msku != ''">
+            AND fsd.msku = #{msku}
         </if>
     </select>
 

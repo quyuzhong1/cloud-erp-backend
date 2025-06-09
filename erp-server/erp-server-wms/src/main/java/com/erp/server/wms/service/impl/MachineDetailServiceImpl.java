@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -19,7 +19,11 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.MachineDetailDTO;
 import com.erp.model.wms.dto.MachineRefSoDTO;
 import com.erp.model.wms.dto.MachineSubComponentsDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
+import com.erp.model.wms.entity.MachineDetailEntity;
+import com.erp.model.wms.entity.MachineInfoEntity;
+import com.erp.model.wms.entity.MachineRefSoEntity;
+import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.MachineDetailMapper;
@@ -33,6 +37,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -152,6 +157,30 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     }
 
     @Override
+    public List<MachineDetailEntity> listBySourceDetailIds(List<String> detailIds) {
+        if(CollectionUtils.isEmpty(detailIds)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(MachineDetailEntity::getSourceDetailId,detailIds).list();
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineBySourceIdList(List<String> sourceIdList) {
+        if (CollectionUtils.isEmpty(sourceIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listMachineBySourceIdList(sourceIdList);
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listMachineByRefIdList(List<String> refIdList) {
+        if (CollectionUtils.isEmpty(refIdList)) {
+            return Collections.EMPTY_LIST;
+        }
+        return baseMapper.listMachineByRefIdList(refIdList);
+    }
+
+    @Override
     public List<MachineDetailEntity> listByMainId(String mainId) {
         return lambdaQuery()
                 .eq(MachineDetailEntity::getMainId,mainId)
@@ -168,7 +197,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<MachineDetailDTO.UpdateDTO> newList, List<MachineDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(MachineDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(MachineDetailEntity
                 ::getId).collect(Collectors.toList());
@@ -181,10 +210,10 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
     private void doOpHandleDetails (List<MachineDetailEntity> newList, String mainId, Boolean isUpdate) {
 
         //需要新增的数据
-        List<MachineDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<MachineDetailEntity> addList = newList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
 
         //需要修改的数据
-        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(MachineDetailEntity::getId).collect(Collectors.toList());
+        List<String> ids = newList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(MachineDetailEntity::getId).collect(Collectors.toList());
         List<MachineDetailEntity> list = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(ids)) {
             list = this.listByIds(ids);
@@ -214,16 +243,18 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         //仓位必填验证
         checkWarehouseLocation(warehouseEntity,newList);
 
-        for (MachineDetailEntity detail:newList) {
+        for (int i = 0; i < newList.size(); i++) {
+            MachineDetailEntity detail = newList.get(i);
+            detail.setIndex(i+1);
             //验证子件数量
             checkBomChildrenSku(bomChildrenSkuList,detail);
 
             //单位
-            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
+            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && CharSequenceUtil.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
             detail.setMainId(mainId);
             //修改操作日志
-            if (StringUtils.isNotBlank(detail.getId())) {
+            if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
                     throw new ServiceException(ApiError.ERROR_99053);
                 }
@@ -283,7 +314,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
             CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
             warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
         }
-        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getWarehouseLocation())).count();
         //判断仓位是否需要必填
         if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());
@@ -303,7 +334,7 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         if (ObjectUtils.isEmpty(machineInfoEntity)) {
             throw new ServiceException(ApiError.ERROR_99052);
         }
-        if (!SourceTypeEnum.SO_INFO.getCode().equals(machineInfoEntity.getSourceType())) {
+        if (SourceTypeEnum.SO_DELIVERY_NOTICE.getCode().equals(machineInfoEntity.getSourceType())) {
             return;
         }
         List<String> refDetailIdList = list.stream().map(MachineDetailEntity::getRefDetailId).collect(Collectors.toList());
@@ -320,12 +351,18 @@ public class MachineDetailServiceImpl extends SuperServiceImpl<MachineDetailMapp
         List<MachineRefSoDTO.AddDTO> refAddList = new ArrayList<>();
         for (MachineDetailEntity detailEntity: list) {
             MachineRefSoDTO.AddDTO addDTO = new MachineRefSoDTO.AddDTO();
+            if (CharSequenceUtil.isBlank(detailEntity.getRefId()) || CharSequenceUtil.isBlank(detailEntity.getRefCode()) || CharSequenceUtil.isBlank(detailEntity.getRefDetailId())) {
+                continue;
+            }
             addDTO.setSoId(detailEntity.getRefId());
             addDTO.setSoCode(detailEntity.getRefCode());
             addDTO.setSoDetailId(detailEntity.getRefDetailId());
             addDTO.setMachineId(mainId);
             addDTO.setMachineDetailId(detailEntity.getId());
             refAddList.add(addDTO);
+        }
+        if (CollUtil.isEmpty(refAddList)) {
+            return;
         }
         List<MachineRefSoEntity> machineRefSoList = BeanMapperUtils.copyList(MachineRefSoEntity.class, refAddList);
         machineRefSoService.saveBatch(machineRefSoList);

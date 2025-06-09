@@ -11,7 +11,6 @@ import java.util.Map;
 /**
  * @author zdy
  * @ClassName LogisticsBaseService
- * @description: TODO
  * @date 2023年11月15日
  * @version: 1.0
  */
@@ -46,7 +45,7 @@ public interface LogisticsBaseService {
      * @param records
      * @return
      */
-    List<BatchResultDTO> processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType);
+    void processRegisterData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType);
 
     List<BatchResultDTO> batchUpdateTrackInfo(List<LogisticsTrackDTO.UpdateTrackDTO> dtos,String transportType);
 
@@ -91,10 +90,7 @@ public interface LogisticsBaseService {
     void syncLogisticsAddress(Map<String, String> authMap);
 
     /**
-     * 清洗mongodb 物流轨迹数据
-     * @param platformType
-     * @param records
-     * @param transportType
+     * TikTok全托管同步物流地址
      */
-    void processMongoTrackData(String platformType, List<LogisticsTrackDTO.UpdateTrackDTO> records, String transportType);
+    void syncTikTokLogisticsAddress(String shopId);
 }

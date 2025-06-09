@@ -1,10 +1,11 @@
 package com.erp.server.oms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.RuleCompareEnum;
 import com.common.core.exception.ServiceException;
@@ -26,11 +27,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.*;
+import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -44,13 +48,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapper, RuleConditionEntity> implements RuleConditionService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private DictRuleConditionService dictRuleConditionService;
 
-    @Autowired
+    @Resource
     private CfgConditionService cfgConditionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -70,10 +74,8 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "规则条件单", ruleConditionEntity.getId());
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg =  CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(),ModuleTypeEnum.RULE_CONDITION.getName(), ruleConditionEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, ruleConditionEntity.getId(), "新增操作");
-        // TODO 新增明细（如果有明细的话）
         return ruleConditionEntity.getId();
     }
 
@@ -84,7 +86,9 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
     @Override
     public Boolean update(RuleConditionDTO.UpdateDTO updateDTO) {
         RuleConditionEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "规则条件单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL,ModuleTypeEnum.RULE_CONDITION.getName());
+        }
         RuleConditionEntity ruleConditionEntity = BeanMapperUtils.map(RuleConditionEntity.class, updateDTO);
 
         // 数据处理
@@ -93,12 +97,9 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         if (!save) {
             throw new ServiceException("规则条件单保存失败");
         }
-        // TODO 修改明细数据（包含增删改）（如果有明细的话）
-
         // 记录主单操作日志
         log.info("编辑 开始记录规则条件单日志数据，id：【{}】", ruleConditionEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleConditionEntity.getId(), "规则条件单");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+        String msg =  CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), ruleConditionEntity.getId(),ModuleTypeEnum.RULE_CONDITION.getName());
         operateLogService.addModuleOperateLogByObj(old, ruleConditionEntity, null, ruleConditionEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -122,13 +123,14 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         int i = 1;
         for (RuleConditionDTO.AddDTO item : conditionList) {
             item.setIndex(i);
-            item.setName(StrUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
+            item.setName(CharSequenceUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
             i++;
         }
         List<RuleConditionEntity> ruleConditionList = BeanMapper.copyList(conditionList, RuleConditionEntity.class);
         ruleConditionList.forEach(r -> r.setRuleId(ruleId));
         handleDataList(ruleConditionList);
-        this.saveBatch(ruleConditionList);
+        RuleConditionServiceImpl bean = ApplicationContextUtils.getBean(RuleConditionServiceImpl.class);
+        bean.saveBatch(ruleConditionList);
     }
 
     /**
@@ -185,7 +187,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         int i = 1;
         for (RuleConditionDTO.UpdateDTO item : conditionList) {
             item.setIndex(i);
-            item.setName(StrUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
+            item.setName(CharSequenceUtil.isBlank(item.getName()) ? item.getValue() : item.getName());
             i++;
         }
         String moduleType = ModuleTypeEnum.RULE_ORDER_APPROVAL.getCode();
@@ -224,11 +226,12 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
         for (RuleConditionEntity updateItem : updateRuleConditionList) {
             RuleConditionEntity old = dbList.stream().filter(r -> r.getId().equals(updateItem.getId())).findFirst().orElse(null);
             if (Objects.nonNull(old)) {
-                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId, StrUtil.format("修改了第【{}】条订单规则",updateItem.getIndex()));
+                operateLogService.addModuleOperateLogByObj(old, updateItem, moduleType, ruleId,  CharSequenceUtil.format("修改了第【{}】条订单规则",updateItem.getIndex()));
             }
         }
         handleDataList(saveOrUpdateList);
-        this.saveOrUpdateBatch(saveOrUpdateList);
+        RuleConditionServiceImpl bean = ApplicationContextUtils.getBean(RuleConditionServiceImpl.class);
+        bean.saveOrUpdateBatch(saveOrUpdateList);
     }
 
     /**
@@ -264,7 +267,7 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
      */
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<RuleConditionEntity> dbList) {
         List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
-                map(obj -> obj.getKey()).collect(Collectors.toList());
+                map(Pair::getKey).collect(Collectors.toList());
         List<String> dbIds = dbList.stream().map(RuleConditionEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
     }
@@ -279,7 +282,6 @@ public class RuleConditionServiceImpl extends SuperServiceImpl<RuleConditionMapp
      * 新增修改处理数据
      */
     private void handleDataList(List<RuleConditionEntity> ruleConditionList) {
-        // TODO 验证数据 & 数据赋值
         for (RuleConditionEntity item : ruleConditionList) {
             String compare = item.getCompare();
             if (RuleCompareEnum.IS_NULL.getCode().equals(compare)) {

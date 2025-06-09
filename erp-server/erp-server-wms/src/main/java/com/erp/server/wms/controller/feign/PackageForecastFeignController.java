@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.validator.ValidList;
@@ -52,7 +53,7 @@ public class PackageForecastFeignController extends BaseController {
                 packageForecastService.add(item);
             } catch (Exception e) {
                 log.error("添加组包预报异常 {}", e.getMessage());
-                item.getDetailList().forEach(v-> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(),v.getSoCode(), StrUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
+                item.getDetailList().forEach(v-> resultDTOList.add(BatchResultDTO.fail(item.getLogisticsSupplierId(),v.getSoCode(), CharSequenceUtil.format("添加组包预报异常 {}", ExceptionUtil.getSimpleMessage(e)))));
             }
         }
 

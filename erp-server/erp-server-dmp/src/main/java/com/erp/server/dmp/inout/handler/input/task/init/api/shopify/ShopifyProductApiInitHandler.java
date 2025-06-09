@@ -81,6 +81,7 @@ public class ShopifyProductApiInitHandler implements DmpInputApiInitHandler {
             try {
                 Thread.sleep(sleepTime);
             } catch (InterruptedException exception) {
+            	Thread.currentThread().interrupt();
             }
             sleepTime = sleepTime + 1000;
             count = count + 1;

@@ -22,6 +22,6 @@ public class Video implements Serializable {
     private String videoUrl;
     @Alias( "thumbnail_url")
     private String thumbnailUrl;
-    @Alias( "")
+    @Alias( "duration")
     private String duration;
 }

@@ -65,7 +65,7 @@ public class DmpThirdWarehouseInfoServiceImpl extends SuperServiceImpl<DmpThirdW
     @Override
     public Boolean update(DmpThirdWarehouseInfoDTO.UpdateDTO updateDTO) {
         DmpThirdWarehouseInfoEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "第三方仓库"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "第三方仓库"));
         DmpThirdWarehouseInfoEntity dmpThirdWarehouseInfoEntity =  BeanMapperUtils.map(DmpThirdWarehouseInfoEntity.class, updateDTO);
 
         // 数据处理
@@ -83,6 +83,17 @@ public class DmpThirdWarehouseInfoServiceImpl extends SuperServiceImpl<DmpThirdW
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, dmpThirdWarehouseInfoEntity, null, dmpThirdWarehouseInfoEntity.getId(), msg);
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<DmpThirdWarehouseInfoEntity> listByAuthId(String authId) {
+        if (StrUtil.isNotBlank(authId)) {
+            return super.lambdaQuery()
+                    .eq(DmpThirdWarehouseInfoEntity::getAuthId, authId)
+                    .eq(DmpThirdWarehouseInfoEntity::getDisabled, Boolean.FALSE)
+                    .list();
+        }
+        return Collections.emptyList();
     }
 
 

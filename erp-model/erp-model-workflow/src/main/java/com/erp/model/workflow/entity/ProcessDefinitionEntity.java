@@ -2,7 +2,6 @@ package com.erp.model.workflow.entity;
 
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.workflow.dto.ProcessDTO;
@@ -86,7 +85,7 @@ public class ProcessDefinitionEntity extends BaseEntity<ProcessDefinitionEntity>
 
     public static final String BPMN_XML = "bpmn_xml";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String REVIEW_SETTING = "review_setting";
 

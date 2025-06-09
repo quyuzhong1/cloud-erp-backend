@@ -1,5 +1,7 @@
 package com.erp.model.wms.enums.inventory;
 
+import lombok.Setter;
+
 import java.util.Arrays;
 import java.util.Objects;
 
@@ -41,12 +43,12 @@ public enum VirtualInventoryBusinessTypeEnum {
     /**
      * B2B销售订单锁定库存，添加冻结减少可用
      */
-    SO_INFO_LOCK_ADD("so_info_lock_add", "07","B2B销售订单"),
+    SO_INFO_LOCK_ADD("so_info_lock_add", "07","B2B销售订单添加"),
 
     /**
      * B2B销售订单锁定库存，添加可用减少冻结
      */
-    SO_INFO_LOCK_LESS("so_info_lock_less", "08","B2B销售订单"),
+    SO_INFO_LOCK_LESS("so_info_lock_less", "08","B2B销售订单减少"),
 
     /**
      * B2B销售订单释放库存，减冻结加可用
@@ -87,10 +89,21 @@ public enum VirtualInventoryBusinessTypeEnum {
      * 发货通知单新增，加冻结
      */
     SO_DELIVERY_NOTICE_ADD("so_delivery_notice_add", "16","发货通知单新增加冻结"),
+
+    /**
+     * 加工单子件出库，减冻结
+     */
+    MACHINE_INFO_CHILD_OUT("machine_info_child_out", "17","加工单子件出库"),
+
+    /**
+     * 发货通知单处理类型
+     */
+    SO_DELIVERY_NOTICE_HANDLE("so_delivery_notice_handle", "18","发货通知单处理减少可用、添加冻结"),
     ;
 
     private String code;
 
+    @Setter
     private String type;
 
     private String name;
@@ -111,10 +124,6 @@ public enum VirtualInventoryBusinessTypeEnum {
 
     public String getType() {
         return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     /**

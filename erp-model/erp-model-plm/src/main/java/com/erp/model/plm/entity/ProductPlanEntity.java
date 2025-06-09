@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @TableName(value ="product_plan")
 @Data
 @NoArgsConstructor
-public class ProductPlanEntity extends BaseEntity {
+public class ProductPlanEntity extends BaseEntity<ProductPlanEntity> {
 
     /**
      * 年份
@@ -256,4 +256,10 @@ public class ProductPlanEntity extends BaseEntity {
     @TableField(value = "listing_date")
     private LocalDate listingDate;
 
+
+    /**
+     * 应用分类id
+     */
+    @TableField(value = "application_category_id")
+    private String applicationCategoryId;
 }

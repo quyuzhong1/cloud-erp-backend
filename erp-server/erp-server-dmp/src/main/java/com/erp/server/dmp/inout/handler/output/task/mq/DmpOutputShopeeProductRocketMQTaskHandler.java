@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -79,10 +80,12 @@ public class DmpOutputShopeeProductRocketMQTaskHandler extends DmpOutputRocketMQ
 		for(String changId : changeIds) {
 			DmpProductInfoEntity dmpProductInfoEntity = dmpProductInfoEntityMap.get(changId);
 			List<DmpSkuInfoEntity> dmpSkuInfoEntityList = dmpSkuInfoEntityMap.get(changId);
-			for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
-				PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
-				if(product != null) {
-					map.put(dmpSkuInfoEntity.getId(), JSON.toJSONString(product));
+			if(CollUtil.isNotEmpty(dmpSkuInfoEntityList)) {
+				for(DmpSkuInfoEntity dmpSkuInfoEntity : dmpSkuInfoEntityList) {
+					PlatformProductDTO product = this.convert(dmpProductInfoEntity, dmpSkuInfoEntity, cfgOutputId);
+					if(product != null) {
+						map.put(dmpSkuInfoEntity.getId(), JSON.toJSONString(product));
+					}
 				}
 			}
 		}
@@ -98,21 +101,32 @@ public class DmpOutputShopeeProductRocketMQTaskHandler extends DmpOutputRocketMQ
     	}
     	
     	PlatformProductDTO product = new PlatformProductDTO()
-                // 类型 platform 平台  warehouse 仓库
+    			// 类型 platform 平台  warehouse 仓库
                 .setPlatformType("platform")
                 // 平台spu no
                 .setPlatformProductNo(dmpSkuInfoEntity.getSkuId())
                 // 平台sku no
                 .setPlatformSkuNo(dmpSkuInfoEntity.getSkuNo())
+                //平台产品id
+                .setPlatformSkuId(dmpSkuInfoEntity.getSkuId())
+                //平台sku状态
+                .setPlatformStatus(dmpSkuInfoEntity.getStatus())
                 //sku名称
                 .setPlatformSkuName(dmpSkuInfoEntity.getName())
                 // 平台产品名称
-                .setPlatformProductName(dmpSkuInfoEntity.getName())
+                .setPlatformProductName(dmpSkuInfoEntity.getBrandName())
                 //产品包装信息
                 .setProductPacking(StrUtil.format("长度:{}cm;宽度:{}cm;高度:{}cm;重量:{}kg;", dmpSkuInfoEntity.getPackageLength(), dmpSkuInfoEntity.getPackageWidth(), dmpSkuInfoEntity.getPackageHeight(), dmpSkuInfoEntity.getGrossWeight()))
                 //产品规格信息
                 .setProductSpec(dmpSkuInfoEntity.getCategoryName());
                 //店铺
+    	
+
+        
+    	String imageUrls = dmpSkuInfoEntity.getImageUrls();
+    	if(StringUtils.isNotBlank(imageUrls)) {
+    		product.setProductImageUrl(imageUrls.split(";")[0]);
+    	}
     	
     	product.setPlatform(dmpProductInfoEntity.getSourcePlatform());
         product.setShopId(dmpProductInfoEntity.getNextLevelId());

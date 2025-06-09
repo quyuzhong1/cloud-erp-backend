@@ -8,6 +8,7 @@ import lombok.Setter;
 import lombok.experimental.Accessors;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 /**
  * <p>
@@ -77,6 +78,48 @@ public class SoReturnDetailEntity extends BaseEntity<SoReturnDetailEntity> {
      */
     @TableField(exist = false)
     private String approveStatus;
+
+    /**
+     * listing_id
+     */
+    @TableField("listing_id")
+    private String listingId;
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
+    /**
+     * 平台sku名称
+     */
+    @TableField("platform_sku_name")
+    private String platformSkuName;
+
+    /**
+     *退货金额
+     */
+    @TableField("return_amount")
+    private BigDecimal returnAmount;
+    /**
+     *含税退货金额
+     */
+    @TableField("tax_return_amount")
+    private BigDecimal taxReturnAmount;
+    /**
+     *退货金额（本位币）
+     */
+    @TableField("return_amount_local_currency")
+    private BigDecimal returnAmountLocalCurrency;
+    /**
+     *含税退货金额（本位币）
+     */
+    @TableField("tax_return_amount_local_currency")
+    private BigDecimal taxReturnAmountLocalCurrency;
+    /**
+     * 汇率
+     */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
 
     public static final String MAIN_ID = "main_id";
 

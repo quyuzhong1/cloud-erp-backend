@@ -25,8 +25,8 @@ public class GoodCangLogisticsAndWarehouseResp implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     @ToString
-    public static class AIR  extends Base{
-
+    public static class AIR  extends Base implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         //物流产品
         @JSONField(name = "sm_code")
         private String smCode;
@@ -48,8 +48,8 @@ public class GoodCangLogisticsAndWarehouseResp implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     @ToString
-    public static class LCL extends Base{
-
+    public static class LCL extends Base implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         //物流产品
         @JSONField(name = "sm_code")
         private String smCode;
@@ -70,7 +70,8 @@ public class GoodCangLogisticsAndWarehouseResp implements Serializable {
     @EqualsAndHashCode(callSuper = true)
     @Data
     @ToString
-    public static class EXPRESS extends Base{
+    public static class EXPRESS extends Base implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         //物流产品
         @JSONField(name = "sm_code")
         private String smCode;
@@ -82,27 +83,5 @@ public class GoodCangLogisticsAndWarehouseResp implements Serializable {
         //物流产品绑定中转仓目的仓对象数组
         @JSONField(name = "twc_to_warehouse")
         private List<TwcToWarehouse> twcToWarehouseList;
-    }
-
-    @Data
-    @ToString
-    public static class TwcToWarehouse {
-
-        //中转仓代码
-        @JSONField(name = "transit_warehouse_code")
-        private String transitWarehouseCode;
-
-        //中转仓名称
-        @JSONField(name = "transit_warehouse_name")
-        private String transitWarehouseName;
-
-        //目的仓代码
-        @JSONField(name = "warehouse_code")
-        private String warehouseCode;
-
-        //目的仓名称
-        @JSONField(name = "warehouse_name")
-        private String warehouseName;
-
     }
 }

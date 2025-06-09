@@ -1,7 +1,6 @@
 package com.erp.rpc.scm.feign;
 
 import com.common.business.config.FeignErrorDecoder;
-import com.common.business.dto.base.ForgotPasswordDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
@@ -15,7 +14,6 @@ import com.erp.model.sys.vo.SupplierUserVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
 
 import java.util.List;
 
@@ -49,13 +47,13 @@ public interface SupplierUserFeign {
      * 添加用户
      */
     @PostMapping("/feign/supplierUser/saveSrm")
-    ApiResult saveSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
+    ApiResult<Object> saveSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
     /**
      * 修改用户
      */
     @PostMapping("/feign/supplierUser/updateSrm")
-    ApiResult updateSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
+    ApiResult<Object> updateSrm(@RequestBody @Validated SysUserInfoDTO sysUserInfoDTO);
 
 
     /**
@@ -69,7 +67,7 @@ public interface SupplierUserFeign {
      * 删除
      */
     @PostMapping("/feign/supplierUser/remove")
-    ApiResult remove(@RequestParam("uid") String uid);
+    ApiResult<Object> remove(@RequestParam("uid") String uid);
 
     /**
      * 批量启用/禁用
@@ -78,7 +76,7 @@ public interface SupplierUserFeign {
      * @return
      */
     @PostMapping("/feign/supplierUser/updateState")
-    ApiResult updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO);
+    ApiResult<Object> updateState(@RequestBody @Validated UpdateUserStateDTO stateDTO);
 
     /**
      * 重置密码
@@ -88,7 +86,7 @@ public interface SupplierUserFeign {
      * @return
      */
     @GetMapping("/feign/supplierUser/changePassword")
-    ApiResult changePassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
+    ApiResult<Object> changePassword(@RequestParam("uid") String uid, @RequestParam("pwd") String pwd);
 
     /**
      * 保存用户关系

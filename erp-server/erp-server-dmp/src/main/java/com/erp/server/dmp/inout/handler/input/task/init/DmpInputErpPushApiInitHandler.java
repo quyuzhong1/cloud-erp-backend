@@ -68,16 +68,22 @@ public class DmpInputErpPushApiInitHandler extends DmpInputInitHandler{
 			} catch (Exception e) {
 				Throwable cause = e.getCause();
 				if(cause instanceof ClientException && i < 9) {
-					try {Thread.sleep(10000);} catch (InterruptedException e1) {}
+					try {Thread.sleep(10000);} catch (InterruptedException e1) {
+						Thread.currentThread().interrupt();
+					}
 				}else {
 					throw e;
 				}
 			}
 			i = i + 1;
 		}
-		dmpInputTaskInitDTO.setMsg(JSON.toJSONString(list));
+		
+		dmpInputTaskInitDTO.setMsg(this.afterQueryData(list));
 		
 		return Collections.singletonList(dmpInputTaskInitDTO);
 	}
 	
+	protected String afterQueryData(List<BaseEntity> list) {
+		return JSON.toJSONString(list);
+	}
 }

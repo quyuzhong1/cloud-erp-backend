@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,6 +17,7 @@ import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WarehouseReceiveEntity;
+import com.erp.server.wms.query.WarehouseReceiveQueryHandler;
 import com.erp.server.wms.service.WarehouseReceiveDetailService;
 import com.erp.server.wms.service.WarehouseReceiveService;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +27,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 
@@ -57,14 +57,30 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "receive_user_id",
+            warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
     public ApiResult<PagingVO<WarehouseReceiveDTO.PagingViewDTO>> paging(@RequestBody @Validated PagingDTO<WarehouseReceiveDTO.PagingParamDTO> dto) {
         PagingVO<WarehouseReceiveDTO.PagingViewDTO> pagingVO = warehouseReceiveService.paging(dto);
         return success(pagingVO);
     }
 
+    /**
+     * 合计
+     **/
+    @PostMapping("/pagingTotal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "receive_user_id",
+            warehouseTableField = "wr.delivery_warehouse_id",
+            menuCode = "wms:warehouseReceive:paging",
+            tableAlias = "wr"
+    )
+    @WebAdvanceQuery(handler = WarehouseReceiveQueryHandler.class)
+    public ApiResult<WarehouseReceiveDTO.PagingTotalDTO> pagingTotal(@RequestBody @Validated WarehouseReceiveDTO.PagingParamDTO dto) {
+        return success(warehouseReceiveService.pagingTotal(dto));
+    }
     /**
      * 列表状态数量统计
      * @Author Luo_WG
@@ -75,6 +91,7 @@ public class WarehouseReceiveController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "receive_user_id",
+            warehouseTableField = "wr.delivery_warehouse_id",
             menuCode = "wms:warehouseReceive:paging",
             tableAlias = "wr"
     )
@@ -92,9 +109,9 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "新增采购收货单")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
-        String id = warehouseReceiveService.add(dto);
-        return StringUtils.isNotBlank(id) == true ? success() : failure();
+    public ApiResult<?> add(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
+        WarehouseReceiveEntity entity = warehouseReceiveService.add(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
     /**
@@ -111,7 +128,7 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:update",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
+    public ApiResult<?> update(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean flag = warehouseReceiveService.update(dto);
         return flag == true ? success() : failure();
     }
@@ -149,9 +166,23 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:submit",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = warehouseReceiveService.submit(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, WarehouseReceiveEntity> entityMap = warehouseReceiveService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseReceiveEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(warehouseReceiveService.submitEntity(entity));
+            }catch (Exception e){
+                log.error("采购收货单提交失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -168,9 +199,9 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:add",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
-    public ApiResult addAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
-        Boolean flag = warehouseReceiveService.addAndSubmit(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> addAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.AddDTO dto) {
+        WarehouseReceiveEntity entity = warehouseReceiveService.addAndSubmit(dto);
+        return null != entity ? success(new BaseResultDTO.AddDTO(entity.getId(), entity.getCode())) : failure();
     }
 
     /**
@@ -187,7 +218,7 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:update",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "id")
-    public ApiResult updateAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
+    public ApiResult<?> updateAndSubmit(@RequestBody @Validated WarehouseReceiveDTO.UpdateDTO dto) {
         Boolean flag = warehouseReceiveService.updateAndSubmit(dto);
         return flag == true ? success() : failure();
     }
@@ -276,16 +307,31 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:cancelProcess",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        Boolean flag = warehouseReceiveService.cancelProcess(dto.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, WarehouseReceiveEntity> entityMap = warehouseReceiveService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseReceiveEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(warehouseReceiveService.cancelProcessEntity(entity));
+            }catch (Exception e){
+                log.error("采购收货单撤销失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
+
 
     /**
      * 批量作废
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param remarkDTO idsDTO
+     * @param dto idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.INVALID, desc = "作废采购收货单")
@@ -295,16 +341,30 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:invalid",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
-    public ApiResult invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO remarkDTO) {
-        Boolean flag = warehouseReceiveService.invalid(remarkDTO.getIds(), remarkDTO.getRemark());
-        return flag == true ? success() : failure();
+    public ApiResult<?> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, WarehouseReceiveEntity> entityMap = warehouseReceiveService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseReceiveEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(warehouseReceiveService.invalidEntity(entity, dto.getRemark()));
+            }catch (Exception e){
+                log.error("采购收货单作废失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
      * 批量删除
      * @Author Luo_WG
      * @Date 2023/4/6 19:29
-     * @param idsDTO idsDTO
+     * @param dto idsDTO
      * @return com.common.core.controller.vo.ApiResult
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "删除采购收货单")
@@ -314,9 +374,23 @@ public class WarehouseReceiveController extends BaseController {
             menuCode = "wms:warehouseReceive:delete",
             serviceClass = WarehouseReceiveService.class,
             keyIdName = "ids")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        Boolean flag = warehouseReceiveService.delete(idsDTO.getIds());
-        return flag == true ? success() : failure();
+    public ApiResult<?> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        Map<String, WarehouseReceiveEntity> entityMap = warehouseReceiveService.mapByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            WarehouseReceiveEntity entity = entityMap.get(id);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"采购收货单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(warehouseReceiveService.deleteEntity(entity));
+            } catch (Exception e){
+                log.error("采购收货单删除失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -328,7 +402,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出采购收货单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto) {
+    public ApiResult<?> exportExcel(@RequestBody WarehouseReceiveDTO.PagingParamDTO dto) {
         Boolean flag = warehouseReceiveService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
@@ -360,7 +434,7 @@ public class WarehouseReceiveController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "下推入库单保存")
     @PostMapping(value = "/generateStockIn")
-    public ApiResult generateStockIn(@RequestBody WarehouseReceiveDTO.ListGenerateStockInDTO dtos) {
+    public ApiResult<?> generateStockIn(@RequestBody WarehouseReceiveDTO.ListGenerateStockInDTO dtos) {
         Boolean flag = warehouseReceiveService.generateStockIn(dtos.getList());
         return flag == true ? success() : failure();
     }
@@ -387,7 +461,7 @@ public class WarehouseReceiveController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "下推收货单保存")
     @PostMapping("/generateReceive")
-    public ApiResult generateReceive(@RequestBody @Validated PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
+    public ApiResult<?> generateReceive(@RequestBody @Validated PurchaseOrderDTO.ListGenerateReceiveDTO dto) {
         Boolean flag = warehouseReceiveService.generateReceive(dto);
         return flag == true ? success() : failure();
     }
@@ -396,7 +470,7 @@ public class WarehouseReceiveController extends BaseController {
      * @return
      */
     @PostMapping("/instockStatusCleanJob")
-    public ApiResult instockStatusCleanJob(){
+    public ApiResult<?> instockStatusCleanJob(){
         warehouseReceiveService.instockStatusCleanJob();
         return success();
     }

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -55,6 +56,7 @@ public class OtherInstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "oi.warehouse_id",
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
     )
@@ -74,6 +76,7 @@ public class OtherInstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "oi.warehouse_id",
             menuCode = "wms:otherInstock:paging",
             tableAlias = "oi"
     )
@@ -98,7 +101,7 @@ public class OtherInstockController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated OtherInstockDTO.AddDTO dto) {
         String id = otherInstockService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -117,7 +120,7 @@ public class OtherInstockController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated OtherInstockDTO.AddDTO dto) {
         String id = otherInstockService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

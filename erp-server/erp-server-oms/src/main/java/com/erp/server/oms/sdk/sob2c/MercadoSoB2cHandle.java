@@ -3,6 +3,7 @@ package com.erp.server.oms.sdk.sob2c;
 import com.common.business.annotation.PlatformSoB2cAnnotate;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.enums.PlatformDictEnum;
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -10,20 +11,26 @@ import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
-import com.erp.server.oms.service.ISoB2cHandleService;
 import com.erp.server.oms.service.PlatformOrderConsumerHandleService;
+import com.erp.server.oms.service.SoB2cCoreService;
 import com.erp.server.oms.service.SoB2cErrorService;
 import com.erp.server.oms.service.SoB2cService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
+/**
+ * 美客多-全球
+ */
 @Slf4j
 @Component
 @PlatformSoB2cAnnotate(method = PlatformDictEnum.MERCADOLIBRE)
-public class MercadoSoB2cHandle implements ISoB2cHandleService {
+public class MercadoSoB2cHandle  extends AbstractSoB2cHandle {
 
     @Resource
     private PlatformOrderConsumerHandleService platformOrderConsumerHandleService;
@@ -33,6 +40,8 @@ public class MercadoSoB2cHandle implements ISoB2cHandleService {
     private SoB2cErrorService soB2cErrorService;
     @Resource
     private SoB2cService soB2cService;
+    @Resource
+    private SoB2cCoreService soB2cCoreService;
 
     @Override
     public Boolean handleRule(SoB2cEntity mainEntity) {
@@ -60,9 +69,12 @@ public class MercadoSoB2cHandle implements ISoB2cHandleService {
         if (isShipped && hasPlatformWarehouse) {
             try {
                 SoOutstockDTO.GenerateB2cDTO generateB2cDTO = soB2cService.getSoOutstockInfoById(mainEntity.getId());
-                soOutstockFeign.generateB2cSoOutstockByData(generateB2cDTO);
+
+                //平台仓拆分
+                List<SoOutstockDTO.GenerateB2cDTO> generateB2cList = soB2cCoreService.splitB2cSoOutstock(mainEntity,generateB2cDTO);
+                generateB2cList.forEach(obj -> soOutstockFeign.generateB2cSoOutstockByData(obj));
             } catch (Exception e) {
-                log.error("[美客多生成销售出库单异常]:order={},msg={}", mainEntity.getCode(), e.getMessage());
+                log.error("[美客多生成销售出库单异常]:order={},", mainEntity.getCode(), e);
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson("");
@@ -73,5 +85,13 @@ public class MercadoSoB2cHandle implements ISoB2cHandleService {
             }
         }
         return true;
+    }
+
+    @Override
+    public List<DmpInoutDTO.CreateInputDTO> convertCreateInputDTOList(List sourceList) {
+        Map<String, List<SoB2cEntity>> shopGroupMap = ((List<SoB2cEntity>) sourceList).stream().collect(Collectors.groupingBy(SoB2cEntity::getShopId));
+        return shopGroupMap.values().stream()
+                .map(this::createInputDTO)
+                .collect(Collectors.toList());
     }
 }

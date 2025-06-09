@@ -1,5 +1,7 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -9,6 +11,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SkuApproveConfigureEnum;
 import com.common.business.enums.WorkflowBusinessEnum;
 import com.common.business.threadlocal.UserContext;
@@ -18,10 +21,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.plm.dto.*;
-import com.erp.model.plm.entity.ProductChangeEntity;
-import com.erp.model.plm.entity.ProductDetailEntity;
-import com.erp.model.plm.entity.ProductInfoEntity;
-import com.erp.model.plm.entity.ProductPurchaseEntity;
+import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.BomOperationTypeEnum;
 import com.erp.model.plm.enums.BomStateEnum;
 import com.erp.model.plm.enums.ProductChangeStateEnum;
@@ -30,11 +30,15 @@ import com.erp.model.plm.vo.ProductChangePagingVO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import com.erp.model.wms.entity.InventoryEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.vo.ApproveNodeRecordVO;
 import com.erp.model.workflow.vo.MyToDoTaskVO;
 import com.erp.model.workflow.vo.ProcessCurrentAuditorVO;
 import com.erp.rpc.sys.feign.SysUserFeign;
+import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.BomOperateContent;
@@ -75,6 +79,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
 
     @Resource
     private ProductDetailService productDetailService;
+    @Resource
+    private ProductInfoService productInfoService;
 
 
     @Resource
@@ -98,12 +104,20 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     @Resource
     private ProductPurchaseService productPurchaseService;
 
+    @Resource
+    private InventoryFeign inventoryFeign;
+
     //变更财务人员审核
     @Value("${changeFinancialAudit}")
     private String financial;
 
     private static final String SPUCLASSPATH = String.valueOf(ProductInfoEntity.class);
     private static final String SKUCLASSPATH = String.valueOf(ProductDetailEntity.class);
+
+
+    private void checkInventoryGreaterThanZero(){
+
+    }
 
     /**
      * 添加变更
@@ -253,6 +267,59 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     }
 
     /**
+     * 检查库存是否大于零
+     * 此方法用于检查给定商品的库存是否大于零如果库存大于零，则根据库存状态统计数量，并抛出异常
+     *
+     */
+    @Override
+    public void checkInventoryGreaterThanZero(ProductInfoEntity productInfoEntity,String propertyId , String skuId) {
+        // 如果商品属性ID与实体中的属性ID不匹配，则直接返回
+        if(productInfoEntity.getPropertyId().equals(propertyId)){
+            return;
+        }
+
+        // 创建一个用于查询库存的DTO对象，并设置SKU编号列表
+        InventoryQtyDTO.InventoryBySkuDTO inventoryBySkuDTO = new InventoryQtyDTO.InventoryBySkuDTO();
+        inventoryBySkuDTO.setSkuIdList(Collections.singletonList(skuId));
+
+        // 调用远程服务，获取库存实体列表
+        List<InventoryEntity> inventoryEntities = inventoryFeign.listInventoryBySkuIds(inventoryBySkuDTO);
+
+        // 如果库存实体列表不为空，则进行进一步处理
+        if(CollUtil.isNotEmpty(inventoryEntities)){
+            // 排除在途的库存
+            inventoryEntities = inventoryEntities.stream()
+                    .filter(v -> !v.getDictInventoryStatus().equals(InventoryStatusEnum.IN_TRANSIT.getCode()))
+                    .collect(Collectors.toList());
+
+            // 计算剩余库存的总数量
+            int totalQty = inventoryEntities.stream()
+                    .mapToInt(inventory -> Optional.ofNullable(inventory.getQty()).orElse(0))
+                    .sum();
+
+            // 如果总库存量大于0，则按库存状态统计数量，并抛出异常
+            if(totalQty > 0){
+                // 按库存状态统计数量
+                Map<String, Integer> qtyMap = inventoryEntities.stream()
+                        .collect(Collectors.groupingBy(
+                                InventoryEntity::getDictInventoryStatus,
+                                Collectors.summingInt(inventory -> Optional.ofNullable(inventory.getQty()).orElse(0))
+                        ));
+
+                // 构建包含库存状态和数量的字符串
+                StringBuilder sb = new StringBuilder();
+                for (Map.Entry<String, Integer> entry : qtyMap.entrySet()) {
+                    sb.append(InventoryStatusEnum.getNameByCode(entry.getKey())).append(":")
+                            .append(entry.getValue()).append(";");
+                }
+
+                // 抛出包含库存状态和数量信息的自定义异常
+                throw new ServiceException(ApiError.ERROR_95286,sb.toString());
+            }
+        }
+    }
+
+    /**
      * 启动一个变更流程
      *
      * @param
@@ -315,7 +382,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             parameterMap.put("productManagerList", productManagerList);
 
             //获取产品经理上一级
-            List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
+            List<String> productManagerSupervisorList = getProductManagerSupervisorList(productManagerList);
+            if (CollectionUtils.isEmpty(productManagerSupervisorList)) {
                 throw new ServiceException(ApiError.ERROR_9031);
             }
             //产品经理上级
@@ -476,7 +544,6 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         SearchPagingDTO params = dto.getParams();
         String searchKeyword = params.getSearchKeyword();
-        String searchType = params.getSearchType();
         List<String> changeIdList = new ArrayList<>();
 
         //当这个不为空的时候 表示可能要搜索 sku 或者 sku名称 或者bom 编号
@@ -484,24 +551,13 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         if (StringUtils.isNotBlank(searchKeyword)) {
             changeSearch = baseMapper.getChangeSearchCondition(searchKeyword);
         }
-        //待审核
-        if (SearchType.WAIT_AUDIT.equals(searchType)) {
-            String userId = UserContext.getDefaultLoginUser().getUid();
-            //获取我的待办信息
-            List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
-            changeIdList = myToDoTasks.stream().map(MyToDoTaskVO::getBusinessTableId).collect(Collectors.toList());
-            if (CollectionUtils.isEmpty(changeIdList)) {
-                IPage pageData = new Page();
-                return new PagingVO(pageData);
-            }
-        }
         //如果搜索是空就返回空
         if (CollectionUtils.isEmpty(changeSearch) && StringUtils.isNotBlank(searchKeyword)) {
             IPage pageData = new Page();
             return new PagingVO(pageData);
         }
 
-        IPage pageData = baseMapper.paging(query, changeSearch, changeIdList);
+        IPage pageData = baseMapper.paging(query, changeSearch, params);
         List<ProductChangePagingVO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
             return new PagingVO(new Page());
@@ -724,7 +780,34 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         parameterMap.put("agree", true);
         approveProcess.setParameterMap(parameterMap);
         this.updateById(changeEntity);
-
+//        List<ProductChangeDetailsEntity> details = productChangeDetailsService.lambdaQuery().eq(ProductChangeDetailsEntity::getChangeInfoId, id).list().stream().filter(v -> StringUtils.isNotBlank(v.getDetailsJson())).collect(Collectors.toList());
+//        if(CollectionUtils.isNotEmpty(details)){
+//            for (ProductChangeDetailsEntity detail : details) {
+//                ProductSmallestUnitDTO newProductEntity = JSONUtil.toBean(detail.getDetailsJson(), ProductSmallestUnitDTO.class);
+//                ProductManySpecBaseDTO productManySpecBaseDTO = newProductEntity.getProductManySpecBaseDTO();
+//                ProductInfoDTO productInfoDTO = new ProductInfoDTO();
+//                BeanMapper.copy(productManySpecBaseDTO,productInfoDTO);
+//                List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = productDetailService.getProductBasicChangeField(productInfoDTO, null);
+//
+//                ProductPackShowDTO productPackShowDTO = newProductEntity.getProductPackShowDTO();
+//                ProductPackDTO productPackDTO = new ProductPackDTO();
+//                BeanMapper.copy(productPackShowDTO,productPackDTO);
+//                List<ProductDetailDTO.SkuChangeInfoDTO> productPackChangeField = productDetailService.getProductPackChangeField(productPackDTO, null);
+//
+//                //发送通知
+//                ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+//                noticeDTO.setProductId(productManySpecBaseDTO.getId());
+//                noticeDTO.setName(productManySpecBaseDTO.getName());
+//                noticeDTO.setChargeId(newProductEntity.getProductManySkuDetail().getChargeId());
+//                noticeDTO.setChargeName(newProductEntity.getProductManySkuDetail().getChargeName());
+//                noticeDTO.setSkuNo(newProductEntity.getProductManySkuDetail().getSkuNo());
+//                noticeDTO.setProductPackChangeField(productPackChangeField);
+//                noticeDTO.setProductBasicChangeField(productBasicChangeField);
+//                List<ProductDetailDTO.NoticeDTO> noticeDTOList = Collections.singletonList(noticeDTO);
+//                //发送消息
+//                productDetailService.handleProductChangeNotification(noticeDTOList,Boolean.FALSE);
+//            }
+//        }
         String operateContent = String.format("[变更审核]" + BomOperateContent.STATE_CHANGE, BomStateEnum.WAIT_AUDIT.getName(), BomStateEnum.AUDIT_ING.getName() + "  审核意见：" + dto.getComment());
         //操作记录
         bomOperateLogService.saveOperate(changeEntity.getSourceId(), BomOperationTypeEnum.STATE_CHANGE.getType(), operateContent);
@@ -1015,6 +1098,17 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             resultList = resultList.stream().filter(e -> !"createTime".equals(e) && !"updateTime".equals(e) && !"updateUserId".equals(e) && !"updateUserName".equals(e) && !"createUserName".equals(e)).distinct().collect(Collectors.toList());
         }
         return resultList;
+    }
+
+    @Override
+    public List<ProductChangePagingVO.TabListDTO> tabList(PermissionsDTO dto) {
+        List<ProductChangePagingVO.TabListDTO> tabList = new ArrayList<>();
+        tabList.add(new ProductChangePagingVO.TabListDTO(SearchType.ALL, count()));
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        //获取我的待办信息
+        List<MyToDoTaskVO> myToDoTasks = workflowFeign.getMyToDoTasks(userId);
+        tabList.add(new ProductChangePagingVO.TabListDTO(SearchType.WAIT_AUDIT, myToDoTasks.size()));
+        return tabList;
     }
 
     private void setList(Object newObj, Object oldObj, List<String> resultList) {

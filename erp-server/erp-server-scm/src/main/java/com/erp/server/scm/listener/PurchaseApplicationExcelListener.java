@@ -1,20 +1,24 @@
 package com.erp.server.scm.listener;
 
+import cn.hutool.core.collection.CollUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseApplicationDetailDTO;
 import com.erp.model.scm.dto.excel.PurchaseApplicationImportExcelDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.rpc.wms.feign.WmsTaskFeign;
+import org.springframework.util.ObjectUtils;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -58,7 +62,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
     /**
      * 仓库数据
      */
-    private List<WarehouseDTO.UpdateDTO> warehouseList;
+    private WmsTaskFeign wmsTaskFeign;
 
     /**
      * 核算公司
@@ -68,9 +72,9 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
 
     DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d");
 
-    public PurchaseApplicationExcelListener(List<SkuVO> skuList,List<WarehouseDTO.UpdateDTO> warehouseList,List<String> skuIds,List<BaseIdDTO> companyList) {
+    public PurchaseApplicationExcelListener(List<SkuVO> skuList, WmsTaskFeign wmsTaskFeign, List<String> skuIds, List<BaseIdDTO> companyList) {
         this.skuList = skuList;
-        this.warehouseList = warehouseList;
+        this.wmsTaskFeign = wmsTaskFeign;
         this.skuIds = CollectionUtils.isNotEmpty(skuIds) ? skuIds : new ArrayList<>();
         this.companyList = companyList;
     }
@@ -94,7 +98,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
         } else {
             if (StringUtils.isNotBlank(importExcelDTO.getSkuNo())) {
                 SkuVO skuEntity = skuList.stream().filter(obj -> obj.getSkuNo().equals(importExcelDTO.getSkuNo())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(skuEntity)) {
+                if (org.springframework.util.ObjectUtils.isEmpty(skuEntity)) {
                     errorMsgList.add("请录入已审核SKU");
                 } else {
                     if (skuIds.contains(skuEntity.getSkuId())) {
@@ -112,18 +116,19 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
             }
         }
         //仓库验证
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            errorMsgList.add("系统中未发现已启用仓库");
-        } else {
+//        if (CollectionUtils.isEmpty(warehouseList)) {
+//            errorMsgList.add("系统中未发现已启用仓库");
+//        } else {
             if (StringUtils.isNotBlank(importExcelDTO.getDestWarehouseName())) {
-                WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
-                if (ObjectUtils.isEmpty(warehouseDTO)) {
-                    errorMsgList.add("请录入已审核并且启用的仓库");
+                List<WarehouseDTO.ListDTO> warehouseList = wmsTaskFeign.listWarehouseByNameList(Collections.singletonList(importExcelDTO.getDestWarehouseName()));
+//                WarehouseDTO.UpdateDTO warehouseDTO = warehouseList.stream().filter(obj -> obj.getName().equals(importExcelDTO.getDestWarehouseName())).findFirst().orElse(null);
+                if (CollUtil.isEmpty(warehouseList)) {
+                    errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 } else {
-                    excelDTO.setDestWarehouseId(warehouseDTO.getId());
+                    excelDTO.setDestWarehouseId(warehouseList.get(0).getId());
                 }
             }
-        }
+//        }
 
         if (CollectionUtils.isEmpty(companyList)) {
             errorMsgList.add("系统中未发现已启用的采购组织和收料组织");
@@ -155,7 +160,7 @@ public class PurchaseApplicationExcelListener extends AnalysisEventListener<Purc
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        return;
     }
 
     public List<PurchaseApplicationImportExcelDTO> getAllList(){

@@ -74,6 +74,18 @@ public class DmpCfgDbEntity extends BaseEntity<DmpCfgDbEntity> {
     */
     @TableField("disabled")
     private Boolean disabled;
+    
+    /**
+     * 最小连接数量
+     */
+    @TableField("min_connection_size")
+    private Integer minConnectionSize;
+     
+     /**
+      * 最大连接数量
+      */
+    @TableField("max_connection_size")
+    private Integer maxConnectionSize;
 
 
     public static final String SYSTEM_ID = "system_id";

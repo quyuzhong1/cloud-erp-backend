@@ -1,7 +1,6 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.exceptions.ExceptionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.BusinessNoConstant;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -28,15 +27,12 @@ import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.service.AsyncService;
 import com.erp.server.wms.service.SoOutstockService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import javax.json.JsonObject;
 import java.util.Objects;
 
 /**
@@ -44,10 +40,10 @@ import java.util.Objects;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_outbound_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_outbound_consumer",
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
+//        selectorExpression = "third_system_outbound_tag",
+//        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_outbound_consumer",
+//        consumeMode = ConsumeMode.ORDERLY)
 public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
@@ -87,7 +83,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
      * @return
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.OUTBOUND.getCode());
     }
 
@@ -113,7 +109,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         // 查询已有订单
         SoB2cEntity mainEntity = soB2cFeign.getSoCode(soB2cCode);
         if(null == mainEntity){
-            if (StringUtils.isBlank(soB2cCode)){
+            if (CharSequenceUtil.isBlank(soB2cCode)){
                 return ApiResult.success();
             }
             // 非ERP单号前缀
@@ -148,7 +144,7 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
                             mainEntity.getDictPlatform(),
                             mainEntity.convertSubmitPlatformUniqueKey(),
                             JSONUtil.toJsonStr(dto),
-                            businessDesc, false);
+                            businessDesc, false, false);
                 }
             }
             //清除三方仓异常
@@ -192,10 +188,10 @@ public class PlatformOutboundConsumerService<T extends DmpSyncTaskIdDTO> extends
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-        warnMsgInfo.setTitle(StrUtil.format("平台出库消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("平台出库消息消费失败，来源平台:{},目标平台:{}", dmpPullTaskEntity.getSourcePlatformName(), dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
-        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg) ? "" : msg);
+        warnMsgInfo.setKeyInfo(CharSequenceUtil.isBlank(msg) ? "" : msg);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }

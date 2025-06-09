@@ -1,9 +1,9 @@
 package com.common.core.utils;
 
-import cn.hutool.core.util.StrUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.google.common.collect.Maps;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 
@@ -12,7 +12,6 @@ import javax.validation.Validation;
 import javax.validation.Validator;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
@@ -40,7 +39,7 @@ public class ValidatorUtil {
 	/**
 	 * 正则表达式：验证邮箱
 	 */
-	public static final String REGEX_EMAIL = "^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?$";
+	public static final String REGEX_EMAIL = "^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+){0,10}@(?:[\\w](?:[\\w-]*[\\w])?\\.){1,10}[\\w](?:[\\w-]*[\\w])?$";
 
 	/**
 	 * 正则表达式：验证汉字
@@ -55,7 +54,7 @@ public class ValidatorUtil {
 	/**
 	 * 正则表达式：验证URL
 	 */
-	public static final String REGEX_URL = "http(s)?://([\\w-]+\\.)+[\\w-]+(/[\\w- ./?%&=]*)?";
+	public static final String REGEX_URL = "http(s)?://([\\w-]+\\.){1,10}[\\w-]+(/[\\w- ./?%&=]*)?";
 
 	/**
 	 * 正则表达式：验证IP地址
@@ -242,7 +241,7 @@ public class ValidatorUtil {
 		}
 	}
 	public static void isNotBlank(String str, ApiError apiError, String... args) {
-		if(StrUtil.isBlank(str)) {
+		if(StringUtils.isBlank(str)) {
 			throw new ServiceException(apiError, args);
 		}
 	}

@@ -1,8 +1,6 @@
 package com.sdk.tms.express.enums;
 
-import com.sdk.tms.express.constants.PathConstants;
 import com.sdk.tms.express.service.IServiceCodeStandard;
-import com.sdk.tms.express.enums.PrePathEnum;
 
 /**
  * @Description: 速运APIServiceCode

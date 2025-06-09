@@ -1,14 +1,12 @@
 package com.erp.server.wms.service;
 
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.dto.excel.WarehouseExportExcelDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
 import org.springframework.web.multipart.MultipartFile;
@@ -41,7 +39,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @date: 2023/3/21 14:27
      * @return List<WarehouseDTO>
      */
-    List<WarehouseDTO.ListDTO> listApproveWarehouse();
+    List<WarehouseDTO.ListDTO> listApproveWarehouse(Boolean showByAuth);
 
     /**
      * @description:
@@ -100,7 +98,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @param dto
      * @return java.lang.Boolean
      */
-    Boolean updateStatus(UpdateStateDTO dto);
+    Boolean updateStatus(WarehouseUpdateStateDTO dto);
 
     /**
      * 审核仓库
@@ -264,7 +262,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @Author Jim
      * @date 2023-11-29
      */
-    List<WarehouseDTO.ListDTO> listOverseasWarehouse();
+    List<WarehouseDTO.PullDownDTO> listOverseasWarehouse();
 
     /**
      * 根据名称获取仓库id
@@ -273,15 +271,7 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
      * @author hyj
      * @date 2024/4/18 10:26
      */
-    List<WarehouseDTO.ListDTO> getByNames(List<String> nameList);
-    /**
-     * @description: 根据仓库名称集合查询
-     * @author Will
-     * @date: 2024/3/21 17:35
-     * @param warehouseNameList
-     * @return List<UpdateDTO>
-     */
-    List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(List<String> warehouseNameList);
+    List<WarehouseDTO.ListDTO> listByNames(List<String> nameList);
     /**
      * @description: 远程分页查询仓库信息
      * @author Will
@@ -299,4 +289,10 @@ public interface WarehouseService extends SuperService<WarehouseEntity> {
 
 
     PagingVO<WarehouseExportExcelDTO> exportWarehouse(PagingDTO<WarehouseDTO.ExportDTO> dto);
+    
+    /**
+     * 检验启用和禁用时间
+     * @param warehouseEntity
+     */
+    boolean checkOpenCloseTime(WarehouseEntity warehouseEntity);
 }

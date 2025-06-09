@@ -25,7 +25,6 @@ import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Comment;
 import org.camunda.bpm.engine.task.Task;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,31 +40,34 @@ import java.util.*;
 @Service
 public class WorkflowServiceImpl implements WorkflowService {
 
-    @Autowired
+    public static final String USER_TASK = "userTask";
+    public static final String START_EVENT = "startEvent";
+    public static final String NONE_END_EVENT = "noneEndEvent";
+    @Resource
     private RuntimeService runtimeService;
 
-    @Autowired
+    @Resource
     private TaskService taskService;
 
-    @Autowired
+    @Resource
     private HistoryService historyService;
 
-    @Autowired
+    @Resource
     private RepositoryService repositoryService;
 
-    @Autowired
+    @Resource
     private ActHistoryActivityService actHistoryActivityService;
 
     @Resource
     private WorkflowMapper workflowMapper;
 
-    @Autowired
+    @Resource
     private IdentityService identityService;
 
-    @Autowired
+    @Resource
     private ProcessTaskService processTaskService;
 
-    @Autowired
+    @Resource
     private WorkflowBusinessProcessService workflowBusinessProcessService;
 
     /**
@@ -93,7 +95,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         Task task = taskList.get(0);
         List<HistoricActivityInstance> historicActivityInstanceList = historyService.createHistoricActivityInstanceQuery()
                 .processInstanceId(task.getProcessInstanceId())
-                .activityType("userTask")
+                .activityType(USER_TASK)
                 .finished().orderByHistoricActivityInstanceEndTime()
                 .asc().list();
         if (CollectionUtils.isEmpty(historicActivityInstanceList)) {
@@ -151,7 +153,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         // 判断是否处于第一个用户任务节点
         List<HistoricActivityInstance> historicActivityInstanceList = historyService.createHistoricActivityInstanceQuery()
                 .processInstanceId(procId)
-                .activityType("userTask")
+                .activityType(USER_TASK)
                 .unfinished().orderByHistoricActivityInstanceStartTime()
                 .asc().list();
         if (CollectionUtils.isEmpty(historicActivityInstanceList) ||
@@ -183,7 +185,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         }
 
         // 对于并行的任务，只能取消其中一个，另外的任务取消不了，所以只能自己操作表，去删除、更新数据状态
-        if (CollectionUtils.isNotEmpty(taskIdList) && CollectionUtils.isNotEmpty(actIdList)) {
+        if (!CollectionUtils.isEmpty(taskIdList) && !CollectionUtils.isEmpty(actIdList)) {
             // 删除ACT_RU_EXECUTION 表中的实例
             workflowMapper.deleteTaskByIdArray(taskIdList);
             // 删除ACT_RU_EXECUTION数据
@@ -224,7 +226,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         ActivityImpl currentActivity = processDefinitionEntity.findActivity(taskInstance.getTaskDefinitionKey());
         // 获取起始活动
         List<HistoricActivityInstance> historicActivityInstances = historyService.createHistoricActivityInstanceQuery()
-                .activityType("userTask")
+                .activityType(USER_TASK)
                 .processInstanceId(processInstanceId)
                 .finished()
                 .orderByHistoricActivityInstanceEndTime()
@@ -348,7 +350,7 @@ public class WorkflowServiceImpl implements WorkflowService {
             AuditorHandleDTO vo = new AuditorHandleDTO();
             vo.setActivityName(item.getActivityName());
             vo.setActivityType(matching(item.getActivityType()));
-            vo.setComment(taskComments.size() > 0 ? taskComments.get(0).getFullMessage() : "");
+            vo.setComment(!taskComments.isEmpty() ? taskComments.get(0).getFullMessage() : "");
             vo.setHandleUserName(StringUtils.isBlank(item.getAssignee()) ? "无" : item.getAssignee());
             vo.setStartTime(DateUtil.conversionDate(item.getStartTime(), DateUtil.fmt));
             vo.setEndTime(DateUtil.conversionDate(item.getEndTime(), DateUtil.fmt));
@@ -372,11 +374,6 @@ public class WorkflowServiceImpl implements WorkflowService {
         if (StringUtils.isBlank(processInstanceId)) {
             return;
         }
-//        //获取流程状态
-//        int state = checkProcessInstanceState(processInstanceId);
-//        if (ProcessInstanceStateEnum.PROCESS_ING.getCode() != state) {
-//            throw new ServiceException(ApiError.ERROR_94000);
-//        }
 
         //判断是否有任务
         List<Task> taskList = taskService.createTaskQuery().processInstanceId(processInstanceId).list();
@@ -384,7 +381,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         //获取到流程的节点
         ActivityInstance activityInstance = runtimeService.getActivityInstance(processInstanceId);
 
-        if (CollectionUtils.isNotEmpty(taskList) && activityInstance != null) {
+        if (!CollectionUtils.isEmpty(taskList) && activityInstance != null) {
             for (int i = 0; i < taskList.size(); i++) {
                 runtimeService.createProcessInstanceModification(processInstanceId)
                         .cancelActivityInstance(getInstanceIdForActivity(activityInstance, taskList.get(i).getTaskDefinitionKey()))//关闭相关任务
@@ -421,7 +418,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     @Override
     public Boolean batchCancelProcess(List<String> processIdList) {
         try {
-            if (CollectionUtils.isNotEmpty(processIdList)) {
+            if (!CollectionUtils.isEmpty(processIdList)) {
                 for (String processId : processIdList) {
                     runtimeService.deleteProcessInstance(processId, "驳回删除流程");
                 }
@@ -441,8 +438,7 @@ public class WorkflowServiceImpl implements WorkflowService {
         if (StringUtils.isBlank(id)) {
             return new ArrayList<>();
         }
-        List<ApproveNodeRecordVO> recordList = processTaskService.getHistoryTaskByBusinessTableId(id);
-        return recordList;
+        return processTaskService.getHistoryTaskByBusinessTableId(id);
     }
 
     /**
@@ -457,10 +453,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     public Boolean withDrawProcessByBusinessTable(WithDrawProcessBusinessDTO dto) {
         List<String> businessTableIds = dto.getBusinessTableIdList();
         String userId = dto.getUserId();
-        if (CollectionUtils.isEmpty(businessTableIds)) {
-            return false;
-        }
-        if (StringUtils.isBlank(userId)) {
+        if (CollectionUtils.isEmpty(businessTableIds) || StringUtils.isBlank(userId)) {
             return false;
         }
         try {
@@ -503,13 +496,13 @@ public class WorkflowServiceImpl implements WorkflowService {
     public String matching(String activityType) {
         String value = "";
         switch (activityType) {
-            case "startEvent":
+            case START_EVENT:
                 value = "流程开始";
                 break;
-            case "userTask":
+            case USER_TASK:
                 value = "用户处理";
                 break;
-            case "noneEndEvent":
+            case NONE_END_EVENT:
                 value = "流程结束";
                 break;
             default:

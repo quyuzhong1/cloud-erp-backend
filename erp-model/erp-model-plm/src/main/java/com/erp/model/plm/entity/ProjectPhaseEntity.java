@@ -20,7 +20,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_phase")
-public class ProjectPhaseEntity extends BaseEntity implements Serializable {
+public class ProjectPhaseEntity extends BaseEntity<ProjectPhaseEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

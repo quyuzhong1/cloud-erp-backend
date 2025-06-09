@@ -10,16 +10,15 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.*;
-import com.erp.model.sys.enums.ChargeSuperiorEnum;
 import com.erp.model.plm.vo.DropdownEnumVO;
 import com.erp.model.plm.vo.PreTaskListVO;
-import com.erp.server.plm.service.*;
+import com.erp.model.sys.enums.ChargeSuperiorEnum;
+import com.erp.server.plm.service.ProjectTemplateService;
 import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import java.util.Arrays;
 import java.util.List;
@@ -64,7 +63,7 @@ public class ProjectTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增或修改模板管理")
     @PostMapping("/saveOrUpdate")
-    public ApiResult saveOrUpdate(@RequestBody @Validated ProjectTemplateSaveOrUpdateDTO dto) {
+    public ApiResult<Object> saveOrUpdate(@RequestBody @Validated ProjectTemplateSaveOrUpdateDTO dto) {
         Boolean flag = projectTemplateService.saveOrUpdate(dto);
         return flag ? success() : failure();
     }
@@ -79,7 +78,7 @@ public class ProjectTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "修改状态模板管理:id={id},模板状态={state}(1=启用,0=未启用)")
     @PutMapping("/updateStatus")
-    public ApiResult updateTemplateStatus(@RequestBody @Validated ProjectTemplateUpdateStatusDTO dto) {
+    public ApiResult<Object> updateTemplateStatus(@RequestBody @Validated ProjectTemplateUpdateStatusDTO dto) {
         Boolean flag = projectTemplateService.updateTemplateStatus(dto);
         return flag ? success() : failure();
     }
@@ -121,7 +120,7 @@ public class ProjectTemplateController extends BaseController {
      * @return
      */
     @GetMapping("/getProductPropertyList")
-    public ApiResult getProductPropertyList() {
+    public ApiResult<Object> getProductPropertyList() {
         List<Map<String, Object>> list = projectTemplateService.getProductPropertyList();
         return success(list);
     }
@@ -134,7 +133,7 @@ public class ProjectTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新前置任务列表:模板id={templateId}")
     @PostMapping("/update/pre/task")
-    public ApiResult setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") PreTemplateTaskUpdateDTO dto) {
+    public ApiResult<Object> setPreTask(@RequestBody @Validated @NotEmpty(message = "参数列表不能为空") PreTemplateTaskUpdateDTO dto) {
         Boolean flag = projectTemplateService.updatePreTask(dto);
         return flag == true ? success() : failure();
     }
@@ -172,7 +171,7 @@ public class ProjectTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "同步阶段")
     @GetMapping("/migratePhase")
-    public ApiResult migratePhaseDb() {
+    public ApiResult<Object> migratePhaseDb() {
         boolean result = projectTemplateService.migratePhaseDb();
         return result == true ? success() : failure();
     }
@@ -183,7 +182,7 @@ public class ProjectTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "迁移文档名")
     @GetMapping("/migrateDocs")
-    public ApiResult migrateDocsDb() {
+    public ApiResult<Object> migrateDocsDb() {
         boolean result = projectTemplateService.migrateDocsDb();
         return result == true ? success() : failure();
     }

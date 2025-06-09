@@ -1,8 +1,8 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -11,7 +11,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
 import com.common.business.constant.ApproveType;
-import com.common.business.constant.SearchType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.base.*;
@@ -27,7 +26,6 @@ import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.ExcelUtil;
-import com.common.core.utils.ReflectUtils;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
 import com.erp.model.oms.dto.DictBasicDTO;
@@ -52,6 +50,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -300,34 +299,35 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         int allCount = approveCountList.stream().mapToInt(CustomerB2CDTO.ApproveCountDTO::getCount).sum();
         CustomerB2CDTO.TabListDTO all = new CustomerB2CDTO.TabListDTO();
         all.setCount(allCount);
-        all.setSearchType(SearchType.ALL);
+        all.setTabFlag("all");
+        all.setTabFlagName("全部");
         resultList.add(all);
         //待审核
-        String ing = ApproveStatusEnum.APPROVE_ING.getStatus();
-        CustomerB2CDTO.TabListDTO waitApprove = new CustomerB2CDTO.TabListDTO();
-        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(ing)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        waitApprove.setCount(waitApproveCount);
-        waitApprove.setSearchType(SearchType.WAIT_APPROVE);
+        CustomerB2CDTO.TabListDTO waitApprove = createTabListDTO(approveCountList, ApproveStatusEnum.APPROVE_ING);
         resultList.add(waitApprove);
 
         //已审核
-        String approveStatus = ApproveStatusEnum.APPROVE.getStatus();
-        CustomerB2CDTO.TabListDTO approve = new CustomerB2CDTO.TabListDTO();
-        int approveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        approve.setCount(approveCount);
-        approve.setSearchType(approveStatus);
+        CustomerB2CDTO.TabListDTO approve = createTabListDTO(approveCountList, ApproveStatusEnum.APPROVE);
         resultList.add(approve);
+
         //审核不通过
-        String rejectStatus = ApproveStatusEnum.REJECT.getStatus();
-        CustomerB2CDTO.TabListDTO reject = new CustomerB2CDTO.TabListDTO();
-        int rejectCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(rejectStatus)).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        reject.setCount(rejectCount);
-        reject.setSearchType(rejectStatus);
+        CustomerB2CDTO.TabListDTO reject = createTabListDTO(approveCountList, ApproveStatusEnum.REJECT);
         resultList.add(reject);
         return resultList;
+    }
+
+
+    /**
+     * 创建tab
+     */
+    private static CustomerB2CDTO.TabListDTO createTabListDTO(List<CustomerB2CDTO.ApproveCountDTO> approveCountList, ApproveStatusEnum approveIngEnum) {
+        CustomerB2CDTO.TabListDTO waitApprove = new CustomerB2CDTO.TabListDTO();
+        int waitApproveCount = approveCountList.stream().filter(a -> a.getApproveStatus().equals(approveIngEnum.getStatus())).findFirst().
+                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+        waitApprove.setCount(waitApproveCount);
+        waitApprove.setTabFlag(approveIngEnum.getStatus());
+        waitApprove.setTabFlagName(approveIngEnum.getName());
+        return waitApprove;
     }
 
     /**
@@ -359,7 +359,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             approveList.add(ApproveStatusEnum.REJECT.getStatus());
         }
 
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage pageData = baseMapper.paging(query, params, approveList);
         List<CustomerB2CDTO.PagingViewDTO> list = pageData.getRecords();
         if (CollectionUtils.isEmpty(list)) {
@@ -377,7 +377,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code,listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code,listApiResult.getMsg()));
             }
         }
 
@@ -797,7 +797,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             item.setApproveStatusName(approveStatus.getName());
         }
         StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/CustomerExport.xlsx";
+        String excelPath = "excel/CustomerB2cExport.xlsx";
         String name = "客户列表";
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         sb.append(date);
@@ -1151,7 +1151,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //            customerInfoEntity.setUseOrgName(useOrgName);
             // 使用组织id需根据名称获取
 //            if (!accountCompanyNameMap.containsKey(useOrgName)) {
-//                throw new ServiceException(StrUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
+//                throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到组织【{}】", noticeRow, useOrgName));
 //            }
             // 名称不会重复
 //            if (Objects.nonNull(accountCompanyNameMap.get(useOrgName))) {
@@ -1169,7 +1169,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             // 国家
             String countryName = ExcelUtil.convertCellValueToString(row.getCell(4));
             if (!countryNameMap.containsKey(countryName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
+                throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到国家【{}】", noticeRow, countryName));
             }
             // 国家id需根据国家名称获取
             customerInfoEntity.setCountryId("");
@@ -1217,7 +1217,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             // 平台类型
             String platformTypeName = ExcelUtil.convertCellValueToString(row.getCell(10));
             if (!platformNameMap.containsKey(platformTypeName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
+                throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到平台类型【{}】", noticeRow, platformTypeName));
             }
             customerInfoEntity.setPlatformType(platformNameMap.get(platformTypeName).getValue());
             // 公司类别
@@ -1239,7 +1239,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             // 结算币别
             String currencyName = ExcelUtil.convertCellValueToString(row.getCell(15));
             if (StrUtils.isEmpty(currencyName) || !currencyNameMap.containsKey(currencyName)) {
-                throw new ServiceException(StrUtil.format("第【{}】行币别为空或未找到结算币别【{}】", noticeRow, currencyName));
+                throw new ServiceException( CharSequenceUtil.format("第【{}】行币别为空或未找到结算币别【{}】", noticeRow, currencyName));
             }
             customerInfoEntity.setCurrency(currencyNameMap.get(currencyName).getId());
             // 收款条件
@@ -1391,7 +1391,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList) {
+    public CustomerB2cEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity, String dictCountryCode, List<DictCountryEntity> countryList,boolean notUpdateAddress) {
         // 当前国家
         DictCountryEntity dictCountryEntity = countryList.stream().findFirst().orElse(null);
         CustomerB2cEntity entity = this.getBySourceId(mainEntity.getId());
@@ -1472,7 +1472,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
         buildCustomerDTO(pageData.getRecords());
         CustomerB2CDTO.DropPagingDTO<CustomerB2CDTO.DropListDTO> result = new CustomerB2CDTO.DropPagingDTO<>(pageData);
         if (CollectionUtils.isNotEmpty(pageData.getRecords()))  {
-            long count = pageData.getRecords().stream().filter(obj -> StrUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
+            long count = pageData.getRecords().stream().filter(obj -> CharSequenceUtil.equals(obj.getCustomerName(), pagingDTO.getParams().getCustomerName())).count();
             if (count > 0) {
                 result.setIsExist(Boolean.TRUE);
             }
@@ -1704,7 +1704,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //            return;
 //        }
 //        if (StrUtils.isNotEmpty(deptName) && !deptNameMap.containsKey(deptName)) {
-//            throw new ServiceException(StrUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
+//            throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到销售部门【{}】", noticeRow, deptName));
 //        }
 //        // 销售员信息
 //        CustomerB2cSellerEntity customerB2cSellerEntity = new CustomerB2cSellerEntity();
@@ -1716,7 +1716,7 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
 //        // 销售员
 //        String sellerName = ExcelUtil.convertCellValueToString(row.getCell(41));
 //        if (StrUtils.isNotEmpty(sellerName) && !userNameMap.containsKey(sellerName)) {
-//            throw new ServiceException(StrUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
+//            throw new ServiceException( CharSequenceUtil.format("第【{}】行未找到销售员【{}】", noticeRow, sellerName));
 //        }
 //        customerB2cSellerEntity.setSellerName(sellerName);
 //        // 需转换成销售员id
@@ -1820,5 +1820,13 @@ public class CustomerB2cServiceImpl extends SuperServiceImpl<CustomerB2cMapper, 
             List<CustomerB2cEntity> updateList = list.stream().filter(obj -> updateIdList.contains(obj.getId())).collect(Collectors.toList());
             approveEnd(dto, updateList);
         }
+    }
+
+
+    @Override
+    public List<CustomerB2CDTO.DropListDTO> customerListByName(List<String> customerNameList) {
+        List<CustomerB2CDTO.DropListDTO> b2cCustomerList = baseMapper.customerListByName(customerNameList);
+        buildCustomerDTO(b2cCustomerList);
+        return b2cCustomerList;
     }
 }

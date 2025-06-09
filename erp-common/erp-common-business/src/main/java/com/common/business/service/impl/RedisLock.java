@@ -144,6 +144,8 @@ public class RedisLock {
         try {
             Thread.sleep(sleepMillis);
         } catch (InterruptedException e) {
+            log.error( "线程睡眠阻塞: Interrupted!:{}", e.getMessage());
+            Thread.currentThread().interrupt();
             e.printStackTrace();
         }
     }

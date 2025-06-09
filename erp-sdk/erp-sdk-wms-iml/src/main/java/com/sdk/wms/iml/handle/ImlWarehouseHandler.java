@@ -22,6 +22,7 @@ import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.dto.response.ImlWarehouseResp;
 import com.sdk.wms.iml.service.ImlService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -41,7 +42,7 @@ public class ImlWarehouseHandler extends AbstractPullThirdWarehouseHandler<ImlWa
     private ImlService imlService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     private final String failureMsgHead = "调用艾姆勒获取仓库数据接口异常";
 

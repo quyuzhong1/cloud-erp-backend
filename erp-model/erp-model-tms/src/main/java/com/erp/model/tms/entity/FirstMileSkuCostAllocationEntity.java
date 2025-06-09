@@ -1,14 +1,15 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
@@ -138,6 +139,11 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
      */
     @TableField("reconciliation_detail_id")
     private String reconciliationDetailId;
+    /**
+     * 上期分摊明细
+     */
+    @TableField(exist = false)
+    private List<FirstMileSkuCostAllocationDetailEntity> lastDetailEntityList;
 
 
     public static final String MAIN_ID = "main_id";
@@ -166,7 +172,7 @@ public class FirstMileSkuCostAllocationEntity extends BaseEntity<FirstMileSkuCos
 
     public static final String WEIGHT_UNIT = "weight_unit";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String BILL_SOURCE_TYPE = "bill_source_type";
 

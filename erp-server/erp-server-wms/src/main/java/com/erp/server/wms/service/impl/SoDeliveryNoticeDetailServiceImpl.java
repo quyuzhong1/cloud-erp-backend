@@ -1,7 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -28,9 +29,8 @@ import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,28 +61,31 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Resource
     private OperateLogService operateLogService;
 
-
+    @Lazy
     @Resource
     private SoOutstockDetailService soOutstockDetailService;
 
-    @Autowired
+    @Resource
     private SoDeliveryNoticeService soDeliveryNoticeService;
 
-    @Autowired
+    @Resource
     private VirtualInventoryService virtualInventoryService;
 
-    @Autowired
+    @Resource
     private VirtualWarehouseService virtualWarehouseService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
 
-    @Autowired
+    @Resource
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+
+    @Resource
+    private SoOutstockService soOutstockService;
 
 
     @Override
@@ -109,6 +112,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setMainId(id);
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
+            soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
+            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
             soDeliveryNoticeDetailEntity.setDeliveryQty(detailDto.getDeliveryQty());
             soDeliveryNoticeDetailEntity.setIsClose(detailDto.getIsClose());
             soDeliveryNoticeDetailEntity.setRemark(detailDto.getRemark());
@@ -134,7 +139,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
     @Override
     @Transactional(rollbackFor = Exception.class)
     public Boolean update(SoDeliveryNoticeDTO.Update dto) {
-        List<String> addList = dto.getDetailList().stream().filter(c -> StringUtils.isBlank(c.getId())).map(SoDeliveryNoticeDetailDTO.Update::getId).collect(Collectors.toList());
+        List<String> addList = dto.getDetailList().stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).map(SoDeliveryNoticeDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> detailIds = dto.getDetailList().stream().map(SoDeliveryNoticeDetailDTO.Update::getSourceDetailId).collect(Collectors.toList());
         List<SoDetailEntity> soDetailEntitieList = soInfoFeign.listSoDetailByIds(detailIds);
         if (CollectionUtils.isEmpty(soDetailEntitieList)) {
@@ -167,7 +172,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             SoDeliveryNoticeDetailEntity soDeliveryNoticeDetailEntity = new SoDeliveryNoticeDetailEntity();
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(detailDto.getSourceDetailId())).findFirst().orElse(new SoDetailEntity());
             Integer deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
-            if (StringUtils.isNotBlank(detailDto.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 soDeliveryNoticeDetailEntity.setId(detailDto.getId());
                 deliveryQty = detailEntityList.stream().filter(req -> req.getSourceDetailId().equals(detailDto.getSourceDetailId()) && !req.getId().equals(detailDto.getId())).map(SoDeliveryNoticeDetailEntity::getDeliveryQty).reduce(MathUtil.ZERO, Integer::sum);
             } else {
@@ -191,6 +196,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             soDeliveryNoticeDetailEntity.setMainId(dto.getId());
             soDeliveryNoticeDetailEntity.setSkuId(soDetailEntity.getSkuId());
             soDeliveryNoticeDetailEntity.setSkuNo(soDetailEntity.getSkuNo());
+            soDeliveryNoticeDetailEntity.setBomVersion(soDetailEntity.getBomVersion());
+            soDeliveryNoticeDetailEntity.setPlatformSkuNo(soDetailEntity.getPlatformSkuNo());
             detailDto.setSkuNo(soDetailEntity.getSkuNo());
             soDeliveryNoticeDetailEntity.setDeliveryQty(detailDto.getDeliveryQty());
             soDeliveryNoticeDetailEntity.setIsClose(detailDto.getIsClose());
@@ -203,7 +210,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             //保存附件
             wmsAttachmentService.batchSaveNotDel(detailDto.getAttachUrlList(), detailDto.getAttachNameList(), type, soDeliveryNoticeDetailEntity.getId());
             //修改操作日志
-            if (StringUtils.isNotBlank(detailDto.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailDto.getId())) {
                 SoDeliveryNoticeDetailEntity old = this.getById(soDeliveryNoticeDetailEntity.getId());
                 if (ObjectUtils.isNotEmpty(old)) {
                     operateLogService.addModuleOperateLogByObj(old, soDeliveryNoticeDetailEntity, ModuleTypeEnum.SO_DELIVERY_NOTICE.getCode(), dto.getId(), "", String.format("【%s】", old.getSkuNo()));
@@ -246,13 +253,10 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         List<String> mainIdList = soDetailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<SoInfoEntity> soInfoList = soInfoFeign.listSoInfoByIds(mainIdList);
 
-        //销售订单参数
-        List<VirtualInventoryStockDTO.OutInStockDTO> soParamList = new ArrayList<>();
-
-        //销售订单参数
+        //销售订单释放冻结参数
         List<VirtualInventoryStockDTO.OutInStockDTO> subParamList = new ArrayList<>();
 
-        //发货通知单参数
+        //发货通知单添加冻结参数
         List<VirtualInventoryStockDTO.OutInStockDTO> addParamList = new ArrayList<>();
 
         //销售订单冻结数量更新
@@ -261,24 +265,20 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         for (SoDeliveryNoticeDetailEntity detailEntity : detailList) {
 
             //销售明细
-            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> StrUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
+            SoDetailEntity soDetailEntity = soDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSourceDetailId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92016);
             }
-
             //销售订单
-            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
+            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
 
             //无虚拟仓不扣库存
-            if (StrUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
+            if (CharSequenceUtil.isBlank(soInfoEntity.getVirtualWarehouseId())) {
                 continue;
             }
-            //销售订单参数
-            handleSoParam(soInfoEntity, soDetailEntity, detailEntity,soParamList);
-
             //销售订单扣减参数
             handleSubSoParam(soInfoEntity, soDetailEntity,detailEntity,subParamList);
 
@@ -299,34 +299,24 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
             }
         }
 
-        //销售订单扣减库存
-        if (CollectionUtils.isNotEmpty(soParamList)) {
-            //添加冻结，扣减可用
-            VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
-            dto.setParamList(soParamList);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_ADD.getCode());
-            //更新库存
-            virtualInventoryTransCoreService.approve(dto);
-        }
-        //销售订单减冻结
+        //销售订单减冻结、加可用
         if (CollectionUtils.isNotEmpty(subParamList)) {
             //减冻结
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(subParamList);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_SUBTRACT_FREEZE.getCode());
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_INFO_LOCK_LESS.getCode());
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
         }
-        //发货通知单添加冻结
+        //发货通知单减可用、加冻结
         if (CollectionUtils.isNotEmpty(addParamList)) {
             //添加冻结
             VirtualInventoryStockDTO.StockParamDTO dto = new VirtualInventoryStockDTO.StockParamDTO();
             dto.setParamList(addParamList);
-            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_ADD.getCode());
+            dto.setBusinessType(VirtualInventoryBusinessTypeEnum.SO_DELIVERY_NOTICE_HANDLE.getCode());
             //更新库存
             virtualInventoryTransCoreService.approve(dto);
         }
-
         //更新销售订单冻结数量
         soInfoFeign.updateFrozenQty(updateList);
     }
@@ -346,7 +336,6 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),detailEntity.getDeliveryQty()) >= MathUtil.ZERO) {
             return;
         }
-
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
         outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_INFO);
         outInStockDTO.setSourceId(soInfoEntity.getId());
@@ -372,7 +361,14 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      */
     private void handleSubSoParam(SoInfoEntity soInfoEntity,SoDetailEntity soDetailEntity,
             SoDeliveryNoticeDetailEntity detailEntity,List<VirtualInventoryStockDTO.OutInStockDTO> paramList) {
+        if (MathUtil.compareTo(soDetailEntity.getFrozenQty(),MathUtil.ZERO) == MathUtil.ZERO) {
+            return;
+        }
         VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        Integer qty = detailEntity.getDeliveryQty();
+        if (MathUtil.compareTo(detailEntity.getDeliveryQty(),soDetailEntity.getFrozenQty()) > MathUtil.ZERO) {
+            qty = soDetailEntity.getFrozenQty();
+        }
         outInStockDTO.setSourceType(InventorySourceTypeEnum.SO_INFO);
         outInStockDTO.setSourceId(soInfoEntity.getId());
         outInStockDTO.setSourceCode(soInfoEntity.getCode());
@@ -380,7 +376,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         outInStockDTO.setBillDate(LocalDate.now());
         outInStockDTO.setSkuId(soDetailEntity.getSkuId());
         outInStockDTO.setSkuNo(soDetailEntity.getSkuNo());
-        outInStockDTO.setQty(detailEntity.getDeliveryQty());
+        outInStockDTO.setQty(qty);
         outInStockDTO.setWarehouseId(soInfoEntity.getWarehouseId());
         outInStockDTO.setVirtualWarehouseId(soInfoEntity.getVirtualWarehouseId());
         paramList.add(outInStockDTO);
@@ -413,7 +409,7 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
 
 
     private List<String> getDeleteIds(List<SoDeliveryNoticeDetailDTO.Update> newList, List<SoDeliveryNoticeDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(SoDeliveryNoticeDetailDTO.Update::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(SoDeliveryNoticeDetailEntity
                 ::getId).collect(Collectors.toList());
@@ -460,15 +456,27 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
      * @date 2023-05-25 10:30
      */
     @Override
-    public Integer getPushDownBySoDetailIds(List<String> soDetailIds) {
+    public List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(List<String> soDetailIds) {
         if (CollectionUtils.isEmpty(soDetailIds)) {
-            return 0;
+            return new ArrayList<>();
         }
+        List<SoDeliveryNoticeDetailDTO.PushDownDTO> result = new ArrayList<>();
         //发货通知的
-        Integer deliveryNoticeCount = this.lambdaQuery().in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds).count();
-
-        Integer soOutstockCount = soOutstockDetailService.getPushDownCountBySoDetailIds(soDetailIds);
-        return deliveryNoticeCount + soOutstockCount;
+        List<SoDeliveryNoticeDetailDTO.ListDTO> listDTOS = baseMapper.listBySourceDetailIdList(soDetailIds);
+        if(CollUtil.isNotEmpty(listDTOS)){
+            for (SoDeliveryNoticeDetailDTO.ListDTO detailEntity : listDTOS) {
+                SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
+                pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
+                pushDownDTO.setSkuId(detailEntity.getSkuId());
+                pushDownDTO.setSkuNo(detailEntity.getSkuNo());
+                result.add(pushDownDTO);
+            }
+        }
+//        List<SoDeliveryNoticeDetailDTO.PushDownDTO> soOutstockDetailEntityList = soOutstockDetailService.getPushDownBySoDetailIds(soDetailIds);
+//        if(CollUtil.isNotEmpty(soOutstockDetailEntityList)){
+//            result.addAll(soOutstockDetailEntityList);
+//        }
+        return result;
     }
 
 
@@ -487,8 +495,8 @@ public class SoDeliveryNoticeDetailServiceImpl extends SuperServiceImpl<SoDelive
         if (CollectionUtils.isNotEmpty(soDetailIds)) {
             this.lambdaUpdate().set(SoDeliveryNoticeDetailEntity::getIsClose, Boolean.TRUE).
                     set(SoDeliveryNoticeDetailEntity::getIsChangeClose, Boolean.TRUE).
-                    in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds).update();
-
+                    in(SoDeliveryNoticeDetailEntity::getSourceDetailId, soDetailIds)
+                    .update();
             soOutstockDetailService.closeBySoDetailIds(soDetailIds);
         }
 

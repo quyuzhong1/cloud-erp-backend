@@ -1,5 +1,6 @@
 package com.common.business.interceptor;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.AuthPassPath;
 import com.common.business.threadlocal.UserContext;
@@ -23,7 +24,7 @@ public class CommonInterceptor implements HandlerInterceptor {
         try {
             if (StringUtils.isNotBlank(tokenUserStr)) {
                 tokenUserStr = URLDecoder.decode(tokenUserStr, "UTF-8");
-                LoginUser user = JSONObject.parseObject(tokenUserStr, LoginUser.class);
+                LoginUser user = JSON.parseObject(tokenUserStr, LoginUser.class);
                 UserContext.setLoginUser(user);
             }
         } catch (UnsupportedEncodingException e) {

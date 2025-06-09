@@ -61,7 +61,7 @@ public class QuerySchemeFavoriteEntity extends BaseEntity<QuerySchemeFavoriteEnt
     private String remark ;
 
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
     public static final String USER_ID = "user_id";
 
@@ -69,7 +69,7 @@ public class QuerySchemeFavoriteEntity extends BaseEntity<QuerySchemeFavoriteEnt
 
     public static final String PARAM_JSON = "param_json";
 
-    public static final String REMARK  = "remark ";
+    public static final String FIELD_REMARK  = "remark ";
 
     public QuerySchemeFavoriteEntity(QuerySchemeFavoriteDTO.AddDTO addDTO, String userId) {
         this.name = addDTO.getName();

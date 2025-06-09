@@ -1,13 +1,11 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * bom 操作记录日志表(BomOperateLog)实体类
@@ -18,7 +16,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("product_bom_operate_log")
-public class BomOperateLogEntity extends BaseEntity implements Serializable {
+public class BomOperateLogEntity extends BaseEntity<BomOperateLogEntity> implements Serializable {
     private static final long serialVersionUID = -32922189918551527L;
 
     /**

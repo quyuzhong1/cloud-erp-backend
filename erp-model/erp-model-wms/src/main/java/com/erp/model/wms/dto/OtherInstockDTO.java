@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.anno.StateEnumValue;
@@ -142,7 +141,6 @@ public class OtherInstockDTO implements Serializable {
          */
         private String thirdCode;
 
-
         /**
          * 备注
          */
@@ -152,6 +150,16 @@ public class OtherInstockDTO implements Serializable {
          * 退货物流单号
          */
         private String returnLogisticCode;
+
+        /**
+         * 入库类型
+         */
+        private String type;
+
+        /**
+         * 入库类型名称
+         */
+        private String typeName;
     }
 
     @Data

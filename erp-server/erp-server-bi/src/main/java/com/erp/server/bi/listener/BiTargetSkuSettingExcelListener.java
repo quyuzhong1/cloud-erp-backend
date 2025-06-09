@@ -1,11 +1,12 @@
 package com.erp.server.bi.listener;/**
  * @author Lambda
  * @Classname BiTargetShopSettingExcelListener
- * @Description TODO
+ * @Description
  * @Date 2023-09-15 16:36
  * @Created by yl
  */
 
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
@@ -18,10 +19,9 @@ import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 /**
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-15 16:36
  */
@@ -55,16 +55,16 @@ public class BiTargetSkuSettingExcelListener extends AnalysisEventListener<Targe
         }
         String metricsName = excelDTO.getMetricsName();
         Boolean isExistMetrics = metricsNameList.contains(metricsName);
-        if (!isExistMetrics) {
+        if (Boolean.FALSE.equals(isExistMetrics)) {
             errorMsgList.add("考核指标不存在");
         }
         String skuNo = excelDTO.getSku();
         BiProductDetailEntity sku= biProductDetailService.getBySkuNo(skuNo);
-        if (Objects.isNull(sku)) {
+        if (ObjectUtil.isEmpty(sku)) {
             errorMsgList.add("sku不存在");
         }
         //添加错误数据
-        if (errorMsgList.size() > 0) {
+        if (!errorMsgList.isEmpty()) {
             excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
             errorList.add(excelDTO);
             return;
@@ -97,7 +97,7 @@ public class BiTargetSkuSettingExcelListener extends AnalysisEventListener<Targe
 
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 
 

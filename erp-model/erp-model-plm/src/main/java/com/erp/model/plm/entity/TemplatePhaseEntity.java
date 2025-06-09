@@ -17,7 +17,7 @@ import java.util.Date;
  */
 @Data
 @TableName(value ="template_phase")
-public class TemplatePhaseEntity extends BaseEntity {
+public class TemplatePhaseEntity extends BaseEntity<TemplatePhaseEntity> {
 
     /**
      * 阶段名

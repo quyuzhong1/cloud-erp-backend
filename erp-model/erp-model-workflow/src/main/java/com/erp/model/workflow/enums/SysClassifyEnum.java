@@ -2,10 +2,14 @@ package com.erp.model.workflow.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@Getter
 public enum SysClassifyEnum {
     PLM("plm", "PLM系统"),
     SCM("scm", "SCM系统"),
@@ -22,14 +26,6 @@ public enum SysClassifyEnum {
     SysClassifyEnum(String code, String name) {
         this.code = code;
         this.name = name;
-    }
-
-    public String getCode() {
-        return code;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public static String getName(String code) {
@@ -51,10 +47,6 @@ public enum SysClassifyEnum {
     }
 
     public static List<SysClassifyEnum> getAll() {
-        List<SysClassifyEnum> resultList = new ArrayList<>();
-        for (SysClassifyEnum optionEnum : SysClassifyEnum.values()) {
-            resultList.add(optionEnum);
-        }
-        return resultList;
+        return Arrays.stream(SysClassifyEnum.values()).collect(Collectors.toList());
     }
 }

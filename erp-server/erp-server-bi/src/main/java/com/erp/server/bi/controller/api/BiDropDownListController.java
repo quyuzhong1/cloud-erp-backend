@@ -1,7 +1,7 @@
 package com.erp.server.bi.controller.api;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
@@ -297,11 +297,11 @@ public class BiDropDownListController extends BaseController {
                 .eq(BiShopInfoEntity::getIsVijim, Boolean.TRUE)
                 .eq(null != status, BiShopInfoEntity::getStatus, status)
                 .list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownIdVO> result = list.stream()
-                .map(x -> new ShopDropDownVO.ShopDropDownIdVO(x.getId(), x.getName(), MathUtil.ONE.equals(x.getStatus()) ? false : true))
+                .map(x -> new ShopDropDownVO.ShopDropDownIdVO(x.getId(), x.getName(), !MathUtil.ONE.equals(x.getStatus())))
                 .distinct()
                 .collect(Collectors.toList());
         return success(result);
@@ -313,12 +313,12 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/category/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listCategoryDropDown() {
         List<BiSkuInfoEntity> list = dmpSkuInfoService.list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream().map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getParentCategoryName()))
                 .distinct()
-                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .filter(x -> CharSequenceUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }
@@ -329,12 +329,12 @@ public class BiDropDownListController extends BaseController {
     @GetMapping("/brand/list")
     public ApiResult<List<ShopDropDownVO.ShopDropDownNameVO>> listBrandDropDown() {
         List<BiSkuInfoEntity> list = dmpSkuInfoService.list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return success(new ArrayList<>());
         }
         List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream().map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getBrandName()))
                 .distinct()
-                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .filter(x -> CharSequenceUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
         return success(result);
     }

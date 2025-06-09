@@ -1,28 +1,31 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.validator.AddGroup;
+import com.common.business.validator.UpdateGroup;
 import com.common.core.anno.StateEnumValue;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Lambda
  * @Classname SkuMapingDTO
-
  * @Date 2023-06-28 17:24
  * @Created by yl
  */
@@ -47,15 +50,13 @@ public class SkuMappingDTO implements Serializable {
          * 对照关系是否映射到改服务商所有仓库(当前只有谷仓支持): f=否(), t=是
          */
         public Boolean checkAndGetHasMappingAll() {
-            if (null == this.hasMappingAll){
+            if (null == this.hasMappingAll) {
                 return false;
             }
             return hasMappingAll;
         }
 
     }
-
-
 
 
     /**
@@ -66,7 +67,14 @@ public class SkuMappingDTO implements Serializable {
     public static class TabListDTO {
 
         private String tabFlag;
+        /**
+         * 类型名称
+         */
+        private String tabFlagName;
 
+        /**
+         * 数量
+         */
         private Integer count;
 
     }
@@ -74,11 +82,12 @@ public class SkuMappingDTO implements Serializable {
     /**
      * tab
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
     public static class FindTabDTO extends PermissionsDTO {
 
-        @StateEnumValue(strValues = {"platform","warehouse"}, message = "类型有误")
+        @StateEnumValue(strValues = {"platform", "warehouse","customer"}, message = "类型有误")
         private String type;
 
 
@@ -92,11 +101,11 @@ public class SkuMappingDTO implements Serializable {
         private String warehouseId;
 
         @NotBlank(message = "库存SKU不能为空")
-        @Size(max=200,message = "库存SKU最大100字符")
+        @Size(max = 200, message = "库存SKU最大100字符")
         private String warehouseSkuNo;
 
         @NotBlank(message = "库存产品名称不能为空")
-        @Size(max=200,message = "库存产品名称最大200字符")
+        @Size(max = 200, message = "库存产品名称最大200字符")
         private String warehouseProductName;
 
         @NotBlank(message = "产品sku不能为空")
@@ -112,7 +121,10 @@ public class SkuMappingDTO implements Serializable {
 //        @NotBlank(message = "平台类型: goodcang=谷仓，iml=艾姆勒不能为空")
 //        @Size(max = 30,message = "平台类型: goodcang=谷仓，iml=艾姆勒 最大长度不能超过30位")
 //        private String dictPlatform;
-
+        /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
     }
 
     @Data
@@ -121,7 +133,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 匹配结果
          */
-        private Boolean matchResult;
+        private String matchResult;
 
         /**
          * 数量
@@ -137,86 +149,17 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
 
         /**
-         * 搜索关键字
+         * sqlMap 默认key default
          */
-        private String searchKeyword;
+        private Map<String, String> sqlMap;
 
         private String type;
-
-        /**
-         * 平台产品SPU编号或ID模糊搜索条件
-         */
-        private List<String> platformSpuNoList;
-
-        /**
-         * 平台SKU编号模糊搜索条件
-         */
-        private List<String> platformSkuNoList;
-
-        /**
-         * 平台SKU额外关联的FNSKU模糊搜索条件
-         */
-        private List<String> fnSkuList;
-
-        /**
-         * 店铺id集合
-         */
-        private List<String> shopIdList;
-
-        /**
-         * sku集合
-         */
-        private List<String> skuNoList;
-
-        /**
-         * 搜索类型
-         * alL 全部
-         * already 已匹配
-         * not 未匹配
-         */
-        @StateEnumValue(strValues = {"all", "already", "not"}, message = "搜索类型有误")
-        @NotBlank(message = "搜索类型不能为空")
-        private String tabFlag;
-
-
-        /**
-         * 平台code 集合
-         */
-        private List<String> platformList;
-
-
-
-        /**
-         * 更新人 id 集合
-         */
-        private List<String> updateUserIdList;
-
-        /**
-         * 更新时间
-         */
-        private List<LocalDate> updateTimeList;
-
-        /**
-         * 创建人 id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 平台SKU编号模糊搜索条件
-         */
-        private List<String> platformFnSkuList;
-
-        /**
-         * 是否匹配：true=是, false=否
-         */
-        private Boolean matchResult;
 
     }
 
@@ -228,102 +171,106 @@ public class SkuMappingDTO implements Serializable {
     @NoArgsConstructor
     public static class WarehousePagingParamDTO extends SortDTO {
 
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
         private String type;
 
-        /**
-         * 平台产品SPU编号或ID模糊搜索条件
-         */
-        private List<String> platformSpuNoList;
-
-        /**
-         * 平台SKU编号模糊搜索条件
-         */
-        private List<String> platformSkuNoList;
-
-        /**
-         * 平台SKU额外关联的FNSKU模糊搜索条件
-         */
-        private List<String> fnSkuList;
-
-        /**
-         * 库存产品名称
-         */
-        private String warehouseProductName;
-
-        /**
-         * 仓库id 集合
-         */
-        private List<String> warehouseIdList;
-
-
-        /**
-         * 库存sku no 集合
-         */
-        private List<String> warehouseSkuNoList;
-
-
-        /**
-         * 产品skuNO集合
-         */
-        private List<String> productSkuNoList;
-
-        /**
-         * 平台code 集合
-         */
-        private List<String> dictPlatformList;
-
-        /**
-         * sku id list
-         */
-        private List<String> skuIdList;
-
-
-        /**
-         * 产品名称
-         */
-        private String productName;
-
-        /**
-         * 搜索类型
-         * alL 全部
-         * already 已匹配
-         * not 未匹配
-         */
-        @StateEnumValue(strValues = {"all", "already", "not"}, message = "搜索类型有误")
-        @NotBlank(message = "搜索类型不能为空")
-        private String tabFlag;
-
-        /**
-         * 更新人 id 集合
-         */
-        private List<String> updateUserIdList;
-
-        /**
-         * 更新时间
-         */
-        private List<LocalDate> updateTimeList;
-
-        /**
-         * 创建人 id 集合
-         */
-        private List<String> createUserIdList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 是否匹配：true=是, false=否
-         */
-        private Boolean matchResult;
-
-        /**
-         * 仓库简称
-         */
-        private String shortName;
     }
 
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddCustomerRequest {
+        /**
+         * json数据
+         */
+        @Valid
+        private AddCustomerDTO dto;
+        /**
+         * 文件
+         */
+        private MultipartFile file;
+    }
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class AddCustomerDTO {
+
+        /**
+         * skuMappingId
+         */
+        @NotBlank(message = "skuMappingId不能为空",groups = {UpdateGroup.class})
+        private String skuMappingId;
+        /**
+         * 客户id
+         */
+        @NotBlank(message = "客户id不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        private String customerId;
+
+        /**
+         * skuId
+         */
+        @NotBlank(message = "skuid不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        private String skuId;
+
+        /**
+         * 客户sku
+         */
+        @NotBlank(message = "客户sku不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        private String platformSkuNo;
+        /**
+         * 生效时间
+         */
+        @NotNull(message = "生效时间不能为空",groups = {UpdateGroup.class, AddGroup.class})
+        @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime effectiveTime;
+
+        /**
+         * 客户产品名称
+         */
+        private String platformSkuName;
+        /**
+         * 图片url，更新时如果没变更传
+         */
+        private String productImageUrl;
+
+
+    }
+    /**
+     * 分页参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CustomerPagingParamDTO extends SortDTO {
+
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        private String type;
+
+        private boolean isExport;
+    }
 
     /**
      * 更改sku
@@ -348,6 +295,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 店铺
          */
+        @NotBlank(message = "店铺ID不能为空")
         private String shopId;
 
         /**
@@ -365,9 +313,12 @@ public class SkuMappingDTO implements Serializable {
          */
 //        @NotBlank(message = "平台sku不能为空")
         @NotNull(message = "平台sku不能为null")
-        @Size(max=200,message = "平台SKU最大100字符")
+        @Size(max = 200, message = "平台SKU最大100字符")
         private String platformSkuNo;
-
+        /**
+         * 平台产品ID
+         */
+        private String platformSpuNo;
         /**
          * 平台sku 名
          */
@@ -375,9 +326,52 @@ public class SkuMappingDTO implements Serializable {
 
 
         private List<SkuMappingExtendListDTO> extendList;
+        /**
+         * 同账号同平台SKU批量更新 默认 true  false 不更新
+         */
+        private Boolean batchUpdateSamePlatform;
+        /**
+         * 税务信息
+         */
+        private TaxCodeDTO taxCodeDTO;
+    }
 
-
-
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TaxCodeDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * listingId
+         */
+        private String listingId;
+        /**
+         * 发票海关编码（ncm）
+         */
+        private String invoiceHsCode;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 跨州税务编码（跨州cfop）
+         */
+        private String diffStateTaxCode;
+        /**
+         * 同州税务编码（同州cfop）
+         */
+        private String sameStateTaxCode;
+        /**
+         * 原产地
+         */
+        private String dictOrigin;
+        /**
+         * 开票产品名称
+         */
+        private String invoiceProductName;
     }
 
     /**
@@ -415,7 +409,6 @@ public class SkuMappingDTO implements Serializable {
         private String id;
 
 
-
         /**
          * 仓库id
          */
@@ -426,14 +419,14 @@ public class SkuMappingDTO implements Serializable {
          * 库存sku no
          */
         @NotBlank(message = "库存sku不能为空")
-        @Size(max=200,message = "库存SKU最大100字符")
+        @Size(max = 200, message = "库存SKU最大100字符")
         private String warehouseSkuNo;
 
         /**
          * 库存产品名称
          */
         @NotBlank(message = "库存产品名称不能为空")
-        @Size(max=200,message = "库存产品名称最大200字符")
+        @Size(max = 200, message = "库存产品名称最大200字符")
         private String warehouseProductName;
 
 
@@ -447,6 +440,10 @@ public class SkuMappingDTO implements Serializable {
          */
         @NotNull(message = "生效时间不能为空")
         private LocalDateTime effectiveTime;
+        /**
+         * 产品条码（三方仓商品条码）
+         */
+        private String thirdBarcode;
 
     }
 
@@ -480,6 +477,15 @@ public class SkuMappingDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 备注
+         */
+        private String remark;
         /**
          * 平台
          */
@@ -536,6 +542,10 @@ public class SkuMappingDTO implements Serializable {
          * 平台更新时间
          */
         private LocalDateTime platformUpdateTime;
+        /**
+         * 系统创建时间
+         */
+        private LocalDateTime systemCreateTime;
 
 
         /**
@@ -567,13 +577,12 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 匹配结果
          */
-        private Boolean matchResult;
+        private String matchResult;
 
         /**
          * 匹配结果
          */
         private String matchResultStr;
-
 
 
         /**
@@ -614,10 +623,151 @@ public class SkuMappingDTO implements Serializable {
          */
         private Boolean isCombination;
         /**
+         * 来源类型  selfAdd系统新增，third第三方同步
+         */
+        private String sourceType;
+        /**
          * 仓库发货配置
          */
         private List<SkuMappingExtendDTO.ListDTO> extendList = Collections.emptyList();
+        /**
+         * 发票海关编码
+         */
+        private String invoiceHsCode;
+        /**
+         * 单位
+         */
+        private String unit;
+        /**
+         * 跨州税务编码
+         */
+        private String diffStateTaxCode;
+        /**
+         * 同州税务编码
+         */
+        private String sameStateTaxCode;
+        /**
+         * 原产地
+         */
+        private String dictOrigin;
+        /**
+         * 原产地名称
+         */
+        private String dictOriginName;
+        /**
+         * 开票产品名称
+         */
+        private String invoiceProductName;
+    }
 
+
+    /**
+     * 客户sku分页数据
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CustomerPagingViewDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * listingId
+         */
+        private String listingId;
+
+        /**
+         * 平台名称
+         */
+        private String platformName;
+
+        /**
+         * 客户Id
+         */
+        private String customerId;
+        /**
+         * 客户名称
+         */
+        private String customerName;
+
+        /**
+         * 销售员
+         */
+        private String sellerName;
+
+        /**
+         * 图片
+         */
+        private String productImageUrl;
+        /**
+         * 图片byte
+         */
+        private byte[] imageByte;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 客户产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
+
+        /**
+         * 产品sku
+         */
+        private String productSkuNo;
+
+        /**
+         * 产品名称
+         */
+        private String productName;
+
+        /**
+         * 匹配结果
+         */
+        private String matchResult;
+
+        /**
+         * 匹配结果
+         */
+        private String matchResultStr;
+
+        /**
+         * 备注
+         */
+        private String remark;
+
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+
+        /**
+         * 创建时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime createTime;
+
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
+
+        /**
+         * 更新时间
+         */
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        private LocalDateTime updateTime;
+
+        private LocalDateTime effectiveTime;
     }
 
 
@@ -633,6 +783,10 @@ public class SkuMappingDTO implements Serializable {
          */
         private String id;
 
+        /**
+         * 备注
+         */
+        private String remark;
         /**
          * 仓库简称
          */
@@ -672,6 +826,11 @@ public class SkuMappingDTO implements Serializable {
         private String productName;
 
         /**
+         * 三方仓商品条码
+         */
+        private String thirdBarcode;
+
+        /**
          * 库存sku
          */
         private String warehouseSkuNo;
@@ -684,7 +843,7 @@ public class SkuMappingDTO implements Serializable {
         /**
          * 匹配结果
          */
-        private Boolean matchResult;
+        private String matchResult;
 
         /**
          * 匹配结果
@@ -732,9 +891,98 @@ public class SkuMappingDTO implements Serializable {
         private LocalDateTime expireTime;
     }
 
+
     @Data
     @NoArgsConstructor
-    public static class ProductSkuInfoDTO{
+    public static class CustomerInventorySkuInfoDTO {
+
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+
+        /**
+         * 对应库存信息
+         */
+        private List<InnerCustomerInventorySkuInfoDTO> innerCustomerInventorySkuInfoDTOS;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class InnerCustomerInventorySkuInfoDTO {
+
+        /**
+         * skumapping Id
+         */
+        private String id;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * skuId
+         */
+        private String skuNo;
+        /**
+         * 产品名称
+         */
+        private String productName;
+        /**
+         * 是否有效
+         */
+        private Boolean isEffective;
+
+        /**
+         * 启用时间
+         */
+        private LocalDateTime effectiveTime;
+
+        /**
+         * 实体仓实际库存
+         */
+        private Integer actualQty;
+
+        /**
+         * 虚拟仓冻结库存
+         */
+        private Integer virtualFrozenQty;
+
+        /**
+         * 实体仓实际库存 - 虚拟仓冻结库存
+         */
+        private Integer stock;
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ProductSkuInfoDTO {
+
+        /**
+         *
+         */
+        private String id;
+        /**
+         *
+         */
+        private String shopId;
+        /**
+         *
+         */
+        private String customerId;
+        /**
+         *
+         */
+        private String listingId;
+        /**
+         *
+         */
+        private String dictPlatform;
+        /**
+         *
+         */
+        private String platformName;
 
         /**
          * sku id
@@ -762,7 +1010,6 @@ public class SkuMappingDTO implements Serializable {
          * 平台sku
          */
         private String platformSkuName;
-
 
     }
 
@@ -814,6 +1061,10 @@ public class SkuMappingDTO implements Serializable {
          * 店铺Id
          */
         private String shopId;
+        /**
+         * 订单日期
+         */
+        private LocalDateTime billDate;
 
         public ListSkuParamDTO(String skuNo, String warehouseId, String dictPlatform) {
             this.skuNo = skuNo;
@@ -825,7 +1076,7 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ListingSkuParamDTO{
+    public static class ListingSkuParamDTO {
         private String type;
 
         private String skuId;
@@ -871,9 +1122,7 @@ public class SkuMappingDTO implements Serializable {
         private String listingId;
 
 
-
         private String type;
-
 
 
         /**
@@ -896,8 +1145,6 @@ public class SkuMappingDTO implements Serializable {
          */
         private String platformSpuName;
     }
-
-
 
 
     @Data
@@ -935,10 +1182,14 @@ public class SkuMappingDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class ListSkuDTO {
-       /**
-        * 产品skuId
-        */
-       private String productSkuId;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
 
         /**
          * 产品skuNo
@@ -1026,6 +1277,17 @@ public class SkuMappingDTO implements Serializable {
          * 净重
          */
         private BigDecimal netWeight;
+
+        /**
+         * 成本价格来源
+         */
+        private String costSource;
+        //材料成本
+        private BigDecimal productCost;
+        //头程运费
+        private BigDecimal firstMileShippingCost;
+        //清关税费
+        private BigDecimal clearanceCustomsTax;
     }
 
 
@@ -1034,10 +1296,12 @@ public class SkuMappingDTO implements Serializable {
     public static class MappingSkuViewDTO {
 
         private String id;
-       /**
-        * 产品skuId
-        */
-       private String productSkuId;
+
+        private String authId;
+        /**
+         * 产品skuId
+         */
+        private String productSkuId;
 
         /**
          * 产品skuNo
@@ -1183,18 +1447,183 @@ public class SkuMappingDTO implements Serializable {
          */
         private String productName;
 
-
-
         /**
          *
          */
         private String listingId;
 
         private Boolean isExpire;
+    }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class UpdateNotMatchDTO {
+        /**
+         * listing id
+         */
+        @NotEmpty(message = "数据不能为空")
+        private List<String> listingIds;
+        /**
+         * 备注
+         */
+        @NotBlank(message = "备注不能为空")
+        private String remark;
+    }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class CustomerInventorySkuParamDTO {
 
+
+        /**
+         * 客户id
+         */
+        @NotBlank(message = "客户id不能为空")
+        private String customerId;
+
+        /**
+         * 客户Sku
+         */
+        @NotEmpty(message = "平台sku不能为空")
+        private List<String> platformSkuNoList;
+
+        /**
+         * 仓库id
+         */
+        @NotBlank(message = "仓库id不能为空")
+        private String warehouseId;
+
+        /**
+         * 虚拟仓库id
+         */
+        private String virtualWarehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuParamDTO {
+        /**
+         * 平台sku
+         */
+        private List<String> platformSkuNoList;
+        /**
+         * sku编号
+         */
+        private List<String> skuNoList;
+        /**
+         * skuid
+         */
+        private List<String> skuIdList;
+        /**
+         * 客户id
+         */
+        private String cutomerId;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class SyncPlatformProductView {
+        /**
+         * 店铺id
+         */
+        private String shopId;
+
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+        /**
+         * 授权状态
+         */
+        private String authStatusName;
+        /**
+         * 最近同步时间
+         */
+        private LocalDateTime lastSyncTime;
+        /**
+         * 同步结果
+         */
+        private String syncResult;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SyncWarehouseProductView {
+        /**
+         * 授权id
+         */
+        private String authId;
+        /**
+         * 三方仓服务商code
+         */
+        private String warehouseProvideCode;
+        /**
+         * 三方仓服务商名称
+         */
+        private String warehouseProvideName;
+        /**
+         * 账号
+         */
+        private String account;
+
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+
+        /**
+         * 授权状态Name
+         */
+        private String authStatusName;
+        /**
+         * 最近同步时间
+         */
+        private LocalDateTime lastSyncTime;
+        /**
+         * 同步结果
+         */
+        private String syncResult;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SkuMappingViewDTO {
+        private String mappingId;
+        private String dictPlatform;
+        private String productSkuId;
+        //产品SKU
+        private String productSkuNo;
+        private String productName;
+        private String type;
+        private String warehouseId;
+        private String warehouseName;
+        private String isExpire;
+        private String listingId;
+        //客户id
+        private String customerId;
+        //平台SKU
+        private String platformSkuNo;
+        private String platformSkuName;
+        private String platformName;
+        //条码
+        private String thirdBarcode;
+        private String platformSpuNo;
+        private String platformSpuName;
+        private String platformFnSku;
+        /**
+         * 服务商简称
+         */
+        private String shortName;
     }
 }

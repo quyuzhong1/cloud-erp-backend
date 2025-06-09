@@ -42,12 +42,18 @@ public class SkuMappingImportExcelDTO {
     @FieldValid(fieldName = "平台sku", isNotBlank = true)
     private String platformSkuNo;
 
-
+    /**
+     * 平台产品ID
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "平台产品ID", index = 3)
+    @FieldValid(fieldName = "平台产品ID")
+    private String platformProductId;
     /**
      * 平台产品名称
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "平台产品名称", index = 3)
+    @ExcelProperty(value = "平台产品名称", index = 4)
     @FieldValid(fieldName = "平台产品名称")
     private String platformProductName;
 
@@ -55,15 +61,69 @@ public class SkuMappingImportExcelDTO {
      * 产品sku
      */
     @ColumnWidth(30)
-    @ExcelProperty(value = "产品sku", index = 4)
+    @ExcelProperty(value = "产品sku", index = 5)
     @FieldValid(fieldName = "产品sku", isNotBlank = true)
     private String productSkuNo;
+    /**
+     * 产品sku
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "启用时间", index = 6)
+    @FieldValid(fieldName = "启用时间")
+    private String enabledTime;
 
+    /**
+     * NCM
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "NCM", index = 7)
+    @FieldValid(fieldName = "NCM")
+    private String invoiceHsCode;
+
+    /**
+     * 单位
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "单位", index = 8)
+    @FieldValid(fieldName = "单位")
+    private String unit;
+
+    /**
+     * 跨州CFOP
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "跨州CFOP", index = 9)
+    @FieldValid(fieldName = "跨州CFOP")
+    private String diffStateTaxCode;
+
+    /**
+     * 同州CFOP
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "同州CFOP", index = 10)
+    @FieldValid(fieldName = "同州CFOP")
+    private String sameStateTaxCode;
+
+    /**
+     * 原产地
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "原产地", index = 11)
+    @FieldValid(fieldName = "原产地")
+    private String dictOriginNo;
+
+    /**
+     * 开票产品名称
+     */
+    @ColumnWidth(30)
+    @ExcelProperty(value = "开票产品名称", index = 12)
+    @FieldValid(fieldName = "开票产品名称")
+    private String invoiceProductName;
     /**
      * 错误信息
      */
     @ColumnWidth(100)
-    @ExcelProperty(value = "错误数据", index = 5)
+    @ExcelProperty(value = "错误数据", index = 13)
     private String errorMsg;
 
 

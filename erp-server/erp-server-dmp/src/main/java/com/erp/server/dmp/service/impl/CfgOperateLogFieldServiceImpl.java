@@ -69,7 +69,7 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
     @Override
     public Boolean update(CfgOperateLogFieldDTO.UpdateDTO updateDTO) {
         CfgOperateLogFieldEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "日志字段配置单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "日志字段配置单"));
         CfgOperateLogFieldEntity cfgOperateLogFieldEntity = BeanMapperUtils.map(CfgOperateLogFieldEntity.class, updateDTO);
 
         // 数据处理

@@ -1,6 +1,6 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -47,7 +47,7 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
                 .in(BiDataSourceCostDetailEntity::getCostType, dictValues)
                 .list();
 
-        if (CollectionUtil.isEmpty(detailEntities)) {
+        if (CollUtil.isEmpty(detailEntities)) {
             return new HashMap<>(0);
         }
         Map<String, List<BiDataSourceCostDetailEntity>> detailMap = detailEntities.stream()
@@ -56,9 +56,8 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
         detailMap.keySet().stream().forEach(x -> {
             List<BiDataSourceCostDetailEntity> detailList = detailMap.get(x);
             HashMap<String, BigDecimal> tempMap = new HashMap<>(detailList.size());
-            detailList.stream().forEach(m -> {
-                tempMap.put(m.getCostType(), m.getCostValue());
-            });
+            detailList.stream().forEach(m -> tempMap.put(m.getCostType(), m.getCostValue()));
+
             entityMap.put(x, tempMap);
         });
 
@@ -136,7 +135,7 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
-            grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
+            grossProfitRateValue = MathUtil.multiplyWithTwo(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
@@ -184,7 +183,7 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
-            grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
+            grossProfitRateValue = MathUtil.multiplyWithTwo(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }
@@ -230,7 +229,7 @@ public class BiDataSourceCostDetailServiceImpl extends ServiceImpl<BiDataSourceC
             profitRateResult.setType(grossProfitRate);
             profitRateResult.setDateStr(item.getDateStr());
             BigDecimal grossProfitRateValue = MathUtil.divide(grossProfitValue, mainIncome, 4);
-            grossProfitRateValue = MathUtil.multiply(grossProfitRateValue, MathUtil.BigDecimal_100);
+            grossProfitRateValue = MathUtil.multiplyWithTwo(grossProfitRateValue, MathUtil.BigDecimal_100);
             profitRateResult.setValue(grossProfitRateValue);
             resultList.add(profitRateResult);
         }

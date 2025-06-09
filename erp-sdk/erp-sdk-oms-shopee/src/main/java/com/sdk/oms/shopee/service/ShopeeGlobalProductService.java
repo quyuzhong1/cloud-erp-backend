@@ -1,7 +1,8 @@
 package com.sdk.oms.shopee.service;
 
-import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.CollectionUtils;
 import com.sdk.oms.shopee.constants.ShopeeConstants;
 import com.sdk.oms.shopee.dto.base.ShopeeResponse;
@@ -27,11 +28,11 @@ import static com.sdk.oms.shopee.constants.ShopeeConstants.pageSize;
 /**
  * @author zdy
  * @ClassName ShopeeGlobalProductService
- * @description: TODO
+ * @description: 全局产品-暂时没有使用
  * @date 2023年11月29日
  * @version: 1.0
  */
-@Component
+//@Component
 @Slf4j
 public class ShopeeGlobalProductService {
     public static void main(String[] args) {
@@ -46,17 +47,17 @@ public class ShopeeGlobalProductService {
                 .build();
         ShopeeResponse productList = service.getGlobalProductList(productRequest);
         JSONObject response = productList.getResponse();
-        String offset = response.getString("offset");
-        Boolean hasNextPage = response.getBoolean("has_next_page");
-        Integer totalCount = response.getInteger("total_count");
+        String offset = response.getStr("offset");
+        Boolean hasNextPage = response.getBool("has_next_page");
+        Integer totalCount = response.getInt("total_count");
         JSONArray globalItemList = response.getJSONArray("global_item_list");
-        List<GlobalItem> items = JSONObject.parseArray(globalItemList.toJSONString(), GlobalItem.class);
+        List<GlobalItem> items = JSONUtil.toList(globalItemList, GlobalItem.class);
         List<Long> itemIds = items.stream().map(GlobalItem::getItemId).collect(Collectors.toList());
         productRequest.setItemIdList(StringUtils.join(itemIds, ","));
         ShopeeResponse globalProductInfo = service.getGlobalProductInfo(productRequest);
         JSONObject response1 = globalProductInfo.getResponse();
         JSONArray itemList = response1.getJSONArray("global_item_list");
-        List<GlobalItemInfo> globalItemInfos = JSONObject.parseArray(itemList.toJSONString(), GlobalItemInfo.class);
+        List<GlobalItemInfo> globalItemInfos = JSONUtil.toList(itemList, GlobalItemInfo.class);
         System.out.println(globalItemInfos.size());
     }
 
@@ -96,7 +97,7 @@ public class ShopeeGlobalProductService {
             return;
         }
         JSONObject response = productList.getResponse();
-        String error = response.getString("error");
+        String error = response.getStr("error");
         if (StringUtils.isNotEmpty(error)) {
             return;
         }
@@ -105,7 +106,7 @@ public class ShopeeGlobalProductService {
             return;
         }
         //目录列表
-        List<GlobalItem> items = JSONObject.parseArray(jsonArray.toJSONString(), GlobalItem.class);
+        List<GlobalItem> items = JSONUtil.toList(jsonArray, GlobalItem.class);
         //获取item明细
         List<Long> itemIds = items.stream().map(GlobalItem::getItemId).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(itemIds)) {
@@ -115,16 +116,16 @@ public class ShopeeGlobalProductService {
             if (Objects.nonNull(responseBaseInfo)) {
                 //循环填充
                 JSONArray listBase = responseBaseInfo.getJSONArray("global_item_list");
-                List<GlobalItemInfo> list = JSONObject.parseArray(listBase.toJSONString(), GlobalItemInfo.class);
+                List<GlobalItemInfo> list = JSONUtil.toList(listBase, GlobalItemInfo.class);
                 if (CollectionUtils.isNotEmpty(list)) {
                     itemInfos.addAll(list);
                 }
             }
         }
         //是否还有数据
-        boolean hasNextPage = response.getBoolean("has_next_page");
+        boolean hasNextPage = response.getBool("has_next_page");
         if (hasNextPage) {
-            String offset = response.getString("offset");
+            String offset = response.getStr("offset");
             productRequest.setOffset(offset);
             getAllProduct(productRequest, itemInfos);
         }

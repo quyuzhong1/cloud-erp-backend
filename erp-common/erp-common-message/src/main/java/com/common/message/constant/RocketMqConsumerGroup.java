@@ -308,12 +308,26 @@ public class RocketMqConsumerGroup {
      * 异步获取平台打印面单标签
      */
     public static final String ASYNC_GET_PLATFORM_LABEL_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_get_platform_label_consumer";
+    /**
+     * 异步更新物流更新时间
+     */
+    public static final String ASYNC_GET_LOGISTICS_TRACK_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_get_logistics_track_consumer";
 
     /**
      * 异步组包发货
      */
     public static final String ASYNC_MERGE_PACKAGE_DELIVERY_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-async_merge_package_delivery_consumer";
 
+    /**
+     * 同步虚拟仓库存明细
+     */
+    public static final String WMS_VIRTUAL_DETAIL_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_consumer";
+
+
+    /**
+     * 异步组包发货
+     */
+    public static final String DMP_WECHAT_SUBSCRIBE_MSG_CONSUMER = "${spring.cloud.nacos.discovery.namespace}-dmp_wechat_subscribe_msg_consumer";
 
     //---------------------------------------------------wangdian---------------------------------------------------------------------------------------------
     /**

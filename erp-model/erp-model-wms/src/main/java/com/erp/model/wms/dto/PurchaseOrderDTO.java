@@ -115,10 +115,6 @@ public class PurchaseOrderDTO implements Serializable {
         */
         private String purchaseDeptName;
 
-        /**
-        * 新品首批（false否,true是）
-        */
-        private Boolean isFirstMassProduct;
 
         /**
         * 作废状态（false未作废，true已作废）
@@ -281,10 +277,6 @@ public class PurchaseOrderDTO implements Serializable {
         */
         private String purchaseDeptName;
 
-        /**
-        * 新品首批（false否,true是）
-        */
-        private Boolean isFirstMassProduct;
 
         /**
         * 作废状态（false未作废，true已作废）
@@ -434,12 +426,6 @@ public class PurchaseOrderDTO implements Serializable {
         @NotBlank(message = "采购部门名称不能为空")
         @Size(max = 64,message = "采购部门名称最大长度不能超过64位")
         private String purchaseDeptName;
-
-        /**
-        * 新品首批（false否,true是）
-        */
-        @NotNull(message = "新品首批（false否,true是）不能为空")
-        private Boolean isFirstMassProduct;
 
         /**
         * 作废时间

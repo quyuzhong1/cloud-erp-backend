@@ -2,24 +2,23 @@ package com.erp.server.wms.service;
 
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
+import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryDetailEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.AbnormalCauseEnum;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -76,11 +75,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 手动发货
      *
      * @param id
+     * @param deliveryDate
      * @return com.common.business.dto.base.BatchResultDTO
      * @Author Luo_WG
      * @Date 2023/12/13 19:26
      **/
-    BatchResultDTO manualDelivery(String id);
+    BatchResultDTO manualDelivery(String id, LocalDate deliveryDate);
 
     /**
      * 手动标发
@@ -93,11 +93,12 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 打印拣货单预览
      *
      * @param ids
+     * @param isAddWave 是否添加波次
      * @return java.util.List<com.erp.model.wms.dto.SoB2cDeliveryDTO.printPickingViewDTO>
      * @Author Luo_WG
      * @Date 2023/12/13 19:37
      **/
-    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids);
+    List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingView(List<String> ids, boolean isAddWave);
 
     /**
      * 打印拣货单
@@ -191,36 +192,13 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * 发货
      *
      * @param
+     * @param deliveryDate
      * @return
      * @description
      * @author Lambda
      * @create 2023-12-29 10:37
      */
-    BatchResultDTO delivery(String id, String deliveryType);
-
-    /**
-     * 扣减冻结库存（库存不够生成异常）
-     * @author will
-     * @date 2024/7/21 9:47
-     * @param entity
-     */
-    Boolean generateOutFreezeError (SoB2cDeliveryEntity entity);
-
-    /**
-     * 清除扣减冻结异常
-     * @author will
-     * @date 2024/8/8 22:08
-     * @param entity
-     */
-    void cleanErrorSignFreeze (SoB2cDeliveryEntity entity);
-
-    /**
-     * 扣减冻结库存
-     * @author will
-     * @date 2024/7/21 9:47
-     * @param entity
-     */
-    Boolean outFreezeVirtualInventory (SoB2cDeliveryEntity entity);
+    BatchResultDTO delivery(String id, String deliveryType, LocalDate deliveryDate);
 
     /**
      * 生成销售出库单
@@ -361,8 +339,9 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      *
      * @param soB2cDeliveryEntity         发货单
      * @param soB2cDeliveryDetailEntities 发货单明细
+     * @param waveType 波次类型
      */
-    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities);
+    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities,String waveType);
 
     /**
      * B2C生成拣货单 (规则前置执行)
@@ -370,8 +349,9 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param soB2cDeliveryEntity         发货单
      * @param soB2cDeliveryDetailEntities 发货单明细
      * @param results 前置规则返回的仓位
+     * @param waveType 波次类型
      */
-    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results);
+    List<String> generatePickingDetail(SoB2cDeliveryEntity soB2cDeliveryEntity, List<SoB2cDeliveryDetailEntity> soB2cDeliveryDetailEntities, List<LocationInventoryResultDTO> results,String waveType);
     /**
      * 取消发货
      */
@@ -439,4 +419,54 @@ public interface SoB2cDeliveryService extends SuperService<SoB2cDeliveryEntity> 
      * @param deliveryEntityList
      */
     void addUsableVirtualInventory (List<SoB2cDeliveryEntity> deliveryEntityList);
+
+    /**
+     * 根据销售订单手动标发
+     * @param id
+     * @return
+     */
+    BatchResultDTO falseDeliveryBySoId(String id);
+
+    /**
+     * 更新中转仓库记录
+     * @param entity
+     * @param changeIds
+     * @return
+     */
+    BatchResultDTO updateTransferWarehouse(SoB2cDeliveryEntity entity, List<String> changeIds);
+    /**
+     * 查询b2c流水
+     * @author will
+     * @date 2025/3/31 11:56
+     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
+     */
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2cVirtualFlow();
+
+    /**
+     * 打印条码列表展示
+     * @param ids
+     * @return
+     */
+    List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids);
+
+    /**
+     * 打印sku条码确认
+     * @param dto
+     * @param response
+     */
+    void printSkuBarcodeConfirm(SoB2cDeliveryDTO.PrintSkuBarcodeConfirmDTO dto, HttpServletResponse response);
+
+    /**
+     * SKU打印完成
+     * @param idsDTO
+     * @return
+     */
+    ApiResult<?> printSkuBarcodeFinish(BaseIdsDTO.IdsDTO idsDTO);
+
+    /**
+     * 获取发货清单
+     * @param ids
+     * @return
+     */
+    List<PickingListsDTO.CombinationPrintDetailView> getDeliveryDetail(List<String> ids);
 }

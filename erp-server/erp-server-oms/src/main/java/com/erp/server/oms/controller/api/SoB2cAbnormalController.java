@@ -2,10 +2,12 @@ package com.erp.server.oms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -52,6 +54,11 @@ public class SoB2cAbnormalController extends BaseController {
      * @return
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2cAbnormal:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
     public ApiResult<PagingVO<SoB2cAbnormalDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
         return success(soB2cAbnormalService.abnormalPaging(dto));
@@ -79,7 +86,7 @@ public class SoB2cAbnormalController extends BaseController {
      * @param dto
      * @return ApiResult<List<BatchResultDTO>>
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "批量重试")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量重试", keyIdName = "ids")
     @PostMapping(value = "/batchRetry")
     public ApiResult<List<BatchResultDTO>> batchRetry(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>();
@@ -103,5 +110,18 @@ public class SoB2cAbnormalController extends BaseController {
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+    /**
+     * 清除异常
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "清除异常")
+    @PostMapping(value = "/clearAbnormal")
+    public ApiResult<?> clearAbnormal(@RequestBody @Validated SoB2cAbnormalDTO.ClearAbnormalDTO dto) {
+        soB2cAbnormalService.clearAbnormal(dto);
+        return success();
     }
 }

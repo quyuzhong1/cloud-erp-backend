@@ -58,12 +58,12 @@
         sod.so_detail_id as soDetailId,
         sod.source_detail_id AS sourceDetailId,
         sod.warehouse_location AS warehouseLocation,
+        sod.virtual_warehouse_id as virtualWarehouseId,
         so.packing_status,
         so.logistics_channel_id,
         so.logistics_channel_name
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod
-        ON so.id=sod.main_id AND sod.is_deleted=FALSE
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
         and  so.is_deleted=FALSE
@@ -77,7 +77,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-            so.create_time DESC
+        sod.id DESC
     </select>
 
     <select id="listExport" resultType="com.erp.model.wms.dto.SoOutstockDTO$PagingViewDTO">
@@ -128,14 +128,14 @@
             sod.exchange_rate as exchangeRate,
             sod.so_detail_id as soDetailId,
            sod.source_detail_id AS sourceDetailId,
+        sod.virtual_warehouse_id as virtualWarehouseId,
            sod.warehouse_location AS warehouseLocation
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod
-        ON so.id=sod.main_id AND  sod.is_deleted=FALSE
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND  sod.is_deleted=FALSE
+        left join so_b2c sb on sb.id = so.so_id and sb.is_deleted=FALSE
         WHERE
             ${params.sqlMap.default}
           and so.is_deleted=FALSE
-
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -146,7 +146,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-            so.create_time DESC
+        sod.id DESC
     </select>
 
 
@@ -201,15 +201,17 @@
     </select>
     <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
           SELECT
-            approve_status,
-            invalid_status,
-	        count(*)
-	     FROM so_outstock
-	     WHERE is_deleted=FALSE
+            so.approve_status,
+            so.invalid_status,
+	        count(distinct so.id)
+        FROM so_outstock so
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
+        left join so_b2c sb on sb.id = so.so_id and sb.is_deleted=FALSE
+	     WHERE so.is_deleted=FALSE
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-         GROUP BY approve_status,invalid_status
+         GROUP BY so.approve_status,so.invalid_status
     </select>
     <select id="getIdsByTemp" resultType="java.lang.String">
         SELECT so.id FROM "temp_recovry_record" trr,${tableName} so where trr.code = so.code and so.is_deleted = false
@@ -218,7 +220,6 @@
 
     <select id="pdaPaging" resultType="com.erp.model.wms.dto.SoOutstockDTO$PdaPagingViewDTO">
         SELECT
-        DISTINCT
         so.id,
         so.code,
         so.source_type,
@@ -227,7 +228,6 @@
         so.approve_status,
         so.create_time
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
         WHERE so.is_deleted = false
         AND so.invalid_status = false
         AND so.source_type NOT IN ('SAL_OUTSTOCK')
@@ -251,7 +251,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        ORDER BY so.create_time desc
+        ORDER BY so.id desc
     </select>
 
     <select id="listCount" resultType="java.lang.Integer">
@@ -316,12 +316,10 @@
             sum(sod.plan_qty) as planTotalQty,
             sum(sod.all_amount_local_currency) as totalTaxAmount
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod
-        ON so.id = sod.main_id AND sod.is_deleted = FALSE
+        INNER JOIN so_outstock_detail sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
         WHERE
         ${params.sqlMap.default}
            and so.is_deleted = FALSE
-
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -497,4 +495,44 @@
            AND t.warehouse_name = #{params.warehouseName}
        	</if>
     </sql>
+
+    <select id="queryToSdy" resultType="com.erp.model.wms.entity.SoOutstockEntity">
+        SELECT DISTINCT so.* FROM so_outstock so
+        LEFT JOIN so_outstock_detail sod ON so.id = sod.main_id
+        WHERE so.bill_date >= #{startDate}
+        AND so.bill_date &lt;= #{endDate}
+        AND so.approve_status = 'approve'
+        AND so.is_deleted = FALSE
+        AND sod.is_deleted = FALSE
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="listAmountBySkuIds" resultType="com.erp.model.wms.dto.SoOutstockDTO$AmountDTO"
+            parameterType="com.erp.model.wms.dto.SoOutstockDTO$ListAmountParamDTO">
+        select
+            sod.source_detail_id AS soDetailId
+        from so_outstock_detail sod
+        INNER JOIN so_outstock so on so.id = sod.main_id and so.is_deleted =FALSE
+          where
+          sod.is_deleted =FALSE
+          and sod.is_close = FALSE
+          and so.approve_status = 'approve'
+          and so.order_type ='B2B'
+        <if test="params.currency!=null and params.currency!=''">
+            and sod.currency =  #{params.currency}
+        </if>
+        <if test="params.returnCreateDate!=null and params.returnCreateDate!=''">
+            and so.actual_delivery_date &lt; #{params.returnCreateDate}
+        </if>
+          <if test="params.customerId!=null and params.customerId!=''">
+            and so.customer_id = #{params.customerId}
+        </if>
+        <if test="params.skuIds !=null and params.skuIds.size>0">
+            and sod.sku_id in
+            <foreach collection="params.skuIds" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        order by so.actual_delivery_date desc
+    </select>
 </mapper>

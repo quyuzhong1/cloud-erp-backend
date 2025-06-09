@@ -1,18 +1,20 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.util.List;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -91,6 +93,20 @@ public class OverseasInventoryDTO implements Serializable {
         private List<String> platformWarehouseCodeList;
 
         private Boolean sortFlag = false;
+
+        /**
+         * 仓库名称
+         */
+        private List<String> warehouseNameList;
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
 
@@ -105,6 +121,10 @@ public class OverseasInventoryDTO implements Serializable {
          */
         private String  id;
 
+        /**
+         * 三方仓简称
+         */
+        private String provideShortName;
         /**
          * 平台仓库编码
          */
@@ -191,9 +211,59 @@ public class OverseasInventoryDTO implements Serializable {
         private Integer shippedQty;
 
         /**
+         * 销退在途数量
+         */
+        private Integer saleReturnInTransitQty = 0;
+
+        /**
          * 平台下载更新时间 (更新时间)
          */
         private LocalDateTime downloadTime;
+
+        /**
+         * 库龄 0-30 天的可售商品数量
+         */
+        private Integer inventoryAge0To30Days = 0 ;
+
+        /**
+         * 库龄 31-60 天的可售商品数量
+         */
+        private Integer inventoryAge31To60Days = 0 ;
+
+        /**
+         * 库龄 61-90 天的可售商品数量
+         */
+        private Integer inventoryAge61To90Days = 0 ;
+
+        /**
+         * 库龄 91-180 天的可售商品数量
+         */
+        private Integer inventoryAge91To180Days = 0 ;
+
+        /**
+         * 库龄 181-270 天的可售商品数量
+         */
+        private Integer inventoryAge181To270Days = 0 ;
+
+        /**
+         * 库龄 271-365 天的可售商品数量
+         */
+        private Integer inventoryAge271To365Days = 0 ;
+
+        /**
+         * 库龄 365 天以上的可售商品数量
+         */
+        private Integer inventoryAge365PlusDays = 0 ;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
 
@@ -497,4 +567,18 @@ public class OverseasInventoryDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * erp skuId
+         */
+        private List<String> skuIds;
+        /**
+         * 平台SKU
+         */
+        private String platformSku;
+        //平台仓库编码
+        private List<String> platformWarehouseCodeList;
+    }
 }

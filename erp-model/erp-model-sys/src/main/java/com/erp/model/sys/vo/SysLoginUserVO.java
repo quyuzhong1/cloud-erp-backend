@@ -42,4 +42,14 @@ public class SysLoginUserVO implements Serializable {
      * 是否是超级管理员
      */
     private Boolean isSupper;
+
+    /**
+     * 部门id
+     */
+    private String deptId;
+
+    /**
+     * 部门名称
+     */
+    private String deptName;
 }

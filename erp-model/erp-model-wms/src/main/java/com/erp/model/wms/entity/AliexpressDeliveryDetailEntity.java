@@ -4,10 +4,11 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.math.BigDecimal;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -50,6 +51,87 @@ public class AliexpressDeliveryDetailEntity extends BaseEntity<AliexpressDeliver
      */
     @TableField("sku_id")
     private String skuId;
+
+    /**
+     * 单价
+     */
+    @TableField("price")
+    private BigDecimal price;
+
+    /**
+     * 币别
+     */
+    @TableField("currency")
+    private String currency;
+
+    /**
+     * 实际支付金额
+     */
+    @TableField("pay_amount")
+    private BigDecimal payAmount;
+
+    /**
+     * 实际支付币别
+     */
+    @TableField("pay_currency")
+    private String payCurrency;
+
+    /**
+     * 折扣金额
+     */
+    @TableField("discount_amount")
+    private BigDecimal discountAmount;
+
+    /**
+     * 折扣币别
+     */
+    @TableField("discount_currency")
+    private String discountCurrency;
+
+    /**
+     * 货品id
+     */
+    @TableField("sc_item_id")
+    private String scItemId;
+
+    /**
+     * 唯一ID
+     * 速卖通=中台明细ID
+     */
+    @TableField("unique_id")
+    private String uniqueId;
+
+    /**
+     * 平台skuId
+     */
+    @TableField("platform_sku_id")
+    private String platformSkuId;
+
+    /**
+     * 平台产品ID
+     */
+    @TableField("platform_spu_no")
+    private String platformSpuNo;
+
+    /**
+     * 平台销售订单明细id
+     * 根据平台产品ID和明细单价匹配
+     */
+    @TableField("platform_detail_id")
+    private String platformDetailId;
+
+
+    /**
+     * 计算后的发货明细单价
+     */
+    @TableField("prorated_unit_price")
+    private BigDecimal proratedUnitPrice;
+
+    /**
+     * 计算后的发货明细总价
+     */
+    @TableField("prorated_amount")
+    private BigDecimal proratedAmount;
 
     public static final String MAIN_ID = "main_id";
 

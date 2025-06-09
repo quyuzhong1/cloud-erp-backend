@@ -3,6 +3,7 @@ package com.erp.model.wms.enums.inventory;
 import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -33,6 +34,7 @@ public enum InventoryTransportTypeEnum {
      */
     private String name;
 
+    @Setter
     private String label;
 
     InventoryTransportTypeEnum(String type, String name, String label) {
@@ -51,10 +53,6 @@ public enum InventoryTransportTypeEnum {
 
     public String getLabel() {
         return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
     }
 
     public static InventoryTransportTypeEnum getByCode(String code) {

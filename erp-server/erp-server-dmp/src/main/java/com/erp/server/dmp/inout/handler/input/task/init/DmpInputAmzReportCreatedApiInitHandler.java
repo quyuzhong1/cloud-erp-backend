@@ -2,46 +2,35 @@ package com.erp.server.dmp.inout.handler.input.task.init;
 
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.utils.RedisUtil;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.dto.AmazonCreateReportResultDTO;
 import com.erp.model.dmp.dto.AmazonShopInfoDTO;
-import com.erp.model.dmp.entity.CfgAmzReportTypeEntity;
 import com.erp.sdk.oms.amz.spapi.api.ReportsApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
 import com.erp.sdk.oms.amz.spapi.client.ApiResponse;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonMarketplaceEnum;
-import com.erp.sdk.oms.amz.spapi.enums.AmazonReportRecordTypeEnum;
 import com.erp.sdk.oms.amz.spapi.enums.AmazonRequestTypeRateLimiterEnum;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportResponse;
 import com.erp.sdk.oms.amz.spapi.model.reports.CreateReportSpecification;
-import com.erp.sdk.oms.amz.spapi.model.reports.Report;
 import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
 import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
 import com.erp.server.dmp.inout.dto.request.DmpInputInitRequest;
 import com.erp.server.dmp.inout.dto.response.DmpInputInitResponse;
 import com.erp.server.dmp.inout.dto.response.DmpInputTaskResponse;
-import com.erp.server.dmp.service.AmzReportHandleService;
-import com.erp.server.dmp.service.CfgAmzReportTypeService;
 import com.erp.server.dmp.service.CfgAppClientService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * dmp输入init任务基础处理器下的亚马逊api获取数据方式
@@ -51,16 +40,11 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler {
+public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputAmzReportCommonApiInitHandler {
 
     @Resource
-    private RedisUtil redisUtil;
-    @Resource
-    private CfgAmzReportTypeService cfgAmzReportTypeService;
-    @Resource
     private CfgAppClientService cfgAppClientService;
-    @Resource
-    private AmzReportHandleService AmzReportHandleService;
+
 
     @Override
     public List<DmpInputTaskInitDTO> getInitData(DmpInputInitRequest dmpRequest, DmpInputTaskResponse dmpResponse) {
@@ -79,17 +63,17 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
             ServiceException.runError("未找到店铺授权:" + shopId);
         }
 
-        List<String> marketplaceIds;
-        AmazonReportRecordTypeEnum recordTypeEnum = AmazonReportRecordTypeEnum.checkAndGetByRecordType(reportType);
-        if (recordTypeEnum.isHasMergeMarketplaces()){
-            // 合并站点
-            // 校验MarketplaceId
-            marketplaceIds = new ArrayList<>(shopInfoDTO.getMarketplaceShopIdMap().keySet());
-        } else {
-            AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByCountryCode(shopInfoDTO.getDictCountryCode());
-            // 非合并站点
-            marketplaceIds = Collections.singletonList(marketplaceEnum.getMarketplaceId());
+        // 允许指定报告ID
+        String detailExtendJson = dmpInputTaskEntity.getExtendJson();
+        if (StringUtils.isNotBlank(detailExtendJson)) {
+            JSONObject detailExtendObj = JSONObject.parseObject(detailExtendJson);
+            String reportId = detailExtendObj.getString("reportId");
+            if (StringUtils.isNotBlank(reportId)){
+                return convertDmpInputTaskInitDTOS(reportId, reportType, shopInfoDTO);
+            }
         }
+
+        List<String> marketplaceIds = checkReportIsMergeMarketplace(reportType, shopInfoDTO);
 
         String marketplaceId = marketplaceIds.stream().findFirst().orElse(null);
         AmazonMarketplaceEnum marketplaceEnum = AmazonMarketplaceEnum.getByMarketplaceId(marketplaceId);
@@ -106,7 +90,11 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         Object limitObj = redisUtil.get(limitKey);
         if (null != limitObj){
             String msg = StrUtil.format("【亚马逊创建报告】 platformShopCode={}, 报告类型={},存在429等待恢复:放弃当前请求任务", shopInfoDTO.getPlatformShopCode(), reportType);
-            throw new ServiceException(msg);
+            log.warn(msg);
+            // 触发限流不执行当前
+            DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+            initDmpResponse.setDoNextStatus(false);
+            return Collections.emptyList();
         }
         String rateLimitStr = requestTypeRateLimiterEnum.getRateLimit();
 
@@ -124,7 +112,7 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
                     waitDto.getEstimatedWaitSecond());
             // 下次时间
             DmpInputInitResponse dmpInputInitResponse = (DmpInputInitResponse) dmpResponse;
-            dmpInputInitResponse.setDoNextChain(false);
+            dmpInputInitResponse.setDoNextStatus(false);
             return Collections.emptyList();
         }
 
@@ -139,6 +127,11 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
                 // 设置动态速率，失效时间=1/limit
                 BigDecimal timeOut = BigDecimal.ONE.max(BigDecimal.ONE.divide(new BigDecimal(rateLimitStr), 8, RoundingMode.DOWN));
                 redisUtil.set(limitKey, rateLimitStr, timeOut.longValue());
+                log.warn("【亚马逊创建报告】 platformShopCode={},reportType={},当前触发429限流:放弃当前请求任务", shopInfoDTO.getPlatformShopCode(), reportType);
+                // 触发限流不执行当前
+                DmpInputInitResponse initDmpResponse = (DmpInputInitResponse) dmpResponse;
+                initDmpResponse.setDoNextStatus(false);
+                return Collections.emptyList();
             }
             throw new ServiceException("[Amazon SP-APi] 创建报告失败:body=" + e.getMessage());
         }
@@ -150,55 +143,9 @@ public class DmpInputAmzReportCreatedApiInitHandler extends DmpInputInitHandler 
         // 设置到缓存(已完成或结束删除)
 //      redisUtil.set(key, reportId);
         // 组合响应
-        Report report = new Report();
-        report.setReportId(reportId);
-        report.setReportType(reportType);
-        report.setProcessingStatus(Report.ProcessingStatusEnum.IN_PROGRESS);
-
-        JSONObject jsonObject = (JSONObject) JSON.toJSON(report);
-        // 补充其他信息
-        jsonObject.put("platformShopCode", shopInfoDTO.getPlatformShopCode());
-        jsonObject.put("createdMethod", "system");
-        return Collections.singletonList(DmpInputTaskInitDTO.initMsg(JSON.toJSONString(jsonObject)));
+        return convertDmpInputTaskInitDTOS(reportId, reportType, shopInfoDTO);
     }
 
-    /**
-     * 请求创建中报告预计时间
-     */
-    public Long requestAndCheckWaitTime(String reportType, ReportsApi reportsApi, AmazonShopInfoDTO shopInfoDTO) {
-        List<CfgAmzReportTypeEntity> list = cfgAmzReportTypeService.findActive(null);
-        if (CollectionUtils.isEmpty(list)) {
-            ServiceException.runError("未找到报告配置");
-        }
-        CfgAmzReportTypeEntity curReportType = list.stream().filter(e -> e.getReportType().equalsIgnoreCase(reportType)).findFirst().orElse(null);
-        if (null == curReportType) {
-            ServiceException.runError("未找到当前报告配置:" + reportType);
-        }
-        Map<String, List<CfgAmzReportTypeEntity>> reportGroupMap = list.stream().collect(Collectors.groupingBy(CfgAmzReportTypeEntity::getReportGroup));
-        List<CfgAmzReportTypeEntity> curReportGroupList = reportGroupMap.get(curReportType.getReportGroup());
-        List<String> reportTypes = curReportGroupList.stream().map(CfgAmzReportTypeEntity::getReportType).distinct().collect(Collectors.toList());
 
-        // 查询是否有处理中的报告(响应预估处理结束时间:0=无处理中报告)
-        return AmzReportHandleService.queryProcessReportWaitTime(reportsApi, reportTypes, dmpCfgInputEntity.getId(), shopInfoDTO.getPlatformShopCode());
-    }
 
-    /**
-     * 组合请求参数
-     */
-    private CreateReportSpecification createReportSpecificationParam(String reportType, List<String> marketplaceIdsArray) {
-        CreateReportSpecification body = new CreateReportSpecification();
-        body.setReportType(reportType);
-        body.setMarketplaceIds(marketplaceIdsArray);
-        String startTime = dmpInputTaskEntity.getStartTime().atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneOffset.UTC)
-                .toOffsetDateTime()
-                .toString();
-        String endTime = dmpInputTaskEntity.getEndTime().atZone(ZoneId.systemDefault())
-                .withZoneSameInstant(ZoneOffset.UTC)
-                .toOffsetDateTime()
-                .toString();
-        body.setDataStartTime(startTime);
-        body.setDataEndTime(endTime);
-        return body;
-    }
 }

@@ -22,11 +22,11 @@ import java.util.List;
 @Mapper
 public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
 
-    IPage<ProductShowDTO> paging(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params,@Param("categoryIdList") List<String> categoryIdList);
+    IPage<ProductShowDTO> paging(Page<ProductSearchDTO.PagingParamDTO> query, @Param("params") ProductSearchDTO.PagingParamDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
-    List<ProductShowDTO> listAllExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+    IPage<ProductShowDTO> listAllExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
 
-    List<TaskExportDTO.ProductTaskExcelDTO> listAllTaskExport(@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList);
+    IPage<TaskExportDTO.ProductTaskExcelDTO> listAllTaskExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList);
     /**
      * 我的项目
      * @param query
@@ -34,7 +34,7 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param categoryIdList
      * @return
      */
-    IPage<ProductShowDTO> myProjectPaging(Page query, @Param("params")ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId") String userId);
+    IPage<ProductShowDTO> myProjectPaging(Page<ProductSearchDTO.PagingParamDTO> query, @Param("params")ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId") String userId);
 
     /**
      * 我的项目导出
@@ -43,9 +43,9 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param userId
      * @return
      */
-    List<ProductShowDTO> listMyProjectExport(@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList, @Param("userId")String userId);
+    IPage<ProductShowDTO> listMyProjectExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList, @Param("userId")String userId);
 
-    List<TaskExportDTO.ProductTaskExcelDTO> listMyProjectTaskExport(@Param("params")ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
+    IPage<TaskExportDTO.ProductTaskExcelDTO> listMyProjectTaskExport(Page<ProductSearchDTO.ExportDTO> query ,@Param("params")ProductSearchDTO.ExportDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
 
 
     /**
@@ -55,12 +55,12 @@ public interface ProductInfoMapper extends BaseMapper<ProductInfoEntity> {
      * @param categoryIdList
      * @return
      */
-    IPage<ProductShowDTO> collect(Page query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
+    IPage<ProductShowDTO> collect(Page<ProductSearchDTO.PagingParamDTO> query, @Param("params") ProductSearchDTO.PagingParamDTO params, @Param("categoryIdList")List<String> categoryIdList,@Param("userId")String userId);
 
-    List<ProductShowDTO> collectExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+    IPage<ProductShowDTO> collectExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList, @Param("userId") String userId);
 
 
-    List<TaskExportDTO.ProductTaskExcelDTO> collectTaskExport(@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList);
+    IPage<TaskExportDTO.ProductTaskExcelDTO> collectTaskExport(Page<ProductSearchDTO.ExportDTO> query,@Param("params") ProductSearchDTO.ExportDTO params,@Param("categoryIdList") List<String> categoryIdList, @Param("userId") String userId);
 
     List<BasicDTO> listNotPaging(@Param("params") ProductSearchDTO.PagingParamDTO params,@Param("archiveProductIds") List<String> archiveProductIds,@Param("categoryIdList") List<String> categoryIdList);
 

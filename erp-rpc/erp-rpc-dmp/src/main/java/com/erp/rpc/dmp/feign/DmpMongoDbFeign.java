@@ -57,12 +57,4 @@ public interface DmpMongoDbFeign {
      **/
     @PostMapping("/checkOtherOutStock")
     Boolean checkOtherOutStock(@RequestBody DmpPullOtherOutStockDTO resultDTO);
-
-    /**
-     * 获取mongo DB中track123数据
-     * @param trackNoList
-     * @return
-     */
-    @PostMapping("/listMongoTractDataByTrackNoList")
-    String listMongoTractDataByTrackNoList(@RequestBody List<String> trackNoList);
 }

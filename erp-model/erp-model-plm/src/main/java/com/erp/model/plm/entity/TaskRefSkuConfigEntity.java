@@ -18,7 +18,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("task_ref_sku_config")
-public class TaskRefSkuConfigEntity extends BaseEntity implements Serializable {
+public class TaskRefSkuConfigEntity extends BaseEntity<TaskRefSkuConfigEntity> implements Serializable {
     private static final long serialVersionUID = 942529455380352989L;
 
     /**

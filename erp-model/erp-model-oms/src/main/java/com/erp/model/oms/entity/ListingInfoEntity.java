@@ -67,7 +67,7 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      * 匹配结果吧true 已匹配 false 未匹配
      */
     @TableField("match_result")
-    private Boolean matchResult;
+    private String matchResult;
 
     /**
      * 产品图片 url
@@ -86,6 +86,12 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("product_packing")
     private String productPacking;
+
+    /**
+     * 产品条码（三方仓商品条码）
+     */
+    @TableField("third_barcode")
+    private String thirdBarcode;
 
     /**
      * 平台最后修改时间
@@ -116,6 +122,17 @@ public class ListingInfoEntity extends BaseEntity<ListingInfoEntity> {
      */
     @TableField("auth_id")
     private String authId;
+
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+    /**
+     * 来源类型 selfAdd系统新增，third第三方同步
+     */
+    @TableField("source_type")
+    private String sourceType;
 
     public static final String SKU_NO = "sku_no";
 

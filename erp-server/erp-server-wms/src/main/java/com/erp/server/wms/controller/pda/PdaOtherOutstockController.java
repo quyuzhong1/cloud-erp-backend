@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.pda;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -52,6 +53,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "oo.warehouse_id",
             menuCode = "wms:pdaOtherOutstock:paging",
             tableAlias = "oo"
     )
@@ -70,6 +72,7 @@ public class PdaOtherOutstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "oo.warehouse_id",
             menuCode = "wms:pdaOtherOutstock:paging",
             tableAlias = "oo"
     )
@@ -94,7 +97,7 @@ public class PdaOtherOutstockController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated OtherOutstockDTO.AddDTO dto) {
         String id = otherOutstockService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -113,7 +116,7 @@ public class PdaOtherOutstockController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated OtherOutstockDTO.AddDTO dto) {
         String id = otherOutstockService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

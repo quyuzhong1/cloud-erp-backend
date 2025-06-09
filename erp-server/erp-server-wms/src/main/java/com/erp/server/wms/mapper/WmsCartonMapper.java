@@ -35,5 +35,7 @@ public interface WmsCartonMapper extends BaseMapper<WmsCartonEntity> {
      */
     List<WmsCartonEntity> listByTaskIdsAndPermission(@Param("params") PackingTaskDTO.PackedDetailDTO packedDetailDTO);
 
-    List<WmsCartonDTO.DetailDTO> listByPackingTaskId(@Param("packingTaskId") String packingTaskId);
+    List<WmsCartonDTO.DetailDTO> listByPackingTaskId(@Param("packingTaskId") String packingTaskId,@Param("cartonIds") List<String>  cartonIds);
+
+    List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(@Param("boxIds") List<String> boxIds);
 }

@@ -56,7 +56,7 @@ public class CfgRuleOrderHandleController extends BaseController {
     */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "订单处理规则表修改")
-    public ApiResult<?> update(@RequestBody @Validated CfgRuleOrderHandleDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated CfgRuleOrderHandleDTO.UpdateDTO dto) {
         cfgRuleOrderHandleService.update(dto);
         return success();
     }
@@ -96,8 +96,8 @@ public class CfgRuleOrderHandleController extends BaseController {
      * @return ApiResult
      */
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+    public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
         Boolean result = cfgRuleOrderHandleService.updateStatus(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 }

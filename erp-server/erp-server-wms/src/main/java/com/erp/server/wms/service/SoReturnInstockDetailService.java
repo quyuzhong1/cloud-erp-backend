@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import com.erp.model.wms.dto.SoReturnInstockDTO;
+import com.erp.model.wms.dto.SoReturnInstockDetailDTO;
 import com.erp.model.wms.dto.SoReturnNoticeDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.common.business.service.SuperService;
@@ -82,4 +83,8 @@ public interface SoReturnInstockDetailService extends SuperService<SoReturnInsto
     List<SoReturnInstockDetailEntity> listDetailBySourceDetailIds(List<String> sourceDetailIds);
 
     List<SoReturnInstockDetailEntity> listDetailBySoReturnDetailIds(List<String> soReturnDetailIds);
+
+    List<SoReturnInstockDetailEntity> getSoReturnInstockByReturnIds(List<String> returnIds);
+
+    void clearSoReturnAndUpdate(SoReturnInstockDetailDTO.ClearSoReturnAndUpdateDTO dto);
 }

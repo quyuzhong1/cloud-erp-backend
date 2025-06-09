@@ -1,10 +1,7 @@
 package com.erp.tms.aliexpress.util;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
+import javax.net.ssl.*;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -16,12 +13,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.GZIPInputStream;
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 /**
  * @author zdy
  * @ClassName WebUtils
@@ -41,9 +32,19 @@ public abstract class WebUtils {
             return null;
         }
 
-        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+        public void checkClientTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            for (X509Certificate cert : chain) {
+                cert.checkValidity();
+                // Additional checks can be added here.
+            }
+        }
 
-        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {}
+        public void checkServerTrusted(X509Certificate[] chain, String authType) throws CertificateException {
+            for (X509Certificate cert : chain) {
+                cert.checkValidity();
+                // Additional checks can be added here.
+            }
+        }
     }
 
     public static void setIgnoreSSLCheck(boolean ignoreSSLCheck) {
@@ -207,20 +208,10 @@ public abstract class WebUtils {
                     SSLContext ctx = SSLContext.getInstance("TLS");
                     ctx.init(null, new TrustManager[] { new TrustAllTrustManager() }, new SecureRandom());
                     connHttps.setSSLSocketFactory(ctx.getSocketFactory());
-                    connHttps.setHostnameVerifier(new HostnameVerifier() {
-                        public boolean verify(String hostname, SSLSession session) {
-                            return true;
-                        }
-                    });
+
                 } catch (Exception e) {
                     throw new IOException(e.toString());
                 }
-            } else if (ignoreHostCheck) {
-                connHttps.setHostnameVerifier(new HostnameVerifier() {
-                    public boolean verify(String hostname, SSLSession session) {
-                        return true;
-                    }
-                });
             }
             conn = connHttps;
         }

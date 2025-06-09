@@ -20,7 +20,6 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -48,6 +47,7 @@ public class AliexpressDeliveryController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "ad.shop_id",
             menuCode = "wms:aliexpressDelivery:paging",
             tableAlias = "ad"
     )
@@ -66,9 +66,9 @@ public class AliexpressDeliveryController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出速卖通发货单")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody @Validated AliexpressDeliveryDTO.SearchParamDTO dto) {
-        Boolean flag = aliexpressDeliveryService.exportExcel(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> exportExcel(@RequestBody @Validated AliexpressDeliveryDTO.SearchParamDTO dto) {
+        boolean flag = aliexpressDeliveryService.exportExcel(dto);
+        return flag ? success() : failure();
     }
 
 

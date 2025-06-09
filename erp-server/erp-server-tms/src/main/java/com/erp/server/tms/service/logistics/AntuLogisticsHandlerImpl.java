@@ -3,6 +3,7 @@ package com.erp.server.tms.service.logistics;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.tms.entity.LogisticsSaleChannelEntity;
@@ -51,7 +52,7 @@ public class AntuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
             ThirdWarehouseContext.setAuthMap(authMap);
 
-            AntuResponse<List<AntuLogisticsProductsResp>> antuResponse = antuService.getShippingMethod("");
+            AntuResponse<List<AntuLogisticsProductsResp>> antuResponse = antuService.getShippingMethod("",OmsPlatformEnum.OMS_ANTU);
             if (isFailure(antuResponse.getAsk())) {
                 logAndReturnFailure(chanelQueryVO, RequestStatusEnums.FAILED, antuResponse);
             }
@@ -65,9 +66,9 @@ public class AntuLogisticsHandlerImpl extends AbstractLogisticsHandler {
 
             Map<String, String> warehouseMap = overseasProviderWarehouseEntityList.stream()
                     .collect(Collectors.toMap(OverseasProviderWarehouseEntity::getPlatformWarehouseCode,
-                            OverseasProviderWarehouseEntity::getId));
+                            OverseasProviderWarehouseEntity::getId,(v1,v2)->v1));
 
-            antuResponse.getData().forEach(data -> data.setErpWarehouseId(warehouseMap.get(data.getWarehouseCode())));
+            antuResponse.getData().forEach(data -> data.setErpWarehouseId(warehouseMap.get(data.getWarehouseCode())).setLogisticsPlatform(getPlatForm().getCode()));
 
             //实体转换
             List<LogisticsSaleChannelEntity> response =
@@ -91,14 +92,14 @@ public class AntuLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             Map<String, Object> authObjMap = authMap.entrySet().stream()
                     .collect(Collectors.toMap(Map.Entry::getKey, e -> (Object) e.getValue()));
             ThirdWarehouseContext.setAuthMap(authObjMap);
 
             AntuResponse<List<AntuLogisticsProductsResp>> antuResponse =
-                    antuService.getShippingMethod("");
+                    antuService.getShippingMethod("",OmsPlatformEnum.OMS_ANTU);
             if (isFailure(antuResponse.getAsk())) {
                 return failure("授权失败:" + antuResponse.getMessage());
             } else {

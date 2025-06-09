@@ -72,7 +72,7 @@ public class FirstMileCostAllocationJob {
                     XxlJobHelper.log("[生成头程费用分摊] autoGenerateFirstMileCostAllocation 任务结束: 按周期生成：非周期号【{}】不生成", dayOfMonth);
                     return ReturnT.SUCCESS;
                 }
-                reportPeriodMonth = LocalDate.now().withDayOfMonth(1);
+                reportPeriodMonth = LocalDate.now().minusMonths(1).withDayOfMonth(1);
             }else {
                 XxlJobHelper.log("[生成头程费用分摊] autoGenerateFirstMileCostAllocation 任务结束: 按周期生成：生成类型【{}】不支持", dto.getFirstMileAllocationType());
                 return ReturnT.SUCCESS;

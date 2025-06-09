@@ -1,7 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -50,24 +52,24 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<SubcontractReturnDetailMapper, SubcontractReturnDetailEntity> implements SubcontractReturnDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private SubcontractReturnService subcontractReturnService;
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
-    @Autowired
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SubcontractIssueDetailService subcontractIssueDetailService;
     @Override
     public void add(List<SubcontractReturnDetailDTO.AddDTO> details, String mainId) {
-        if (CollectionUtil.isEmpty(details)) {
+        if (CollUtil.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_1041, SourceTypeEnum.SUBCONTRACT_RETURN.getName());
         }
         List<SubcontractReturnDetailEntity> list = BeanMapperUtils.copyList(SubcontractReturnDetailEntity.class, details);
@@ -89,14 +91,14 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             throw new ServiceException("委外退料明细单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外退料明细单" , mainId);
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "委外退料明细单" , mainId);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SUBCONTRACT_RETURN.getCode(), mainId, "新增操作");
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(List<SubcontractReturnDetailDTO.UpdateDTO> details, String mainId) {
-        if (CollectionUtil.isEmpty(details)) {
+        if (CollUtil.isEmpty(details)) {
             throw new ServiceException(ApiError.ERROR_1041, SourceTypeEnum.SUBCONTRACT_RETURN.getName());
         }
         List<SubcontractReturnDetailEntity> list = BeanMapperUtils.copyList(SubcontractReturnDetailEntity.class, details);
@@ -138,7 +140,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     * 新增修改处理数据
     */
     private void handleData(List<SubcontractReturnDetailEntity> list,SubcontractReturnEntity subcontractReturnEntity) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
         //委外明细id集合
@@ -163,7 +165,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
         List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdAndCode(paramList);
         for (SubcontractReturnDetailEntity detailEntity : list) {
             //来源明细id默认委外明细id
-            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(subcontractReturnEntity.getSourceType()) && StrUtil.isBlank(detailEntity.getSourceDetailId())) {
+            if (SourceTypeEnum.SUBCONTRACT_ORDER.getCode().equals(subcontractReturnEntity.getSourceType()) && CharSequenceUtil.isBlank(detailEntity.getSourceDetailId())) {
                 detailEntity.setSourceDetailId(detailEntity.getSubcontractOrderDetailId());
             }
             //委外子SKU明细信息
@@ -202,7 +204,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             detailEntity.setWarehouseName(warehouseName);
 
             //操作日志
-            if (StringUtils.isNotBlank(detailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 SubcontractReturnDetailEntity old = this.getById(detailEntity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98026);
@@ -211,7 +213,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
             }
         }
         //添加操作日志
-        List<SubcontractReturnDetailEntity> addList = list.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<SubcontractReturnDetailEntity> addList = list.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
         //新增不需要添加新增SKU的日志
         if (CollectionUtils.isNotEmpty(addList) && addList.size() != list.size()) {
             List<Pair<String, String>> addPairList = addList.stream().map(obj -> new Pair<>(subcontractReturnEntity.getId(), obj.getSkuNo())).collect(Collectors.toList());
@@ -221,8 +223,8 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
 
     @Override
     public List<SubcontractReturnDetailEntity> listByMainIds(List<String> mainIdList) {
-        if (CollectionUtil.isEmpty(mainIdList)) {
-            return Collections.EMPTY_LIST;
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
         }
         return lambdaQuery().in(SubcontractReturnDetailEntity::getMainId,mainIdList).list();
     }
@@ -235,7 +237,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     @Override
     public List<SubcontractReturnDetailEntity> listBySourceDetailIdList(List<String> sourceDetailIdList) {
         if (CollectionUtils.isEmpty(sourceDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listBySourceDetailIdList(sourceDetailIdList);
     }
@@ -243,7 +245,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
     @Override
     public List<SubcontractReturnDetailEntity> listBySubcontractOrderDetailIdList(List<String> subcontractOrderDetailIdList) {
         if (CollectionUtils.isEmpty(subcontractOrderDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return baseMapper.listBySubcontractOrderDetailIdList(subcontractOrderDetailIdList);
     }
@@ -252,7 +254,7 @@ public class SubcontractReturnDetailServiceImpl extends SuperServiceImpl<Subcont
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<SubcontractReturnDetailEntity> newList, List<SubcontractReturnDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(SubcontractReturnDetailEntity::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(SubcontractReturnDetailEntity::getId).collect(Collectors.toList());
         return oldIds.stream().filter(s -> !newIds.contains(s)).collect(Collectors.toList());

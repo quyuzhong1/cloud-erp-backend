@@ -2,6 +2,7 @@ package com.erp.server.scm.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -74,6 +75,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -226,6 +228,10 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
         if (Objects.nonNull(userInfo)){
             addEntity.setSrmOperateUserId(userInfo.getUid());
             addEntity.setSrmOperateUserName(userInfo.getUserName());
+        }
+        //如果付款公司是空，那就是自己公司付款
+        if (CharSequenceUtil.isBlank(addEntity.getPaymentCompanyName())) {
+            addEntity.setPaymentCompanyName(addEntity.getName());
         }
         Boolean result = this.save(addEntity);
         //保存成功
@@ -412,6 +418,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
                 flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
         supplier.setGradeName(gradeName);
 
+        //如果付款公司是空，那就是自己公司付款
+        if (CharSequenceUtil.isBlank(supplier.getPaymentCompanyName())) {
+            supplier.setPaymentCompanyName(supplier.getName());
+        }
+
         Boolean result = this.updateById(supplier);
         //修改成功
         if (result) {
@@ -481,7 +492,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             listApiResult = workflowFeign.curApprover(dtoList);
             Integer code = listApiResult.getCode();
             if (200 != code) {
-                throw new ServiceException(new ApiResult(ApiError.Default.code, listApiResult.getMsg()));
+                throw new ServiceException(new ApiResult(ApiError.DEFAULT.code, listApiResult.getMsg()));
             }
         }
         //TODO 获取srm 供应商订单规则
@@ -892,12 +903,12 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
 
     }
@@ -1371,6 +1382,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             SupplierExportExcelDTO exportExcel = new SupplierExportExcelDTO();
             exportExcel.setName(item.getName());
             exportExcel.setCode(item.getCode());
+            exportExcel.setVoucherNo(item.getVoucherNo());
             //禁用状态 true 禁用
             boolean disabled = Objects.nonNull(item.getDisabled()) ? item.getDisabled() : true;
             exportExcel.setEnableStatus(disabled ? "停用" : "启用");
@@ -1427,6 +1439,22 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
 
         }
         return new PagingVO<>(resultList, (int) page.getTotal(), dto.getPageSize(), dto.getCurrPage());
+    }
+
+    @Override
+    public Boolean updateVoucherNo(List<String> ids, String voucherNo) {
+        if (CollectionUtils.isEmpty(ids)) {
+            return Boolean.TRUE;
+        }
+        this.lambdaUpdate()
+                .in(SupplierEntity::getId, ids)
+                .set(SupplierEntity::getVoucherNo, voucherNo)
+                .update(new SupplierEntity());
+        ids.forEach(v->{
+            String content = StrUtil.format("更新外部平台单号为：{}", voucherNo);
+            moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), v, "更新外部平台单号");
+        });
+        return Boolean.TRUE;
     }
 
     /**

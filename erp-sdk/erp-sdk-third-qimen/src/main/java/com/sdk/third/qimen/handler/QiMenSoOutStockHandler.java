@@ -181,8 +181,8 @@ public class QiMenSoOutStockHandler extends AbstractSoOutStockHandler<QiMenSoOut
                 detail.setTaxRate(BigDecimal.valueOf(Double.parseDouble(detailItem.getTaxRate())));
                 //成交价
                 detail.setAmount(BigDecimal.valueOf(Double.parseDouble(detailItem.getSellPrice())));
-                detail.setCurrency(CurrencyEnum.RMB.getCurrencyCode());
-                detail.setCurrencySymbol(CurrencyEnum.RMB.getCurrencySymbol());
+                detail.setCurrency(CurrencyEnum.CNY.getCurrencyCode());
+                detail.setCurrencySymbol(CurrencyEnum.CNY.getCurrencySymbol());
                 detail.setAllAmountLocalCurrency(BigDecimal.valueOf(Double.parseDouble(detailItem.getSellPrice())));
                 detail.setExchangeRate(new BigDecimal(1));
                 detail.setSoDetailId(String.valueOf(detailItem.getSrcOrderDetailId()));

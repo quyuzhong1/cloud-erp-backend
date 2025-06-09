@@ -1,12 +1,17 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cReceiverDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 
@@ -21,23 +26,23 @@ import java.util.List;
 public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> {
 
     /**
+     * @param receiverDTO
+     * @param soB2cEntity
+     * @return Boolean
      * @description: 新增
      * @author Will
      * @date: 2023/8/21 17:13
-     * @param receiverDTO
-     * @param mainId
-     * @return Boolean
      */
-    Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, String mainId);
+    Boolean add(SoB2cReceiverDTO.AddDTO receiverDTO, SoB2cEntity soB2cEntity);
     /**
+     * @param receiverDTO
+     * @param soB2cEntity
+     * @return Boolean
      * @description: 修改
      * @author Will
      * @date: 2023/8/21 17:13
-     * @param receiverDTO
-     * @param mainId
-     * @return Boolean
      */
-    Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, String mainId);
+    Boolean update(SoB2cReceiverDTO.UpdateDTO receiverDTO, SoB2cEntity soB2cEntity);
     /**
      * @description: 根据主表id查询
      * @author Will
@@ -69,11 +74,20 @@ public interface SoB2cReceiverService extends SuperService<SoB2cReceiverEntity> 
      * @Author Jim
      * @since 2023-11-10
      **/
-    SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList);
+    SoB2cReceiverEntity saveOrUpdateEntity(PlatformOrderDTO dto, SoB2cEntity mainEntity, List<DictCountryEntity> countryList ,boolean notUpdateAddress);
 
     /**
      * 更新指定字段
      * @param receiver
      */
     void updateFieldById(SoB2cReceiverEntity receiver);
+
+    /**
+     * 封装分区Id
+     */
+    void buildPartitionId(SoB2cReceiverEntity receiverEntity, ShopInfoEntity shopInfoEntity);
+
+    IPage<SoB2cReceiverEntity> pagePartitionIsNull(Page query);
+
+    void importB2cCustomerFile(MultipartFile excelFile, HttpServletResponse response);
 }

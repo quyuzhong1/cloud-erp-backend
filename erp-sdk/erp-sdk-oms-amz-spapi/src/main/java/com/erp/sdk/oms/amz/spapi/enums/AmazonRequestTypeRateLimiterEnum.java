@@ -26,6 +26,7 @@ public enum AmazonRequestTypeRateLimiterEnum {
 
     // 商品相关
     PRODUCT_ITEMS("5", "5", "product","商品详情"),
+    PRODUCT_PRICING("1", "1", "product_pricing","商品详情"),
 
     // 货件相关
     FBA_SHIPMENT("2", "30","fba_shipment","货件信息"),
@@ -44,6 +45,8 @@ public enum AmazonRequestTypeRateLimiterEnum {
     REPORTS_QUERY("2", "15","reports_query","根据ID查询报告"),
     REPORTS_DOCUMENT_QUERY("2", "15","reports_query","根据报告文档ID查询报告文档"),
 
+    // 财务相关
+    FINANCIAL_EVENTS("0.5", "30","financial_events","财务事件"),
     ;
 
 

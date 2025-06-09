@@ -8,6 +8,7 @@ import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDeadlineSettingDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
+import com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity;
 import com.erp.model.tms.entity.TransferDeclareEntity;
 
 import java.util.List;
@@ -194,4 +195,15 @@ public interface TransferDeclareService extends SuperService<TransferDeclareEnti
     ApiResult<String> cancelOrderForecast(TransferDeclareDTO.CancelOrderForecastDTO cancelOrderForecastDTO);
 
     PagingVO<TransferDeclareDTO.ExportListDTO> exportTransferDeclare(PagingDTO<TransferDeclareDTO.PagingParamDTO> dto);
+
+    /**
+     * 批量新增
+     * @param dtoList
+     * @return
+     */
+    List<BaseResultDTO.AddDTO> batchAdd(List<TransferDeclareDTO.AddDTO> dtoList);
+    
+    BatchResultDTO pushAllocation(String id , String reportDate);
+    
+    void singPushAllocation(String id , String reportDate , List<TmsB2cDeclareReconciliationDetailEntity> tmsB2cDeclareReconciliationDetailEntityList);
 }

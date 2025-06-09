@@ -1,8 +1,11 @@
 package com.sdk.wms.goodcang.constants;
 
 public class GoodCangConstants {
+    private GoodCangConstants() {
+        throw new IllegalStateException("Utility GoodCangConstants class");
+    }
     public static final String BASE_URL = "https://uat-oms.eminxing.com";
-//    public static final String BASE_URL = "https://oms.goodcang.net";
+    public static final String BASE_URL_PROD = "https://oms.goodcang.net";
     public static final String METHOD_GET_SKU_LIST = "/public_open/product/get_product_sku_list";
     public static final String METHOD_GET_WAREHOUSE = "/public_open/base_data/get_warehouse";
     public static final String METHOD_GET_RECEIPT_BATCH = "/public_open/inbound_order/get_receipt_batch";
@@ -17,4 +20,11 @@ public class GoodCangConstants {
     public static final String METHOD_GET_ORDER_LIST = "/public_open/order/get_order_list";
     public static final String METHOD_GET_GRN_DETAIL = "/public_open/inbound_order/get_grn_detail";
     public static final String METHOD_GET_OUT_BOUND_CODE = "/public_open/order/get_order_by_ref_code";
+    public static final String METHOD_GET_RETURN_INSTOCK = "/public_open/return_order/list";
+    public static final String METHOD_POST_CALCULATE_DELIVERY_FEE = "/public_open/inventory/get_calculate_delivery_fee";
+    public static final String METHOD_POST_UPLOAD_ATTACHMENT = "/public_open/base_data/upload_attachment";
+    public static final String METHOD_POST_UPLOAD_ORDER_LABEL = "/public_open/order/upload_order_label";
+
+    public static final String INVENTORY_AGE_LIST = "/public_open/inventory/inventory_age_list";
+    public static final String GET_INVENTORY_LOG = "/public_open/inventory/get_inventory_log";
 }

@@ -18,6 +18,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -88,7 +89,12 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
         if(object != null) {
         	purchasePriceIdStr = object.toString();
         }
-		return saveTask(entity,operate,resultMap, purchasePriceIdStr);
+        
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap() , purchasePriceIdStr);
+    	}else {
+    		return saveTask(entity,operate,resultMap, purchasePriceIdStr);
+    	}
     }
 
     /**
@@ -227,8 +233,8 @@ public class SyncKingdeePurchasePriceChangeServiceImpl implements SyncKingdeePur
             jsonObject.set("skuNo",detailEntity.getSkuNo());
             jsonObject.set("beforeTaxPrice",purchasePriceDetailEntity.getTaxPrice());
             jsonObject.set("afterTaxPrice",detailEntity.getTaxPrice());
-            jsonObject.set("beforeTaxRate",MathUtil.multiply(purchasePriceDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
-            jsonObject.set("afterTaxRate",MathUtil.multiply(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("beforeTaxRate",MathUtil.multiplyWithTwo(purchasePriceDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("afterTaxRate",MathUtil.multiplyWithTwo(detailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             jsonObject.set("effectiveDate", LocalDateTimeUtil.format(detailEntity.getEffectiveDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             jsonObject.set("expireDate",LocalDateTimeUtil.format(detailEntity.getExpireDate(), DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             list.add(jsonObject);

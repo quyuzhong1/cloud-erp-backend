@@ -18,10 +18,10 @@ import java.io.Serializable;
 public class AttributeValue implements Serializable {
 
     @Alias( "value_id")
-    private Long id;
+    private Long valueId;
 
     @Alias( "original_value_name")
-    private String valueName;
+    private String originalValueName;
 
     @Alias( "value_unit")
     private String valueUnit;

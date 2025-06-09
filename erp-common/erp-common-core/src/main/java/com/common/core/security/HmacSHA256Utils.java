@@ -1,9 +1,17 @@
 package com.common.core.security;
 
+import lombok.extern.slf4j.Slf4j;
+
+import java.nio.charset.StandardCharsets;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+@Slf4j
 public class HmacSHA256Utils {
+
+    private HmacSHA256Utils() {
+    }
+
     /**
      * HmacSHA256加密
      * @Author Luo_WG
@@ -14,11 +22,10 @@ public class HmacSHA256Utils {
      **/
     public static String hmacSHA256(String jsonString, String secret) {
         try {
-            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes("utf-8"), "HmacSHA256");
-            sha256_HMAC.init(secretKey);
-            byte[] hash = sha256_HMAC.doFinal(jsonString.getBytes("utf-8"));
-            //String encodeStr = Base64.encodeBase64String(hash);
+            Mac sha256Hmac = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            sha256Hmac.init(secretKey);
+            byte[] hash = sha256Hmac.doFinal(jsonString.getBytes(StandardCharsets.UTF_8));
             return byte2Hex(hash);
         } catch (Exception e) {
             e.printStackTrace();
@@ -34,7 +41,7 @@ public class HmacSHA256Utils {
      * @return java.lang.String
      **/
     private static String byte2Hex(byte[] bytes) {
-        StringBuffer stringBuffer = new StringBuffer();
+        StringBuilder stringBuffer = new StringBuilder();
         String temp = null;
         for (int i = 0; i < bytes.length; i++) {
             temp = Integer.toHexString(bytes[i] & 0xFF);

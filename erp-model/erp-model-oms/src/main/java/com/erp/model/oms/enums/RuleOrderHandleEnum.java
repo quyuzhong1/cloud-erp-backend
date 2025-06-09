@@ -17,6 +17,7 @@ public enum RuleOrderHandleEnum {
         REPLACE_WITH_CITY("replaceWithCity","若收货地址省/州为空,使用城市信息进行填充"),
         REPLACE_BLANK("replaceBlank","省州推送物流商下单为空"),
         CUSTOM_REPLACE("customReplace","自定义替换"),
+        CUSTOMIZE("customize","自定义"),
         ;
         private final String code;
         private final String name;
@@ -29,11 +30,32 @@ public enum RuleOrderHandleEnum {
         REPLACE_WITH_PROVINCE("replaceWithProvince","若收货地址城市为空,使用州省信息进行填充"),
         REPLACE_BLANK("replaceBlank","城市推送物流商下单为空"),
         CUSTOM_REPLACE("customReplace","自定义替换"),
+        CUSTOMIZE("customize","自定义"),
+        ;
+        private final String code;
+        private final String name;
+    }
+    @Getter
+    @AllArgsConstructor
+    public enum ZipCodeContentEnum implements EnumMessage {
+        REPLACE_BLANK("replaceBlank","邮编推送物流商下单为空"),
         ;
         private final String code;
         private final String name;
     }
 
+    /**
+     * 订单号处理方法
+     */
+    @Getter
+    @AllArgsConstructor
+    public enum OrderCodeRuleContentEnum implements EnumMessage {
+        CUSTOM_REPLACE("customReplace","自定义替换"),
+        ;
+        private final String code;
+        private final String name;
+
+    }
     @Getter
     @AllArgsConstructor
     public enum Address1FilterEnum implements EnumMessage {

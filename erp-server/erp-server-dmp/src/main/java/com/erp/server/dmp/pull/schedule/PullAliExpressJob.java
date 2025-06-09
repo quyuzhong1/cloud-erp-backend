@@ -174,6 +174,7 @@ public class PullAliExpressJob {
             latch.await();
         } catch (InterruptedException e) {
             XxlJobHelper.log("[拉取速卖通订单详情任务] aliExpressOrderDetailDownload 监听任务异常:{}", e.getMessage());
+            Thread.currentThread().interrupt();
         }
         XxlJobHelper.log("[拉取速卖通订单详情任务] aliExpressOrderDetailDownload 任务结束");
         return ReturnT.SUCCESS;
@@ -223,6 +224,7 @@ public class PullAliExpressJob {
             latch.await();
         } catch (InterruptedException e) {
             XxlJobHelper.log("[拉取速卖通发货单任务] aliExpressSoDeliveryDownload 监听任务异常:{}", e.getMessage());
+            Thread.currentThread().interrupt();
         }
         XxlJobHelper.log("[拉取速卖通发货单任务] aliExpressSoDeliveryDownload 任务结束");
         return ReturnT.SUCCESS;
@@ -271,6 +273,7 @@ public class PullAliExpressJob {
             latch.await();
         } catch (InterruptedException e) {
             XxlJobHelper.log("[拉取速卖通发货单明细任务] aliExpressSoDeliveryDetailDownload 监听任务异常:{}", e.getMessage());
+            Thread.currentThread().interrupt();
         }
         XxlJobHelper.log("[拉取速卖通发货单明细任务] aliExpressSoDeliveryDetailDownload 任务结束");
         return ReturnT.SUCCESS;

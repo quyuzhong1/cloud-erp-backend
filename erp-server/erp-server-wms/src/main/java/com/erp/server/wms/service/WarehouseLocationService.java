@@ -155,7 +155,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      */
     PagingVO<WarehouseAreaDTO.PagingView> areaPaging(PagingDTO<WarehouseAreaDTO.PagingParam> dto);
 
-    void addArea(WarehouseAreaDTO.Add dto);
+    String addArea(WarehouseAreaDTO.Add dto);
 
     void updateArea(WarehouseAreaDTO.Update dto);
 
@@ -212,7 +212,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @date: 2024-05-31
      * @author: tanmujin
      */
-    void updateDisabled(WarehouseLocationDTO.updateStatusDto dto);
+    void updateDisabled(WarehouseLocationDTO.UpdateStatusDto dto);
 
     /**
      * 查询操作日志
@@ -248,7 +248,7 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * @date: 2024-05-31
      * @author: tanmujin
      */
-    void update(WarehouseLocationDTO.updateDto dto);
+    void update(WarehouseLocationDTO.UpdateDto dto);
 
     /**
      * 通过仓库ID查询仓位列表
@@ -262,11 +262,11 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
     /**
      * tab名称及其包含的数据量统计
      * @param
-     * @return WarehouseLocationDTO.tabDto
+     * @return WarehouseLocationDTO.TabDto
      * @date: 2024-06-03
      * @author: tanmujin
      */
-    List<WarehouseLocationDTO.tabDto> tabList();
+    List<WarehouseLocationDTO.TabDto> tabList();
 
     void downloadTemplate(HttpServletResponse response);
 
@@ -297,6 +297,15 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      */
     List<WarehouseLocationEntity> listByWarehouseIdsAndCodeList(List<String> warehouseIds, List<String> warehouseLocationList);
 
+    /**
+     * 根据仓库和仓位名称查询
+     * @author will
+     * @date 2025/4/25 19:18
+     * @param warehouseIds
+     * @param warehouseLocationNameList
+     * @return List<WarehouseLocationEntity>
+     */
+    List<WarehouseLocationEntity> listByWarehouseIdsAndNameList(List<String> warehouseIds, List<String> warehouseLocationNameList);
     /**
      * 查询库区
      * @param warehouseId 仓库ID
@@ -330,5 +339,8 @@ public interface WarehouseLocationService extends SuperService<WarehouseLocation
      * 导出库位
      */
     PagingVO<WarehouseLocationExportVo> exportWarehouseLocation(PagingDTO<WarehouseLocationDTO.exportParamDto> dto);
+
     WarehouseLocationEntity getWarehouseLocation(String warehouseId, String warehouseLocation, WarehouseLocationTypeEnum type);
+
+    WarehouseLocationDTO.WareInventoryQtyDTO getOneWareInventoryQty(String warehouseId, String skuNo);
 }

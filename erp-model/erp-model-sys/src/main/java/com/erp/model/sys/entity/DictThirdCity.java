@@ -74,7 +74,7 @@ public class DictThirdCity extends BaseEntity<DictThirdCity> {
 
     public static final String REGION_LEVEL = "region_level";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
     public static final String DICT_CITY_ID = "dict_city_id";
 

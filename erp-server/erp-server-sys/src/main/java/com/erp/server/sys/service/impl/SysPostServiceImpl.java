@@ -3,20 +3,20 @@ package com.erp.server.sys.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.core.utils.BeanMapperUtils;
 import com.common.business.dto.base.BasePagingSearchDTO;
 import com.common.business.dto.base.BaseSearchDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.vo.PagingVO;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.business.vo.PagingVO;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.sys.dto.SysPostDTO;
 import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.server.sys.mapper.SysPostMapper;
 import com.erp.server.sys.service.SysPostService;
 import com.erp.server.sys.service.SysPostUserService;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -150,5 +150,21 @@ public class SysPostServiceImpl extends ServiceImpl<SysPostMapper, SysPostEntity
         list.add("创建人");
         list.add("处理人");
         return this.lambdaQuery().in(SysPostEntity::getPostName,list).list();
+    }
+
+    @Override
+    public List<SysPostEntity> listByRequisitionChangeSetting() {
+        List<String> list = new ArrayList<>();
+        list.add("创建人");
+        list.add("审核人");
+        return this.lambdaQuery().in(SysPostEntity::getPostName,list).list();
+    }
+
+    @Override
+    public List<SysPostEntity> listByNameList(List<String> nameList) {
+        if(CollectionUtils.isEmpty(nameList)){
+            return new ArrayList<>();
+        }
+        return this.lambdaQuery().in(SysPostEntity::getPostName,nameList).list();
     }
 }

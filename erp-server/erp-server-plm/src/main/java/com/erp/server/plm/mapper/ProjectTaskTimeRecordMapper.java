@@ -20,7 +20,8 @@ import java.util.List;
  * @since 2023-02-23
  */
 @Mapper
-public interface ProjectTaskTimeRecordMapper extends BaseMapper<ProjectTaskTimeRecordEntity> {
+public interface
+ProjectTaskTimeRecordMapper extends BaseMapper<ProjectTaskTimeRecordEntity> {
 
     /**
      * 分页查询任务列表
@@ -30,7 +31,7 @@ public interface ProjectTaskTimeRecordMapper extends BaseMapper<ProjectTaskTimeR
      * @param param
      * @return
      */
-    IPage<ProjectTaskTimeRecordPageVO> pageTaskTimeRecord(Page<ProjectTaskTimeRecordPageVO> page, @Param("params") ProjectTaskTimeRecordDTO.PageRecordDto dto, @Param("param") String param);
+    IPage<ProjectTaskTimeRecordPageVO> pageTaskTimeRecord(Page<ProjectTaskTimeRecordDTO.PageRecordDto> page, @Param("params") ProjectTaskTimeRecordDTO.PageRecordDto dto, @Param("param") String param);
 
     List<ProjectTaskTimeRecordPageVO> pageTaskTimeRecord(@Param("params") ProjectTaskTimeRecordDTO.PageRecordDto dto, @Param("param") String param);
 

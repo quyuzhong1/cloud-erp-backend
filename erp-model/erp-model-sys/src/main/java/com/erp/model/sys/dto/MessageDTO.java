@@ -1,23 +1,12 @@
 package com.erp.model.sys.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
-import com.common.business.dto.base.SortDTO;
-
-import java.time.LocalDateTime;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import org.springframework.cglib.core.Local;
 
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * <p>

@@ -3,7 +3,7 @@ package com.sdk.tms.disifang.model.base;
 /**
  * @author zdy
  * @ClassName CommonRequestParam
- * @description: TODO
+
  * @date 2023年11月02日
  * @version: 1.0
  */
@@ -24,18 +24,7 @@ public class CommonRequestParam {
 
     private String language;
 
-    public CommonRequestParam() {}
 
-    public CommonRequestParam(String method, String appKey, String version, Long timestamp, String format, String sign, String accessToken, String language) {
-        this.method = method;
-        this.appKey = appKey;
-        this.version = version;
-        this.timestamp = timestamp;
-        this.format = format;
-        this.sign = sign;
-        this.accessToken = accessToken;
-        this.language = language;
-    }
 
     public String getMethod() {
         return this.method;

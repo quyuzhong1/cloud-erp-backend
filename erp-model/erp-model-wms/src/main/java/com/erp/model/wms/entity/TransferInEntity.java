@@ -130,12 +130,17 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
     private String sourceCode;
 
 
+    /**
+     * 同步金蝶id
+     */
+    @TableField("sync_kingdee_id")
+    private String syncKingdeeId;
 
-    public static final String CODE = "code";
+
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String TYPE = "type";
+    
 
     public static final String BILL_DATE = "bill_date";
 
@@ -153,7 +158,7 @@ public class TransferInEntity extends BaseEntity<TransferInEntity> {
 
     public static final String TRANSFER_DIRECTION = "transfer_direction";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String INVALID_STATUS = "invalid_status";
 

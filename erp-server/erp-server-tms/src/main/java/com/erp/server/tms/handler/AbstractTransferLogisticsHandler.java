@@ -1,8 +1,8 @@
 package com.erp.server.tms.handler;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
@@ -25,6 +25,7 @@ import com.erp.model.tms.entity.TransferLogisticsChannelEntity;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.service.TransferLogisticsAuthService;
 import com.erp.server.tms.service.TransferLogisticsService;
+import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -35,6 +36,8 @@ import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -48,7 +51,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     private DmpTaskFeign dmpTaskFeign;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<WarnMsgInfoDTO> mqProducerService;
 
     public void handleAuthInfo(String id) {
         TransferLogisticsAuthEntity authEntity = getAuthEntity(id);
@@ -63,7 +66,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
     }
 
     @Override
-    public ApiResult authorization(Map<String, String> authConfig) {
+    public ApiResult<Object>authorization(Map<String, String> authConfig) {
         try {
             TransferLogisticsContext.setAuthMap(authConfig);
             ApiResult<List<TransferLogisticsChannelEntity>>  result = this.getShippingMethodList();
@@ -84,6 +87,22 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
 
     @Override
     public ApiResult<String> createOrder(TransferLogisticsCreateOrderReq createOrderReq, String authId) {
+        //相同sku合并数量
+        if(CollectionUtils.isNotEmpty(createOrderReq.getProductDetailList())){
+            createOrderReq.setProductDetailList(createOrderReq.getProductDetailList().stream()
+                    .collect(Collectors.groupingBy(
+                            TransferLogisticsCreateOrderReq.ProductDetail::getSkuNo,  // 以 skuNo 分组
+                            Collectors.reducing((pd1, pd2) -> {
+                                // 合并qty
+                                pd1.setQty(pd1.getQty() + pd2.getQty());
+                                return pd1;
+                            })
+                    ))
+                    .values()
+                    .stream()
+                    .map(Optional::get)
+                    .collect(Collectors.toList()));
+        }
         return handleAndRemoveContext(() -> createOrder(createOrderReq), authId, SourceTypeEnum.TRANSFER_LOGISTICS_CREATE_ORDER,createOrderReq.getReferenceNo());
     }
 
@@ -142,12 +161,12 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
             ApiResult<T> result = handler.handle();
             TransferLogisticsContext.setMsg(JSONUtil.toJsonStr(result));
             //记录日志
-            pushOperateLog(businessType,result.getCode(),erpBusinessCode);
+            pushOperateLog(businessType,result.getCode(),erpBusinessCode,false);
             return result;
         } catch (Exception e){
             log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
             TransferLogisticsContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
-            pushOperateLog(businessType,2000,erpBusinessCode);
+            pushOperateLog(businessType,2000,erpBusinessCode,false);
             return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
             // remove thread-local
@@ -160,13 +179,13 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         ApiResult<T> handle();
     }
 
-    private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode) {
+    private void pushOperateLog(SourceTypeEnum businessType, Integer status, String erpBusinessCode,boolean isPush) {
         if("dmp_pull_task".equals(businessType.getTableName())){
             DmpPullTaskEntity dmpPullTaskEntity = buildDmpPullTaskEntity(businessType, status, erpBusinessCode);
             try {
                 String id = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
                 //增加异常预警
-                if (!ApiResult.success().getCode().equals(status)) {
+                if (!ApiResult.success().getCode().equals(status) && isPush) {
                     dmpPullTaskEntity.setId(id);
                     sendPullWarnMsg(dmpPullTaskEntity);
                 }
@@ -178,7 +197,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
             try {
                 String id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
                 //增加异常预警
-                if (!ApiResult.success().getCode().equals(status)) {
+                if (!ApiResult.success().getCode().equals(status) && isPush) {
                     dmpPushTaskEntity.setId(id);
                     sendPushWarnMsg(dmpPushTaskEntity);
                 }
@@ -237,7 +256,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
-        warnMsgInfo.setTitle(StrUtil.format("ERP拉取物流报关商【{}】数据从{}拉取至{}失败", entity.getSourceCode(),  entity.getTargetPlatformName(),entity.getSourcePlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("ERP拉取物流报关商【{}】数据从{}拉取至{}失败", entity.getSourceCode(),  entity.getTargetPlatformName(),entity.getSourcePlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
         warnMsgInfo.setKeyInfo(StringUtils.isEmpty(TransferLogisticsContext.getMsg())?"":TransferLogisticsContext.getMsg());
@@ -249,7 +268,7 @@ public abstract class AbstractTransferLogisticsHandler extends BaseController im
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
-        warnMsgInfo.setTitle(StrUtil.format("物流报关商【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("物流报关商【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
         warnMsgInfo.setKeyInfo(StringUtils.isEmpty(TransferLogisticsContext.getMsg())?"":TransferLogisticsContext.getMsg());

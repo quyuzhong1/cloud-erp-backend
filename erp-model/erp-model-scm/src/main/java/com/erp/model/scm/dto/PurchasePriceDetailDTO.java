@@ -25,7 +25,7 @@ public class PurchasePriceDetailDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO implements Serializable{
         /**
          * 供应商表id
          */

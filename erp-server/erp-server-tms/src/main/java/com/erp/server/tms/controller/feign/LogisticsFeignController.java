@@ -1,18 +1,17 @@
 package com.erp.server.tms.controller.feign;
 
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.core.anno.LogSystemModule;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.common.core.utils.MathUtil;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
-import com.erp.server.tms.service.LogisticsAddressService;
-import com.erp.server.tms.service.LogisticsBaseService;
-import com.erp.server.tms.service.LogisticsChannelService;
-import com.erp.server.tms.service.LogisticsSupplierService;
+import com.erp.server.tms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +22,6 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName LogisticsFeignController
- * @description: TODO
  * @date 2023年11月03日
  * @version: 1.0
  */
@@ -44,6 +42,15 @@ public class LogisticsFeignController {
 
     @Resource
     private LogisticsAddressService logisticsAddressService;
+    @Resource
+    private LogisticsTrackService logisticsTrackService;
+    @Resource
+    private InventorySkuCostService inventorySkuCostService;
+
+    @Resource
+    private ShippingCalculationService shippingCalculationService;
+    @Resource
+    private LogisticsChannelBlacklistService logisticsChannelBlacklistService;
 
     @PostMapping("/queryOrderList")
     public List<LogisticsOrderResponseVO> queryOrderList(@RequestBody List<LogisticsQueryBaseVO> logisticsQueryVOList){
@@ -102,6 +109,15 @@ public class LogisticsFeignController {
         return logisticsChannelService.getChannelByName(channelName);
     }
     /**
+     * 获取渠道 根据渠道名称
+     * @param channelNameList
+     * @return
+     */
+    @PostMapping("/listChannelByNameList")
+    public List<LogisticsChannelEntity> listChannelByNameList(@RequestBody List<String> channelNameList){
+        return logisticsChannelService.listByName(channelNameList);
+    }
+    /**
      * 获取渠道 根据渠道i
      * @param channelId
      * @return
@@ -154,5 +170,96 @@ public class LogisticsFeignController {
     @PostMapping("/listAddressByType")
     public List<LogisticsAddressDTO.ListDTO> listAddressByType(@RequestBody @Validated LogisticsAddressDTO.AddressByTypeDTO dto) {
         return logisticsAddressService.listAddressByType(dto);
+    }
+
+    /**
+     * 根据渠道汇总时间段内未更新运单号记录
+     * @param query
+     * @return
+     */
+    @PostMapping("/getWarnReportByChannel")
+    public List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@RequestBody LogisticsBillDetailQueryDTO query){
+        return logisticsChannelService.getWarnReportByChannel(query);
+    }
+
+    /**
+     * 接收track123物流轨迹同步数据
+     * @return
+     */
+    @PostMapping("/webhookByTrack123")
+    public void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto){
+        logisticsTrackService.webhookByTrack123(dto);
+    }
+    /**
+     * 根据渠道id ， 国家二字码，邮编判断是否属于偏远邮编组
+     * @param
+     * @return
+     */
+    @GetMapping("/estimateIsOutOfRangeDelivery")
+    public Boolean estimateIsOutOfRangeDelivery(@RequestParam("logisticsChannelId")String logisticsChannelId, @RequestParam("country")String country, @RequestParam("postCode")String postCode){
+        return logisticsChannelService.estimateIsOutOfRangeDelivery(logisticsChannelId, country, postCode);
+    }
+
+    /**
+     * 更新销售订单预估运费
+     *
+     * @param pagingParamDTO
+     * @return void
+     * @author zdy
+     * @date: 2023/11/10 17:35
+     */
+    @PostMapping("/updateShippingCalculation")
+    public void updateShippingCalculation(@RequestBody @Validated ShippingCalculationDTO.PagingParamDTO pagingParamDTO) {
+        PagingDTO<ShippingCalculationDTO.PagingParamDTO> dto = new PagingDTO<>();
+        dto.setParams(pagingParamDTO);
+        dto.setPageSize(MathUtil.NUMBER_100);
+        dto.setCurrPage(MathUtil.ONE);
+        shippingCalculationService.paging(dto);
+    }
+
+    /**
+     * sku成本根据sku查询
+     * @param queryB2BDTO
+     * @return
+     */
+    @PostMapping("/listSkuCostBySkuIds")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(@RequestBody InventorySkuCostDTO.QueryB2BDTO queryB2BDTO) {
+        return inventorySkuCostService.listSkuCostBySkuIds(queryB2BDTO);
+    }
+    /**
+     * sku成本根据订单明细查询
+     * @param queryB2CDTO
+     * @return
+     */
+    @PostMapping("/listSkuCostByDetail")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(@RequestBody InventorySkuCostDTO.QueryB2CDTO queryB2CDTO) {
+        return inventorySkuCostService.listSkuCostByDetail(queryB2CDTO);
+    }
+    /**
+     * sku成本 单个明细
+     * @param queryDetailDTOList
+     * @return
+     */
+    @PostMapping("/listSkuCostByDetailList")
+    public List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(@RequestBody List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList){
+        return inventorySkuCostService.listSkuCostByDetailList(queryDetailDTOList);
+    }
+
+    /**
+     * 所有渠道下拉
+     * @return
+     */
+    @GetMapping("listAll")
+    public List<BaseDropDownDTO.DisabledDTO> listAll(){
+        return logisticsChannelService.listAll();
+    }
+    /**
+     * 根据渠道查询黑名单
+     * @param channelIdList
+     * @return
+     */
+    @PostMapping("listChannelBlacklist")
+    public List<LogisticsChannelBlacklistEntity> listChannelBlacklist(@RequestBody List<String> channelIdList){
+        return logisticsChannelBlacklistService.listChannelBlacklist(channelIdList);
     }
 }

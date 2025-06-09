@@ -13,13 +13,18 @@
 package com.erp.server.dmp.lingxing;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.date.DatePattern;
+import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.json.JSONUtil;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.erp.server.dmp.ErpServerDmpApplication;
-import com.sdk.third.lingxing.dto.FbaReceiveReqDTO;
-import com.sdk.third.lingxing.dto.FbaShipmentReceiveDTO;
-import com.sdk.third.lingxing.dto.Result;
-import com.sdk.third.lingxing.dto.ShopInfoDTO;
+import com.erp.server.dmp.inout.dto.base.DmpInputTaskInitDTO;
+import com.sdk.third.lingxing.dto.*;
 import com.sdk.third.lingxing.utils.LingxingApiUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -27,8 +32,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.time.LocalDate;
-import java.util.List;
-import java.util.Map;
+import java.time.ZoneId;
+import java.util.*;
 
 /**
  * API tests for Lingxing
@@ -68,5 +73,153 @@ public class LingxingApiTest {
         List<FbaShipmentReceiveDTO> data = LingxingApiUtils.getAllReceivedInventory(sid, receivedDate);
         System.out.println("FBA货件明细列表");
         System.out.println(JSONUtil.toJsonStr(data));
+    }
+
+
+    @Test
+    public void warehouseList(){
+        Map<String, Object> objectMap = new HashMap<>();
+        Result<Object> result = LingxingApiUtils.postAndSign(LingxingApiUtils.WAREHOUSE_URI, objectMap);
+        System.out.println("领星仓库总结果");
+        System.out.println(JSONUtil.toJsonStr(result));
+        Object data = result.getData();
+        System.out.println("领星仓库数据结果");
+        System.out.println(JSONUtil.toJsonStr(data));
+    }
+
+    @Test
+    public void fastOutbound(){
+        OrderFastOutboundPackageDTO.PackageInfo packageInfo = new OrderFastOutboundPackageDTO.PackageInfo();
+        packageInfo.setGlobalOrderNo("103521548118516736");
+        packageInfo.setLogisticsTypeId("4-9");
+        packageInfo.setWaybillNo("SF7444493503348");
+        packageInfo.setWid(Long.valueOf("96"));
+        Result<Object> objectResult = LingxingApiUtils.fastOutbound(Collections.singletonList(packageInfo));
+        System.out.println("结果列表");
+        System.out.println(JSONUtil.toJsonStr(objectResult));
+    }
+
+    @Test
+    public void cancelOrderByOrderList(){
+        Result<Object> objectResult = LingxingApiUtils.cancelOrderByOrderList(Collections.singletonList("103522157705927168"));
+        System.out.println("结果列表");
+        System.out.println(JSONUtil.toJsonStr(objectResult));
+    }
+
+
+    @Test
+    public void addOrUpdateProduct(){
+        ProductInfo productInfo = new ProductInfo();
+        productInfo.setSku("2667");
+        productInfo.setProductName("VIJIM P001 手机/平板夹支架 2222");
+        Result<Object> objectResult = LingxingApiUtils.checkAddOrUpdateProduct(productInfo);
+        System.out.println("商品同步结果");
+        System.out.println(JSONUtil.toJsonStr(objectResult));
+    }
+
+    @Test
+    public void addList(){
+        Result<Object> result = LingxingApiUtils.getAndSign(LingxingApiUtils.PRODUCT_LIST_URI, new HashMap<>());
+        Object data = result.getData();
+        System.out.println("结果");
+        System.out.println(data);
+    }
+
+    @Test
+    public void skuIdentifierList(){
+        TreeMap<String, Object> treeMap = new TreeMap<>();
+        treeMap.put("sku_identifier_list", Collections.singletonList("1619184295035801601"));
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(LingxingApiUtils.PRODUCT_LIST_URI, treeMap);
+        Object data = result.getData();
+        System.out.println("结果");
+        System.out.println(data);
+    }
+
+    @Test
+    public void test(){
+        List<String> storeIds = Arrays.asList("110537432579020800");
+        String apiType = "basicOpen/multiplatform/temu/list";
+
+        // 分页参数
+        int length = 1000;
+        TreeMap<String, Object> requestMap = new TreeMap<>();
+        if (CollectionUtils.isNotEmpty(storeIds)){
+            requestMap.put("store_ids", storeIds);
+        }
+        requestMap.put("length", length);
+
+        Result<Object> result = LingxingApiUtils.postAndSignCheckListConvert(apiType, requestMap);
+        Object data = result.getData();
+        if (null == data){
+            System.out.println("空");
+        }
+
+
+        JSONObject dataResultMap = JSON.parseObject(JSON.toJSONString(data));
+        Object listObj = dataResultMap.get("list");
+        Object countObj = dataResultMap.get("count");
+
+        JSONArray resultList = JSONArray.parseArray(JSON.toJSONString(listObj));
+
+        int total = Integer.parseInt(countObj.toString());
+        if (length <= total){
+            int totalPageSize = (total + length - 1) / length; // 计算总页数
+            for (int i = 1; i < totalPageSize; i++) {
+                // 从第二页开始请求
+                requestMap.put("offset", i);
+                // 当前请求
+                Result<Object> curResult = LingxingApiUtils.postRequestDataAndRetry(apiType, requestMap);
+                Object curData = curResult.getData();
+                if (null == curData){
+                    break;
+                }
+                JSONObject curDataResultMap = JSON.parseObject(JSON.toJSONString(data));
+                Object curListObj = curDataResultMap.get("list");
+                JSONArray curJsonArray = JSONArray.parseArray(JSON.toJSONString(curListObj));
+                resultList.addAll(curJsonArray);
+            }
+        }
+        System.out.println(JSON.toJSONString(resultList));
+    }
+
+
+    @Test
+    public void testOrder(){
+
+        // 请求参数
+        TreeMap<String, Object> requestMap = new TreeMap<>();
+        // 主表扩展参数
+        String extendJson = "{\"platform_code\": [10003, 10015, 10024]}";
+        if (StringUtils.isNotBlank(extendJson)){
+            TreeMap<String, Object> mainTreeMap = JSON.parseObject(extendJson, TreeMap.class);
+            requestMap.putAll(mainTreeMap);
+        }
+
+        // 明细扩展参数
+        String detailExtendJson = "{\"length\": 200, \"date_type\": \"update_time\", \"order_status\": 4}";
+        if (StringUtils.isNotBlank(detailExtendJson)){
+            TreeMap<String, Object> detailTreeMap = JSON.parseObject(detailExtendJson, TreeMap.class);
+            requestMap.putAll(detailTreeMap);
+        }
+
+        // 时间
+        // start_time 开始时间，时间戳格式【单位：秒】，双开区间	是	[int]	1710925191
+        long startEpochSecond = LocalDateTimeUtil.parse("2025-05-26 09:50:00.088", DatePattern.NORM_DATETIME_MS_PATTERN).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+        requestMap.put("start_time", startEpochSecond);
+        // end_time 结束时间，时间戳格式【单位：秒】，双开区间	是	[int]	1713430791
+        long endEpochSecond = LocalDateTimeUtil.parse("2025-05-26 10:51:45.099", DatePattern.NORM_DATETIME_MS_PATTERN).atZone(ZoneId.systemDefault()).toInstant().getEpochSecond();
+        requestMap.put("end_time", endEpochSecond);
+
+        // 分页参数
+        int page = 0;
+        int pageSize = 500;
+        requestMap.put("offset", page);
+        requestMap.put("length", pageSize);
+        System.out.println("请求报文");
+        System.out.println(JSONUtil.toJsonStr(requestMap));
+        // 首次请求
+        Result<Object> result = LingxingApiUtils.postRequestDataAndRetry("pb/mp/order/v2/list", requestMap);
+        System.out.println("响应报文");
+        System.out.println(JSONUtil.toJsonStr(result));
     }
 }

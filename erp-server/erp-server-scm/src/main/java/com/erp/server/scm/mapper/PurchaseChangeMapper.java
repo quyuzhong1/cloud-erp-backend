@@ -30,7 +30,7 @@ public interface PurchaseChangeMapper extends BaseMapper<PurchaseChangeEntity> {
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<PurchaseChangeDTO.ListDTO> paging(Page query,@Param("params") PurchaseChangeDTO.SearchParamDTO params);
+    IPage<PurchaseChangeDTO.ListDTO> paging(Page<PurchaseChangeDTO.SearchParamDTO> query,@Param("params") PurchaseChangeDTO.SearchParamDTO params);
     /**
      * @description: 导出数据查询
      * @author Will

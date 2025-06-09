@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.ListUtil;
-import cn.hutool.core.util.StrUtil;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -15,20 +15,17 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.*;
+import com.erp.model.wms.entity.FbaShipmentPackingEntity;
 import com.erp.model.wms.entity.WmsCartonDetailEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.model.wms.enums.PackingTaskStatusEnum;
 import com.erp.server.wms.convert.CartonConverter;
 import com.erp.server.wms.mapper.WmsCartonMapper;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.WmsCartonDetailService;
-import com.erp.server.wms.service.WmsCartonService;
-import com.erp.server.wms.service.WmsCartonSpecService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,12 +44,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsCartonEntity> implements WmsCartonService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private WmsCartonDetailService wmsCartonDetailService;
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
+    @Resource
+    private FbaShipmentPackingService fbaShipmentPackingService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -69,7 +68,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
             throw new ServiceException("发货单箱子信息明细单保存失败");
         }
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "单箱信息单" , wmsCartonEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据单号为【{}】", UserContext.getDefaultLoginUser().getUserName(), "单箱信息单" , wmsCartonEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, wmsCartonEntity.getId(), "新增操作");
         return new BaseResultDTO.AddDTO(wmsCartonEntity.getId(), wmsCartonEntity.getId());
@@ -78,7 +77,9 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     @Override
     public Boolean update(CartonDTO.UpdateDTO updateDTO) {
         WmsCartonEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "单箱信息单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "单箱信息单");
+        }
         WmsCartonEntity entity =  BeanMapperUtils.map(WmsCartonEntity.class, updateDTO);
 
         // 数据处理
@@ -92,7 +93,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
 
         // 记录主单操作日志
         log.info("编辑 开始记录装箱任务单日志数据，单号：【{}】", entity.getId());
-        String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "装箱任务单");
+        String msg = CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), entity.getId(), "装箱任务单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, entity, null, entity.getId(), msg);
         return Boolean.TRUE;
@@ -103,7 +104,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         if (CollectionUtils.isEmpty(cartonIds)) {
             return Boolean.TRUE;
         }
-        return lambdaUpdate().in(WmsCartonEntity::getSpecId, cartonIds).remove();
+        return lambdaUpdate().in(WmsCartonEntity::getId, cartonIds).remove();
     }
 
     @Override
@@ -135,7 +136,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         addDTO.setTaskId(addDTO.getTaskId());
         BeanMapperUtils.copy(addDTO, wmsCartonEntity);
         //检查数据是否存在
-        if (StrUtil.isNotBlank(addDTO.getCartonId())){
+        if (CharSequenceUtil.isNotBlank(addDTO.getCartonId())){
             WmsCartonEntity old = this.getById(addDTO.getCartonId());
             wmsCartonEntity.setId(Objects.isNull(old)? null: old.getId());
         }
@@ -147,7 +148,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
         if (!save) {
             throw new ServiceException("发货单箱子信息明细单保存失败");
         }
-        String msg = StrUtil.format("【{}】新增【{}】箱号【{}】",addDTO.getContent(), "装箱信息", wmsCartonEntity.getBoxNo());
+        String msg = CharSequenceUtil.format("【{}】新增【{}】箱号【{}】",addDTO.getContent(), "装箱信息", wmsCartonEntity.getBoxNo());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CARTON.getCode(), addDTO.getTaskId(), addDTO.getOperation());
         //新增详情信息
         wmsCartonDetailService.add(addDTO, wmsCartonEntity, wmsCartonSpecEntity);
@@ -156,7 +157,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
 
     @Override
     public WmsCartonEntity findCartonByTaskIdAndBoxNo(String taskId, Integer boxNo) {
-        if (StrUtil.isBlank(taskId) && Objects.isNull(boxNo)){
+        if (CharSequenceUtil.isBlank(taskId) && Objects.isNull(boxNo)){
             return null;
         }
         return lambdaQuery().eq(WmsCartonEntity::getPackingTaskId,taskId).eq(WmsCartonEntity::getBoxNo,boxNo).last("limit 1").one();
@@ -169,7 +170,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
 
     @Override
     public WmsCartonEntity getByTaskIdAndBoxNo(String packingTaskId, String boxNo) {
-        if(StringUtils.isBlank(packingTaskId) ||StringUtils.isBlank(boxNo)){
+        if(CharSequenceUtil.isBlank(packingTaskId) ||CharSequenceUtil.isBlank(boxNo)){
             return null;
         }
         return lambdaQuery().eq(WmsCartonEntity::getPackingTaskId,packingTaskId).eq(WmsCartonEntity::getBoxNo,boxNo).last("limit 1").one();
@@ -213,7 +214,7 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
 
     @Override
     public WmsCartonEntity getBySpecId(String specId) {
-        if (StringUtils.isNotBlank(specId)){
+        if (CharSequenceUtil.isNotBlank(specId)){
             return lambdaQuery().eq(WmsCartonEntity::getSpecId, specId).last("limit 1").one();
         }
         return null;
@@ -221,15 +222,28 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
 
     @Override
     public List<WmsCartonEntity> listByTaskIdsAndPermission(PackingTaskDTO.PackedDetailDTO packedDetailDTO) {
-        if (Objects.isNull(packedDetailDTO) || StrUtil.isBlank(packedDetailDTO.getTaskId())){
+        if (Objects.isNull(packedDetailDTO) || CharSequenceUtil.isBlank(packedDetailDTO.getTaskId())){
             return Collections.emptyList();
         }
         return baseMapper.listByTaskIdsAndPermission(packedDetailDTO);
     }
 
     @Override
-    public List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId) {
-        return baseMapper.listByPackingTaskId(packingTaskId);
+    public List<WmsCartonDTO.DetailDTO> listByPackingTaskId(String packingTaskId, List<String> fbaShipmentCodes) {
+        List<String> cartonIds = new ArrayList<>();
+        if(CollectionUtils.isNotEmpty(fbaShipmentCodes)){
+            List<FbaShipmentPackingEntity> allFbaShipmentPackingEntityList = fbaShipmentPackingService.listByFbaCodes(fbaShipmentCodes);
+            cartonIds = allFbaShipmentPackingEntityList.stream().map(FbaShipmentPackingEntity::getCartonId).collect(Collectors.toList());
+        }
+        return baseMapper.listByPackingTaskId(packingTaskId,cartonIds);
+    }
+
+    @Override
+    public List<WmsCartonDTO.CartonSkuDTO> listSkuByBoxIds(List<String> boxIds) {
+        if(CollUtil.isEmpty(boxIds)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listSkuByBoxIds(boxIds);
     }
 
     /**
@@ -238,13 +252,13 @@ public class WmsCartonServiceImpl extends SuperServiceImpl<WmsCartonMapper, WmsC
     private void handleData(WmsCartonEntity wmsCartonEntity,WmsCartonSpecDTO.AddDTO addDTO) {
         //TODO 单箱状态判断
         wmsCartonEntity.setId(addDTO.getCartonId());
-        if (StrUtil.isBlank(wmsCartonEntity.getPackingStatus())){
+        if (CharSequenceUtil.isBlank(wmsCartonEntity.getPackingStatus())){
             wmsCartonEntity.setPackingStatus(PackingTaskStatusEnum.COMPLETED.getCode());
         }
         //装箱人员填充
         wmsCartonEntity.setPackingUserId(UserContext.getDefaultLoginUser().getUid());
         wmsCartonEntity.setPackingUserName(UserContext.getDefaultLoginUser().getUserName());
-        if (Objects.isNull(wmsCartonEntity.getId())){
+        if (Objects.isNull(wmsCartonEntity.getId()) && Objects.isNull(wmsCartonEntity.getBoxNo())){
             Integer boxNo = baseMapper.getBoxNoByTaskId(addDTO.getTaskId());
             if (Objects.isNull(boxNo)){
                 wmsCartonEntity.setBoxNo(MathUtil.ONE);

@@ -1,7 +1,7 @@
 package com.erp.server.bi.service;/**
  * @author Lambda
  * @Classname listYearMonthValue
- * @Description TODO
+ * @Description
  * @Date 2023-09-18 12:29
  * @Created by yl
  */
@@ -11,7 +11,7 @@ import com.erp.model.bi.dto.BiTargetYearDTO;
 import java.util.List;
 
 /**
- * @Description TODO
+ * @Description
  * @Author yl
  * @Date 2023-09-18 12:29
  */

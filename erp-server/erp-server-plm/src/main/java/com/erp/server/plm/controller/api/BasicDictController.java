@@ -39,7 +39,7 @@ public class BasicDictController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "保存或者修改plm字典表")
     @PostMapping("/saveOrUpdate")
-    public ApiResult saveOrUpdateDict(@RequestBody @Validated List<BasicDictDTO> dtos) {
+    public ApiResult<Object> saveOrUpdateDict(@RequestBody @Validated List<BasicDictDTO> dtos) {
         Boolean flag = basicDictService.saveOrUpdateDict(dtos);
         return flag == true ? success() : failure();
     }
@@ -52,7 +52,7 @@ public class BasicDictController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "删除plm字典表")
     @PostMapping("/remove")
-    public ApiResult saveOrUpdateDict(String id) {
+    public ApiResult<Object> saveOrUpdateDict(String id) {
         Boolean flag = basicDictService.removeById(id);
         return flag == true ? success() : failure();
     }

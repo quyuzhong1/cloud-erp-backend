@@ -1,6 +1,7 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,6 +13,7 @@ import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.CharSequenceUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -56,16 +58,34 @@ public class DmpInputAmzOrderDoChildDmpHandler extends DmpInputDoChildDmpHandler
 		QueryWrapper<?> wrapper = new QueryWrapper<>();
 		wrapper.eq(INPUT_TASK_ID, inputTaskId);
 		List<Map<String, Object>> listMaps = parentServiceImpl.listMaps(wrapper);
+		// 单号和店铺唯一
 		Map<String, String> billNoIdMap = new HashMap<>();
+		// 单号唯一
+		Map<String, String> thirdMap = new HashMap<>();
 		if(CollUtil.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
-				billNoIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.ID).toString());
+				String thirdCode = listMap.getOrDefault("third_code", "").toString();
+				String shopId = listMap.getOrDefault("shop_id", "").toString();
+				// 唯一
+				String uniqueId = CharSequenceUtil.format("{}_{}", thirdCode, shopId);
+				// 单号配店铺
+				billNoIdMap.put(uniqueId, listMap.get(BaseEntity.FIELD_ID).toString());
+				// 单号
+				thirdMap.put(thirdCode, listMap.get(BaseEntity.FIELD_ID).toString());
+
 			}
 		}
 		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {
-			String billNo = dmpInputMongoChildEntity.get("amazonOrderId").toString();
-			String dmpId = billNoIdMap.get(billNo);
-			dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
+			String thirdCode = dmpInputMongoChildEntity.get("amazonOrderId").toString();
+			String shopId = dmpInputMongoChildEntity.getOrDefault("shopId","").toString();
+			if (StringUtils.isBlank(shopId)){
+				String dmpId = thirdMap.get(thirdCode);
+				dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
+			} else {
+				String uniqueId = CharSequenceUtil.format("{}_{}", thirdCode, shopId);
+				String dmpId = billNoIdMap.get(uniqueId);
+				dmpInputMongoChildEntity.put(MAIN_ID, dmpId);
+			}
 		}
 	}
 

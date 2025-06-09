@@ -13,7 +13,7 @@ public class AliexpressDeliveryQueryHandler extends AbstractQueryHandler {
     @Override
     protected String handleSqlLogic(String field, Object value, String compareCodeSplicingValueSql) {
         if("isSystemOut".equals(field)){
-            Boolean isSystemOut = (Boolean) value;
+            boolean isSystemOut = (Boolean) value;
             if(isSystemOut){
                 return " exists (select 1 from so_outstock so where so.so_id = ad.so_id and so.is_deleted = false ) ";
             }else{

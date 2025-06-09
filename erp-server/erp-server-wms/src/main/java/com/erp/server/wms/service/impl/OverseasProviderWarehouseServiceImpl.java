@@ -2,44 +2,56 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.EnumMessage;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
-import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.dto.ShopInfoDTO;
+import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.OverseasInventoryDTO;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.model.wms.enums.ShopSiteEnum;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.server.wms.convert.OverseasWarehouseConverter;
 import com.erp.server.wms.mapper.OverseasProviderWarehouseMapper;
 import com.erp.server.wms.service.*;
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.core.exception.ServiceException;
 import io.seata.spring.annotation.GlobalTransactional;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import lombok.extern.slf4j.Slf4j;
-import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
-
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
-
-import com.common.core.utils.*;
-import com.common.core.enums.ApiError;
 
 import javax.annotation.Resource;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * <p>
@@ -52,16 +64,23 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<OverseasProviderWarehouseMapper, OverseasProviderWarehouseEntity> implements OverseasProviderWarehouseService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
     @Resource
     private OverseasProviderService overseasProviderService;
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
-
+    @Resource
+    private SkuMappingFeign skuMappingFeign;
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+    @Resource
+    private OverseasInventoryService overseasInventoryService;
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
     /**
      * 修改
      */
@@ -73,7 +92,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         //映射字段
         List<OverseasProviderWarehouseEntity> list = BeanMapperUtils.copyList(OverseasProviderWarehouseEntity.class, detailList);
         // 数据处理
-        handleData(list, mainId);
+        handleData(list, mainId, updateDTO);
         boolean save = this.updateBatchById(list);
         if (!save) {
             throw new ServiceException("海外物流商仓库保存失败");
@@ -94,7 +113,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         ThirdMappingDTO.FeignMappingDTO feignMappingDTO = new ThirdMappingDTO.FeignMappingDTO();
         List<ThirdMappingDTO.ThirdAddDTO> addDTOList = new ArrayList<>();
         list.forEach(item -> {
-            if (StringUtils.isNotBlank(item.getWarehouseId()) && Objects.equals(item.getDisabled(), false)) {
+            if (CharSequenceUtil.isNotBlank(item.getWarehouseId()) && Objects.equals(item.getDisabled(), false)) {
                 //绑定第三方配置关系
                 ThirdMappingDTO.ThirdAddDTO addDTO = new ThirdMappingDTO.ThirdAddDTO();
                 addDTO.setType(ThirdSysTypeEnum.WAREHOUSE.getCode());
@@ -118,6 +137,17 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     public OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId) {
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
+                .orderByAsc(OverseasProviderWarehouseEntity::getId)
+                .last("LIMIT 1")
+                .one();
+    }
+
+
+    @Override
+    public OverseasProviderWarehouseEntity getByWarehouseIdWithNotDisabled(String warehouseId) {
+        return lambdaQuery()
+                .eq(OverseasProviderWarehouseEntity::getWarehouseId, warehouseId)
+                .eq(OverseasProviderWarehouseEntity::getDisabled, false)
                 .orderByAsc(OverseasProviderWarehouseEntity::getId)
                 .last("LIMIT 1")
                 .one();
@@ -161,13 +191,13 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         String mainId = overseasProviderService.getByPlatformCode(platform).getId();
         return lambdaQuery()
                 .eq(OverseasProviderWarehouseEntity::getMainId, mainId)
-                .in(OverseasProviderWarehouseEntity::getPlatformWarehouseCode, warehouseCodeList)
+                .in(CollectionUtils.isNotEmpty(warehouseCodeList),OverseasProviderWarehouseEntity::getPlatformWarehouseCode, warehouseCodeList)
                 .list();
     }
 
     @Override
     public OverseasProviderEntity findPlatformByWarehouseId(String warehouseId) {
-        List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Arrays.asList(warehouseId));
+        List<OverseasProviderWarehouseEntity> entityList = listByWarehouseIds(Collections.singletonList(warehouseId));
         if (CollectionUtils.isEmpty(entityList)) {
             return null;
         }
@@ -190,11 +220,12 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
     /**
      * 新增修改处理数据
      */
-    private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId) {
-        List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Arrays.asList(mainId));
+    private void handleData(List<OverseasProviderWarehouseEntity> list, String mainId, OverseasProviderDTO.UpdateDTO dto) {
+        List<OverseasProviderWarehouseEntity> oldList = this.listByMainIds(Collections.singletonList(mainId));
         List<String> warehouseIds = list.stream().map(req -> req.getWarehouseId()).distinct().collect(Collectors.toList());
         List<WarehouseDTO.UpdateDTO> warehouseDtoList = warehouseService.listWarehouseByIds(warehouseIds);
-
+        List<OverseasProviderDTO.ListWithWarehouseDTO> allList = overseasProviderService.listAllMatch();
+        allList = allList.stream().filter(v->!v.getId().equals(mainId)).collect(Collectors.toList());
         //查询绑定的仓库
         List<OverseasProviderWarehouseEntity> overseasProviderWarehouseEntities = this.listByWarehouseIds(warehouseIds);
 
@@ -204,17 +235,22 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
             //如果启用，校验仓库是否绑定
             if (!detailEntity.getDisabled()) {
-                if (StringUtils.isBlank(detailEntity.getWarehouseId())) {
+                if (CharSequenceUtil.isBlank(detailEntity.getWarehouseId())) {
                     throw new ServiceException(ApiError.ERROR_NOT_WAREHOUSE);
                 }
 
                 //已绑定第三方供应商仓，一个仓库只能绑定一个第三方仓
-                long warehouseCount = list.stream()
+                String sameWarehouse = list.stream()
                         .filter(req -> !req.getDisabled()
-                                && req.getWarehouseId().equals(detailEntity.getWarehouseId()))
-                        .count();
-                if (warehouseCount > 1) {
-                    throw new ServiceException(ApiError.WAREHOUSE_REPEAT_BINDING, updateDTO.getName());
+                                && CharSequenceUtil.equals(req.getWarehouseId(),detailEntity.getWarehouseId())
+                                && !CharSequenceUtil.equals(req.getPlatformWarehouseCode(),detailEntity.getPlatformWarehouseCode()))
+                        .map(OverseasProviderWarehouseEntity::getPlatformWarehouseName).findFirst().orElse(null);
+                if (StringUtils.isNotBlank(sameWarehouse)) {
+                    throw new ServiceException("系统仓库【{}】已映射【{}】-【{}】",detailEntity.getWarehouseName(),dto.getName(),sameWarehouse);
+                }
+                OverseasProviderDTO.ListWithWarehouseDTO other = allList.stream().filter(req -> !req.getDisabled()&& req.getWarehouseId().equals(detailEntity.getWarehouseId())).findFirst().orElse(null);
+                if (Objects.nonNull(other)) {
+                    throw new ServiceException("系统仓库【{}】已映射【{}】-【{}】",detailEntity.getWarehouseName(),other.getName(),other.getPlatformWarehouseName());
                 }
                 long count = overseasProviderWarehouseEntities.stream().filter(req -> !req.getDisabled()
                         && req.getWarehouseId().equals(detailEntity.getWarehouseId()) && !Objects.equals(req.getMainId(), mainId)).count();
@@ -227,7 +263,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
             detailEntity.setWarehouseName(updateDTO.getName());
 
             //校验是否是修改，如果是就新增修改日志
-            if (StringUtils.isNotBlank(detailEntity.getId())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getId())) {
                 OverseasProviderWarehouseEntity old = oldList.stream().filter(obj -> obj.getId().equals(detailEntity.getId())).findFirst().orElse(null);
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_NOT_FBA_DELIVERY_DETAIL);
@@ -273,7 +309,7 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
 
     @Override
     public Boolean isApiWarehouse(String destWarehouseId) {
-        if(StringUtils.isBlank(destWarehouseId)){
+        if(CharSequenceUtil.isBlank(destWarehouseId)){
             return false;
         }
         OverseasProviderWarehouseEntity entity = getByWarehouseId(destWarehouseId);
@@ -287,5 +323,110 @@ public class OverseasProviderWarehouseServiceImpl extends SuperServiceImpl<Overs
         }
 
         return true;
+    }
+
+    @Override
+    public List<String> listProviderWarehouseBySql(String compareCodeSplicingValueSql) {
+        return baseMapper.listProviderWarehouseBySql(compareCodeSplicingValueSql);
+    }
+
+    @Override
+    public List<OverseasProviderWarehouseDTO.ShippedViewDTO> getShippedInfo(OverseasProviderWarehouseDTO.ShippedDTO shippedDTO) {
+        //仓库列表
+        List<String> warehouseCodeList = shippedDTO.getWarehouseCodeList();
+        if (CollUtil.isEmpty(warehouseCodeList)){
+            return Collections.emptyList();
+        }
+        //根据平台配置进行匹配产品sku
+        ListingInfoParamDTO dto = new ListingInfoParamDTO();
+        dto.setPlatform(PlatformDictEnum.SHOPIFY.getCode());
+//        dto.setType(RuleTypeEnum.PLATFORM.code);
+        String platformSku = shippedDTO.getPlatformSku();
+        dto.setPlatformSkuNoList(CharSequenceUtil.isNotBlank(platformSku) ? Collections.singletonList(platformSku) : Collections.singletonList(CharSequenceUtil.EMPTY));
+        String platformProductId = shippedDTO.getPlatformProductId();
+        dto.setPlatformSpuNoList(CharSequenceUtil.isNotBlank(platformProductId) ? Collections.singletonList(platformProductId) : Collections.singletonList(CharSequenceUtil.EMPTY));
+        //店铺id
+        List<String> shopIdList = getShopIdBySite(shippedDTO.getSite());
+        if (CollUtil.isNotEmpty(shopIdList)){
+            dto.setShopIdList(shopIdList);
+        }
+        dto.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+        dto.setIsExpire(false);
+        List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingDTOS = skuMappingFeign.listingInfoWithSkuMappingList(dto);
+        if (CollUtil.isEmpty(listingInfoWithSkuMappingDTOS)){
+            return Collections.emptyList();
+        }
+        ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingInfoWithSkuMappingDTOS.get(0);
+        //erp映射的sku
+        List<String> skuIds = null;
+        List<String> childSkuIds;
+        //根据是否组合品获取子件
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuIds(Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId()));
+        if (CollUtil.isNotEmpty(bomChildrenSkuList)){
+            List<BomChildrenSkuDTO> bomChildren = bomChildrenSkuList.stream()
+                    .filter(req -> req.getParentSkuId().equals(listingInfoWithSkuMappingDTO.getProductSkuId())
+                            && BomTypeEnum.COMBINATION.getType().equals(req.getType())
+                    ).collect(Collectors.toList());
+            childSkuIds = bomChildren.stream().map(BomChildrenSkuDTO::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        } else {
+            childSkuIds = null;
+        }
+        //合并sku
+        if (CollUtil.isEmpty(childSkuIds)){
+            skuIds = Collections.singletonList(listingInfoWithSkuMappingDTO.getProductSkuId());
+        }else {
+            skuIds = Stream.concat(childSkuIds.stream(), Stream.of(listingInfoWithSkuMappingDTO.getProductSkuId())).distinct().collect(Collectors.toList());
+        }
+        //查询三方仓库存
+        OverseasInventoryDTO.QueryDTO queryDTO = new OverseasInventoryDTO.QueryDTO();
+        queryDTO.setSkuIds(skuIds);
+        queryDTO.setPlatformWarehouseCodeList(warehouseCodeList);
+        List<OverseasInventoryEntity> inventoryEntityList = overseasInventoryService.listBySkuAndWarehouseCode(queryDTO);
+        if (CollUtil.isEmpty(inventoryEntityList)){
+            return Collections.emptyList();
+        }
+        //先匹配产品skuId 匹配不到存在子件，取子件最小数量
+        OverseasInventoryEntity entity = inventoryEntityList.stream().filter(e -> Objects.nonNull(e.getSellableQty()) && e.getSellableQty() > 0 && warehouseCodeList.contains(e.getWarehouseCode())
+                && Objects.equals(listingInfoWithSkuMappingDTO.getProductSkuId(), e.getSkuId())).max(Comparator.comparing(OverseasInventoryEntity::getSellableQty)).orElse(null);
+        if (Objects.nonNull(entity)){
+            return Collections.singletonList(OverseasWarehouseConverter.INSTANCE.inventoryToShipmentDTO(entity));
+        }
+        if (CollUtil.isEmpty(childSkuIds)){
+            return Collections.emptyList();
+        }
+        //判断子件是否都有库存， 存在无库存子件 则返回空
+        for (String skuId : childSkuIds){
+            OverseasInventoryEntity entity2 = inventoryEntityList.stream().filter(e -> Objects.nonNull(e.getSellableQty()) && e.getSellableQty() > 0
+                    && warehouseCodeList.contains(e.getWarehouseCode())
+                    && Objects.equals(skuId,e.getSkuId())).min(Comparator.comparing(OverseasInventoryEntity::getSellableQty)).orElse(null);
+            if (Objects.isNull(entity2)){
+                return Collections.emptyList();
+            }
+        }
+        //都存在按照最小子件数量返回
+        OverseasInventoryEntity entity3 = inventoryEntityList.stream().filter(e -> Objects.nonNull(e.getSellableQty()) && e.getSellableQty() > 0 && warehouseCodeList.contains(e.getWarehouseCode())
+                && childSkuIds.contains(e.getSkuId())).min(Comparator.comparing(OverseasInventoryEntity::getSellableQty)).orElse(null);
+        if (Objects.isNull(entity3)){
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(OverseasWarehouseConverter.INSTANCE.inventoryToShipmentDTO(entity3));
+    }
+
+    private List<String> getShopIdBySite(String site) {
+        if (CharSequenceUtil.isBlank(site)){
+            return Collections.emptyList();
+        }
+        String code = EnumMessage.getNameByCode(ShopSiteEnum.class, site);
+        if (CharSequenceUtil.isBlank(code)){
+            return Collections.emptyList();
+        }
+        ShopInfoDTO.ListParamDTO dto = new ShopInfoDTO.ListParamDTO();
+        dto.setAuthStatus(AuthStatusEnum.ALREADY.getCode());
+        dto.setDictPlatform(PlatformDictEnum.SHOPIFY.getCode());
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoFeign.listByParams(dto);
+        if (CollUtil.isEmpty(shopInfoEntityList)){
+            return Collections.emptyList();
+        }
+        return shopInfoEntityList.stream().filter(e -> e.getDomain().equalsIgnoreCase(code)).map(ShopInfoEntity::getId).distinct().collect(Collectors.toList());
     }
 }

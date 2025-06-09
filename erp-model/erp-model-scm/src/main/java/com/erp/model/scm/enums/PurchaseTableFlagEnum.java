@@ -9,9 +9,9 @@ package com.erp.model.scm.enums;
 public enum PurchaseTableFlagEnum {
 
     WAIT_SUBMIT("waitSubmit", "待提交"),
-    TO_BE_APPROVE("toBeApprove", "待审批"),
-    TO_BE_CREATE("toBeCreate", "待生成"),
-    CREATED("created", "已生成"),
+    TO_BE_APPROVE("toBeApprove", "待审核"),
+    TO_BE_CREATE("toBeCreate", "待到货"),
+    CREATED("created", "已到货"),
     REJECT("reject", "不通过"),
     ;
 

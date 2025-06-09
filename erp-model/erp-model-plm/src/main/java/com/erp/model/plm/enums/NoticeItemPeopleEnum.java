@@ -48,7 +48,7 @@ public enum NoticeItemPeopleEnum {
 
     public static String getNameByFlags(String flag, String splitFlag) {
         String flags[] = flag.split(splitFlag);
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         boolean mark = false;
         for (String flagStr : flags) {
             if (mark) {
@@ -60,8 +60,8 @@ public enum NoticeItemPeopleEnum {
         return sb.toString();
     }
 
-    public static List<Map> getAll() {
-        List<Map> resultList = new ArrayList<>();
+    public static List<Map<String,String>> getAll() {
+        List<Map<String,String>> resultList = new ArrayList<>();
         for (NoticeItemPeopleEnum item : NoticeItemPeopleEnum.values()) {
             Map<String, String> map = new HashMap<>();
             map.put("flag", item.flag);

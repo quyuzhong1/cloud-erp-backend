@@ -12,6 +12,8 @@ import java.util.Map;
 
 public class TongYouUtils {
 
+    private TongYouUtils(){}
+
     public static String sendPost(String method,Map<String, Object> paramsMap,String userToken){
         Map<String, String> headerMap = headerMap(userToken);
         return OkHttpUtils.doPostJson(TongYouConstants.BASE_URL + method, paramsMap, headerMap);

@@ -188,6 +188,16 @@ public class SplitSkuDTO {
      */
     private String productPropertyId;
 
+    /**
+     * 真实售价
+     */
+    private BigDecimal price;
+    /**
+     * 售价原币种
+     */
+    private String currency;
+
+
     public SplitSkuDTO(String skuId, String skuNo) {
         this.skuId = skuId;
         this.skuNo = skuNo;

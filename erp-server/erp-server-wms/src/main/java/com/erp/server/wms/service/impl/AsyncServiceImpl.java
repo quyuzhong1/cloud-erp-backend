@@ -1,10 +1,11 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.DataIdempotent;
+import com.common.business.annotation.DistributeLocker;
 import com.common.business.dto.PlatformOrderQueryDTO;
 import com.common.business.dto.PlatformShipOrderDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -27,17 +28,13 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
-import com.erp.model.wms.entity.CfgAmzFulfillmentCenterEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.ShipmentMarkTypeEnum;
 import com.erp.model.wms.enums.SoB2cDeliveryStatusEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.tms.feign.LogisticsBillFeign;
 import com.erp.rpc.tms.feign.TransferDeclareFeign;
-import com.erp.server.wms.service.AsyncService;
-import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.SoB2cDeliveryService;
-import com.erp.server.wms.service.SoOutstockService;
+import com.erp.server.wms.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -48,7 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -80,6 +77,8 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Resource
     private SoOutstockService soOutstockService;
+    @Resource
+    private WaveListService waveListService;
 
     @Resource
     @Lazy
@@ -95,11 +94,11 @@ public class AsyncServiceImpl implements AsyncService {
         if (orderGroupMap.isEmpty()){
             return;
         }
-        orderGroupMap.entrySet().parallelStream().peek(e->{
+        orderGroupMap.entrySet().parallelStream().forEach(e -> {
             String dictPlatform = e.getKey();
             List<PlatformOrderQueryDTO> curOrderList = e.getValue();
             PlatformSaveHandler.batchQueryAndUpdateOrderStatus(dictPlatform, curOrderList);
-        }).collect(Collectors.toList());
+        });
     }
 
     @Override
@@ -112,10 +111,10 @@ public class AsyncServiceImpl implements AsyncService {
 
     @Async("wmsErpExecutor")
     @Override
-    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag) {
+    public void asyncShipOrder(String soId, String soCode, String dictPlatform, String submitPlatformUniqueKey, String sourceDTOJson, String businessDesc, boolean falseDeliveryFlag, boolean hasNotOutstock) {
         try {
             // 根据提交平台唯一key幂等提交
-            submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey);
+            asyncService.submitShipOrder(soId, dictPlatform, falseDeliveryFlag, submitPlatformUniqueKey,hasNotOutstock);
         } catch (Exception e) {
             log.error("【{}】销售单【{}】 标记发货失败 >>>错误信息{}", businessDesc, soCode, ExceptionUtil.stacktraceToString(e));
             // 独立异常
@@ -140,8 +139,8 @@ public class AsyncServiceImpl implements AsyncService {
 
 
     @Override
-    @DataIdempotent(keyIdName = "submitPlatformUniqueKey")
-    public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey) {
+    @DistributeLocker(keyName = "submitPlatformUniqueKey")
+    public List<String> submitShipOrder(String soId, String dictPlatform, boolean falseDeliveryFlag, String submitPlatformUniqueKey,boolean hasNotOutstock) {
         log.info("【{}】销售单【{}】 标记发货开始 >>>提交平台唯一key:{}", dictPlatform, soId, submitPlatformUniqueKey);
         // 查询本单明细有已发货标记跳过触发
         List<SoB2cDetailEntity> detailEntityList =FeignQuery.create(SoB2cDetailEntity.class)
@@ -158,6 +157,7 @@ public class AsyncServiceImpl implements AsyncService {
         platformShipOrderDTO.setDictPlatform(dictPlatform);
         platformShipOrderDTO.setSubmitPlatformUniqueKey(submitPlatformUniqueKey);
         platformShipOrderDTO.setFalseDeliveryFlag(falseDeliveryFlag);
+        platformShipOrderDTO.setHasNotOutStock(hasNotOutstock);
         List<String> detailIds = PlatformSaveHandler.shipOrder(platformShipOrderDTO);
         //更新销售明细标识
         soB2cFeign.updateSignShippedByDetailId(detailIds);
@@ -186,8 +186,8 @@ public class AsyncServiceImpl implements AsyncService {
             declareDetailEntity = new TransferDeclareDetailEntity();
         }
         //如果是待上传或上传失败则直接返回
-        if (StrUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || StrUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
-                StrUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
+        if (CharSequenceUtil.equals(soB2cEntity.getTransferStatus(), TransferStatusEnum.WAIT.getCode()) || CharSequenceUtil.equals(declareDetailEntity.getOrderUploadStatus(), TransferDeclareUploadStatusEnum.WAIT_UPLOAD.getCode()) ||
+                CharSequenceUtil.equals(declareDetailEntity.getOrderUploadStatus(),TransferDeclareUploadStatusEnum.UPLOAD_FAILURE.getCode())) {
             return;
         }
         //获取一个当前时间当作发货时间
@@ -195,24 +195,24 @@ public class AsyncServiceImpl implements AsyncService {
 
         //修改订单状态待发货
         SoB2cDTO.UpdateDeliveryTimeDTO updateDeliveryTimeDTO = new SoB2cDTO.UpdateDeliveryTimeDTO();
-        updateDeliveryTimeDTO.setSoB2cIds(Arrays.asList(entity.getSourceId()));
+        updateDeliveryTimeDTO.setSoB2cIds(Collections.singletonList(entity.getSourceId()));
         updateDeliveryTimeDTO.setStatus(SoB2cBillStatusEnum.ENUM_SHIPPED.getCode());
         updateDeliveryTimeDTO.setDeliveryTime(LocalDateTime.now());
-        updateDeliveryTimeDTO.setSoDeliveryDTOList(Arrays.asList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
+        updateDeliveryTimeDTO.setSoDeliveryDTOList(Collections.singletonList(new SoB2cDTO.SoDeliveryDTO(entity.getSourceId(),entity.getCode())));
         soB2cFeign.updateSoB2cStatusAndDeliveryTime(updateDeliveryTimeDTO);
 
-        String msg = StrUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "流水线称重", entity.getCode());
+        String msg = CharSequenceUtil.format("用户【{}】通过【{}】触发单据编号【{}】的自动发货功能", UserContext.getDefaultLoginUser().getUserName(), "流水线称重", entity.getCode());
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.SO_B2C_DELIVERY.getCode(), entity.getId(), "流水线称重");
 
         if (soB2cFeign.checkPlatformShipOrder(entity.getSourceId())) {
             // 调用第三方平台SDK标记发货(独立事务)
             String businessDesc = "包装验货";
-            this.asyncShipOrder(soB2cEntity.getId(),
+            asyncService.asyncShipOrder(soB2cEntity.getId(),
                     soB2cEntity.getCode(),
                     soB2cEntity.getDictPlatform(),
                     soB2cEntity.convertSubmitPlatformUniqueKey(),
                     JSONUtil.toJsonStr(entity),
-                    businessDesc, false);
+                    businessDesc, false, false);
         } else {
             log.warn("【{}】未达到条件:忽略标记平台发货", soB2cEntity.getCode());
         }
@@ -240,15 +240,13 @@ public class AsyncServiceImpl implements AsyncService {
             return;
         }
         asyncService.soB2cDeliveryAutoOut(soB2cEntity,entity);
-        //扣减冻结库存
-        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
-        if (isOut) {
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-            if (isPush) {
-                //出库
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
+        //波次列表波次状态自动变更
+        waveListService.waveListStatusAutoChange(entity.getId());
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
     }
     /**
@@ -257,15 +255,11 @@ public class AsyncServiceImpl implements AsyncService {
     @Override
     @Async("wmsErpExecutor")
     public void syncAutoOut(SoB2cDeliveryEntity entity) {
-        //扣减冻结库存
-        Boolean isOut = soB2cDeliveryService.generateOutFreezeError(entity);
-        if (isOut) {
-            //生成直接调拨单
-            Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
-            if (isPush) {
-                //出库
-                soB2cDeliveryService.generateB2cSoOutstock(entity);
-            }
+        //生成直接调拨单
+        Boolean isPush = soB2cDeliveryService.pushTransferInfoError(entity);
+        if (isPush) {
+            //出库
+            soB2cDeliveryService.generateB2cSoOutstock(entity);
         }
     }
 

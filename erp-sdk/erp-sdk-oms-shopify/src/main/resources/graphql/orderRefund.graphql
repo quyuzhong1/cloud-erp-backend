@@ -1,0 +1,42 @@
+query refund($input: ID!) {
+    refund(id: $input) {
+        createdAt
+        duties {
+            amountSet {
+                presentmentMoney {
+                    amount
+                    currencyCode
+                }
+                shopMoney {
+                    amount
+                    currencyCode
+                }
+            }
+            originalDuty {
+                countryCodeOfOrigin
+                harmonizedSystemCode
+                id
+                price{
+                    shopMoney {
+                        amount
+                        currencyCode
+                    }
+                    presentmentMoney {
+                        amount
+                        currencyCode
+                    }
+                }
+            }
+        }
+        totalRefundedSet {
+            presentmentMoney {
+                amount
+                currencyCode
+            }
+            shopMoney{
+                amount
+                currencyCode
+            }
+        }
+    }
+}

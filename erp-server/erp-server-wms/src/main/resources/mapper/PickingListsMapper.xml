@@ -22,23 +22,30 @@
         <result column="sku_total" property="skuTotal"/>
         <result column="location_total" property="locationTotal"/>
     </resultMap>
+
+
     <select id="paging" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$PagingView">
-        select id,
-               update_time,
-               update_user_name,
-               code,
-               warehouse_id,
-               warehouse_name,
-               source_id,
-               source_type,
-               source_code,
-               sku_total,
-               location_total
-        from picking_lists
+        select pl.id,
+               pl.update_time,
+               pl.update_user_name,
+               pl.code,
+               pl.warehouse_id,
+               pl.warehouse_name,
+               pl.source_id,
+               pl.source_type,
+               pl.source_code,
+               pl.sku_total,
+               pl.location_total,
+               pl.create_time as createTime
+        from picking_lists pl
         where ${params.sqlMap.default}
-          and source_type = #{params.sourceType}
-          and is_deleted = false
-        order by create_time desc, id desc
+          and pl.source_type = #{params.sourceType}
+          and pl.is_deleted = false
+        <!--权限 -->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        order by pl.create_time desc, pl.id desc
     </select>
 
     <select id="exportInfo" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$ExportInfoDTO">
@@ -57,6 +64,10 @@
         where ${params.sqlMap.default}
           and pl.source_type = #{params.sourceType}
           and pl.is_deleted = false
+        <!--权限 -->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
         order by pl.update_time desc, pl.id desc
     </select>
     <select id="listBySourceIds" resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$SourceView">
@@ -65,6 +76,7 @@
                pl.source_id          as sourceId,
                pl.source_code        as sourceCode,
                pl.warehouse_id       as warehouseId,
+               pd.id                 as detailId,
                pd.sku_id             as skuId,
                pd.sku_no             as skuNo,
                pd.warehouse_location as warehouseLocation,
@@ -88,6 +100,7 @@
             pl.source_id,
             pd.sku_id,
             pd.sku_no,
+            pd.platform_sku_no as fnSku,
             SUM(pd.qty) as qty,
             SUM(pd.picked_qty) as pickedQty
         FROM picking_lists pl
@@ -99,7 +112,8 @@
             </foreach>
         GROUP BY pl.source_id,
                  pd.sku_id,
-                 pd.sku_no
+                 pd.sku_no,
+                 pd.platform_sku_no
     </select>
     <select id="listRequitDetailBySourceIds"
             resultType="com.erp.model.wms.dto.pickingstrategy.PickingListsDTO$DetailPickDTO">
@@ -107,6 +121,7 @@
             fmd.id as sourceId,
             rad.sku_id,
             rad.sku_no,
+            rad.platform_fn_sku as fnSku,
             SUM(rad.picking_qty) as qty
         FROM first_mile_delivery fmd
         LEFT JOIN requisition_application_detail rad ON fmd.source_id = rad.main_id  AND rad.is_deleted = FALSE
@@ -117,7 +132,7 @@
             </foreach>
         GROUP BY fmd.id,
         rad.sku_id,
-        rad.sku_no
+        rad.sku_no,
+        rad.platform_fn_sku
     </select>
-
 </mapper>

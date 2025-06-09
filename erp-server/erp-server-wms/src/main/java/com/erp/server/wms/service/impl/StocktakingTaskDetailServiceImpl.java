@@ -1,7 +1,10 @@
 package com.erp.server.wms.service.impl;
 
 import com.alibaba.excel.EasyExcel;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -28,6 +31,7 @@ import com.erp.server.wms.pull.service.ProductDetailService;
 import com.erp.server.wms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -39,6 +43,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -77,7 +82,8 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
     @Override
-    public Boolean exportExcel(BaseIdDTO dto) {
+    public Boolean exportExcel(StocktakingTaskDTO.BaseIdDTO dto) {
+        dto.checkAndGetMainId();
         downloadTaskFeign.saveDownloadTask("盘点任务明细列表", EXPORT_WMS_STOCKTAKING_TASK_DETAIL.getCode(), dto);
         return Boolean.TRUE;
     }
@@ -103,9 +109,8 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             throw new ServiceException("只有复盘中,未开始的盘点任务才能修改盘点库存");
         }
 
-        List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Arrays.asList(mainId));
-        List<WarehouseEntity> warehouseList = warehouseService.list();
-        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseList, operateLogService);
+        List<StocktakingTaskDetailEntity> taskDetailList = this.listBaseByMainIds(Collections.singletonList(mainId));
+        StocktakingTaskDetailExcelListener excelListener = new StocktakingTaskDetailExcelListener(this, task.getCode(), taskDetailList, warehouseService, operateLogService);
         try {
             EasyExcel.read(excelFile.getInputStream(), StocktakingTaskDetailExcelDTO.class, excelListener).sheet(0).doRead();
         } catch (Exception e) {
@@ -233,7 +238,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
      */
     @Override
     public List<StocktakingTaskDetailDTO.ViewDTO> listByMainId(String mainId) {
-        List<StocktakingTaskDetailEntity> dbList = this.listBaseByMainIds(Arrays.asList(mainId));
+        List<StocktakingTaskDetailEntity> dbList = this.listBaseByMainIds(Collections.singletonList(mainId));
         List<StocktakingTaskDetailDTO.ViewDTO> resultList = BeanMapper.copyList(dbList, StocktakingTaskDetailDTO.ViewDTO.class);
         List<String> skuIdList = resultList.stream().map(StocktakingTaskDetailDTO.ViewDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = productDetailService.listProductDetailByIds(skuIdList);
@@ -272,7 +277,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -341,9 +346,9 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
     }
 
     @Override
-    public PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(PagingDTO<BaseIdDTO> dto) {
+    public PagingVO<StocktakingTaskDetailDTO.ExportDTO> exportStocktakingTaskDetail(PagingDTO<StocktakingTaskDTO.BaseIdDTO> dto) {
+        String mainId = dto.getParams().checkAndGetMainId();
 
-        String mainId = dto.getParams().getId();
         StocktakingTaskDTO.ViewDTO view = stocktakingTaskMapper.getViewById(mainId);
         if(Objects.isNull(view)){
             throw new ServiceException("盘点任务不存在");
@@ -354,7 +359,7 @@ public class StocktakingTaskDetailServiceImpl extends SuperServiceImpl<Stocktaki
         //是否盲盘
         Boolean isBlindCount = StocktakingModeEnum.BLIND_COUNT.equals(stocktakingMode);
         //盘点人信息
-        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Arrays.asList(mainId));
+        List<StocktakingTaskUserEntity> taskUserList = stocktakingTaskUserService.listBaseBySourceIdList(Collections.singletonList(mainId));
         String stocktakingUserName = taskUserList.stream().
                 map(StocktakingTaskUserEntity::getUserName).collect(Collectors.joining(","));
         List<StocktakingTaskDetailDTO.ExportDTO> exportList = baseMapper.listExportByMainId(mainId);

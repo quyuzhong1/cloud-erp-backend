@@ -1,16 +1,12 @@
 package com.erp.server.wms.controller.feign;
 
-import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseChannelDTO;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
 import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
-import com.erp.server.wms.service.VirtualWarehouseAllocationDetailService;
 import com.erp.server.wms.service.VirtualWarehouseChannelService;
 import com.erp.server.wms.service.VirtualWarehouseService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
@@ -51,5 +47,21 @@ public class VirtualWarehouseFeignController {
         return virtualWarehouseChannelService.getVirtualWarehouse(platformDTO);
     }
 
+    /**
+     * 根据平台查询虚拟仓配置
+     * @author will
+     * @date 2024/9/3 18:12
+     * @param platformList
+     * @return List<CfgRuleVirtualWarehouseDTO>
+     */
+    @PostMapping("/listCfgRuleVirtualWarehouse")
+    public List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> listCfgRuleVirtualWarehouse(@RequestBody List<String> platformList){
+        return virtualWarehouseChannelService.listCfgRuleVirtualWarehouse(platformList);
+    }
+
+    @GetMapping("/listWarehouseBySql")
+    List<String> listWarehouseBySql(@RequestParam String compareCodeSplicingValueSql){
+        return virtualWarehouseService.listWarehouseBySql(compareCodeSplicingValueSql);
+    }
 }
 

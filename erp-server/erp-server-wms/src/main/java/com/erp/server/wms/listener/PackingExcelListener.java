@@ -16,6 +16,8 @@ import com.erp.model.wms.dto.excel.PackingExcelDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.FmDeliveryLogisticsStatusEnum;
+import com.erp.model.wms.enums.PackingTaskStatusEnum;
+import com.erp.model.wms.enums.PackingWeightStatusEnum;
 import com.erp.model.wms.enums.WmsDeclareStatusEnum;
 import com.erp.server.wms.service.*;
 import lombok.Getter;
@@ -172,13 +174,6 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
                 it.remove();
                 continue;
             }
-            //检查发货单是否已审核
-            if(Objects.nonNull(firstMileDeliveryEntity) && firstMileDeliveryEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
-                packingExcelDTO.setErrorMsg(" 发货单已审核，无法更改装箱");
-                errorList.add(packingExcelDTO);
-                it.remove();
-                continue;
-            }
             if(Objects.nonNull(soDeliveryNoticeEntity) && soDeliveryNoticeEntity.getApproveStatus().equals(ApproveStatusEnum.APPROVE.getCode())){
                 packingExcelDTO.setErrorMsg(" 发货通知已审核，无法更改装箱");
                 errorList.add(packingExcelDTO);
@@ -189,7 +184,7 @@ public class PackingExcelListener extends AnalysisEventListener<PackingExcelDTO>
             Integer currentMaxBoxNo = boxMap.get(packingExcelDTO.getCode());
             if(Objects.isNull(currentMaxBoxNo)){
                 if(packingExcelDTO.getBoxNo() != 1){
-                    packingExcelDTO.setErrorMsg("装箱号不连续");
+                    packingExcelDTO.setErrorMsg("装箱号从1开始");
                     errorList.add(packingExcelDTO);
                     it.remove();
                     continue;

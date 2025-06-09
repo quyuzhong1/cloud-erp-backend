@@ -1,69 +1,77 @@
 package com.erp.server.dmp.service.impl;
 
 
-import java.lang.reflect.Method;
-import java.util.*;
-import java.util.stream.Collectors;
-
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
-
+import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.*;
-import com.common.business.enums.OperationTypeEnum;
+import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDetailDTO;
-import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
+import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.threadlocal.UserContext;
 import com.common.business.utils.ApplicationContextUtils;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.PagingVO;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.enums.ApiError;
+import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.constant.DmpConstant;
 import com.erp.model.dmp.dto.DmpCfgOutputBlackDTO;
 import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO.TabListDTO;
 import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.*;
-import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackCompareSignEnum;
-import com.erp.model.dmp.enums.DmpCfgOutputBlackDataTypeEnum;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
-import com.erp.model.dmp.enums.DmpPushMonitorTabEnum;
+import com.erp.model.dmp.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.inout.utils.DmpHandlerCache;
 import com.erp.server.dmp.inout.utils.DmpHandlerUtils;
+import com.erp.server.dmp.mapper.DmpOutputTaskRecordMapper;
 import com.erp.server.dmp.service.*;
+import com.google.common.collect.Lists;
+
+import io.seata.spring.annotation.GlobalTransactional;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.common.business.service.impl.SuperServiceImpl;
-import com.common.business.threadlocal.UserContext;
-import com.common.core.enums.ApiError;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-import com.erp.server.dmp.mapper.DmpOutputTaskRecordMapper;
-
-import cn.hutool.core.util.StrUtil;
-import io.seata.spring.annotation.GlobalTransactional;
-import lombok.extern.slf4j.Slf4j;
-
 import javax.annotation.Resource;
+import javax.sql.DataSource;
+
+import java.lang.reflect.Method;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_NEW_DMP_PUSH_TASK;
 
@@ -99,6 +107,25 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Autowired
 	private DmpPushMsgService dmpPushMsgService;
 
+    @Autowired
+    private DmpPushTaskService dmpPushTaskService;
+    
+    @Resource
+    private RedisUtil redisUtil;
+    
+    @Autowired
+	@Qualifier("dmpTabListExecutorPool")
+	private ExecutorService dmpTabListExecutorPool;
+    
+    @Resource
+    private DmpInputTaskService dmpInputTaskService;
+    
+    @Resource
+    private DmpInputFileMongoRelationService dmpInputFileMongoRelationService;
+    
+    @Resource
+    private DmpInputMongoDmpRelationService dmpInputMongoDmpRelationService;
+    
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -130,7 +157,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     @Override
     public Boolean update(DmpOutputTaskRecordDTO.UpdateDTO updateDTO) {
         DmpOutputTaskRecordEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "推送任务记录"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "推送任务记录"));
         DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = BeanMapperUtils.map(DmpOutputTaskRecordEntity.class, updateDTO);
 
         // 数据处理
@@ -159,74 +186,131 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Override
     public List<DmpOutputTaskRecordDTO.TabListDTO> tabList(PermissionsDTO dto) {
-        List<DmpOutputTaskRecordDTO.TabListDTO> result = new ArrayList<>(4);
-        List<DmpOutputTaskRecordDTO.TabListDTO> countList = baseMapper.listStatusCount(dto.getPermissionSql());
-        //全部
-        int allCount = countList.stream().mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
-        DmpOutputTaskRecordDTO.TabListDTO all = new DmpOutputTaskRecordDTO.TabListDTO();
-        all.setCount(allCount);
-        all.setTabFlag(DmpConstant.ALL);
-        result.add(all);
+        List<DmpOutputTaskRecordDTO.TabListDTO> result = new ArrayList<>(8);
+        
+        Object resultObject = redisUtil.get(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_COUNT);
+        Object timeObject = redisUtil.get(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_TIME);
+    	if(resultObject != null && timeObject != null) {
+    		result = JSON.parseArray(resultObject.toString(), DmpOutputTaskRecordDTO.TabListDTO.class);
+    	}else {
+    		redisUtil.set(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_TIME, DateUtil.now() , 30);
+    		List<Future<List<TabListDTO>>> submitList = new ArrayList<>(8);
+            
+            Future<List<TabListDTO>> submit1 = dmpTabListExecutorPool.submit(() -> {
+            	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
+            	List<DmpOutputTaskRecordDTO.TabListDTO> countList = baseMapper.listStatusCount(dto.getPermissionSql());
+                //全部
+                int allCount = countList.stream().mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
+                DmpOutputTaskRecordDTO.TabListDTO all = new DmpOutputTaskRecordDTO.TabListDTO();
+                all.setCount(allCount);
+                all.setTabFlag(DmpConstant.ALL);
+                subList.add(all);
 
-        //待推送
-        DmpOutputTaskRecordDTO.TabListDTO inif = new DmpOutputTaskRecordDTO.TabListDTO();
-        inif.setTabFlag(DmpPushMonitorTabEnum.INIT.getCode());
-        int inifCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.INIT.getCode())).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        inif.setCount(inifCount);
-        result.add(inif);
+                //待推送
+                DmpOutputTaskRecordDTO.TabListDTO inif = new DmpOutputTaskRecordDTO.TabListDTO();
+                inif.setTabFlag(DmpPushMonitorTabEnum.INIT.getCode());
+                int inifCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.INIT.getCode())).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+                inif.setCount(inifCount);
+                subList.add(inif);
 
 
-        //推送中
-        DmpOutputTaskRecordDTO.TabListDTO pushIng = new DmpOutputTaskRecordDTO.TabListDTO();
-        pushIng.setTabFlag(DmpPushMonitorTabEnum.PUSH_ING.getCode());
-        int pushIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode())
-                || DmpOutputTaskRecordStatusEnum.MQERROR.getCode().equals(a.getTabFlag())
-                || DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode().equals(a.getTabFlag())
-        ).map(req -> req.getCount()).reduce(MathUtil.ZERO, Integer::sum);
-        pushIng.setCount(pushIngCount);
-        result.add(pushIng);
+                //推送中
+                DmpOutputTaskRecordDTO.TabListDTO pushIng = new DmpOutputTaskRecordDTO.TabListDTO();
+                pushIng.setTabFlag(DmpPushMonitorTabEnum.PUSH_ING.getCode());
+                int pushIngCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.MQSUCCESS.getCode())
+                        || DmpOutputTaskRecordStatusEnum.MQERROR.getCode().equals(a.getTabFlag())
+                        || DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode().equals(a.getTabFlag())
+                ).map(req -> req.getCount()).reduce(MathUtil.ZERO, Integer::sum);
+                pushIng.setCount(pushIngCount);
+                subList.add(pushIng);
 
-        //同步失败
-        DmpOutputTaskRecordDTO.TabListDTO failed = new DmpOutputTaskRecordDTO.TabListDTO();
-        failed.setTabFlag(DmpPushMonitorTabEnum.ERROR.getCode());
-        int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())
-        ).findFirst().
-                flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
-        failed.setCount(failedCount);
-        result.add(failed);
+                //同步失败
+                DmpOutputTaskRecordDTO.TabListDTO failed = new DmpOutputTaskRecordDTO.TabListDTO();
+                failed.setTabFlag(DmpPushMonitorTabEnum.ERROR.getCode());
+                int failedCount = countList.stream().filter(a -> a.getTabFlag().equals(DmpOutputTaskRecordStatusEnum.ERROR.getCode())
+                ).findFirst().
+                        flatMap(obj -> Optional.ofNullable(obj.getCount())).orElse(0);
+                failed.setCount(failedCount);
+                subList.add(failed);
 
-        //同步成功
-        DmpOutputTaskRecordDTO.TabListDTO finish = new DmpOutputTaskRecordDTO.TabListDTO();
-        finish.setTabFlag(DmpPushMonitorTabEnum.FINISH.getCode());
-        int finishCount = countList.stream().filter(a -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(a.getTabFlag())
-        ).mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
-        finish.setCount(finishCount);
-        result.add(finish);
+                //同步成功
+                DmpOutputTaskRecordDTO.TabListDTO finish = new DmpOutputTaskRecordDTO.TabListDTO();
+                finish.setTabFlag(DmpPushMonitorTabEnum.FINISH.getCode());
+                int finishCount = countList.stream().filter(a -> DmpOutputTaskRecordStatusEnum.FINISH.getCode().equals(a.getTabFlag())
+                ).mapToInt(DmpOutputTaskRecordDTO.TabListDTO::getCount).sum();
+                finish.setCount(finishCount);
+                subList.add(finish);
+                return subList;
+            });
+            submitList.add(submit1);
+            
+            Future<List<TabListDTO>> submit2 = dmpTabListExecutorPool.submit(() -> {
+            	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
+            	//无需同步
+                Integer count = this.lambdaQuery()
+                        .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+                        .eq(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
+                        .count();
+                DmpOutputTaskRecordDTO.TabListDTO noNeedSync = new DmpOutputTaskRecordDTO.TabListDTO();
+                noNeedSync.setTabFlag(DmpPushMonitorTabEnum.NO_NEED_SYNC.getCode());
+                noNeedSync.setCount(count);
+                subList.add(noNeedSync);
+                return subList;
+            });
+            submitList.add(submit2);
 
-        //无需同步
-        Integer count = this.lambdaQuery()
-                .eq(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
-                .eq(DmpOutputTaskRecordEntity::getIsNeedSync, Boolean.FALSE)
-                .count();
-        DmpOutputTaskRecordDTO.TabListDTO noNeedSync = new DmpOutputTaskRecordDTO.TabListDTO();
-        noNeedSync.setTabFlag(DmpPushMonitorTabEnum.NO_NEED_SYNC.getCode());
-        noNeedSync.setCount(count);
-        result.add(noNeedSync);
-
-        DmpOutputTaskRecordDTO.PagingParamDTO params = new DmpOutputTaskRecordDTO.PagingParamDTO();
-        Map<String,String> sqlMap = new HashMap<>();
-        sqlMap.put("default", "1 = 1");
-        params.setSqlMap(sqlMap);
-        params.setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(1, -1);
-        IPage blackPaging = baseMapper.blackPaging(query, params);
-        //黑名单
-        Integer blackCount = blackPaging.getRecords().size();
-        DmpOutputTaskRecordDTO.TabListDTO black = new DmpOutputTaskRecordDTO.TabListDTO();
-        black.setTabFlag(DmpPushMonitorTabEnum.BLACK.getCode());
-        black.setCount(blackCount);
-        result.add(black);
+            Future<List<TabListDTO>> submit3 = dmpTabListExecutorPool.submit(() -> {
+            	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
+    	        DmpOutputTaskRecordDTO.PagingParamDTO params = new DmpOutputTaskRecordDTO.PagingParamDTO();
+    	        Map<String,String> sqlMap = new HashMap<>();
+    	        sqlMap.put("default", "1 = 1");
+    	        params.setSqlMap(sqlMap);
+    	        params.setPermissionSql(dto.getPermissionSql());
+    	        Page query = new Page(1, -1);
+    	        IPage blackPaging = baseMapper.blackPaging(query, params);
+    	        //黑名单
+    	        Integer blackCount = blackPaging.getRecords().size();
+    	        DmpOutputTaskRecordDTO.TabListDTO black = new DmpOutputTaskRecordDTO.TabListDTO();
+    	        black.setTabFlag(DmpPushMonitorTabEnum.BLACK.getCode());
+    	        black.setCount(blackCount);
+    	        subList.add(black);
+    	        return subList;
+            });
+            submitList.add(submit3);
+            
+            Future<List<TabListDTO>> submit4 = dmpTabListExecutorPool.submit(() -> {
+            	List<DmpOutputTaskRecordDTO.TabListDTO> subList = new ArrayList<>(8);
+            	Integer historyCount = 0;
+            	Object redisCount = redisUtil.get(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT);
+            	if(redisCount != null) {
+            		historyCount = Integer.valueOf(redisCount.toString());
+            	}else {
+            		historyCount = baseMapper.listStatusCountHis(dto.getPermissionSql());
+        	        if(historyCount == null) {
+        	        	historyCount = 0;
+        	        }
+        	        redisUtil.set(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT, historyCount);
+            	}
+    	        DmpOutputTaskRecordDTO.TabListDTO history = new DmpOutputTaskRecordDTO.TabListDTO();
+    	        history.setTabFlag(DmpPushMonitorTabEnum.HISTORY.getCode());
+    	        history.setCount(historyCount);
+    	        subList.add(history);
+    	        return subList;
+            });
+            submitList.add(submit4);
+            
+            for(Future<List<TabListDTO>> s : submitList) {
+            	try {
+            		result.addAll(s.get());
+    			} catch (Exception e) {
+    				log.error("并发获取tab失败" , e);
+    				Thread.currentThread().interrupt();
+    			}
+            }
+            redisUtil.set(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_COUNT , JSON.toJSONString(result));
+            redisUtil.set(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_TIME, DateUtil.now() , 30);
+    	}
 
         return result;
     }
@@ -239,12 +323,14 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
         IPage pageData = null;
         if(CollUtil.isNotEmpty(advanceQueryDTOList)) {
-        	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("tab") && "black".equals(a.getValue()))) {
+        	if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("tab") && DmpPushMonitorTabEnum.BLACK.getCode().equals(a.getValue()))) {
         		String sql = params.getSqlMap().get("default");
         		if(StringUtils.isNotBlank(sql)) {
         			params.getSqlMap().put("default", sql.replace("t.source_code", "t.field_value"));
         		}
         		pageData = baseMapper.blackPaging(query, params);
+        	}else if(advanceQueryDTOList.stream().anyMatch(a -> a.getField().equals("tab") && DmpPushMonitorTabEnum.HISTORY.getCode().equals(a.getValue()))) {
+        		pageData = baseMapper.hisPaging(query, params);
         	}else {
         		pageData = baseMapper.paging(query, params);
         	}
@@ -486,7 +572,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Override
     public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> exportNewDmpPushTask(PagingDTO<DmpOutputTaskRecordDTO.ExpotParamDTO> dto) {
-        Page<DmpOutputTaskRecordDTO.PagingDTO> page = baseMapper.listExportExcel(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
+        IPage<DmpOutputTaskRecordDTO.PagingDTO> page = baseMapper.paging(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         if (!CollectionUtils.isEmpty(page.getRecords())) {
             //数据处理
             doOpHandleDmpPushTask(page.getRecords());
@@ -537,13 +623,12 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
     	String extendJson = dmpCfgInputEntity.getExtendJson();
 		JSONObject parseObject = JSON.parseObject(extendJson);
 		String system = parseObject.getString("system");
-		String apiType = dmpHandlerCache.getDmpCfgApiEntityList(d -> d.getId().equals(dmpCfgInputEntity.getTypeId())).get(0).getApiType();
 		
 		List<DmpPushMsgEntity> dmpPushMsgEntityList = dmpPushMsgService.listByIds(dataIds);
 		DmpSyncMqDTO.SyncParamDTO syncParamDTO = new DmpSyncMqDTO.SyncParamDTO();
-		syncParamDTO.setSourceType(SourceTypeEnum.getEnum(apiType));
 		List<SyncParamDetailDTO> sourceDetailList = new ArrayList<>();
 		for(DmpPushMsgEntity dmpPushMsgEntity : dmpPushMsgEntityList) {
+			syncParamDTO.setSourceType(SourceTypeEnum.getEnum(dmpPushMsgEntity.getSourceType()));
 			SyncParamDetailDTO syncParamDetailDTO = new SyncParamDetailDTO();
 			syncParamDetailDTO.setSourceId(dmpPushMsgEntity.getSourceId());
 			syncParamDetailDTO.setSyncOperate(dmpPushMsgEntity.getSyncOperate());
@@ -566,11 +651,29 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 				log.error("查询同步调用erp服务报错" , e);
 			}
 		}else {
-			Map<String, Map<String, Object>> invoke = FeignQuery.invoke(Map.class , "com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "newFindDataSendSyncTask", Arrays.asList(syncParamDTO));
-			if(invoke != null) {
+			List<DmpOutputTaskRecordEntity> allUpdateList = new ArrayList<>();
+			Map<String, Map<String, Object>> result = null;
+			List<DmpCfgOutputDataEntity> dmpCfgOutputDataEntityList = dmpHandlerCache.getDmpCfgOutputDataEntityList(d -> d.getMainId().equals(dmpCfgOutputEntity.getId()));
+			if(CollUtil.isNotEmpty(dmpCfgOutputDataEntityList)) {
+				DmpCfgOutputDataEntity dmpCfgOutputDataEntity = dmpCfgOutputDataEntityList.get(0);
+				String dbId = dmpCfgOutputDataEntity.getDbId();
+				DataSource dataSource = dmpHandlerCache.getDataSource(dbId);
+				String sqlQuery = dmpCfgOutputDataEntity.getSqlString().replace("?", sourceDetailList.stream().map(SyncParamDetailDTO::getSourceId).collect(Collectors.joining("','", "('", "')")));
+				try {
+					Map<String, List<Map<String, Object>>> sourceResult = DmpHandlerUtils.queryDatabase(dataSource, sqlQuery);
+					result = new HashMap<>();
+					for(SyncParamDetailDTO syncParamDetailDTO : sourceDetailList) {
+						result.put(syncParamDetailDTO.getDataId(), DmpHandlerUtils.parseDbColumnName(sourceResult.get(syncParamDetailDTO.getSourceId())));
+					}
+				} catch (SQLException e) {
+					throw new RuntimeException("查询组装数据失败" , e);
+				}
+			}else {
+				result = FeignQuery.invoke(Map.class , "com.erp.server."+ system +".service.impl.SyncTaskServiceImpl", "newFindDataSendSyncTask", Arrays.asList(syncParamDTO));
+			}
+			if(result != null) {
 				Map<String, List<DmpOutputTaskRecordEntity>> dataIdOutputMaps = list.stream().collect(Collectors.groupingBy(DmpOutputTaskRecordEntity::getDataId));
-				List<DmpOutputTaskRecordEntity> allUpdateList = new ArrayList<>();
-				for(Map.Entry<String, Map<String, Object>> i : invoke.entrySet()) {
+				for(Map.Entry<String, Map<String, Object>> i : result.entrySet()) {
 					List<DmpOutputTaskRecordEntity> updateList = dataIdOutputMaps.get(i.getKey());
 					if(CollUtil.isNotEmpty(updateList)) {
 						String requestData = JSON.toJSONString(i.getValue());
@@ -582,9 +685,122 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 						allUpdateList.addAll(updateList);
 					}
 				}
-				return allUpdateList;
 			}
+			List<String> updateIds = allUpdateList.stream().map(DmpOutputTaskRecordEntity::getId).collect(Collectors.toList());
+			allUpdateList.addAll(list.stream().filter(l -> !updateIds.contains(l.getId())).collect(Collectors.toList()));
+			return allUpdateList;
 		}
 		return new ArrayList<>();
     }
+    
+
+    @Override
+    public DmpPushTaskDTO.SyncInfoDTO getErrorData(DmpSyncTaskDTO.OneDTO oneDTO) {
+        DmpPushTaskDTO.SyncInfoDTO syncInfoData = baseMapper.getErrorData(oneDTO);
+        if (ObjectUtil.isNotEmpty(syncInfoData)) {
+            return syncInfoData;
+        }
+        DmpPushTaskEntity dmpPushTaskEntity = dmpPushTaskService.getByParam(oneDTO);
+        if (ObjectUtil.isEmpty(dmpPushTaskEntity)) {
+            return syncInfoData;
+        }
+        return BeanMapperUtils.map(DmpPushTaskDTO.SyncInfoDTO.class, dmpPushTaskEntity);
+    }
+
+	@Override
+	public List<DmpOutputTaskRecordEntity> getOutputErrorTask(String systemId, String size) {
+		List<DmpOutputTaskRecordEntity> outputErrorTask = this.getBaseMapper().getOutputErrorTask(systemId, size);
+		if(outputErrorTask == null) {
+			outputErrorTask = new ArrayList<>();
+		}
+		return outputErrorTask;
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void dmpInputMoveToHistoryTable(String beforeUpdateTime, String size) {
+		List<String> list = dmpInputTaskService.lambdaQuery()
+			.eq(DmpInputTaskEntity::getStatus, DmpInputTaskStatusEnum.FINISH.getCode())
+			.lt(DmpInputTaskEntity::getUpdateTime, beforeUpdateTime)
+			.last(" limit " + size + " ")
+			.select(DmpInputTaskEntity::getId)
+			.list().stream().map(DmpInputTaskEntity::getId).collect(Collectors.toList());
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<String>> partition = Lists.partition(list, 50000);
+		for(List<String> p : partition) {
+			this.getBaseMapper().dmpInputMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
+		}
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void dmpRelationMoveToHistoryTable(String beforeUpdateTime, String size) {
+		List<String> dmpInputFileMongoRelationList = dmpInputFileMongoRelationService.lambdaQuery()
+				.lt(DmpInputFileMongoRelationEntity::getUpdateTime, beforeUpdateTime)
+				.last(" limit " + size + " ")
+				.select(DmpInputFileMongoRelationEntity::getId)
+				.list().stream().map(DmpInputFileMongoRelationEntity::getId).collect(Collectors.toList());
+		if(CollUtil.isNotEmpty(dmpInputFileMongoRelationList)) {
+			List<List<String>> filePartition = Lists.partition(dmpInputFileMongoRelationList, 50000);
+			for(List<String> fileP : filePartition) {
+				this.getBaseMapper().dmpRelationMoveToHistoryTable(fileP.stream().collect(Collectors.joining("','", "'", "'")), null);
+			}
+		}
+		
+		List<String> dmpInputMongoDmpRelationList = this.getBaseMapper().getDmpRelationMoveToHistoryTable(beforeUpdateTime, size);
+		if(CollUtil.isNotEmpty(dmpInputMongoDmpRelationList)) {
+			List<List<String>> dmpPartition = Lists.partition(dmpInputMongoDmpRelationList, 50000);
+			for(List<String> dmpP : dmpPartition) {
+				this.getBaseMapper().dmpRelationMoveToHistoryTable(null , dmpP.stream().collect(Collectors.joining("','", "'", "'")));
+			}
+		}
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void dmpOutputMoveToHistoryTable(String beforeUpdateTime, String size) {
+		List<String> list = this.getBaseMapper().getDmpOutputMoveToHistoryTable(beforeUpdateTime, size);
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<String>> partition = Lists.partition(list, 50000);
+		for(List<String> p : partition) {
+			this.getBaseMapper().dmpOutputMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
+		}
+		
+		redisUtil.del(RedisCacheConstants.DMP_OUTPUT_RECORD_HIS_COUNT);
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void dmpOutputNoRecordMoveToHistoryTable() {
+		List<String> list = this.getBaseMapper().getDmpOutputNoRecordMoveToHistoryTable();
+		if(CollUtil.isEmpty(list)) {
+			return;
+		}
+		
+		List<List<String>> partition = Lists.partition(list, 50000);
+		for(List<String> p : partition) {
+			this.getBaseMapper().dmpOutputNoRecordMoveToHistoryTable(p.stream().collect(Collectors.joining("','", "'", "'")));
+		}
+	}
+
+    @Override
+    public List<DmpOutputTaskRecordEntity> queryBySourceCodeAndCfgOutputId(String sourceCode, String cfgOutputId) {
+        return this.baseMapper.queryBySourceCodeAndCfgOutputId(sourceCode, cfgOutputId);
+    }
+
+    @Override
+    public DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass) {
+        return baseMapper.getOutputTaskRecord(sourceCode, outputClass);
+    }
+
+	@Override
+	public List<String> outputErrorCountMsg() {
+		return baseMapper.outputErrorCountMsg();
+	}
 }

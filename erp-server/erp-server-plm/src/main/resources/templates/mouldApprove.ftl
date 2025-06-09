@@ -1,0 +1,10 @@
+详细信息：模具信息已审核完成，请知悉
+项目名称：${name}
+产品经理：${productManager}
+模具分类编码：${mouldCategoryCode}
+创建人：${createUserName}
+创建时间：${createTime}
+审核人：${approveUserName}
+审核时间：${approveTime}
+审核结果：${status}
+审核说明：${approveRemark}

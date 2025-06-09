@@ -15,6 +15,7 @@ public enum ShipmentTypeEnum implements EnumMessage {
     SELF_DELIVER("selfDeliver", "自发货"),
     THIRD_WAREHOUSE_DELIVER("thirdWarehouseDeliver", "第三方仓发货"),
     PLATFORM_DELIVER("platformDeliver", "平台仓发货"),
+    FIRST_MILE_DELIVER("firstMileDelivery", "头程发货"),
     ;
 
     /**

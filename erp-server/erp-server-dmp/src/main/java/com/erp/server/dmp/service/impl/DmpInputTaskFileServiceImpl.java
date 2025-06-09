@@ -62,7 +62,7 @@ public class DmpInputTaskFileServiceImpl extends SuperServiceImpl<DmpInputTaskFi
     @Override
     public Boolean update(DmpInputTaskFileDTO.UpdateDTO updateDTO) {
         DmpInputTaskFileEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务文件存储"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拉取任务文件存储"));
         DmpInputTaskFileEntity dmpInputTaskFileEntity =  BeanMapperUtils.map(DmpInputTaskFileEntity.class, updateDTO);
 
         // 数据处理

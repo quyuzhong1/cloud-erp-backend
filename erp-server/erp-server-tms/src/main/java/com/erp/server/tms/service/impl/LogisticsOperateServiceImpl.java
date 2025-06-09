@@ -1,15 +1,12 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.IdUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.enums.ErpServerModuleEnum;
-import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
-import com.common.business.utils.StringUtil;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.dmp.entity.DmpPullTaskEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -20,9 +17,8 @@ import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.server.tms.service.LogisticsOperateService;
 import io.seata.common.util.StringUtils;
-import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.util.IdGenerator;
+import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 
@@ -63,11 +59,11 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         String id = null;
         try {
             id = dmpTaskFeign.saveOrUpdateDmpPullTask(dmpPullTaskEntity);
-            //增加异常预警
-            if (!RequestStatusEnums.SUCCESS.getCode().equals(status)){
-                dmpPullTaskEntity.setId(id);
-                this.sendPullWarnMsg(dmpPullTaskEntity);
-            }
+//            //增加异常预警
+//            if (!RequestStatusEnums.SUCCESS.getCode().equals(status)){
+//                dmpPullTaskEntity.setId(id);
+//                this.sendPullWarnMsg(dmpPullTaskEntity);
+//            }
 
         } catch (Exception e) {
             log.error("saveOrUpdateDmpPullTask:记录操作日志失败");
@@ -97,10 +93,10 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         try {
             id = dmpTaskFeign.saveOrUpdateDmpPushTask(dmpPushTaskEntity);
             //增加异常预警
-            if (!RequestStatusEnums.SUCCESS.getCode().equals(status) && isSendMsg){
-                dmpPushTaskEntity.setId(id);
-                this.sendPushWarnMsg(dmpPushTaskEntity);
-            }
+//            if (!RequestStatusEnums.SUCCESS.getCode().equals(status) && isSendMsg){
+//                dmpPushTaskEntity.setId(id);
+//                this.sendPushWarnMsg(dmpPushTaskEntity);
+//            }
         } catch (Exception e) {
             log.error("saveOrUpdateDmpPushTask:记录操作日志失败");
         }
@@ -115,7 +111,7 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
-        warnMsgInfo.setTitle(StrUtil.format("物流平台【{}】从{}拉取至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("物流平台【{}】从{}拉取至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getId());
         warnMsgInfo.setKeyInfo(entity.getReturnMsg());
@@ -131,7 +127,7 @@ public class LogisticsOperateServiceImpl implements LogisticsOperateService {
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_TMS);
-        warnMsgInfo.setTitle(StrUtil.format("物流平台【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("物流平台【{}】从{}推送至{}失败",entity.getSourceCode(),entity.getSourcePlatformName(),entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getId());
         warnMsgInfo.setKeyInfo(entity.getReturnMsg());

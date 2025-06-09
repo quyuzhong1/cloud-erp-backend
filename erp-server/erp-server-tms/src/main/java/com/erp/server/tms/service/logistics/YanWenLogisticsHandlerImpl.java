@@ -81,6 +81,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //燕文接口[{发件人税号}---senderInfo] 国家为挪威的时候推送[VOEC]税号,其他国家不用推送.
         request.getSenderInfo().setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo()));
         ValidatorUtil.validateEntity(request);
+        String ioss = request.getParcelInfo().getIoss();
         try {
             YanWenResponse<YanWenCreateWayBill> yanWenResponse = yanWenService.createWayBill(request,logisticsOrderVO.getAuthMap());
             if(!yanWenResponse.getSuccess()){
@@ -96,6 +97,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .transportNo(yanWenResponse.getData().getWaybillNumber())
                     .deliveryNo(yanWenResponse.getData().getOrderNumber())
                     .trackNo(yanWenResponse.getData().getWaybillNumber())
+                    .iossTaxNo(ioss)
                     .build());
         }catch (Exception e){
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
@@ -239,7 +241,7 @@ public class YanWenLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult<Object>authorization(Map<String, String> authMap){
         try {
             YanWenResponse<List<YanWenChannel>> yanWenResponse = yanWenService.getAllChannel(authMap);
             if (!yanWenResponse.getSuccess()) {

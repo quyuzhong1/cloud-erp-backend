@@ -1,8 +1,8 @@
 package com.erp.server.wms.handler;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncStatusEnum;
@@ -26,8 +26,8 @@ import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.ThirdWarehouseService;
 import io.seata.common.util.CollectionUtils;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -48,7 +48,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     private DmpTaskFeign dmpTaskFeign;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     public void handleAuthInfo(String id) {
         OverseasProviderEntity authEntity = getAuthEntity(id);
@@ -69,11 +69,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     public Boolean authorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         try {
             ThirdWarehouseContext.setAuthMap(dto.getAuthJson());
-            boolean result = hasWarehouse();
-            if (result) {
-                dmpTaskFeign.createThirdWarehouseTask(new ThirdWarehouseTaskDTO.AddDTO(dto.getId(), dto.getAuthJson(), getPlatForm().getCode()));
-            }
-            return result;
+            return warehouseAuthorize(dto);
         } finally {
             ThirdWarehouseContext.remove();
         }
@@ -91,7 +87,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
 
     @Override
     public ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq, String authId) {
-        if(StringUtils.isBlank(createInboundReq.getReceivingCode())){
+        if(CharSequenceUtil.isBlank(createInboundReq.getReceivingCode())){
             return failure("第三方入库单号不能为空");
         }
         return handleAndRemoveContext(() -> editInboundBill(createInboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_EDIT_INBOUND_BILL,createInboundReq.getReceivingCode());
@@ -107,7 +103,10 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         if(CollectionUtils.isNotEmpty(createOutboundReq.getItems())){
             Map<String,Integer> mergeSkuMap = createOutboundReq.getItems().stream().collect(Collectors.toMap(ThirdWarehouseCreateOutboundReq.Item::getProductSku, ThirdWarehouseCreateOutboundReq.Item::getQuantity, Integer::sum));
             //将map转成List<Item>
-            createOutboundReq.setItems(mergeSkuMap.entrySet().stream().map(v->new ThirdWarehouseCreateOutboundReq.Item(v.getKey(),v.getValue())).collect(Collectors.toList()));
+            createOutboundReq.setItems(mergeSkuMap.entrySet().stream().map(v->{
+                    ThirdWarehouseCreateOutboundReq.Item item = createOutboundReq.getItems().stream().filter(i->i.getProductSku().equals(v.getKey())).findFirst().orElse(new ThirdWarehouseCreateOutboundReq.Item());
+               return new ThirdWarehouseCreateOutboundReq.Item(v.getKey(),v.getValue(),item.getHsCode());
+            }).collect(Collectors.toList()));
         }
         return handleAndRemoveContext(() -> createOutboundBill(createOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL,createOutboundReq.getReferenceNo());
     }
@@ -117,6 +116,26 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         return handleAndRemoveContext(() -> cancelOutboundBill(cancelOutboundReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL,cancelOutboundReq.getOrderCode());
     }
 
+    @Override
+    public ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(ThirdWarehouseCalculateFeeReq calculateFeeReq, String authId) {
+        return handleAndRemoveContext(() -> getCalculateFeeBatch(calculateFeeReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_CALCULATE_FEE,calculateFeeReq.getCountryCode());
+    }
+
+    @Override
+    public ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(ThirdWarehouseUploadFileReq uploadFileReq, String authId) {
+        return handleAndRemoveContext(() -> uploadFile(uploadFileReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_UPLOAD_FILE,uploadFileReq.getOrderCode());
+    }
+
+    @Override
+    public ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(ThirdWarehouseUploadOrderLabelReq uploadOrderLabelReq, String authId) {
+        return handleAndRemoveContext(() -> uploadOrderLabel(uploadOrderLabelReq), authId,SourceTypeEnum.THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL,uploadOrderLabelReq.getOrderCode());
+    }
+
+    @Override
+    public ApiResult<String> refreshToken(String authId,Map<String,Object> map) {
+        return handleAndRemoveContext(() ->  refreshToken(map), authId,SourceTypeEnum.THIRD_WAREHOUSE_REFRESH_TOKEN,authId);
+    }
+
     protected abstract ApiResult<List<ThirdWarehouseSkuResp>> getSkuList(ThirdWarehouseProductReq productReq);
 
     protected abstract ApiResult<String> createInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
@@ -124,12 +143,19 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
     protected abstract ApiResult<String> editInboundBill(ThirdWarehouseCreateInboundReq createInboundReq);
 
     protected abstract ApiResult<String> cancelInboundBill(@Valid ThirdWarehouseCancelInboundReq cancelInboundReq);
-
+    protected abstract ApiResult<List<ThirdWarehouseCalculateFeeResponse>> getCalculateFeeBatch(@Valid ThirdWarehouseCalculateFeeReq calculateFeeReq);
+    protected abstract ApiResult<ThirdWarehouseUploadFileResponse> uploadFile(@Valid ThirdWarehouseUploadFileReq uploadFileReq);
+    protected abstract ApiResult<ThirdWarehouseUploadOrderLabelResponse> uploadOrderLabel(@Valid ThirdWarehouseUploadOrderLabelReq uploadFileReq);
     protected abstract ApiResult<String> createOutboundBill(ThirdWarehouseCreateOutboundReq createOutboundReq);
+
+    protected  ApiResult<String> refreshToken(Map<String,Object> map){
+        return success();
+    };
+
 
     protected abstract ApiResult<String> cancelOutboundBill(@Valid ThirdWarehouseCancelOutboundReq cancelOutboundReq);
 
-    protected abstract Boolean hasWarehouse();
+    protected abstract Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto);
 
     private <T> ApiResult<T> handleAndRemoveContext(Handler<T> handler, String authId,SourceTypeEnum businessType,String erpBusinessCode) {
         try {
@@ -144,7 +170,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         } catch (Exception e){
             log.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.msg,e);
             ThirdWarehouseContext.setMsg(ExceptionUtil.stacktraceToString(e,2000));
-            pushOperateLog(businessType,2000,erpBusinessCode, true);
+            pushOperateLog(businessType,2000,erpBusinessCode, false);
             return ApiResult.error(ApiError.THIRD_WAREHOUSE_INTERFACE_EXCEPTION.code,e.getMessage());
         } finally {
             // remove thread-local
@@ -201,7 +227,7 @@ public abstract class AbstractThirdWarehouseHandler extends BaseController imple
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(entity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-        warnMsgInfo.setTitle(StrUtil.format("第三方仓【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("第三方仓【{}】从{}推送至{}失败", entity.getSourceCode(), entity.getSourcePlatformName(), entity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(entity.getSourceType()));
         warnMsgInfo.setTableId(entity.getSourceId());
         warnMsgInfo.setKeyInfo(StringUtil.isEmpty(ThirdWarehouseContext.getMsg())?"":ThirdWarehouseContext.getMsg());

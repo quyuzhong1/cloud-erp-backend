@@ -74,11 +74,7 @@ public class OtherInstockDetailEntity extends BaseEntity<OtherInstockDetailEntit
 
     public static final String ACTUAL_QTY = "actual_qty";
 
-    public static final String UNIT = "unit";
-
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
-
-    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

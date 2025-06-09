@@ -1,6 +1,5 @@
 package com.erp.model.tms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
@@ -248,6 +247,10 @@ public class LogisticsBillDTO implements Serializable {
          * 物流轨迹更新时间
          */
         private LocalDateTime trackTime;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
 
     }
 
@@ -654,6 +657,10 @@ public class LogisticsBillDTO implements Serializable {
          *订单对应收货地址OAID 目前速卖通用到
          */
         private String oaid;
+        /**
+         * 物流id
+         */
+        private Long shipmentId;
 
         @NotBlank(message = "渠道不能为空")
         private String channelId;
@@ -696,6 +703,14 @@ public class LogisticsBillDTO implements Serializable {
          */
         private String platformCode;
         /**
+         * 包裹号【虾皮下单使用】
+         */
+        private String packageNumber;
+        /**
+         * 包裹id【tiktok下单使用】
+         */
+        private String packageId;
+        /**
          * 销售平台
          */
         private String salesPlatform;
@@ -719,14 +734,6 @@ public class LogisticsBillDTO implements Serializable {
          * 包裹信息
          */
         private PackageDTO packageInfo;
-
-//        /**
-//         * sku Id list
-//         */
-//        @Size(min = 1,message = "sku信息不能为空")
-//        @NotNull(message = "sku信息不能为空L")
-//        private List<SkuDTO> skuList;
-
         /**
          * 产品信息不能为空
          */
@@ -736,6 +743,7 @@ public class LogisticsBillDTO implements Serializable {
     }
 
     @Data
+    @Builder
     @NoArgsConstructor
     @AllArgsConstructor
     public static class GenerateBillResultDTO{
@@ -749,8 +757,14 @@ public class LogisticsBillDTO implements Serializable {
          * 跟踪单号
          */
         private String trackNo;
-
-
+        /**
+         * ioss税号
+         */
+        private String iossTaxNo;
+        /**
+         * 是否修改平台已标发货状态
+         */
+        private Boolean isPlatformShip = false;
     }
 
 
@@ -1103,5 +1117,18 @@ public class LogisticsBillDTO implements Serializable {
          * 销售物流单id
          */
         private  String id;
+    }
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class NoOutstockDTO {
+        //物流单id
+        private String id;
+        //销售出库单id
+        private String outstockId;
+        //销售出库单编码
+        private String outstockCode;
     }
 }

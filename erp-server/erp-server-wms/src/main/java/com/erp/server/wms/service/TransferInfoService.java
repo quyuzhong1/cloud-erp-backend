@@ -8,8 +8,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.wms.dto.TransferInfoDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.entity.*;
-import io.seata.spring.annotation.GlobalTransactional;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -266,4 +264,20 @@ public interface TransferInfoService extends SuperService<TransferInfoEntity> {
     List<TransferInfoEntity> listBySourceId(String sourceId);
 
     PagingVO<TransferInfoDTO.ListDTO> exportTransferInfo(PagingDTO<TransferInfoDTO.SearchParamDTO> dto);
+
+    /**
+     * 批量修改调拨日期
+     * @param entity
+     * @param billDate
+     * @return
+     */
+    BatchResultDTO updateBillDate(TransferInfoEntity entity, LocalDate billDate);
+    /**
+     * 处理错误数据
+     * @author will
+     * @date 2024/11/27 11:03
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO handleErrorData(String id);
 }

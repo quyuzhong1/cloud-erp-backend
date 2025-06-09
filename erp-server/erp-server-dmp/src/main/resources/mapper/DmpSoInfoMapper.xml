@@ -51,5 +51,45 @@
         platform_create_time, platform_update_time, source_platform, source_system, third_code, platform_code, invalid_status, order_status, delivery_status, return_status, platform_original_status, shop_id, shop_name, sell_remark, buyer_remark, pay_time, pay_status, pay_method, currency_code, exchange_rate, tax_rate, pay_amount, all_amount, shipping_amount, platform_cost, subsidy_amount, delivery_time, logistics_code, logistics_name, extend_data, unique_encrypt, data_encrypt, input_task_id, convert_id, next_level_id
     </sql>
 
+    <select id="findSoMissingDetail" resultMap="BaseResultMap">
+        SELECT
+            si.*
+        FROM
+            dmp_so_info si
+        LEFT JOIN dmp_so_detail sd ON sd.main_id = si.ID
+        WHERE si.source_system = #{sourceSystem}
+        <if test="null != nextLevelId">
+            AND si.next_level_id = #{nextLevelId}
+        </if>
+        <if test="null != startTime">
+            AND si.update_time &gt;= #{startTime}::timestamp
+        </if>
+        <if test="null != endTime">
+            AND si.update_time &lt;= #{endTime}::timestamp
+        </if>
+        AND si.is_deleted = false
+        AND sd.main_id IS NULL
+    </select>
+
+    <select id="listDetailByPlatformCode" resultType="com.erp.model.dmp.dto.AfterSaleDTO$DropDownDTO" parameterType="java.lang.String">
+        SELECT
+            si.id,
+            sd.id as detailId,
+            si.shop_id as shopId,
+            sd.sku_id as skuId,
+            sd.sku_no as skuNo,
+            sd.sku_name as skuName,
+            sd.qty,
+            si.source_platform as thirdType
+        FROM
+            dmp_so_info si
+                LEFT JOIN dmp_so_detail sd ON sd.main_id = si.ID and sd.is_deleted = FALSE
+        where
+            si.is_deleted = FALSE
+        <if test="null != platformCode and platformCode != ''">
+            AND (si.platform_code  = #{platformCode} or si.third_code = #{platformCode})
+        </if>
+        order by sd.create_time desc
+    </select>
 
 </mapper>

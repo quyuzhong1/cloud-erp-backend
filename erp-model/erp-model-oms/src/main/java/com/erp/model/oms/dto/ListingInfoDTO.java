@@ -190,6 +190,21 @@ public class ListingInfoDTO implements Serializable {
         private String warehouseProductName;
     }
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SearchResultDTO {
+
+        /**
+         * listingId
+         */
+        private String listingId;
+
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
+    }
 
     @Data
     @NoArgsConstructor
@@ -207,6 +222,32 @@ public class ListingInfoDTO implements Serializable {
         public static BaseDropDownDTO init(String fieldValue) {
             return new BaseDropDownDTO(fieldValue, fieldValue);
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SearchParamDTO {
+
+        /**
+         * 平台sku(客户sku)
+         */
+        @NotBlank(message = "平台sku不能为空")
+        private String searchKey;
+
+        /**
+         * 类型
+         *     PLATFORM("platform","平台"),
+         *     WAREHOUSE("warehouse","仓库"),
+         *     CUSTOMER("customer","客户"),
+         */
+        @NotBlank(message = "类型不能为空")
+        private String type;
+
+        /**
+         * 授权id,客户id（类型为仓库和客户时必填）
+         */
+        private String authId;
     }
 
     @Data
@@ -263,4 +304,47 @@ public class ListingInfoDTO implements Serializable {
         private String errorUrl;
     }
 
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryDTO {
+        /**
+         * 平台skuId
+         */
+        private List<String> platformSkuIdList;
+        /**
+         * 平台skuNo
+         */
+        private List<String> platformSkuNoList;
+        /**
+         * 类型 platform 平台  warehouse 仓库
+         */
+        private String type;
+
+        private String authId;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class QueryPlatformDTO {
+        /**
+         * 平台skuNo
+         */
+        private String platformSkuNo;
+        /**
+         * 类型 platform 平台  warehouse 仓库
+         */
+        private String type;
+        /**
+         * 店铺账号
+         */
+        private String account;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+    }
 }

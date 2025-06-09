@@ -1,16 +1,13 @@
 package com.erp.model.wms.dto;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
-import java.io.Serializable;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -370,4 +367,27 @@ public class OverseasWarehouseInboundDetailDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ViewChangeDTO {
+
+        private String id;
+
+        private String sourceId;
+        private String sourceCode;
+        /**
+         * 业务单号
+         */
+        private String code;
+        private String toWarehouseId;
+        private String toWarehouseName;
+        private String detailId;
+        private String platformSkuNo;
+        private String skuNo;
+        private String skuId;
+        private String productName;
+        private Integer deliveryQty;
+        private Integer receiveQty;
+        private LocalDateTime receiveTime;
+    }
 }

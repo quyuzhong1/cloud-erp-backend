@@ -226,10 +226,11 @@
                sui.real_name as realName,
                sui.user_state as userState,
                sui.update_user_name as updateUserName,
-               sui.update_time as updateTime
+               sui.update_time as updateTime,
+               sui.create_time as createTime
         from sys_user_info sui
         <where>
-            sui.delete_state = 1 and sui.user_type = 'erp'
+            ${params.sqlMap.default} and sui.delete_state = 1 and sui.user_type = 'erp'
             <if test="params.userName != null and params.userName != ''">
                 and sui.user_name  ilike concat('%',#{params.userName}::text,'%')
             </if>

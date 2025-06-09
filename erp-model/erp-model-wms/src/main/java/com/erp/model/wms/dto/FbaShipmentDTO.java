@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
@@ -8,13 +9,14 @@ import com.alibaba.excel.annotation.ExcelProperty;
 import com.alibaba.excel.annotation.write.style.ColumnWidth;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.enums.RequestIdTypeEnum;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -443,8 +445,8 @@ public class FbaShipmentDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class PagingParamDTO extends SortDTO {
-
+    public static class PagingParamDTO extends SortDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 页面高级查询
          */
@@ -455,7 +457,14 @@ public class FbaShipmentDTO implements Serializable {
          */
         private Map<String, String> sqlMap;
 
-
+        /**
+         * 主表id
+         */
+        private List<String> ids;
+        /**
+         * 明细ids
+         */
+        private List<String> detailIds;
     }
 
     /**
@@ -652,6 +661,14 @@ public class FbaShipmentDTO implements Serializable {
          * 签收数量
          */
         private Integer receiveQty;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
 
         @Override
         public String toString(){
@@ -870,4 +887,79 @@ public class FbaShipmentDTO implements Serializable {
         private Integer requisitionQty;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class SyncViewDTO {
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 授权状态
+         */
+        private String authStatus;
+        /**
+         * 授权状态Name
+         */
+        private String authStatusName;
+        /**
+         * 最近同步时间
+         */
+        private LocalDateTime lastSyncTime;
+        /**
+         * 同步结果
+         */
+        private String syncResult;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ViewListReqDTO {
+
+        /**
+         * 目标ID类型:
+         * mainId=单据ID
+         * detailId=详情ID
+         */
+        @NotNull(message = "目标ID类型不能为空")
+        @JsonDeserialize(using = RequestIdTypeEnum.RequestIdEnumDeserializer.class)
+        private RequestIdTypeEnum requestIdType;
+
+        /**
+         * 请求ID列表
+         */
+        @NotNull(message = "请求ID列表不能为空")
+        @Size(min = 1, message = "请求ID至少有一个")
+        private List<@NotBlank(message = "请求ID不能为空") String> requestIdList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ReceivedDTO {
+        /**
+         * 详情detailId
+         */
+        @NotBlank(message = "详情detailId不能为空")
+        private String detailId;
+
+        /**
+         * 签收数量
+         */
+        @NotNull(message = "签收数量不能为空")
+        private Integer receivedQty;
+
+        /**
+         * 签收日期
+         */
+        @NotNull(message = "签收日期不能为空")
+        private LocalDate receiveDate;
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
+    }
 }

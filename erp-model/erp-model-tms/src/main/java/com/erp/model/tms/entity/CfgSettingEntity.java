@@ -1,14 +1,15 @@
 package com.erp.model.tms.entity;
 
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
 import org.apache.ibatis.type.JdbcType;
+
+import java.io.Serializable;
 
 
 /**
@@ -52,15 +53,15 @@ public class CfgSettingEntity extends BaseEntity<CfgSettingEntity> {
     private String remark;
 
 
-    public static final String KEY = "key";
+    public static final String FIELD_KEY = "key";
 
     public static final String DATA_JSON = "data_json";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
-    public static final String INDEX = "index";
+    public static final String FIELD_INDEX = "index";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

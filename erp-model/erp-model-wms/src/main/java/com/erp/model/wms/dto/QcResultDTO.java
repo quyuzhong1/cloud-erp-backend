@@ -7,10 +7,12 @@ import com.erp.model.wms.enums.QcReCheckResultEnum;
 import com.erp.model.wms.enums.QcResultEnum;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.*;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -23,16 +25,18 @@ import java.util.List;
  * @Created by yl
  */
 @Data
-@NoArgsConstructor
 public class QcResultDTO {
-
+    private QcResultDTO() {
+        throw new IllegalStateException("Utility QcResultDTO class");
+    }
 
     /**
      * 暂存 质检信息
      */
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO implements Serializable {
+        private static final long serialVersionUID = 1905122041950251207L;
 
         private String id;
         /**
@@ -153,7 +157,8 @@ public class QcResultDTO {
      */
     @Data
     @NoArgsConstructor
-    public static class ViewDTO {
+    public static class ViewDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
         private String id;
 
@@ -365,6 +370,7 @@ public class QcResultDTO {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class UpdateHandleModeDTO {
 
         /**
@@ -452,10 +458,14 @@ public class QcResultDTO {
         private String qcStatus;
 
         /**
-         * 是否新品首批
-         * true 是
+         * 新品首批
          */
-        private Boolean isFirstMassProduct;
+        private String firstMassProduct;
+
+        /**
+         * 采购单明细id
+         */
+        private String purchaseOrderDetailId;
 
         /**
          * 采购订单code

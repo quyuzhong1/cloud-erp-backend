@@ -147,7 +147,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
                 .eq(CfgSettingEntity::getType, SettingEnum.NEW_DMP_PULL_SWITCH_LIST.getType())
                 .eq(CfgSettingEntity::getValue, "1")
                 .count();
-        if (count > 1){
+        if (count > 0){
             // 执行新中台拉取逻辑
             return newDmpPullShipment(dto, shopInfoDTO);
         } else {
@@ -190,7 +190,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
             String platform = PlatformDictEnum.AMAZON.getCode();
             String business = BusinessTypeEnum.FBA_SHIPMENT.getCode();
             for (PlatformAmazonFbaShipmentDTO amazonShipmentDTO : amazonFbaShipmentDTOList) {
-                // TODO 封装?
                 amazonShipmentDTO.setDownloadStatus(1);
                 amazonShipmentDTO.setDownloadTime(LocalDateTime.now(ZoneId.systemDefault()).toString());
                 // 转换
@@ -300,7 +299,6 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         body.setPeriod(periodEnum);
         // 请求
         ReportsApi reportsApi = ReportsApi.initApi(marketplaceEnum.getEndpointsEnum(), shopInfoDTO, true, null);
-        // TODO 兼容已创建
         CreateReportScheduleResponse response = reportsApi.createReportSchedule(body);
 
         // 更新到记录
@@ -683,7 +681,7 @@ public class AmzReportHandleServiceImpl implements AmzReportHandleService {
         DmpInputHotfixCreateRequest dmpInputHotfixCreateRequest = new DmpInputHotfixCreateRequest();
         dmpInputHotfixCreateRequest.setCfgInputDetailIdList(inputDetailIds);
         dmpInputHotfixCreateRequest.setCfgInputId(inputEntity.getId());
-        dmpInputHotfixCreateRequest.setDetailExtendJson(JSONObject.toJSONString(dto));
+        dmpInputHotfixCreateRequest.setDetailExtendJson(JSON.toJSONString(dto));
         dmpInputCreateFactory.doHotfixInputTask(dmpInputHotfixCreateRequest);
         return true;
     }

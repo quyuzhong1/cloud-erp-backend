@@ -1,6 +1,7 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.plm.dto.PreTaskUpdateDTO;
 import com.erp.model.plm.enums.TaskRelationshipEnum;
@@ -8,8 +9,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * 任务的前置任务表
@@ -18,7 +17,7 @@ import java.util.Date;
 @Data
 @TableName(value ="template_pre_task")
 @NoArgsConstructor
-public class TemplatePreTaskEntity extends BaseEntity implements Serializable {
+public class TemplatePreTaskEntity extends BaseEntity<TemplatePreTaskEntity> implements Serializable {
 
     /**
      * 任务id

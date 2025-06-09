@@ -1,12 +1,11 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @author Will
@@ -16,7 +15,7 @@ import java.util.Date;
  */
 @TableName(value ="product_detail_comment")
 @Data
-public class ProductDetailCommentEntity extends BaseEntity implements Serializable {
+public class ProductDetailCommentEntity extends BaseEntity<ProductDetailCommentEntity> implements Serializable {
 
     /**
      * 产品信息id

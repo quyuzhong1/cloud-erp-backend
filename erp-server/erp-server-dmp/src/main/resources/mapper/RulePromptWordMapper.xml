@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.dmp.mapper.RulePromptWordMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.dmp.entity.RulePromptWordEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="name" property="name" />
+       <result column="disabled" property="disabled" />
+       <result column="description" property="description" />
+       <result column="tips" property="tips" />
+       <result column="solution" property="solution" />
+       <result column="index" property="index" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        name, disabled, description, tips, solution, index
+    </sql>
+    <select id="paging" resultType="com.erp.model.dmp.dto.RulePromptWordDTO$ListDTO">
+        select rpw.id,
+               rpw.index,
+               rpw.name,
+               rpw.description,
+               rpw.disabled,
+               rpw.create_user_name as createUserName,
+               rpw.create_time as createTime,
+        rpw.update_user_name as update_user_name,
+        rpw.update_time as update_time
+        from
+                     rule_prompt_word rpw
+        where ${params.sqlMap.default}
+        and rpw.is_deleted = false
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        rpw.create_time DESC
+    </select>
+    <select id="list" resultType="com.erp.model.dmp.entity.RulePromptWordEntity">
+        select *
+        from rule_prompt_word
+        where is_deleted = false
+    </select>
+
+
+</mapper>

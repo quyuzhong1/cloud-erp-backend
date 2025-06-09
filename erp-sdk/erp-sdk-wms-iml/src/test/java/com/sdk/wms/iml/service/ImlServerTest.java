@@ -196,15 +196,5 @@ public class ImlServerTest {
 
         // 打印转换后的本地日期时间
         System.out.println("LocalDateTime: " + localDateTime);
-//        ImlGetOutboundReq imlGetOutboundReq = ImlGetOutboundReq.builder()
-////                .orderCode("RV86526-240129-0001")
-//                .modifyDateFrom(localDateTime)
-//                .modifyDateTo(localDateTime.plusMinutes(1440))
-//                .pageSize(100)
-//                .build();
-//
-//        List<ImlOutboundResp> respList = new ArrayList<>();
-//        ImlResponse<List<ImlOutboundResp>> response = imlServer.getOutboundBatch(imlGetOutboundReq);
-//        System.out.println(response);
     }
 }

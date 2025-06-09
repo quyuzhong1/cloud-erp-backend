@@ -48,6 +48,7 @@
         wcs.main_id as id,
         wcd.sku_id,
         wcd.sku_no,
+        wcd.fn_sku,
         SUM(wcd.pack_qty) AS packQty,
         SUM(wcs.box_qty) AS boxQty
         FROM wms_carton_spec wcs
@@ -62,7 +63,8 @@
           </if>
         GROUP BY wcs.main_id,
         wcd.sku_id,
-        wcd.sku_no
+        wcd.sku_no,
+        wcd.fn_sku
     </select>
 
     <!--根据来源Id查询包装信息-->

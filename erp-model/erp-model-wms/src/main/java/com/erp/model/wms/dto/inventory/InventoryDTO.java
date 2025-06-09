@@ -1,13 +1,11 @@
 package com.erp.model.wms.dto.inventory;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.vo.PagingVO;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.apache.poi.ss.formula.functions.T;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
@@ -15,7 +13,9 @@ import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname: InventoryDTO
@@ -75,7 +75,7 @@ public class InventoryDTO implements Serializable {
          * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位<br/>
          * 接口地址：/wms/dict/drop/down?type=inventoryDimension
          */
-        @NotBlank
+//        @NotBlank
         private String dimension;
 
         /**
@@ -92,6 +92,16 @@ public class InventoryDTO implements Serializable {
          * SKU ID编码集合
          */
         private List<String> skuIdList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -139,7 +149,8 @@ public class InventoryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class ExportInvParamDTO {
+    public static class ExportInvParamDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
         /**
          * 仓库id（勾选导出必传参数）
@@ -235,17 +246,6 @@ public class InventoryDTO implements Serializable {
          * 查询维度：warehouse仓库，warehouseArea库区，warehouseLocation仓位
          */
         private String dimension;
-
-        /**
-         * 仓位编码
-         */
-//        private String warehouseLocationCode;
-
-        /**
-         * 库区编码
-         */
-//        private String warehouseAreaCode;
-
         /**
          * 库区编码集合
          */
@@ -270,6 +270,16 @@ public class InventoryDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -442,9 +452,15 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class ExportInvFlowSearchParamDTO extends SortDTO {
         /**
-         * 勾选行数据（仅传该字段（行id），其他字段不要传输）
+         * 页面高级查询
          */
-        private List<String> ids;
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
         /**
          * 仓库id（点击查看流水必传参数）
          */
@@ -454,7 +470,6 @@ public class InventoryDTO implements Serializable {
         /**
          * 库存组织id（点击查看流水必传参数）
          */
-        @NotEmpty(message = "库存组织不能为空")
         private String orgId;
 
         /**
@@ -462,42 +477,6 @@ public class InventoryDTO implements Serializable {
          */
         @NotEmpty(message = "sku不能为空")
         private String skuId;
-
-        /**
-         * 单据编号
-         */
-        private String sourceCode;
-
-        /**
-         * 业务日期范围（单据日期）
-         */
-        private List<LocalDate> dateList;
-
-        /**
-         * 操作类型（对应原型单据状态）  接口地址：/wms/common/enumDropDown?type=InventoryOperationMode
-         */
-        private List<String> operationModeList;
-
-        /**
-         * 库存状态  接口地址：/wms/common/enumDropDown?type=InventoryStatus
-         */
-        private List<String> inventoryStatusList;
-
-        /**
-         * 销售状态集合 接口地址：plm/common/enumDropDown?type=SaleState
-         */
-        private List<Integer> saleStatusList;
-
-        /**
-         * 库存组织集合
-         */
-        private List<String> orgIdList;
-
-        /**
-         * sku id编码集合，不提供给前端使用
-         */
-        @JsonIgnore
-        private List<String> skuIdList;
 
         /**
          * 仓位编码
@@ -512,6 +491,17 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     public static class TransFlowSearchParamDTO extends SortDTO {
 
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String,String> sqlMap;
+
         /**
          * 仓库id（点击查看流水必传参数）
          */
@@ -521,7 +511,6 @@ public class InventoryDTO implements Serializable {
         /**
          * 库存组织id（点击查看流水必传参数）
          */
-        @NotEmpty(message = "库存组织不能为空")
         private String orgId;
 
         /**
@@ -534,26 +523,6 @@ public class InventoryDTO implements Serializable {
          * 仓位编码
          */
         private String warehouseLocation;
-
-        /**
-         * 单据编号
-         */
-        private String sourceCode;
-
-        /**
-         * 业务日期范围（单据日期）
-         */
-        private List<LocalDate> dateList;
-
-        /**
-         * 操作类型（对应原型单据状态）  接口地址：/wms/common/enumDropDown?type=InventoryOperationMode
-         */
-        private List<String> operationModeList;
-
-        /**
-         * 库存状态  接口地址：/wms/common/enumDropDown?type=InventoryStatus
-         */
-        private List<String> inventoryStatusList;
     }
 
 
@@ -730,6 +699,16 @@ public class InventoryDTO implements Serializable {
          */
         private List<LocalDate> billDateList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
     /**
@@ -796,6 +775,16 @@ public class InventoryDTO implements Serializable {
          * 单据日期
          */
         private List<LocalDate> billDateList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -943,6 +932,16 @@ public class InventoryDTO implements Serializable {
          */
         private String syncKingdeeStatusName;
 
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
+
     }
 
     /**
@@ -956,7 +955,7 @@ public class InventoryDTO implements Serializable {
          * 日期类型 (approveDate审核日期，billDate单据日期)
          * /api/wms/dict/list，字典inventoryDate
          */
-        @NotBlank(message = "日期类型不能为空")
+//        @NotBlank(message = "日期类型不能为空")
         private String dateType;
 
 
@@ -968,7 +967,7 @@ public class InventoryDTO implements Serializable {
         /**
          * 日期范围
          */
-        @NotEmpty(message = "日期范围不能为空")
+//        @NotEmpty(message = "日期范围不能为空")
         private List<LocalDate> dateList;
 
 
@@ -981,6 +980,16 @@ public class InventoryDTO implements Serializable {
          * 仓库id集合
          */
         private List<String> warehouseIdList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -1039,6 +1048,16 @@ public class InventoryDTO implements Serializable {
          */
         private List<String> warehouseIdList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
     }
 
 
@@ -1049,13 +1068,6 @@ public class InventoryDTO implements Serializable {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class UsableInventoryParamDTO {
-        /**
-         * 组织id
-         */
-        /*
-        @NotBlank(message = "仓库组织不能为空")
-        private String orgId;
-         */
 
         /**
          * 仓库id
@@ -1248,11 +1260,13 @@ public class InventoryDTO implements Serializable {
         private Integer receiveMaterielQty;
 
         public Integer getTotalInstockQty() {
-            return this.totalInstockQty = this.purchaseInstockQty + this.otherInstockQty + this.transferInstockQty + this.inventoryProfitInstockQty + this.saleReturnQty + this.machineInstockQty + this.returnMaterielQty;
+            List<Integer> integerList = Arrays.asList(this.purchaseInstockQty , this.otherInstockQty , this.transferInstockQty , this.inventoryProfitInstockQty , this.saleReturnQty , this.machineInstockQty , this.returnMaterielQty);
+            return this.totalInstockQty = integerList.stream().mapToInt(Integer::intValue).sum();
         }
 
         public Integer getTotalOutstockQty() {
-            return this.totalOutstockQty = this.purchaseReturnQty + this.saleOutstockQty + this.otherOutstockQty + this.inventoryLossOutstockQty + this.transferOutstockQty + this.machineOutstockQty + this.receiveMaterielQty;
+            List<Integer> integerList = Arrays.asList(this.purchaseReturnQty , this.saleOutstockQty , this.otherOutstockQty , this.inventoryLossOutstockQty , this.transferOutstockQty , this.machineOutstockQty , this.receiveMaterielQty);
+            return this.totalOutstockQty = integerList.stream().mapToInt(Integer::intValue).sum();
         }
 
         public Integer getPurchaseInstockQty() {
@@ -1429,6 +1443,7 @@ public class InventoryDTO implements Serializable {
          * 是否零库存
          */
         private boolean zeroInventory;
+        private String permissionSql;
     }
 
     @Data
@@ -1600,9 +1615,10 @@ public class InventoryDTO implements Serializable {
     /**
      * PDA:库存查询（SKU）
      */
+    @EqualsAndHashCode(callSuper = true)
     @Data
     @NoArgsConstructor
-    public static class PdaInventoryWarehousePageDTO<T> extends PagingVO implements Serializable{
+    public static class PdaInventoryWarehousePageDTO<T> extends PagingVO<T> implements Serializable{
         /**
          * 库位
          */
@@ -1799,7 +1815,7 @@ public class InventoryDTO implements Serializable {
 
     @AllArgsConstructor
     @Data
-    public static class tabDto{
+    public static class TabDto {
         /**
          * 类型：warehouse仓库，warehouseArea库区，warehouseLocation仓位
          */
@@ -1809,5 +1825,10 @@ public class InventoryDTO implements Serializable {
          * 数量
          */
         private long count;
+
+        /**
+         * 名称
+         */
+        private String tabFlagName;
     }
 }

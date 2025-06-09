@@ -1,8 +1,8 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -88,9 +89,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
     @Resource
     private WarehouseService warehouseService;
-
+    @Lazy
     @Resource
     private WmsCartonSpecService wmsCartonSpecService;
+    @Resource
+    private SoOutstockService soOutstockService;
 
 
     @Override
@@ -108,13 +111,14 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      *
      * @param mainId
      * @param detailList
+     * @param entity
      * @return void
      * @author yl
      * @date 2023-05-19 10:18
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType) {
+    public void add(String mainId, List<SoOutstockDetailDTO.AddDTO> detailList, String orderType, SoOutstockEntity entity) {
         if (CollectionUtils.isEmpty(detailList)) {
             return;
         }
@@ -162,7 +166,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //处理明细数据
             handleB2cDetailData(addList);
         }
-
+        //赋值仓库名称
+        if(Objects.nonNull(entity)){
+            addList.forEach(v->v.setWarehouseName(entity.getWarehouseName()));
+        }
 
         super.saveBatch(addList);
         wmsAttachmentService.saveBatch(batchAttachmentList);
@@ -185,7 +192,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         List<String> warehouseLocationList = resultList.stream().map(SoOutstockDetailDTO.ViewDTO::getWarehouseLocation).collect(Collectors.toList());
         InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
         skuInventoryDTO.setSkuIdList(skuIdList);
-        skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+        skuInventoryDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
         skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
         skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
         List<String> idList = dbList.stream().map(SoOutstockDetailEntity::getId).collect(Collectors.toList());
@@ -253,7 +260,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
-        List<String> excludedIdList = detailList.stream().filter(d -> StringUtils.isNotBlank(d.getId())).
+        List<String> excludedIdList = detailList.stream().filter(d -> CharSequenceUtil.isNotBlank(d.getId())).
                 map(SoOutstockDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
 
         //发货通知单
@@ -296,7 +303,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         } else {
             InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
             skuInventoryDTO.setSkuIdList(skuIdList);
-            skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+            skuInventoryDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
             skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
             skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
             //可用数量
@@ -360,7 +367,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_92029);
         }
-        List<SoOutstockDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        List<SoOutstockDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> CharSequenceUtil.isNotBlank(c.getId())).collect(Collectors.toList());
         List<SoOutstockDetailEntity> dbList = this.listBaseByMainId(mainId);
         List<Pair<String, String>> pairList = updateList.stream().map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
         List<String> deleteIdList = getDeleteIds(pairList, dbList);
@@ -390,7 +397,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
 
         for (SoOutstockDetailDTO.UpdateDTO item : detailList) {
             String id = item.getId();
-            Boolean isAdd = StringUtils.isBlank(id);
+            Boolean isAdd = CharSequenceUtil.isBlank(id);
             SoOutstockDetailEntity entity = new SoOutstockDetailEntity();
             BeanMapper.copy(item, entity);
             if (isAdd) {
@@ -484,7 +491,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         if (CollectionUtils.isEmpty(soIds)) {
             return new ArrayList<>();
         }
-        List<SoOutstockDetailEntity> resultList = baseMapper.listDetailBySoIds(soIds);
+        List<String> newSoIds = soIds.stream().filter(StringUtils::isNotBlank).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(newSoIds)) {
+            return new ArrayList<>();
+        }
+		List<SoOutstockDetailEntity> resultList = baseMapper.listDetailBySoIds(newSoIds);
         return resultList;
     }
 
@@ -545,7 +556,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      */
     @Override
     public void checkB2cOrderQty(String warehouseId, String soId, String sourceId, String sourceType, List<SoOutstockDetailDTO.UpdateDTO> checkList) {
-        if(StringUtils.isBlank(warehouseId)){
+        if(CharSequenceUtil.isBlank(warehouseId)){
             throw new ServiceException(ApiError.ERROR_99002);
         }
         // 忽略库存计算SKU
@@ -586,7 +597,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         } else {
             InventoryQtyDTO.SkuInventoryParamDTO skuInventoryDTO = new InventoryQtyDTO.SkuInventoryParamDTO();
             skuInventoryDTO.setSkuIdList(skuIdList);
-            skuInventoryDTO.setWarehouseIdList(Arrays.asList(warehouseId));
+            skuInventoryDTO.setWarehouseIdList(Collections.singletonList(warehouseId));
             skuInventoryDTO.setWarehouseLocationIdList(warehouseLocationList);
             skuInventoryDTO.setInventoryStatus(InventoryStatusEnum.USABLE.getCode());
             //获取B2C销售订单详情集合
@@ -604,16 +615,6 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 if (ignoreInventorySkuIds.contains(item.getSkuId())) {
                     log.warn("sku id: {}产品属性是费用或服务，不参与库存出入库，不做库存验证", item.getSkuId());
                 } else {
-//                    //这个是销售数量
-//                    Integer soQty = soB2cDetailList.stream().filter(s -> s.getId().equals(soDetailId)).findFirst().
-//                            flatMap(obj -> Optional.ofNullable(obj.getQty())).orElse(0);
-//                    //这个是已出的数量 这个对应的就是销售订单的详情id
-//                    Integer outStockQty = soOutstockDetailList.stream().filter(s ->
-//                            s.getSoDetailId().equals(soDetailId)
-//                    ).mapToInt(SoOutstockDetailEntity::getActualQty).sum();
-//                    if (outStockQty + actualQty > soQty) {
-//                        throw new ServiceException(ApiError.ERROR_92028);
-//                    }
                     //即时库存
                     Integer inventory = skuInventoryList.stream().filter(s -> s.getSkuId().equals(skuId) && s.getWarehouseLocationId().
                             equals(warehouseLocation)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getInventoryTotal())).orElse(0);
@@ -636,7 +637,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 .filter(v->CollectionUtils.isEmpty(v.getHistorySkuMappingList()))
                 .map(SoOutstockDetailDTO.AddDTO::getSkuNo).collect(Collectors.toList());
         if (CollectionUtils.isNotEmpty(notExistMapping)){
-            throw new ServiceException(StrUtil.format("{}找不到历史映射关系",notExistMapping));
+            throw new ServiceException(CharSequenceUtil.format("{}找不到历史映射关系",notExistMapping));
         }
         // 生成库存检查参数
         List<String> skuIdList = new LinkedList<>();
@@ -664,7 +665,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         Map<String, Integer> inventoryQtyMap = inventoryEntityList
                 .stream()
                 .filter(e-> InventoryStatusEnum.USABLE.getCode().equalsIgnoreCase(e.getDictInventoryStatus()))
-                .collect(Collectors.toMap(e -> StrUtil.format("{}_{}_{}_{}", e.getWarehouseId(), e.getOrgId(), e.getSkuId(), e.getWarehouseLocation()), InventoryEntity::getQty));
+                .collect(Collectors.toMap(e -> CharSequenceUtil.format("{}_{}_{}_{}", e.getWarehouseId(), e.getOrgId(), e.getSkuId(), e.getWarehouseLocation()), InventoryEntity::getQty));
         ConcurrentHashMap<String, Integer> currentInventoryQtyMap = new ConcurrentHashMap<>(inventoryQtyMap);
         // 查询仓库是否开启负库存
         WarehouseDTO.UpdateDTO warehouseDTO = warehouseService.detailWithCache(dto.getWarehouseId());
@@ -688,7 +689,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             for (int idx = 0; idx < currentSize; idx++) {
                 SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO = currentMappingList.get(idx);
                 // 当前库存key
-                String currentInventoryQtyKey = StrUtil.format("{}_{}_{}_{}", dto.getWarehouseId(), dto.getWarehouseOrgId(), currentSkuMappingDTO.getProductSkuId(), addDTO.getWarehouseLocation());
+                String currentInventoryQtyKey = CharSequenceUtil.format("{}_{}_{}_{}", dto.getWarehouseId(), dto.getWarehouseOrgId(), currentSkuMappingDTO.getProductSkuId(), addDTO.getWarehouseLocation());
                 // 当前库存数量
                 Integer currentQty = currentInventoryQtyMap.getOrDefault(currentInventoryQtyKey, 0);
 
@@ -783,7 +784,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     }
 
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<SoOutstockDetailEntity> dbList) {
-        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
+        List<String> ids = pairList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getKey())).
                 map(obj -> obj.getKey()).collect(Collectors.toList());
         List<String> dbIds = dbList.stream().map(SoOutstockDetailEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());
@@ -814,7 +815,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @date 2023-05-19 11:36
      */
     private List<SoOutstockDetailEntity> listBaseByMainId(String mainId) {
-        if (StringUtils.isNotBlank(mainId)) {
+        if (CharSequenceUtil.isNotBlank(mainId)) {
             return this.lambdaQuery().eq(SoOutstockDetailEntity::getMainId, mainId).orderByAsc(SoOutstockDetailEntity::getId).list();
         }
         return Collections.emptyList();
@@ -847,7 +848,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             if (ObjectUtils.isEmpty(soDetailEntity)) {
                 throw new ServiceException(ApiError.ERROR_92015);
             }
-            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> StrUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
+            SoInfoEntity soInfoEntity = soInfoList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), soDetailEntity.getMainId())).findFirst().orElse(null);
             if (ObjectUtil.isEmpty(soInfoEntity)) {
                 throw new ServiceException(ApiError.ERROR_92016);
             }
@@ -858,7 +859,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setPrice(soDetailEntity.getPrice());
             detailEntity.setTaxRate(soDetailEntity.getTaxRate());
             detailEntity.setExchangeRate(soDetailEntity.getExchangeRate());
-            detailEntity.setAmount(MathUtil.multiply(soDetailEntity.getPrice(), detailEntity.getActualQty()));
+            detailEntity.setAmount(MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), detailEntity.getActualQty()));
             detailEntity.setCurrency(soDetailEntity.getCurrency());
             detailEntity.setCurrencySymbol(soDetailEntity.getCurrencySymbol());
             //销售订单明细已下推的销售出库单
@@ -867,7 +868,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
              *  最后一笔价税合计(本位币)=总价税合计(本位币)-价税合计SKU累计(本位币)
              */
             List<SoOutstockDetailEntity> soOutStockDetailList = soOutstockDetailList.stream().filter(obj -> obj.getSoDetailId().equals(soDetailEntity.getId())).collect(Collectors.toList());
-            BigDecimal allAmountLocalCurrency = MathUtil.multiply(soDetailEntity.getAllAmountLocalCurrency(), MathUtil.divide(new BigDecimal(detailEntity.getActualQty()), new BigDecimal(soDetailEntity.getQty())));
+            BigDecimal allAmountLocalCurrency = MathUtil.multiplyWithTwo(soDetailEntity.getAllAmountLocalCurrency(), MathUtil.divide(new BigDecimal(detailEntity.getActualQty()), new BigDecimal(soDetailEntity.getQty())));
             if (CollectionUtils.isNotEmpty(soOutStockDetailList)) {
                 Integer totalActualQty = soOutStockDetailList.stream().map(SoOutstockDetailEntity::getActualQty).reduce(MathUtil.ZERO, Integer::sum);
                 if (MathUtil.compareTo(totalActualQty + detailEntity.getActualQty(), soDetailEntity.getAllAmountLocalCurrency()) == MathUtil.ZERO) {
@@ -900,14 +901,16 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
                 continue;
             }
             //虚拟仓库
-            detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
+            if(StringUtils.isBlank(detailEntity.getVirtualWarehouseId())){
+                detailEntity.setVirtualWarehouseId(soDetailEntity.getVirtualWarehouseId());
+            }
 
             BigDecimal price=soDetailEntity.getPrice();
             //单价信息
             detailEntity.setPrice(price);
             BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
             detailEntity.setExchangeRate(exchangeRate);
-            BigDecimal amount=MathUtil.multiply(price, detailEntity.getActualQty());
+            BigDecimal amount=MathUtil.multiplyWithTwo(price, detailEntity.getActualQty());
             detailEntity.setAmount(amount);
             String currency = soDetailEntity.getCurrency();
             detailEntity.setCurrency(currency);
@@ -915,7 +918,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             detailEntity.setCurrencySymbol(symbol);
             BigDecimal amountLocalCurrency=amount;
             if(BigDecimal.ZERO.compareTo(exchangeRate)!=0){
-                amountLocalCurrency=MathUtil.multiply(amount,exchangeRate,4);
+                amountLocalCurrency=MathUtil.multiplyWithTwo(amount,exchangeRate,4);
             }
             detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
         }
@@ -928,9 +931,10 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
      * @author Will
      * @date: 2023/11/1 15:45
      */
-    private List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList) {
+    @Override
+    public List<SoOutstockDetailEntity> listBySoDetailIds(List<String> soDetailIdList) {
         if (CollectionUtils.isEmpty(soDetailIdList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<SoOutstockDetailEntity> list = baseMapper.listBySoDetailIds(soDetailIdList);
         return list;
@@ -963,7 +967,7 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     public Boolean updateSoOutPrice(List<SoDetailEntity> soDetailEntityList) {
-        soDetailEntityList = soDetailEntityList.stream().filter(v->StringUtils.isNotBlank(v.getId())).collect(Collectors.toList());
+        soDetailEntityList = soDetailEntityList.stream().filter(v->CharSequenceUtil.isNotBlank(v.getId())).collect(Collectors.toList());
         List<String> soDetailIds = soDetailEntityList.stream().map(BaseEntity::getId).collect(Collectors.toList());
         if(CollectionUtils.isEmpty(soDetailIds)){
             return true;
@@ -980,11 +984,11 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
             //单价信息
             detailEntity.setPrice(price);
             BigDecimal exchangeRate=soDetailEntity.getExchangeRate();
-            BigDecimal amount=MathUtil.multiply(price, detailEntity.getActualQty());
+            BigDecimal amount=MathUtil.multiplyWithTwo(price, detailEntity.getActualQty());
             detailEntity.setAmount(amount);
             BigDecimal amountLocalCurrency=amount;
             if(Objects.nonNull(exchangeRate) && BigDecimal.ZERO.compareTo(exchangeRate)!=0){
-                amountLocalCurrency=MathUtil.multiply(amount,exchangeRate,4);
+                amountLocalCurrency=MathUtil.multiplyWithTwo(amount,exchangeRate,4);
             }
             detailEntity.setAllAmountLocalCurrency(amountLocalCurrency);
             updateList.add(detailEntity);
@@ -994,5 +998,29 @@ public class SoOutstockDetailServiceImpl extends SuperServiceImpl<SoOutstockDeta
         }
         
         return true;
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listSoOutstockBySourceIdList(List<String> sourceIdList) {
+        return baseMapper.listSoOutstockBySourceIdList(sourceIdList);
+    }
+
+    @Override
+    public List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            return new ArrayList<>();
+        }
+        List<SoDeliveryNoticeDetailDTO.PushDownDTO> result = new ArrayList<>();
+        List<SoOutstockDetailEntity> soOutstockDetailEntityList = baseMapper.listBySoDetailIds(soDetailIds);
+        if(CollUtil.isNotEmpty(soOutstockDetailEntityList)){
+            for (SoOutstockDetailEntity detailEntity : soOutstockDetailEntityList) {
+                SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO = new SoDeliveryNoticeDetailDTO.PushDownDTO();
+                pushDownDTO.setSoDetailId(detailEntity.getSourceDetailId());
+                pushDownDTO.setSkuId(detailEntity.getSkuId());
+                pushDownDTO.setSkuNo(detailEntity.getSkuNo());
+                result.add(pushDownDTO);
+            }
+        }
+        return result;
     }
 }

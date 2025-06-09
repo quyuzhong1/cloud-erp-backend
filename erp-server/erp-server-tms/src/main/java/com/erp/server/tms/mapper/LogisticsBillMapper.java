@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.TabListDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.dto.TmsFirstMileReconciliationDetailDTO;
@@ -11,7 +12,9 @@ import com.erp.model.tms.entity.LogisticsBillEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -68,7 +71,6 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
      *@author yl
      *@date 2023-11-16
      */
-    List<LogisticsBillDTO.PagingVO> listExport(@Param("params")LogisticsBillDTO.PagingParamDTO dto);
     Page<LogisticsBillDTO.PagingVO> listExport(@Param("page") Page<LogisticsBillDTO.PagingVO> page, @Param("params")LogisticsBillDTO.PagingParamDTO dto);
 
     /**
@@ -129,4 +131,27 @@ public interface LogisticsBillMapper extends BaseMapper<LogisticsBillEntity> {
     LogisticsBillDTO.BaseDTO getByTrackNoOrTransportNo(@Param("logisticsCode") String logisticsCode);
 
     List<TmsFirstMileLogisticDTO.WeightAllocationDTO> assembleFirstMileEstimatedList(@Param("ids") List<String> ids);
+
+    List<LogisticsBillEntity> queryToSdy(@Param("startTime") LocalDateTime startTime, @Param("endTime")LocalDateTime endTime, @Param("pageSize")Integer pageSize, @Param("offset")int offset);
+
+    /**
+     * 根据订单类型 获取物流单id
+     * @param orderType
+     * @return
+     */
+    List<LogisticsBillDTO.NoOutstockDTO> selectLogisticsBillNoOutstock(@Param("orderType") String orderType);
+
+    /**
+     * 查询是否存在有物流单 没有物流明细数据
+     * @return
+     */
+    List<LogisticsBillEntity> selectNoLogisticsBillDetailByBill();
+
+    /**
+     *  根据订单类型查询物流单重量
+     * @param orderType
+     * @param permissionSql
+     * @return
+     */
+    List<TabListDTO> countTotalWeight(@Param("orderType") String orderType, @Param("permissionSql") String permissionSql);
 }

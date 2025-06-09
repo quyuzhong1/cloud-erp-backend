@@ -2,6 +2,7 @@ package com.erp.server.oms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -12,7 +13,7 @@ import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2CDTO;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.entity.CustomerB2cEntity;
-import com.erp.model.oms.entity.SoChangeEntity;
+import com.erp.server.oms.query.CustomerB2cQueryHandler;
 import com.erp.server.oms.service.CustomerB2cAddressService;
 import com.erp.server.oms.service.CustomerB2cService;
 import lombok.extern.slf4j.Slf4j;
@@ -74,6 +75,7 @@ public class CustomerB2cController extends BaseController {
             menuCode = "oms:customerB2c:paging",
             tableAlias = "ci"
     )
+    @WebAdvanceQuery(handler = CustomerB2cQueryHandler.class)
     public ApiResult<PagingVO<CustomerB2CDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<CustomerB2CDTO.PagingParamDTO> dto) {
         PagingVO<CustomerB2CDTO.PagingViewDTO> pagingVO = customerB2cService.paging(dto);
         return success(pagingVO);
@@ -87,7 +89,7 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated CustomerB2CDTO.AddDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated CustomerB2CDTO.AddDTO dto) {
         String id = customerB2cService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -105,9 +107,9 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids"
     )
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerB2cService.submit(dto.getIds());
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -154,7 +156,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "id"
     )
-    public ApiResult update(@RequestBody @Validated CustomerB2CDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated CustomerB2CDTO.UpdateDTO dto) {
         String id = customerB2cService.updateCustomer(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -172,9 +174,9 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "id"
     )
-    public ApiResult updateAndSubmit(@RequestBody @Validated CustomerB2CDTO.UpdateDTO dto) {
+    public ApiResult<Object> updateAndSubmit(@RequestBody @Validated CustomerB2CDTO.UpdateDTO dto) {
         Boolean result = customerB2cService.updateAndSubmit(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -220,7 +222,7 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids"
     )
-    public ApiResult disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> disApprove(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<CustomerB2cEntity> entityList = customerB2cService.listByIds(ids);
@@ -253,9 +255,9 @@ public class CustomerB2cController extends BaseController {
             menuCode = "oms:customerB2c:cancelProcess",
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerB2cService.cancelProcess(dto.getIds());
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
 
@@ -272,18 +274,19 @@ public class CustomerB2cController extends BaseController {
             serviceClass = CustomerB2cService.class,
             keyIdName = "ids"
     )
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerB2cService.deleteByIds(dto.getIds());
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
      * 导出数据
      */
     @PostMapping("/export")
-    public ApiResult exportCustomerB2c(@RequestBody @Valid CustomerB2CDTO.ExportDTO dto, HttpServletResponse response) {
+    @WebAdvanceQuery(handler = CustomerB2cQueryHandler.class)
+    public ApiResult<Object> exportCustomerB2c(@RequestBody @Valid CustomerB2CDTO.ExportDTO dto, HttpServletResponse response) {
         Boolean result = customerB2cService.exportExcel(dto, response);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -334,9 +337,9 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+    public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         Boolean result = customerB2cService.updateStatus(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -385,9 +388,9 @@ public class CustomerB2cController extends BaseController {
      * @return
      */
     @GetMapping("/processData")
-    public ApiResult processData() {
+    public ApiResult<Object> processData() {
         Boolean result = customerB2cService.processData();
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -402,17 +405,6 @@ public class CustomerB2cController extends BaseController {
         return success();
     }
 
-    /**
-     * 导入客户关联金蝶信息
-     *
-     * @param file
-     * @return
-     */
-//    @PostMapping(value = "importCustomerKingdee")
-//    public ApiResult<Void> importCustomerKingdee(@RequestParam(value = "file") MultipartFile file) throws IOException {
-//        customerB2cService.importCustomerKingdee(file);
-//        return success();
-//    }
 
     /**
      * 根据客户id查询买家信息

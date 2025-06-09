@@ -1,10 +1,10 @@
 package com.erp.server.workflow.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+
+import cn.hutool.core.text.CharSequenceUtil;
 import com.erp.model.workflow.dto.CamundaDTO;
 import com.erp.model.workflow.enums.DictBasicEnum;
-import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -46,12 +46,12 @@ public class AssigneeStrategyService {
     public List<String> getResult(String resourceType, String value, String startUserId, String candidateUsers) {
         //Controller根据 优惠券类型resourceType、编码resourceId 去查询 发放方式grantType
         Function<CamundaDTO.StrategyParamDTO,List<String>> result = assigneeStrategyMap.get(resourceType);
-        List<String> candidateUserList = StrUtil.isNotBlank(candidateUsers) ? Arrays.asList(candidateUsers.split(",")) : Collections.EMPTY_LIST;
+        List<String> candidateUserList = CharSequenceUtil.isNotBlank(candidateUsers) ? Arrays.asList(candidateUsers.split(",")) : Collections.emptyList();
         if(null == result){
             return candidateUserList;
         }
         List<String> assignees = result.apply(new CamundaDTO.StrategyParamDTO(value, startUserId));
-        if(CollectionUtil.isEmpty(assignees)){
+        if(CollectionUtils.isEmpty(assignees)){
             return candidateUserList;
         }
         return assignees;
@@ -61,24 +61,22 @@ public class AssigneeStrategyService {
      * 无审批人处理
      *
      * @param assigneeEmpty 审批为空处理方式
-     * @param task          任务
      * @param startUserId
      * @return 审批人
      */
     public List<String> assigneeEmptyHandler(String assigneeEmpty, String startUserId) {
         // 审批为空处理方式为空
-        if(StrUtil.isEmpty(assigneeEmpty)){
-            return Collections.EMPTY_LIST;
+        if(CharSequenceUtil.isEmpty(assigneeEmpty)){
+            return Collections.emptyList();
         }
         if(DictBasicEnum.REJECT_APPLICANT.getCode().equals(assigneeEmpty)) {
             // 审批为空处理方式驳回审批人 返回空审核人列表，在层方法处理驳回操作
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         } else if(DictBasicEnum.ESCALATE.getCode().equals(assigneeEmpty)){
             // 审批为空处理方式转上级审批
-            List<String> result  = assigneeStrategyTypeService.superiorAssignee(new CamundaDTO.StrategyParamDTO(startUserId));
-            return result;
+            return assigneeStrategyTypeService.superiorAssignee(new CamundaDTO.StrategyParamDTO(startUserId));
         }
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
 
     }
 

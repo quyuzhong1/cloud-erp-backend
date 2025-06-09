@@ -251,7 +251,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-          throw new ServiceException(ApiError.Default);
+          throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -299,7 +299,7 @@ public class ExcelUtil {
                     //自定义注解
                     .doWrite(list2);
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -338,7 +338,7 @@ public class ExcelUtil {
                     .doWrite(list2);
 
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
 
@@ -370,9 +370,10 @@ public class ExcelUtil {
                     .doWrite(list2);
             return outputStream.toByteArray();
         } catch (Exception e) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
     }
+
 
     /**
      * 返回文件
@@ -405,6 +406,46 @@ public class ExcelUtil {
         EasyExcel.write(filePath).head(hs).sheet(sheetName).doWrite(dataResult);
         return filePath;
 
+    }
+
+    /**
+     * 导出文件
+     * @param templatePath
+     * @param fileName
+     * @param dataResult
+     * @return File
+     */
+    public static File exportFile(String templatePath,String fileName, List<?> dataResult) {
+        // 1. 获取模板输入流（假设模板在 resources/excel 目录下）
+        InputStream templateStream = ExcelUtil.class.getClassLoader().getResourceAsStream(templatePath);
+        // 2. 修改后的导出代码
+        File tempDirectory = FileUtils.getTempDirectory();
+        File outputFile = new File(tempDirectory,fileName);
+        try (FileOutputStream fos = new FileOutputStream(outputFile)) {
+            // EasyExcel 模板填充逻辑
+            ExcelWriter excelWriter = EasyExcel.write(fos)
+                    .withTemplate(templateStream) // 绑定模板
+                    .build();
+
+            WriteSheet writeSheet = EasyExcel.writerSheet().build();
+
+            // 填充数据（假设 errorList 是模板中的占位符数据）
+            excelWriter.fill(dataResult, writeSheet);
+
+            excelWriter.finish(); // 必须调用 finish 确保写入完成
+            return outputFile;
+        } catch (IOException e) {
+            throw new ServiceException(ApiError.ERROR_95125);
+        } finally {
+            // 关闭模板流（重要！）
+            if (templateStream != null) {
+                try {
+                    templateStream.close();
+                } catch (IOException e) {
+                    // 日志记录或处理异常
+                }
+            }
+        }
     }
 
     /**
@@ -605,7 +646,7 @@ public class ExcelUtil {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + URLEncoder.encode(excelName, StandardCharsets.UTF_8.name()));
             response.setContentType("application/msexcel");
             wb.write(output);
         } catch (Exception e) {
@@ -630,7 +671,7 @@ public class ExcelUtil {
                 cell.setCellValue(headerName.get(i)); // 写入名称
                 // 自适应列宽
                 // 计算内容宽度并设置单元格宽度
-                int contentWidth = headerName.get(i).getBytes(StandardCharsets.UTF_8).length * 256; // 中文字符宽度按照字节数计算
+                int contentWidth = headerName.get(i).getBytes(StandardCharsets.UTF_8).length * 400; // 中文字符宽度按照字节数计算
                 sheet.setColumnWidth(i, contentWidth); // 设置列宽度
             }
             // 输出Excel文件
@@ -638,7 +679,7 @@ public class ExcelUtil {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(configExcelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(configExcelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
         } catch (Exception e) {

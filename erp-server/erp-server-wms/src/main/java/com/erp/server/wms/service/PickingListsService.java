@@ -3,9 +3,11 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
 import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
 import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
@@ -103,5 +105,25 @@ public interface PickingListsService extends SuperService<PickingListsEntity> {
     PagingVO<PickingListsDTO.ExportInfoDTO> exportPickingLists(PagingDTO<PickingListsDTO.ExportDTO> dto);
 
     void initDelivery(List<String> codes);
+    /**
+     * 处理组合sku
+     */
+    void generatePicking(PickingListsDTO.AddDTO dto);
 
+    List<PickingDetailDTO.ChangeQtyView> generateRequisitionChange(PickingListsDTO.UpdateDTO dto);
+
+    void updateByChange(List<PickingDetailEntity> updatePickingList, List<String> sourceDetailIds, boolean isFromRequisition);
+    /**
+     * 批量打印 b2b拣货单
+     *
+     * @param ids ids
+     */
+    List<PickingListsDTO.PrintView> b2bPrint(List<String> ids);
+
+    /**
+     * 打印组合品清单
+     * @param ids
+     * @return
+     */
+    List<PickingListsDTO.PrintCombinationView> printCombination(List<String> ids);
 }

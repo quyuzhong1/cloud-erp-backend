@@ -1,8 +1,10 @@
 package com.erp.server.dmp.service.impl;
 
 
+import java.util.List;
 import java.util.Optional;
 
+import com.erp.model.dmp.dto.DmpInoutDTO;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,7 +64,7 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
     @Override
     public Boolean update(DmpCfgInputDetailDTO.UpdateDTO updateDTO) {
         DmpCfgInputDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "外部系统接口明细"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "外部系统接口明细"));
         DmpCfgInputDetailEntity dmpCfgInputDetailEntity =  BeanMapperUtils.map(DmpCfgInputDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -79,6 +81,11 @@ public class DmpCfgInputDetailServiceImpl extends SuperServiceImpl<DmpCfgInputDe
             String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), dmpCfgInputDetailEntity.getId(), "外部系统接口明细");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         return Boolean.TRUE;
+    }
+
+    @Override
+    public List<DmpInoutDTO.ListDTO> listBySystemCodeAndBillType(List<String> systemCodeList, List<String> billTypeList, List<String> nextLevelIdList) {
+        return baseMapper.listBySystemCodeAndBillType(systemCodeList, billTypeList, nextLevelIdList);
     }
 
 

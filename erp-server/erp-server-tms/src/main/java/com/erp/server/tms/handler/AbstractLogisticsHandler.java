@@ -29,6 +29,7 @@ import java.util.*;
  */
 public abstract class AbstractLogisticsHandler extends BaseController implements LogisticsService {
 
+    public static final String MSG = "功能未开放";
     @Resource
     private LogisticsAuthService logisticsAuthService;
     @Resource
@@ -37,21 +38,44 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
     //对于一些公共方法可以进行封装
     public Map<String, String> getLogisticsAuthConfigByAuthId(String authId) {
         Map<String, String> map = new HashMap<>();
-        List<LogisticsAuthFieldEntity> fieldEntities = null;
         if (StringUtils.isNoneBlank(authId)) {
             map.put("id", authId);
+
+            // 获取 authEntity
             LogisticsAuthEntity authEntity = logisticsAuthService.getById(authId);
-            if (Objects.isNull(authEntity)) return null;
-            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
-            fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
-        }
-        if (CollectionUtils.isNotEmpty(fieldEntities)) {
-            fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-            });
+            if (authEntity == null) {
+                return map;  // 如果 authEntity 为空，直接返回已有的 map
+            }
+
+            // 确保 authEntity 不为 null，再进行操作
+            String logisticsPlatform = authEntity.getLogisticsPlatform();
+            if (logisticsPlatform != null) {
+                map.put("logisticsPlatform", logisticsPlatform);
+            }
+
+            // 获取 fieldEntities
+            List<LogisticsAuthFieldEntity> fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(authId);
+
+            // 避免空指针，只有在 fieldEntities 非空时才进行处理
+            handleFiledEntites(fieldEntities, map);
         }
         return map;
     }
+
+    private static void handleFiledEntites(List<LogisticsAuthFieldEntity> fieldEntities, Map<String, String> map) {
+        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+            fieldEntities.forEach(logisticsAuthFieldEntity -> {
+                if (logisticsAuthFieldEntity != null) {
+                    String fieldCode = logisticsAuthFieldEntity.getFieldCode();
+                    String fieldValue = logisticsAuthFieldEntity.getFieldValue();
+                    if (fieldCode != null && fieldValue != null) {
+                        map.put(fieldCode, fieldValue);
+                    }
+                }
+            });
+        }
+    }
+
     @Override
     public Map<String, String> getLogisticsAuthConfigByShopId(String shopId) {
         return new HashMap<>();
@@ -68,9 +92,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
                 map.put("logisticsPlatform", logisticsAuthEntity.getLogisticsPlatform());
                 fieldEntities = logisticsAuthFieldService.listByLogisticsAuthId(logisticsAuthEntity.getId());
                 if (CollectionUtils.isNotEmpty(fieldEntities)) {
-                    fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                        map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-                    });
+                    fieldEntities.forEach(logisticsAuthFieldEntity -> map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue()));
                     mapList.add(map);
                 }
             });
@@ -85,7 +107,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<LogisticsOrderResponseVO> createOrder(LogisticsOrderVO logisticsOrderVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -95,7 +117,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<ConfirmResponseVO>> confirmOrder(List<LogisticsQueryBaseVO> logisticsQueryVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
 
@@ -106,7 +128,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<CancelResponseVO>> cancelOrder(List<LogisticsCancelOrderVO> logisticsQueryVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -116,7 +138,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<InterceptResponseVO>> interceptOrder(List<LogisticsInterceptOrderVO> logisticsQueryVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -126,7 +148,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<UpdateResponseVO>> updateOrder(List<LogisticsOrderVO> logisticsOrderVOS) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
 
@@ -137,7 +159,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<LogisticsOrderResponseVO>> queryOrderList(List<LogisticsQueryBaseVO> logisticsQueryVOList) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -147,7 +169,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<LogisticsPrintLabelResponse>> getLabelList(List<LogisticsGetLabelVO> logisticsQueryVO) throws IOException {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -157,7 +179,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<LogisticsTrackEntity>> getTrack(LogisticsTrackVO logisticsTrackVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
     /**
      * 海运轨迹查询
@@ -166,7 +188,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<LogisticsTrackEntity>> getOceanTrack(List<LogisticsTrackBaseDTO.OceanTrackRequestDTO> oceanTrackRequestList) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -176,7 +198,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<LogisticsSaleChannelEntity>> getChannel(ChanelQueryVO chanelQueryVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -184,8 +206,8 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      *
      * @return
      */
-    public ApiResult authorization(Map<String, String> authMap) {
-        return ApiResult.error(-1, "功能未开放");
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -195,7 +217,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<RegisterResponseVO>> registerLogisticsNumber(RegisterTrackVO registerTrackVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -205,7 +227,7 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<List<RegisterResponseVO>> oceanRegisterLogisticsNumber(List<LogisticsTrackBaseDTO.OceanRegisterRequestDTO> list) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 
     /**
@@ -223,6 +245,6 @@ public abstract class AbstractLogisticsHandler extends BaseController implements
      * @return
      */
     public ApiResult<String> updateWeight(LogisticsUpdateWeightVO logisticsUpdateWeightVO) {
-        return ApiResult.error(-1, "功能未开放");
+        return ApiResult.error(-1, MSG);
     }
 }

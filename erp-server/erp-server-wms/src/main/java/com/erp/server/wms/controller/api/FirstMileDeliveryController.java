@@ -1,39 +1,38 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.DataPermission;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.*;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.anno.LogAction;
+import com.common.core.anno.LogSystemModule;
+import com.common.core.anno.LogViewService;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
-import com.erp.model.wms.dto.OverseasWarehouseInboundDTO;
 import com.erp.model.wms.entity.FirstMileDeliveryEntity;
 import com.erp.model.wms.entity.PackingTaskEntity;
 import com.erp.server.wms.query.FirstMileDeliveryQueryHandler;
 import com.erp.server.wms.service.FirstMileDeliveryDetailService;
+import com.erp.server.wms.service.FirstMileDeliveryService;
 import com.erp.server.wms.service.PackingTaskService;
+import com.erp.server.wms.service.RequisitionApplicationService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import com.common.core.anno.LogAction;
-import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
-import com.common.core.enums.LogActionEnum;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.common.core.controller.BaseController;
-import com.erp.server.wms.service.FirstMileDeliveryService;
-import com.common.core.controller.vo.ApiResult;
-import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
-import cn.hutool.core.util.ObjectUtil;
-import com.common.business.annotation.DataPermission;
-import com.common.business.enums.DataAttributeEnum;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
-import java.util.*;
-import java.util.function.Function;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -48,14 +47,16 @@ import java.util.stream.Collectors;
 @RequestMapping("/fbaDelivery")
 public class FirstMileDeliveryController extends BaseController {
 
-    @Autowired
+    @Resource
     private FirstMileDeliveryService firstMileDeliveryService;
 
-    @Autowired
+    @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
 
     @Resource
     private PackingTaskService packingTaskService;
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     /**
     * 新增
@@ -93,6 +94,13 @@ public class FirstMileDeliveryController extends BaseController {
     * @return
     */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            shopTableField = "fd.shop_id",
+            warehouseTableField = "fd.delivery_warehouse_id,fd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging",
+            tableAlias = "fd"
+    )
     public ApiResult<List<FirstMileDeliveryDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(firstMileDeliveryService.tabList(dto));
     }
@@ -107,6 +115,8 @@ public class FirstMileDeliveryController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "fd.shop_id",
+            warehouseTableField = "fd.delivery_warehouse_id,fd.dest_warehouse_id",
             menuCode = "wms:fbaDelivery:paging",
             tableAlias = "fd"
     )
@@ -196,12 +206,12 @@ public class FirstMileDeliveryController extends BaseController {
             keyIdName = "ids")
     @LogAction(value = LogActionEnum.APPROVE, desc = "头程发货单审核")
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
-        List<String> ids = dto.getIds();
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : ids) {
             BatchResultDTO approveResult;
             try {
-                approveResult = firstMileDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()));
+                approveResult = firstMileDeliveryService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment(),dto.getDeliveryDate()));
             }catch (Exception e){
                 log.error("发货单审核失败",e);
                 FirstMileDeliveryEntity entity = firstMileDeliveryService.getById(id);
@@ -280,6 +290,7 @@ public class FirstMileDeliveryController extends BaseController {
                 try {
                     PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
                     invalidResult = firstMileDeliveryService.delete(entity, packingTaskEntity);
+                    requisitionApplicationService.writeBackRequisitionDeliveryPushDownStatus(entity.getSourceId());
                 }catch (Exception e){
                     log.error("发货单删除失败",e);
                     invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
@@ -317,6 +328,8 @@ public class FirstMileDeliveryController extends BaseController {
                 try {
                     PackingTaskEntity packingTaskEntity = packingTaskEntityList.stream().filter(v->v.getSourceCode().equals(entity.getCode())).findFirst().orElse(null);
                     invalidResult = firstMileDeliveryService.invalid(entity,dto.getRemark(), packingTaskEntity);
+                    requisitionApplicationService.writeBackRequisitionDeliveryPushDownStatus(entity.getSourceId());
+
                 }catch (Exception e){
                     log.error("发货单作废失败",e);
                     invalidResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
@@ -554,5 +567,51 @@ public class FirstMileDeliveryController extends BaseController {
     @PostMapping("/listPacking")
     public ApiResult<WmsCartonSpecDTO.ListPackingDTO> listPacking(@RequestBody @Validated BaseIdDTO dto) {
         return success(firstMileDeliveryService.listPacking(dto.getId()));
+    }
+
+    /**
+     * 下载箱号对照表excel
+     */
+    @PostMapping("/exportBox")
+    @LogAction(value = LogActionEnum.EXPORT, desc = "导出箱号对照表Excel")
+    public ApiResult exportBox(@RequestBody @Validated PackingTaskDTO.ExportDTO dto) {
+        firstMileDeliveryService.exportBox(dto);
+        return success();
+    }
+
+    /**
+     * 批量修改中转仓库
+     * @author zdy
+     * @date:  2024-10-24
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateTransferWarehouse")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改中转仓库")
+    public ApiResult<List<BatchResultDTO>> updateTransferWarehouse(@RequestBody @Validated BaseIdsDTO.ChangeDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<FirstMileDeliveryEntity> entityList = firstMileDeliveryService.listByIds(ids);
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            FirstMileDeliveryEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"头程发货单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTO = firstMileDeliveryService.updateTransferWarehouse(entity, dto.getChangeIds());
+            }catch (Exception e){
+                log.error("头程发货单修改中转仓库失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "发货单不存在, 修改中转仓库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }

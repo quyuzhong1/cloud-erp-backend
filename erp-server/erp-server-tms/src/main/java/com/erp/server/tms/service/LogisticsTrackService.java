@@ -53,26 +53,6 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      *@date 2023-11-16
      */
     LogisticsTrackDTO.ViewDTO listByTrackNo(String trackNo);
-
-    /**
-     * 根据跟踪单号进行物理删除
-     * @param trackNo
-     */
-    void deleteByTrackNo(String trackNo);
-
-    /**
-     * 同步修改订单状态
-     * @param logisticsTrackEntity
-     */
-    void checkTrackStatus(LogisticsTrackEntity logisticsTrackEntity);
-
-    /**
-     * 获取跟踪号最后一条记录
-     * @param trackNo
-     * @return
-     */
-    LogisticsTrackEntity getMaxByTrackTime(String trackNo);
-
     /**
      * 处理mongoDb同步数据
      * @param dto
@@ -83,4 +63,12 @@ public interface LogisticsTrackService extends SuperService<LogisticsTrackEntity
      * 更新3个月前物流单状态为系统完结
      */
     void updateBeforeThreeMonthTrackNo(LogisticsBillDetailQueryDTO query);
+
+    /**
+     * 对接track123 webhook
+     * @param dto
+     */
+    void webhookByTrack123(LogisticsTrackDTO.TrackWebHookDTO dto);
+
+    void saveIncrementTrackData(String trackNo, List<LogisticsTrackEntity> newList);
 }

@@ -4,6 +4,7 @@ import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.server.msg.model.MsgResultVO;
 import com.erp.server.msg.model.MsgSendChannelWrapParam;
+import org.apache.poi.ss.formula.functions.T;
 
 /**
  * @Classname: IMessageSend
@@ -17,7 +18,7 @@ public interface IMessageSendService {
      * 发送通知消息
      * @return
      */
-    MsgResultVO doSendMsg(MsgSendChannelWrapParam msgInfo);
+    MsgResultVO<T> doSendMsg(MsgSendChannelWrapParam msgInfo);
 
     /**
      * 发送预警消息

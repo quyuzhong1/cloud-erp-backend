@@ -1,6 +1,7 @@
 package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 
@@ -10,6 +11,7 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.common.business.dto.base.BaseIdDTO.CodeDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
@@ -17,6 +19,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -37,10 +40,15 @@ import com.erp.server.wms.service.WmsPushMsgService;
 
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -82,8 +90,12 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(WarehouseEntity entity, String operate) {
-        //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	//生成任务
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -149,7 +161,7 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             return resultMap;
         }
 
-        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Arrays.asList(entity.getOrgId()));
+        List<BaseIdDTO.CodeDTO> accountingCompanyList = sysUserFeign.getAccountingCompanyList(Collections.singletonList(entity.getOrgId()));
         if (CollectionUtils.isNotEmpty(accountingCompanyList)) {
             String orgCode = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getCode())).orElse("");
             String orgKingdeeId = accountingCompanyList.stream().filter(obj -> obj.getId().equals(entity.getOrgId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getFlagId())).orElse("");
@@ -182,21 +194,23 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
             resultMap.put("type",type.getValue());
         }
         //仓库负责人
-        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChargeId());
-        if (ObjectUtils.isNotEmpty(findUserDTO)) {
-            resultMap.put("chargeCode",findUserDTO.getCode());
+        if (CharSequenceUtil.isNotBlank(entity.getChargeId())){
+            FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getChargeId());
+            if (ObjectUtils.isNotEmpty(findUserDTO)) {
+                resultMap.put("chargeCode",findUserDTO.getCode());
+            }
         }
         //查询仓位
-        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Arrays.asList(entity.getId()));
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIds(Collections.singletonList(entity.getId()));
         if (CollectionUtils.isNotEmpty(warehouseLocationList) && entity.getIsEnableLocation()) {
             //区域
-            List<WarehouseLocationEntity> areaList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.AREA.getCode().equals(obj.getType())).collect(Collectors.toList());
+            List<WarehouseLocationEntity> areaList = warehouseLocationList.stream().filter(obj -> Objects.equals(entity.getId(),obj.getWarehouseId()) && WarehouseLocationTypeEnum.AREA.getCode().equals(obj.getType())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(areaList)) {
                 log.error("仓库对应区域未找到，code = {},name = {}",entity.getKingdeeWarehouseCode(),entity.getName());
                 throw new ServiceException("仓库对应区域未找到");
             }
             //仓位
-            List<WarehouseLocationEntity> locationList = warehouseLocationList.stream().filter(obj -> obj.getWarehouseId().equals(obj.getWarehouseId()) && WarehouseLocationTypeEnum.LOCATION.getCode().equals(obj.getType())).collect(Collectors.toList());
+            List<WarehouseLocationEntity> locationList = warehouseLocationList.stream().filter(obj -> Objects.equals(entity.getId(),obj.getWarehouseId()) && WarehouseLocationTypeEnum.LOCATION.getCode().equals(obj.getType())).collect(Collectors.toList());
             if (CollectionUtils.isEmpty(locationList)) {
                 log.error("仓库对应仓位未找到，code = {},name = {}",entity.getKingdeeWarehouseCode(),entity.getName());
                 throw new ServiceException("仓库对应仓位未找到");
@@ -225,4 +239,80 @@ public class SyncKingdeeWarehouseServiceImpl implements SyncKingdeeWarehouseServ
         }
         return resultMap;
 	}
+
+	@Transactional(rollbackFor = Exception.class)
+	@Override
+	public void syncDataToSdy(WarehouseEntity paramEntity, String operate) {
+		WarehouseEntity entity = warehouseService.getById(paramEntity.getId());
+		if(entity.getOpenTime() == null) {
+			log.warn("{}仓库启用时间为空，不推送数帝云" , entity.getKingdeeWarehouseCode());
+			return;
+		}
+		WmsPushMsgEntity wmsPushMsgEntity = new WmsPushMsgEntity();
+        wmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+        wmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_WAREHOUSE.getCode());
+        wmsPushMsgEntity.setSourceId(entity.getId());
+        wmsPushMsgEntity.setSourceCode(entity.getKingdeeWarehouseCode());
+        wmsPushMsgEntity.setSyncOperate(operate);
+        if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+        	wmsPushMsgEntity.setPushData(JSON.toJSONString(DmpOutputConstant.getQuerySyncMap()));
+        }else {
+        	wmsPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(entity, operate)));
+        }
+        
+        wmsPushMsgService.save(wmsPushMsgEntity);
+	}
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(WarehouseEntity entity, String operate) {
+		String orgId = entity.getOrgId();
+		String shippingOrganization = entity.getShippingOrganization();
+		String financialOrganization = entity.getFinancialOrganization();
+		Map<String, BaseIdDTO.CodeDTO> idCodeMap = sysUserFeign.getAccountingCompanyList(Arrays.asList(orgId , shippingOrganization , financialOrganization))
+				.stream().collect(Collectors.toMap(BaseIdDTO.CodeDTO::getId, t -> t));
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("biz_uni_key", entity.getId());
+		CodeDTO invertoryDto = idCodeMap.get(orgId);
+		if(invertoryDto != null) {
+			resultMap.put("inventory_org_code", invertoryDto.getCode());
+			resultMap.put("inventory_org_name", invertoryDto.getName());
+		}
+		resultMap.put("warehouse_code", entity.getKingdeeWarehouseCode());
+		resultMap.put("warehouse_name", entity.getName());
+		String channelAffiliation = entity.getChannelAffiliation();
+		if(StringUtils.isNotBlank(channelAffiliation)) {
+			List<com.erp.model.oms.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.oms.entity.DictBasicEntity.class)
+					.eq(com.erp.model.oms.entity.DictBasicEntity::getValue, channelAffiliation)
+					.eq(com.erp.model.oms.entity.DictBasicEntity::getType, "salesPlatform")
+					.list();
+			resultMap.put("channel_affiliation",  dictBasicEntityList.get(0).getName());
+		}
+		CodeDTO shippingDto = idCodeMap.get(shippingOrganization);
+		if(shippingDto != null) {
+			resultMap.put("shipping_organization", shippingDto.getCode());
+		}
+		CodeDTO finanDto = idCodeMap.get(financialOrganization);
+		if(finanDto != null) {
+			resultMap.put("financial_organization", finanDto.getCode());
+		}
+		resultMap.put("warehouse_type", dictBasicService.getById(entity.getTypeId()).getName());
+		LocalDateTime openTime = entity.getOpenTime();
+		if(openTime != null) {
+			resultMap.put("created_time", openTime.format(formatter));
+		}
+		LocalDateTime closeTime = entity.getCloseTime();
+		if(closeTime != null) {
+			resultMap.put("modified_time", closeTime.format(formatter));
+		}
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "已删除");
+		}else {
+			resultMap.put("status", entity.getApproveStatus().getName());
+		}
+		return resultMap;
+	}
+	
 }

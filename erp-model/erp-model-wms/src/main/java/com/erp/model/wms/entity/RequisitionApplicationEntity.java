@@ -1,14 +1,14 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
 
 
 /**
@@ -116,8 +116,18 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
      */
     @TableField("fba_shipment_code")
     private String fbaShipmentCode;
+    /**
+     * 拣货单下推状态 not:未生成 part:部分生成 finish:已生成
+     */
+    @TableField("pick_push_down_status")
+    private String pickPushDownStatus;
+    /**
+     * 发货单下推状态 not:未生成 part:部分生成 finish:已生成
+     */
+    @TableField("delivery_push_down_status")
+    private String deliveryPushDownStatus;
 
-    public static final String CODE = "code";
+    
 
     public static final String SOURCE_ID = "source_id";
 
@@ -125,7 +135,7 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
 
     public static final String SOURCE_TYPE = "source_type";
 
-    public static final String STATUS = "status";
+    
 
     public static final String INVALID_STATUS = "invalid_status";
 
@@ -133,7 +143,7 @@ public class RequisitionApplicationEntity extends BaseEntity<RequisitionApplicat
 
     public static final String INVALID_TIME = "invalid_time";
 
-    public static final String TYPE = "type";
+
 
     public static final String CHANNEL_ID = "channel_id";
 

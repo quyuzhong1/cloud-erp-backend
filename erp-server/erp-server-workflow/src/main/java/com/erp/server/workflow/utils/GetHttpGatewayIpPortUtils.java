@@ -1,9 +1,7 @@
 package com.erp.server.workflow.utils;
 
-import io.lettuce.core.dynamic.annotation.Command;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
 /**
@@ -26,27 +24,27 @@ public class GetHttpGatewayIpPortUtils {
     public static String OMS_PORT;
 
     @Value("${HttpGatewayIpPort.ip}")
-    public void setIP(String IP) {
-        GetHttpGatewayIpPortUtils.IP = IP;
+    public void setIp(String ip) {
+        GetHttpGatewayIpPortUtils.IP = ip;
     }
 
     @Value("${HttpGatewayIpPort.plm.port}")
-    public void setPLM_PORT(String PLM_PORT) {
-        GetHttpGatewayIpPortUtils.PLM_PORT = PLM_PORT;
+    public void setPlmPort(String plmPort) {
+        GetHttpGatewayIpPortUtils.PLM_PORT = plmPort;
     }
 
     @Value("${HttpGatewayIpPort.scm.port}")
-    public void setSCM_PORT(String SCM_PORT) {
-        GetHttpGatewayIpPortUtils.SCM_PORT = SCM_PORT;
+    public void setScmPort(String scmPort) {
+        GetHttpGatewayIpPortUtils.SCM_PORT = scmPort;
     }
 
     @Value("${HttpGatewayIpPort.wms.port}")
-    public void setWMS_PORT(String WMS_PORT) {
-        GetHttpGatewayIpPortUtils.WMS_PORT = WMS_PORT;
+    public void setWmsPort(String wmsPort) {
+        GetHttpGatewayIpPortUtils.WMS_PORT = wmsPort;
     }
 
     @Value("${HttpGatewayIpPort.oms.port}")
-    public void setOMS_PORT(String OMS_PORT) {
-        GetHttpGatewayIpPortUtils.OMS_PORT = OMS_PORT;
+    public void setOmsPort(String omsPort) {
+        GetHttpGatewayIpPortUtils.OMS_PORT = omsPort;
     }
 }

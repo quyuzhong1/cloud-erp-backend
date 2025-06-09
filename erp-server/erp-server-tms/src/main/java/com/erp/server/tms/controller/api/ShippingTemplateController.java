@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -15,13 +16,14 @@ import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.ShippingTemplateDTO;
 import com.erp.model.tms.dto.ShippingTemplateOtherCostDTO;
 import com.erp.model.tms.entity.ShippingTemplateEntity;
+import com.erp.server.tms.query.ShippingTemplateQueryHandler;
 import com.erp.server.tms.service.ShippingTemplateService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -39,7 +41,7 @@ import java.util.List;
 @RequestMapping("/shippingTemplate")
 public class ShippingTemplateController extends BaseController {
 
-    @Autowired
+    @Resource
     private ShippingTemplateService shippingTemplateService;
 
 
@@ -74,6 +76,7 @@ public class ShippingTemplateController extends BaseController {
             menuCode = "tms:shippingTemplate:paging",
             tableAlias = "st"
     )
+    @WebAdvanceQuery(handler = ShippingTemplateQueryHandler.class)
     public ApiResult<PagingVO<ShippingTemplateDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ShippingTemplateDTO.PagingParamDTO> dto) {
         PagingVO<ShippingTemplateDTO.ListDTO> pagingVO = shippingTemplateService.paging(dto);
         return success(pagingVO);
@@ -107,7 +110,7 @@ public class ShippingTemplateController extends BaseController {
         menuCode = "tms:shippingTemplate:update",
         serviceClass = ShippingTemplateService.class,
         keyIdName = "id")
-    public ApiResult update(@RequestBody @Validated ShippingTemplateDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@RequestBody @Validated ShippingTemplateDTO.UpdateDTO dto) {
         shippingTemplateService.update(dto);
         return success();
     }
@@ -140,7 +143,7 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "下载运费模板")
     @GetMapping("/downloadTemplate")
-    public ApiResult downloadTemplate(HttpServletResponse response, @RequestParam(value = "billingMethod") String billingMethod, @RequestParam(value = "type") String type) {
+    public ApiResult<Object>downloadTemplate(HttpServletResponse response, @RequestParam(value = "billingMethod") String billingMethod, @RequestParam(value = "type") String type) {
         shippingTemplateService.downloadTemplate(response,billingMethod,type);
         return success();
     }
@@ -157,7 +160,7 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入运费模板")
     @PostMapping("/import")
-    public ApiResult importFile(@RequestParam(value = "billingMethod") String billingMethod,@RequestParam(value = "type") String type,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult<Object>importFile(@RequestParam(value = "billingMethod") String billingMethod,@RequestParam(value = "type") String type,@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = shippingTemplateService.importFile(billingMethod,type,excelFile, response);
         return result ? success() : failure();
     }
@@ -171,7 +174,8 @@ public class ShippingTemplateController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出运费模板")
     @PostMapping(value = "/exportExcel")
-    public ApiResult exportExcel(@RequestBody ShippingTemplateDTO.ExportExcelParamDTO dto) {
+    @WebAdvanceQuery(handler = ShippingTemplateQueryHandler.class)
+    public ApiResult<Object>exportExcel(@RequestBody ShippingTemplateDTO.ExportExcelParamDTO dto) {
         Boolean flag = shippingTemplateService.exportExcel(dto);
         return flag == true ? success() : failure();
     }
@@ -202,14 +206,14 @@ public class ShippingTemplateController extends BaseController {
      * @param dto
      * @return ApiResult<ViewDTO>
      */
-    @LogViewService
+//    @LogViewService
     @PostMapping("/updateChannel")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
             menuCode = "tms:shippingTemplate:updateChannel",
             serviceClass = ShippingTemplateService.class,
             keyIdName = "id")
-    public ApiResult updateChannel(@RequestBody @Validated ShippingTemplateDTO.ChannelParamDTO dto) {
+    public ApiResult<Object>updateChannel(@RequestBody @Validated ShippingTemplateDTO.ChannelParamDTO dto) {
          shippingTemplateService.updateChannel(dto);
         return success();
     }
@@ -221,7 +225,7 @@ public class ShippingTemplateController extends BaseController {
      * @param dto 
      * @return ApiResult<List<BatchResultDTO>> 
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用停用:idList={idList},状态值={disabled}(true=禁用,false=启用)")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "启用停用:idList={idList},状态值={disabled}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",

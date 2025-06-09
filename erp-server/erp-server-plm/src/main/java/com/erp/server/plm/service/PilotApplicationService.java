@@ -200,6 +200,14 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * 更新试产量产明细表的订单状态
      */
     void updateDetailByPilotApplicationDetailIds(Map<String,String> map);
+    /**
+     *
+     * @param id
+     * @return
+     * @author jack
+     * @date: 2024-09-23
+     */
+    PilotApplicationDTO.ApprovePilotNoticeDTO getPilotApplicationNoticeData(String id);
 
     /**
      * 审核
@@ -210,4 +218,46 @@ public interface PilotApplicationService extends SuperService<PilotApplicationEn
      * @date: 2024-09-23
      */
     void approvePilotApplicationNotice(String id);
+    /**
+     * 审核
+     *
+     * @param id
+     * @return
+     * @author jack
+     * @date: 2024-09-23
+     */
+    void writeProductPurchaseBack(String id);
+
+    /**
+     * 工作流审核通过处理
+     * @param id id
+     */
+    void writeProductPurchaseBackByWork(String id);
+
+    /**
+     * 工作流审核通过处理
+     * @param id id
+     */
+    void approvePilotApplicationNoticeByWork(String id);
+
+    /**
+     * 根据skuIds获取产品包装尺寸明细,过滤包装数据完整的数据
+     * @param ids 参数
+     */
+    List<ProductPackViewDTO> listProductPackBySkuIds(List<String> ids);
+
+    /**
+     * 作废单据
+     * @param id
+     * @param remark
+     * @return
+     */
+    BatchResultDTO invalid(String id, String remark);
+
+    /**
+     * 取消作废
+     * @param id
+     * @return
+     */
+    BatchResultDTO unInvalid(String id);
 }

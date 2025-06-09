@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -43,6 +45,10 @@ public class ReportOrderSalesController extends BaseController {
      * @return ApiResult<PagingVO<ListDTO>>
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "ros.warehouse_id",
+            menuCode = "wms:reportOrderSales:paging"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<ReportOrderSalesDTO.ListDTO>> queryByPage(@RequestBody @Validated PagingDTO<ReportOrderSalesDTO.PagingParamDTO> dto) {
         PagingVO<ReportOrderSalesDTO.ListDTO> pagingVO = reportOrderSalesService.paging(dto);
@@ -58,7 +64,6 @@ public class ReportOrderSalesController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出订单需求报表")
     @PostMapping(value = "/exportExcell")
-    @WebAdvanceQuery
     public ApiResult exportExcel(@RequestBody ReportOrderSalesDTO.PagingParamDTO dto) {
         Boolean flag = reportOrderSalesService.exportExcel(dto);
         return flag == true ? success() : failure();

@@ -16,7 +16,11 @@
         srid.warehouse_location,
         srid.remark,
         srid.source_detail_id,
-        sri.approve_Status
+        sri.approve_Status,
+        srid.return_amount,
+        srid.tax_return_amount,
+        srid.return_amount_local_currency,
+        srid.tax_return_amount_local_currency
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
         WHERE sri.is_deleted = FALSE
@@ -43,7 +47,11 @@
         srid.warehouse_location,
         srid.remark,
         srid.source_detail_id,
-        sri.approve_Status
+        sri.approve_Status,
+        srid.return_amount,
+        srid.tax_return_amount,
+        srid.return_amount_local_currency,
+        srid.tax_return_amount_local_currency
         FROM so_return_instock_detail srid
         INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
         WHERE sri.is_deleted = FALSE
@@ -54,5 +62,17 @@
                 #{id}
             </foreach>
         </if>
+    </select>
+    <select id="getSoReturnInstockByReturnIds"
+            resultType="com.erp.model.wms.entity.SoReturnInstockDetailEntity">
+        SELECT srid.*,sri.so_return_id as returnId,sri.code,sri.approve_time as approveTime,sri.approve_status
+        FROM so_return_instock_detail srid
+        INNER JOIN so_return_instock sri ON sri.id = srid.main_id AND srid.is_deleted = FALSE
+        WHERE sri.is_deleted = FALSE
+          AND sri.invalid_status = FALSE
+        and sri.so_return_id in
+        <foreach collection="returnIds" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
     </select>
 </mapper>

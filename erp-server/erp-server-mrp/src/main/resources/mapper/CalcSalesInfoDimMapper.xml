@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.CalcSalesInfoDimMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.CalcSalesInfoDimEntity">
+        <result column="id" property="id"/>
+        <result column="create_user_id" property="createUserId"/>
+        <result column="create_user_name" property="createUserName"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user_id" property="updateUserId"/>
+        <result column="update_user_name" property="updateUserName"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="version" property="version"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="sku_id" property="skuId"/>
+        <result column="sku_no" property="skuNo"/>
+        <result column="country" property="country"/>
+        <result column="shop_id" property="shopId"/>
+        <result column="platform" property="platform"/>
+        <result column="sales_qty_json" property="salesQtyJson"/>
+        <result column="avg_sales_qty_json" property="avgSalesQtyJson"/>
+        <result column="month_sales_estimate_qty_json" property="monthSalesEstimateQtyJson"/>
+        <result column="month_real_sales_qty_json" property="monthRealSalesQtyJson"/>
+        <result column="cfg_rule_calc_id" property="cfgRuleCalcId"/>
+        <result column="remark" property="remark"/>
+    </resultMap>
+
+    <select id="paging" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$PagingView">
+        select csic.id,
+               csic.update_time updateTime,
+               csic.sku_id skuId,
+               csic.sku_no,
+               csic.country,
+               csic.shop_id shopId,
+               csic.platform,
+               csic.sales_qty_json,
+               csic.avg_sales_qty_json,
+               csic.month_sales_estimate_qty_json,
+               csic.month_real_sales_qty_json,
+               csic.cfg_rule_calc_id,
+               csic.r2_score as r2Score,
+               csic.mape_score as mapeScore
+        from calc_sales_info_dim csic
+        where ${params.sqlMap.default}
+          and csic.is_deleted = FALSE
+          and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            csic.update_time desc
+
+    </select>
+    <select id="view" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ViewDTO">
+        select csic.id,
+               csic.update_time,
+               csic.sku_id,
+               csic.sku_no,
+               csic.country,
+               csic.shop_id,
+               csic.platform,
+               csic.remark,
+               csic.cfg_rule_calc_id,
+               crc.name,
+               crc.code,
+               csic.status
+        from calc_sales_info_dim csic
+                 inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where csic.id = #{id}
+    </select>
+    <select id="exportData" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportDTO">
+        select csic.id,
+        csic.sku_id,
+        csic.sku_no,
+        csic.country,
+        csic.shop_id,
+        csic.platform,
+        csic.sales_qty_json,
+        csic.avg_sales_qty_json,
+        csic.cfg_rule_calc_id,
+        crc.start_calc_date,
+        crc.end_calc_date
+        from calc_sales_info_dim csic
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csic.is_deleted = FALSE
+        <if test="params.cfgRuleCalcId != null and params.cfgRuleCalcId != ''">
+            and csic.cfg_rule_calc_id = #{params.cfgRuleCalcId}
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+    </select>
+
+    <select id="pagingDetail" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$DetailViewDTO">
+        select crc.id as cfgRuleCalcId,
+        crc.name,
+        crc.code,
+        crc.start_calc_date startCalcDate,
+        crc.end_calc_date endCalcDate,
+        crc.sale_type saleType,
+        crc.file_url,
+        crc.create_user_name,
+        crc.create_time createTime,
+        csic.id,
+        csic.sku_id skuId,
+        csic.sku_no skuNo,
+        csic.country,
+        csic.shop_id,
+        csic.platform,
+        csic.sales_qty_json,
+        csic.avg_sales_qty_json,
+        csic.month_real_sales_qty_json,
+        csic.month_sales_estimate_qty_json,
+        csic.cfg_rule_calc_id,
+        csic.update_time updateTime,
+        csic.update_user_name,
+        csic.remark,
+        csic.r2_score as r2Score,
+        csic.mape_score as mapeScore,
+        csic.mae_score as maeScore,
+        csic.mse_score as mseScore,
+        csic.rmse_score as rmseScore,
+        csic.status,
+        csic.serial_no as serialNo,
+        csic.month_r2_score as monthR2Score,
+        csic.month_mape_score as monthMapeScore,
+        csic.month_mae_score as monthMaeScore,
+        csic.month_mse_score as monthMseScore,
+        csic.month_rmse_score as monthRmseScore
+        from calc_sales_info_dim csic
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csic.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        crc.create_time desc,serial_no
+    </select>
+
+    <select id="pagingTemplate" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$TemplateViewDTO">
+        select crc.id as cfgRuleCalcId,
+        crc.create_user_name,
+        crc.create_time createTime,
+        crc.sale_type saleType,
+        crc.file_url,
+        crc.name,
+        crc.code,
+        crc.start_calc_date startCalcDate,
+        crc.end_calc_date endCalcDate,
+        crc.status
+        from cfg_rule_calc as crc
+        where ${params.sqlMap.default}
+        and crc.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+            crc.update_time desc
+    </select>
+
+    <select id="listBySkuAndShopAndDate" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$CompareResultDTO">
+        select csid.id,
+               csid.sku_id,
+               csid.sku_no,
+               csid.shop_id,
+               csid.platform,
+               csid.country,
+               csid.cfg_rule_calc_id,
+               csid.his_data_md5,
+               crc.start_calc_date,
+               crc.end_calc_date,
+               crc.name,crc.code
+        from calc_sales_info_dim csid
+                 inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where csid.is_deleted = false
+          and csid.sku_id = #{dto.skuId}
+          and csid.shop_id = #{dto.shopId}
+          and crc.start_calc_date = #{dto.startCalcDate}
+    </select>
+    <select id="listCompareByIds" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$CompareResultDTO">
+        select csid.id,
+        csid.sku_id,
+        csid.sku_no,
+        csid.shop_id,
+        csid.platform,
+        csid.country,
+        csid.cfg_rule_calc_id,
+        csid.his_data_md5,
+        crc.start_calc_date,
+        crc.end_calc_date,
+        crc.name,crc.code
+        from calc_sales_info_dim csid
+        inner join cfg_rule_calc crc on csid.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where csid.is_deleted = false
+        and csid.id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+
+    </select>
+    <select id="exportMrpSalesCalcList"
+            resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportSalesInfoListDTO">
+        select crc.code as code,
+        crc.name as name,
+        crc.start_calc_date as startCalcDate,
+        crc.end_calc_date as endCalcDate,
+        csic.sku_id as skuId,
+        csic.sku_no,
+        csic.shop_id as shopId,
+        csic.platform,
+        csic.country,
+        crc.sale_type as saleType,
+        csic.r2_score as r2Score,
+        csic.mape_score as mapeScore,
+        csic.mae_score as maeScore,
+        csic.mse_score as mseScore,
+        csic.rmse_score as rmseScore,
+        csic.remark,
+        crc.create_user_name,
+        crc.create_time as createTime,
+        csic.update_time as updateTime,
+        csic.update_user_name,
+        csic.status,
+        csic.serial_no as serialNo,
+        csic.month_r2_score as monthR2Score,
+        csic.month_mape_score as monthMapeScore,
+        csic.month_mae_score as monthMaeScore,
+        csic.month_mse_score as monthMseScore,
+        csic.month_rmse_score as monthRmseScore
+        from calc_sales_info_dim csic
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csic.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by csic.update_time desc,csic.id desc
+    </select>
+    <select id="dataIdPage" resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$DataIdPageDTO">
+
+        select crc.id as cfgRuleCalcId,
+        csic.id,
+        crc.code as code,
+        crc.name as name,
+        crc.start_calc_date as startCalcDate,
+        crc.end_calc_date as endCalcDate,
+        csic.sku_id as skuId,
+        csic.shop_id as shopId,
+        crc.sale_type as saleType,
+        csic.r2_score as r2Score,
+        csic.mape_score as mapeScore,
+        csic.mae_score as maeScore,
+        csic.mse_score as mseScore,
+        csic.rmse_score as rmseScore,
+        crc.create_time as createTime,
+        csic.update_time as updateTime,
+        csic.serial_no as serialNo,
+        csic.month_r2_score as monthR2Score,
+        csic.month_mape_score as monthMapeScore,
+        csic.month_mae_score as monthMaeScore,
+        csic.month_mse_score as monthMseScore,
+        csic.month_rmse_score as monthRmseScore
+        from calc_sales_info_dim csic
+        inner join cfg_rule_calc crc on csic.cfg_rule_calc_id = crc.id and crc.is_deleted = false
+        where ${params.sqlMap.default}
+        and csic.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        crc.create_time desc,serial_no
+    </select>
+    <select id="exportMrpSalesCalcTemplateList"
+            resultType="com.erp.model.mrp.dto.CalcSalesInfoDimDTO$ExportSalesInfoTemplateListDTO">
+        select crc.id as cfgRuleCalcId,
+        crc.create_user_name,
+        crc.create_time createTime,
+        crc.sale_type saleType,
+        crc.name,
+        crc.code,
+        crc.start_calc_date startCalcDate,
+        crc.end_calc_date endCalcDate,
+        crc.status,
+        crc.update_time as updateTime,
+        crc.update_user_name
+        from cfg_rule_calc as crc
+        where ${params.sqlMap.default}
+        and crc.is_deleted = FALSE
+        <if test="params.favorite != null and params.favorite ">
+            and exists (select id from calc_sales_info_favorite where is_deleted = false and cfg_rule_calc_id = crc.id
+            and user_id = #{uid})
+        </if>
+        order by
+        <if test="params.sortList != null and params.sortList.size > 0">
+            <foreach collection="params.sortList" item="item" separator="," close=",">
+                ${item.field} ${item.sort}
+            </foreach>
+        </if>
+        crc.update_time desc
+    </select>
+</mapper>

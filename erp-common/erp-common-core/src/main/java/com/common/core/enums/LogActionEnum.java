@@ -36,8 +36,8 @@ public enum LogActionEnum {
     LOGOUT("logout", "登出",false),
     CUSTOM_UPDATE("customUpdate", "自定义更新",false),
     UPDATE_WITHOUT_PARAMS("updateWithoutParams", "无参更新",false),
-    CUSTOM_BATCH_UPDATE("customBatchUpdate", "自定义批量更新",false),
-    CUSTOM_BATCH_INSERT("customBatchInsert", "自定义批量插入", false),
+    CUSTOM_BATCH_UPDATE("customBatchUpdate", "自定义批量更新",true),
+    CUSTOM_BATCH_INSERT("customBatchInsert", "自定义批量插入", true),
     UPLOAD("upload", "上传", false),
     DOWNLOAD("download", "下载", false),
     // 新接口禁止使用
@@ -47,6 +47,7 @@ public enum LogActionEnum {
     RECEIVE("receive", "签收",true),
     EXECUTE("execute", "执行",true),
     GET_LOGISTICS_NO("getLogisticsNo", "获取物流跟踪号",true),
+    GET_LOGISTICS_LABEL("getLogisticsLabel", "获取物流面单",true),
     ;
 
     @EnumValue

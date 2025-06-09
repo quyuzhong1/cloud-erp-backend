@@ -24,7 +24,14 @@
             srd.return_qty AS returnQty,
             sr.bill_date AS billDate,
             sr.approve_user_name AS approveUserName,
-            sr.create_user_name AS createUserName
+            sr.create_user_name AS createUserName,
+            sr.currency,
+            sr.currency_symbol,
+            srd.exchange_rate,
+            srd.return_amount ,
+            srd.tax_return_amount ,
+            srd.return_amount_local_currency ,
+            srd.tax_return_amount_local_currency
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE
@@ -79,7 +86,14 @@
         srd.return_qty AS returnQty,
         sr.bill_date AS billDate,
         sr.approve_user_name AS approveUserName,
-        sr.create_user_name AS createUserName
+        sr.create_user_name AS createUserName,
+        sr.currency,
+        sr.currency_symbol,
+        srd.exchange_rate,
+        srd.return_amount ,
+        srd.tax_return_amount ,
+        srd.return_amount_local_currency ,
+        srd.tax_return_amount_local_currency
         FROM so_return_detail srd
         INNER JOIN so_return sr ON srd.main_id = sr.id AND srd.is_deleted = FALSE
         WHERE
@@ -181,6 +195,18 @@
             AND sr.code ILIKE concat('%', #{code}::text ,'%')
         </if>
         ORDER BY sr.create_time DESC
+    </select>
+    <select id="listSoReturnByApproveStatus" resultType="com.erp.model.oms.entity.SoReturnEntity">
+        SELECT
+            sr.*
+        FROM so_return sr
+        WHERE sr.is_deleted = FALSE
+        AND sr.approve_status = #{approveStatus}
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+        order by sr.code desc
     </select>
 
 </mapper>

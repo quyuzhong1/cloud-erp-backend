@@ -1,12 +1,12 @@
 package com.erp.rpc.tms.feign;
 
 import com.common.business.config.FeignErrorDecoder;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.core.controller.vo.ApiResult;
-import com.erp.model.tms.dto.LogisticsAddressDTO;
-import com.erp.model.tms.dto.LogisticsChannelDTO;
-import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.dto.*;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.vo.request.LogisticsQueryBaseVO;
 import com.erp.model.tms.vo.response.LogisticsOrderResponseVO;
@@ -65,6 +65,13 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/getChannelByName")
     List<LogisticsChannelEntity> getChannelByName(@RequestBody String channelName);
+    /**
+     * 获取渠道 根据渠道名称
+     * @param channelNameList
+     * @return
+     */
+    @PostMapping("/feign/logistics/listChannelByNameList")
+    List<LogisticsChannelEntity> listChannelByNameList(@RequestBody List<String> channelNameList);
     @PostMapping("/feign/logistics/getChannelInfoById")
     LogisticsChannelDTO.BaseDTO getChannelInfoById(@RequestBody String channelId);
 
@@ -94,4 +101,67 @@ public interface LogisticsFeign {
      */
     @PostMapping("/feign/logistics/listAddressByType")
     List<LogisticsAddressDTO.ListDTO> listAddressByType(@RequestBody @Validated LogisticsAddressDTO.AddressByTypeDTO dto);
+    /**
+     * 根据渠道汇总时间段内未更新运单号记录
+     *
+     * @return
+     */
+    @PostMapping("/feign/logistics/getWarnReportByChannel")
+    List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@RequestBody LogisticsBillDetailQueryDTO query);
+
+    /**
+     * 接收track123物流轨迹同步数据
+     * @return
+     */
+    @PostMapping("/feign/logistics/webhookByTrack123")
+    void webhookByTrack123(@RequestBody LogisticsTrackDTO.TrackWebHookDTO dto);
+
+    @GetMapping("/feign/logistics/estimateIsOutOfRangeDelivery")
+    Boolean estimateIsOutOfRangeDelivery(@RequestParam("logisticsChannelId")String logisticsChannelId, @RequestParam("country")String country, @RequestParam("postCode")String postCode);
+
+    /**
+     * 更新销售订单预估运费
+     *
+     * @param pagingParamDTO
+     * @return void
+     * @author zdy
+     * @date: 2024/12/10 17:35
+     */
+    @PostMapping("/feign/logistics/updateShippingCalculation")
+    void updateShippingCalculation(@RequestBody @Validated ShippingCalculationDTO.PagingParamDTO pagingParamDTO);
+
+    /**
+     *sku成本-skuIds
+     * @param queryB2BDTO
+     * @return
+     */
+    @PostMapping("/feign/logistics/listSkuCostBySkuIds")
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostBySkuIds(@RequestBody InventorySkuCostDTO.QueryB2BDTO queryB2BDTO);
+    /**
+     * sku成本 订单明细
+     * @param queryB2CDTO
+     * @return
+     */
+    @PostMapping("/feign/logistics/listSkuCostByDetail")
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetail(@RequestBody InventorySkuCostDTO.QueryB2CDTO queryB2CDTO);
+    /**
+     * sku成本 单个明细
+     * @param queryDetailDTOList
+     * @return
+     */
+    @PostMapping("/feign/logistics/listSkuCostByDetailList")
+    List<InventorySkuCostDTO.SkuCostDTO> listSkuCostByDetailList(@RequestBody List<InventorySkuCostDTO.QueryDetailDTO> queryDetailDTOList);
+    /**
+     * 所有的物流渠道
+     * @return
+     */
+    @GetMapping("/feign/logistics/listAll")
+    List<BaseDropDownDTO.DisabledDTO> listAll();
+    /**
+     * 根据渠道查询黑名单
+     * @param channelIdList
+     * @return
+     */
+    @PostMapping("/feign/logistics/listChannelBlacklist")
+    List<LogisticsChannelBlacklistEntity> listChannelBlacklist(@RequestBody List<String> channelIdList);
 }

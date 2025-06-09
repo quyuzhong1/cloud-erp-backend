@@ -2,6 +2,28 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.erp.server.wms.mapper.SoDeliveryNoticeMapper">
     <select id="paging" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PagingView">
+        WITH so_delivery_notice_details AS (
+        SELECT
+        sdn.id AS notice_id,
+        sdnd.id AS detail_id,
+        COUNT(pd.id) OVER (PARTITION BY sdn.id) AS picked_count,
+        COUNT(sdnd.id) OVER (PARTITION BY sdn.id) AS total_count
+        FROM so_delivery_notice sdn
+        JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
+        LEFT JOIN picking_detail pd ON pd.source_detail_id = sdnd.id AND pd.is_deleted = FALSE
+        WHERE sdnd.is_deleted = FALSE
+        ),
+        generation_status AS (
+        SELECT
+        notice_id,
+        CASE
+        WHEN total_count = picked_count THEN '已生成'
+        WHEN picked_count > 0 THEN '部分生成'
+        ELSE '未生成'
+        END AS generationPickStatus
+        FROM so_delivery_notice_details
+        GROUP BY notice_id, picked_count, total_count
+        )
         SELECT
             sdn.id,
             sdnd.id as detailId,
@@ -15,6 +37,8 @@
             sdn.approve_status AS approveStatus,
             sdn.invalid_status AS invalidStatus,
             sdn.delivery_status AS deliveryStatus,
+            sdn.warehouse_id AS warehouseId,
+            sdn.warehouse_name AS warehouseName,
             sdn.warehouse_org_id AS warehouseOrgId,
             sdn.warehouse_org_name AS warehouseOrgName,
             sdnd.sku_id AS skuId,
@@ -27,13 +51,17 @@
             sdn.pack_date AS packDate,
             sdn.approve_user_name AS approveUserName,
             sdn.create_user_name AS createUserName,
-        (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
-        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id) as packingQty,
+        COALESCE((select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
+        where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = sdnd.sku_id),0) as packingQty,
         pt.packing_status as packingStatus,
-            sdn.create_time AS createTime
+            sdn.create_time AS createTime,
+        sdnd.picking_qty as pickedQty,
+        g.generationPickStatus,
+        sdn.transfer_warehouse_ids
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
         LEFT JOIN packing_task pt on pt.source_id = sdn.id and pt.is_deleted = false
+        LEFT JOIN  generation_status g ON sdn.id = g.notice_id
         WHERE
         ${params.sqlMap.default}
         and    sdnd.is_deleted = FALSE
@@ -92,7 +120,8 @@
         sdn.actual_delivery_date AS actualDeliveryDate,
         sdn.approve_user_name AS approveUserName,
         sdn.create_user_name AS createUserName,
-        sdn.create_time AS createTime
+        sdn.create_time AS createTime,
+        sdn.transfer_warehouse_ids
         FROM so_delivery_notice sdn
         INNER JOIN so_delivery_notice_detail sdnd ON sdn.id = sdnd.main_id AND sdn.is_deleted = FALSE
         WHERE
@@ -205,6 +234,7 @@
     <select id="pagingPicking" resultType="com.erp.model.wms.dto.SoDeliveryNoticeDTO$PickingViewDTO">
         select sdnd.id AS detailId,
         sdnd.sku_no AS skuNo,
+        sdnd.platform_sku_no AS platformSkuNo,
         sdnd.sku_id AS skuId,
         sdnd.delivery_qty AS planQty,
         sdnd.picking_qty AS pickedQuantity,
@@ -219,5 +249,120 @@
                 #{sku}
             </foreach>
         </if>
+    </select>
+
+    <!-- 查询b2b订单流水 -->
+    <select id="rebuildB2bVirtualFlow"
+            resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
+        -- b2b销售订单冻结
+        select
+            sd.sku_id,
+            sd.sku_no,
+            si.virtual_warehouse_id,
+            si.warehouse_id,
+            'soInfo' as source_type,
+            si.id as source_id,
+            si.code as source_code,
+            sd.id as source_detail_id,
+            COALESCE(sd.frozen_time,sd.create_time) as bill_date,
+            COALESCE(sd.frozen_time,sd.create_time) as trade_time,
+            sd.frozen_qty as qty
+        from so_info si
+        inner join so_detail sd on si.id = sd.main_id and sd.is_deleted = false and sd.frozen_qty > 0
+        where si.is_deleted = false and si.virtual_warehouse_id != ''
+        union all
+        -- 发货通知单冻结
+        select * from (
+        select
+            sdnd.sku_id,
+            sdnd.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'soDeliveryNotice' as source_type,
+            sdn.id as source_id,
+            sdn.code as source_code,
+            sdnd.id as source_detail_id,
+            sdn.create_time as bill_date,
+            sdn.create_time as trade_time,
+            case when sdn.approve_status = 'approve' then sdnd.picking_qty else sdnd.last_picking_qty end as qty
+        from so_delivery_notice sdn
+        inner join so_delivery_notice_detail sdnd on sdn.id = sdnd.main_id and sdnd.is_deleted = false and sdn.virtual_warehouse_id != '' and sdn.invalid_status = false
+        where sdn.is_deleted = false ) as soDelivery where soDelivery.qty > 0
+        -- 加工单出库(发货通知单下推)
+        union all
+        select
+            md.sku_id,
+            md.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'machineInfo' as source_type,
+            mi.id as source_id,
+            mi.code as source_code,
+            md.id as source_detail_id,
+            mi.approve_time as bill_date,
+            mi.approve_time as trade_time,
+            md.qty as qty
+        from machine_info mi
+        inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve' and mi.source_type = 'soDeliveryNotice' and md.qty > 0
+        inner join so_delivery_notice_detail sdnd on sdnd.id = md.source_detail_id and sdnd.is_deleted = false
+        inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != ''
+        where mi.is_deleted = false
+        -- 加工单出库(销售订单下推)
+        union all
+        select
+            md.sku_id,
+            md.sku_no,
+            si.virtual_warehouse_id,
+            si.warehouse_id,
+            'machineInfo' as source_type,
+            mi.id as source_id,
+            mi.code as source_code,
+            md.id as source_detail_id,
+            mi.approve_time as bill_date,
+            mi.approve_time as trade_time,
+            md.qty as qty
+        from machine_info mi
+         inner join machine_detail md on md.main_id = mi.id and md.is_deleted = false and mi.approve_status = 'approve'  and mi.source_type = 'soInfo' and md.qty > 0
+         inner join machine_ref_so mrs on md.id = mrs.machine_detail_id and mi.id = mrs.machine_id and mrs.is_deleted = false
+         inner join  so_info si on si.id = mrs.so_id and si.is_deleted = false and si.virtual_warehouse_id != ''
+        where mi.is_deleted = false
+        --直接调拨单出库
+        union all
+        select
+            tid.sku_id,
+            tid.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'transferInfo' as source_type,
+            ti.id as source_id,
+            ti.code as source_code,
+            tid.id as source_detail_id,
+            ti.approve_time as bill_date,
+            ti.approve_time as trade_time,
+            tid.qty as qty
+        from transfer_info ti
+        inner join transfer_info_detail tid on ti.id = tid.main_id and tid.is_deleted = false and ti.approve_status = 'approve' and tid.qty > 0
+        inner join so_delivery_notice_detail sdnd on sdnd.id = tid.source_detail_id and sdnd.is_deleted = false
+        inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and tid.out_warehouse_id = sdn.warehouse_id
+        where ti.is_deleted = false
+        union all
+        -- 销售出库单出库
+        select
+            sod.sku_id,
+            sod.sku_no,
+            sdn.virtual_warehouse_id,
+            sdn.warehouse_id,
+            'soOutstock' as source_type,
+            so.id as source_id,
+            so.code as source_code,
+            sod.id as source_detail_id,
+            so.approve_time as bill_date,
+            so.approve_time as trade_time,
+            sod.actual_qty as qty
+        from so_outstock so
+        inner join so_outstock_detail sod on so.id = sod.main_id and sod.is_deleted = false and so.approve_status = 'approve' and sod.actual_qty > 0
+        inner join so_delivery_notice_detail sdnd on sdnd.id = sod.source_detail_id and sdnd.is_deleted = false
+        inner join  so_delivery_notice sdn on sdn.id = sdnd.main_id and sdn.is_deleted = false and sdn.virtual_warehouse_id != '' and sod.warehouse_id = sdn.warehouse_id
+        where so.is_deleted = false
     </select>
 </mapper>

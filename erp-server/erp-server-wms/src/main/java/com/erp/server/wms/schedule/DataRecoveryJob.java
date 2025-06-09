@@ -1,6 +1,8 @@
 package com.erp.server.wms.schedule;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -46,7 +48,7 @@ public class DataRecoveryJob {
     @XxlJob("soOutStockDataRecovery")
     public void SoOutStockDataRecovery() {
         String jobParam = XxlJobHelper.getJobParam();
-        if (StrUtil.isBlank(jobParam)) {
+        if (CharSequenceUtil.isBlank(jobParam)) {
             XxlJobHelper.log("参数错误= {}",jobParam);
             return;
         }
@@ -55,7 +57,7 @@ public class DataRecoveryJob {
         String type = param.get("type", String.class);
         Boolean isManual = param.get("isManual", Boolean.class);
         Boolean isPushKingdee = param.getBool("isPushKingdee", Boolean.FALSE);
-        if(CollectionUtil.isEmpty(ids)){
+        if(CollUtil.isEmpty(ids)){
             if("soReturnInstockService".equals(type)){
                 ids = soOutstockService.getIdsByTemp("so_return_instock");
             }else if("transferInfoService".equals(type)){
@@ -72,20 +74,19 @@ public class DataRecoveryJob {
 
         ids.parallelStream().forEach(item -> {
             BaseIdsDTO.IdsDTO idsDTO = new BaseIdsDTO.IdsDTO();
-//            idsDTO.setIds(Collections.singletonList(item));
             SoOutstockEntity soOutstock = soOutstockService.getById(item);
             try {
-                if(StrUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
+                if(CharSequenceUtil.isNotBlank(type) && "soReturnInstockService".equals(type)){
                     SoReturnInstockEntity entity = soReturnInstockService.getById(item);
                     if (Objects.nonNull(entity)){
                         soReturnInstockService.disApprove(entity, isPushKingdee);
                     }
-                }else if(StrUtil.isNotBlank(type) && "transferInfoService".equals(type)){
+                }else if(CharSequenceUtil.isNotBlank(type) && "transferInfoService".equals(type)){
                     TransferInfoEntity entity = transferInfoService.getById(item);
                     if (Objects.nonNull(entity)){
                         transferInfoService.disApprove(entity, isPushKingdee, isManual);
                     }
-                }else if(StrUtil.isNotBlank(type) && "soOutstockService".equals(type)){
+                }else if(CharSequenceUtil.isNotBlank(type) && "soOutstockService".equals(type)){
                     soOutstockService.disApprove(soOutstock, isPushKingdee);
                 }
             } catch (Exception e) {
@@ -106,7 +107,7 @@ public class DataRecoveryJob {
         List<String> kingdeeCodeList=new ArrayList<>();
         kingdeeCodeList = dmpTaskFeign.getKingdeeSourceCode(condition);
 
-        if(CollectionUtil.isNotEmpty(kingdeeCodeList)){
+        if(CollUtil.isNotEmpty(kingdeeCodeList)){
             kingdeeCodeList.stream().forEach(kingdeeCode->{
                 LambdaQueryWrapper<SoOutstockEntity> queryWrapper=new LambdaQueryWrapper<>();
                 queryWrapper.select(SoOutstockEntity::getId);
@@ -116,7 +117,7 @@ public class DataRecoveryJob {
 
                 // 按条件查询
                 List<SoOutstockEntity> queryResult=soOutstockService.list(queryWrapper);
-                if(CollectionUtil.isNotEmpty(queryResult)){
+                if(CollUtil.isNotEmpty(queryResult)){
                     // 添加 id
                     queryResult.stream().forEach(item->result.add(item.getId()));
                 }

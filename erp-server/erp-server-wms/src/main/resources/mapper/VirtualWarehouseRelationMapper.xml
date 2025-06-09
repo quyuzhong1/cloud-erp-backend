@@ -37,6 +37,10 @@
         from virtual_warehouse_relation vwr
         inner join warehouse w on vwr.warehouse_id=w.id and w.is_deleted=false and w.disabled=false
         where vwr.is_deleted=false and vwr.disabled=false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ( (w.id = #{params.searchKeyword}) or w.name ilike
             concat('%', #{params.searchKeyword}::text ,'%'))
@@ -59,6 +63,7 @@
         from (select vw.id virtualWarehouseId,vw.name virtualWarehouseName,vw.disabled
         from virtual_warehouse_relation vwr
         inner join virtual_warehouse vw on vwr.virtual_warehouse_id=vw.id and vw.is_deleted=false and vw.disabled=false
+        left join virtual_warehouse_channel vwc on vwc.virtual_warehouse_id=vwr.virtual_warehouse_id and vwc.is_deleted=false and vwc.disabled=false
         where vwr.is_deleted=false and vwr.disabled=false
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ( (vw.id = #{params.searchKeyword}) or vw.name ilike
@@ -66,6 +71,9 @@
         </if>
         <if test="params.warehouseId != null and params.warehouseId != ''">
             and vwr.warehouse_id = #{params.warehouseId}
+        </if>
+        <if test="params.shopId != null and params.shopId != ''">
+            and (vwc.relation_id = #{params.shopId} or vwc.relation_id = '')
         </if>
         group by vw.id
         order by
@@ -78,5 +86,24 @@
         vw.id) virtualWarehouse
     </select>
 
-
+    <!-- 根据仓库id查询 -->
+    <select id="listWarehouseIdList" resultType="com.erp.model.wms.dto.VirtualWarehouseRelationDTO$SelectResultDTO">
+        select
+            vwr.warehouse_id as warehouseId,
+            vw.id as virtualWarehouseId,
+            vw.name as virtualWarehouseName,
+            vw.disabled,
+            vwc.relation_id as relationId,
+            vwc.dict_platform as dictPlatform,
+            vwc.type
+        from virtual_warehouse_relation vwr
+        inner join virtual_warehouse vw on vwr.virtual_warehouse_id=vw.id and vw.is_deleted=false and vw.disabled=false
+        inner join virtual_warehouse_channel vwc on vw.id = vwc.virtual_warehouse_id and vwc.is_deleted =false
+        where vwr.is_deleted = false and vwr.disabled = false
+        and vwr.warehouse_id in
+        <foreach collection="warehouseIdList" item="item" open="(" close=")" separator=",">
+            #{item}
+        </foreach>
+        order by vw.id
+    </select>
 </mapper>

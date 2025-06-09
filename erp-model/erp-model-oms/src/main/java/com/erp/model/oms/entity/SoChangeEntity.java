@@ -133,8 +133,11 @@ public class SoChangeEntity extends BaseEntity<SoChangeEntity> {
      */
     @TableField("receive_address_id")
     private String receiveAddressId;
-
-
+    /**
+     * 客户id
+     */
+    @TableField(exist = false)
+    private String customerId;
 
     public static final String CODE = "code";
 

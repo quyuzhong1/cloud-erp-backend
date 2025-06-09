@@ -3,7 +3,7 @@
 <mapper namespace="com.erp.server.tms.mapper.FirstMileEstimatedBillMapper">
 
     <select id="paging" resultType="com.erp.model.tms.dto.FirstMileEstimatedBillDTO$View">
-        select DISTINCT
+        select
                 eb.id,
                fd. businessCode,
                lb.outstock_id outStockId,
@@ -18,14 +18,11 @@
                eb.confirm_time confirmTime,
                eb.create_time createTime,
                lb.channel_id logisticsChannelId,
-               eb.logistics_bill_id,
-               lbc.reconciliation_status actualBillStatus,
-               lbc.currency
+               eb.logistics_bill_id
         from first_mile_estimated_bill eb
                  inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
                  left join logistics_channel lc on lb.channel_id = lc.id
                  left join logistics_bill_detail lbd on lb.id = lbd.main_id and lbd.is_deleted = false
-                 left join logistics_bill_cost lbc on lbc.is_deleted = FALSE AND eb.logistics_bill_id = lbc.logistics_bill_id
         LEFT JOIN (
         SELECT
             DISTINCT
@@ -34,14 +31,19 @@
         FROM
             wms_first_mile_delivery fd
         LEFT JOIN wms_first_mile_delivery_detail fdd ON fdd.main_id = fd.ID AND fdd.is_deleted =FALSE
-                LEFT JOIN wms_overseas_warehouse_inbound owi ON owi.source_id = fd.ID AND owi.is_deleted = FALSE
+                LEFT JOIN wms_overseas_warehouse_inbound owi ON owi.source_id = fd.ID AND owi.is_deleted = FALSE and owi.instock_status != 'canceled'
         WHERE
             fd.is_deleted = FALSE
         ) AS fd ON lb.outstock_id = fd.ID
         <where>
             ${params.sqlMap.default}
             and eb.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
         </where>
+
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
@@ -129,6 +131,7 @@
                 lc.fee_rule feeRule,
                 lbc.id logisticsBillCostId,
                 lbc.currency,
+                lbc.exchange_rate,
                 lbc.reconciliation_status actualBillStatus,
                 lbd.track_status transportStatus,
                 lbd.sign_time signTime,
@@ -159,7 +162,8 @@
         select fmeb.logistics_bill_id logisticsBillId,
                tcc.dict_cost_attribution dictCostAttribution,
                tcc.dict_cost_category dictCostCategory,
-               sum(tcd.cost_value) costValue
+               sum(tcd.cost_value) costValue,
+			   max(tcd.currency) currency
         from first_mile_estimated_bill fmeb
                  inner join logistics_bill_cost lbc on fmeb.logistics_bill_id = lbc.logistics_bill_id
                  left join tms_cost_detail tcd on lbc.id = tcd.main_id and tcd.is_deleted = false
@@ -175,8 +179,9 @@
         group by fmeb.logistics_bill_id, tcc.dict_cost_attribution, tcc.dict_cost_category;
     </select>
     <select id="countByParam" resultType="java.lang.Integer">
-        select count(1)
+        select count(distinct eb.id)
         from first_mile_estimated_bill eb
+        inner join logistics_bill lb on eb.logistics_bill_id = lb.id and eb.is_deleted = false
             left join logistics_bill_cost lbc on lbc.logistics_bill_id = eb.logistics_bill_id and lbc.is_deleted = false
         <where>
             eb.is_deleted = false
@@ -185,6 +190,10 @@
             </if>
             <if test="estimatedStatus != null and estimatedStatus != ''">
                 and eb.status = #{estimatedStatus}
+            </if>
+            <!--权限-->
+            <if test="permissionSql!=null and permissionSql!=''">
+                ${permissionSql}
             </if>
         </where>
     </select>
@@ -197,10 +206,17 @@
                lbc.reconciliation_status actualStatus,
                lbc.track_no trackNo,
                lbc.id costId,
+               lbc.currency,
                lb.id logisticsBillId
         from logistics_bill lb
                  inner join first_mile_estimated_bill eb on lb.id = eb.logistics_bill_id and eb.is_deleted = false
                  inner join logistics_bill_cost lbc on lb.id = lbc.logistics_bill_id and lbc.is_deleted = false
         where lb.is_deleted = false
+        <if test="outstockIdList != null and outstockIdList.size > 0">
+            and lb.outstock_id in
+            <foreach collection="outstockIdList" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
     </select>
 </mapper>

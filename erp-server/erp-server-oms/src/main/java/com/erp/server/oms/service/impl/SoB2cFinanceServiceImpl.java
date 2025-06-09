@@ -2,9 +2,9 @@ package com.erp.server.oms.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
-import com.common.business.constant.BusinessCommonConstants;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformOrderFinanceDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.enums.CurrencyEnum;
@@ -13,7 +13,11 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ReflectUtils;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cFinanceDTO;
-import com.erp.model.oms.entity.*;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cFinanceEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.enums.FullyManagedPlatformStatusEnum;
 import com.erp.server.oms.convert.B2cOrderConsumerConverter;
 import com.erp.server.oms.mapper.SoB2cFinanceMapper;
 import com.erp.server.oms.service.OperateLogService;
@@ -22,7 +26,7 @@ import com.erp.server.oms.service.SoB2cService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,8 +48,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper, SoB2cFinanceEntity> implements SoB2cFinanceService {
-    @Autowired
-    private OperateLogService operateLogService;
+    @Lazy
     @Resource
     private SoB2cService soB2cService;
 
@@ -74,7 +77,9 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
     @Override
     public Boolean update(SoB2cFinanceDTO.UpdateDTO updateDTO) {
         SoB2cFinanceEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单财务信息单"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "B2C销售订单财务信息单");
+        }
         SoB2cFinanceEntity soB2cFinanceEntity =  BeanMapperUtils.map(SoB2cFinanceEntity.class, updateDTO);
 
         // 数据处理
@@ -179,6 +184,9 @@ public class SoB2cFinanceServiceImpl extends SuperServiceImpl<SoB2cFinanceMapper
         }
         if (null != financeDTO.getPlatformCost() && financeDTO.getPlatformCost().compareTo(BigDecimal.ZERO) > 0){
             newEntity.setPlatformCost(financeDTO.getPlatformCost());
+        }
+        if (null != financeDTO.getShippingCost() && financeDTO.getShippingCost().compareTo(BigDecimal.ZERO) > 0){
+            newEntity.setShippingCost(financeDTO.getShippingCost());
         }
     }
 

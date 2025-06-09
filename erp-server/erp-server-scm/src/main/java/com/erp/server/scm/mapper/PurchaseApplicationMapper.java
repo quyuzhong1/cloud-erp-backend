@@ -28,7 +28,7 @@ public interface PurchaseApplicationMapper extends BaseMapper<PurchaseApplicatio
      * @param params
      * @return IPage<ListDTO>
      */
-    IPage<PurchaseApplicationDTO.ListDTO> paging(Page query,@Param("params") PurchaseApplicationDTO.SearchParamDTO params);
+    IPage<PurchaseApplicationDTO.ListDTO> paging(Page<PurchaseApplicationDTO.SearchParamDTO> query,@Param("params") PurchaseApplicationDTO.SearchParamDTO params);
     /**
      * @description: 查询总数
      * @author Will

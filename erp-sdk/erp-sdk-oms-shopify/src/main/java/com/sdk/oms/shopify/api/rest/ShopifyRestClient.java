@@ -1,5 +1,7 @@
 package com.sdk.oms.shopify.api.rest;
 
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.jaxrs.json.JacksonJaxbJsonProvider;
 import com.github.rholder.retry.*;
@@ -766,7 +768,7 @@ public class ShopifyRestClient {
             log.info("Retrieved {} orders from page {}", shopifyOrderPage.size(), shopifyOrderPage.getNextPageInfo());
             resultOrderList.addAll(shopifyOrderPage);
         }
-        return resultOrderList;
+         return resultOrderList;
     }
 
 
@@ -822,6 +824,15 @@ public class ShopifyRestClient {
         return getOrders(response);
     }
 
+    /**
+     * 通过订单IDS查询
+     */
+    public ShopifyPage<ShopifyOrder> getOrderByIds(List<String> orderIds) {
+        final Response response =
+                get(buildOrdersEndpoint().queryParam(IDS_QUERY_PARAMETER, String.join(",", orderIds)));
+        return getOrders(response);
+    }
+
 
     /**
      * @param shopifyFulfillmentRoot
@@ -833,21 +844,6 @@ public class ShopifyRestClient {
         return shopifyFulfillmentRootResponse.getFulfillment();
     }
 
-
-    /**
-     * @param shopifyFulfillmentUpdateRequest
-     * @return ShopifyFulfillment
-     */
-    public ShopifyFulfillment updateFulfillment(final ShopifyFulfillmentUpdateRequest shopifyFulfillmentUpdateRequest) {
-//        final ShopifyFulfillmentRoot shopifyFulfillmentRoot = new ShopifyFulfillmentRoot();
-//        final ShopifyFulfillment shopifyFulfillment = shopifyFulfillmentUpdateRequest.getRequest();
-//        shopifyFulfillmentRoot.setFulfillment(shopifyFulfillment);
-//        final Response response = put(buildOrdersEndpoint().path(shopifyFulfillment.getOrderId()).path(FULFILLMENTS).path(shopifyFulfillment.getId()),
-//                shopifyFulfillmentRoot);
-//        final ShopifyFulfillmentRoot shopifyFulfillmentRootResponse = response.readEntity(ShopifyFulfillmentRoot.class);
-//        return shopifyFulfillmentRootResponse.getFulfillment();
-        return null;
-    }
 
 
     /**
@@ -1531,6 +1527,25 @@ public class ShopifyRestClient {
     public ShopifyFulfillmentServicesRoot getFulfillmentServices() {
         Response response = get(getWebTarget().path(FULFILLMENT_SERVICES.concat(JSON)).queryParam(SCOPE, ALL));
         return response.readEntity(ShopifyFulfillmentServicesRoot.class);
+    }
+
+    /**
+     * 获取物流渠道
+     */
+    public JSONObject getFulfillments(String orderId) {
+        Response response = get(buildOrdersEndpoint().path(orderId).path(FULFILLMENTS.concat(JSON)));
+        return JSONUtil.parseObj(response.getEntity());
+    }
+
+    /**
+     * @param orderId
+     * @return List<ShopifyTransaction>
+     */
+    public String getOrderRefunds(final String orderId) {
+        final Response response = get(buildOrdersEndpoint().path(orderId).path(REFUNDS.concat(JSON)));
+        return JSONUtil.toJsonStr(response);
+//        final ShopifyTransactionsRoot shopifyTransactionsRootResponse = response.readEntity(ShopifyTransactionsRoot.class);
+//        return shopifyTransactionsRootResponse.getTransactions();
     }
 
 }

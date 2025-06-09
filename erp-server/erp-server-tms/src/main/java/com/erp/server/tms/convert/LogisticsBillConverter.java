@@ -4,6 +4,8 @@ import com.common.business.mapper.BigDecimalToIntMapperWork;
 import com.erp.model.plm.dto.LogisticsProductDTO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
+import com.erp.model.tms.entity.LogisticsBillDetailEntity;
+import com.erp.model.tms.entity.LogisticsBillEntity;
 import com.erp.model.tms.vo.request.LogisticsProductVO;
 import com.erp.model.tms.vo.request.ParceInfoVO;
 import com.erp.model.tms.vo.request.ReceiverInfoVO;
@@ -109,4 +111,28 @@ public interface LogisticsBillConverter {
             @Mapping(target = "actId", ignore = true)
     })
     SenderInfo convertSender(LogisticsAddressEntity logisticsAddress);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "trackTime", ignore = true)
+    @Mapping(target = "trackStatus", ignore = true)
+    @Mapping(target = "trackQueryMode", ignore = true)
+    @Mapping(target = "trackEnable", ignore = true)
+    @Mapping(target = "trackContent", ignore = true)
+    @Mapping(target = "signTime", ignore = true)
+    @Mapping(target = "registerStatus", ignore = true)
+    @Mapping(target = "registerResult", ignore = true)
+    @Mapping(target = "platformOrderNo", ignore = true)
+    @Mapping(target = "logisticsAuthId", ignore = true)
+    @Mapping(target = "isApiUpdate", ignore = true)
+    @Mapping(target = "createUserId", ignore = true)
+    @Mapping(target = "createUserName", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "updateUserId", ignore = true)
+    @Mapping(target = "updateUserName", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "mainId", source = "id")
+    @Mapping(target = "trackNo", source = "transportNo")
+    LogisticsBillDetailEntity convertLogisticsDetail(LogisticsBillEntity entity);
+    List<LogisticsBillDetailEntity> convertLogisticsDetail(List<LogisticsBillEntity> list);
 }

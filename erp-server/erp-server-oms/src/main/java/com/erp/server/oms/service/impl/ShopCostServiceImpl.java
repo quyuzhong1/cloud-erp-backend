@@ -3,6 +3,7 @@ package com.erp.server.oms.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.ShopDTO;
@@ -111,7 +112,7 @@ public class ShopCostServiceImpl extends SuperServiceImpl<ShopCostMapper, ShopCo
 
     @Override
     public ShopCostEntity getByShopId(String shopId) {
-        return this.lambdaQuery().eq(ShopCostEntity::getShopId, shopId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(ShopCostEntity::getShopId, shopId).last( SqlConstants.LIMIT_1).one();
     }
 
     /**

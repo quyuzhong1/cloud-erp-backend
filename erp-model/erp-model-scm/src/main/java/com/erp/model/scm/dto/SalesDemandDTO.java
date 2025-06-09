@@ -76,11 +76,6 @@ public class SalesDemandDTO implements Serializable {
         private Boolean isUrgent;
 
         /**
-         * 新品首批（false否,true是）
-         */
-        private Boolean isFirstMassProduct;
-
-        /**
          * 计划交期
          */
         private LocalDate planDeliveryDate;
@@ -144,6 +139,16 @@ public class SalesDemandDTO implements Serializable {
          * 创建时间
          */
         private LocalDateTime createTime;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批
+         */
+        private String firstMassProductName;
     }
 
     @Data
@@ -187,15 +192,13 @@ public class SalesDemandDTO implements Serializable {
         private String applyDeptId;
 
         /**
-         * 新品首批（false否,true是）
-         */
-        @NotNull(message = "新品首批不能为空")
-        private Boolean isFirstMassProduct;
-
-        /**
          * 店铺id
          */
         private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
 
         /**
          * 备货原因
@@ -322,10 +325,9 @@ public class SalesDemandDTO implements Serializable {
         private LocalDate applyDate;
 
         /**
-         * 新品首批不能为空
+         * 新品首批（false否,true是）
          */
-        @NotNull(message = "新品首批不能为空")
-        private Boolean isFirstMassProduct;
+        private String firstMassProduct;
 
         /**
          * 销售订单数量

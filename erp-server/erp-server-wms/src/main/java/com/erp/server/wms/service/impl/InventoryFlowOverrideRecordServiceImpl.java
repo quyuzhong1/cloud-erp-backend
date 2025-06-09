@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
@@ -44,7 +45,7 @@ public class InventoryFlowOverrideRecordServiceImpl extends SuperServiceImpl<Inv
     @Override
     public Map<String, LocalDateTime> mapMaxEndTimeGroupByOrgId(String inventoryOrgId) {
         List<InventoryFlowOverrideRecordEntity> entityList = listMaxEndTimeGroupByOrgId(inventoryOrgId);
-        if (CollectionUtil.isEmpty(entityList)){
+        if (CollUtil.isEmpty(entityList)){
             return Collections.emptyMap();
         }
         Map<String, LocalDateTime> map = new HashMap<>(entityList.size());

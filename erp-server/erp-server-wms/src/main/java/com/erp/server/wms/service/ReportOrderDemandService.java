@@ -83,4 +83,14 @@ public interface ReportOrderDemandService extends SuperService<ReportOrderDemand
      * @return Boolean
      */
     Boolean batchAddAllocation(ValidList<ReportOrderDemandDTO.BatchAddVirtualAllocationDTO> list);
+    /**
+     * 根据sku、仓库、虚拟仓查询
+     * @author will
+     * @date 2024/12/2 17:50
+     * @param skuIdList
+     * @param warehouseIdList
+     * @param virtualWarehouseIdList
+     * @return List<ReportOrderDemandEntity>
+     */
+    List<ReportOrderDemandEntity> listByParam(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList);
 }

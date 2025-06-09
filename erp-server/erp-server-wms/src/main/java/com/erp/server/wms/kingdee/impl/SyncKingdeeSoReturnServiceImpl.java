@@ -2,8 +2,8 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 
 import com.alibaba.fastjson.JSON;
@@ -12,7 +12,6 @@ import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
 import com.common.business.wrapper.FeignQuery;
@@ -20,6 +19,7 @@ import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.erp.model.dmp.entity.CfgSettingEntity;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -55,7 +55,6 @@ import com.erp.server.wms.service.WmsPushMsgService;
 import io.seata.spring.annotation.GlobalTransactional;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -114,8 +113,11 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SoReturnInstockEntity entity, String operate) {
-        //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     private String getSoDetailid(SoReturnInstockEntity entity,  List<SoReturnDetailEntity> returnDetailEntitys, List<SoReturnDetailEntity> returnDetailList, List<SoDetailEntity> soDetailList, SoReturnInstockDetailEntity detailEntity, String soDetailId) {
@@ -165,7 +167,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
           dmpSyncTaskDTO.setSourcePlatformName(PlatformEnum.ERP.getDesc());
           dmpSyncTaskDTO.setTargetPlatformName(PlatformEnum.KINGDEE.getDesc());
           dmpSyncTaskDTO.setSyncOperate(operate);
-          dmpSyncTaskDTO.setParentId(entity.getSoId());
+          if(!"B2C".equals(entity.getType())) {
+        	  dmpSyncTaskDTO.setParentId(entity.getSoId());
+          }
           return dmpMqFeign.saveTask(dmpSyncTaskDTO);
         }
 
@@ -176,7 +180,9 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         wmsPushMsgEntity.setSourceCode(entity.getCode());
         wmsPushMsgEntity.setSyncOperate(operate);
         wmsPushMsgEntity.setPushData(JSON.toJSONString(resultMap));
-        wmsPushMsgEntity.setParentId(entity.getSoId());
+        if(!"B2C".equals(entity.getType())) {
+        	wmsPushMsgEntity.setParentId(entity.getSoId());
+        }
 
         wmsPushMsgService.save(wmsPushMsgEntity);
 
@@ -202,15 +208,15 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         List<SoReturnInstockDetailEntity> returnInstockDetailEntities = soReturnInstockDetailService.listDetailByMainId(entity.getId());
 
         //客户信息
-        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Arrays.asList(entity.getCustomerId()));
+        List<CustomerInfoEntity> customerInfoEntitieList = customerFeign.listCustomerByIds(Collections.singletonList(entity.getCustomerId()));
         //退货单
-        SoReturnEntity soReturnEntity = soReturnFeign.getSoReturnById(entity.getSourceId());
+        SoReturnEntity soReturnEntity = CharSequenceUtil.isNotBlank(entity.getSourceId())?soReturnFeign.getSoReturnById(entity.getSourceId()):null;
 
 
 
         String soId = "";
         if (SourceTypeEnum.SO_RETURN_RECEIVE.getCode().equals(entity.getSourceType())) {
-            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listByIds(Arrays.asList(entity.getSourceId()));
+            List<SoReturnReceiveEntity> soReturnReceiveEntities = soReturnReceiveService.listByIds(Collections.singletonList(entity.getSourceId()));
             if (CollectionUtils.isNotEmpty(soReturnReceiveEntities)) {
                 soId = soReturnReceiveEntities.get(0).getSoId();
             }
@@ -218,19 +224,23 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             soId = entity.getSoId();
         } else if (SourceTypeEnum.SO_INFO.getCode().equals(entity.getSourceType())) {
             soId = entity.getSoId();
+        }else if (SourceTypeEnum.SO_RETURN_INSTOCK.getCode().equals(entity.getSourceType())){
+            //金蝶订单编号
+            resultMap.put("platformOrderCode",entity.getPlatformOrderCode());
+            //金蝶第三方单据编号
+            resultMap.put("thirdCode",entity.getThirdCode());
         }
-
         //销售单
         SoInfoEntity soInfoEntity = new SoInfoEntity();
-        if (StringUtils.isNotBlank(soId)) {
+        if (CharSequenceUtil.isNotBlank(soId)) {
             soInfoEntity = soInfoFeign.getSoInfoById(soId);
         }
 
 
         //销售单明细
         List<SoDetailEntity> soDetailEntitieList = new ArrayList<>();
-        if (StringUtils.isNotBlank(soId)) {
-            soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Arrays.asList(soId));
+        if (CharSequenceUtil.isNotBlank(soId)) {
+            soDetailEntitieList = soInfoFeign.listSoDetailByMainIds(Collections.singletonList(soId));
         }
         List<String> warehouseIds = returnInstockDetailEntities.stream().map(SoReturnInstockDetailEntity::getWarehouseId).collect(Collectors.toList());
         //仓库
@@ -254,12 +264,13 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
         }
         //销售员
         String sellerId = entity.getSellerId();
-
+        String salesDeptId = entity.getSalesDeptId();
         //获取业务员信息
-        if (StringUtils.isNotBlank(sellerId)) {
+        if (CharSequenceUtil.isNotBlank(sellerId)) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgId(entity.getSalesOrgId());
             findBusinessOperator.setUserId(sellerId);
+            findBusinessOperator.setSalesDeptId(salesDeptId);
             findBusinessOperator.setBusinessOperatorType(KingdeeBusinessOperatorTypeEnum.XSY.getCode());
             //获取员工业务信息
             KingdeeOperatorRefPostDTO.OperatorDTO kingSellerInfo = kingdeeFeign.getBusinessOperator(findBusinessOperator);
@@ -270,7 +281,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             }
         }
 
-        if (StringUtils.isNotBlank(entity.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getWarehouseKeeperId())) {
             //仓管员编码
             FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(entity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(findUserDTO)) {
@@ -288,7 +299,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             resultMap.put("collectionTerms", viewDTO.getRemark());
 
             //获取币别信息
-            List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Arrays.asList(customerInfoEntity.getCurrency()));
+            List<CurrencyDTO.ViewDTO> currencyListt = sysUserFeign.listByCurrency(Collections.singletonList(customerInfoEntity.getCurrency()));
             CurrencyDTO.ViewDTO currencyDTO = currencyListt.stream().filter(req -> req.getId().equals(customerInfoEntity.getCurrency())).findFirst().orElse(new CurrencyDTO.ViewDTO());
             resultMap.put("currencyCode", currencyDTO.getKingdeeCode());
         }
@@ -333,8 +344,12 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             String finalSoDetailId = soDetailId;
             SoDetailEntity soDetailEntity = soDetailEntitieList.stream().filter(req -> req.getId().equals(finalSoDetailId)).findFirst().orElse(new SoDetailEntity());
             Map<String,Object> map = new HashMap<>();
+            //金蝶订单编号
+            map.put("platformOrderCode",entity.getPlatformOrderCode());
+            //金蝶第三方单据编号
+            map.put("thirdCode",entity.getThirdCode());
             //退货原因
-            if (StringUtils.isNotBlank(detailEntity.getReturnReasonDict())) {
+            if (CharSequenceUtil.isNotBlank(detailEntity.getReturnReasonDict())) {
                 resultMap.put("returnReason", ReturnReasonEnum.getEnum(detailEntity.getReturnReasonDict()).getKingdeeCode());
             }
             //销售订单金蝶id
@@ -349,7 +364,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
             //含税单价
             BigDecimal flagTaxRate = MathUtil.divide(soDetailEntity.getTaxRate(), MathUtil.BigDecimal_100);
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(soDetailEntity.getPrice(), multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(soDetailEntity.getPrice(), multiplyTax);
             //含税单价
             map.put("taxPrice", taxPrice);
             //是否赠品
@@ -370,7 +385,7 @@ public class SyncKingdeeSoReturnServiceImpl implements SyncKingdeeSoReturnServic
                 map.put("warehouseCode", warehouseCode);
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), detailEntity.getWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位

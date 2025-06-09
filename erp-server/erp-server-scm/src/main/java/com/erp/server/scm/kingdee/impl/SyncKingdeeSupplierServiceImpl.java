@@ -3,7 +3,6 @@ package com.erp.server.scm.kingdee.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -18,6 +17,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
@@ -25,6 +25,7 @@ import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.dto.SupplierContactDTO;
 import com.erp.model.scm.entity.*;
+import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.scm.kingdee.SyncKingdeeSupplierService;
@@ -82,7 +83,11 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(SupplierEntity entity, String operate) {
         //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -202,6 +207,9 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
             //查询银行信息
             List<String> bankIds = accountList.stream().map(SupplierAccountEntity::getBankId).distinct().collect(Collectors.toList());
             List<BaseIdDTO> bankList = sysUserFeign.getBankList(bankIds);
+            List<DictBasicEntity> list = FeignQuery.list(DictBasicEntity.class);
+            Map<String, String> stringMap = list.stream().filter(v -> v.getType().equals(DictBasicEnum.SUPPLIER_ACCOUNT_PAYMENT.getType()))
+                    .collect(Collectors.toMap(DictBasicEntity::getId, DictBasicEntity::getName, (o1, o2) -> o1));
             for (SupplierAccountEntity accountEntity : accountList) {
                 JSONObject bank = new JSONObject();
                 //银行账号
@@ -215,8 +223,12 @@ public class SyncKingdeeSupplierServiceImpl implements SyncKingdeeSupplierServic
                 }
                 //开户银行
                 bank.set("bankSubbranch",accountEntity.getBankSubbranch());
+                String sb = "【支付方式】 " +
+                        stringMap.get(accountEntity.getPayMethodId()) + "\n" +
+                        "【备注】 " +
+                        accountEntity.getRemark();
                 //备注
-                bank.set("remark",accountEntity.getRemark());
+                bank.set("remark", sb);
                 blankList.add(bank);
             }
             resultMap.put("blankList",blankList);

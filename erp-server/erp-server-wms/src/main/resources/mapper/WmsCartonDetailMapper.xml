@@ -25,13 +25,21 @@
             wcd.sku_id,
             wcd.sku_no,
             wc.box_no,
-            wcd.pack_qty
+            wcd.pack_qty,
+            wcs.box_length,
+            wcs.box_width,
+            wcs.box_height,
+            wcs.size_unit,
+            wcs.weight_unit,
+            wcs.package_weight,
+            wcd.fn_sku as platformSkuNo
         FROM
             wms_carton_detail wcd
                 INNER JOIN wms_carton wc ON wc.id = wcd.main_id and wc.is_deleted = FALSE
                 INNER JOIN packing_task pt ON pt.id = wc.packing_task_id and pt.is_deleted = FALSE
+                INNER join wms_carton_spec wcs on pt.id = wcs.main_id and wc.spec_id = wcs.id and wcs.is_deleted = false
         WHERE
-            wcd.is_deleted = FALSE and wcd.sku_id is not null
+            wcd.is_deleted = FALSE
           and pt.source_Id in
         <foreach collection="sourceIdList" item="id" open="(" close=")" separator=",">
             #{id}
@@ -54,6 +62,7 @@
     </select>
     <select id="listByTaskIds" resultType="com.erp.model.wms.entity.WmsCartonDetailEntity">
         SELECT
+        wcd.id,
         wcd.main_id,
         wcd.sku_id,
         wcd.sku_no,

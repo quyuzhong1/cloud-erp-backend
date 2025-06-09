@@ -47,7 +47,7 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
 
     PagingVO<DeliveryOrderDTO.ListDTO> paging(PagingDTO<DeliveryOrderDTO.ParamDTO> dto);
 
-    List<DeliveryOrderDTO.TabListDTO> tabList(List<String> supplierIdList);
+    List<DeliveryOrderDTO.TabListDTO> tabList(DeliveryOrderDTO.ParamDTO paramDTO);
 
     DeliveryOrderDTO.ViewDTO view(String id);
 
@@ -58,8 +58,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     boolean delete(List<String> ids);
 
     boolean confirmPrint(List<String> ids);
-
-    List<DeliveryOrderExportExcelDTO> getExportList(DeliveryOrderDTO.ParamDTO dto);
 
     List<DeliveryOrderDTO.GenerateReceiveListDTO> listGenerateReceive(BaseIdsDTO.IdsDTO dto);
 
@@ -73,19 +71,6 @@ public interface DeliveryOrderService extends SuperService<DeliveryOrderEntity> 
     List<BatchResultDTO> addDeliveryOrder(List<DeliveryOrderDTO.AddDeliveryDTO> dtos);
 
     DeliveryOrderDTO.ViewDTO viewByCode(String code);
-
-    /**
-     * 汇总待发货列表统计
-     * @param
-     * @return
-     */
-    List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount();
-    /**
-     * 汇总待发货列表统计
-     * @param waitDeliveryCountDTO
-     * @return
-     */
-    List<DeliveryOrderDTO.WaitDeliveryCountDTO> buildSrmWaitDeliveryCount(PurchaseOrderSrmDTO.WaitDeliveryCountDTO waitDeliveryCountDTO);
 
     Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
 

@@ -1,13 +1,13 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
 
 
 /**
@@ -77,9 +77,17 @@ public class PackingTaskEntity extends BaseEntity<PackingTaskEntity> {
      */
     @TableField("weighting_status")
     private String weightingStatus;
+    /**
+     * 业务id
+     */
+    @TableField("business_id")
+    private String businessId;
 
-
-    public static final String CODE = "code";
+    /**
+     * 业务单号 B2B取值为销售订单/来源为要货申请&发货单取值为发货计划
+     */
+    @TableField("business_code")
+    private String businessCode;
 
     public static final String SOURCE_ID = "source_id";
 

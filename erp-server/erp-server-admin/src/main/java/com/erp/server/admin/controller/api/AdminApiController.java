@@ -36,13 +36,13 @@ public class AdminApiController  extends BaseController {
      * 菜单列表
      */
     @RequestMapping("/list")
-    public ApiResult list(@RequestBody @Validated SysFindMenuDTO dto) {
+    public ApiResult<Object> list(@RequestBody @Validated SysFindMenuDTO dto) {
         List<MenuEntity> list = menuService.menuList(dto);
         return success(list);
     }
 
     @RequestMapping("/tree")
-    public ApiResult tree() {
+    public ApiResult<Object> tree() {
         List<SysMenuVO> treeList = menuService.treeList();
         return success(treeList);
     }
@@ -52,7 +52,7 @@ public class AdminApiController  extends BaseController {
      * 信息
      */
     @RequestMapping("/info/{menuId}")
-    public ApiResult info(@PathVariable("menuId") Long menuId) {
+    public ApiResult<Object> info(@PathVariable("menuId") Long menuId) {
         MenuEntity sysMenu = menuService.getById(menuId);
         return success(sysMenu);
     }
@@ -61,13 +61,13 @@ public class AdminApiController  extends BaseController {
      * 保存或者修改
      */
     @RequestMapping("/saveOrUpdate")
-    public ApiResult save(@RequestBody @Validated MenuEntity sysMenu) {
+    public ApiResult<Object> save(@RequestBody @Validated MenuEntity sysMenu) {
         boolean resultFlag = menuService.saveOrUpdateMenu(sysMenu);
-        return resultFlag == true ? success() : failure();
+        return resultFlag ? success() : failure();
     }
 
     @RequestMapping("/batchSave")
-    public ApiResult batchSave(@RequestBody @Validated List<SysMenuDTO> list) {
+    public ApiResult<Object> batchSave(@RequestBody @Validated List<SysMenuDTO> list) {
         menuService.batchSaveMenu(list);
         return success();
     }
@@ -77,7 +77,7 @@ public class AdminApiController  extends BaseController {
      * 修改
      */
     @RequestMapping("/update")
-    public ApiResult update(@RequestBody @Validated MenuEntity sysMenu) {
+    public ApiResult<Object> update(@RequestBody @Validated MenuEntity sysMenu) {
         menuService.updateById(sysMenu);
 
         return success();
@@ -87,7 +87,7 @@ public class AdminApiController  extends BaseController {
      * 删除
      */
     @RequestMapping("/remove")
-    public ApiResult delete(@RequestBody List<String> menuIds) {
+    public ApiResult<Object> delete(@RequestBody List<String> menuIds) {
         menuService.removeMenuByIds(menuIds);
         return success();
     }

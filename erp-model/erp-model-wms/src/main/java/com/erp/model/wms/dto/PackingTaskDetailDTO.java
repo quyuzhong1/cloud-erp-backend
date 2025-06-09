@@ -2,13 +2,13 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -71,8 +71,17 @@ public class PackingTaskDetailDTO implements Serializable {
         * fnSku
         */
         private String fnSku;
+        /**
+         * ean
+         */
         private String ean;
-
+        /**
+         * 三方仓商品条码
+         */
+        private String thirdBarcode;
+        /**
+         * 来源编码
+         */
         private String sourceCode;
 
 

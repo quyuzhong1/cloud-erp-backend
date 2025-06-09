@@ -134,4 +134,13 @@ public interface DictCountryService extends SuperService<DictCountryEntity> {
      * 根据国家id或三字码 集合 获取到国家列表
      */
     List<DictCountryEntity> listCountryByIdsOrAlpha3(List<String> codeList);
+
+    void renewCountryImg();
+
+    /**
+     * 根据国家名/Id 集合 获取到国家列表
+     * @param codeList
+     * @return
+     */
+    List<DictCountryEntity> listCountryByNamesOrIds(List<String> codeList);
 }

@@ -1,5 +1,6 @@
 package com.erp.server.wms.mabang.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -40,7 +41,7 @@ import java.util.stream.Stream;
 @Service
 public class SyncMabangTransferServiceImpl implements SyncMabangTransferService {
 
-    @Autowired
+    @Resource
     private TransferInfoDetailService transferInfoDetailService;
 
     @Resource
@@ -49,7 +50,7 @@ public class SyncMabangTransferServiceImpl implements SyncMabangTransferService 
     @Resource
     private MQProducerService mQProducerService;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
     @Override
@@ -100,7 +101,7 @@ public class SyncMabangTransferServiceImpl implements SyncMabangTransferService 
         CompletableFuture.supplyAsync(() -> {
             SendResult result = mQProducerService.syncClassMsg(RocketMqTopic.SYNC_WMS_TO_DMP_TOPIC, RocketMqTagEnum.ERP_DMP_TRANSFER_INFO_TAG.getName(), mabangTransferInfoDTO, entity.getId());
             if (!result.getSendStatus().equals(SendStatus.SEND_OK)) {
-                throw new RuntimeException(StrUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
+                throw new RuntimeException(CharSequenceUtil.format("发送MQ数据异常，{}", JSONUtil.toJsonStr(result)));
             }
             return Boolean.TRUE;
         });

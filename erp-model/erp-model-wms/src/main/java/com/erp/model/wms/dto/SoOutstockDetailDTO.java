@@ -3,11 +3,13 @@ package com.erp.model.wms.dto;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jnr.ffi.annotations.In;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.constraints.*;
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -358,6 +360,9 @@ public class SoOutstockDetailDTO implements Serializable {
 
         private String warehouseId;
 
+        private String warehouseName;
+        private String virtualWarehouseId;
+
         public AddDTO(ListingInfoWithSkuMappingGenDTO currentSkuMappingDTO, AddDTO addDTO, Integer currentQty) {
             this.skuId = currentSkuMappingDTO.getProductSkuId();
             this.skuNo = currentSkuMappingDTO.getPlatformSkuNo();
@@ -373,6 +378,7 @@ public class SoOutstockDetailDTO implements Serializable {
             this.historySkuMappingList = addDTO.getHistorySkuMappingList();
             this.platformCode = addDTO.getPlatformCode();
             this.platformDetailId = addDTO.getPlatformDetailId();
+            this.virtualWarehouseId = addDTO.getVirtualWarehouseId();
         }
     }
 
@@ -441,7 +447,7 @@ public class SoOutstockDetailDTO implements Serializable {
         /**
          * 匹配结果吧true 已匹配 false 未匹配
          */
-        private Boolean matchResult;
+        private String matchResult;
     }
 
     @Data
@@ -647,6 +653,4 @@ public class SoOutstockDetailDTO implements Serializable {
         private String approveStatus;
 
     }
-
-
 }

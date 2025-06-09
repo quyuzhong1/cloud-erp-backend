@@ -116,6 +116,16 @@ public class PurchaseOrderDetailDTO implements Serializable {
         private Boolean isGift;
 
         /**
+         * 新品首批（false否,true是）
+         */
+        private String firstMassProduct;
+
+        /**
+         * 新品首批（false否,true是）名字
+         */
+        private String firstMassProductName;
+
+        /**
          * 备注
          */
         @Size(max = 255,message = "备注不能大于255字符")
@@ -158,6 +168,10 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 执行状态描述
          */
         private String executionStatusName;
+        /**
+         * 是否需要重新赋值税率
+         */
+        private Boolean isRevalueTaxRate = true;
     }
 
     @Data
@@ -226,21 +240,37 @@ public class PurchaseOrderDetailDTO implements Serializable {
          * 不含税单价
          */
         private BigDecimal price;
+        /**
+         * 不含税单价 使用科学计数法展示
+         */
+        private String priceStr;
 
         /**
          * 含税单价
          */
         private BigDecimal taxPrice;
+        /**
+         * 含税单价 使用科学计数法展示
+         */
+        private String taxPriceStr;
 
         /**
          * 不含税金额
          */
         private BigDecimal notTaxPurchaseAmount;
+        /**
+         * 不含税金额 使用科学计数法展示
+         */
+        private String notTaxPurchaseAmountStr;
 
         /**
          * 含税金额
          */
         private BigDecimal purchaseAmount;
+        /**
+         * 含税金额 使用科学计数法展示
+         */
+        private String purchaseAmountStr;
 
         /**
          * 交期

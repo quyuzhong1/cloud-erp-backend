@@ -54,16 +54,9 @@ public class VirtualWarehousePushHandleEntity extends BaseEntity<VirtualWarehous
     @TableField("direction")
     private Integer direction;
 
-
     public static final String SOURCE_ID = "source_id";
 
     public static final String SOURCE_CODE = "source_code";
-
-    public static final String TYPE = "ype";
-
-    public static final String STATUS = "status";
-
-    public static final String DIRECTION = "direction";
 
     @Override
     public Serializable pkVal() {

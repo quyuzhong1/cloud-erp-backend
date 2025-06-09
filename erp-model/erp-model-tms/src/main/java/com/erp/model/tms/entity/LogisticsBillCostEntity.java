@@ -105,7 +105,11 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
     */
     @TableField("currency")
     private String currency;
-
+    /**
+     * 汇率
+     */
+    @TableField("exchange_rate")
+    private BigDecimal exchangeRate;
     /**
     * 备注
     */
@@ -164,7 +168,37 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
      */
     @TableField(value = "reconciliation_id")
     private String reconciliationId;
+    
+    /**
+     * 体积
+     */
+    @TableField(value = "volume")
+    private String volume;
 
+    /**
+     * 退付款类型，pay=付款，refund=退款
+     */
+    @TableField(value = "pay_type")
+    private String payType;
+
+    /**
+     * 支付状态，payment=未支付，paid=已支付
+     */
+    @TableField(value = "pay_status")
+    private String payStatus;
+
+    /**
+     *支付时间 
+     */
+    @TableField(value = "pay_time")
+    private LocalDateTime payTime;
+
+    /**
+     * 核算状态，checking=待生成，checked=已生成，confirm=已确认
+     */
+    @TableField(value = "check_status")
+    private String checkStatus;
+    
     /**
      * 费用编辑（导入数据返回）
      */
@@ -189,9 +223,9 @@ public class LogisticsBillCostEntity extends BaseEntity<LogisticsBillCostEntity>
 
     public static final String DIFF_SHIPPING_COST = "diff_shipping_cost";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

@@ -20,6 +20,7 @@ import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.SoB2cItemStatusEnum;
 import com.erp.model.oms.enums.SoB2cPayStatusEnum;
 import com.erp.sdk.oms.amz.spapi.client.StringUtil;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
@@ -170,10 +171,9 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         if (ObjectUtil.isNotEmpty(dmpSoInfoEntity.getPayTime())) {
             // 使用Instant类将Unix时间戳转换为LocalDateTime对象
             orderDTO.setPayTime(dmpSoInfoEntity.getPayTime());
-
-            //付款方式
-            orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
         }
+        //付款方式
+        orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
 
         //买家备注
         orderDTO.setBuyerRemark(dmpSoInfoEntity.getBuyerRemark());
@@ -191,7 +191,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setSourceId(dmpSoInfoEntity.getThirdCode());
 
         // 来源编码
-        orderDTO.setSourceCode("");
+        orderDTO.setSourceCode(dmpSoInfoEntity.getThirdCode());
 
         // 异常原因（1、订单规则审核不通过；2、配货规则匹配失败；3、人工审核不通过）
         orderDTO.setAbnormalType("");
@@ -209,7 +209,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
         orderDTO.setInvalidStatus(dmpSoInfoEntity.getInvalidStatus());
 
-        orderDTO.setIsCancel(Boolean.FALSE);
+        orderDTO.setIsCancel(dmpSoInfoEntity.getIsCancel());
         // 平台订单原始状态
         orderDTO.setPlatformOrderStatus(dmpSoInfoEntity.getPlatformOriginalStatus());
         if ("ON_HOLD".equalsIgnoreCase(dmpSoInfoEntity.getPlatformOriginalStatus())) {
@@ -220,6 +220,18 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         //创建时间
         orderDTO.setPlatformOrderCreateTime(dmpSoInfoEntity.getPlatformCreateTime());
+
+        //优惠金额
+        orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
+
+        //运费
+        orderDTO.setShippingFee(dmpSoInfoEntity.getShippingAmount());
+
+        // 税金
+        orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+
+        // 税后支付金额
+        orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
 
         // 订单明细
         List<PlatformOrderDetailDTO> details = parseDetailDto(dmpSoInfoEntity, dmpSoDetailEntityList);
@@ -242,7 +254,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         Map<String, List<DmpSoDetailEntity>> collect = dmpSoDetailEntities.stream().collect(Collectors.groupingBy(req -> req.getPlatformSku() + req.getPlatformPackageId()));
 
         return collect.entrySet().stream()
-                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e.getValue()))
+                .map(e -> intPlatformOrderDetailDTO(dmpSoInfoEntity, e.getValue(), e.getKey()))
                 .collect(Collectors.toList());
     }
 
@@ -250,7 +262,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
     /**
      * 转换明细
      */
-    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList) {
+    private static PlatformOrderDetailDTO intPlatformOrderDetailDTO(DmpSoInfoEntity dmpSoInfoEntity, List<DmpSoDetailEntity> soDetailEntityList, String sourceDetailId) {
         PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
         if (CollectionUtil.isEmpty(soDetailEntityList)) {
             return detailDTO;
@@ -284,7 +296,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         BigDecimal salePrice = soDetailEntityList.stream().map(req -> req.getAfterAmount()).reduce(BigDecimal.ZERO, BigDecimal::add);
         detailDTO.setAmount(salePrice);
         // 单价
-        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPrice()));
+        detailDTO.setPrice(NumberUtil.toBigDecimal(soDetailEntity.getSellPriceOrigin()));
         // 币别（原币）
         detailDTO.setCurrency(dmpSoInfoEntity.getCurrencyCode());
         // 汇率
@@ -294,15 +306,20 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         // 含税成本（本位币）
         detailDTO.setTaxCost(BigDecimal.ZERO);
 
+        // 来源明细id
+        detailDTO.setSourceDetailId(sourceDetailId);
+
         List<String> thirdDetailIdList = soDetailEntityList.stream()
                 .map(DmpSoDetailEntity::getThirdDetailId)
                 .sorted()
                 .collect(Collectors.toList());
 
-        // 来源明细id
-        detailDTO.setSourceDetailId(String.join(",", thirdDetailIdList));
+        // 平台明细行
+        detailDTO.setPlatformLineNumber(String.join(",", thirdDetailIdList));
+
         // 标签json
         detailDTO.setLabelJson("");
+
         // 库存组织id
         detailDTO.setWarehouseOrgId("");
         // 库存组织名称
@@ -366,7 +383,7 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
 
         List<PlatformOrderLogisticsDTO> logisticsDTOS = new ArrayList<>();
         PlatformOrderLogisticsDTO dto = PlatformOrderLogisticsDTO.builder()
-                .code(dmpSoInfoEntity.getLogisticsCode())
+//                .code(dmpSoInfoEntity.getLogisticsCode())
                 .name(name)
                 .deliveryTime(dmpSoInfoEntity.getDeliveryTime())
                 .estimatedShippingCost(cost)
@@ -392,18 +409,19 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
         BigDecimal taxRate = BigDecimal.ZERO;
         for (DmpSoDetailEntity dmpSoDetailEntity : dmpSoDetailEntities) {
             JSONObject jsonObject = JSONObject.parseObject(dmpSoDetailEntity.getExtendData());
+            if (ObjectUtil.isNotEmpty(jsonObject.get("itemTax"))) {
+                List<Map<String, Object>> mapList = (List<Map<String, Object>>) jsonObject.get("itemTax");
+                BigDecimal amount = mapList.stream()
+                        .filter(req -> StringUtils.isNotBlank(req.get("taxType")+"") && "SALES_TAX".equalsIgnoreCase(req.get("taxType")+""))
+                        .map(req -> MathUtil.valueOf(req.get("taxAmount")))
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
+                BigDecimal rate = mapList.stream()
+                        .map(req -> MathUtil.valueOf(req.get("taxRate")))
+                        .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
 
-            List<Map<String, Object>> mapList = (List<Map<String, Object>>) jsonObject.get("itemTax");
-            BigDecimal amount = mapList.stream()
-                    .filter(req -> StringUtils.isNotBlank(req.get("taxType")+"") && "SALES_TAX".equalsIgnoreCase(req.get("taxType")+""))
-                    .map(req -> MathUtil.valueOf(req.get("taxAmount")))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-            BigDecimal rate = mapList.stream()
-                    .map(req -> MathUtil.valueOf(req.get("taxRate")))
-                    .reduce(BigDecimal::add).orElse(BigDecimal.ZERO);
-
-            taxAmount = taxAmount.add(amount);
-            taxRate = taxRate.add(rate);
+                taxAmount = taxAmount.add(amount);
+                taxRate = taxRate.add(rate);
+            }
         }
 
         return PlatformOrderFinanceDTO.builder()
@@ -413,9 +431,10 @@ public class TikTokOrderRocketMQTaskHandler extends DmpOutputRocketMQTaskHandler
                 .platformCost(taxAmount)
                 .build();
     }
-    
+
+
     @Override
     protected List<String> getSourceCodeKeys() {
-    	return Arrays.asList("platformCode");
+        return Arrays.asList("platformCode");
     }
 }

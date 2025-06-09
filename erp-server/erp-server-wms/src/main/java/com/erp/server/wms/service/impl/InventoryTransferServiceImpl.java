@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSONObject;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -38,10 +40,10 @@ import java.util.stream.Stream;
 @InventoryHandler(InventoryBizTypeEnum.TRANSFER_STOCK)
 public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private WarehouseLocationService warehouseLocationService;
 
     @Override
@@ -80,24 +82,24 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
 
                 // 当前仓仓库和仓位信息
                 WarehouseDTO.UpdateDTO warehouseDetail = warehouseMap.computeIfAbsent(param.getCurWarehouseId(), v -> warehouseService.detailWithCache(v));
-                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                if(Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
                     ServiceException.runError(ApiError.ERROR_99002);
                 }
 
                 if(StrUtils.isNotEmpty(param.getCurWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getCurWarehouseLocation(), v->warehouseLocationService.findByWarehouseIdAndCode(param.getCurWarehouseId(), v));
-                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                    if(Objects.isNull(warehouseLocation) || CharSequenceUtil.isEmpty(warehouseLocation.getId())) {
                         ServiceException.runError("仓位信息不存在");
                     }
                 }
                 // 目的仓仓库和仓位信息
                 warehouseDetail = warehouseMap.computeIfAbsent(param.getTargetWarehouseId(), v ->warehouseService.detailWithCache(v));
-                if(Objects.isNull(warehouseDetail) || StrUtil.isEmpty(warehouseDetail.getId())) {
+                if(Objects.isNull(warehouseDetail) || CharSequenceUtil.isEmpty(warehouseDetail.getId())) {
                     ServiceException.runError(ApiError.ERROR_99002);
                 }
                 if(StrUtils.isNotEmpty(param.getTargetWarehouseLocation())) {
                     WarehouseLocationEntity warehouseLocation = warehouseLocationMap.computeIfAbsent(param.getTargetWarehouseLocation(),v->warehouseLocationService.findByWarehouseIdAndCode(param.getTargetWarehouseId(), v));
-                    if(Objects.isNull(warehouseLocation) || StrUtil.isEmpty(warehouseLocation.getId())) {
+                    if(Objects.isNull(warehouseLocation) || CharSequenceUtil.isEmpty(warehouseLocation.getId())) {
                         ServiceException.runError("仓位信息不存在");
                     }
                 }
@@ -182,13 +184,13 @@ public class InventoryTransferServiceImpl extends AbstractInventoryServiceImpl {
             }
         } else {
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                ServiceException.runError(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+                ServiceException.runError(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
             }
             log.info("参数未传库存状态，从配置读取，业务类型：【{}】，单据类型：【{}】，单据id：【{}】，单据日期：【{}】,SKU编号：【{}】,交易配置信息：【{}】", businessType.getName(), param.getSourceType().getName(), param.getSourceId(), param.getBillDate(), param.getSkuNo(), JSONObject.toJSONString(transactionRuleParams));
             // 判断当前仓是入库还是出库
             transactionRuleParams = transactionRuleParams.stream().filter(r->Objects.equals(r.getWarehouseOption(), param.getWarehouseOptionEnum())).collect(Collectors.toList());
             if(CollUtil.isEmpty(transactionRuleParams)) {
-                ServiceException.runError(ApiError.ERROR_99034.code, StrUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
+                ServiceException.runError(ApiError.ERROR_99034.code, CharSequenceUtil.format(ApiError.ERROR_99034.msg, businessType.getName()));
             }
             transactionRuleParams = transactionRuleParams.stream()
                     .sorted(Comparator.comparing(inventoryStatus -> inventoryStatus.getInventoryStatus().getCode()))

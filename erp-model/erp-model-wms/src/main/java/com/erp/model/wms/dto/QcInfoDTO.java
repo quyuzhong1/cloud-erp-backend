@@ -38,7 +38,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class QcInfoDTO implements Serializable {
-
+    private static final long serialVersionUID = 1905122041950251207L;
 
     /**
      * 添加质检单
@@ -170,11 +170,10 @@ public class QcInfoDTO implements Serializable {
          * 来源详情id
          */
         private String sourceDetailId;
-
         /**
-         * 是否新品
+         * 新品首批
          */
-        private Boolean isFirstMassProduct;
+        private String firstMassProduct;
         /**
          * 质检类型
          */
@@ -325,11 +324,6 @@ public class QcInfoDTO implements Serializable {
          * 退货单编号
          */
         private String soReturnCode;
-
-        /**
-         * 是否新品
-         */
-        private Boolean isFirstMassProduct;
 
         /**
          * 质检类型
@@ -540,6 +534,16 @@ public class QcInfoDTO implements Serializable {
          * 来源类型
          */
         private String sourceType;
+
+        /**
+         * 来源单号
+         */
+        private String sourceCode;
+
+        /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
 
         /**
          * 来源id
@@ -876,6 +880,11 @@ public class QcInfoDTO implements Serializable {
         private String sourceType;
 
         /**
+         * 来源类型名称
+         */
+        private String sourceTypeName;
+
+        /**
          * 来源id
          */
         private String sourceId;
@@ -889,6 +898,12 @@ public class QcInfoDTO implements Serializable {
          * 质检完成时间
          */
         private LocalDateTime qcFinishTime;
+
+
+        /**
+         * 采购订单明细id
+         */
+        private String purchaseOrderDetailId;
     }
 
 
@@ -1057,7 +1072,7 @@ public class QcInfoDTO implements Serializable {
         /**
          * 是否新品首批
          */
-        Boolean isFirstMassProduct;
+        private String firstMassProduct;
 
         /**
          * 产品状态
@@ -1460,7 +1475,7 @@ public class QcInfoDTO implements Serializable {
         private BigDecimal boxHeight;
 
         /**
-         * 整单数量
+         * 整箱数量
          */
         private Integer boxQty;
 

@@ -38,12 +38,21 @@
         is_deleted,
         reconciliation_status, channel_id, logistics_bill_id, actual_weight, volume_weight, billing_weight, estimated_shipping_cost , billing_weight_logistics, actual_shipping_cost, diff_shipping_cost, currency, remark
     </sql>
+    <update id="updateShopChargeId">
+        update logistics_bill_cost lbc
+        set shop_charge_id = #{userId},shop_charge_name = #{userName},update_time = NOW()
+        FROM  logistics_bill lb
+        WHERE lb.id = lbc.logistics_bill_id
+          and lb.is_deleted = false
+          and lbc.is_deleted = false and lb.shop_id = #{shopId}
+    </update>
 
     <!-- tab列表 -->
     <select id="listCount" resultType="java.lang.Integer">
         select
-        count(distinct lbc.id)
+        count( lbc.id)
         from logistics_bill_cost lbc
+        inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         <where>
             ${params.sqlMap.default}
             and lbc.is_deleted = false
@@ -72,7 +81,6 @@
             lbc.track_no as trackNo,
             lbc.channel_id as channelId,
             lbc.logistics_bill_detail_id,
-            lbd.transportStatus,
             lbc.actual_weight as actualWeight,
             lbc.volume_weight as volumeWeight,
             lbc.billing_weight as billingWeight,
@@ -95,12 +103,15 @@
             lbc.fee_rule,
             lbc.confirm_time as confirmTime,
             lbc.shop_charge_id,
-            lbc.shop_charge_name
+            lbc.shop_charge_name,
+            lbc.volume,
+            lbc.pay_type payType,
+            lbc.pay_status payStatus,
+            lbc.pay_time payTime,
+            lbc.check_status checkStatus,
+            lbc.create_time createTime
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
-        left join (
-            select main_id,max(track_status) as transportStatus from logistics_bill_detail where is_deleted = false  group by main_id
-        ) lbd on lb.id = lbd.main_id
         left join logistics_channel lc on lbc.channel_id = lc.id and lc.is_deleted = false
         <where>
             ${params.sqlMap.default}
@@ -152,7 +163,12 @@
             lbc.fee_rule as feeRule,
             lbc.confirm_time as confirmTime,
             lbc.shop_charge_id,
-            lbc.shop_charge_name
+            lbc.shop_charge_name,
+            lbc.volume,
+            lbc.pay_type,
+            lbc.pay_status,
+            lbc.pay_time,
+            lbc.check_status
         from logistics_bill_cost lbc
         inner join logistics_bill lb on lbc.logistics_bill_id = lb.id and lb.is_deleted = false
         left join (
@@ -182,10 +198,9 @@
             c.reconciliation_status AS reconciliationStatus
         FROM
             logistics_bill AS b
-                LEFT JOIN logistics_bill_cost AS c ON b.ID = c.logistics_bill_id
-                AND c.is_deleted = FALSE
+                inner JOIN logistics_bill_cost AS c ON b.ID = c.logistics_bill_id
         WHERE
-            b.is_deleted = FALSE
+            b.is_deleted = FALSE AND c.is_deleted = FALSE
         <if test="ids != null and ids.size > 0">
             AND b.outstock_id IN
             <foreach collection="ids" item="item" open="(" close=")" separator=",">
@@ -206,6 +221,30 @@
         and cc.dict_cost_category = 'shippingCost'
           and cd.type = 'actual'
         and lb.source_id = #{soId}
+    </select>
+    <select id="listBillCostByExchangeRate"
+            resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$ExchangeRateDTO">
+        SELECT
+            lbc.id,
+            lbc.currency,
+            lbc.exchange_rate,
+            lbc.create_time
+        FROM
+            logistics_bill_cost lbc
+                LEFT JOIN logistics_bill lb ON lb.ID = lbc.logistics_bill_id
+                AND lb.is_deleted = FALSE
+        WHERE lbc.is_deleted = FALSE
+            AND lb.order_type = 'firstMile'
+          AND lbc.exchange_rate = 0
+    </select>
+    <select id="selectLogisticsBillCostNoBill"
+            resultType="com.erp.model.tms.dto.LogisticsBillCostDTO$BillCostNoBillDTO">
+        SELECT
+            lbc.id,lbc.logistics_bill_id,lbc.logistics_bill_detail_id
+        FROM logistics_bill_cost lbc
+        LEFT JOIN logistics_bill lb on lb.id = lbc.logistics_bill_id and lb.is_deleted = false
+        where lbc.is_deleted = false and lb.id is null
+        ORDER BY lbc.create_time desc
     </select>
 
 

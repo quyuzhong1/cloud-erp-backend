@@ -1,17 +1,18 @@
 package com.erp.server.file.business.plm;
 
+import com.common.business.dto.DynamicExcelDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.plm.dto.ProductDetailExcelExportDTO;
 import com.erp.server.file.core.AbstractDynamicHeadersFileEventHandler;
-import com.common.business.dto.DynamicExcelDTO;
 import com.erp.server.file.entity.FileTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
-public class ProductDetailExportHandler extends AbstractDynamicHeadersFileEventHandler {
+public class ProductDetailExportHandler extends AbstractDynamicHeadersFileEventHandler<ProductDetailExcelExportDTO> {
 
 
 
@@ -23,7 +24,7 @@ public class ProductDetailExportHandler extends AbstractDynamicHeadersFileEventH
     }
 
     @Override
-    protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO dto) {
+    protected PagingVO<DynamicExcelDTO> getPageData(PagingDTO<ProductDetailExcelExportDTO> dto) {
         return null;
     }
 

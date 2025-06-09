@@ -1,5 +1,6 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -10,6 +11,7 @@ import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.CustomerSellerEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
+import com.erp.model.sys.entity.SysDepartmentEntity;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.oms.mapper.CustomerSellerMapper;
 import com.erp.server.oms.service.CustomerSellerService;
@@ -231,22 +233,16 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        //销售员
-        List<String> sellerIdList = list.stream().map(CustomerInfoEntity::getSellerId).collect(Collectors.toList());
-        List<SysDepartmentUserNumberDTO> deptUserList = sysUserFeign.listDeptUserByUserIdList(sellerIdList);
         //主表信息
         List<String> mainIdList = list.stream().map(CustomerInfoEntity::getId).collect(Collectors.toList());
         //数据库存在的
         List<CustomerSellerEntity> dbSellerList = this.listByMainIdList(mainIdList);
         List<CustomerSellerEntity> batchSaveOrUpdateList = new ArrayList<>(10);
-        LocalDate nowDate = LocalDate.now();
         //添加的
         for (CustomerInfoEntity item : list) {
             //当前的销售员id
             String currentSellerId = item.getSellerId();
             String mainId = item.getId();
-            SysDepartmentUserNumberDTO deptUser = deptUserList.stream().filter(d -> d.getUserId().equals(item.getSellerId())).
-                    findFirst().orElse(null);
             Boolean isAdd = Boolean.TRUE;
             //存在的销售员
             List<CustomerSellerEntity> existSellerList = dbSellerList.stream().filter(s -> s.getMainId().equals(mainId)).collect(Collectors.toList());
@@ -266,10 +262,8 @@ public class CustomerSellerServiceImpl extends SuperServiceImpl<CustomerSellerMa
             }
             if (isAdd) {
                 CustomerSellerEntity addSeller = new CustomerSellerEntity();
-                if (deptUser != null) {
-                    addSeller.setSellerName(deptUser.getUserName());
-                    addSeller.setDeptId(deptUser.getDepartmentId());
-                }
+                addSeller.setSellerName(item.getSellerName());
+                addSeller.setDeptId(item.getSalesDeptId());
                 addSeller.setSellerId(item.getSellerId());
                 addSeller.setMainId(mainId);
                 addSeller.setStartDate(date);

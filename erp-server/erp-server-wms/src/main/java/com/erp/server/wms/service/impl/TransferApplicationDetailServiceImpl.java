@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -113,7 +114,7 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<TransferApplicationDetailDTO.UpdateDTO> newList, List<TransferApplicationDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(TransferApplicationDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(TransferApplicationDetailEntity
                 ::getId).collect(Collectors.toList());
@@ -127,10 +128,10 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
     private void doOpHandleDetails (List<TransferApplicationDetailEntity> newList, String mainId, Boolean isUpdate) {
 
         //需要新增的数据
-        List<TransferApplicationDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<TransferApplicationDetailEntity> addList = newList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
 
         //需要修改的数据
-        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(TransferApplicationDetailEntity::getId).collect(Collectors.toList());
+        List<String> ids = newList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(TransferApplicationDetailEntity::getId).collect(Collectors.toList());
         List<TransferApplicationDetailEntity> list = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(ids)) {
             list = this.listByIds(ids);
@@ -144,11 +145,11 @@ public class TransferApplicationDetailServiceImpl extends SuperServiceImpl<Trans
         }
         for (TransferApplicationDetailEntity detail:newList) {
             //单位
-            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && StringUtils.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
+            String unit = skuList.stream().filter(obj -> obj.getSkuId().equals(detail.getSkuId()) && CharSequenceUtil.isNotBlank(obj.getUnitName())).map(SkuVO::getUnitName).findFirst().orElse("");
             detail.setUnit(unit);
             detail.setMainId(mainId);
             //修改操作日志
-            if (StringUtils.isNotBlank(detail.getId())) {
+            if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
                     throw new ServiceException(ApiError.ERROR_99044);
                 }

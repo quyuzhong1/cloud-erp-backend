@@ -24,7 +24,7 @@ public interface BiSubjectRefLayoutService  extends IService<BiSubjectRefLayoutE
      * @param layoutIds
      * @return void
      */
-    void addSubjectRefLayout(String subjectId, List<String> layoutIds);
+    Boolean addSubjectRefLayout(String subjectId, List<String> layoutIds);
 
     void deleteBySubjectId(String subjectId);
 

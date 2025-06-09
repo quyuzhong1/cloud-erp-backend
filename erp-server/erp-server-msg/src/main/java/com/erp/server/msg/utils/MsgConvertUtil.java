@@ -1,7 +1,7 @@
 package com.erp.server.msg.utils;
 
+import cn.hutool.core.util.ObjUtil;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
-import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.MessageChannelEnum;
 import com.erp.model.msg.enums.NoticeMessageTypeEnum;
 import com.erp.server.msg.enums.MessageChannelAppEnum;
@@ -20,7 +20,9 @@ import java.util.List;
  * @Author: zhangchunlin
  */
 public class MsgConvertUtil {
-
+    private MsgConvertUtil() {
+        throw new IllegalStateException("Utility MsgConvertUtil class");
+    }
     /**
      * 任务通知填充卡片
      * @param noticeMsgInfo
@@ -48,7 +50,25 @@ public class MsgConvertUtil {
         fieldElementsDTO.setFields(fields);
         elements.add(fieldElementsDTO);
 
-        // 暂不填充按钮等
+        // 添加"详情"按钮
+        if (ObjUtil.isNotEmpty(noticeMsgInfo.getNoticeMsgCardButtonDTO())) {
+
+            FeiShuSendBaseParam.CardDTO.ElementsDTO actionElementsDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO();
+            actionElementsDTO.setTag("action");
+            List<FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO> actions = new ArrayList<>();
+
+            FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO buttonActionDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO();
+            buttonActionDTO.setTag("button");
+            buttonActionDTO.setText(new FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO.TextDTO(noticeMsgInfo.getNoticeMsgCardButtonDTO().getName(),"plain_text"));
+            buttonActionDTO.setType("default");
+            // 这里是按钮点击后的跳转链接
+            buttonActionDTO.setUrl(noticeMsgInfo.getNoticeMsgCardButtonDTO().getUrl());
+
+            actions.add(buttonActionDTO);
+            actionElementsDTO.setActions(actions);
+            elements.add(actionElementsDTO);
+
+        }
 
         contentDTO.setElements(elements);
         return contentDTO;
@@ -72,7 +92,7 @@ public class MsgConvertUtil {
         noticeMsgWrapInfoDTO.setContent(msgInfo.getContent());
         noticeMsgWrapInfoDTO.setUrgent(msgInfo.getUrgent());
         noticeMsgWrapInfoDTO.setNoticeMessageTypeEnum(noticeMessageTypeEnum);
-
+        noticeMsgWrapInfoDTO.setNoticeMsgCardButtonDTO(msgInfo.getNoticeMsgCardButtonDTO());
         msgSendChannelWrapParam.setNoticeMsgWrapInfoDTO(noticeMsgWrapInfoDTO);
 
         msgSendChannelWrapParam.setSourceMsgInfo(msgInfo);
@@ -107,7 +127,25 @@ public class MsgConvertUtil {
         fieldElementsDTO.setFields(fields);
         elements.add(fieldElementsDTO);
 
-        // 暂不填充按钮等
+        // 添加"详情"按钮
+        if (ObjUtil.isNotEmpty(warnMsgContentDTO.getNoticeMsgCardButtonDTO())) {
+
+            FeiShuSendBaseParam.CardDTO.ElementsDTO actionElementsDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO();
+            actionElementsDTO.setTag("action");
+            List<FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO> actions = new ArrayList<>();
+
+            FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO buttonActionDTO = new FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO();
+            buttonActionDTO.setTag("button");
+            buttonActionDTO.setText(new FeiShuSendBaseParam.CardDTO.ElementsDTO.ActionsDTO.TextDTO(warnMsgContentDTO.getNoticeMsgCardButtonDTO().getName(),"plain_text"));
+            buttonActionDTO.setType("default");
+            // 这里是按钮点击后的跳转链接
+            buttonActionDTO.setUrl(warnMsgContentDTO.getNoticeMsgCardButtonDTO().getUrl());
+
+            actions.add(buttonActionDTO);
+            actionElementsDTO.setActions(actions);
+            elements.add(actionElementsDTO);
+
+        }
 
         contentDTO.setElements(elements);
         return contentDTO;

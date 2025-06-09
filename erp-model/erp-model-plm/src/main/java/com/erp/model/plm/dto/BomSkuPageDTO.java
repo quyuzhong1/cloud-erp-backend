@@ -4,6 +4,7 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -14,7 +15,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class BomSkuPageDTO {
+public class BomSkuPageDTO implements Serializable {
 
     @Data
     @NoArgsConstructor

@@ -1,12 +1,10 @@
 package com.erp.model.plm.entity;
 
-import com.baomidou.mybatisplus.annotation.*;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import lombok.Data;
 import lombok.experimental.Accessors;
-
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @author Will
@@ -17,7 +15,7 @@ import java.util.Date;
 @Data
 @TableName("sys_log_field")
 @Accessors(chain = true)
-public class SysLogFieldEntity extends BaseEntity {
+public class SysLogFieldEntity extends BaseEntity<SysLogFieldEntity> {
 
     private static final long serialVersionUID = 1L;
 

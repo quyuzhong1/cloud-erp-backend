@@ -1,5 +1,10 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -16,13 +21,13 @@ import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.TransferInDetailService;
 import com.erp.server.wms.service.TransferOutDetailService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -118,6 +123,14 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         return list;
     }
 
+    @Override
+    public List<TransferInDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollUtil.isEmpty(mainIdList)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(TransferInDetailEntity::getMainId,mainIdList).list();
+    }
+
 
     /**
      * 更改详情
@@ -136,9 +149,9 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         }
         List<TransferInDetailEntity> saveOrUpdateList = new ArrayList<>(detailList.size());
         //这是修改的
-        List<TransferInDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> StringUtils.isNotBlank(c.getId())).collect(Collectors.toList());
+        List<TransferInDetailDTO.UpdateDTO> updateList = detailList.stream().filter(c -> CharSequenceUtil.isNotBlank(c.getId())).collect(Collectors.toList());
         //这是要添加的
-        List<TransferInDetailDTO.UpdateDTO> addList = detailList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<TransferInDetailDTO.UpdateDTO> addList = detailList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
         //这个是要修改的实体
         List<TransferInDetailEntity> updateEntityList = BeanMapper.copyList(updateList, TransferInDetailEntity.class);
         //这个是要添加的
@@ -165,10 +178,10 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
         List<Pair<String, String>> removePairList = removeList.stream().map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("删除了一个分布式调入产品【%s】", ModuleTypeEnum.TRANSFER_IN.getCode(), removePairList, "编辑操作");
         //这是添加
-        List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s -> StringUtils.isBlank(s.getId())).map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
+        List<Pair<String, String>> addPairList = saveOrUpdateList.stream().filter(s -> CharSequenceUtil.isBlank(s.getId())).map(obj -> new Pair<>(mainId, obj.getSkuNo())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("添加了一个分布式调入产品【%s】", ModuleTypeEnum.TRANSFER_IN.getCode(), addPairList, "编辑操作");
         //修改的
-        updateEntityList = saveOrUpdateList.stream().filter(s -> StringUtils.isNotBlank(s.getId())).collect(Collectors.toList());
+        updateEntityList = saveOrUpdateList.stream().filter(s -> CharSequenceUtil.isNotBlank(s.getId())).collect(Collectors.toList());
         for (TransferInDetailEntity update : updateEntityList) {
             String id = update.getId();
             TransferInDetailEntity old = dbList.stream().filter(d -> d.getId().equals(id)).findFirst().orElse(null);
@@ -226,6 +239,22 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
 
     }
 
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(TransferInDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(TransferInDetailEntity::getId, detailId)
+                    .update();
+        }
+    }
+
     /**
      * 获取到删除的数据
      *
@@ -236,7 +265,7 @@ public class TransferInDetailServiceImpl extends SuperServiceImpl<TransferInDeta
      * @date 2023-05-25 12:07
      */
     private List<String> getDeleteIds(List<Pair<String, String>> pairList, List<TransferInDetailEntity> dbList) {
-        List<String> ids = pairList.stream().filter(g -> StringUtils.isNotBlank(g.getKey())).
+        List<String> ids = pairList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getKey())).
                 map(obj -> obj.getKey()).collect(Collectors.toList());
         List<String> dbIds = dbList.stream().map(TransferInDetailEntity::getId).collect(Collectors.toList());
         return dbIds.stream().filter(s -> !ids.contains(s)).collect(Collectors.toList());

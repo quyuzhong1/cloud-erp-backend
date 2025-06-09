@@ -1,14 +1,14 @@
 package com.erp.server.dmp.controller.api;
 
 
+import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
-import com.common.core.anno.LogViewService;
 import com.common.core.enums.LogActionEnum;
 import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
@@ -67,6 +67,12 @@ public class DmpSoInfoController extends BaseController {
         return success();
     }
 
-
-
+    /**
+     * 领星导出订单刷新进入dmp
+     */
+//    @PostMapping("/lxSoUpdate")
+    public ApiResult<?> lxSoUpdate(@RequestBody JSONObject jsonObject) {
+        dmpSoInfoService.lxSoUpdate();
+        return success();
+    }
 }

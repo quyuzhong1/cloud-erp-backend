@@ -230,7 +230,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         });
         boolean flag = this.saveBatch(membersEntityList);
         if (!flag) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         membersEntityList.stream().forEach(obj -> {
             //关联表数据处理
@@ -279,7 +279,7 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
         //修改角色成员关联数据
         Boolean flag = templateRoleRefMembersService.updateByTemplateId(templateRoleRefMembersEntity);
         if (!flag) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         //根据id和模板id修改
         TemplateMembersEntity templateMembersEntity = new TemplateMembersEntity();
@@ -301,18 +301,18 @@ public class TemplateMembersServiceImpl extends ServiceImpl<TemplateMembersMappe
 
         TemplateRoleRefMembersEntity roleRefMembers = templateRoleRefMembersService.getByIdAndTemplateId(dto.getRoleRefMembersId(), dto.getTemplateId());
         if (roleRefMembers == null) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
 
         //删除成员表信息
         Boolean templateMembersRemove = templateMembersService.removeByIdAndTemplateId(roleRefMembers.getMembersId(), roleRefMembers.getTemplateId());
         if (!templateMembersRemove) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         //删除角色成员关联表信息
         Boolean roleRefMembersRemove = templateRoleRefMembersService.removeByIdAndTemplateId(dto.getRoleRefMembersId(), dto.getTemplateId());
         if (!roleRefMembersRemove) {
-            throw new ServiceException(ApiError.Default);
+            throw new ServiceException(ApiError.DEFAULT);
         }
         //如果角色表下面没有成员信息则删除角色
         List<TemplateRoleRefMembersEntity> list = templateRoleRefMembersService.getByRoleIdAndTemplateId(roleRefMembers.getRoleId(), roleRefMembers.getTemplateId());

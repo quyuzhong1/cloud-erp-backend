@@ -1,10 +1,9 @@
 package com.erp.model.sys.dto;
 
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.core.anno.RegularValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
-import com.erp.model.sys.validator.AddGroup;
-import com.erp.model.sys.validator.UpdateGroup;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -14,6 +13,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Classname 系统用户入参
@@ -77,7 +77,18 @@ public class SysUserInfoDTO implements Serializable {
     private String refId;
     //角色id 集合
     private List<String> roleIdList;
-
+    //店铺id集合
+    private List<String> shopIdList;
+    /**
+     * 店铺授权类型（all全部授权，part指定授权）
+     */
+    private String shopAuthType;
+    //仓库id集合
+    private List<String> warehouseIdList;
+    /**
+     * 仓库授权类型（all全部授权，part指定授权）
+     */
+    private String warehouseAuthType;
     /**
      * 店铺权限设置分页查询条件
      */
@@ -124,7 +135,14 @@ public class SysUserInfoDTO implements Serializable {
          * 更新时间
          */
         private List<LocalDate> updateTimeList;
-
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -167,5 +185,10 @@ public class SysUserInfoDTO implements Serializable {
          * 店铺
          */
         private String shopNames;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 }

@@ -3,7 +3,6 @@ package com.erp.server.file.business.wms;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
-import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.VirtualTransFlowDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -44,5 +43,10 @@ public class ExportWmsVirtualTransFlowHandler extends AbstractPageFileEventHandl
     @Override
     protected PagingVO<VirtualTransFlowDTO.ListDTO> getPageData(PagingDTO<VirtualTransFlowDTO.SearchParamDTO> dto) {
         return exportWmsFeign.exportVirtualTransFlow(dto);
+    }
+
+    @Override
+    protected int getPageSize() {
+        return 100000;
     }
 }

@@ -1,33 +1,36 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.SourceTypeEnum;
-import com.common.core.utils.MathUtil;
-import com.common.core.utils.ValidatorUtil;
-import com.erp.model.wms.dto.TransferOutDTO;
-import com.erp.model.wms.entity.PickingDetailEntity;
-import com.erp.model.wms.entity.TransferInDetailEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
-import com.erp.server.wms.service.*;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.math3.util.Pair;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
+import com.common.core.utils.ValidatorUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.TransferOutDTO;
 import com.erp.model.wms.dto.TransferOutDetailDTO;
+import com.erp.model.wms.entity.PickingDetailEntity;
+import com.erp.model.wms.entity.TransferInDetailEntity;
 import com.erp.model.wms.entity.TransferOutDetailEntity;
+import com.erp.model.wms.entity.TransferOutEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.mapper.TransferOutDetailMapper;
+import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,19 +50,19 @@ import java.util.stream.Collectors;
 @Service
 public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDetailMapper, TransferOutDetailEntity> implements TransferOutDetailService {
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private PickingDetailService pickingDetailService;
 
-    @Autowired
+    @Resource
     private TransferOutService transferOutService;
 
-    @Autowired
+    @Resource
     private TransferInDetailService transferInDetailService;
 
     @Override
@@ -92,17 +95,18 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         // 需要删除的id集合
         List<String> deleteIds = originIds.stream().filter(id->!nowIds.contains(id)).collect(Collectors.toList());
         if(CollUtil.isNotEmpty(deleteIds)) {
-            // 记录删除日志
-            List<TransferOutDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
-            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
-            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(),pairList,"编辑操作");
-            // 删除明细数据
-            super.removeByIds(deleteIds);
+            throw new ServiceException("仅支持修改明细数据，不支持删除明细");
+//            // 记录删除日志
+//            List<TransferOutDetailEntity> deleteMembers = originMembers.stream().filter(r->deleteIds.contains(r.getId())).collect(Collectors.toList());
+//            List<Pair<String, String>> pairList = deleteMembers.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSkuNo())).collect(Collectors.toList());
+//            operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(),pairList,"编辑操作");
+//            // 删除明细数据
+//            super.removeByIds(deleteIds);
         }
         // 新增或修改的明细数据
         List<TransferOutDetailEntity> newList = BeanMapperUtils.copyList(TransferOutDetailEntity.class, detailList);
-        // 下推数量验证
-        checkTransferOutQty(newList, mainId);
+//        // 下推数量验证
+//        checkTransferOutQty(newList, mainId);
         // 记录新增或修改日志
         handleDetails(newList, mainId, Boolean.TRUE);
         //新增或修改明细
@@ -136,7 +140,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         // 从分步式调入单的来源id查询分步式调出单明细
         List<TransferOutDetailEntity> transferOutDetailList = baseMapper.listTransferOutDetailByParam(param);
         if (CollUtil.isEmpty(transferOutDetailList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         Map<String,TransferOutDetailEntity> transferDetailMap = transferOutDetailList.stream().collect(Collectors.toMap(TransferOutDetailEntity::getId, Function.identity()));
         // 分步式调出单明细id集合
@@ -175,6 +179,24 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         return resultList;
     }
 
+
+
+    @Override
+    public void updateKingdeeDetailId(JSONArray list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        for (Object obj : list) {
+            JSONObject jsonObject = JSONUtil.parseObj(obj);
+            String detailId = (String) jsonObject.get("detailId");
+            String kingdeeDetailId = (String) jsonObject.get("kingdeeDetailId");
+            this.lambdaUpdate()
+                    .set(TransferOutDetailEntity::getKingdeeDetailId, kingdeeDetailId)
+                    .eq(TransferOutDetailEntity::getId, detailId)
+                    .update();
+        }
+    }
+
     private void handleDetails(List<TransferOutDetailEntity> newList, String mainId, Boolean isUpdate) {
         // 新增的明细
         List<TransferOutDetailEntity> addList = newList.stream().filter(c -> StrUtils.isEmpty(c.getId())).collect(Collectors.toList());
@@ -191,7 +213,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
         for(int i = 0, length = newList.size();i < length;i++) {
             TransferOutDetailEntity data = newList.get(i);
             if(!skuMap.containsKey(data.getSkuId()) || CollUtil.isEmpty(skuMap.get(data.getSkuId()))) {
-                throw new ServiceException(StrUtil.format("SKU【{}】错误", data.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("SKU【{}】错误", data.getSkuNo()));
             }
             SkuVO skuVO = skuMap.get(data.getSkuId()).get(0);
             // 单位
@@ -247,7 +269,7 @@ public class TransferOutDetailServiceImpl extends SuperServiceImpl<TransferOutDe
             }
             //数量检验
             if (detailEntity.getQty().intValue() > pickingQty.intValue() - hasPickingQty.intValue()) {
-                throw new ServiceException(StrUtil.format("调拨申请单【{}】SKU【{}】已完成分步式调拨调出", transferOutEntity.getSourceCode(), detailEntity.getSkuNo()));
+                throw new ServiceException(CharSequenceUtil.format("调拨申请单【{}】SKU【{}】已完成分步式调拨调出", transferOutEntity.getSourceCode(), detailEntity.getSkuNo()));
             }
         }
 

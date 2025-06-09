@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.oms.mapper.CfgInvoiceInvalidMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.oms.entity.CfgInvoiceInvalidEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="cfg_invoice_setting_id" property="cfgInvoiceSettingId" />
+       <result column="no" property="no" />
+       <result column="start_invoice_no" property="startInvoiceNo" />
+       <result column="end_invoice_no" property="endInvoiceNo" />
+       <result column="deactivate_invoice_no" property="deactivateInvoiceNo" />
+       <result column="reason" property="reason" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        cfg_invoice_setting_id, no, start_invoice_no, end_invoice_no, deactivate_invoice_no, reason
+    </sql>
+    <select id="paging" resultType="com.erp.model.oms.dto.CfgInvoiceInvalidDTO$PagingViewDTO">
+        SELECT
+        cii.id,
+        cis.company_name as cfgInvoiceSettingCompanyName,
+        cis.id as cfgInvoiceSettingId,
+        cii.no,
+        cii.deactivate_invoice_no,
+        cii.reason,
+        cii.update_time AS updateTime,
+        cii.create_time AS createTime
+        FROM cfg_invoice_invalid cii
+        LEFT join cfg_invoice_setting cis on cii.cfg_invoice_setting_id = cis.id and cis.is_deleted = false
+        WHERE
+        <!--高级查询-->
+        ${params.sqlMap.default}
+        and cii.is_deleted=FALSE
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''"></if>
+        ORDER BY cii.update_time DESC
+    </select>
+
+
+</mapper>

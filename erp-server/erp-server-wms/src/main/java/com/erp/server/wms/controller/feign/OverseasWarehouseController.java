@@ -1,14 +1,17 @@
 package com.erp.server.wms.controller.feign;
 
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.dmp.dto.ThirdShopDTO;
 import com.erp.model.dmp.dto.ThirdWarehouseDTO;
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
 import com.erp.model.wms.entity.OverseasProviderEntity;
 import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
+import com.erp.server.wms.service.OverseasProviderService;
 import com.erp.server.wms.service.OverseasProviderWarehouseService;
 import com.erp.server.wms.service.OverseasWarehouseInboundService;
 import org.apache.commons.collections4.CollectionUtils;
@@ -32,6 +35,9 @@ public class OverseasWarehouseController extends BaseController {
     @Resource
     private OverseasProviderWarehouseService overseasProviderWarehouseService;
 
+    @Resource
+    private OverseasProviderService overseasProviderService;
+
     /**
      * 通过状态获取入库单号
      */
@@ -48,9 +54,6 @@ public class OverseasWarehouseController extends BaseController {
      */
     @PostMapping("/getOverseasWarehouseListByPlatformCodes")
     public List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCodes(@RequestParam(value = "warehouseCodeList") List<String> warehouseCodeList, @RequestParam(value = "platform")String platform){
-        if (CollectionUtils.isEmpty(warehouseCodeList)) {
-            return Collections.emptyList();
-        }
         return overseasProviderWarehouseService.listByPlatformWarehouseCode(warehouseCodeList,platform);
     }
 
@@ -79,4 +82,12 @@ public class OverseasWarehouseController extends BaseController {
         return overseasProviderWarehouseService.pagingSelect(dto);
     }
 
+    /**
+     * 三方仓分页
+     *
+     */
+    @PostMapping("/pageWarehouseProduct")
+    public PagingVO<SkuMappingDTO.SyncWarehouseProductView> pageWarehouseProduct(@RequestBody @Validated PagingDTO<AdvanceQueryContainer> advanceQueryDTO) {
+        return overseasProviderService.pageWarehouseProduct(advanceQueryDTO);
+    }
 }

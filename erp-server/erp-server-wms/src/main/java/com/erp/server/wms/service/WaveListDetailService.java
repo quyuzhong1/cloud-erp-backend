@@ -21,11 +21,11 @@ public interface WaveListDetailService extends SuperService<WaveListDetailEntity
 
     WaveListDetailDTO.ViewDTO view(String waveId) throws ServiceException;
 
-    ApiResult<?> moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO);
+    ApiResult moveOut(WaveListDetailDTO.MoveOutDTO moveOutDTO);
 
     List<WaveListDetailEntity> listByMainIds(List<String> waveIds);
 
-    ApiResult<?> moveOut(String deliveryId, Boolean isIntercept);
+    ApiResult moveOut(String deliveryId, Boolean isIntercept);
 
     /**
      * 根据发货单查询波次

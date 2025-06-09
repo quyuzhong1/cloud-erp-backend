@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.feign;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataIdempotent;
 import com.common.business.annotation.DistributeLocker;
@@ -18,6 +19,7 @@ import com.erp.model.wms.enums.CfgRuleOutEnum;
 import com.erp.server.wms.service.SoB2cDeliveryDetailService;
 import com.erp.server.wms.service.SoB2cDeliveryService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -116,10 +118,24 @@ public class SoB2cDeliveryFeignController extends BaseController {
      **/
     @PostMapping("/falseDeliveryBatch")
     public Boolean falseDeliveryBatch(@RequestBody List<String> ids) {
+        if (CollectionUtils.isEmpty(ids)){
+            return Boolean.FALSE;
+        }
         Boolean flag = soB2cDeliveryService.falseDeliveryBatch(ids);
         return flag;
     }
 
+    /**
+     * 根据销售订单手动标发
+     * @Author Luo_WG
+     * @Date 2023/12/27 16:00
+     * @param id 销售订单id
+     * @return java.lang.Boolean
+     **/
+    @PostMapping("/falseDeliveryBySoId")
+    public BatchResultDTO falseDeliveryBySoId(@RequestBody String id){
+        return soB2cDeliveryService.falseDeliveryBySoId(id);
+    }
     /**
      * 平台标记发货
      **/
@@ -145,7 +161,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
             return result;
         }catch (Exception e){
             log.error("流水线称重异常",e);
-            return ApiResult.error(StrUtil.format("系统异常:{}",e.getMessage()), CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode());
+            return ApiResult.error(CharSequenceUtil.format("系统异常:{}",e.getMessage()), CfgRuleOutEnum.EquipmentSortingPortEnum.NINE.getCode());
         }
     }
 
@@ -155,7 +171,7 @@ public class SoB2cDeliveryFeignController extends BaseController {
      * @param code 类型
      */
     @PostMapping("/updateShipmentMark")
-    void updateShipmentMark(List<String> ids, String code) {
+    void updateShipmentMark(@RequestParam("ids")List<String> ids, @RequestParam("code")String code) {
         soB2cDeliveryService.updateShipmentMark(ids, code);
     }
 

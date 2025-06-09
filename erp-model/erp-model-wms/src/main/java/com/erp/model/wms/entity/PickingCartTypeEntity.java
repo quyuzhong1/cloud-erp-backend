@@ -35,10 +35,6 @@ public class PickingCartTypeEntity extends BaseEntity<PickingCartTypeEntity> {
      */
     private Integer index;
 
-    public static final String NAME = "name";
-
-    public static final String INDEX = "index";
-
     @Override
     public Serializable pkVal() {
         return null;

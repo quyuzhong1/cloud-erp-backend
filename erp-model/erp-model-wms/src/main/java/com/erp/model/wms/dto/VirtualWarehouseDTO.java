@@ -8,9 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
@@ -59,9 +57,12 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String name;
 
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         private List<ThirdMappingDTO.ViewDTO> thirdMappingList;
+        //关联实体仓id集合
         private List<String> warehouseIdList;
+        //关联实体仓名称集合
+        private List<String> warehouseNameList;
     }
     @Data
     @NoArgsConstructor
@@ -71,6 +72,10 @@ public class VirtualWarehouseDTO implements Serializable {
          * 关联id（如店铺id）,无关联id时传空字符
          */
         private String relationId;
+        /**
+         * 分区id
+         */
+        private String partitionId;
 
         /**
          * 平台
@@ -88,6 +93,7 @@ public class VirtualWarehouseDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class VwDTO {
 
         /**
@@ -117,8 +123,8 @@ public class VirtualWarehouseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
-        @Valid
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        @Valid
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         //        @Valid
         private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
@@ -137,7 +143,7 @@ public class VirtualWarehouseDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
-        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
+//        private List<VirtualWarehouseChannelDTO.ChannelAddDTO> channelList;
         private List<ThirdMappingDTO.AddDTO> thirdMappingList;
         private List<String> warehouseIdList;
 
@@ -345,9 +351,17 @@ public class VirtualWarehouseDTO implements Serializable {
          */
         private String virtualWarehouseId;
         /**
-         * 虚拟仓id
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
+        /**
+         * 店铺id
          */
         private String relationId;
+        /**
+         * 分区id
+         */
+        private String partitionId;
 
     }
     @Data
@@ -357,5 +371,136 @@ public class VirtualWarehouseDTO implements Serializable {
         private String name;
         private String code;
         private Boolean disabled;
+    }
+
+
+    @Data
+    @NoArgsConstructor
+    public static class CfgRuleVirtualWarehouseDTO {
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 关联id集合
+         */
+        private List<String> relationIdList;
+        /**
+         * 分区id集合
+         */
+        private List<String> partitionIdList;
+
+    }
+
+    /**
+     * 导出列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ExportDTO {
+        /**
+         * 主键id
+         */
+        private String id;
+        /**
+         * 虚拟仓编号
+         */
+        private String code;
+        /**
+         * 虚拟仓名称
+         */
+        private String name;
+        /**
+         * 关联仓库Id
+         */
+        private String warehouseId;
+        /**
+         * 关联仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 关联外部仓平台
+         */
+        private String outSidePlatform;
+        /**
+         * 关联外部仓平台
+         */
+        private String outSidePlatformName;
+        /**
+         * 关联外部仓库id
+         */
+        private String outSideVirtualWarehouseId;
+        /**
+         * 关联外部仓库名称
+         */
+        private String outSideVirtualWarehouseName;
+        /**
+         * 是否启用
+         */
+        private Boolean disabled;
+        /**
+         * 是否启用
+         */
+        private String disabledStr;
+        /**
+         * 渠道类型
+         */
+        private String type;
+        /**
+         * 渠道类型名称
+         */
+        private String typeName;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 平台
+         */
+        private String dictPlatformName;
+        /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
+         * 店铺名称
+         */
+        private String shopName;
+        /**
+         * 分区id
+         */
+        private String partitionId;
+        /**
+         * 分区名称
+         */
+        private String partitionName;
+        /**
+         * 创建人名称
+         */
+        private String createUserName;
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+        /**
+         * 更新人名称
+         */
+        private String updateUserName;
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 }

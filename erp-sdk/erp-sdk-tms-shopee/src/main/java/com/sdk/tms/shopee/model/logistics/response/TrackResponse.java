@@ -8,7 +8,7 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName TrackResponse
- * @description: TODO
+
  * @date 2023年10月30日
  * @version: 1.0
  */
@@ -24,5 +24,6 @@ public class TrackResponse implements Serializable {
     private String lastMileTrackingNumber;
     @JSONField(name = "hint")
     private String hint;
-
+    @JSONField(name = "pickup_code")
+    private String pickupCode;
 }

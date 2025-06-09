@@ -22,7 +22,7 @@ public class SupplierAccountDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO {
+    public static class AddDTO implements Serializable{
 
 
         /**
@@ -56,6 +56,10 @@ public class SupplierAccountDTO implements Serializable {
          */
         // @NotBlank(message = "支付方式不能为空")
         private String payMethodId;
+        /**
+         * 是否默认
+         */
+        private Boolean isDefault;
 
         /**
          * 备注

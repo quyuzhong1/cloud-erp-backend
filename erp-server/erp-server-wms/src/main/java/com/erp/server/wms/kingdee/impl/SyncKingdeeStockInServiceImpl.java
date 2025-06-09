@@ -2,14 +2,13 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
-
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.SourceTypeEnum;
@@ -20,6 +19,7 @@ import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -31,14 +31,14 @@ import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.PurchaseOrderSupplierEntity;
 import com.erp.model.scm.entity.SupplierEntity;
+import com.erp.model.sys.dto.DeptKingdeeDTO;
 import com.erp.model.sys.dto.KingdeeBusinessOperatorDTO;
 import com.erp.model.sys.dto.KingdeeOperatorRefPostDTO;
-import com.erp.model.sys.dto.SysDepartmentDTO;
+import com.erp.model.sys.entity.KingdeeDepartmentEntity;
 import com.erp.model.sys.enums.KingdeeBusinessOperatorTypeEnum;
 import com.erp.model.wms.entity.PoInstockDetailEntity;
 import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.WarehouseEntity;
-import com.erp.model.wms.entity.WarehouseReceiveDetailEntity;
 import com.erp.model.wms.entity.WmsPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
@@ -50,7 +50,6 @@ import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
 import com.erp.server.wms.service.PoInstockDetailService;
 import com.erp.server.wms.service.WarehouseService;
 import com.erp.server.wms.service.WmsPushMsgService;
-
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -111,7 +110,11 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(PoInstockEntity entity, String operate) {
         //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -162,7 +165,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 	@Override
 	public Map<String, Object> newSyncDataToKingdee(PoInstockEntity entity, String operate) {
 		//如果上游单据未发送成功则无需发送
-        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
            /* PurchaseOrderEntity purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
             DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
@@ -205,11 +208,13 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 
 
         //获取用户部门id
-        if (StringUtils.isNotBlank(entity.getPurchaseDeptId())) {
-            SysDepartmentDTO departmentDTO = sysUserFeign.getUserDeptById(entity.getPurchaseDeptId());
-            //采购部门
-            if (ObjectUtil.isNotEmpty(departmentDTO)) {
-                resultMap.put("purchaseDeptCode", departmentDTO.getCode());
+        if (CharSequenceUtil.isNotBlank(entity.getPurchaseDeptId())) {
+            DeptKingdeeDTO.FindDeptKingdeeDTO dto = new DeptKingdeeDTO.FindDeptKingdeeDTO();
+            dto.setDeptId(entity.getPurchaseDeptId());
+            dto.setOrgId(purchaseOrderEntity.getPurchaseOrgId());
+            KingdeeDepartmentEntity deptKingdee = kingdeeFeign.getDeptKingdee(dto);
+            if (ObjectUtils.isNotEmpty(deptKingdee)) {
+                resultMap.put("purchaseDeptCode", deptKingdee.getKingdeeDeptCode());
             }
         }
         //入库日期
@@ -217,7 +222,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
 
         //采购员
         String purchaseUserId = entity.getPurchaseUserId();
-        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getPurchaseUserId())) {
             KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO findBusinessOperator = new KingdeeBusinessOperatorDTO.FindBusinessOperatorDTO();
             findBusinessOperator.setOrgCode(purchaseOrgCode);
             findBusinessOperator.setUserId(purchaseUserId);
@@ -229,12 +234,6 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
                 resultMap.put("purchaseUserCode", kingSellerInfo.getUserPostCode());
                 resultMap.put("purchaseUserName", kingSellerInfo.getUserName());
             }
-        }
-        //新品首批
-        if (entity.getIsFirstMassProduct()) {
-            resultMap.put("isFirstMassProduct", 1);
-        } else {
-            resultMap.put("isFirstMassProduct", 2);
         }
 
         resultMap.put("receiveOrgCode", receiveOrgCode);
@@ -281,7 +280,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
         List<JSONObject> list = new ArrayList<>();
 
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getDeliveryWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getDeliveryWarehouseId()));
 
         for (PoInstockDetailEntity detail : detailList) {
             JSONObject jsonObject = new JSONObject();
@@ -296,6 +295,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             jsonObject.set("supplierCode", supplierEntity.getCode());
             //供应商编码
             jsonObject.set("supplierName", supplierEntity.getName());
+            jsonObject.set("firstMassProduct", detail.getFirstMassProduct());
             //交货仓库
             jsonObject.set("deliveryWarehouseName", entity.getDeliveryWarehouseName());
             if (ObjectUtil.isNotEmpty(warehouseEntity)) {
@@ -303,7 +303,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
                 jsonObject.set("deliveryWarehouseCode", warehouseEntity.getKingdeeWarehouseCode());
             }
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getDeliveryWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getDeliveryWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //库位
@@ -323,7 +323,7 @@ public class SyncKingdeeStockInServiceImpl implements SyncKingdeeStockInService 
             //含税单价
             jsonObject.set("taxPrice", purchaseOrderDetailEntity.getTaxPrice());
             //税率
-            jsonObject.set("taxRate", MathUtil.multiply(purchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
+            jsonObject.set("taxRate", MathUtil.multiplyWithTwo(purchaseOrderDetailEntity.getTaxRate(),MathUtil.BigDecimal_100));
             //采购编号
             jsonObject.set("purchaseOrderCode", entity.getPurchaseOrderCode());
             //明细id

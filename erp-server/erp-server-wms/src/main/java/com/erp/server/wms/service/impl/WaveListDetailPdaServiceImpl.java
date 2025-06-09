@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -61,9 +62,11 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     @Transactional(rollbackFor = Exception.class)
     public Boolean hangUp(WaveListDetailPdaDTO.HangUpParamDTO hangUpDTO) {
         WaveListEntity old = waveListService.getById(hangUpDTO.getWaveId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "波次列表"));
-        if (!StrUtil.equals(old.getStatus(),WaveStatusEnum.PICK_ING.getCode())) {
-            throw new ServiceException(StrUtil.format("波次【{}】非拣货中，不支持挂起。",old.getCode()));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "波次列表");
+        }
+        if (!CharSequenceUtil.equals(old.getStatus(),WaveStatusEnum.PICK_ING.getCode())) {
+            throw new ServiceException(CharSequenceUtil.format("波次【{}】非拣货中，不支持挂起。",old.getCode()));
         }
         List<PickingDetailEntity> updateList = getPickingDetailEntities(hangUpDTO);
         pickingDetailService.updateBatchById(updateList);
@@ -182,7 +185,7 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
             for (String skuId : skuSet) {
                 WaveListDetailPdaDTO.PickingLocationDTO card = new WaveListDetailPdaDTO.PickingLocationDTO();
                 card.setWarehouseLocation(location);
-                WarehouseLocationEntity locationEntity = warehouseLocationList.stream().filter(item -> item.getType().equals("location") && item.getCode().equals(location)).findFirst().orElse(new WarehouseLocationEntity());
+                WarehouseLocationEntity locationEntity = warehouseLocationList.stream().filter(item -> "location".equals(item.getType()) && item.getCode().equals(location)).findFirst().orElse(new WarehouseLocationEntity());
                 card.setWarehouseLocationName(locationEntity.getName());
                 card.setSkuId(skuId);
                 card.setSkuNo(skuMap.get(skuId));
@@ -207,9 +210,9 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
                 for (WaveListDetailDTO.DeliveryInfoDTO delivery : deliveryCollect) {
                     WaveListDetailPdaDTO.BasketDTO basketDTO = new WaveListDetailPdaDTO.BasketDTO();
                     basketDTO.setNo(delivery.getBasketNo());
-                    WaveListDetailDTO.LocationInfoDTO locationInfoDTO = delivery.getLocationInfoList().stream().filter(item -> StringUtils.equals(item.getWarehouseLocation(), location)).findAny().get();
-                    basketDTO.setPickedQty(locationInfoDTO.getPickedQty());
-                    basketDTO.setShouldPickingQty(locationInfoDTO.getShouldPickQty());
+                    List<WaveListDetailDTO.LocationInfoDTO> collect = delivery.getLocationInfoList().stream().filter(item -> StringUtils.equals(item.getWarehouseLocation(), location)).collect(Collectors.toList());
+                    basketDTO.setPickedQty(collect.stream().mapToInt(WaveListDetailDTO.LocationInfoDTO::getPickedQty).sum());
+                    basketDTO.setShouldPickingQty(collect.stream().mapToInt(WaveListDetailDTO.LocationInfoDTO::getShouldPickQty).sum());
                     basketList.add(basketDTO);
                 }
                 card.setBasketList(basketList);
@@ -238,8 +241,8 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
         int pickedSumQty = deliveryList.stream().mapToInt(WaveListDetailDTO.DeliveryInfoDTO::getPickedSumQty).sum();
 
         resultDTO.setCode(view.getCode());
-        resultDTO.setSkuShouldPickingQty(Long.valueOf(skuIdsCount).intValue());
-        resultDTO.setSkuPickedQty(Long.valueOf(skuIdsPickedCount).intValue());
+        resultDTO.setSkuShouldPickingQty(Math.toIntExact(skuIdsCount));
+        resultDTO.setSkuPickedQty(Math.toIntExact(skuIdsPickedCount));
         resultDTO.setGoodsShouldPickingQty(salesSumQty);
         resultDTO.setGoodsPickedQty(pickedSumQty);
 
@@ -273,12 +276,12 @@ public class WaveListDetailPdaServiceImpl extends SuperServiceImpl<WaveListDetai
     }
 
     @Override
-    public ApiResult<?> scanSkuOrEanCode(String skuId, String code) {
+    public ApiResult scanSkuOrEanCode(String skuId, String code) {
         ProductDetailDTO.ServiceToWavePickingDTO productInfo = productDetailFeign.getProductInfoBySkuId(skuId);
-        if(StringUtils.isNotBlank(productInfo.getSkuNo()) && productInfo.getSkuNo().equals(code)){
+        if(CharSequenceUtil.isNotBlank(productInfo.getSkuNo()) && productInfo.getSkuNo().equals(code)){
             return ApiResult.success();
         }
-        if(StringUtils.isNotBlank(productInfo.getEanNo()) && productInfo.getEanNo().equals(code)){
+        if(CharSequenceUtil.isNotBlank(productInfo.getEanNo()) && productInfo.getEanNo().equals(code)){
             return ApiResult.success();
         }
         return ApiResult.error("SKU不一致");

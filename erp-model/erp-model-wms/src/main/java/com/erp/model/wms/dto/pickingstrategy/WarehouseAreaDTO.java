@@ -17,7 +17,9 @@ import java.util.Map;
 @Getter
 @Setter
 public class WarehouseAreaDTO {
-
+    private WarehouseAreaDTO() {
+        throw new IllegalStateException("Utility WarehouseAreaDTO class");
+    }
     @Getter
     @Setter
     public static class PagingParam extends SortDTO {
@@ -132,7 +134,7 @@ public class WarehouseAreaDTO {
         private String remark;
         private String updateUserName;
         private LocalDateTime updateTime;
-
+        private Boolean canEditAreaType;
     }
 
     @Getter

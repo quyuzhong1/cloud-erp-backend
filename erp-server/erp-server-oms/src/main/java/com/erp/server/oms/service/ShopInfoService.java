@@ -1,9 +1,7 @@
 package com.erp.server.oms.service;
 
-import com.common.business.dto.base.BaseIdsDTO;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.AdvanceQueryContainer;
+import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
@@ -145,7 +143,7 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @author Will
      * @date: 2023/9/7 16:31
      */
-    List<ShopDTO.ListTreeDTO> listTree();
+    List<ShopDTO.ListTreeDTO> listTree(Boolean showByAuth);
 
     /**
      * 检查店铺是否授权
@@ -180,7 +178,14 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * @param cfClientId
      */
     Boolean saveOrUpdateShopee(ShopeeTokenAuth shopeeTokenAuth, String type, String shopeeId, ShopInfoEntity shopInfo, String cfClientId);
-
+    /**
+     * 根据平台查询店铺
+     * @author will
+     * @date 2025/4/25 10:25
+     * @param platformList
+     * @return List<ShopInfoEntity>
+     */
+    List<ShopInfoEntity> listByPlatformList(List<String> platformList, String permissionSql);
     /**
      * 查询亚马逊店铺信息
      * @Author Luo_WG
@@ -190,13 +195,6 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
     List<ShopInfoEntity> listShopByAmazon();
 
     List<ShopSysUserAuthDTO.ViewShopDTO> listShopByAmazonAuth();
-    /**
-     * 根据条件查询是否存在店铺
-     *
-     * @author Jim
-     * @since 2023-11-09
-     */
-    boolean checkExist(String dictCountryCode, String dictPlatform, String authStatus);
 
     /**
      * 根据仓库id查询店铺
@@ -331,5 +329,56 @@ public interface ShopInfoService extends SuperService<ShopInfoEntity> {
      * 导出店铺
      */
     PagingVO<ShopDTO.PagingViewDTO> exportShop(PagingDTO<ShopDTO.ExportDTO> dto);
+
+    PagingVO<SkuMappingDTO.SyncPlatformProductView> pageAuthShop(PagingDTO<AdvanceQueryContainer> advanceQueryDTO, List<String> shopIds);
+    /**
+     * 区域远程搜索
+     * @author will
+     * @date 2024/8/28 17:15
+     * @param dto
+     * @return PagingVO<AreaDTO>
+     */
+    PagingVO<ShopDTO.AreaDTO> pagingSelectArea(PagingDTO<ShopDTO.AreaParamDTO> dto);
+    /**
+     * 店铺下拉
+     * @author will
+     * @date 2024/8/28 18:28
+     * @param dto
+     * @return List<ListDTO>
+     */
+    List<ShopDTO.ListDTO> listSelect(ShopDTO.SelectDTO dto);
+
+    /**
+     * 根据平台获取店铺
+     * @param platform 平台
+     */
+    List<String> listShopInfoByPlatform(String platform);
     void saveCustom(ShopInfoEntity shopInfoEntity);
+
+    /**
+     * 检查和更新亚马逊同账号店铺授权
+     */
+    Boolean checkAndSaveAllAmazonToken(AmazonTokenUpdateDTO updateDTO);
+
+    /**
+     * 获取已授权店铺 (多平台)
+     *
+     * @return ApiResult<List < ShopInfoEntity>>
+     * @author Will
+     * @date: 2023/10/18 10:00
+     */
+    List<ShopInfoEntity> listAuthPlatform(List<String> platformDTO);
+    /**
+     * 根据店铺名称查询店铺信息
+     * @param shopNameList
+     * @return
+     */
+    List<ShopInfoDTO.ListDTO> listShopByName(List<String> shopNameList);
+
+    /**
+     * 根据权限查询对应平台店铺 (默认有仓库权限的店铺)
+     * @param dictPlatform
+     * @return
+     */
+    List<ShopSysUserAuthDTO.ViewShopDTO> listUserAuthShop(String dictPlatform);
 }

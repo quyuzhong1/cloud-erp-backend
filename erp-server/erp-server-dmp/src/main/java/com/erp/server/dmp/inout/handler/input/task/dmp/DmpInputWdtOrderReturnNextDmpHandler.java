@@ -42,7 +42,7 @@ public class DmpInputWdtOrderReturnNextDmpHandler extends DmpInputWdtNextDmpHand
 					BigDecimal amountBigDecimal = new BigDecimal(amount.toString());
 					BigDecimal qtyBigDecimal = new BigDecimal(qty.toString());
 					if(qtyBigDecimal.compareTo(BigDecimal.ZERO) != 0) {
-						dmpDataMap.put("sellPrice", amountBigDecimal.divide(qtyBigDecimal , 2, RoundingMode.HALF_UP));
+						dmpDataMap.put("sellPrice", amountBigDecimal.divide(qtyBigDecimal , 4, RoundingMode.HALF_UP));
 					}else {
 						dmpDataMap.put("sellPrice", amountBigDecimal);
 					}

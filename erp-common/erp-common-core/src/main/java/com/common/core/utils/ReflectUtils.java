@@ -396,7 +396,7 @@ public class ReflectUtils {
                 return;
             }
             // 其他类型
-            ReflectUtil.setFieldValue(targetObj, fieldName, sourceObjFieldValue);
+//            ReflectUtil.setFieldValue(targetObj, fieldName, sourceObjFieldValue);
         });
         return targetObj;
     }

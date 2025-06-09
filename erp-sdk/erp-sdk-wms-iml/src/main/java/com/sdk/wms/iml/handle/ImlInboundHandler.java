@@ -21,6 +21,7 @@ import com.sdk.wms.iml.dto.response.ImlResponse;
 import com.sdk.wms.iml.service.ImlService;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -42,7 +43,7 @@ public class ImlInboundHandler extends AbstractPullThirdWarehouseHandler<ImlRece
     private ImlService imlService;
 
     @Resource
-    private MQProducerService mqProducerService;
+    private MQProducerService<T> mqProducerService;
 
     @Resource
     private WmsOverseasWarehouseFeign overseasWarehouseFeign;

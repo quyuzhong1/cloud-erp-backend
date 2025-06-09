@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,11 +14,6 @@ import java.math.BigDecimal;
 @Data
 @NoArgsConstructor
 public class PlatformDeliveryDetailDTO {
-
-    /**
-     * erp 主记录id
-     */
-    private String mainId;
 
     /**
      * skuId
@@ -79,5 +75,39 @@ public class PlatformDeliveryDetailDTO {
      */
     private String sourcePlatform = "thirdPlatform";
 
+    // 速卖通发货单明细信息
+    /**
+     * 币别(速卖通发货单明细来源单价币种)
+     */
+    private String currency;
+    /**
+     * 实际支付金额
+     */
+    private BigDecimal payAmount;
 
+    /**
+     * 实际支付币别
+     */
+    private String payCurrency;
+
+    /**
+     * 折扣金额
+     */
+    private BigDecimal discountAmount;
+
+    /**
+     * 折扣币别
+     */
+    private String discountCurrency;
+
+    /**
+     * 唯一ID:
+     * 速卖通=中台明细ID
+     */
+    private String uniqueId;
+
+    /**
+     * 平台订单明细状态
+     */
+    private String orderDetailPlatformStatus;
 }

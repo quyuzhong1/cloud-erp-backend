@@ -262,7 +262,7 @@ public class TemplateDeliveryDocsServiceImpl extends ServiceImpl<TemplateDeliver
     public Boolean updateStatus(TemplateDeliveryDocsUpdateStatusDTO dto) {
         TemplateTaskDocsNameEntity taskDocsNameEntity = templateTaskDocsNameService.getById(dto.getId());
         if (Objects.isNull(taskDocsNameEntity)) {
-            throw new ServiceException(ApiError.ERROR_95155);
+            throw new ServiceException(ApiError.ERROR_95052);
         }
         //当是关闭的时候 要查询是否有引用 有就不能管
         if (!dto.getStatus()) {

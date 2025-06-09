@@ -4,6 +4,7 @@ import java.util.Map;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.entity.ProductInfoEntity;
 
 /**
  * @author Will
@@ -20,5 +21,9 @@ public interface SyncKingdeeProductDetailService {
      */
     DmpPushTaskEntity syncDataToKingdee(ProductDetailEntity entity, String operate);
     
+    void syncDataToSdy(ProductDetailEntity entity, String operate);
+    
     Map<String, Object> newSyncDataToKingdee(ProductDetailEntity entity, String operate);
+    
+    Map<String, Object> newSyncDataToSdy(ProductDetailEntity entity, ProductInfoEntity productInfoEntity, String operate);
 }

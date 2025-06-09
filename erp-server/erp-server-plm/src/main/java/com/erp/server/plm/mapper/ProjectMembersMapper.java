@@ -6,7 +6,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.plm.dto.MemberPagingDTO;
 import com.erp.model.plm.dto.MemberPagingShowDTO;
 import com.erp.model.plm.entity.ProjectMembersEntity;
-import com.erp.model.plm.entity.TemplateMembersEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -23,9 +22,9 @@ import java.util.List;
 @Mapper
 public interface ProjectMembersMapper extends BaseMapper<ProjectMembersEntity> {
 
-    IPage<MemberPagingShowDTO> paging(Page query, @Param("productId")String productId, @Param("roleIds") List<String> roleIds  );
+    IPage<MemberPagingShowDTO> paging(Page<MemberPagingDTO> query, @Param("productId")String productId, @Param("roleIds") List<String> roleIds  );
 
-    IPage<MemberPagingShowDTO> allPaging(Page query, @Param("productId") String productId);
+    IPage<MemberPagingShowDTO> allPaging(Page<MemberPagingDTO> query, @Param("productId") String productId);
 
     /**
      * 根据角色名称和模板id查询人员

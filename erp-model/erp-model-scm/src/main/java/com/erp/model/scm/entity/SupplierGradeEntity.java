@@ -36,9 +36,9 @@ public class SupplierGradeEntity extends BaseEntity<SupplierGradeEntity> {
     private Integer seq;
 
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
-    public static final String SEQ = "seq";
+    public static final String FIELD_SEQ = "seq";
 
     @Override
     public Serializable pkVal() {

@@ -23,7 +23,7 @@ public class SupplierContactDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class AddDTO{
+    public static class AddDTO implements Serializable{
 
 
 
@@ -51,7 +51,7 @@ public class SupplierContactDTO implements Serializable {
         /**
          * 邮箱
          */
-        @Size(max = 30,message = "邮箱最大30字符")
+        @Size(max = 30,message = "邮箱最大50字符")
         @RegularValid(formatPattern= FieldFormatPatternTypeEnum.MAILBOX,message = "邮箱格式有误")
         private String email;
 

@@ -2,7 +2,6 @@ package com.erp.server.tms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsBillDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailDTO;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
@@ -27,7 +26,7 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     /**
      * 新增
      *
-     * @param mainId
+     * @param billEntity
      * @param list
      * @return
      * @author lambda
@@ -76,33 +75,11 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
     BatchResultDTO updateStatus(String id, String trackStatus, LocalDateTime trackTime,String trackDesc);
 
     /**
-     * 分页获取轨迹数据
-     *
-     * @param query
-     * @return
-     */
-    PagingVO<LogisticsBillDetailEntity> getPage(LogisticsBillDetailQueryDTO query);
-
-    /**
-     *
-     * @param query
-     * @return
-     */
-    PagingVO<LogisticsTrackDTO.UpdateTrackDTO> getTrackDtoPage(LogisticsBillDetailQueryDTO query);
-
-    /**
      * 列表查询
      * @param query
      * @return
      */
     List<LogisticsTrackDTO.UpdateTrackDTO> listTrackDto(LogisticsBillDetailQueryDTO query);
-
-    /**
-     * 根据运单号查询明细记录
-     * @param trackNo
-     * @return
-     */
-    List<LogisticsBillDetailEntity> getDetailByTrackNo(String trackNo);
 
     /**
      * 更改运输单号
@@ -124,17 +101,11 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
 
     /**
      * 根据跟踪号进行更新操作
+     *
      * @param max
      */
     void updateLogisticsBillDetailByTrackNo(LogisticsTrackEntity max);
 
-    /**
-     * 更新跟踪号信息
-     * @param trackNo
-     * @param status
-     * @param signTime
-     */
-    void updateTrackStatus(String trackNo, String status, LocalDateTime signTime, LocalDateTime trackTime);
 
     /**
      * 批量更新跟踪号信息
@@ -144,4 +115,18 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @param trackTime
      */
     void batchUpdateTrackStatus(List<String> trackNoList, String code, LocalDateTime signTime, LocalDateTime trackTime);
+
+    /**
+     * 更新注册状态
+     * @param errorList
+     * @param status
+     */
+    void updateRegisterStatus(List<LogisticsBillDetailDTO.BillDetailErrorDTO> errorList, int status);
+
+    /**
+     * 更新注册状态 携带参数
+     * @param sucessList
+     * @param status
+     */
+    void updateRegisterStatusByParams(List<LogisticsBillDetailDTO.BillDetailDTO> sucessList, int status);
 }

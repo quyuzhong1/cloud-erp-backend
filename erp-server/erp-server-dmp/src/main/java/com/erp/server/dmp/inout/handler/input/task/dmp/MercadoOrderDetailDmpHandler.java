@@ -57,6 +57,13 @@ public class MercadoOrderDetailDmpHandler extends MercadoOrderGetDetailDmpHandle
 				if (titleObj != null) {
 					dmpDataMap.put("skuName", titleObj);
 				}
+				dmpDataMap.put("currencyCode", dmpDataMap.get("currencyId"));
+
+				Object unitPriceObj = dmpDataMap.get("sellPrice");
+				Object quantityObj = dmpDataMap.get("qty");
+				if (unitPriceObj != null && quantityObj != null) {
+					dmpDataMap.put("afterAmount", MathUtil.valueOf(unitPriceObj).multiply(MathUtil.valueOf(quantityObj)));
+				}
 			}
 		}
 	}

@@ -9,11 +9,13 @@ import java.util.TimeZone;
 /**
  * @author zdy
  * @ClassName DateUtil
- * @description: TODO
+
  * @date 2023年11月02日
  * @version: 1.0
  */
 public class DateUtil {
+    private DateUtil(){}
+
     public static final String SIMPLE_DATE_STRING = "yyyy-MM-dd";
 
     public static final String FULL_DATE_STRING = "yyyy-MM-dd HH:mm:ss";
@@ -31,43 +33,6 @@ public class DateUtil {
         } catch (ParseException e) {
             return null;
         }
-    }
-
-    public static Date spliceDate(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd 23:59:59");
-        String formatStr = sdf.format(date);
-        sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        try {
-            return sdf.parse(formatStr);
-        } catch (ParseException e) {
-            return null;
-        }
-    }
-
-    public static Date spliceDate2(Date date) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd 00:00:00");
-        String formatStr = sdf.format(date);
-        sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        try {
-            return sdf.parse(formatStr);
-        } catch (ParseException e) {
-            return null;
-        }
-    }
-
-    public static String parse2String(Date date, String format) {
-        if (date == null)
-            return null;
-        SimpleDateFormat sdf = new SimpleDateFormat(format);
-        return sdf.format(date);
-    }
-
-    public static String parse2StringByTimeZone(Date date, String format, TimeZone toTimeZone) {
-        if (date == null)
-            return null;
-        SimpleDateFormat sdf = new SimpleDateFormat(format);
-        sdf.setTimeZone(toTimeZone);
-        return sdf.format(date);
     }
 
     public static int dayOfWeek(Date date) {

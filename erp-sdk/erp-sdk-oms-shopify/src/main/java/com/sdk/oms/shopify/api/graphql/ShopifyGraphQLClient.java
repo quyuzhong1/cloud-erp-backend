@@ -1,5 +1,6 @@
 package com.sdk.oms.shopify.api.graphql;
 
+import com.common.core.exception.ServiceException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sdk.oms.shopify.api.graphql.model.*;
@@ -10,6 +11,7 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
+import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.tcp.ProxyProvider;
@@ -22,14 +24,14 @@ import java.util.Map;
 /*
  * This is a Shopify Client that uses GraphQL to retrieve data from Shopify. You should get a client object using the ShopifyGraphQLClientService
  * rather than creating your own.
- * 
+ *
  * This client has a couple simple methods to retrieve basic Shop and Product data from Shopify, and a method to create a very simple new Product. You
  * can add you own methods to this client to perform more GraphQL based actions with Shopify. At a later date this may be refactored a bit to make it
  * easy to extend, to help decouple your custom code from the core framework. However, at this point, you just pull the framework into your project,
  * and make you changes directly.
- * 
- * 
- * 
+ *
+ *
+ *
  * @since 0.0.1
  */
 @Slf4j
@@ -47,21 +49,27 @@ public class ShopifyGraphQLClient {
 
     private WebClient webClient;
 
-    public ShopifyGraphQLClient(String shopName, String accessToken, String apiVersion) {
+    public ShopifyGraphQLClient(String shopName, String accessToken, String apiVersion, InetSocketAddress inetSocketAddress) {
         this.shopName = shopName;
         this.accessToken = accessToken;
         this.apiVersion = apiVersion;
 
 //        HttpClient httpClient = HttpClient.create().wiretap("reactor.netty.http.client.HttpClient", LogLevel.DEBUG, AdvancedByteBufFormat.TEXTUAL);
         HttpClient httpClient = HttpClient.create()
-                .tcpConfiguration(client ->
-                        client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
-                                //本地启动时设置代理
-//                                .proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP)
-//                                        .address(new InetSocketAddress("127.0.0.1", 7890)))
-                                .doOnConnected(conn -> conn
-                                        .addHandlerLast(new ReadTimeoutHandler(60))
-                                        .addHandlerLast(new WriteTimeoutHandler(60))));
+                .tcpConfiguration(client -> {
+                    // 设置连接、读、写超时
+                    client = client.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 60000)
+                            .doOnConnected(conn -> conn
+                                    .addHandlerLast(new ReadTimeoutHandler(60))
+                                    .addHandlerLast(new WriteTimeoutHandler(60)));
+                    // 如果inetSocketAddress不为null，则设置代理
+                    if (inetSocketAddress != null) {
+                        client = client.proxy(proxy -> proxy.type(ProxyProvider.Proxy.HTTP)
+                                .address(inetSocketAddress));
+                    }
+                    return client;
+                });
+
 
         this.webClient = WebClient.builder().baseUrl("https://" + shopName + "/admin/api/" + apiVersion + "/graphql.json")
                 .defaultHeader(SHOPIFY_ACCESS_TOKEN_HEADER_NAME, accessToken)
@@ -83,21 +91,25 @@ public class ShopifyGraphQLClient {
         // Parse the JSON String response into a Shop object
         Shop shop = handleResponse(jsonString, Shop.class);
         return shop;
-    };
+    }
+
+    ;
 
     public ShopifyOrderResponse getOrderLocalizationExtensions(String orderId) {
         Map<String, String> variablesMap = new HashMap<>();
-        variablesMap.put("id","gid://shopify/Order/"+orderId);
-        String jsonString = runQuery("orderLocalizationExtensions",variablesMap);
+        variablesMap.put("id", "gid://shopify/Order/" + orderId);
+        String jsonString = runQuery("orderLocalizationExtensions", variablesMap);
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             ShopifyOrderResponse response = objectMapper.readValue(jsonString, ShopifyOrderResponse.class);
             return response;
         } catch (Exception e) {
-            log.error("shopify获取订单信息转换异常",e);
+            log.error("shopify获取订单信息转换异常", e);
             return null;
         }
-    };
+    }
+
+    ;
 
 
     /**
@@ -173,17 +185,16 @@ public class ShopifyGraphQLClient {
     }
 
 
-
     /**
      * This method is used to parse the JSON response from the GraphQL API call into a Java object. It takes the object class in as a parameter and
      * returns the fully constructed object.
-     * 
+     * <p>
      * The Shopify response has a top level "data" object that contains the actual data inside it, and an "extensions" object contains additional
      * information.
-     * 
+     *
      * @param <T>
      * @param jsonString the full Shopify GraphQL response
-     * @param clazz the class literal of the object to be constructed
+     * @param clazz      the class literal of the object to be constructed
      * @return the fully constructed object of type clazz
      * @throws IOException
      */
@@ -228,4 +239,17 @@ public class ShopifyGraphQLClient {
         return objectToReturn;
     }
 
+    public String getOrderReturn(String orderId) {
+        Map<String, String> variablesMap = new HashMap<>();
+        variablesMap.put("input", "gid://shopify/Refund/" + orderId);
+        String jsonString = runQuery("orderRefund", variablesMap);
+        ObjectMapper objectMapper = new ObjectMapper();
+        try {
+            return jsonString;
+        } catch (Exception e) {
+            log.error("shopify获取退货订单信息转换异常", e);
+            ServiceException.runError("shopify获取退货订单信息转换异常", e);
+            return "";
+        }
+    }
 }

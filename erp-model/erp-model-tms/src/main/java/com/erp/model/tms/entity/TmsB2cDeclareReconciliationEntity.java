@@ -12,6 +12,7 @@ import lombok.experimental.Accessors;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -98,9 +99,33 @@ public class TmsB2cDeclareReconciliationEntity extends BaseEntity<TmsB2cDeclareR
     */
     @TableField("reason")
     private String reason;
+    
+    /**
+     * 东莞仓费用
+     */
+    @TableField("dg_warsehouse_fee")
+    private BigDecimal dgWarseHouseFee;
+    
+    /**
+     * 香港仓费用
+     */
+    @TableField("xg_warsehouse_fee")
+    private BigDecimal xgWarseHouseFee;
+    
+    /**
+     * 支付状态
+     */
+    @TableField("pay_status")
+    private String payStatus;
+    
+    /**
+     * 付款时间
+     */
+    @TableField("pay_time")
+    private LocalDateTime payTime;
 
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
 
@@ -122,11 +147,11 @@ public class TmsB2cDeclareReconciliationEntity extends BaseEntity<TmsB2cDeclareR
 
     public static final String LOGISTICS_SUPPLIER_NAME = "logistics_supplier_name";
 
-    public static final String CURRENCY = "currency";
+    public static final String FIELD_CURRENCY = "currency";
 
     public static final String EXCHANGE_RATE = "exchange_rate";
 
-    public static final String REASON = "reason";
+    public static final String FIELD_REASON = "reason";
 
     @Override
     public Serializable pkVal() {

@@ -71,7 +71,14 @@ public class ShopSysUserAuthDTO implements Serializable {
          * 店铺名称
          */
         private String shopName;
-
+        /**
+         * 国家编码
+         */
+        private String countryId;
+        /**
+         * 国家名称
+         */
+        private String countryName;
 
         /**
          * id 与shopId同值，兼容旧接口
@@ -97,6 +104,15 @@ public class ShopSysUserAuthDTO implements Serializable {
          * 仓库名称
          */
         private String warehouseName;
+        /**
+         * 店铺类型 overseas 海外, internal 国内'
+         * ShopTypeEnum
+         */
+        private String type;
+        /**
+         * 是否有仓库权限
+         */
+        private Boolean hasWarehouseAuth;
     }
 
     /**

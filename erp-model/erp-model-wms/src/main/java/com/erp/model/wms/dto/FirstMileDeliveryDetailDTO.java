@@ -256,4 +256,41 @@ public class FirstMileDeliveryDetailDTO implements Serializable {
     }
 
 
+
+    @Data
+    @NoArgsConstructor
+    public static class listFirstMileDTO {
+        /**
+         * 主表id
+         */
+        private String id;
+        /**
+         * 明细id
+         */
+        private String detailId;
+        /**
+         * SKU
+         */
+        private String skuId;
+        /**
+         * SKU
+         */
+        private String skuNo;
+        /**
+         * mSku
+         */
+        private String platformSkuNo;
+        /**
+         * 备货类型
+         */
+        private String demandType;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源明细id
+         */
+        private String sourceDetailId;
+    }
 }

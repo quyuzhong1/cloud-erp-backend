@@ -15,6 +15,7 @@ public enum DmpPushMonitorTabEnum implements EnumMessage {
     ERROR("error", "推送失败"),
     NO_NEED_SYNC("noNeedSync", "无需同步"),
     BLACK("black", "黑名单"),
+    HISTORY("history", "已归档"),
     ;
     /**
      * 类型

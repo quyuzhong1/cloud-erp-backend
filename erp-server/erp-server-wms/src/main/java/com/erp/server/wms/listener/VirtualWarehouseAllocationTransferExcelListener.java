@@ -2,10 +2,12 @@
 package com.erp.server.wms.listener;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.dto.ProductDetailDTO;
@@ -22,7 +24,6 @@ import com.erp.server.wms.service.VirtualWarehouseRelationService;
 import com.erp.server.wms.service.VirtualWarehouseService;
 import com.erp.server.wms.service.WarehouseService;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,13 +91,13 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
             errorList.add(vwAllocationAllocationExcelDTO);
             return;
         }
-        if (StringUtils.isBlank(vwAllocationAllocationExcelDTO.getSkuNo())) {
+        if (CharSequenceUtil.isBlank(vwAllocationAllocationExcelDTO.getSkuNo())) {
             errorMsgList.add("SKU不能为空");
         }
         VirtualWarehouseAllocationDTO.DetailDto detailDto = new VirtualWarehouseAllocationDTO.DetailDto();
 
         //查看sku是否存在
-        if (StringUtils.isNotBlank(vwAllocationAllocationExcelDTO.getSkuNo())) {
+        if (CharSequenceUtil.isNotBlank(vwAllocationAllocationExcelDTO.getSkuNo())) {
             //根据sku编号查询sku
             Map<String, String> skuParams = new HashMap<>();
             skuParams.put("skuNo", vwAllocationAllocationExcelDTO.getSkuNo());
@@ -115,10 +116,10 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
         } else {
             detailDto.setQty(Integer.valueOf(vwAllocationAllocationExcelDTO.getQty()));
         }
-        if (StringUtils.isBlank(vwAllocationAllocationExcelDTO.getWarehouseName())) {
+        if (CharSequenceUtil.isBlank(vwAllocationAllocationExcelDTO.getWarehouseName())) {
             errorMsgList.add("实体仓不能为空");
         }
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getWarehouseName()));
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(Collections.singletonList(vwAllocationAllocationExcelDTO.getWarehouseName()));
         List<VirtualWarehouseDTO.VwDTO> vwDtoList = virtualWarehouseService.getByNames(Arrays.asList(vwAllocationAllocationExcelDTO.getFromVirtualWarehouseName(), vwAllocationAllocationExcelDTO.getToVirtualWarehouseName()));
         if (CollectionUtils.isEmpty(vwDtoList) || Objects.isNull(vwDtoList.get(0))) {
             errorMsgList.add("虚拟仓不存在");
@@ -146,7 +147,7 @@ public class VirtualWarehouseAllocationTransferExcelListener extends AnalysisEve
         }
 
         if (CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) {
-            errorMsgList.add("实体仓不存在");
+            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
         } else {
             if (Boolean.TRUE.equals(warehouseList.get(0).getDisabled())) {
                 errorMsgList.add("实体仓非启用状态");

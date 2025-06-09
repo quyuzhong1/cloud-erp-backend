@@ -1,10 +1,13 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.common.business.enums.ErpServerModuleEnum;
 import com.common.business.service.impl.RedisService;
+import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.utils.RedisUtil;
 import com.common.core.enums.CurrencyEnum;
 import com.common.core.utils.BeanMapperUtils;
@@ -15,27 +18,32 @@ import com.erp.model.dmp.entity.DmpSkuCostCustomEntity;
 import com.erp.model.dmp.entity.DmpSkuCostEntity;
 import com.erp.model.msg.dto.WarnMsgInfoDTO;
 import com.erp.model.msg.enums.WarnMsgTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.model.scm.dto.SkuCostDTO;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
-import com.erp.rpc.plm.feign.LogisticsProductFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.dmp.mapper.DmpSkuCostMapper;
+import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpSkuCostCustomService;
 import com.erp.server.dmp.service.DmpSkuCostService;
-import com.common.business.service.impl.SuperServiceImpl;
-import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.stereotype.Service;
-
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -53,6 +61,7 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
     @Resource
     private ScmTaskFeign scmTaskFeign;
 
+    @Autowired
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
@@ -69,7 +78,8 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
     private DmpSkuCostCustomService dmpSkuCostCustomService;
 
     @Resource
-    private LogisticsProductFeign logisticsProductFeign;
+    private DictBasicService dictBasicService;
+
     /**
      * 同步采购单sku成本信息
      * @Author Luo_WG
@@ -78,20 +88,20 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
      **/
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void syncPurchaseOrderSkuCost(List<LocalDate> localDateList) {
-        List<SkuCostDTO> skuCostList = scmTaskFeign.listPurchaseOrderByPurchaseDate(localDateList);
+    public void syncPurchaseOrderSkuCost(SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO) {
+        List<SkuCostDTO> skuCostList = scmTaskFeign.listPurchaseOrderByPurchaseDate(queryPurchaseDTO);
         if (CollectionUtils.isEmpty(skuCostList)) {
-            log.warn("未发现进三个月成本信息，cleanSkuCostBySKuNos >>>>>> localDateList：{}",localDateList);
+            log.warn("未发现进三个月成本信息，cleanSkuCostBySKuNos >>>>>> localDateList：{}",queryPurchaseDTO.getLocalDateList());
             return;
         }
         List<String> skuNoList = skuCostList.stream().map(SkuCostDTO::getSkuNo).distinct().collect(Collectors.toList());
 
         //更新本身及上级SKU
-        cleanSkuCostBySKuNos (skuNoList);
+        cleanSkuCostBySKuNos (skuNoList, queryPurchaseDTO.getPurchaseOrderIds(), queryPurchaseDTO.getSupplierIds());
     }
 
     @Override
-    public void cleanSkuCostBySKuNos(List<String> skuNoList) {
+    public void cleanSkuCostBySKuNos(List<String> skuNoList, List<String> purchaseOrderIds, List<String> supplierIds) {
         if (CollectionUtils.isEmpty(skuNoList)) {
             log.warn("录入编码不能为空，cleanSkuCostBySKuNos >>>>>> skuNoList：{}",skuNoList);
             return;
@@ -117,8 +127,12 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         }
         SkuCostDTO.ParamDTO paramDTO = new SkuCostDTO.ParamDTO();
         paramDTO.setSkuNoList(resultSkuNoList);
+        paramDTO.setPurchaseOrderIds(purchaseOrderIds);
+        paramDTO.setSupplierIds(supplierIds);
         //查询所有子级SKU近三个月成本信息
         List<SkuCostDTO> skuCostList = scmTaskFeign.listPurchaseOrderCost(paramDTO);
+        //清除需要计算单过滤后没有成本信息的数据
+        clearNoSkuCostData(skuCostList,resultSkuNoList);
         if (CollectionUtils.isEmpty(skuCostList)) {
             log.warn("未发现进三个月成本信息，cleanSkuCostBySKuNos >>>>>> skuNoList：{}",skuNoList);
             return;
@@ -132,6 +146,22 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
         addOrUpdateSkuCost(childSkuCostList);
     }
 
+    private void clearNoSkuCostData(List<SkuCostDTO> skuCostList, List<String> skuNoList) {
+        LocalDate localDate = LocalDate.now();
+        List<String> costSkuNoList = skuCostList.stream().map(SkuCostDTO::getSkuNo).distinct().collect(Collectors.toList());
+        List<String> skuNOList2 = skuNoList.stream().filter(e -> CollUtil.isNotEmpty(costSkuNoList) && !costSkuNoList.contains(e)).distinct().collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(skuNOList2)){
+            this.lambdaUpdate().set(DmpSkuCostEntity::getIsDeleted, true).eq(DmpSkuCostEntity::getCostDate, localDate).in(DmpSkuCostEntity::getSkuNo, skuNOList2).update();
+            skuNOList2.forEach(skuNo ->{
+                String existKey = StrUtil.format(RedisKeyConstant.DMP_SKU_COST_CODE, skuNo);
+                boolean isHas = redisUtil.hasKey(existKey);
+                if (isHas) {
+                    //删除缓存
+                    redisUtil.keys(existKey).forEach(key -> redisUtil.del(key));
+                }
+            });
+        }
+    }
 
 
     @Override
@@ -157,10 +187,72 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
     @Override
     public List<DmpSkuCostEntity> listRedisBySkuNoList (List<String> skuNoList) {
         if (CollectionUtils.isEmpty(skuNoList)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
+        }
+        //根据sku编码查询bom数据
+        List<BomChildrenSkuDTO> bomChildrenSkuList = plmTaskFeign.listBomChildBySkuNos(skuNoList);
+        //仅销售套装bom查子件
+        bomChildrenSkuList = CollUtil.isEmpty(bomChildrenSkuList) ? Collections.emptyList() : bomChildrenSkuList.stream().filter(obj -> CharSequenceUtil.equals(BomTypeEnum.COMBINATION.getType(),obj.getType())).collect(Collectors.toList());
+
+        List<String> allSkuIdList = new ArrayList<>(skuNoList);
+        if (CollUtil.isNotEmpty(bomChildrenSkuList)) {
+            List<String> childSkuNoList = bomChildrenSkuList.stream().distinct().map(BomChildrenSkuDTO::getSkuNo).collect(Collectors.toList());
+            allSkuIdList.addAll(childSkuNoList);
+        }
+        Map<String, List<BomChildrenSkuDTO>> bomMap = bomChildrenSkuList.stream()
+                .collect(Collectors.groupingBy(BomChildrenSkuDTO::getParentSkuNo));
+
+        List<DmpSkuCostEntity> childDmpSkuCostList = getChildDmpSkuCostEntity(allSkuIdList);
+        if (CollUtil.isEmpty(childDmpSkuCostList)) {
+            return Collections.emptyList();
+        }
+        Map<String, DmpSkuCostEntity> costMap = childDmpSkuCostList.stream()
+                .collect(Collectors.toMap(DmpSkuCostEntity::getSkuNo,Function.identity()));
+
+        List<DmpSkuCostEntity> returnList = new ArrayList<>();
+        for (String skuNo : skuNoList) {
+            List<BomChildrenSkuDTO> bomChildrenSkuDTOS = bomMap.get(skuNo);
+            //非组合品
+            if (CollUtil.isEmpty(bomChildrenSkuDTOS)) {
+                DmpSkuCostEntity thisCostEntity = costMap.get(skuNo);
+                if (ObjectUtil.isNotEmpty(thisCostEntity)) {
+                    returnList.add(thisCostEntity);
+                }
+                continue;
+            }
+            //组合品
+            DmpSkuCostEntity parentCostEntity = new DmpSkuCostEntity();
+            BigDecimal totalCost = BigDecimal.ZERO;
+            BigDecimal totalNotTaxCost = BigDecimal.ZERO;
+            for (BomChildrenSkuDTO childrenSkuDTO : bomChildrenSkuDTOS) {
+                DmpSkuCostEntity childCostEntity = costMap.get(childrenSkuDTO.getSkuNo());
+                //含税成本
+                BigDecimal childCost = ObjectUtil.isEmpty(childCostEntity) ? BigDecimal.ZERO : MathUtil.multiplyWithTwo(childCostEntity.getCostPrice(), childrenSkuDTO.getQuantity());
+                totalCost = totalCost.add(childCost);
+                //不含税成本
+                BigDecimal childNotTaxCost = ObjectUtil.isEmpty(childCostEntity) ? BigDecimal.ZERO : MathUtil.multiplyWithTwo(childCostEntity.getNotTaxCostPrice(), childrenSkuDTO.getQuantity());
+                totalNotTaxCost = totalNotTaxCost.add(childNotTaxCost);
+            }
+            parentCostEntity.setCostPrice(totalCost);
+            parentCostEntity.setNotTaxCostPrice(totalNotTaxCost);
+            parentCostEntity.setSkuId(bomChildrenSkuDTOS.get(0).getParentSkuId());
+            parentCostEntity.setSkuNo(skuNo);
+            returnList.add(parentCostEntity);
+        }
+        return returnList;
+    }
+
+    /**
+     * 查询子级sku的成本
+     * @param skuNoList
+     * @return
+     */
+    private List<DmpSkuCostEntity> getChildDmpSkuCostEntity (List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuNoList)) {
+            return Collections.emptyList();
         }
         //sku编码去重
-       List<String> distSkuNoList = skuNoList.stream().distinct().collect(Collectors.toList());
+        List<String> distSkuNoList = skuNoList.stream().distinct().collect(Collectors.toList());
 
         //返回结果集
         List<DmpSkuCostEntity> resultList = new ArrayList<>();
@@ -313,14 +405,14 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                         //取自定义成本数据
                         DmpSkuCostCustomEntity costCustomEntity = dmpSkuCostCustomService.getBySkuNo(childSkuLevelDTO.getSkuNo());
                         if (ObjectUtil.isNotEmpty(costCustomEntity)) {
-                            parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiply(costCustomEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
-                            parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiply(costCustomEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
+                            parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiplyWithTwo(costCustomEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
+                            parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiplyWithTwo(costCustomEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
                         }
                     }
                     continue;
                 }
-                parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiply(dmpSkuCostEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
-                parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiply(dmpSkuCostEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
+                parentSkuCostEntity.setCostPrice(MathUtil.add(MathUtil.multiplyWithTwo(dmpSkuCostEntity.getCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getCostPrice()));
+                parentSkuCostEntity.setNotTaxCostPrice(MathUtil.add(MathUtil.multiplyWithTwo(dmpSkuCostEntity.getNotTaxCostPrice(),new BigDecimal(childSkuLevelDTO.getQuantity()),4) ,parentSkuCostEntity.getNotTaxCostPrice()));
             }
         }
 
@@ -364,9 +456,9 @@ public class DmpSkuCostServiceImpl extends SuperServiceImpl<DmpSkuCostMapper, Dm
                     continue;
                 }
                 //含税成本
-                totalCostAmount = MathUtil.add(totalCostAmount,MathUtil.multiply(MathUtil.multiply(skuCostDTO.getCostPrice(), exchangeRate),skuCostDTO.getQty()) );
+                totalCostAmount = MathUtil.add(totalCostAmount,MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(skuCostDTO.getCostPrice(), exchangeRate),skuCostDTO.getQty()) );
                 //未含税成本
-                totalNoTaxCostAmount = MathUtil.add(totalNoTaxCostAmount,MathUtil.multiply(MathUtil.multiply(skuCostDTO.getNotTaxCostPrice(), exchangeRate),skuCostDTO.getQty()));
+                totalNoTaxCostAmount = MathUtil.add(totalNoTaxCostAmount,MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(skuCostDTO.getNotTaxCostPrice(), exchangeRate),skuCostDTO.getQty()));
                 size++;
             }
             //总数量

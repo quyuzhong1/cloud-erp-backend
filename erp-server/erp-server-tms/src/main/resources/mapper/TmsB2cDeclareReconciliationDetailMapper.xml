@@ -74,6 +74,9 @@
         tbdrd.actual_shipping_cost,
         tbdrd.actual_declare_cost,
         tbdrd.actual_other_cost,
+        tbdrd.actual_shipping_currency,
+        tbdrd.actual_declare_currency,
+        tbdrd.actual_other_currency,
         tbdrd.remark,
         tbdrd.status,
         tbdrd.confirm_date,
@@ -142,6 +145,24 @@
             tbdrd.is_deleted = false and tbdrd.main_id = ''
             and tbdrd.date >= #{startDate}
             and (#{endDate}::TIMESTAMP + INTERVAL '1 DAY') > tbdrd.date
+        </where>
+    </select>
+    
+    <select id="listAutoGenerateCost"
+            resultType="com.erp.model.tms.entity.TmsB2cDeclareReconciliationDetailEntity">
+        SELECT 
+G.approve_date,
+	T.* 
+FROM
+	tms_b2c_declare_reconciliation_detail
+	T LEFT JOIN tms_b2c_declare_reconciliation G ON T.main_id = G.ID 
+        <where>
+        G.approve_status = 'approve' 
+	AND g.approve_date >= #{startDate}
+	AND #{endDate} > G.approve_date
+	AND NOT EXISTS ( SELECT 1 FROM transfer_declare_cost_allocation_main h WHERE h.declare_reconciliation_detail_id = T.ID AND h.is_deleted = 'f' )
+	AND G.is_deleted = 'f'
+	AND T.is_deleted = 'f'
         </where>
     </select>
 

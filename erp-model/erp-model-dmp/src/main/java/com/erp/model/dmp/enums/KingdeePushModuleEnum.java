@@ -46,6 +46,10 @@ public enum KingdeePushModuleEnum {
     HR_ORG_HRPOST("HR_ORG_HRPOST","岗位信息"),
     BD_NEWSTAFF("BD_NEWSTAFF","员工任岗位信息"),
     BD_OPERATOR("BD_OPERATOR","业务员信息"),
+    STK_TRANSFERIN("STK_TRANSFERIN","分步式调入单"),
+    STK_TRANSFEROUT("STK_TRANSFEROUT","分步式调出单"),
+
+
 
 
     ;

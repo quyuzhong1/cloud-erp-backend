@@ -7,12 +7,16 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 public class SoReturnInstockDTO {
+    private SoReturnInstockDTO() {
+        throw new IllegalStateException("Utility SoReturnInstockDTO class");
+    }
     /**
      * 分页参数
      */
@@ -104,6 +108,10 @@ public class SoReturnInstockDTO {
          */
         private String id;
         /**
+         * id
+         */
+        private String soId;
+        /**
          * 明细id
          */
         private String detailId;
@@ -119,6 +127,10 @@ public class SoReturnInstockDTO {
          * 退货明细id
          */
         private String soReturnDetailId;
+        /**
+         * 退货明细id
+         */
+        private String soReturnId;
         /**
          * 退货入库单号
          */
@@ -173,6 +185,11 @@ public class SoReturnInstockDTO {
          * 销售员Id
          */
         private String sellerId;
+
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
         /**
          * 销售员
          */
@@ -238,6 +255,51 @@ public class SoReturnInstockDTO {
          * 退货物流单号
          */
         private String returnLogisticCode;
+        /**
+         *仓库id
+         */
+        private String warehouseId;
+        /**
+         *仓库名称
+         */
+        private String warehouseName;
+        /**
+         *仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**
@@ -279,9 +341,17 @@ public class SoReturnInstockDTO {
          */
         private String sourceCode;
         /**
+         * 平台订单编号
+         */
+        private String platformOrderCode;
+        /**
          * 退货客户id
          */
         private String customerId;
+        /**
+         * 店铺id
+         */
+        private String shopId;
         /**
          * 销售组织
          */
@@ -324,6 +394,19 @@ public class SoReturnInstockDTO {
          * 明细信息
          */
         private List<SoReturnInstockDetailDTO.Add> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -399,6 +482,19 @@ public class SoReturnInstockDTO {
          * 明细信息
          */
         private List<SoReturnInstockDetailDTO.Update> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -548,7 +644,7 @@ public class SoReturnInstockDTO {
         /**
          * 创建时间
          */
-        private String createTime;
+        private LocalDateTime createTime;
 
         /**
          * 退货物流单号
@@ -558,6 +654,19 @@ public class SoReturnInstockDTO {
          * 明细信息
          */
         private List<SoReturnInstockDetailDTO.View> detailList;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 比重
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
     }
 
     /**
@@ -674,6 +783,35 @@ public class SoReturnInstockDTO {
          * 质检状态
          */
         private String qcStatus;
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *销售金额
+         */
+        private BigDecimal amount;
+        /**
+         *含税销售金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
     }
 
     /**
@@ -983,5 +1121,20 @@ public class SoReturnInstockDTO {
          */
         private String childWarehouseLocation;
 
+    }
+    @Data
+    public static class SearchDTO {
+
+        private String id;
+
+        private String code;
+    }
+    @Data
+    public static class SelectDTO {
+
+        /**
+         * code
+         */
+        private String searchKeyword;
     }
 }

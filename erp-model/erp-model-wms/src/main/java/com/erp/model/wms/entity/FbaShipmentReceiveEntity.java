@@ -102,6 +102,12 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
     /**
      * 来源类型：erp=系统生成, lingxing=领星 amazon=亚马逊报告
      */
+    @TableField("source_platform")
+    private String sourcePlatform;
+    /**
+     * 数据来源类型
+     * SignSourceTypeEnum
+     */
     @TableField("source_type")
     private String sourceType;
     /**
@@ -130,7 +136,6 @@ public class FbaShipmentReceiveEntity extends BaseEntity<FbaShipmentReceiveEntit
 
     public static final String FBA_SHIPMENT_ID = "fba_shipment_id";
 
-    public static final String ASIN = "asin";
 
     public static final String M_SKU = "m_sku";
 

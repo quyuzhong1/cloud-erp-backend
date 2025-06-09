@@ -1,13 +1,16 @@
 package com.erp.server.tms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.BaseDropDownDTO.ChildTree;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -17,7 +20,9 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.tms.dto.TmsCfgCostDTO;
+import com.erp.model.tms.dto.TmsCfgCostDTO.DropDownDTO;
 import com.erp.model.tms.entity.TmsCfgCostEntity;
+import com.erp.model.tms.enums.AllocationFeeTypeEnum;
 import com.erp.server.tms.query.TmsCfgCostQueryHandler;
 import com.erp.server.tms.service.TmsCfgCostService;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +32,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 费用管理配置表
@@ -72,6 +79,42 @@ public class TmsCfgCostController extends BaseController {
     public ApiResult<List<TmsCfgCostDTO.DropDownDTO>> listDropDown(@RequestBody @Validated TmsCfgCostDTO.DropDownParamDTO dto) {
         return success(tmsCfgCostService.listDropDown(dto));
     }
+    
+    /**
+     * 费用名称级联
+     * @date: 2024/3/22 15:52
+     * @param dto
+     * @return ApiResult<ViewDTO>
+     */
+    @PostMapping("/tree")
+    public ApiResult<List<BaseDropDownDTO.Tree>> tree(@RequestBody @Validated TmsCfgCostDTO.DropDownParamDTO dto) {
+    	List<DropDownDTO> listDropDown = tmsCfgCostService.listDropDown(dto);
+    	Map<String, List<DropDownDTO>> categoryListMaps = listDropDown.stream().collect(Collectors.groupingBy(DropDownDTO::getDictCostCategory));
+    	List<BaseDropDownDTO.Tree> trees = new ArrayList<>();
+    	AllocationFeeTypeEnum[] values = AllocationFeeTypeEnum.values();
+    	for(AllocationFeeTypeEnum allocationFeeTypeEnum : values) {
+    		String code = allocationFeeTypeEnum.getCode();
+    		List<DropDownDTO> value = categoryListMaps.get(code);
+    		if(CollUtil.isEmpty(value)) {
+    			continue;
+    		}
+    		BaseDropDownDTO.Tree tree = new BaseDropDownDTO.Tree();
+    		tree.setCode(code);
+    		tree.setValue(allocationFeeTypeEnum.getName());
+    		tree.setDisabled(false);
+    		List<ChildTree> childTreeList = new ArrayList<>();
+    		for(DropDownDTO v : value) {
+    			ChildTree childTree = new ChildTree();
+    			childTree.setCode(v.getId());
+    			childTree.setValue(v.getCostName());
+    			childTree.setDisabled(false);
+    			childTreeList.add(childTree);
+    		}
+    		tree.setChildTreeList(childTreeList);
+    		trees.add(tree);
+    	}
+    	return success(trees);
+    }
 
 
     /**
@@ -101,7 +144,7 @@ public class TmsCfgCostController extends BaseController {
         menuCode = "tms:tmsCfgCost:update",
         serviceClass = TmsCfgCostService.class,
         keyIdName = "id")
-    public ApiResult<?> update(@RequestBody @Validated TmsCfgCostDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated TmsCfgCostDTO.UpdateDTO dto) {
         tmsCfgCostService.update(dto);
         return success();
     }

@@ -71,7 +71,7 @@ public class PreTaskListVO {
         }
     }
 
-    public PreTaskListVO(String taskName, PreTaskVO preTask) {
+    public PreTaskListVO(String taskName) {
         this.preTaskName = taskName;
 
     }

@@ -1,12 +1,11 @@
 package com.erp.model.tms.dto;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -114,6 +113,22 @@ public class LogisticsBillDetailDTO implements Serializable {
 
 
     }
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BillDetailDTO {
+        private String trackNo;
+        private String platformOrderNo;
+    }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BillDetailErrorDTO {
+        private String id;
+        private String errorMsg;
+    }
 
 }

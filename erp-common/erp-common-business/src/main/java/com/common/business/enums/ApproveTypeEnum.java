@@ -1,19 +1,18 @@
 package com.common.business.enums;
 
 import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 /**
  * @author Will
  * @version 1.0
  * @date 2023/3/20 9:30
  */
+@Getter
 public enum ApproveTypeEnum {
 
     PASS("pass", "审核通过"),
@@ -29,22 +28,14 @@ public enum ApproveTypeEnum {
     ;
     @JsonValue
     @EnumValue
-    private String status;
-    private String name;
+    private final String status;
+    private final String name;
 
     ApproveTypeEnum(String status, String name) {
         this.status = status;
         this.name = name;
     }
 
-    public String getStatus() {
-        return status;
-    }
-
-
-    public String getName() {
-        return name;
-    }
 
     public static String getName(String state) {
         if (StringUtils.isNotBlank(state)) {

@@ -26,24 +26,6 @@ import java.util.Map;
 public interface PackingTaskService extends SuperService<PackingTaskEntity> {
 
     /**
-    * 新增
-    * @author zdy
-    * @date: 2024-07-02
-    * @param dto
-    * @return
-    */
-    BaseResultDTO.AddDTO add(PackingTaskDTO.AddDTO dto);
-
-    /**
-    * 修改
-    * @author zdy
-    * @date: 2024-07-02
-    * @param dto
-    * @return
-    */
-    Boolean update(PackingTaskDTO.UpdateDTO dto);
-
-    /**
      * 发货单转换成装箱任务实体
      * @param soDeliveryNoticeEntity
      * @return
@@ -94,21 +76,14 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuById(String id);
 
     /**
-     * 批量汇总状态
-     * @param taskIds
-     * @return
-     */
-    List<WmsCartonSpecDTO.GroupSkuDTO> listGroupSkuByIds(List<String> taskIds);
-
-    /**
      * 装箱保存
      * @param dto
-     * @param isDeleteCarton 是否需要删除装箱数据
+     * @param isAddCarton 是否需要删除装箱数据
      * @return
      */
-    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isDeleteCarton);
+    Boolean packingSave(WmsCartonSpecDTO.WmsCartonAdd dto, Boolean isAddCarton);
 
-    void sendNoticeMsg(String taskId, String operation, String content);
+    void sendNoticeMsg(String taskId, String operation, String content, PackingTaskEntity packingTask);
 
     /**
      * 装箱详情
@@ -254,9 +229,9 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     /**
      * 更新任务状态
      * @param groupSkuDTOS
-     * @param taskId
+     * @param packingTaskEntity
      */
-    void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOS, String taskId);
+    void updatePackingStatus(List<WmsCartonSpecDTO.GroupSkuDTO> groupSkuDTOS, PackingTaskEntity packingTaskEntity);
 
     void updateWeightStatus(PackingTaskEntity packingTaskEntity);
 
@@ -268,7 +243,11 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     WmsCartonDTO.PrintDTO getPrintBarCode(String cartonId);
-
+    /**
+     * 要货申请单转换装箱任务实体
+     * @param entity
+     * @return
+     */
     void addPackingByRequisition(RequisitionApplicationEntity entity);
 
     void updateDetailQty(Map<String, Integer> qtyMap);
@@ -283,4 +262,44 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
      * @return
      */
     void updatePackingStatusByTaskId(String taskId);
+
+    /**
+     * 根据外部箱号查询装箱的基础信息和产品明细
+     * @param outBoxNo
+     * @return
+     */
+    WmsCartonDTO.OutBoxNoDTO getCartonDetailByOutBoxNo(String outBoxNo);
+
+    /**
+     * 导出未装箱明细
+     * @param dto
+     */
+    void exportUnPackingDetail(PackingTaskDTO.ExportDTO dto);
+
+    /**
+     * 查询未装箱明细
+     * @param dto
+     * @return
+     */
+    PagingVO<WmsCartonSpecDTO.NoPackingViewDTO> unPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto);
+
+    void syncByDeliveryNoticeChange(SoDeliveryNoticeEntity soDeliveryNotice, List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
+
+    /**
+     * 处理第三方仓产品条形码字段
+     */
+    void processThirdBarcode();
+
+    /**
+     * 删除装箱
+     * @param dto
+     * @return
+     */
+    Boolean deleteCarton(WmsCartonSpecDTO.DeleteCartonDTO dto);
+
+    List<WmsCartonSpecDTO.NoPackingView> checkCartonWeightBySourceCodes(List<String> sourceCodes);
+
+    List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(List<String> sourceCodes);
+
+    List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity);
 }

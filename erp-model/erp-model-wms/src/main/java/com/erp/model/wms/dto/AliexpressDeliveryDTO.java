@@ -1,14 +1,18 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.PlatformDeliveryDTO;
+import com.common.business.dto.PlatformDeliveryDetailDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
-import java.time.LocalDate;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +100,8 @@ public class AliexpressDeliveryDTO implements Serializable {
     public static class AddDTO extends CommonDTO {
 
         private List<AliexpressDeliveryDetailDTO.AddDTO> detailList;
+
+        private List<PlatformDeliveryDTO> allSourceDeliveryList;
     }
 
     @Data
@@ -108,6 +114,20 @@ public class AliexpressDeliveryDTO implements Serializable {
         @NotBlank(message = "平台订单号不能为空")
         @Size(max = 64,message = "平台订单号最大长度不能超过64位")
         private String platformCode;
+        /**
+         * 平台发货状态
+         * AliexpressDeliveryOrderStatusEnum
+         */
+        private String platformDeliveryStatus;
+
+        /**
+         * 平台发货单号
+         */
+        private String platformDeliveryCode;
+        /**
+         * 系统已出库
+         */
+        private Boolean isOutstock;
 
         /**
         * 销售单id
@@ -143,6 +163,10 @@ public class AliexpressDeliveryDTO implements Serializable {
         @NotBlank(message = "物流跟踪号不能为空")
         @Size(max = 255,message = "物流跟踪号最大长度不能超过255位")
         private String trackNo;
+        /**
+         * 物流运单号
+         */
+        private String transportNo;
 
         /**
         * 订单创建时间
@@ -159,7 +183,25 @@ public class AliexpressDeliveryDTO implements Serializable {
         */
         private String warehouseName;
 
+        /**
+         * (速卖通)买家视角订单金额
+         */
+        private BigDecimal actualAmount;
 
+        /**
+         * (速卖通)买家视角订单金额币种
+         */
+        private String actualCurrency;
+
+        /**
+         *  平台订单整单金额
+         */
+        private BigDecimal orderAmount;
+
+        /**
+         * 平台订单整单税后金额
+         */
+        private BigDecimal orderAfterTaxAmount;
     }
 
     /**
@@ -240,7 +282,8 @@ public class AliexpressDeliveryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class SearchParamDTO extends SortDTO {
+    public static class SearchParamDTO extends SortDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
         /**
          * 页面高级查询
          */
@@ -250,5 +293,24 @@ public class AliexpressDeliveryDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String, String> sqlMap;
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class StatusDTO {
+        /**
+         * 销售订单id
+         */
+        private String soId;
+        /**
+         * 平台发货单
+         */
+        private String platformDeliveryCode;
+        /**
+         * 是否销售出库
+         */
+        private Boolean isOutstock;
     }
 }

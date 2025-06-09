@@ -25,5 +25,5 @@ public interface BiTargetManagementMapper extends BaseMapper<BiTargetManagementE
      * @param params
      * @return IPage<BiTargetManagementShowDTO>
      */
-    IPage<BiTargetManagementShowDTO> paging(Page query,@Param("params") AdvanceSearchDTO params);
+    IPage<BiTargetManagementShowDTO> paging(Page<Object> query,@Param("params") AdvanceSearchDTO params);
 }

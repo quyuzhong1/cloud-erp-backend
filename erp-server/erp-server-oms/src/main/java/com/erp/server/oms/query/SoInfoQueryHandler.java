@@ -7,6 +7,7 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
 import com.common.business.query.AbstractQueryHandler;
 import com.common.business.threadlocal.AdvanceQueryContext;
+import com.common.business.threadlocal.UserContext;
 import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.model.wms.enums.DeliveryStatusEnum;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
@@ -35,28 +36,12 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
             QueryConditionEnum queryConditionEnum = AdvanceQueryContext.getCompareCode();
             if(queryConditionEnum.equals(QueryConditionEnum.EQ) || queryConditionEnum.equals(QueryConditionEnum.IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.CONTAINS)
                     || queryConditionEnum.equals(QueryConditionEnum.STARTS_WITH) ||  queryConditionEnum.equals(QueryConditionEnum.ENDS_WITH)){
-                List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByAdvanceQuery(AdvanceQueryContainer.builder()
-                        .advanceQueryDTOList(Arrays.asList(AdvanceQueryDTO.buildSplicingSQLDTO("track_no", AdvanceQueryContext.getCompareCode(),value, QueryDataTypeEnum.STRING)
-                                ,AdvanceQueryDTO.buildSplicingSQLDTO("invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN)))
-                        .build());
-                List<String> soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).distinct().collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(soIdList)){
-                    return this.getQueryEmptySql();
-                }
-                this.buildDefaultDTO("si.id",soIdList);
+                return "exists ( SELECT 1 from so_outstock sout where sout.is_deleted = false and sout.so_id = si.id and sout.invalid_status = false and sout.track_no " + compareCodeSplicingValueSql +")";
             }
 
             if(queryConditionEnum.equals(QueryConditionEnum.NE) || queryConditionEnum.equals(QueryConditionEnum.NOT_IN_LIST) || queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)){
-                QueryConditionEnum queryCond = queryConditionEnum.equals(QueryConditionEnum.NOT_CONTAINS)?QueryConditionEnum.CONTAINS:QueryConditionEnum.IN_LIST;
-                List<SoOutstockEntity> soOutstockList = soOutstockFeign.listByAdvanceQuery(AdvanceQueryContainer.builder()
-                        .advanceQueryDTOList(Arrays.asList(AdvanceQueryDTO.buildSplicingSQLDTO("track_no", queryCond,value, QueryDataTypeEnum.STRING)
-                                ,AdvanceQueryDTO.buildSplicingSQLDTO("invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN)))
-                        .build());
-                List<String> soIdList = soOutstockList.stream().map(SoOutstockEntity::getSoId).distinct().collect(Collectors.toList());
-                if(CollectionUtils.isEmpty(soIdList)){
-                    return this.getQueryAllSql();
-                }
-                this.buildSplicingSQLDTO("si.id",QueryConditionEnum.NOT_IN_LIST,soIdList,QueryDataTypeEnum.STRING);
+                return " not exists ( SELECT 1 from so_outstock sout where sout.is_deleted = false and sout.so_id = si.id and sout.invalid_status = false and sout.track_no " + compareCodeSplicingValueSql +")";
+
             }
         }
         if("remark".equals(field)){
@@ -66,14 +51,21 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
          * 虚拟仓是否缺货
          */
         if("isVirtualScarce".equals(field)){
-            String sql = "COALESCE(sdnd.deliveryQty,0) - COALESCE(vi.virtualQty,0)";
-            if ((Boolean) value) {
-                return sql + "< 0";
-            } else {
-                return sql + ">= 0";
-            }
+            return getQueryAllSql();
         }
 
+        /**
+         * 虚拟仓是否缺货
+         */
+        if("isVirtualOutStock".equals(field)){
+//            String sql = "COALESCE(sdnd.deliveryQty,0) - COALESCE(vi.virtualQty,0)";
+//            if ((Boolean) value) {
+//                return sql + "< 0";
+//            } else {
+//                return sql + ">= 0";
+//            }
+            return getQueryAllSql();
+        }
 
         if("tab".equals(field)){
             switch (value.toString()) {
@@ -83,8 +75,13 @@ public class SoInfoQueryHandler extends AbstractQueryHandler {
                     break;
                 case OmsConstant.WAIT_APPROVE:
                     //待审核
-                    super.buildDefaultDTO("si.approve_status",ApproveStatusEnum.APPROVE_ING.getStatus());
-                    break;
+                    return "si.approve_status = 'approveIng' and  exists (\n" +
+                            "\t\t\t\tSELECT 1  \n" +
+                            "\t\t\t\tFROM foreign_process_management pm\n" +
+                            "        inner JOIN foreign_process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'\n" +
+                            "\t\t\t\twhere ptm.cur_approve_id = '"+ UserContext.getDefaultLoginUser().getUid()+"' and pm.business_key = 'soInfo'\n" +
+                            "\t\t\t\tand pm.business_id = si.id\n" +
+                            "\t\t\t\t)";
                 case OmsConstant.REJECT:
                     //审核不通过
                     super.buildDefaultDTO("si.approve_status",ApproveStatusEnum.REJECT.getStatus());

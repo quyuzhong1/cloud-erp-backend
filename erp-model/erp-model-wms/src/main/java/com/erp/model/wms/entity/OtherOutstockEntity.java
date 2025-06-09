@@ -194,9 +194,6 @@ public class OtherOutstockEntity extends BaseEntity<OtherOutstockEntity> {
     @TableField(exist = false)
     private OtherOutStockImportExcelDTO importExcelDTO;
 
-
-    public static final String CODE = "code";
-
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String BILL_DATE = "bill_date";

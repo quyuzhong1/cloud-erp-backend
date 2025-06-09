@@ -1,15 +1,15 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.util.List;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -115,7 +115,7 @@ public class VirtualWarehouseRelationDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class SelectDTO {
+    public static class SelectDTO extends SortDTO {
         /**
          * 关键词
          */
@@ -128,12 +128,31 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 虚拟仓id
          */
         private String virtualWarehouseId;
+        /**
+         * 关联id(店铺)
+         */
+        private String shopId;
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
     }
 
     @Data
     @NoArgsConstructor
     public static class SelectResultDTO {
-
+        /**
+         * 店铺id
+         */
+        private String relationId;
+        /**
+         * 平台
+         */
+        private String dictPlatform;
+        /**
+         * 类型
+         */
+        private String type;
         /**
          * 实体仓id
          */
@@ -177,10 +196,52 @@ public class VirtualWarehouseRelationDTO implements Serializable {
          * 关联id（如店铺id）,无关联id时传空字符
          */
         private List<String> relationIdList;
+        /**
+         * 分区ids
+         */
+        private List<String> partitionIds;
 
         /**
          * 平台
          */
         private String dictPlatform;
+    }
+
+
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class IsExistVirtualDTO {
+
+        /**
+         * 渠道id
+         */
+        private String relationId;
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class IsExistVirtualResultDTO {
+
+        /**
+         * 实体仓id
+         */
+        private String warehouseId;
+
+        /**
+         * 渠道id
+         */
+        private String relationId;
+
+        /**
+         * 是否存在虚拟仓
+         */
+        private Boolean isExistVirtual;
     }
 }

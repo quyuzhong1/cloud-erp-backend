@@ -1,16 +1,14 @@
 package com.erp.server.workflow.controller.api;
 
 
+import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.workflow.dto.DictBasicDTO;
-import com.erp.model.workflow.entity.DictBasicEntity;
 import com.erp.server.workflow.service.DictBasicService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import com.common.core.controller.BaseController;
 
 import javax.annotation.Resource;
 import java.util.List;

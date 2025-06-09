@@ -8,6 +8,7 @@ import com.erp.server.bi.mapper.BiSubjectRefLayoutMapper;
 import com.erp.server.bi.service.BiSubjectRefLayoutService;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,8 @@ public class BiSubjectRefLayoutServiceImpl extends ServiceImpl<BiSubjectRefLayou
      * @date 2022-12-13 16:54
      */
     @Override
-    public void addSubjectRefLayout(String subjectId, List<String> layoutIds) {
+    @Transactional(rollbackFor = Exception.class)
+    public Boolean addSubjectRefLayout(String subjectId, List<String> layoutIds) {
         if (CollectionUtils.isNotEmpty(layoutIds)) {
             List<BiSubjectRefLayoutEntity> addList = new ArrayList<>(layoutIds.size());
             for (String layoutId : layoutIds) {
@@ -41,8 +43,13 @@ public class BiSubjectRefLayoutServiceImpl extends ServiceImpl<BiSubjectRefLayou
                 entity.setSubjectId(subjectId);
                 addList.add(entity);
             }
-            this.saveBatch(addList);
+            Boolean flag = this.saveBatch(addList);
+            if (Boolean.TRUE.equals(flag)) {
+                return Boolean.TRUE;
+            }
         }
+
+        return Boolean.FALSE;
     }
 
 

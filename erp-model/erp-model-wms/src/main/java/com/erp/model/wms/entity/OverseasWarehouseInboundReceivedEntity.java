@@ -1,18 +1,15 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.time.OffsetDateTime;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.time.LocalDateTime;
 
 
 /**
@@ -51,6 +48,17 @@ public class OverseasWarehouseInboundReceivedEntity extends BaseEntity<OverseasW
     */
     @TableField("receive_time")
     private LocalDateTime receiveTime;
+    /**
+     * 数据来源
+     * SignSourceTypeEnum
+     */
+    @TableField("source_type")
+    private String sourceType;
+    /**
+     * 流水ID
+     */
+    @TableField("flow_id")
+    private String flowId;
 
 
     public static final String DETAIL_ID = "detail_id";

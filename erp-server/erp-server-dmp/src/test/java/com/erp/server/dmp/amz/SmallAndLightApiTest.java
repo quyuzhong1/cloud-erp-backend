@@ -30,7 +30,7 @@ import java.util.List;
 @Ignore
 public class SmallAndLightApiTest {
 
-    private final SmallAndLightApi api = null;
+    private final SmallAndLightApi api = new SmallAndLightApi(null);
 
     
     /**

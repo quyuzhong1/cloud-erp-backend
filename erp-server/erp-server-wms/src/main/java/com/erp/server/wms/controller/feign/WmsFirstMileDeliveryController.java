@@ -39,6 +39,11 @@ public class WmsFirstMileDeliveryController {
      * 根据入参查询单据数量
      **/
     @PostMapping("/getGenerateLogisticDTO")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "fmd.shop_id",
+            warehouseTableField = "fmd.delivery_warehouse_id,fmd.dest_warehouse_id",
+            menuCode = "wms:fbaDelivery:paging"
+    )
     public List<FirstMileDeliveryDTO.GenerateLogisticDTO> getGenerateLogisticDTO(@RequestBody FirstMileDeliveryDTO.GenerateLogisticReqDTO dto) {
         return firstMileDeliveryService.getGenerateLogisticDTO(dto);
     }
@@ -157,5 +162,19 @@ public class WmsFirstMileDeliveryController {
     @PostMapping("/getBusinessCodeByCodes")
     List<FirstMileDeliveryDTO.BusinessDTO> getBusinessCodeByCodes(@RequestBody List<String> deliveryCodes){
         return firstMileDeliveryService.getBusinessCodeByCodes(deliveryCodes);
+    }
+    /**业务单号查询发货单号
+     *
+     * @param businessCodes
+     * @return
+     */
+    @PostMapping("/getDeliveryCodeByBusinessCodes")
+    List<FirstMileDeliveryDTO.BusinessDTO> getDeliveryCodeByBusinessCodes(@RequestBody List<String> businessCodes){
+        return firstMileDeliveryService.getDeliveryCodeByBusinessCodes(businessCodes);
+    }
+
+    @PostMapping("/listGenerateLogisticDTO")
+    public List<FirstMileDeliveryDTO.GenerateLogisticDTO> listGenerateLogisticDTO(@RequestBody List<String> deliveryCodes) {
+        return firstMileDeliveryService.listGenerateLogisticDTO(deliveryCodes);
     }
 }

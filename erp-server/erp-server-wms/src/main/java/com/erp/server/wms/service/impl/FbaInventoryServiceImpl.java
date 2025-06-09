@@ -2,11 +2,13 @@ package com.erp.server.wms.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.PlatformDictEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
@@ -14,11 +16,20 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
+import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.wms.dto.FbaInventoryDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.RequisitionApplicationDetailDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
+import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.model.wms.enums.DeliveryChannelsEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.oms.feign.OmsListingInfoFeign;
+import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.convert.WmsFbaInventoryConverter;
 import com.erp.server.wms.mapper.FbaInventoryMapper;
@@ -33,10 +44,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_INVENTORY;
@@ -52,12 +60,16 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_INVENTO
 @Slf4j
 @Service
 public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper, FbaInventoryEntity> implements FbaInventoryService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private OmsListingInfoFeign omsListingInfoFeign;
+
+
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> paging(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
@@ -74,7 +86,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public FbaInventoryDTO.SummaryNumber summaryNumber(PagingDTO<FbaInventoryDTO.PagingParamDTO> pagingParamDTO) {
-        pagingParamDTO.setPermissionSql(pagingParamDTO.getPermissionSql());
+        pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         FbaInventoryDTO.SummaryNumber summaryNumber = this.baseMapper.summaryNumber(pagingParamDTO.getParams());
         return summaryNumber;
     }
@@ -96,7 +108,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "FBA库存", fbaInventoryEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "FBA库存", fbaInventoryEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, fbaInventoryEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -110,7 +122,9 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
     @Override
     public Boolean update(FbaInventoryDTO.UpdateDTO updateDTO) {
         FbaInventoryEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "FBA库存"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "FBA库存");
+        }
         FbaInventoryEntity fbaInventoryEntity = BeanMapperUtils.map(FbaInventoryEntity.class, updateDTO);
 
         // 数据处理
@@ -124,7 +138,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
         // 记录主单操作日志
         log.info("编辑 开始记录FBA库存日志数据，id：【{}】", fbaInventoryEntity.getId());
-        String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), fbaInventoryEntity.getId(), "FBA库存");
+        String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), fbaInventoryEntity.getId(), "FBA库存");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, fbaInventoryEntity, null, fbaInventoryEntity.getId(), msg);
         return Boolean.TRUE;
@@ -182,10 +196,10 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
                 newSaveBatch.add(newEntity);
             } else {
                 // 时间数据滞后忽略更新
-                if (null != newEntity.getDataEndTime() && newEntity.getDataEndTime().isBefore(oldEntity.getDataEndTime())){
-                    log.warn("【亚马逊FBA库存数据】 DataEndTime时间滞后忽略更新: entity={}", JSONUtil.toJsonStr(newEntity));
-                    continue;
-                }
+//                if (null != newEntity.getDataEndTime() && newEntity.getDataEndTime().isBefore(oldEntity.getDataEndTime())){
+//                    log.warn("【亚马逊FBA库存数据】 DataEndTime时间滞后忽略更新: entity={}", JSONUtil.toJsonStr(newEntity));
+//                    continue;
+//                }
                 FbaInventoryEntity updateEntity = WmsFbaInventoryConverter.INSTANCE.newCombineOld(oldEntity, newEntity);
                 newUpdateBatch.add(updateEntity);
             }
@@ -203,7 +217,7 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
         if (!CollectionUtils.isEmpty(newUpdateBatch)){
             boolean result = this.updateBatchById(newUpdateBatch);
             if (!result) {
-                throw new ServiceException("【FbaInventoryEntity】批量更新失败");
+                log.warn("【FbaInventoryEntity】批量更新失败");
             }
         }
 
@@ -212,8 +226,8 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public FbaInventoryEntity getByAttribute(String asin, String mSku, String fnSku, String warehouseId) {
-        if (StringUtils.isBlank(asin) || StringUtils.isBlank(mSku) || StringUtils.isBlank(fnSku) || StringUtils.isBlank(warehouseId)) {
-            String msg = StrUtil.format("数据异常，存在空参数：asin={},skuNo={}, fnSku={}, warehouseId={}", asin, mSku, fnSku, warehouseId);
+        if (CharSequenceUtil.isBlank(asin) || CharSequenceUtil.isBlank(mSku) || CharSequenceUtil.isBlank(fnSku) || CharSequenceUtil.isBlank(warehouseId)) {
+            String msg = CharSequenceUtil.format("数据异常，存在空参数：asin={},skuNo={}, fnSku={}, warehouseId={}", asin, mSku, fnSku, warehouseId);
             throw new ServiceException(msg);
         }
         return lambdaQuery()
@@ -237,13 +251,63 @@ public class FbaInventoryServiceImpl extends SuperServiceImpl<FbaInventoryMapper
 
     @Override
     public PagingVO<FbaInventoryDTO.ListDTO> exportFbaInventory(PagingDTO<FbaInventoryDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<FbaInventoryDTO.ListDTO> page = this.baseMapper.listExport(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (!CollUtil.isEmpty(page.getRecords())) {
             // 数据处理
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public List<ListingInfoWithSkuMappingDTO> checkAndSaveFnskuToListing(List<String> platformSkuNoList, String shopId) {
+        if (CollectionUtils.isEmpty(platformSkuNoList) || CharSequenceUtil.isBlank(shopId)){
+            return Collections.emptyList();
+        }
+
+        ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
+        paramDTO.setPlatform(PlatformDictEnum.AMAZON.getCode());
+        paramDTO.setPlatformSkuNoList(platformSkuNoList);
+        paramDTO.setShopIdList(Collections.singletonList(shopId));
+        paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
+
+        return omsListingInfoFeign.checkAndUpdateFnsku(paramDTO);
+    }
+
+    @Override
+    public void checkAndUpdateFnsku(RequisitionApplicationDTO.AddDTO dto) {
+        checkAndUpdateFnskuCommon(dto.getDetailList(), dto.getChannelId());
+    }
+
+    @Override
+    public void checkAndUpdateFnsku(RequisitionApplicationDTO.UpdateDTO dto) {
+        checkAndUpdateFnskuCommon(dto.getDetailList(), dto.getChannelId());
+    }
+
+    private <T extends RequisitionApplicationDetailDTO.CommonDTO> void checkAndUpdateFnskuCommon(List<T> detailList, String channelId) {
+        List<String> platformSkuNoList = detailList.stream()
+                .map(RequisitionApplicationDetailDTO.CommonDTO::getPlatformSku)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+
+        List<ListingInfoWithSkuMappingDTO> updateFnSkulist = this.checkAndSaveFnskuToListing(platformSkuNoList, channelId);
+
+        if (CollectionUtils.isEmpty(updateFnSkulist)) {
+            return;
+        }
+
+        for (T addDTO : detailList) {
+            if (CharSequenceUtil.isNotBlank(addDTO.getPlatformFnSku())) {
+                continue;
+            }
+            updateFnSkulist.stream()
+                    .filter(e -> e.getShopId().equalsIgnoreCase(channelId) && e.getPlatformSkuNo().equals(addDTO.getPlatformSku()))
+                    .findFirst().ifPresent(mappingDTO -> addDTO.setPlatformFnSku(mappingDTO.getPlatformFnSku()));
+
+        }
     }
 
 }

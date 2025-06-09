@@ -1,14 +1,15 @@
 package com.erp.model.tms.dto;
 
-import java.time.LocalDateTime;
+import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.util.List;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -204,5 +205,58 @@ public class LogisticsTrackDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class TrackWebHookDTO {
+        private Track123DTO data;
+        private Verify verify;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class Verify {
+        private String signature;
+        private String timestamp;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class Track123DTO {
+        private LocalDateTime createTime;
+        private Integer deliveredDays;
+        private LocalDateTime deliveredTime;
+        private Long id;
+        private LocalDateTime lastTrackingTime;
+        private LocalLogisticsInfo localLogisticsInfo;
+        private LocalDateTime orderTime;
+        private Integer receiptDays;
+        private LocalDateTime receiptTime;
+        private String shipFrom;
+        private LocalDateTime shipTime;
+        private String shipTo;
+        private String trackNo;
+        private String transitStatus;
+        private String transitSubStatus;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class LocalLogisticsInfo {
+        private String courierCode;
+        private String courierHomePage;
+        private String courierNameCN;
+        private String courierNameEN;
+        private List<TrackingDetail> trackingDetails;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TrackingDetail {
+        private String address;
+        private String eventDetail;
+        private LocalDateTime eventTime;
+        private String transitSubStatus;
+        /**
+         * 用于计算数据唯一值
+         */
+        private String md5;
+    }
 }

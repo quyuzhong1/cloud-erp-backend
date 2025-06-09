@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -16,17 +17,17 @@ import com.common.message.service.mq.MQProducerService;
 import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import com.erp.server.wms.kingdee.SyncKingdeeSoReturnService;
 import com.erp.server.wms.query.SoReturnInstockQueryHandler;
 import com.erp.server.wms.service.SoReturnInstockService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -44,10 +45,6 @@ public class SoReturnInstockController extends BaseController {
 
     @Resource
     private SoReturnInstockService soReturnInstockService;
-    @Resource
-    private MQProducerService mQProducerService;
-    @Resource
-    private SyncKingdeeSoReturnService syncKingdeeSoReturnService;
     /**
      * 列表查询
      * @Author Luo_WG
@@ -58,6 +55,7 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
@@ -77,6 +75,7 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srid.warehouse_id",
             menuCode = "wms:soReturnInstock:paging",
             tableAlias = "sri"
     )
@@ -96,7 +95,7 @@ public class SoReturnInstockController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoReturnInstockDTO.Add dto) {
         String id = soReturnInstockService.add(dto);
-        return StringUtils.isNotBlank(id) == true ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) == true ? success() : failure();
     }
 
     /**
@@ -389,5 +388,73 @@ public class SoReturnInstockController extends BaseController {
     public ApiResult generateMachineInfo(@RequestBody @Validated  ValidList<SoReturnInstockDTO.GenerateMachineInfoDTO> list) {
         Boolean flag = soReturnInstockService.generateMachineInfo(list);
         return flag == true ? success() : failure();
+    }
+
+    /**
+     * b2c退货入库远程搜索
+     */
+    @PostMapping("/b2cPagingSelect")
+    public ApiResult<PagingVO<SoReturnInstockDTO.SearchDTO>> b2cPagingSelect(@RequestBody @Valid PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO) {
+        PagingVO<SoReturnInstockDTO.SearchDTO> list = soReturnInstockService.pagingSelect(searchDTO);
+        return success(list);
+    }
+    
+    /**
+     * 下推物流自发货费用
+     * @author Will
+     * @date: 2023/8/28 15:26
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.INSERT, desc = "下推物流单")
+    @PostMapping(value = "/generateLogisticsBill")
+    public ApiResult<List<BatchResultDTO>> generateLogisticsBill(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoReturnInstockEntity> entityList = soReturnInstockService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoReturnInstockEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"退货入库单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soReturnInstockService.generateLogisticsBill(entity));
+            }catch (Exception e){
+                log.error("退货入库单下推物流单失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+
+
+
+    /**
+     * 下载模板
+     * @author will
+     * @date 2025/4/24 19:47
+     * @param response
+     * @return ApiResult
+     */
+    @GetMapping("/downloadTemplate")
+    public ApiResult downloadTemplate(HttpServletResponse response) {
+        soReturnInstockService.downloadTemplate(response);
+        return success();
+    }
+
+    /**
+     * 导入
+     * @author will
+     * @date 2025/4/24 19:48
+     * @param excelFile
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入销售退货入库单")
+    @PostMapping("/import")
+    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+        Boolean result = soReturnInstockService.importFile(excelFile, response);
+        return result ? success() : failure();
     }
 }

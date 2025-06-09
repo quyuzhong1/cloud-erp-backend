@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.pda;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -47,6 +48,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srr.warehouse_id",
             menuCode = "wms:pdaSoReturnReceive:paging",
             tableAlias = "srr"
     )
@@ -65,6 +67,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srr.warehouse_id",
             menuCode = "wms:pdaSoReturnReceive:paging",
             tableAlias = "srr"
     )
@@ -84,7 +87,7 @@ public class PdaSoReturnReceiveController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated SoReturnReceiveDTO.Add dto) {
         String id = soReturnReceiveService.add(dto);
-        return StringUtils.isNotBlank(id) == true ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) == true ? success() : failure();
     }
 
     /**

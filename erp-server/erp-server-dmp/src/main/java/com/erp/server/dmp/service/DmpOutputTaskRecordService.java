@@ -1,14 +1,17 @@
 package com.erp.server.dmp.service;
+import java.util.List;
+
+import com.common.business.dto.DmpSyncTaskDTO;
+import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.erp.model.dmp.dto.DmpOutputTaskDTO;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
+import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.dmp.entity.DmpCfgOutputEntity;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.dmp.dto.DmpOutputTaskRecordDTO;
-
-import java.util.List;
 
 /**
  * <p>
@@ -119,4 +122,33 @@ public interface DmpOutputTaskRecordService extends SuperService<DmpOutputTaskRe
      * @param list
      */
     List<DmpOutputTaskRecordEntity> erpQuerySync(DmpCfgOutputEntity dmpCfgOutputEntity , List<DmpOutputTaskRecordEntity> list);
+    /**
+     * 获取推送任务数据
+     * @author will
+     * @date 2024/10/22 9:07
+     * @param oneDTO
+     * @return SyncInfoDTO
+     */
+    DmpPushTaskDTO.SyncInfoDTO getErrorData(DmpSyncTaskDTO.OneDTO oneDTO);
+    
+    List<DmpOutputTaskRecordEntity> getOutputErrorTask(String systemId , String size);
+    
+    void dmpInputMoveToHistoryTable(String beforeUpdateTime , String size);
+    
+    void dmpRelationMoveToHistoryTable(String beforeUpdateTime , String size);
+    
+    void dmpOutputMoveToHistoryTable(String beforeUpdateTime , String size);
+    
+    void dmpOutputNoRecordMoveToHistoryTable();
+
+    List<DmpOutputTaskRecordEntity> queryBySourceCodeAndCfgOutputId(String sourceCode, String cfgOutputId);
+    /**
+     * 根据来源编码和输出类获取输出任务记录
+     * @param sourceCode
+     * @param outputClass
+     * @return
+     */
+    DmpOutputTaskRecordEntity getOutputTaskRecord(String sourceCode, String outputClass);
+    
+    List<String> outputErrorCountMsg();
 }

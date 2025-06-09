@@ -13,6 +13,7 @@ public enum ApiModuleTypeEnum {
     STOCK_OVERSEAS(2, "stockOverseas", "海外仓库存",""),
     ASSISTANT_DATA(3, "assistantData", "辅助资料",""),
     ONE_LEVEL_CATEGORY(4, "oneLevelCategory", "一级分类","plm"),
+    APPLICATION_CATEGORY(99, "applicationCategory", "应用分类","plm"),
     SECOND_LEVEL_CATEGORY(5, "secondLevelCategory", "二级分类","plm"),
     SYS_USER_INFO(6, "sysUserInfo", "员工","sys"),
     CHANGE_ORG(7, "changeOrg", "默认组织切换",""),
@@ -55,6 +56,9 @@ public enum ApiModuleTypeEnum {
     WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL(43, "wdtVwAllocationHandleDetail", "旺店通分货单处理明细", "wms"),
     WDT_EXT_OUT_STOCK(44, "wdtExtOutStock", "旺店通外仓调整出库单", "wms"),
     WDT_EXT_IN_STOCK(45, "wdtExtInStock", "旺店通外仓调整入库单", "wms"),
+    TRANSFER_IN(46, "transferIn", "分步式调入单","wms"),
+    TRANSFER_OUT(47, "transferOut", "分步式调出单","wms"),
+
     ;
     private Integer code;
 

@@ -17,7 +17,6 @@ import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.SoReturnDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.SoReturnEntity;
 import com.erp.server.oms.query.SoReturnQueryHandler;
 import com.erp.server.oms.service.SoReturnDetailService;
@@ -28,9 +27,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -40,7 +37,7 @@ import java.util.Objects;
  * @since 2023-05-10
  */
 @RestController
-@LogSystemModule("销售退货定单")
+@LogSystemModule("销售退货订单")
 @RequestMapping("/soReturn")
 @Slf4j
 public class SoReturnController extends BaseController {
@@ -60,6 +57,7 @@ public class SoReturnController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )
@@ -79,6 +77,7 @@ public class SoReturnController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )
@@ -369,8 +368,8 @@ public class SoReturnController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult
      **/
     @GetMapping(value = "/getSoReturnById")
-    public ApiResult<SoReturnEntity> getSoReturnById(@RequestParam("id") String id) {
-        SoReturnEntity entity = soReturnService.getSoReturnById(id);
+    public ApiResult<SoReturnDTO.SoReturnEntityDTO> getSoReturnById(@RequestParam("id") String id) {
+        SoReturnDTO.SoReturnEntityDTO entity = soReturnService.getSoReturnById(id);
         return success(entity);
     }
 
@@ -386,6 +385,7 @@ public class SoReturnController extends BaseController {
         List<SoDetailDTO.AddDetailView> addDetailViews = soReturnDetailService.listAddDetailView(dto);
         return success(addDetailViews);
     }
+
 
     /**
      * 下推销售退货订单-保存
@@ -412,5 +412,42 @@ public class SoReturnController extends BaseController {
     public ApiResult<List<SoReturnDTO.PagingView>> listSoReturnDetailBySourceId(@RequestParam("soId") String id) {
         List<SoReturnDTO.PagingView> list = soReturnService.listSoReturnDetailBySourceId(id);
         return success(list);
+    }
+
+    /**
+     * 快粘贴查询, 需要区分是否拆分套装BOM
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author jack
+     * @Date 2024-11-08
+     **/
+    @PostMapping("/listAddDetailWithNoBomView")
+    public ApiResult<SoDetailDTO.ListAddDetailNoBomViewDTO> listAddDetailWithNoBomView(@RequestBody SoReturnDTO.PlatformSkuDTO dto) {
+        return success(soReturnDetailService.listAddDetailWithNoBomView(dto));
+    }
+
+    /**
+     * 退货详情页，根据skuId + customerId / sodetailId查询以下字段 ：退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author jack
+     * @Date 2024-11-27
+     **/
+    @PostMapping("/getReturnAmount")
+    public ApiResult<List<SoReturnDTO.SoReturnAmoutDTO>> getReturnAmount(@RequestBody @Validated SoReturnDTO.SkuParamDTO dto) {
+        return success(soReturnDetailService.getReturnAmount(dto));
+    }
+
+
+    /**
+     * 退货通知单、签收单、入库单详情页，根据skuId + customerId / sodetailId查询以下字段 ：退货金额，含税退货金额，退货金额（本位币），含税退货金额（本位币）
+     * @param dto dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoDetailDTO.AddDetailView>>
+     * @Author jack
+     * @Date 2024-11-27
+     **/
+    @PostMapping("/getReturnAmountInNotice")
+    public ApiResult<List<SoReturnDTO.SoReturnAmoutDTO>> getReturnAmountInNotice(@RequestBody @Validated SoReturnDTO.SkuParamDTO dto) {
+        return success(soReturnDetailService.getReturnAmountInNotice(dto));
     }
 }

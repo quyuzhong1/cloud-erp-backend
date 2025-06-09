@@ -3,6 +3,10 @@ package com.common.business.utils;
 import org.apache.commons.lang3.StringUtils;
 
 public class StringUtil {
+
+    private StringUtil() {
+    }
+
     /**
      * 定义下划线
      */

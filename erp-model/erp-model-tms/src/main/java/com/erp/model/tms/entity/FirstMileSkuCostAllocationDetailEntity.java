@@ -1,13 +1,15 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -92,20 +94,82 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
     @TableField("end_period_estimated_cost")
     private BigDecimal endPeriodEstimatedCost;
     /**
+     * 备注
+     */
+    private String remark;
+    /**
+     * 业务单号
+     */
+    @TableField(exist = false)
+    private String businessCode;
+    /**
+     *分摊重量
+     */
+    @TableField(exist = false)
+    private BigDecimal allocatedWeight;
+    /**
+     * 来源单号
+     */
+    @TableField(exist = false)
+    private String sourceCode;
+    /**
+     * 来源单号
+     */
+    @TableField(exist = false)
+    private String sourceId;
+    /**
+     * 物流单id
+     */
+    @TableField(exist = false)
+    private String logisticsBillId;
+    /**
+     * 物流运单号
+     */
+    @TableField(exist = false)
+    private String transportNo;
+    /**
      * skuId
      */
     @TableField(exist = false)
     private String skuId;
+    /**
+     * skuNo
+     */
+    @TableField(exist = false)
+    private String skuNo;
     /**
      * 平台sku
      */
     @TableField(exist = false)
     private String platformSkuNo;
     /**
+     * 账单来源：estimated=预估账单，actual=实际账单
+     * ReconciliationBillTypeEnum
+     *
+     */
+    @TableField(exist = false)
+    private String billSourceType;
+    /**
+     * 费用分摊状态
+     * AllocationStatusEnum
+     */
+    @TableField(exist = false)
+    private String status;
+    /**
      * 发货数量
      */
     @TableField(exist = false)
     private Integer deliveryQty;
+    /**
+     * 核算区间
+     */
+    @TableField(exist = false)
+    private LocalDate reportMonth;
+    /**
+     * 核算区间id
+     */
+    @TableField(exist = false)
+    private String reportPeriodId;
 
     public static final String MAIN_ID = "main_id";
 
@@ -115,7 +179,7 @@ public class FirstMileSkuCostAllocationDetailEntity extends BaseEntity<FirstMile
 
     public static final String ALLOCATION_TYPE = "allocation_type";
 
-    public static final String AMOUNT = "amount";
+    public static final String FIELD_AMOUNT = "amount";
 
     public static final String ALLOCATED_AMOUNT = "allocated_amount";
 

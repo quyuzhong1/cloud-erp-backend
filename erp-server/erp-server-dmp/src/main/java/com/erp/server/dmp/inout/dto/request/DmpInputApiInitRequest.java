@@ -24,4 +24,9 @@ public class DmpInputApiInitRequest extends DmpInputInitRequest{
 	private String requestParam; 
 	
 	private String nextLevelId;
+
+    /**
+     * 任务记录extend_json
+     */
+	private String taskExtendJson;
 }

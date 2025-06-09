@@ -1,22 +1,28 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
+import com.erp.model.wms.dto.PickingDetailDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
+import com.erp.model.wms.entity.PickingListsEntity;
 import com.erp.server.wms.service.PickingListsService;
+import com.erp.server.wms.service.RequisitionApplicationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -32,6 +38,8 @@ public class PickingListsController extends BaseController {
 
     @Resource
     private PickingListsService pickingListsService;
+    @Resource
+    private RequisitionApplicationService requisitionApplicationService;
 
     /**
      * 分页查询
@@ -39,6 +47,12 @@ public class PickingListsController extends BaseController {
      * @param dto 分页查询条件
      */
     @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "pl.warehouse_id",
+            menuCode = "wms:picking-lists:paging",
+            tableAlias = "pl"
+    )
     @WebAdvanceQuery
     public ApiResult<PagingVO<PickingListsDTO.PagingView>> paging(@RequestBody @Validated PagingDTO<PickingListsDTO.PagingParam> dto) {
         PagingVO<PickingListsDTO.PagingView> pagingVO = pickingListsService.paging(dto);
@@ -54,6 +68,17 @@ public class PickingListsController extends BaseController {
     public ApiResult<String> update(@RequestBody @Validated PickingListsDTO.UpdateDTO dto) {
         pickingListsService.update(dto);
         return success();
+    }
+
+
+    /**
+     * 修改数量弹窗
+     *
+     * @param dto 编辑参数
+     **/
+    @PostMapping("/changeQtyView")
+    public ApiResult<List<PickingDetailDTO.ChangeQtyView>> generateRequisitionChange(@RequestBody @Validated PickingListsDTO.UpdateDTO dto) {
+        return success(pickingListsService.generateRequisitionChange(dto));
     }
 
     /**
@@ -75,19 +100,43 @@ public class PickingListsController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除拣货单")
     @PostMapping("/delete")
     public ApiResult<String> delete(@RequestBody BaseIdDTO dto) {
+        PickingListsEntity pickingListsEntity = pickingListsService.getById(dto.getId());
         pickingListsService.delete(dto.getId());
+        requisitionApplicationService.writeBackRequisitionPickPushDownStatus(pickingListsEntity.getSourceId());
         return success();
     }
 
     /**
-     * 批量打印
+     * 批量打印（组合/单品）
      *
      * @param idsDTO idsDTO
      **/
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印拣货单")
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印头程/B2B拣货单")
+    @PostMapping("/printCombination")
+    public ApiResult<List<PickingListsDTO.PrintCombinationView>> printCombination(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<PickingListsDTO.PrintCombinationView> views = pickingListsService.printCombination(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
+        return success(views);
+    }
+    /**
+     * 批量打印拣货单（头程 拣货清单/发货清单）
+     *
+     * @param idsDTO idsDTO
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印头程拣货单")
     @PostMapping("/print")
     public ApiResult<List<PickingListsDTO.PrintView>> print(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
-        List<PickingListsDTO.PrintView> views = pickingListsService.print(idsDTO.getIds());
+        List<PickingListsDTO.PrintView> views = pickingListsService.print(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
+        return success(views);
+    }
+    /**
+     * 批量打印（b2b 拣货清单/发货清单）
+     *
+     * @param idsDTO idsDTO
+     **/
+    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "打印B2B拣货单")
+    @PostMapping("/b2bPrint")
+    public ApiResult<List<PickingListsDTO.PrintView>> b2bPrint(@RequestBody @Validated BaseIdsDTO.IdsDTO idsDTO) {
+        List<PickingListsDTO.PrintView> views = pickingListsService.b2bPrint(idsDTO.getIds().stream().distinct().collect(Collectors.toList()));
         return success(views);
     }
 
@@ -98,6 +147,7 @@ public class PickingListsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出拣货单")
     @PostMapping("/export")
+    @WebAdvanceQuery
     public ApiResult<Boolean> export(@RequestBody @Validated PickingListsDTO.ExportDTO dto) {
         pickingListsService.export(dto);
         return success(true);

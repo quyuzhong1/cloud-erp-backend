@@ -1,18 +1,15 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
-import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
-import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
-import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.model.oms.enums.TransferStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.tms.dto.TransferDeclareDTO;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
@@ -20,18 +17,17 @@ import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.TransferDeclareDetailEntity;
 import com.erp.model.tms.enums.TransferDeclareUploadStatusEnum;
 import com.erp.model.tms.enums.TransferLogisticsStatusEnum;
-import com.erp.model.tms.enums.TransferOutstockStatusEnum;
-import com.erp.model.wms.entity.SoOutstockEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.rpc.wms.feign.SoOutstockFeign;
 import com.erp.server.tms.mapper.TransferDeclareDetailMapper;
-import com.erp.server.tms.service.*;
+import com.erp.server.tms.service.LogisticsChannelService;
+import com.erp.server.tms.service.OperateLogService;
+import com.erp.server.tms.service.TransferDeclareDetailService;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -53,14 +49,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferDeclareDetailMapper, TransferDeclareDetailEntity> implements TransferDeclareDetailService {
-    @Autowired
-    private OperateLogService operateLogService;
-    @Autowired
-    private LogisticsChannelService logisticsChannelService;
-    @Autowired
-    private SoB2cFeign soB2cFeign;
     @Resource
-    private TransferDeclareProductService transferDeclareProductService;
+    private OperateLogService operateLogService;
+    @Resource
+    private LogisticsChannelService logisticsChannelService;
+    @Resource
+    private SoB2cFeign soB2cFeign;
     @Resource
     private SoOutstockFeign soOutstockFeign;
 
@@ -75,8 +69,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //批量新增
         boolean save = this.saveBatch(transferDeclareDetailEntities);
-        //拆分订单sku并新增报关明细
-        transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
+
         log.info("开始新增中转报关详情");
         if(!save) {
             throw new ServiceException("中转报关详情保存失败");
@@ -105,16 +98,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
             List<Pair<String, String>> pairList = removeList.stream().map(obj -> new Pair<>(obj.getMainId(), obj.getSoCode())).collect(Collectors.toList());
             operateLogService.batchAddModuleOperateLog("删除了一个订单【%s】", ModuleTypeEnum.TRANSFER_DECLARE.getCode(), pairList, "编辑操作");
             this.removeByIds(deleteIds);
-            //删除明细对应的sku拆分记录
-            transferDeclareProductService.removeByDeclareDetailIds(deleteIds);
 
-            //处理订单异常信息
-            List<TransferDeclareDetailEntity> detailEntities = this.listByIds(deleteIds);
-            List<String> soIds = detailEntities.stream().map(req -> req.getSoId()).distinct().collect(Collectors.toList());
-            SoB2cErrorDTO.BatchDeleteDTO deleteDTO = new SoB2cErrorDTO.BatchDeleteDTO();
-            deleteDTO.setMainIds(soIds);
-            deleteDTO.setType(SoB2cErrorTypeEnum.INSTOCK_FORECAST.getCode());
-            soB2cFeign.deleteErrorByMainIds(deleteDTO);
         }
 
         // 数据处理
@@ -122,7 +106,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //批量新增
         boolean save = this.saveOrUpdateBatch(transferDeclareDetailEntities);
-        transferDeclareProductService.saveOrUpdateTransferDeclareProducts(transferDeclareDetailEntities);
         log.info("开始修改中转报关详情");
         if(!save) {
             throw new ServiceException("中转报关详情修改失败");
@@ -140,16 +123,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
     @Override
     public List<TransferDeclareDetailDTO.ViewDTO> viewDetailList(TransferDeclareDTO.ViewDetailParamDTO dto) {
         return baseMapper.viewDetailList(dto);
-    }
-
-    @Override
-    public Boolean updateOrderUploadStatus(String id, String status, String shippingOrderNo, String failureReason) {
-        return lambdaUpdate()
-                .eq(TransferDeclareDetailEntity::getId, id)
-                .set(TransferDeclareDetailEntity::getOrderUploadStatus, status)
-                .set(TransferDeclareDetailEntity::getShippingOrderNo, shippingOrderNo)
-                .set(TransferDeclareDetailEntity::getFailureReason, failureReason)
-                .update();
     }
 
     @Override
@@ -179,10 +152,6 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
 
         //删除明细
         lambdaUpdate().in(TransferDeclareDetailEntity::getMainId, mainIds).remove();
-
-        //删除明细对应的sku拆分记录
-        List<String> ids = detailEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
-        transferDeclareProductService.removeByDeclareDetailIds(ids);
     }
 
 
@@ -193,7 +162,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
      */
     @Override
     public TransferDeclareDetailEntity getBySoId(String soId) {
-        return this.lambdaQuery().eq(TransferDeclareDetailEntity::getSoId, soId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(TransferDeclareDetailEntity::getSoId, soId).last(SqlConstants.LIMIT_1).one();
     }
 
 //    @Override
@@ -232,7 +201,7 @@ public class TransferDeclareDetailServiceImpl extends SuperServiceImpl<TransferD
         List<LogisticsChannelEntity> logisticsChannelEntities = new ArrayList<>();
 
         //查询渠道信息
-        if (CollectionUtil.isNotEmpty(logisticsChannelIds)) {
+        if (CollUtil.isNotEmpty(logisticsChannelIds)) {
             logisticsChannelEntities = logisticsChannelService.listByIds(logisticsChannelIds);
         }
 

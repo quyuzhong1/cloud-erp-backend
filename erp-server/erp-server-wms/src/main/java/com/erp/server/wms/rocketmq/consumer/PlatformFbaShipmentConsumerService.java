@@ -1,6 +1,7 @@
 package com.erp.server.wms.rocketmq.consumer;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
@@ -19,6 +20,7 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.ShopInfoDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -53,10 +55,10 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_fba_shipment_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_fba_shipment_consumer",
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
+//        selectorExpression = "third_system_fba_shipment_tag",
+//        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_fba_shipment_consumer",
+//        consumeMode = ConsumeMode.ORDERLY)
 public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
@@ -99,7 +101,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
      * 根据平台组装表名
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.FBA_SHIPMENT.getCode());
     }
 
@@ -151,7 +153,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
             paramDTO.setPlatformSkuNoList(sellerSkuList);
             paramDTO.setShopIdList(Collections.singletonList(entity.getShopId()));
             paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-            paramDTO.setMatchResult(true);
+            paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             paramDTO.setIsExpire(false);
             // 查询ListingInfo和skuMapping的关系
             List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
@@ -200,6 +202,9 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
      * @param currentShopEntity
      */
     private void checkAndSetCountryWithShop(FbaShipmentEntity entity, PlatformFbaShipmentDTO dto, ShopInfoEntity currentShopEntity) {
+        // 补充来源名称
+        entity.setShopName(currentShopEntity.getName());
+        dto.setShopName(currentShopEntity.getName());
         // 查询仓库中心对应国家
         String country = cfgAmzFulfillmentCenterService.findCountryByCode(entity.getFulfillmentCenter());
         // 没有配置处理
@@ -227,7 +232,7 @@ public class PlatformFbaShipmentConsumerService<T extends DmpSyncTaskIdDTO> exte
         requestDTO.setShopId(entity.getShopId());
         ShopInfoEntity shopInfoEntity = shopInfoFeign.getRelatedShopByIdAndCountry(requestDTO);
         if (null == shopInfoEntity){
-            String msg = StrUtil.format("仓库中心对应国家的店铺未授权, shopId={}, country={}", entity.getShopId(), country);
+            String msg = CharSequenceUtil.format("仓库中心对应国家的店铺未授权, shopId={}, country={}", entity.getShopId(), country);
             throw new ServiceException(msg);
         }
         entity.setShopId(shopInfoEntity.getId());

@@ -34,14 +34,14 @@ public enum  PurchaseStateEnum implements EnumMessage {
     public static String getNameByCode(Integer code) {
         PurchaseStateEnum[] purchaseStateEnums = values();
         for (PurchaseStateEnum purchaseStateEnum : purchaseStateEnums) {
-            if (purchaseStateEnum.getCode() == code) {
+            if (purchaseStateEnum.getCode().equals(code) ) {
                 return purchaseStateEnum.getName();
             }
         }
         return "";
     }
 
-    public static PurchaseStateEnum getEnumByType(String code){
+    public static PurchaseStateEnum getEnumByType(Integer code){
         PurchaseStateEnum[] purchaseStateEnums = values();
         for (PurchaseStateEnum purchaseStateEnum : purchaseStateEnums) {
             if (purchaseStateEnum.getCode().equals(code)) {

@@ -2,6 +2,7 @@ package com.erp.server.wms.controller.api;
 
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -17,6 +18,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
+
 /**
  * FBA库存
  *
@@ -29,7 +32,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/fbaInventory")
 public class FbaInventoryController extends BaseController {
 
-    @Autowired
+    @Resource
     private FbaInventoryService fbaInventoryService;
 
     /**
@@ -42,9 +45,11 @@ public class FbaInventoryController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "fi.warehouse_id",
             menuCode = "wms:fbaInventory:paging",
             tableAlias = "fi"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<FbaInventoryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<FbaInventoryDTO.PagingParamDTO> dto) {
         PagingVO<FbaInventoryDTO.ListDTO> list = fbaInventoryService.paging(dto);
         return success(list);
@@ -60,6 +65,7 @@ public class FbaInventoryController extends BaseController {
     @PostMapping("/summaryNumber")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "fi.warehouse_id",
             menuCode = "wms:fbaInventory:paging",
             tableAlias = "fi"
     )

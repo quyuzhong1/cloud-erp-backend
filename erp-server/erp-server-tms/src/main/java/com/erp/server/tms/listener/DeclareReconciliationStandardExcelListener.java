@@ -1,6 +1,6 @@
 package com.erp.server.tms.listener;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -31,9 +31,6 @@ public class DeclareReconciliationStandardExcelListener extends AnalysisEventLis
      */
     private List<DeclareReconciliationStandardExcelDTO> successList = new ArrayList<>();
 
-    public DeclareReconciliationStandardExcelListener() {
-
-    }
 
    /**
     * @description: 每解析一行数据回调一遍
@@ -52,10 +49,10 @@ public class DeclareReconciliationStandardExcelListener extends AnalysisEventLis
         if (CollectionUtils.isNotEmpty(msgList)) {
             errorMsgList.addAll(msgList);
         }
-        if ((StrUtil.isBlank(excelDTO.getCostName()) || StrUtil.isBlank(excelDTO.getCostValue()))
-                && StrUtil.isBlank(excelDTO.getActualWeight())
-                && StrUtil.isBlank(excelDTO.getActualBillingWeight())
-                && StrUtil.isBlank(excelDTO.getActualWeightUnit())) {
+        if ((CharSequenceUtil.isBlank(excelDTO.getCostName()) || CharSequenceUtil.isBlank(excelDTO.getCostValue()))
+                && CharSequenceUtil.isBlank(excelDTO.getActualWeight())
+                && CharSequenceUtil.isBlank(excelDTO.getActualBillingWeight())
+                && CharSequenceUtil.isBlank(excelDTO.getActualWeightUnit())) {
             errorMsgList.add("实际实重、实际计费重、（费用项、费用金额）至少填一个");
         }
 
@@ -91,6 +88,8 @@ public class DeclareReconciliationStandardExcelListener extends AnalysisEventLis
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        if(CollectionUtils.isEmpty(successList)){
+            return;
+        }
     }
 }

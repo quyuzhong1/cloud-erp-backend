@@ -79,6 +79,18 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
     private String printTime;
 
     /**
+     * 拣货单打印状态
+     */
+    @TableField("picking_print_status")
+    private String pickingPrintStatus;
+
+    /**
+     * 拣货单打印时间
+     */
+    @TableField("picking_print_time")
+    private String pickingPrintTime;
+
+    /**
      * 拣货人
      */
     @TableField("picking_user_id")
@@ -101,4 +113,31 @@ public class WaveListEntity extends BaseEntity<WaveListEntity> implements Serial
      */
     @TableField("is_out_stock")
     private Boolean isOutStock;
+    /**
+     * 仓库id
+     */
+    @TableField(exist = false)
+    private String warehouseId;
+    /**
+     * 仓库名称
+     */
+    @TableField(exist = false)
+    private String warehouseName;
+    /**
+     * 是否全托订单 是 true 否 false
+     */
+    @TableField("is_fully_managed")
+    private Boolean isFullyManaged;
+
+    /**
+     * SKU条码打印状态
+     */
+    @TableField("sku_barcode_print_status")
+    private String skuBarcodePrintStatus;
+
+    /**
+     * SKU条码打印时间
+     */
+    @TableField("sku_barcode_print_time")
+    private String skuBarcodePrintTime;
 }

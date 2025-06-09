@@ -1,0 +1,14 @@
+spring:
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 172.16.100.17
+        namespace: uat
+      config:
+        server-addr: 172.16.100.17
+        namespace: uat
+        file-extension: yml
+        shared-configs: common.yml,db-mrp.yml,druid-common.yml
+
+
+

@@ -74,7 +74,9 @@ public class MachineSubComponentsDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class UpdateDTO extends AddDTO {
+    public static class UpdateDTO extends AddDTO implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
+
         /**
          * 主键id
          */
@@ -172,5 +174,16 @@ public class MachineSubComponentsDTO implements Serializable {
          * bom版本
          */
         private String bomVersion;
+    }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchViewBomParamDTO {
+
+        /**
+         * skuId 集合
+         */
+        @NotEmpty(message = "SKU不能为空")
+        private List<String> skuIdList;
     }
 }

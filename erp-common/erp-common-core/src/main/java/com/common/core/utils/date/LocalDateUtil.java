@@ -1,7 +1,7 @@
 package com.common.core.utils.date;
 
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -246,6 +246,13 @@ public class LocalDateUtil {
        return LocalDateUtil.date2LocalDateTime(date);
     }
 
+    /**
+     * 导入接收后转为localDate
+     */
+    public static LocalDate stringToLocalDate(String strDate) {
+        Date date = EnumTimePattern.parseDate(strDate);
+        return LocalDateUtil.date2LocalDate(date);
+    }
 
     /**
      * 获取本年开始时间
@@ -391,7 +398,7 @@ public class LocalDateUtil {
     }
 
     public static LocalDateTime strToLocalDateTime(String timeStr) {
-        if (StrUtil.isBlank(timeStr)) {
+        if (CharSequenceUtil.isBlank(timeStr)) {
             return null;
         }
         if(timeStr.contains("T")){
@@ -410,7 +417,7 @@ public class LocalDateUtil {
     }
 
     public static LocalDateTime plusHours(LocalDateTime startTime, String hourStr) {
-        if (StrUtil.isBlank(hourStr)){
+        if (CharSequenceUtil.isBlank(hourStr)){
             return startTime;
         }
         BigDecimal hour = new BigDecimal(hourStr);
@@ -464,12 +471,32 @@ public class LocalDateUtil {
             if (StringUtils.isBlank(dateStr)) {
                 return null;
             }
+
+            // 判断是否包含时间部分（HH:mm:ss）
+            boolean hasTime = dateStr.contains(" ");
+            DateTimeFormatter formatter;
+
             if (dateStr.contains("/")) {
-                DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss");
-                return LocalDateTime.parse(dateStr, dateTimeFormatter);
+                if (hasTime) {
+                    formatter = DateTimeFormatter.ofPattern("yyyy/M/d HH:mm:ss");
+                } else {
+                    // 没有时间部分，补上 00:00:00 并解析
+                    formatter = DateTimeFormatter.ofPattern("yyyy/M/d");
+                    LocalDate date = LocalDate.parse(dateStr, formatter);
+                    return date.atStartOfDay(); // 返回当天 0 点
+                }
             } else {
-                return LocalDateTime.parse(dateStr, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                if (hasTime) {
+                    formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                } else {
+                    // 没有时间部分，补上 00:00:00 并解析
+                    formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+                    LocalDate date = LocalDate.parse(dateStr, formatter);
+                    return date.atStartOfDay(); // 返回当天 0 点
+                }
             }
+
+            return LocalDateTime.parse(dateStr, formatter);
         } catch (Exception e) {
             log.error("parseStrToLocalTime 出错了>>>{}", e);
         }
@@ -491,6 +518,54 @@ public class LocalDateUtil {
     public static LocalDateTime getEndDateTimeOfYear(int year) {
         LocalDateTime endDateTime = LocalDateTime.of(year, Month.DECEMBER, 31, 23, 59, 59);
         return endDateTime.withNano(999_999_999); // Adjust nanoseconds to the maximum value
+    }
+
+    /**
+     * 获取日期范围的每一天
+     * @Author Luo_WG
+     * @Date 2024/10/29 17:46
+     * @param startTime
+     * @param endTime
+     * @return java.util.List<java.lang.String>
+     **/
+    public static List<String> getDateDayList(LocalDateTime startTime, LocalDateTime endTime) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        List<String> dateList = new ArrayList<>();
+
+        LocalDateTime startDate = startTime.toLocalDate().atStartOfDay();
+        LocalDateTime endDate = endTime.toLocalDate().atStartOfDay();
+
+        LocalDateTime currentDate = startDate;
+
+        while (currentDate.isBefore(endDate) || currentDate.isEqual(endDate)) {
+            dateList.add(currentDate.format(formatter));
+            currentDate = currentDate.plusDays(1);
+        }
+
+        return dateList;
+    }
+
+    /**
+     * 计算两个时间之间的小时数，保留小数
+     * @param startTime
+     * @param endTime
+     * @param decimalPlaces 小数位数
+     * @return
+     */
+    public static double calculateHoursWithDecimal(LocalDateTime startTime, LocalDateTime endTime, int decimalPlaces) {
+        Duration duration = Duration.between(startTime, endTime);
+        double totalHours = duration.toMillis() / 1000.0 / 3600.0;
+        double scale = Math.pow(10, decimalPlaces);
+        return Math.round(totalHours * scale) / scale;
+    }
+    /**
+     * 计算两个时间之间的秒数，结果为整数
+     * @param startTime
+     * @param endTime
+     * @return 秒数
+     */
+    public static long calculateSeconds(LocalDateTime startTime, LocalDateTime endTime) {
+        return startTime.until(endTime, ChronoUnit.SECONDS);
     }
 }
 

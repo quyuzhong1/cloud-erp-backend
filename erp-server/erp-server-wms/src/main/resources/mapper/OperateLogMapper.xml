@@ -9,7 +9,7 @@
         sol.create_time,
         max(sol.create_user_name) as create_user_name,
         array_to_string(array_agg(DISTINCT sol.operation),',') as operation,
-        array_to_string(array_agg(DISTINCT sol.content),',') as content
+        array_to_string(array_agg(DISTINCT sol.content),';') as content
         from operate_log sol
         <where>
             <if test="params.businessId !=null and params.businessId!=''">
@@ -17,6 +17,13 @@
             </if>
             <if test="params.pid !=null and params.pid!=''">
                 AND sol.pid = #{params.pid}
+            </if>
+            <if test="params.searchKey !=null and params.searchKey!=''">
+                and (
+                sol.content ILIKE concat('%',#{params.searchKey}::text,'%') or
+                sol.operation ILIKE concat('%',#{params.searchKey}::text,'%') or
+                sol.create_user_name ILIKE concat('%',#{params.searchKey}::text,'%')
+                )
             </if>
         </where>
         group by sol.module_type,sol.business_id,sol.create_time

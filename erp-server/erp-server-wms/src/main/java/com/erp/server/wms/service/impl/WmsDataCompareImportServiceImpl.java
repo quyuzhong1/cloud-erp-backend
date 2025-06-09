@@ -1,6 +1,7 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -19,6 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
+import java.util.Objects;
 import java.util.Optional;
 /**
  * <p>
@@ -31,7 +34,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class WmsDataCompareImportServiceImpl extends SuperServiceImpl<WmsDataCompareImportMapper, WmsDataCompareImportEntity> implements WmsDataCompareImportService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -51,7 +54,7 @@ public class WmsDataCompareImportServiceImpl extends SuperServiceImpl<WmsDataCom
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "数据对比导入文件信息" , wmsDataCompareImportEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "数据对比导入文件信息" , wmsDataCompareImportEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, wmsDataCompareImportEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -66,7 +69,9 @@ public class WmsDataCompareImportServiceImpl extends SuperServiceImpl<WmsDataCom
     @Override
     public Boolean update(WmsDataCompareImportDTO.UpdateDTO updateDTO) {
         WmsDataCompareImportEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比导入文件信息"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "数据对比导入文件信息");
+        }
         WmsDataCompareImportEntity wmsDataCompareImportEntity =  BeanMapperUtils.map(WmsDataCompareImportEntity.class, updateDTO);
 
         // 数据处理
@@ -80,7 +85,7 @@ public class WmsDataCompareImportServiceImpl extends SuperServiceImpl<WmsDataCom
 
         // 记录主单操作日志
             log.info("编辑 开始记录数据对比导入文件信息日志数据，id：【{}】", wmsDataCompareImportEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDataCompareImportEntity.getId(), "数据对比导入文件信息");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), wmsDataCompareImportEntity.getId(), "数据对比导入文件信息");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, wmsDataCompareImportEntity, null, wmsDataCompareImportEntity.getId(), msg);
         return Boolean.TRUE;

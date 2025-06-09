@@ -42,7 +42,6 @@ public class ExportWmsInventoryInOutStockSummaryHandler extends AbstractPageFile
 
     @Override
     public String getExcelPath() {
-        //todo
         return "";
     }
 }

@@ -9,8 +9,11 @@
         sri.source_id AS sourceId,
         srid.source_detail_id AS sourceDetailId,
         srid.so_return_detail_id AS soReturnDetailId,
+        sri.so_return_id as soReturnId,
         sri.code,
         sri.source_code AS sourceCode,
+        sri.platform_order_code AS platformOrderCode,
+        sri.source_type AS sourceType,
         sri.so_code AS soCode,
         sri.type,
         sri.customer_id AS customerId,
@@ -19,6 +22,7 @@
         sri.invalid_status AS invalidStatus,
         sri.seller_id AS sellerId,
         sri.seller_name AS sellerName,
+        sri.so_id as soId,
         srid.id as detailId,
         srid.sku_id AS skuId,
         srid.sku_no AS skuNo,
@@ -34,9 +38,19 @@
         sri.inventory_org_name AS inventoryOrgName,
         srid.is_sub_contract AS isSubContract,
         sri.third_code as thirdCode,
-        sri.return_logistic_code as returnLogisticCode
+        sri.return_logistic_code as returnLogisticCode,
+        srid.warehouse_id,
+        srid.warehouse_name,
+        srid.warehouse_location,
+        sri.currency,
+        sri.currency_symbol,
+        srid.exchange_rate ,
+        srid.return_amount ,
+        srid.tax_return_amount ,
+        srid.return_amount_local_currency ,
+        srid.tax_return_amount_local_currency
         FROM so_return_instock_detail srid
-        INNER JOIN so_return_instock sri ON sri.id = srid.main_id
+        INNER JOIN so_return_instock sri ON sri.id = srid.main_id and sri.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
           and srid.is_deleted = FALSE
@@ -50,7 +64,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        sri.create_time desc
+        srid.id desc
     </select>
 
 
@@ -106,7 +120,17 @@
         sri.inventory_org_id AS inventoryOrgId,
         sri.inventory_org_name AS inventoryOrgName,
         sri.third_code as thirdCode,
-        sri.return_logistic_code as returnLogisticCode
+        sri.return_logistic_code as returnLogisticCode,
+        srid.warehouse_id,
+        srid.warehouse_name,
+        srid.warehouse_location,
+        sri.currency,
+        sri.currency_symbol,
+        srid.exchange_rate ,
+        srid.return_amount ,
+        srid.tax_return_amount ,
+        srid.return_amount_local_currency ,
+        srid.tax_return_amount_local_currency
         FROM so_return_instock sri
         INNER JOIN so_return_instock_detail srid ON sri.id = srid.main_id AND sri.is_deleted = FALSE
         WHERE
@@ -131,7 +155,7 @@
             sri.code,
             sri.source_type,
             sri.approve_status,
-            sri.warehouse_name,
+            srid.warehouse_name,
             sri.seller_name,
             sri.create_time
         FROM so_return_instock sri
@@ -156,5 +180,31 @@
             </foreach>
         </if>
         ORDER BY sri.create_time desc
+    </select>
+    <select id="b2cPagingSelect" resultType="com.erp.model.wms.dto.SoReturnInstockDTO$SearchDTO">
+        select
+        sri.id,
+        sri.code
+        from so_return_instock sri
+        where
+        sri.is_deleted = false
+        and sri.type = 'B2C'
+        <if test="params.searchKeyword != null and params.searchKeyword != ''">
+            and (  sri.code ilike concat('%', #{params.searchKeyword}::text ,'%'))
+        </if>
+        and sri.invalid_status = false
+        order by
+        sri.code
+    </select>
+
+    <select id="queryToSdy" resultType="com.erp.model.wms.entity.SoReturnInstockEntity">
+        SELECT DISTINCT so.* FROM so_return_instock so
+        LEFT JOIN so_return_instock_detail sod ON so.id = sod.main_id
+        WHERE so.bill_date >= #{startDate}
+        AND so.bill_date &lt;= #{endDate}
+        AND so.approve_status = 'approve'
+        AND so.is_deleted = FALSE
+        AND sod.is_deleted = FALSE
+        LIMIT #{pageSize} OFFSET #{offset}
     </select>
 </mapper>

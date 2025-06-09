@@ -1,7 +1,6 @@
 package com.erp.server.wms.service;
 
 import com.common.business.dto.base.BatchResultDTO;
-import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
@@ -9,9 +8,13 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.wms.dto.SoDeliveryNoticeDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
+import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.entity.SoDeliveryNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -160,10 +163,12 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
 
     /**
      * 下推销售出库单-保存
-     * @param id id
+     *
+     * @param id           id
+     * @param deliveryDate
      * @return void
      **/
-    BatchResultDTO generateSoDeliverySave(String id);
+    BatchResultDTO generateSoDeliverySave(String id, LocalDate deliveryDate);
 
     /**
      * 下推发货通知单-保存
@@ -244,7 +249,7 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
      * 生成拣货单
      * @param picking 参数
      */
-    void generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking);
+    List<WarehouseLocationMoveDTO.GenPickToSkuMove> generatePickingList(SoDeliveryNoticeDTO.GeneratePickingDTO picking);
 
     /**
      * 生成拣货单的弹窗
@@ -277,4 +282,23 @@ public interface SoDeliveryNoticeService extends SuperService<SoDeliveryNoticeEn
     BatchResultDTO handleErrorData(String id);
 
     PagingVO<SoDeliveryNoticeDTO.PagingView> exportSoDeliveryNotice(PagingDTO<SoDeliveryNoticeDTO.PagingParam> dto);
+
+
+    /**
+     * 更新中转仓库配置
+     * @param entity
+     * @param changeIds
+     * @return
+     */
+    BatchResultDTO updateTransferWarehouse(SoDeliveryNoticeEntity entity, List<String> changeIds);
+    void updateByNoticeChange(List<SoDeliveryNoticeDetailEntity> addList, List<SoDeliveryNoticeDetailEntity> updateList, List<SoDeliveryNoticeDetailEntity> deleteList);
+
+    Boolean generateMachineInfo(List<String> ids);
+    /**
+     * 查询b2b流水
+     * @author will
+     * @date 2025/3/31 11:28
+     * @return java.util.List<com.erp.model.wms.entity.VirtualTransFlowEntity>
+     */
+    List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildB2bVirtualFlow();
 }

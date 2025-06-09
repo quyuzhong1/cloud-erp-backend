@@ -64,15 +64,11 @@ public interface CfgRuleOutService extends SuperService<CfgRuleOutEntity> {
      */
     List<CfgRuleOutDTO.CfgProductPackingDetail> getCfgProductPackingDetailByType(String type);
 
-    Boolean matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto);
-
     /**
-     * 匹配中转规则和仓库
-     * @author will
-     * @date 2024/7/23 14:07
+     * 匹配中转规则
      * @param dto
-     * @return  CfgRuleOutDTO.MatchTransferResultDTO
+     * @return
      */
-    CfgRuleOutDTO.MatchTransferResultDTO matchTransferAndWarehouse(CfgRuleOutDTO.MatchTransferDTO dto);
+    CfgRuleOutDTO.MatchTransferResultDTO matchTransferRule(CfgRuleOutDTO.MatchTransferRuleDTO dto);
 
 }

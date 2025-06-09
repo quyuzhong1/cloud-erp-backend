@@ -1,9 +1,8 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -15,6 +14,7 @@ import com.erp.model.dmp.dto.CfgApiAuthDTO;
 import com.erp.model.dmp.entity.CfgApiAuthEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.wms.dto.SoB2bProcessingDTO;
 import com.erp.model.wms.dto.TransferInfoDetailDTO;
 import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.wms.entity.*;
@@ -33,6 +33,7 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -140,6 +141,20 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         return baseMapper.listSourceDetailIds(sourceDetailIds);
     }
 
+
+    @Override
+    public Map<String, List<TransferInfoDetailDTO.ApproveDTO>> listApproveByMainIds(List<String> mainIds, Boolean isApprove) {
+        List<TransferInfoDetailDTO.ApproveDTO> approveDTOS = baseMapper.listApproveByMainIds(mainIds, isApprove);
+        return approveDTOS.stream()
+                .collect(Collectors.groupingBy(TransferInfoDetailDTO.ApproveDTO::getMainId));
+
+    }
+
+    @Override
+    public List<SoB2bProcessingDTO.ResponseDTO> listTransferBySourceIdList(List<String> sourceIdList) {
+        return baseMapper.listTransferBySourceIdList(sourceIdList);
+    }
+
     /**
      * @description: 修改时数量验证
      * @author Will
@@ -188,7 +203,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<TransferInfoDetailDTO.UpdateDTO> newList, List<TransferInfoDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(TransferInfoDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(TransferInfoDetailEntity
                 ::getId).collect(Collectors.toList());
@@ -197,18 +212,12 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
     /**
      * 处理明细中的数据id
      */
-    private void doOpHandleDetails (List<TransferInfoDetailEntity> detailList, String mainId, Boolean isUpdate) {
-        //去除服务、费用SKU
-        List<TransferInfoDetailEntity> newList = removeNoInventorySku(detailList);
-        if (CollectionUtils.isEmpty(newList)) {
-            throw new ServiceException(ApiError.ERROR_NO_INVENTORY_SKU_NOT_EXIST);
-        }
-
+    private void doOpHandleDetails (List<TransferInfoDetailEntity> newList, String mainId, Boolean isUpdate) {
         //需要新增的数据
-        List<TransferInfoDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<TransferInfoDetailEntity> addList = newList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
 
         //需要修改的数据
-        List<String> ids = newList.stream().filter(obj -> StringUtils.isNotBlank(obj.getId())).map(TransferInfoDetailEntity::getId).collect(Collectors.toList());
+        List<String> ids = newList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(TransferInfoDetailEntity::getId).collect(Collectors.toList());
         List<TransferInfoDetailEntity> list = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(ids)) {
             list = this.listByIds(ids);
@@ -226,7 +235,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         //仓位信息
         List<WarehouseLocationDTO.WarehouseLocationSearchParamDTO> listParam = newList
                 .stream()
-                .filter(obj -> StringUtils.isNotBlank(obj.getInWarehouseLocation()) || StringUtils.isNotBlank(obj.getOutWarehouseLocation()))
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getInWarehouseLocation()) || CharSequenceUtil.isNotBlank(obj.getOutWarehouseLocation()))
                 .flatMap(obj -> Stream.of(new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getInWarehouseId(), obj.getInWarehouseLocation())
                         , new WarehouseLocationDTO.WarehouseLocationSearchParamDTO(obj.getOutWarehouseId(), obj.getOutWarehouseLocation())))
                 .distinct()
@@ -256,7 +265,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             }
             detail.setOutWarehouseName(outWarehouse.getName());
             //验证调入仓位
-            if (StringUtils.isNotBlank(detail.getInWarehouseLocation())) {
+            if (CharSequenceUtil.isNotBlank(detail.getInWarehouseLocation())) {
                 long count = warehouseLocationList
                         .stream()
                         .filter(obj -> detail.getInWarehouseLocation().equals(obj.getCode())
@@ -269,7 +278,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
                 }
             }
             //验证调出仓位
-            if (StringUtils.isNotBlank(detail.getOutWarehouseLocation())) {
+            if (CharSequenceUtil.isNotBlank(detail.getOutWarehouseLocation())) {
                 long count = warehouseLocationList
                         .stream()
                         .filter(obj -> detail.getOutWarehouseLocation().equals(obj.getCode())
@@ -278,7 +287,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
                                 && (ObjectUtils.isNotEmpty(obj.getDisabled()) && !obj.getDisabled()))
                         .count();
                 if (count == 0) {
-                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_REF_LOCATION,detail.getInWarehouseName(),detail.getInWarehouseLocation());
+                    throw new ServiceException(ApiError.ERROR_WAREHOUSE_REF_LOCATION,detail.getOutWarehouseName(),detail.getOutWarehouseLocation());
                 }
             }
 
@@ -291,7 +300,7 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
             detail.setSkuNo(skuVO.getSkuNo());
             detail.setMainId(mainId);
             //修改操作日志
-            if (StringUtils.isNotBlank(detail.getId())) {
+            if (CharSequenceUtil.isNotBlank(detail.getId())) {
                 if (CollectionUtils.isEmpty(list)) {
                     throw new ServiceException(ApiError.ERROR_99048);
                 }
@@ -328,29 +337,14 @@ public class TransferInfoDetailServiceImpl extends SuperServiceImpl<TransferInfo
         for (TransferInfoDetailEntity entity : list) {
             //调入仓库
             WarehouseEntity inWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getInWarehouseId())).findFirst().orElse(new WarehouseEntity());
-            if (warehouseIdList.contains(inWarehouse.getId()) && StrUtil.isBlank(entity.getInWarehouseLocation())) {
+            if (warehouseIdList.contains(inWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getInWarehouseLocation())) {
                 throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,inWarehouse.getName());
             }
             //调出仓库
             WarehouseEntity outWarehouse = warehouseList.stream().filter(obj -> obj.getId().equals(entity.getOutWarehouseId())).findFirst().orElse(new WarehouseEntity());
-            if (warehouseIdList.contains(outWarehouse.getId()) && StrUtil.isBlank(entity.getInWarehouseLocation())) {
+            if (warehouseIdList.contains(outWarehouse.getId()) && CharSequenceUtil.isBlank(entity.getInWarehouseLocation())) {
                 throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,outWarehouse.getName());
             }
         }
     }
-
-    /**
-     * 移除包含服务和费用的sku明细
-     * @author will
-     * @date 2024/7/26 22:52
-     * @param newList
-     * @return List<TransferInfoDetailEntity>
-     */
-    private List<TransferInfoDetailEntity> removeNoInventorySku (List<TransferInfoDetailEntity> newList) {
-        List<SkuVO> noInventorySkuList = plmTaskFeign.getNoInventorySku();
-        List<String> skuIdList = CollectionUtils.isEmpty(noInventorySkuList)
-                ? new ArrayList<>() : noInventorySkuList.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList());
-        return newList.stream().filter(obj -> !skuIdList.contains(obj.getSkuId())).collect(Collectors.toList());
-    }
-
 }

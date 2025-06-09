@@ -95,12 +95,6 @@ public class SubcontractOrderEntity extends BaseEntity<SubcontractOrderEntity> {
     private String subcontractOrgName;
 
     /**
-    * 新品首批（false否,true是）
-    */
-    @TableField("is_first_mass_product")
-    private Boolean isFirstMassProduct;
-
-    /**
     * 作废状态（false未作废，true已作废）
     */
     @TableField("invalid_status")
@@ -165,7 +159,7 @@ public class SubcontractOrderEntity extends BaseEntity<SubcontractOrderEntity> {
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String BILL_DATE = "bill_date";
 

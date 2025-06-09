@@ -1,6 +1,5 @@
 package com.erp.model.wms.dto.pickingstrategy;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.business.annotation.Dict;
 import com.common.business.enums.ServiceCodeNameEnum;
 import lombok.Getter;
@@ -11,6 +10,9 @@ import javax.validation.constraints.NotBlank;
 @Getter
 @Setter
 public class CfgRuleConditionDTO {
+    private CfgRuleConditionDTO() {
+        throw new IllegalStateException("Utility CfgRuleConditionDTO class");
+    }
     @Getter
     @Setter
     public static class View {

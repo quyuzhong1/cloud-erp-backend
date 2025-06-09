@@ -16,7 +16,7 @@ import java.util.Date;
 **/
 @TableName(value ="product_cost")
 @Data
-public class ProductCostEntity extends BaseEntity implements Serializable {
+public class ProductCostEntity extends BaseEntity<ProductCostEntity> implements Serializable {
 
     /**
      * 产品sku表id

@@ -1,6 +1,8 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -17,16 +19,15 @@ import com.erp.model.wms.entity.TransferInfoEntity;
 import com.erp.server.wms.query.TransferInfoQueryHandler;
 import com.erp.server.wms.service.TransferInfoService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * 直接调拨单主表
@@ -53,6 +54,7 @@ public class TransferInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "tid.in_warehouse_id,tid.out_warehouse_id",
             menuCode = "wms:transferInfo:paging",
             tableAlias = "ti"
     )
@@ -72,6 +74,7 @@ public class TransferInfoController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "tid.in_warehouse_id,tid.out_warehouse_id",
             menuCode = "wms:transferInfo:paging",
             tableAlias = "ti"
     )
@@ -96,7 +99,7 @@ public class TransferInfoController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated TransferInfoDTO.AddDTO dto) {
         String id = transferInfoService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -115,7 +118,7 @@ public class TransferInfoController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated TransferInfoDTO.AddDTO dto) {
         String id = transferInfoService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -343,4 +346,62 @@ public class TransferInfoController extends BaseController {
         return success( "", msg);
     }
 
+    /**
+     * 批量修改调拨日期
+     * @author zdy
+     * @date: 2024/10/24 20:12
+     * @param dto
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改调拨日期")
+    @PostMapping("/updateBillDate")
+    public ApiResult<List<BatchResultDTO>> updateBillDate(@RequestBody @Validated BaseIdsDTO.DateDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<TransferInfoEntity> entityList = transferInfoService.listByIds(ids);
+        for (String id : ids) {
+            TransferInfoEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"直接调拨单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(transferInfoService.updateBillDate(entity,dto.getBillDate()));
+            }catch (Exception e){
+                log.error("直接调拨单修改调拨日期失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 处理数据
+     * @author will
+     * @date 2024/11/27 11:02
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/handleErrorData")
+    public ApiResult<List<BatchResultDTO>> handleErrorData(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<String> ids = dto.getIds();
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = transferInfoService.handleErrorData(id);
+            } catch (Exception e) {
+                log.error("直接调拨单 处理数据失败", e);
+                TransferInfoEntity entity = transferInfoService.getById(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "直接调拨单不存在, 处理数据失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 }

@@ -1,5 +1,6 @@
 package com.erp.server.wms.controller.pda;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -51,6 +52,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "return_user_id",
+            warehouseTableField = "pro.return_warehouse_id",
             menuCode = "wms:pdaPoReturn:paging",
             tableAlias = "pro"
     )
@@ -69,6 +71,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "return_user_id",
+            warehouseTableField = "pro.return_warehouse_id",
             menuCode = "wms:pdaPoReturn:paging",
             tableAlias = "pro")
     public ApiResult<List<PurchaseReturnOrderDTO.PdaReturnOrderCountDTO>> listCount(@RequestBody PermissionsDTO dto) {
@@ -87,7 +90,7 @@ public class PdaPoReturnController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody @Validated PurchaseReturnOrderDTO.AddDTO dto) {
         String id = poReturnService.pdaAdd(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

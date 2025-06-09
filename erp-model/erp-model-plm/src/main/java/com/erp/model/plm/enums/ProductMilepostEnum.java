@@ -30,14 +30,14 @@ public enum ProductMilepostEnum {
     public static String getNameByCode(Integer code) {
         ProductMilepostEnum[] productMilepostEnums = values();
         for (ProductMilepostEnum productMilepostEnum : productMilepostEnums) {
-            if (productMilepostEnum.getCode() == code) {
+            if (productMilepostEnum.getCode().equals(code)) {
                 return productMilepostEnum.getName();
             }
         }
         return null;
     }
 
-    public static ProductMilepostEnum getEnumByType(String code){
+    public static ProductMilepostEnum getEnumByType(Integer code){
         ProductMilepostEnum[] productMilepostEnums = values();
         for (ProductMilepostEnum productMilepostEnum : productMilepostEnums) {
             if (productMilepostEnum.getCode().equals(code)) {

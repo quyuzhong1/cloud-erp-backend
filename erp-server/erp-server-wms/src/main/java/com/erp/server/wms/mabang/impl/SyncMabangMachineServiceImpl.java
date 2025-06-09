@@ -40,16 +40,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SyncMabangMachineServiceImpl implements SyncMabangMachineService {
 
-    @Autowired
+    @Resource
     private MachineDetailService machineDetailService;
 
-    @Autowired
+    @Resource
     private MachineSubComponentsService machineSubComponentsService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
     @Resource

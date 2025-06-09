@@ -1,5 +1,6 @@
 package com.erp.server.dmp.inout.handler.input.task.dmp;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +9,9 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.common.core.utils.CurrencyUtil;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +53,28 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 					dmpInputMongoChild.put("warehouseName", mainMap.get("warehouse_name"));
 					dmpInputMongoChild.put("thirdOrderCode", mainMap.get("trade_order_no"));
 					dmpInputMongoChild.put("platformOrderCode", mainMap.get("trade_order_no"));
+
+					// 价格信息
+					// 明细单价
+					String unitPriceStr = dmpInputMongoChild.getOrDefault("unit_price", "").toString();
+					if (StringUtils.isNotBlank(unitPriceStr)){
+						CurrencyUtil.Money unitPrice = CurrencyUtil.Money.init(unitPriceStr);
+						dmpInputMongoChild.put("currency" ,unitPrice.getCurrency());
+					}
+
+					// 实际明细支付金额
+					String skuActualPaidAmountStr = dmpInputMongoChild.getOrDefault("sku_actual_paid_amount", "").toString();
+					if (StringUtils.isNotBlank(skuActualPaidAmountStr)){
+						CurrencyUtil.Money skuActualPaidAmount = CurrencyUtil.Money.init(skuActualPaidAmountStr);
+						dmpInputMongoChild.put("payCurrency", skuActualPaidAmount.getCurrency());
+					}
+
+					// 明细折扣金额
+					String skuDiscountAmountStr = dmpInputMongoChild.getOrDefault("sku_discount_amount", "").toString();
+					if (StringUtils.isNotBlank(skuDiscountAmountStr)){
+						CurrencyUtil.Money skuDiscountAmount = CurrencyUtil.Money.init(skuDiscountAmountStr);
+						dmpInputMongoChild.put("discountCurrency", skuDiscountAmount.getCurrency());
+					}
 				}
 			}
 		}
@@ -63,7 +89,7 @@ public class DmpInputAliExpressOrderSoOutStockDetailDmpHandler extends DmpInputA
 		Map<String, String> billNoIdMap = new HashMap<>();
 		if(CollUtil.isNotEmpty(listMaps)) {
 			for(Map<String, Object> listMap : listMaps) {
-				billNoIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.ID).toString());
+				billNoIdMap.put(listMap.get("third_code").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
 		for(Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {

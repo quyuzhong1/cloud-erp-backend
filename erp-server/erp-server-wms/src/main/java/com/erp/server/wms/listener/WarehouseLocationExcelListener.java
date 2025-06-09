@@ -1,5 +1,6 @@
 package com.erp.server.wms.listener;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.erp.model.wms.dto.excel.WarehouseLocationExcelDto;
@@ -29,7 +30,7 @@ public class WarehouseLocationExcelListener extends AnalysisEventListener<Linked
         dto.setWarehouseLocationName(data.get(3));
         dto.setRemark(data.get(4));
         verifyField(dto);
-        if(StringUtils.isNotBlank(dto.getErrorMsg())){
+        if(CharSequenceUtil.isNotBlank(dto.getErrorMsg())){
             errorList.add(dto);
         }else {
             successList.add(dto);
@@ -37,19 +38,19 @@ public class WarehouseLocationExcelListener extends AnalysisEventListener<Linked
     }
 
     private void verifyField(WarehouseLocationExcelDto dto) {
-        if(StringUtils.isBlank(dto.getWarehouseName())){
+        if(CharSequenceUtil.isBlank(dto.getWarehouseName())){
             dto.setErrorMsg("仓库不能为空，");
             return;
         }
-        if(StringUtils.isBlank(dto.getWarehouseAreaName())){
+        if(CharSequenceUtil.isBlank(dto.getWarehouseAreaName())){
             dto.setErrorMsg("库区不能为空");
             return;
         }
-        if(StringUtils.isBlank(dto.getWarehouseLocationCode())){
+        if(CharSequenceUtil.isBlank(dto.getWarehouseLocationCode())){
             dto.setErrorMsg("仓位编码不能为空");
             return;
         }
-        if(StringUtils.isBlank(dto.getWarehouseLocationName())){
+        if(CharSequenceUtil.isBlank(dto.getWarehouseLocationName())){
             dto.setErrorMsg("仓位名称不能为空");
             return;
         }

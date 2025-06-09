@@ -42,15 +42,11 @@ public class ProductListingTimeCustomer implements RocketMQListener<Map<String, 
         if (ObjectUtil.isEmpty(productIdBySku)) {
             return;
         }
-/*        ProductSaleEntity bySkuId = productSaleService.getBySkuId(productIdBySku.getId());
-        if (bySkuId.getListingTime() != null) {
-            listingTime = bySkuId.getListingTime().toString();
-        }*/
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         productSaleService.lambdaUpdate()
                 .set(ProductSaleEntity::getListingTime, LocalDate.parse(listingTime, dateTimeFormatter))
                 .eq(ProductSaleEntity::getSkuId, productIdBySku.getId())
                 .update();
-        redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, skuNo, listingTime, 30 * 24 * 3600);
+        redisUtil.hset(RedisKeyConstant.SKU_LISTING_TIME, skuNo, listingTime, 30 * 24 * 3600L);
     }
 }

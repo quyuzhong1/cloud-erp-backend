@@ -1,12 +1,14 @@
 package com.erp.server.wms.rocketmq.consumer;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncTaskIdDTO;
 import com.common.business.dto.PlatformInventoryDTO;
 import com.common.business.enums.*;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.BeanMapper;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.handler.AbstractPlatformConsumerHandler;
 import com.common.message.service.mq.MQProducerService;
@@ -18,15 +20,18 @@ import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.dto.OverseasProviderDTO;
+import com.erp.model.wms.dto.WarehouseMappingDTO;
+import com.erp.model.wms.entity.OverseasInventoryAgeDetailEntity;
 import com.erp.model.wms.entity.OverseasInventoryEntity;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
 import com.erp.server.wms.convert.OverseasWarehouseConverter;
+import com.erp.server.wms.service.OverseasInventoryAgeDetailService;
 import com.erp.server.wms.service.OverseasInventoryService;
 import com.erp.server.wms.service.OverseasProviderService;
+import com.erp.server.wms.service.WarehouseMappingService;
 import io.seata.common.util.CollectionUtils;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.ConsumeMode;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
@@ -34,6 +39,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -44,10 +52,10 @@ import java.util.stream.Collectors;
  */
 @Service
 @Slf4j
-@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
-        selectorExpression = "third_system_inventory_tag",
-        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_inventory_consumer",
-        consumeMode = ConsumeMode.ORDERLY)
+//@RocketMQMessageListener(topic = RocketMqTopic.PLATFORM_PULL_DATA_TOPIC,
+//        selectorExpression = "third_system_inventory_tag",
+//        consumerGroup = "${spring.cloud.nacos.discovery.namespace}-platform_pull_inventory_consumer",
+//        consumeMode = ConsumeMode.ORDERLY)
 public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extends AbstractPlatformConsumerHandler<T> {
 
     @Resource
@@ -67,6 +75,10 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
 
     @Resource
     private DmpMongoDbFeign dmpMongoDbFeign;
+    @Resource
+    private OverseasInventoryAgeDetailService overseasInventoryAgeDetailService;
+    @Resource
+    private WarehouseMappingService warehouseMappingService;
 
     @Override
     public void updateMongodbData(String platform, String uniqueId, Integer isClean) {
@@ -87,7 +99,7 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
      * @return
      */
     private String getTableName(String platform){
-        return StrUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
+        return CharSequenceUtil.format("{}_{}_{}", PlatformCategoryEnum.THIRD_SYSTEM.getCode(),
                 platform, BusinessTypeEnum.INBOUND.getCode());
     }
 
@@ -106,38 +118,56 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public ApiResult<?> handle(Object ext) {
+    public ApiResult<Object> handle(Object ext) {
         PlatformInventoryDTO dto = JSONUtil.toBean(ext.toString(), PlatformInventoryDTO.class);
-        // 查询仓库ID
-        List<OverseasProviderDTO.ListWithWarehouseDTO> overseasWareHouseList = overseasProviderService.listAllMatch();
-        if (overseasWareHouseList.isEmpty()){
-            return ApiResult.success();
-        }
-        List<OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOS = overseasWareHouseList.stream()
-                .filter(e-> e.getCode().equalsIgnoreCase(dto.getPlatform()))
-                .collect(Collectors.toList());
-        if (CollectionUtils.isEmpty(warehouseDTOS)){
+        List<String> warehouseIds = null;
+        if(dto.getPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
+            //仓库映射
+            List<WarehouseMappingDTO.MappingViewDTO> mappingViewDTOS = warehouseMappingService.listMappingViewByDictPlatform(PlatformDictEnum.ALI_EXPRESS.getCode());
+            if (mappingViewDTOS.isEmpty()){
+                return ApiResult.success();
+            }
+            WarehouseMappingDTO.MappingViewDTO mappingViewDTO = mappingViewDTOS.stream()
+                    .filter(e -> e.getThirdWarehouseName().equals(dto.getPlatformWarehouseName()))
+                    .findFirst().orElse(null);
+            if (null == mappingViewDTO){
+                return ApiResult.success();
+            }
+            dto.setWarehouseId(mappingViewDTO.getWarehouseId());
+
+            warehouseIds = mappingViewDTOS.stream().map(WarehouseMappingDTO.MappingViewDTO::getWarehouseId).collect(Collectors.toList());
+        }else {
+            // 查询仓库ID
+            List<OverseasProviderDTO.ListWithWarehouseDTO> overseasWareHouseList = overseasProviderService.listAllMatch();
             if (overseasWareHouseList.isEmpty()){
                 return ApiResult.success();
             }
-        }
-        OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = warehouseDTOS.stream()
-                .filter(e -> e.getPlatformWarehouseCode().equalsIgnoreCase(dto.getPlatformWarehouseCode()))
-                .findFirst().orElse(null);
-        if (null == warehouseDTO){
-            return ApiResult.success();
-        }
-        dto.setWarehouseId(warehouseDTO.getWarehouseId());
+            List<OverseasProviderDTO.ListWithWarehouseDTO> warehouseDTOS = overseasWareHouseList.stream()
+                    .filter(e-> e.getCode().equalsIgnoreCase(dto.getPlatform()))
+                    .collect(Collectors.toList());
+            if (CollectionUtils.isEmpty(warehouseDTOS) && overseasWareHouseList.isEmpty()){
+                    return ApiResult.success();
+                }
 
-        List<String> warehouseIds = warehouseDTOS.stream().map(OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId).collect(Collectors.toList());
+            OverseasProviderDTO.ListWithWarehouseDTO warehouseDTO = warehouseDTOS.stream()
+                    .filter(e -> e.getPlatformWarehouseCode().equalsIgnoreCase(dto.getPlatformWarehouseCode()))
+                    .findFirst().orElse(null);
+            if (null == warehouseDTO){
+                return ApiResult.success();
+            }
+            dto.setWarehouseId(warehouseDTO.getWarehouseId());
 
+            warehouseIds = warehouseDTOS.stream().map(OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId).collect(Collectors.toList());
+        }
         //海外仓
-        if(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(dto.getWarehousePlatformType())){
+        if(WarehousePlatformTypeEnum.OVERSEAS_WAREHOUSE.getCode().equals(dto.getWarehousePlatformType()) || dto.getPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode())){
             //转换成数据库实体对象
             OverseasInventoryEntity entity = OverseasWarehouseConverter.INSTANCE.inventoryDtoToDb(dto);
-            if (StringUtils.isNotBlank(entity.getPlatformSku())){
+            if (CharSequenceUtil.isNotBlank(entity.getPlatformSku())){
                 ListingInfoParamDTO paramDTO = new ListingInfoParamDTO();
-                paramDTO.setPlatform(entity.getDictPlatform());
+                if(Boolean.FALSE.equals(dto.getPlatform().equals(PlatformDictEnum.ALI_EXPRESS.getCode()))){
+                    paramDTO.setPlatform(entity.getDictPlatform());
+                }
                 paramDTO.setWarehouseIdList(warehouseIds);
                 paramDTO.setPlatformSkuNoList(Collections.singletonList(entity.getPlatformSku()));
                 paramDTO.setType(RuleTypeEnum.WAREHOUSE.getCode());
@@ -146,8 +176,8 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
                 List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
                 if(CollectionUtils.isNotEmpty(listingedInfoWithSkuMappingList)){
                     ListingInfoWithSkuMappingDTO listingInfoWithSkuMappingDTO = listingedInfoWithSkuMappingList.stream()
-                            .filter(e-> (e.getHasMappingAll() && e.getPlatformSkuNo().equalsIgnoreCase(dto.getProductSku()))
-                                    || (e.getWarehouseId().equalsIgnoreCase(dto.getWarehouseId()) && e.getPlatformSkuNo().equalsIgnoreCase(dto.getProductSku()))
+                            .filter(e-> (e.getHasMappingAll() && e.getPlatformSkuNo().equals(dto.getProductSku()))
+                                    || (e.getWarehouseId().equalsIgnoreCase(dto.getWarehouseId()) && e.getPlatformSkuNo().equals(dto.getProductSku()))
                             ).findFirst().orElse(null);
                     if (null != listingInfoWithSkuMappingDTO){
                         entity.setPlatformSkuName(listingInfoWithSkuMappingDTO.getPlatformSkuName().trim());
@@ -160,6 +190,35 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
             overseasInventoryService.saveOrUpdateByPlatform(entity);
             //可能首次平台sku没有配置映射关系，在拉取数据时查没有映射关系的重新配置
             overseasInventoryService.handleNotMapping(entity.getDictPlatform());
+
+            //库龄计算
+            if(CollUtil.isNotEmpty(dto.getAgeInfoList())){
+                List<OverseasInventoryAgeDetailEntity> addList = new ArrayList<>();
+                List<OverseasInventoryAgeDetailEntity> oldDetails = overseasInventoryAgeDetailService.lambdaQuery()
+                        .eq(OverseasInventoryAgeDetailEntity::getPullDate, LocalDate.now())
+                        .eq(OverseasInventoryAgeDetailEntity::getMainId,entity.getId())
+                        .list();
+                for (PlatformInventoryDTO.PlatformInventoryAgeDTO ageDTO : dto.getAgeInfoList()) {
+                    // 计算日期差
+                    int daysBetween = (int) ChronoUnit.DAYS.between(ageDTO.getPutAwayDate(), LocalDate.now()) + 1 ;
+
+                    OverseasInventoryAgeDetailEntity oldDetail = oldDetails.stream().filter(v -> v.getPutAwayDate().equals(ageDTO.getPutAwayDate())).findFirst().orElse(null);
+                    if(null == oldDetail){
+                        OverseasInventoryAgeDetailEntity detailEntity = new OverseasInventoryAgeDetailEntity();
+                        BeanMapper.copy(ageDTO, detailEntity);
+                        detailEntity.setMainId(entity.getId());
+                        detailEntity.setInventoryAge(daysBetween);
+                        addList.add(detailEntity);
+                    }else {
+                        oldDetail.setInventoryQty(ageDTO.getInventoryQty());
+                        oldDetail.setInventoryAge(daysBetween);
+                        addList.add(oldDetail);
+                    }
+                }
+                if(CollUtil.isNotEmpty(addList)){
+                    overseasInventoryAgeDetailService.saveOrUpdateBatch(addList);
+                }
+            }
         }
         return ApiResult.success();
     }
@@ -168,10 +227,10 @@ public class PlatformInventoryConsumerService<T extends DmpSyncTaskIdDTO> extend
         WarnMsgInfoDTO warnMsgInfo = new WarnMsgInfoDTO();
         warnMsgInfo.setBizName(SourceTypeEnum.getName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setErpServerModuleEnum(ErpServerModuleEnum.ERP_SERVER_WMS);
-        warnMsgInfo.setTitle(StrUtil.format("库存消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
+        warnMsgInfo.setTitle(CharSequenceUtil.format("库存消息消费失败，来源平台:{},目标平台:{}",dmpPullTaskEntity.getSourcePlatformName(),dmpPullTaskEntity.getTargetPlatformName()));
         warnMsgInfo.setTableName(SourceTypeEnum.getTableName(dmpPullTaskEntity.getSourceType()));
         warnMsgInfo.setTableId(dmpPullTaskEntity.getId());
-        warnMsgInfo.setKeyInfo(StringUtils.isBlank(msg)?"":msg);
+        warnMsgInfo.setKeyInfo(CharSequenceUtil.isBlank(msg)?"":msg);
         warnMsgInfo.setWarnMsgTypeEnum(WarnMsgTypeEnum.SYS_EXCEPTION);
         return warnMsgInfo;
     }

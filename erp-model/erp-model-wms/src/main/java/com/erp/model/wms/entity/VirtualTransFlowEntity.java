@@ -1,15 +1,17 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 
 /**
@@ -23,6 +25,8 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
+@AllArgsConstructor
+@NoArgsConstructor
 @TableName("virtual_trans_flow")
 public class VirtualTransFlowEntity extends BaseEntity<VirtualTransFlowEntity> {
 
@@ -132,6 +136,18 @@ public class VirtualTransFlowEntity extends BaseEntity<VirtualTransFlowEntity> {
     @TableField("is_unapproved")
     private Boolean isUnapproved;
 
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+
+
+    public VirtualTransFlowEntity(String id, Integer afterQty) {
+        super(id);
+        this.curInventoryQty = afterQty;
+    }
+
 
     public static final String VIRTUAL_INVENTORY_ID = "virtual_inventory_id";
 
@@ -163,7 +179,7 @@ public class VirtualTransFlowEntity extends BaseEntity<VirtualTransFlowEntity> {
 
     public static final String TRADE_TIME = "trade_time";
 
-    public static final String QTY = "qty";
+    
 
     public static final String CUR_INVENTORY_QTY = "cur_inventory_qty";
 

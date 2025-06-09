@@ -211,7 +211,6 @@ public class BaseController {
      * @return
      */
     protected <T> ApiResult<T> failure(ServiceException ex) {
-        ApiResult<T> apiResult = message(ex.getCode(), ex.getMsg(), null);
-        return apiResult;
+        return message(ex.getCode(), ex.getMsg(), null);
     }
 }

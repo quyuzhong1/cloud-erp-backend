@@ -46,13 +46,11 @@ public class BasicLabelEntity extends BaseEntity<BasicLabelEntity> {
     @TableField("index")
     private Integer index;
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_COLOR = "color";
 
-    public static final String COLOR = "color";
-
-    public static final String LEVEL = "level";
+    public static final String FIELD_LEVEL = "level";
 
     @Override
     public Serializable pkVal() {

@@ -104,7 +104,7 @@ public class StocktakingTaskDetailEntity extends BaseEntity<StocktakingTaskDetai
 
     public static final String USABLE_QTY = "usable_qty";
 
-    public static final String QTY = "qty";
+    
 
     public static final String FROZEN_QTY = "frozen_qty";
 

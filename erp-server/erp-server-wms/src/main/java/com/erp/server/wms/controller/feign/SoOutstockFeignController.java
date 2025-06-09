@@ -1,6 +1,6 @@
 package com.erp.server.wms.controller.feign;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryContainer;
@@ -10,6 +10,7 @@ import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.SoOutstockDetailEntity;
@@ -21,7 +22,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -154,7 +154,7 @@ public class SoOutstockFeignController {
      */
     @PostMapping("/generateB2cSoOutstockByPlatformData")
     Boolean generateB2cSoOutstockByPlatformData(@RequestBody PlatformGenerateSoOutstockDTO platformDeliveryDetailDTO) {
-        String redissonKey = StrUtil.format("{}:{}", RedisKeyConstant.SO_STOCK_KEY, platformDeliveryDetailDTO.getGenerateB2cDTO().getSourceCode());
+        String redissonKey = CharSequenceUtil.format("{}:{}", RedisKeyConstant.SO_STOCK_KEY, platformDeliveryDetailDTO.getThirdCode());
         return soOutstockService.generateB2cSoOutstockByPlatformData(platformDeliveryDetailDTO, redissonKey);
     }
 
@@ -228,6 +228,30 @@ public class SoOutstockFeignController {
     @PostMapping("/updateSoOutPrice")
     Boolean updateSoOutPrice(@RequestBody List<SoDetailEntity> soDetailEntityList) {
         return soOutstockDetailService.updateSoOutPrice(soDetailEntityList);
+    }
+
+    /**
+     * B2B退货订单没有关联订单时的计算规则
+     * @author jack
+     * @date: 2024-11-25
+     * @param params
+     * @return SoOutstockDTO.AmountDTO
+     */
+    @PostMapping("/listAmountBySkuIds")
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(@RequestBody SoOutstockDTO.ListAmountParamDTO params){
+        return soOutstockService.listAmountBySkuIds(params);
+    }
+
+    /**
+     * 根据销售 销售订单详情ids 获取是否有下推的单据
+     * @author jack
+     * @date 2024-12-19
+     * @param soDetailIds
+     * @return
+     */
+    @PostMapping("/getPushDownBySoDetailIds")
+    public List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIds) {
+        return soOutstockDetailService.getPushDownBySoDetailIds(soDetailIds);
     }
 }
 

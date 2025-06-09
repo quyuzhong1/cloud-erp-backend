@@ -90,17 +90,24 @@ public class TransferInDetailEntity extends BaseEntity<TransferInDetailEntity> {
     private String sourceDetailId;
 
 
+    /**
+     * 金蝶详情Id
+     */
+    @TableField("kingdee_detail_id")
+    private String KingdeeDetailId;
+
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
+    
 
     public static final String OUT_WAREHOUSE_LOCATION = "out_warehouse_location";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String PLAN_QTY = "plan_qty";
 

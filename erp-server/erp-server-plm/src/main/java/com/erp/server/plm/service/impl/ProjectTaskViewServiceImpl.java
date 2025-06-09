@@ -78,7 +78,7 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             parentDto.setParentId(IsConstant.NO);
             parentDto.setChargeId(entry.getKey());
             parentDto.setChargeName(chargeName);
-            parentDto.setPlanStartTime(StringUtils.isEmpty(minStartTime) ? minStartTime : minStartTime.concat(" 00:00:00"));
+            parentDto.setPlanStartTime(StringUtils.isEmpty(minStartTime) ? minStartTime :  minStartTime.concat(" 00:00:00"));
             parentDto.setPlanEndTime(StringUtils.isEmpty(maxEndTime) ? maxEndTime : maxEndTime.concat(" 23:59:59"));
             parentId ++;
             //同一人员下的任务
@@ -372,28 +372,5 @@ public class ProjectTaskViewServiceImpl implements ProjectTaskViewService {
             obj.setStatusName(obj.getIsProjectStatus().equals(IsConstant.YES) ? ProjectStateEnum.getName(obj.getStatus()) : ApprovalStatusEnum.getName(obj.getStatus()));
         });
         return new PagingVO<>(page);
-    }
-
-    /**
-     * @description: 导出文件名称
-     * @author Will
-     * @date: 2022/11/24 14:23
-     * @param fileName
-     * @return String
-     */
-    private String getFileName(String fileName) {
-        StringBuffer sb = new StringBuffer();
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(fileName);
-        sb.append(date);
-        String redisKey = "file:name:" + date;
-        Integer last = redisService.getCacheObject(redisKey);
-        Integer lastNo = 1;
-        if (last != null) {
-            lastNo = last + 1;
-        }
-        redisService.setCacheObject(redisKey, lastNo, (long) 1, TimeUnit.DAYS);
-        return sb.append(lastNo).toString();
-
     }
 }

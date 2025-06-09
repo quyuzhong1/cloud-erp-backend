@@ -1,6 +1,9 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.*;
+import com.common.business.dto.base.BaseIdsDTO;
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.dto.PurchasePriceDTO;
@@ -8,7 +11,6 @@ import com.erp.model.wms.dto.PoInstockDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import com.erp.model.wms.dto.PurchaseReturnOrderDetailDTO;
 import com.erp.model.wms.dto.PurchaseReturnStatisticsDTO;
-import com.erp.model.wms.entity.PoInstockEntity;
 import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -40,7 +42,7 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @param dto dto
      * @return com.common.core.controller.vo.ApiResult
      **/
-    String add(PurchaseReturnOrderDTO.AddDTO dto);
+    PoReturnEntity add(PurchaseReturnOrderDTO.AddDTO dto);
 
     /**
      * 修改
@@ -76,7 +78,7 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @param dto dto
      * @return java.lang.Boolean
      **/
-    Boolean addAndSubmit(PurchaseReturnOrderDTO.AddDTO dto);
+    PoReturnEntity addAndSubmit(PurchaseReturnOrderDTO.AddDTO dto);
 
     /**
      * 修改提交
@@ -98,6 +100,13 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return java.lang.Boolean
      **/
     BatchResultDTO approve(PoReturnEntity entity, String type, String comment, Boolean isNeedProcess,List<PoReturnDetailEntity> poReturnDetailList);
+
+    /**
+     * 审核添加分步式事物代码处理
+     * @param purchaseDetailIdList
+     * @param poReturnEntityList1
+     */
+    void approveTransactional (List<String> purchaseDetailIdList,List<PoReturnEntity> poReturnEntityList1);
 
     /**
      * 批量反审核
@@ -401,4 +410,35 @@ public interface PoReturnService extends SuperService<PoReturnEntity> {
      * @return
      */
     List<PurchasePriceDTO.PriceDTO> batchGetPurchasePrice(List<PurchasePriceDTO.PriceDTO> list);
+
+    List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseView(List<String> ids);
+
+    Boolean pushDownPurchase(List<PurchasePriceDTO.PushDownPurchaseView> pushDownPurchaseViews);
+
+    /**
+     * 单提交
+     */
+    BatchResultDTO submitEntity(PoReturnEntity entity);
+
+    /**
+     * 批量提交
+     */
+    Boolean submitEntityList(List<String> ids, List<PoReturnEntity> purchaseReturnOrderEntities);
+
+    /**
+     * 单取消流程
+     **/
+    BatchResultDTO cancelProcessEntity(PoReturnEntity entity);
+
+
+    /**
+     * 单作废
+     */
+    BatchResultDTO invalidEntity(PoReturnEntity entity, String remark);
+
+    /**
+     * 删除操作
+     */
+
+    BatchResultDTO deleteEntity(PoReturnEntity entity);
 }

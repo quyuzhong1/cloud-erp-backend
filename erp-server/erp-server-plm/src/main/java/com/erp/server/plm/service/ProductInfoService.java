@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.erp.model.plm.dto.*;
+import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.ProductInfoEntity;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -254,7 +256,7 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @param idsTimeDto
      * @return
      */
-    Boolean batchEstablish(ProductInfoDTO.IdsDateDto idsTimeDto);
+    Boolean batchEstablish(List<String> ids, LocalDate localDate);
 
     /**
      * 产品概览
@@ -311,4 +313,19 @@ public interface ProductInfoService extends IService<ProductInfoEntity> {
      * @return List<ProductDTO>
      */
     List<ProductDetailDTO.ProductDTO> listProductBySkuIds(List<String> skuIds);
+
+    /**
+     * 更新分类
+     * @param dto 参数
+     */
+    Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto);
+
+    /**
+     * 部门信息校验和查询
+     */
+    List<String> handleDept(List<String> deptIdList);
+
+    PagingVO<ProductShowDTO> exportProductShow(PagingDTO<ProductSearchDTO.ExportDTO> dto);
+
+    PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProductTaskExcelDTO(PagingDTO<ProductSearchDTO.ExportDTO> dto);
 }

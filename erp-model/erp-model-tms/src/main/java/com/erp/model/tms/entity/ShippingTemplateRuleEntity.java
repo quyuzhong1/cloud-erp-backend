@@ -1,18 +1,15 @@
 package com.erp.model.tms.entity;
 
-import java.math.BigDecimal;
-
-import com.baomidou.mybatisplus.annotation.FieldStrategy;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
-import java.util.List;
-
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.List;
 
 
 /**
@@ -127,7 +124,7 @@ public class ShippingTemplateRuleEntity extends BaseEntity<ShippingTemplateRuleE
 
     public static final String TO_COUNTRY = "to_country";
 
-    public static final String REGION = "region";
+    public static final String FIELD_REGION = "region";
 
     public static final String TO_WAREHOUSE_NAME = "to_warehouse_name";
 

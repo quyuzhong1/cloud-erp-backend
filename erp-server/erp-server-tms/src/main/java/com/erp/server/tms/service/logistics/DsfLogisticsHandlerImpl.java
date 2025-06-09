@@ -1,7 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.nacos.api.utils.StringUtils;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -22,9 +22,6 @@ import com.erp.server.tms.convert.LogisticsChannelConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.erp.tms.batong.constants.BaTongConstants;
-import com.erp.tms.batong.model.label.base.BaseResult;
-import com.erp.tms.batong.model.order.request.BaTongUpdateWeightReq;
 import com.sdk.tms.disifang.model.base.ResponseMsg;
 import com.sdk.tms.disifang.model.chanel.response.ChanelInfo;
 import com.sdk.tms.disifang.model.label.request.LabelRequest;
@@ -49,7 +46,6 @@ import java.util.stream.Collectors;
 /**
  * @author zdy
  * @ClassName DsfLogisticsHandlerImpl
- * @description: TODO
  * @date 2023年11月02日
  * @version: 1.0
  */
@@ -57,6 +53,7 @@ import java.util.stream.Collectors;
 @Component
 @LogisticsPlatformType(LogisticsPlatformEnum.DSF)
 public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
+    public static final String YYYY_MM_DD = "yyyy-MM-dd";
     @Resource
     private DsfShipperService dsfShipperService;
     @Resource
@@ -107,14 +104,14 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 if (!StringUtils.isBlank(logisticsProductVO.getDestCurrency())){
                     currency = logisticsProductVO.getDestCurrency();
                 }
-                BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), currency);
                 if (Objects.isNull(exchangeRate1)){
                     throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
                 }
                 //先转换成人民币
-                BigDecimal cnyDestDeclarePrice = MathUtil.multiply(destDeclarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
+                BigDecimal cnyDestDeclarePrice = MathUtil.multiplyWithTwo(destDeclarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
                 //再统一转换成美元
-                BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+                BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), CurrencyEnum.USD.getCurrencyCode());
                 if (Objects.isNull(exchangeRate2)){
                     throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
                 }
@@ -130,14 +127,14 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 if (!StringUtils.isBlank(logisticsProductVO.getDeclareCurrency())){
                     currency = logisticsProductVO.getDeclareCurrency();
                 }
-                BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), currency);
+                BigDecimal exchangeRate1 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), currency);
                 if (Objects.isNull(exchangeRate1)){
                     throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), currency);
                 }
                 //先转换成人民币
-                BigDecimal cnyDeclarePrice = MathUtil.multiply(declarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
+                BigDecimal cnyDeclarePrice = MathUtil.multiplyWithTwo(declarePrice, exchangeRate1).setScale(4, RoundingMode.HALF_UP);
                 //再统一转换成美元
-                BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")), CurrencyEnum.USD.getCurrencyCode());
+                BigDecimal exchangeRate2 = dmpTaskFeign.getRate(LocalDate.now().format(DateTimeFormatter.ofPattern(YYYY_MM_DD)), CurrencyEnum.USD.getCurrencyCode());
                 if (Objects.isNull(exchangeRate2)){
                     throw new ServiceException(ApiError.ERROR_EXCHANGE_RATE_NOT_EXIST, LocalDate.now(), CurrencyEnum.USD.getCurrencyCode());
                 }
@@ -158,23 +155,25 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
         //包裹信息封装
         orderRequest.setParcelList(getParcel(logisticsOrderVO));
         ValidatorUtil.validateEntity(orderRequest);
+        String iossNo = orderRequest.getIossNo();
         boolean success = true;
         try {
             ResponseMsg responseMsg = dsfShipperService.createOrder(logisticsOrderVO.getAuthMap(), orderRequest);
             if (StringUtils.isBlank(responseMsg.getResult()) || !Objects.equals("1", responseMsg.getResult())) {
-                responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsOrderVO.getDeliveryNo(), JSONObject.toJSONString(responseMsg.getErrors()));
+                responseVO.failure(LogisticsPlatformEnum.DSF.getName(), logisticsOrderVO.getDeliveryNo(), JSON.toJSONString(responseMsg.getErrors()));
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(logisticsOrderVO), JSONUtil.toJsonStr(responseMsg), false);
                 success = false;
             } else {
-                OrderResponse orderResponse = JSONObject.parseObject(JSONObject.toJSONString(responseMsg.getData()), OrderResponse.class);
+                OrderResponse orderResponse = JSON.parseObject(JSON.toJSONString(responseMsg.getData()), OrderResponse.class);
                 responseVO = LogisticsOrderResponseVO.builder()
                         .transportNo(orderResponse.getRef_no())
                         .trackNo(orderResponse.getTracking_no())
                         .transportNo(orderResponse.getDs_consignment_no())
                         .logisticsChannelNo(orderResponse.getLogistics_channel_no())
                         .odaResultSign(orderResponse.getOda_result_sign())
+                        .iossTaxNo(iossNo)
                         .build();
                 logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
                         logisticsOrderVO.getDeliveryNo(), BusinessTypeEnum.CREATE_ORDER.getCode(), LogisticsPlatformEnum.DSF.getCode(),
@@ -310,7 +309,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     list.add(responseVO);
                     success = false;
                 } else {
-                    List<QueryOrderResponse> responses = JSONObject.parseArray(responseMsg.getData().toString(), QueryOrderResponse.class);
+                    List<QueryOrderResponse> responses = JSON.parseArray(responseMsg.getData().toString(), QueryOrderResponse.class);
                     if (CollectionUtils.isNotEmpty(responses)) {
                         responses.forEach(queryOrderResponse -> {
                             LogisticsOrderResponseVO orderResponseVO = LogisticsOrderResponseVO.builder()
@@ -417,7 +416,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
                         RequestStatusEnums.FAILED.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
                 return failure(getPlatForm().getName() + ":" + responseMsg.getMsg());
             } else {
-                List<ChanelInfo> chanelInfos = JSONObject.parseArray(responseMsg.getData().toString(), ChanelInfo.class);
+                List<ChanelInfo> chanelInfos = JSON.parseArray(responseMsg.getData().toString(), ChanelInfo.class);
                 logisticsOperateService.pullOperateLog(chanelQueryVO.getOrderId(),
                         chanelQueryVO.getTransportMode(), BusinessTypeEnum.GET_CHANEL_LIST.getCode(), LogisticsPlatformEnum.DSF.getCode(),
                         RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(chanelQueryVO), JSONUtil.toJsonStr(responseMsg));
@@ -471,7 +470,7 @@ public class DsfLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap) {
+    public ApiResult<Object>authorization(Map<String, String> authMap) {
         try {
             ChanelRequest chanelRequest = ChanelRequest.builder()
                     .transport_mode("1")

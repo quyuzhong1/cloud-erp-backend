@@ -45,71 +45,74 @@
 
     <select id="paging" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$ListDTO">
         SELECT
-        id,
-        code,
-        name,
-        approve_status AS approveStatus,
-        status,
-        mode,
-        separate_rule AS separateRule,
-        type,
-        submit_time AS submitTime,
-        submit_user_id AS submitUserId,
-        submit_user_name AS submitUserName,
-        approve_user_id AS approveUserId,
-        approve_user_name AS approveUserName,
-        approve_time AS approveTime,
-        start_time AS startTime,
-        end_time AS endTime
-        FROM  stocktaking_plan
-        WHERE is_deleted=FALSE
+        sp.id,
+        sp.code,
+        sp.name,
+        sp.approve_status AS approveStatus,
+        sp.status,
+        sp.mode,
+        sp.separate_rule AS separateRule,
+        sp.type,
+        sp.submit_time AS submitTime,
+        sp.submit_user_id AS submitUserId,
+        sp.submit_user_name AS submitUserName,
+        sp.approve_user_id AS approveUserId,
+        sp.approve_user_name AS approveUserName,
+        sp.approve_time AS approveTime,
+        sp.start_time AS startTime,
+        sp.end_time AS endTime,
+        sp.create_time AS createTime,
+        sp.update_time AS updateTime
+        FROM  stocktaking_plan sp
+        left join stocktaking_plan_detail spd on sp.id = spd.main_id and spd.is_deleted=false
+        WHERE ${params.sqlMap.default} and sp.is_deleted=FALSE
         <if test="params.code!=null and params.code!=''">
-            AND code ILIKE concat('%',#{params.code}::text,'%')
+            AND sp.code ILIKE concat('%',#{params.code}::text,'%')
         </if>
         <if test="params.name!=null and params.name!=''">
-            AND name ILIKE concat('%',#{params.name}::text,'%')
+            AND sp.name ILIKE concat('%',#{params.name}::text,'%')
         </if>
         <if test="params.approveStatusList!=null and params.approveStatusList.size > 0">
-            AND approve_status in
+            AND sp.approve_status in
             <foreach collection="params.approveStatusList" item="item" index="index" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
         <if test="params.modeList!=null and params.modeList.size > 0">
-            AND mode in
+            AND sp.mode in
             <foreach collection="params.modeList" item="item" index="index" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
         <if test="params.statusList!=null and params.statusList.size > 0">
-            AND status in
+            AND sp.status in
             <foreach collection="params.statusList" item="item" index="index" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
         <if test="params.typeList!=null and params.typeList.size > 0">
-            AND type in
+            AND sp.type in
             <foreach collection="params.typeList" item="item" index="index" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
         <if test="params.separateRuleList != null and params.separateRuleList.size > 0">
-            AND separate_rule in
+            AND sp.separate_rule in
             <foreach collection="params.separateRuleList" item="item" index="index" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
         <if test="params.submitUserIdList != null and params.submitUserIdList.size > 0">
-            AND submit_user_id in
+            AND sp.submit_user_id in
             <foreach collection="params.submitUserIdList" item="item" index="index" open="(" close=")" separator=",">
                 #{item}
             </foreach>
         </if>
         <if test="params.submitTimeList != null and params.submitTimeList.size > 1">
-            AND submit_time >= #{params.submitTimeList[0]} AND submit_time <![CDATA[<]]> #{params.submitTimeList[1]}
+            AND sp.submit_time >= #{params.submitTimeList[0]} AND submit_time <![CDATA[<]]> #{params.submitTimeList[1]}
         </if>
         <if test="params.tabFlag != null and params.tabFlag != '' and params.tabFlag != 'all' ">
-            AND approve_status = #{params.tabFlag}
+            AND sp.approve_status = #{params.tabFlag}
         </if>
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -119,7 +122,7 @@
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
-        </if> id DESC
+        </if> sp.id DESC
     </select>
 
     <select id="listCount" resultType="com.common.business.dto.base.ApproveStatusQtyDTO">
@@ -131,14 +134,15 @@
     </select>
     <select id="tabList" resultType="com.erp.model.wms.dto.StocktakingPlanDTO$TabListDTO">
         SELECT
-        approve_status AS tabFlag,
-        count(*)  AS count
-        FROM  stocktaking_plan
-        WHERE is_deleted=FALSE
+        sp.approve_status AS tabFlag,
+        count(sp.id)  AS count
+        FROM  stocktaking_plan sp
+        left join stocktaking_plan_detail spd on sp.id = spd.main_id and spd.is_deleted=false
+        WHERE sp.is_deleted=FALSE
         <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
-        GROUP BY approve_status
+        GROUP BY sp.approve_status
     </select>
 
 </mapper>

@@ -1,18 +1,29 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
+import com.common.business.enums.OmsPlatformEnum;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
+import com.erp.model.dmp.dto.CfgAppClientDTO;
+import com.erp.model.dmp.entity.CfgAppClientEntity;
+import com.erp.model.dmp.enums.AppClientEnum;
+import com.erp.model.oms.entity.ShopAuthEntity;
+import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.AuthStatusEnum;
+import com.erp.model.oms.enums.AuthTypeEnum;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsAuthEntity;
@@ -20,13 +31,14 @@ import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
 import com.erp.model.tms.entity.LogisticsSupplierEntity;
 import com.erp.model.tms.enums.LogisticsAuthStatusEnum;
+import com.erp.rpc.dmp.feign.DmpTaskFeign;
+import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.tms.handler.LogisticsRegistry;
 import com.erp.server.tms.mapper.LogisticsAuthMapper;
 import com.erp.server.tms.service.*;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +46,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * <p>
@@ -46,23 +59,26 @@ import java.util.*;
 @Slf4j
 @Service
 public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapper, LogisticsAuthEntity> implements LogisticsAuthService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
     @Resource
     private LogisticsRegistry logisticsRegistry;
-    @Autowired
+    @Resource
     private LogisticsSupplierService logisticsSupplierService;
 
-    @Autowired
+    @Resource
     private LogisticsChannelService logisticsChannelService;
 
-    @Autowired
+    @Resource
     private LogisticsAuthFieldService logisticsAuthFieldService;
 
     @Lazy
     @Resource
     private AsyncService  asyncService;
-
+    @Resource
+    private ShopInfoFeign shopInfoFeign;
+    @Resource
+    private DmpTaskFeign dmpTaskFeign;
 
 
 
@@ -87,7 +103,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         //保存或者修改授权字段
         logisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), addDTO.getFieldMap());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流授权单", logisticsAuthEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流授权单", logisticsAuthEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, logisticsAuthEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getId());
@@ -141,7 +157,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
     @Override
     public LogisticsAuthEntity getByMainId(String id, String mainId) {
-        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).eq(LogisticsAuthEntity::getMainId, mainId).last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -153,7 +169,8 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
 
     @Override
     public LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(String logisticsSupplierId) {
-        return baseMapper.getAuthBySupplierId(logisticsSupplierId);
+        List<LogisticsSupplierDTO.AuthDTO> list = baseMapper.listAuthBySupplierId(Collections.singletonList(logisticsSupplierId));
+        return list.stream().findFirst().orElse(null);
     }
 
     @Override
@@ -165,7 +182,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
     }
 
     @Override
-    public ApiResult authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
+    public ApiResult<Object>authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
         LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
         if (Objects.isNull(service)){
             return ApiResult.error(-1,"功能未开发");
@@ -192,8 +209,106 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return this.lambdaQuery().in(LogisticsAuthEntity::getMainId, supplierIds).list();
     }
 
+    @Override
+    public Map<String, String> addShopAuth(Map<String, String> authMap, String logisticsPlatform) {
+        //获取oms已授权店铺
+        ApiResult<List<ShopAuthEntity>> result = null;
+        try {
+            if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam(AuthTypeEnum.SHOP.getCode(), AuthStatusEnum.ALREADY.getCode(),"");
+            }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.TIK_TOK.getCode());
+            }else if(LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.TIK_TOK_FULLY.getCode());
+            }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE.getCode());
+            }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+                result = shopInfoFeign.getShopListByParam("", AuthStatusEnum.ALREADY.getCode(),LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode());
+            }else{
+                throw new ServiceException("不支持的平台，请联系IT处理");
+            }
+        } catch (Exception e) {
+            log.error("erp-oms服务接口getShopeeShopList异常：{}", e.getMessage());
+        }
+        if (result != null && (!result.isSuccess() || CollectionUtil.isEmpty(result.getData()))) {
+            throw new ServiceException("请先完成店铺授权后再执行物流授权");
+        }
+        //美客多校验账号店铺是否存在授权
+        if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+
+            String shopAccount = authMap.get("shopAccount");
+            if(CharSequenceUtil.isBlank(shopAccount)){
+                throw new ServiceException("请输入账号");
+            }
+            List<ShopAuthEntity> authEntityList = result.getData();
+            if(CollUtil.isEmpty(authEntityList)){
+                throw new ServiceException("请先完成店铺授权后再执行物流授权");
+            }
+            List<String> shopIds = authEntityList.stream().map(ShopAuthEntity::getShopId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+            List<ShopInfoEntity> shopInfoEntityList = FeignQuery.getByIds(ShopInfoEntity.class, shopIds);
+            if(CollUtil.isEmpty(shopInfoEntityList)){
+                throw new ServiceException("店铺信息未找到");
+            }
+            ShopInfoEntity shopInfoEntity = shopInfoEntityList.stream().filter(e -> shopAccount.equals(e.getAccount()) && AuthStatusEnum.ALREADY.getCode().equals(e.getAuthStatus())).findFirst().orElse(null);
+            if(Objects.isNull(shopInfoEntity)){
+                throw new ServiceException("请先完成店铺授权后再执行物流授权");
+            }
+        }
+        //根据主店铺获取子店铺token
+        CfgAppClientDTO.FindDTO findDTO = new CfgAppClientDTO.FindDTO();
+        AppClientEnum appClientEnum;
+        if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.SHOPEE_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.TIKTOK_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.TIKTOK_FULLY_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.MERCADO_ACCESS_TOKEN;
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+            appClientEnum = AppClientEnum.MERCADO_LOCAL_ACCESS_TOKEN;
+        }else{
+            throw new ServiceException("不支持的平台，请联系IT处理");
+        }
+        findDTO.setBusinessType(appClientEnum.getBusinessType());
+        findDTO.setDictPlatform(appClientEnum.getPlatform());
+        findDTO.setPlatformType(appClientEnum.getPlatformType());
+        CfgAppClientEntity cfgAppClient = null;
+        try {
+            cfgAppClient = dmpTaskFeign.getCfgAppClient(findDTO);
+        }catch (Exception e){
+            log.error("erp-dmp服务获取配置信息异常：{}",e.getMessage());
+        }
+        if (Objects.isNull(cfgAppClient)) {
+            throw new ServiceException("请先完成中台授权后再执行物流授权");
+        }
+        ShopAuthEntity shopAuthEntity = result.getData().get(0);
+        if (LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+            authMap.put("shopId",shopAuthEntity.getShopeeId());
+            authMap.put("token",shopAuthEntity.getAccessToken());
+            authMap.put("host",cfgAppClient.getUrl());
+        }else if(LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.TIK_TOK_FULLY.getCode().equals(logisticsPlatform)){
+            authMap.put("shopId",shopAuthEntity.getShopId());
+        }else if(LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
+            authMap.put("shopId",shopAuthEntity.getShopId());
+            authMap.put("token",shopAuthEntity.getAccessToken());
+        }
+
+        return authMap;
+    }
+
+    @Override
+    public List<LogisticsSupplierDTO.AuthDTO> listAuthBySupplierId(List<String> logisticsSupplierIds) {
+        return baseMapper.listAuthBySupplierId(logisticsSupplierIds);
+    }
+
+    @Override
+    public List<String> listAllChannelByOverseas() {
+        return this.baseMapper.listAllChannelByOverseas(OmsPlatformEnum.allPlatform());
+    }
+
     public LogisticsAuthEntity getDbByMainId(String mainId){
-        return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(LogisticsAuthEntity::getMainId, mainId).last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -235,7 +350,7 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
      * 新增修改处理数据
      */
     private void handleData(LogisticsAuthEntity logisticsAuthEntity) {
-        // TODO 验证数据 & 数据赋值
+        
         String mainId = logisticsAuthEntity.getMainId();
         LogisticsSupplierEntity logisticsSupplier = logisticsSupplierService.getById(mainId);
         LogisticsAuthEntity authEntity = this.getByMainId(logisticsAuthEntity.getId(), mainId);
@@ -259,14 +374,16 @@ public class LogisticsAuthServiceImpl extends SuperServiceImpl<LogisticsAuthMapp
         return this.lambdaQuery().ne(StringUtils.isNotBlank(id), LogisticsAuthEntity::getId, id).
                 eq(LogisticsAuthEntity::getMainId, mainId).
                 eq(LogisticsAuthEntity::getLogisticsPlatform, logisticsPlatform).
-                last("LIMIT 1").one();
+                last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
     public Map<String, String> getLogisticsAuthConfig(String authId,String shopId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
         List<LogisticsAuthFieldEntity> fieldEntities = null;
-        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)){
+        if (LogisticsPlatformEnum.ALI_EXPRESS.getCode().equals(logisticsPlatform) || LogisticsPlatformEnum.SHOPEE.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.TIK_TOK.getCode().equals(logisticsPlatform)  || LogisticsPlatformEnum.MERCADOLIBRE.getCode().equals(logisticsPlatform)
+                || LogisticsPlatformEnum.MERCADOLIBRE_LOCAL.getCode().equals(logisticsPlatform)){
             LogisticsService service = logisticsRegistry.getHandler(logisticsPlatform);
             return service.getLogisticsAuthConfigByShopId(shopId);
         }else {

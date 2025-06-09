@@ -47,7 +47,7 @@ public class PickingCartTypeController extends BaseController {
     * @return ApiResult
     */
     @PostMapping("/batchUpdate")
-    public ApiResult<?> batchUpdate(@RequestBody @Validated List<PickingCartTypeDTO.batchUpdateDTO> list) {
+    public ApiResult batchUpdate(@RequestBody @Validated List<PickingCartTypeDTO.BatchUpdateDTO> list) {
         pickingCartTypeService.batchUpdate(list);
         return success();
     }

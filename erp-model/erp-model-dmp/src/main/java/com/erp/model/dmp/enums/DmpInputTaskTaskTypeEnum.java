@@ -4,6 +4,8 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
+
 /**
  * <p>
  * 拉取任务 任务类型 枚举
@@ -33,6 +35,13 @@ public enum DmpInputTaskTaskTypeEnum implements EnumMessage {
     DmpInputTaskTaskTypeEnum(String code, String name) {
         this.code = code;
         this.name = name;
+    }
+
+    public static DmpInputTaskTaskTypeEnum getByType(String taskType) {
+        return Arrays.stream(DmpInputTaskTaskTypeEnum.values())
+                .filter(e -> e.getCode().equalsIgnoreCase(taskType))
+                .findFirst()
+                .orElse(null);
     }
 
     @Override

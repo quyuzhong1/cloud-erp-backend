@@ -29,7 +29,7 @@ public interface CfgRuleWaveMapper extends BaseMapper<CfgRuleWaveEntity> {
      * @param params
      * @return IPage
      */
-    IPage<CfgRuleWaveDTO.ListDTO> paging(Page query,@Param("params") CfgRuleWaveDTO.PagingParamDTO params);
+    IPage<CfgRuleWaveDTO.ListDTO> paging(Page<CfgRuleWaveDTO.ListDTO> query,@Param("params") CfgRuleWaveDTO.PagingParamDTO params);
 
     /**
      * 根据时间查询规则配置

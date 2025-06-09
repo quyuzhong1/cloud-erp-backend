@@ -1,8 +1,8 @@
 package com.erp.model.plm.vo;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
+import javax.ws.rs.GET;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -73,7 +73,21 @@ public class ProductChangePagingVO implements Serializable {
      */
     private String personApproving;
 
+    @Getter
+    @Setter
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TabListDTO {
+        /**
+         * 类型，all全部、waitAudit待审核
+         */
+        private String tabFlag;
 
+        /**
+         * 数量
+         */
+        private Integer count;
+    }
 }
 
 

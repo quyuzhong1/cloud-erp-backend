@@ -1,6 +1,8 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -17,6 +19,7 @@ import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -25,6 +28,8 @@ import com.erp.model.wms.dto.WaveListDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.server.wms.mapper.PickingDetailMapper;
+import com.erp.server.wms.mapper.PickingListsMapper;
 import com.erp.server.wms.mapper.WaveListCartTypeMapper;
 import com.erp.server.wms.mapper.WaveListMapper;
 import com.erp.server.wms.service.*;
@@ -55,6 +60,11 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Resource
     private PickingListsService pickingListsService;
 
+    @Resource
+    private PickingDetailMapper pickingDetailMapper;
+    @Resource
+    private PickingListsMapper pickingListsMapper;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public BaseResultDTO.AddDTO add(WaveListDTO.AddDTO dto) {
@@ -68,6 +78,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         entity.setPickingType(dto.getPickingType());
         entity.setStatus(WaveStatusEnum.AWAIT_PICK.getCode());
         entity.setPrintStatus(PackagePrintStatusEnum.NOT.getCode());
+        entity.setIsFullyManaged(dto.getIsFullyManaged());
         this.save(entity);
 
         List<String> pickCartTypeIdList = dto.getPickCartTypeIdList();
@@ -104,6 +115,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
         operateLogService.addModuleOperateLog(String.format("生成波次【%s】", entity.getCode()), ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), entity.getId(), "新增操作", user.getUid(), user.getUserName());
         return new BaseResultDTO.AddDTO(entity.getId(), entity.getCode());
     }
+
 
     @Override
     public int countDelivery(PermissionsDTO param) {
@@ -150,6 +162,7 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Override
     public PagingVO<WaveListDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<WaveListEntity> result = this.baseMapper.paging(page, pagingDTO.getParams());
         List<WaveListDTO.ViewDTO> viewDTOList = fillViewList(result.getRecords());
@@ -174,7 +187,12 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             viewDTO.setTypeName(PickingWaveTypeEnum.getName(record.getType()));
             viewDTO.setPickingTypeName(WavePickingTypeEnum.getName(record.getPickingType()));
             viewDTO.setPrintStatusName(PrintStatusEnum.getName(record.getPrintStatus()));
-            if(StringUtils.isBlank(record.getPickingCartCode())){
+            viewDTO.setPickingPrintStatusName(PrintStatusEnum.getName(record.getPickingPrintStatus()));
+            viewDTO.setSkuBarcodePrintStatusName(PrintStatusEnum.getName(record.getSkuBarcodePrintStatus()));
+            if (!viewDTO.getIsFullyManaged()){
+                viewDTO.setSkuBarcodePrintStatusName("无需打印");
+            }
+            if(CharSequenceUtil.isBlank(record.getPickingCartCode())){
                 List<WaveListCartTypeEntity> entityList = cartTypeMap.get(record.getId());
                 if(entityList != null && !entityList.isEmpty()){
                     List<String> typeIds = entityList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());
@@ -193,8 +211,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<WaveListDTO.TabDTO> tabList() {
-        List<WaveListDTO.TabDTO> list = baseMapper.listTab();
+    public List<WaveListDTO.TabDTO> tabList(WaveListDTO.SearchParamDTO paramDTO) {
+        List<WaveListDTO.TabDTO> list = baseMapper.listTab(paramDTO);
         Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
 
         List<WaveListDTO.TabDTO> resultList = new ArrayList<>();
@@ -245,28 +263,90 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelPrinted(String waveId) {
-        /*WaveListDetailDTO.ViewDTO viewDTO = waveListDetailService.view(waveId);
-        for (WaveListDetailDTO.DeliveryInfoDTO deliveryDto : viewDTO.getDeliveryInfoList()) {
-            Integer pickedSumQty = deliveryDto.getPickedSumQty();
-            if(pickedSumQty != 0){
-                return BatchResultDTO.fail(waveId, viewDTO.getCode(), "已部分拣货，无法取消打印");
-            }
-        }*/
         WaveListEntity waveListEntity = getById(waveId);
-        if(! StringUtils.equals(waveListEntity.getStatus(), WaveStatusEnum.AWAIT_PICK.getCode())) {
-            return BatchResultDTO.fail(waveListEntity.getId(), waveListEntity.getCode(), "已部分拣货，无法取消打印");
-        }
-
-        update(new UpdateWrapper<WaveListEntity>()
+        UpdateWrapper<WaveListEntity> updateWrapper = new UpdateWrapper<WaveListEntity>()
                 .eq("id", waveId)
-                .set("status", WaveStatusEnum.AWAIT_PICK.getCode())
                 .set("picking_user_id", "")
                 .set("picking_user_name", "")
                 .set("picking_time", null)
+                .set("print_status", "")
                 .set("print_time", null)
-        );
+                .set("picking_print_status",  "")
+                .set("picking_print_time", null)
+                .set("sku_barcode_print_status",  "")
+                .set("sku_barcode_print_time", null);
+        if(StringUtils.equals(waveListEntity.getStatus(), WaveStatusEnum.PICK_ING.getCode())) {
+            updateWrapper.set("status", WaveStatusEnum.AWAIT_PICK.getCode());
+            //记录日志
+            LoginUser user = UserContext.getNonLoginUser();
+            //波次状态自动变更
+            operateLogService.addModuleOperateLog(String.format("波次拣货单取消已打印【%s】，自动变更状态为待拣货", waveListEntity.getCode()), ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更", user.getUid(), user.getUserName());
+        }
+        update(updateWrapper);
+        //清除拣货单拣货数量
+        cleanPickingList(waveListEntity);
         return BatchResultDTO.success(waveListEntity.getId(), waveListEntity.getCode(), "成功");
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void cleanPickingList(WaveListEntity waveListEntity){
+        if(null != waveListEntity && StringUtils.isNotBlank(waveListEntity.getId())) {
+            pickingDetailMapper.updatePickedQtyByWaveIds(Collections.singletonList(waveListEntity.getId()));
+            //记录日志
+            LoginUser user = UserContext.getNonLoginUser();
+            //波次状态自动变更
+            operateLogService.addModuleOperateLog(String.format("波次拣货单取消已打印【%s】，清除拣货单拣货数量", waveListEntity.getCode()), ModuleTypeEnum.PICKING_LISTS.getCode(), waveListEntity.getId(), "波次列表取消打印--清除拣货单数量", user.getUid(), user.getUserName());
+        }
+    }
+
+    @Override
+    public List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO> printSkuBarcodeView(List<String> ids) {
+        List<WaveListEntity> waveListEntities = this.listByIds(ids);
+        //全部都是全托管订单才能打印
+        boolean allFullyManaged = waveListEntities.stream().allMatch(WaveListEntity::getIsFullyManaged);
+        if (!allFullyManaged){
+            //存在非全托管订单不能打印sku条码
+            throw new ServiceException(ApiError.ERROR_NOT_IS_FULLY_MANAGED_ORDER);
+        }
+        List<WaveListDetailEntity> detailList = waveListDetailService.listByMainIds(ids);
+        List<String> deliveryIds = detailList.stream().map(item -> item.getDeliveryId()).distinct().collect(Collectors.toList());
+        return deliveryService.printSkuBarcodeView(deliveryIds);
+    }
+
+    @Override
+    public ApiResult<?> printFinishSkuBarcode(BaseIdsDTO.IdsDTO idsDTO) {
+        List<WaveListEntity> waveListEntities = this.listByIds(idsDTO.getIds());
+        if (CollUtil.isEmpty(waveListEntities)) {
+            throw new ServiceException(ApiError.ERROR_1030);
+        }
+        //全部都是全托管订单才能打印
+        boolean allFullyManaged = waveListEntities.stream().allMatch(WaveListEntity::getIsFullyManaged);
+        if (!allFullyManaged){
+            //存在非全托管订单不能打印sku条码
+            throw new ServiceException(ApiError.ERROR_NOT_IS_FULLY_MANAGED_ORDER);
+        }
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        //修改物流单打印状态为已打印
+        update(new UpdateWrapper<WaveListEntity>()
+                .set("sku_barcode_print_status", PrintStatusEnum.PRINT_FINISH.getCode())
+                .set("sku_barcode_print_time", LocalDateTime.now())
+                .in("id", idsDTO.getIds()));
+        for (String id : idsDTO.getIds()) {
+            operateLogService.addModuleOperateLog("标记SKU条码已打印", ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), id, "SKU条码完成打印", loginUser.getUid(), loginUser.getUserName());
+        }
+        List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(idsDTO.getIds());
+        List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);
+        for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
+            if(!deliveryEntity.getIsPrintSkuBarcode()){
+                deliveryService.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintSkuBarcode,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId()).update();
+                operateLogService.addModuleOperateLog("验货完成自动打印SKU条码", ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), deliveryEntity.getId(), "SKU条码打印", loginUser.getUid(), loginUser.getUserName());
+            }
+        }
+        return ApiResult.success();
     }
 
     @Override
@@ -286,14 +366,26 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     @Override
     public ApiResult<?> printFinish(BaseIdsDTO.IdsDTO idsDTO) {
         LoginUser loginUser = UserContext.getDefaultLoginUser();
-        //修改波次打印状态为已打印
+        //修改物流单打印状态为已打印
         update(new UpdateWrapper<WaveListEntity>()
                 .set("print_status", PrintStatusEnum.PRINT_FINISH.getCode())
                 .set("print_time", LocalDateTime.now())
                 .in("id", idsDTO.getIds()));
-
         for (String id : idsDTO.getIds()) {
-            operateLogService.addModuleOperateLog("标记波次已打印", ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), id, "完成打印", loginUser.getUid(), loginUser.getUserName());
+            operateLogService.addModuleOperateLog("标记物流单已打印", ModuleTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode(), id, "物流单完成打印", loginUser.getUid(), loginUser.getUserName());
+        }
+
+        List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(idsDTO.getIds());
+        if (CollUtil.isEmpty(list)) {
+            throw new ServiceException(ApiError.ERROR_1031);
+        }
+        List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
+        List<SoB2cDeliveryEntity> soB2cDeliveryEntities = deliveryService.listByIds(deliveryIds);
+        for (SoB2cDeliveryEntity deliveryEntity : soB2cDeliveryEntities) {
+            if(!deliveryEntity.getIsPrintLogistic()){
+                deliveryService.lambdaUpdate().set(SoB2cDeliveryEntity::getIsPrintLogistic,Boolean.TRUE).eq(SoB2cDeliveryEntity::getId,deliveryEntity.getId()).update();
+                operateLogService.addModuleOperateLog("验货完成自动打印物流单", ModuleTypeEnum.FIRST_MILE_DELIVERY.getCode(), deliveryEntity.getId(), "物流单打印", loginUser.getUid(), loginUser.getUserName());
+            }
         }
         return ApiResult.success();
     }
@@ -304,13 +396,16 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
     }
 
     @Override
-    public List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> printPickingBill(List<String> ids) {
+    public SoB2cDeliveryDTO.PrintPickingMainDTO printPickingBill(List<String> ids) {
+        SoB2cDeliveryDTO.PrintPickingMainDTO printPickingMainDTO = new SoB2cDeliveryDTO.PrintPickingMainDTO();
         List<SoB2cDeliveryDTO.PrintPickingMainViewDTO> resultList = new ArrayList<>();
         List<WaveListDetailEntity> list = waveListDetailService.listByMainIds(ids);
         List<String> deliveryIds = list.stream().map(WaveListDetailEntity::getDeliveryId).distinct().collect(Collectors.toList());
-        List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = deliveryService.printPickingView(deliveryIds);
-        if (CollectionUtil.isEmpty(printPickingViewList)) {
-            return Collections.EMPTY_LIST;
+        List<PickingListsDTO.CombinationPrintDetailView> deliveryDetailList = deliveryService.getDeliveryDetail(deliveryIds);
+        printPickingMainDTO.setCombinationPrintDetailList(deliveryDetailList);
+        List<SoB2cDeliveryDTO.PrintPickingViewDTO> printPickingViewList = deliveryService.printPickingView(deliveryIds, true);
+        if (CollUtil.isEmpty(printPickingViewList)) {
+            return null;
         }
         Map<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> map = printPickingViewList.stream().collect(Collectors.groupingBy(SoB2cDeliveryDTO.PrintPickingViewDTO::getWaveCode));
         for (Map.Entry<String, List<SoB2cDeliveryDTO.PrintPickingViewDTO>> entry : map.entrySet()) {
@@ -322,7 +417,32 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             printPickingMainViewDTO.setDetailList(entry.getValue());
             resultList.add(printPickingMainViewDTO);
         }
-        return resultList;
+
+        //修改拣货单打印状态为已打印
+        update(new UpdateWrapper<WaveListEntity>()
+                .set("picking_print_status", PrintStatusEnum.PRINT_FINISH.getCode())
+                .set("picking_print_time", LocalDateTime.now())
+                .in("id", ids));
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        for (String id : ids) {
+            operateLogService.addModuleOperateLog("标记拣货单已打印", ModuleTypeEnum.WAVE_LIST.getCode(), id, "拣货单完成打印", loginUser.getUid(), loginUser.getUserName());
+        }
+
+        //波次状态自动变更
+        List<WaveListEntity> waveListEntities = this.baseMapper.selectBatchIds(ids);
+        for (WaveListEntity waveListEntity : waveListEntities) {
+            String id = waveListEntity.getId();
+            //校验波次状态是否为待拣货
+            String status = waveListEntity.getStatus();
+            if(status.equals(WaveStatusEnum.AWAIT_PICK.getCode())){
+                update(new UpdateWrapper<WaveListEntity>()
+                        .set("status",WaveStatusEnum.PICK_ING.getCode())
+                        .eq("id", id));
+                operateLogService.addModuleOperateLog("波次完成拣货单打印，自动变更状态为拣货中", ModuleTypeEnum.WAVE_LIST.getCode(), id, "波次列表波次状态自动变更", loginUser.getUid(), loginUser.getUserName());
+            }
+        }
+        printPickingMainDTO.setPrintPickingMainViewDTOList(resultList);
+        return printPickingMainDTO;
     }
 
     @Override
@@ -334,8 +454,8 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
 
     @Override
     public List<WaveListEntity> listByPickingCartCodeList(List<String> pickingCartCodeList) {
-        if (CollectionUtil.isEmpty(pickingCartCodeList)) {
-            return Collections.EMPTY_LIST;
+        if (CollUtil.isEmpty(pickingCartCodeList)) {
+            return Collections.emptyList();
         }
         return lambdaQuery().in(WaveListEntity::getPickingCartCode,pickingCartCodeList)
                 .list();
@@ -355,5 +475,51 @@ public class WaveListServiceImpl extends SuperServiceImpl<WaveListMapper, WaveLi
             return;
         }
         update(Wrappers.<WaveListEntity>lambdaUpdate().set(WaveListEntity::getIsOutStock, false).eq(WaveListEntity::getId, detail.getMainId()));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public ApiResult<?> updateWaveStatus(List<String> ids) {
+        //修改波次状态为已完成
+        LoginUser loginUser = UserContext.getDefaultLoginUser();
+        for (String id : ids) {
+            List<WaveListEntity> list = lambdaQuery().eq(WaveListEntity::getId, id).eq(WaveListEntity::getStatus, WaveStatusEnum.FINISH.getCode()).list();
+            if(CollUtil.isEmpty(list)){
+                lambdaUpdate()
+                        .set(WaveListEntity::getStatus, WaveStatusEnum.FINISH.getCode())
+                        .ne(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode())
+                        .eq(WaveListEntity::getId, id)
+                        .update();
+                operateLogService.addModuleOperateLog("手动标记波次状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), id, "手动完成", loginUser.getUid(), loginUser.getUserName());
+            }
+        }
+        return ApiResult.success();
+    }
+
+    @Override
+    public void waveListStatusAutoChange(String deliveryId) {
+//        仓储管理-B2C订单发货-发货单：手动发货 SoB2cDeliveryController.delivery
+//        仓储管理-B2C订单发货-包装验货：勾选了流水线称重后自动发货，流水线分拣后自动出库（有接口调用） AsyncServiceImpl.syncSoB2cDeliveryAutoOut
+//        仓储管理-B2C订单发货-称重出库：勾选了称重后自动出库，称重后自动出库 WeighingOutboundController.scan
+//        仓储管理-B2C订单发货-组包称重：点击了组包后自动出库，完成组包后会自动出库 MergePackageDeliveryConsumer.onMessage
+//        仓储管理-B2C订单发货-组包称重：点击了组包后自动出库，完成组包后会自动出库 MergePackageDeliveryConsumer.onMessage
+//        仓储管理-B2C订单发货-发货拦截单：拦截结果确认，选择拦截失败并出库 SoB2cDeliveryInterceptController.interceptFailure
+
+        //查询波次列表状态为待拣货和拣货中的所有数据
+        List<WaveListDTO.WaveDeliveryStatusDTO> waveDeliveryStatusList = this.baseMapper.listDeliveryStatus(deliveryId);
+        if(CollectionUtil.isNotEmpty(waveDeliveryStatusList)){
+            //根据波次主键id分组
+            Map<String, List<WaveListDTO.WaveDeliveryStatusDTO>> map = waveDeliveryStatusList.stream().collect(Collectors.groupingBy(WaveListDTO.WaveDeliveryStatusDTO::getId));
+            for (Map.Entry<String, List<WaveListDTO.WaveDeliveryStatusDTO>> wave : map.entrySet()) {
+                String waveId = wave.getKey();
+                //发货单状态全匹配已发货或取消发货
+                boolean isShipped = wave.getValue().stream().allMatch(item -> item.getStatus().equals(SoB2cDeliveryStatusEnum.SHIPPED.getStatus()) || item.getStatus().equals(SoB2cDeliveryStatusEnum.CANCEL_DELIVERY.getStatus()));
+                if(isShipped){
+                    //更新波次状态为已完成
+                    this.lambdaUpdate().set(WaveListEntity::getStatus,WaveStatusEnum.FINISH.getCode()).eq(WaveListEntity::getId, waveId).update();
+                    operateLogService.addModuleOperateLog("波次下发货单完结，自动变更状态为已完成", ModuleTypeEnum.WAVE_LIST.getCode(), waveId, "波次列表波次状态自动变更");
+                }
+            }
+        }
     }
 }

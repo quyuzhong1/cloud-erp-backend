@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,11 +107,6 @@ public class WmsDeliveryPlanController extends BaseController {
     * @return ApiResult<PagingVO<OverseasDeliveryPlanDTO.ListDTO>>
     */
     @PostMapping("/paging")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:overseasDeliveryPlan:paging",
-            tableAlias = "odp"
-    )
     @WebAdvanceQuery(handler = WmsDeliveryPlanQueryHandler.class)
     public ApiResult<PagingVO<WmsDeliveryPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<WmsDeliveryPlanDTO.PagingParamDTO> dto) {
         return success(wmsDeliveryPlanService.paging(dto));
@@ -417,8 +413,8 @@ public class WmsDeliveryPlanController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.wms.dto.OverseasDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>>
      **/
     @PostMapping("/generateRequisitionApplicationView")
-    public ApiResult<List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> generateRequisitionApplicationView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> result = wmsDeliveryPlanService.generateRequisitionApplicationView(dto.getIds());
+    public ApiResult<List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO>> generateRequisitionApplicationView(@RequestBody @Validated BaseIdsDTO.DetailIdListDTO dto) {
+        List<WmsDeliveryPlanDTO.GenerateRequisitionApplicationViewDTO> result = wmsDeliveryPlanService.generateRequisitionApplicationView(dto.getDetailIdList());
         return success(result);
     }
 
@@ -506,7 +502,7 @@ public class WmsDeliveryPlanController extends BaseController {
     }
 
     /**
-     * 下载模板
+     * 下载第三方仓发货计划模板
      * @author Will
      * @date: 22023/3/15 18:22
      * @param request
@@ -525,7 +521,7 @@ public class WmsDeliveryPlanController extends BaseController {
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -533,5 +529,49 @@ public class WmsDeliveryPlanController extends BaseController {
             throw new ServiceException(ApiError.ERROR_95131);
         }
         return success();
+    }
+
+    /**
+     * 下载FBA发货计划模板
+     * @author jack
+     * @date: 2024-12-16
+     * @param request
+     * @param response
+     */
+    @GetMapping("/exportFbaTemplate")
+    public ApiResult exportFbaTemplate(HttpServletRequest request, HttpServletResponse response) {
+        String path = "classpath:excel/deliveryPlanDetailFbaTemplate.xlsx";
+        String excelName = "template.xlsx";
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+        return success();
+    }
+
+
+    /**
+     * 发货计划显示
+     * @author will
+     * @date 2024/10/23 14:43
+     * @param dto
+     * @return ApiResult<WmsDeliveryPlanDTO.DeliverPlanViewDTO>
+     */
+    @PostMapping("/deliverPlanView")
+    public ApiResult<WmsDeliveryPlanDTO.DeliverPlanViewDTO> deliverPlanView(@RequestBody @Validated BaseIdDTO dto) {
+        WmsDeliveryPlanDTO.DeliverPlanViewDTO result = wmsDeliveryPlanService.deliverPlanView(dto.getId());
+        return success(result);
     }
 }

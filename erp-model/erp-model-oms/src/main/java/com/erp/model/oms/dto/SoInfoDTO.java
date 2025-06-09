@@ -1,10 +1,12 @@
 package com.erp.model.oms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.BillApproveStatusEnum;
 import com.common.business.validator.AddGroup;
 import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.OrderSubTypeEnum;
 import com.erp.model.oms.enums.BillTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -91,6 +93,18 @@ public class SoInfoDTO implements Serializable {
          */
         private String code;
 
+        /**
+         * 军区id
+         */
+        private String partitionId;
+        /**
+         * 军区编码
+         */
+        private String partitionCode;
+        /**
+         * 军区名称
+         */
+        private String partitionName;
 
         /**
          * 审核状态code
@@ -382,6 +396,10 @@ public class SoInfoDTO implements Serializable {
          * 备注
          */
         private String remark;
+        /**
+         * 成本来源
+         */
+        private String costSource;
 
         /**
          * 明细备注
@@ -574,6 +592,10 @@ public class SoInfoDTO implements Serializable {
          * 是否报关
          */
         private Boolean isDeclare;
+        /**
+         * 物流单上传
+         */
+        private Boolean isUploadLabel;
 
         /**
          * 运单号
@@ -605,6 +627,10 @@ public class SoInfoDTO implements Serializable {
          */
         private Boolean isConstitute;
 
+        /**
+         * 客户PO号
+         */
+        private String customerPO;
     }
 
     /**
@@ -891,6 +917,7 @@ public class SoInfoDTO implements Serializable {
          * 是否含税
          * true 是
          */
+        @NotNull(message = "是否含税不能为空", groups = {AddGroup.class})
         private Boolean isTax;
 
         /**
@@ -965,6 +992,11 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+        /**
+         * 单据子类型
+         */
+        private String transactionSubType;
     }
 
 
@@ -985,8 +1017,14 @@ public class SoInfoDTO implements Serializable {
          * code
          */
         private String code;
-
-
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
+        /**
+         * 虚拟仓名称
+         */
+        private String virtualWarehouseName;
         /**
          * 审核状态code
          */
@@ -1021,6 +1059,10 @@ public class SoInfoDTO implements Serializable {
          * 销售部门id
          */
         private String salesDeptId;
+        /**
+         * 销售部门名称
+         */
+        private String salesDeptName;
 
         /**
          * 销售员id
@@ -1214,6 +1256,11 @@ public class SoInfoDTO implements Serializable {
         private LocalDateTime createTime;
 
         /**
+         * 修改时间
+         */
+        private LocalDateTime updateTime;
+
+        /**
          * 审核人
          */
         private String approveUserName;
@@ -1243,6 +1290,17 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+        /**
+         * 单据子类型
+         */
+        @Dict(enumClass = OrderSubTypeEnum.class)
+        private String transactionSubType;
+
+        /**
+         * 版本
+         */
+        private Integer version;
 
 
         /**
@@ -1529,6 +1587,7 @@ public class SoInfoDTO implements Serializable {
          * 是否含税
          * true 是
          */
+        @NotNull(message = "是否含税不能为空")
         private Boolean isTax;
 
         /**
@@ -1603,6 +1662,12 @@ public class SoInfoDTO implements Serializable {
          * 客户订单号
          */
         private String customerOrderNo;
+
+        /**
+         * 单据子类型
+         */
+        @Dict(enumClass = OrderSubTypeEnum.class)
+        private String transactionSubType;
     }
 
     @Data
@@ -1787,6 +1852,11 @@ public class SoInfoDTO implements Serializable {
         private String soRemark;
 
         private String syncKingdeeId;
+
+        /**
+         * 客户关联的销售员
+         */
+        private String customerSellerId;
 
         /**
          * 纳税登记号
@@ -2024,6 +2094,10 @@ public class SoInfoDTO implements Serializable {
          * sku编号
          */
         private String skuNo;
+        /**
+         * 客户sku
+         */
+        private String platformSkuNo;
 
         /**
          * 产品名称
@@ -2034,6 +2108,11 @@ public class SoInfoDTO implements Serializable {
          * 销售数量
          */
         private Integer salesQty;
+
+        /**
+         * 已下推发货数量
+         */
+        private Integer alreadyDeliveryQty;
 
         /**
          * 发货数量
@@ -2250,9 +2329,51 @@ public class SoInfoDTO implements Serializable {
          */
         private String warehouseId;
         /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
          * 备注
          */
         private String remark;
+
+        /**
+         * 币别
+         */
+        private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *销售金额
+         */
+        private BigDecimal amount;
+        /**
+         *含税销售金额
+         */
+        private BigDecimal taxAmount;
+        /**
+         *汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         * 销售组织id
+         */
+        private String salesOrgId;
+        /**
+         * 库存组织id
+         */
+        private String warehouseOrgId;
     }
 
     @Data
@@ -2403,7 +2524,10 @@ public class SoInfoDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class CalCostProfitDTO {
-
+        @NotNull(message = "销售组织不能为空")
+        private String salesOrgId;
+        @NotBlank(message = "仓库不能为空")
+        private String warehouseId;
         /**
          * 单据日期
          */
@@ -2782,5 +2906,36 @@ public class SoInfoDTO implements Serializable {
          * 子件缺货信息
          */
         private List<VirtualChildScarceDTO> childScarceList;
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalDetailDTO {
+        /**
+         * 明细
+         */
+        private List<CalDTO> details;
+
+    }
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class CalDTO {
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        /**
+         * 退货数量
+         */
+        private Integer returnQty;
+
     }
 }

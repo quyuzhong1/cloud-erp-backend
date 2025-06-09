@@ -5,10 +5,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.Accessors;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-
 /**
  * 亚马逊 创建报告结果参数 DTO
  *

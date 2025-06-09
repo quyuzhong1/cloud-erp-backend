@@ -16,7 +16,7 @@ public enum CountrySiteEnum {
     CHINA("China", "China", "CN","中国"),
     AMERICA("America", "America","US","美国"),
     CANADA("Canada", "Canada","CA","加拿大"),
-    Brazil("Brazil", "002","BR","巴西"),
+    BRAZIL("Brazil", "002","BR","巴西"),
     MEXICO("Mexico", "018","MX","墨西哥"),
     ENGLAND("England", "007","UK","英国"),
     GERMANY("Germany", "021","DE","德国"),
@@ -30,11 +30,10 @@ public enum CountrySiteEnum {
     ;
 
 
-    private String currencyCode;
-
-    private String kingDeeCode;
-    private String site;
-    private String currencyName;
+    private final String currencyCode;
+    private final String kingDeeCode;
+    private final String site;
+    private final String currencyName;
 
 
     CountrySiteEnum(String currencyCode, String kingDeeCode, String site, String currencyName) {

@@ -1,13 +1,11 @@
 package com.erp.server.wms.mapper;
 
+import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
 import com.erp.model.wms.dto.VirtualWarehouseDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.entity.VirtualWarehouseEntity;
-import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -44,4 +42,17 @@ public interface VirtualWarehouseMapper extends BaseMapper<VirtualWarehouseEntit
     List<VirtualWarehouseDTO.SelectDTO> warehouseSelectList(PagingDTO<VirtualWarehouseDTO.WarehouseSelectDTO> dto);
 
     List<VirtualWarehouseDTO.SelectDTO> listByParam(@Param("params") VirtualWarehouseDTO.SearchDTO searchDTO);
+
+    /**
+     * 高级查询
+     */
+    List<String> listWarehouseBySql(@Param("compareCodeSplicingValueSql") String compareCodeSplicingValueSql);
+
+    /**
+     * 导出虚拟仓设置
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(Page query,@Param("params") VirtualWarehouseDTO.PagingParamDTO params);
 }

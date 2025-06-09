@@ -50,11 +50,10 @@ public enum MonthEnum implements EnumMessage {
     }
 
     public static List<String> getMonthList(int startMonth, int endMonth) {
-        List<String> monthList = Arrays.stream(MonthEnum.values())
-                .filter(x -> Integer.valueOf(x.code) >= startMonth &&Integer.valueOf(x.code) <= endMonth)
+        return Arrays.stream(MonthEnum.values())
+                .filter(x -> Integer.parseInt(x.code) >= startMonth &&Integer.parseInt(x.code) <= endMonth)
                 .map(MonthEnum::getDesc)
                 .collect(Collectors.toList());
-        return monthList;
     }
 
     public static MonthEnum getNameByCode(String code) {

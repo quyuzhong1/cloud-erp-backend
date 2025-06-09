@@ -8,7 +8,6 @@ import java.io.Serializable;
 /**
  * @author zdy
  * @ClassName DeleteUserDTO
- * @description: TODO
  * @date 2024年01月11日
  * @version: 1.0
  */

@@ -1,13 +1,14 @@
 package com.erp.server.workflow.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.ApproveOneDTO;
 import com.common.business.dto.base.BaseApproveParamDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -16,6 +17,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
@@ -34,10 +36,7 @@ import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import com.erp.model.workflow.enums.ApproveSearchOptionEnum;
 import com.erp.model.workflow.enums.SysClassifyEnum;
-import com.erp.rpc.oms.feign.CustomerFeign;
-import com.erp.rpc.oms.feign.OmsTaskFeign;
-import com.erp.rpc.oms.feign.SoChangeFeign;
-import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.*;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.scm.feign.SupplierFeign;
@@ -46,11 +45,9 @@ import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.workflow.mapper.WorkOptionMapper;
 import com.erp.server.workflow.service.*;
 import com.erp.server.workflow.utils.GetHttpGatewayIpPortUtils;
-import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
@@ -71,6 +68,7 @@ import java.util.stream.Collectors;
 public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, WorkOptionEntity> implements WorkOptionService {
 
 
+    public static final String PROTOCOL = "http://";
     @Resource
     private ProcessTaskService workflowFeign;
 
@@ -94,7 +92,8 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private SoInfoFeign soInfoFeign;
-
+    @Resource
+    private SoB2cFeign soB2cFeign;
     @Resource
     private SoChangeFeign soChangeFeign;
 
@@ -109,6 +108,9 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     @Resource
     private ProcessTaskManagementService processTaskManagementService;
+
+    @Resource
+    private SoPriceFeign soPriceFeign;
 
     /**
      * 待办模块-模块分类下拉
@@ -173,8 +175,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             }
         }
 
-        List<WorkOptionDTO.WaitDoMenu> waitDoMenuList = waitDoMenus.stream().filter(req -> !req.getModuleClassify().equals("质检单")).collect(Collectors.toList());
-        return waitDoMenuList;
+        return waitDoMenus.stream().filter(req -> !req.getModuleClassify().equals("质检单")).collect(Collectors.toList());
     }
 
     /**
@@ -191,13 +192,13 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         if (dto.getType().equals("1")) {
             List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
             List<WorkOptionDTO.MyWorkOptionDTO> collect = myWorkOptionDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(collect)) {
+            if (!CollectionUtils.isEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_940022);
             }
         } else {
             List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
             List<WorkOptionDTO.FrequentlyViewDTO> collect = frequentlyViewDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(collect)) {
+            if (!CollectionUtils.isEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_940022);
             }
         }
@@ -245,13 +246,13 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         if (byId.getType().equals("1")) {
             List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
             List<WorkOptionDTO.MyWorkOptionDTO> collect = myWorkOptionDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(collect)) {
+            if (!CollectionUtils.isEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_940022);
             }
         } else {
             List<WorkOptionDTO.FrequentlyViewDTO> frequentlyViewDTOS = baseMapper.listFrequentlyView(userInfo.getUid());
             List<WorkOptionDTO.FrequentlyViewDTO> collect = frequentlyViewDTOS.stream().filter(req -> req.getModuleStatusId().equals(dto.getWorkMenuId())).collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(collect)) {
+            if (!CollectionUtils.isEmpty(collect)) {
                 throw new ServiceException(ApiError.ERROR_940022);
             }
         }
@@ -265,51 +266,6 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         return this.updateById(workOptionEntity);
     }
 
-    /**
-     * 待办列表
-     *
-     * @return com.common.core.controller.vo.ApiResult<com.common.business.vo.PagingVO < com.erp.model.wms.dto.PurchaseReturnOrderDTO.PagingViewDTO>>
-     * @Author Luo_WG
-     * @Date 2023/4/11 18:48
-     **/
-   /* @Override
-    public List<WorkOptionDTO.PendingViewDTO> listPendingViewTest() {
-        List<WorkOptionDTO.PendingViewDTO> list = new ArrayList<>();
-        LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOS = baseMapper.listMyWorkOption(userInfo.getUid());
-        List<SysClassifyEnum> sysClassifyEnums = SysClassifyEnum.getAll();
-        for (SysClassifyEnum searchOptionEnum : sysClassifyEnums) {
-            WorkOptionDTO.PendingViewDTO pendingViewDTO = new WorkOptionDTO.PendingViewDTO();
-            List<WorkOptionDTO.PendingViewDetailDTO> pendingViewDetailDTOList = new ArrayList<>();
-            pendingViewDTO.setSysClassify(searchOptionEnum.getCode());
-            List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList = myWorkOptionDTOS.stream().filter(req -> req.getSysClassify().equals(searchOptionEnum.getCode())).collect(Collectors.toList());
-            for (WorkOptionDTO.MyWorkOptionDTO myWorkOptionDTO : myWorkOptionDTOList) {
-                WorkOptionDTO.PendingViewDetailDTO pendingViewDetailDTO = new WorkOptionDTO.PendingViewDetailDTO();
-                WorkOptionDTO.TableNumDTO tableNumDTO = new WorkOptionDTO.TableNumDTO();
-                tableNumDTO.setTableName(myWorkOptionDTO.getModuleCode());
-                tableNumDTO.setApproveStatus(myWorkOptionDTO.getModuleStatus());
-                tableNumDTO.setModuleParam(myWorkOptionDTO.getModuleParam());
-                myWorkOptionDTO.setPath(myWorkOptionDTO.getModuleUrl());
-                switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
-                    case PLM:
-                        getPlmModuleCount(tableNumDTO, myWorkOptionDTO, pendingViewDetailDTO);
-                        break;
-                    case SCM:
-                        getScmModuleCount(tableNumDTO, myWorkOptionDTO, pendingViewDetailDTO);
-                        break;
-                    case WMS:
-                        getWmsModuleCount(tableNumDTO, myWorkOptionDTO, pendingViewDetailDTO);
-                        break;
-                    default:
-                        break;
-                }
-                pendingViewDetailDTOList.add(pendingViewDetailDTO);
-            }
-            pendingViewDTO.setList(pendingViewDetailDTOList);
-            list.add(pendingViewDTO);
-        }
-        return list;
-    }*/
 
     /**
      * 常用列表
@@ -328,17 +284,17 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
             if (enumByCode != null) {
                 switch (enumByCode) {
                     case PLM:
-                        req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + req.getModuleUrl());
+                        req.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + req.getModuleUrl());
                         break;
                     case SCM:
-                        req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + req.getModuleUrl());
+                        req.setModuleUrl(PROTOCOL+ GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + req.getModuleUrl());
                         break;
                     case WMS:
                     case FM:
-                        req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
+                        req.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + req.getModuleUrl());
                         break;
                     case OMS:
-                        req.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + req.getModuleUrl());
+                        req.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + req.getModuleUrl());
                         break;
                     default:
                         break;
@@ -358,8 +314,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
     @Override
     public List<WorkOptionDTO.StageViewDTO> stageView() {
         LoginUser userInfo = UserContext.getDefaultLoginUser();
-        List<WorkOptionDTO.StageViewDTO> stageViewDTOS = plmTaskFeign.stageView(userInfo.getUid());
-        return stageViewDTOS;
+        return plmTaskFeign.stageView(userInfo.getUid());
     }
 
     /**
@@ -372,7 +327,7 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      **/
     @Override
     public Boolean delete(String id) {
-        return this.removeById(id);
+        return removeById(id);
     }
 
     private List<WorkOptionDTO.MyWorkOptionDTO> listTableNum(List<WorkOptionDTO.MyWorkOptionDTO> myWorkOptionDTOList, String sysClassify) {
@@ -418,17 +373,17 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 pendingViewDetailDTO.setCount(myWorkOptionDTO.getTableNumber());
                 switch (SysClassifyEnum.getEnumByCode(myWorkOptionDTO.getSysClassify())) {
                     case PLM:
-                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
+                        pendingViewDetailDTO.setModuleUrl(PROTOCOL+ GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.PLM_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     case SCM:
-                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
+                        pendingViewDetailDTO.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.SCM_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     case WMS:
                     case FM:
-                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
+                        pendingViewDetailDTO.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.WMS_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     case OMS:
-                        pendingViewDetailDTO.setModuleUrl("http://" + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + myWorkOptionDTO.getModuleUrl());
+                        pendingViewDetailDTO.setModuleUrl(PROTOCOL + GetHttpGatewayIpPortUtils.IP + ":" + GetHttpGatewayIpPortUtils.OMS_PORT + myWorkOptionDTO.getModuleUrl());
                         break;
                     default:
                         break;
@@ -482,14 +437,14 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
      * @Date 2023/5/11 15:32
      **/
     @Override
-    public PagingVO<List<WorkOptionDTO.ApproveViewDTO>> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
+    public PagingVO<WorkOptionDTO.ApproveViewDTO> approveView(PagingDTO<WorkOptionDTO.ApproveViewParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         dto.getParams().setUserId(userInfo.getUid());
         IPage<WorkOptionDTO.ApproveViewDTO> pageData = this.baseMapper.approveView(query, dto.getParams());
         if (CollectionUtils.isEmpty(pageData.getRecords())) {
-            return new PagingVO(new Page());
+            return new PagingVO<>(new Page<>());
         }
 
         List<FindUserDTO> userList = sysUserFeign.getUserList();
@@ -511,18 +466,16 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 req.setApproveDuration(0 + " H");
             }
             if (StringUtils.isNotBlank(req.getCancelProcessParam())) {
-                req.setCancelProcessParam(JSONUtil.toJsonStr(StrUtil.format(req.getCancelProcessParam(), req.getBusinessId())));
+                req.setCancelProcessParam(JSONUtil.toJsonStr(CharSequenceUtil.format(req.getCancelProcessParam(), req.getBusinessId())));
             }
             req.setApproveStatusName(ApproveStatusEnum.getName(req.getApproveStatus()));
             FindUserDTO findUserDTO = userList.stream().filter(obj -> obj.getUserId().equals(req.getCreateUserId())).findFirst().orElse(new FindUserDTO());
             req.setCreateUserName(findUserDTO.getUserName());
         });
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean approve(ApproveParamDTO dto) {
         BaseApproveParamDTO paramDTO = new BaseApproveParamDTO();
         BeanMapperUtils.copy(dto, paramDTO);
@@ -556,6 +509,13 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
 
     private Boolean plmApprove(ApproveParamDTO dto, ProcessManagementEntity entity) {
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
+            case PILOT_APPLICATION:
+                ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+                approveOneDTO.setId(dto.getId());
+                approveOneDTO.setComment(dto.getComment());
+                approveOneDTO.setType(dto.getType());
+                plmTaskFeign.pilotApprovalPass(approveOneDTO);
+                break;
             case PRODUCT_BOM_INFO:
                 AuditParamDTO auditParamDTO = new AuditParamDTO();
                 auditParamDTO.setId(dto.getId());
@@ -618,34 +578,38 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getType());
         approveOneDTO.setId(dto.getId());
-
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case PURCHASE_PRICE_CHANGE:
-                scmTaskFeign.purchasePriceChangeApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.purchasePriceChangeApprove(baseApproveParamDTO);
                 break;
             case SALES_DEMAND:
-                scmTaskFeign.salesDemandApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.salesDemandApprove(baseApproveParamDTO);
                 break;
             case PURCHASE_APPLICATION:
-                scmTaskFeign.purchaseApplicationApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.purchaseApplicationApprove(baseApproveParamDTO);
                 break;
             case PURCHASE_ORDER:
                 scmTaskFeign.purchaseOrderApprove(approveOneDTO);
                 break;
             case PURCHASE_CHANGE:
-                scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.purchaseChangeApprove(baseApproveParamDTO);
                 break;
             case PURCHASE_PRICE:
-                scmTaskFeign.purchasePriceApprove(baseApproveParamDTO);
+                resultDTOList = scmTaskFeign.purchasePriceApprove(baseApproveParamDTO);
                 break;
             case SUPPLIER:
-                supplierFeign.supplierApprove(baseApproveParamDTO);
+                resultDTOList = supplierFeign.supplierApprove(baseApproveParamDTO);
                 break;
             case SUBCONTRACT_ORDER:
                 scmTaskFeign.subcontractOrderApprove(approveOneDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
+        }
+        BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
+        if (resultDTO != null) {
+            throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
     }
@@ -655,20 +619,22 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
+        baseApproveParamDTO.setDeliveryDate(dto.getDeliveryDate());
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case QC_INFO:
                 break;
             case PO_RECEIVE:
-                wmsTaskFeign.warehouseReceiveApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.warehouseReceiveApprove(baseApproveParamDTO);
                 break;
             case PO_INSTOCK:
-                wmsTaskFeign.poInstockApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.poInstockApprove(baseApproveParamDTO);
                 break;
             case PO_RETURN:
-                wmsTaskFeign.purchaseReturnOrderApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.purchaseReturnOrderApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_APPLICATION:
-                wmsTaskFeign.transferApplicationApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.transferApplicationApprove(baseApproveParamDTO);
                 break;
             case STOCKTAKING_TASK:
                 wmsTaskFeign.stocktakingTaskApprove(baseApproveParamDTO);
@@ -680,10 +646,20 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 wmsTaskFeign.deliveryPlanApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_INFO:
-                wmsTaskFeign.transferInfoApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.transferInfoApprove(baseApproveParamDTO);
+                break;
+            case SO_DELIVERY_NOTICE_CHANGE:
+                resultDTOList = wmsTaskFeign.noticeChangeApprove(baseApproveParamDTO);
+                break;
+            case REQUISITION_APPLICATION_CHANGE:
+                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
+        }
+        BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
+        if (resultDTO != null) {
+            throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
     }
@@ -693,18 +669,36 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
         baseApproveParamDTO.setIds(Arrays.asList(dto.getId()));
         baseApproveParamDTO.setType(dto.getType());
         baseApproveParamDTO.setComment(dto.getComment());
+        List<BatchResultDTO> resultDTOList = new ArrayList<>();
         switch (SourceTypeEnum.getByCode(entity.getBusinessKey())) {
             case SO_INFO:
-                soInfoFeign.approve(baseApproveParamDTO);
+                resultDTOList = soInfoFeign.approve(baseApproveParamDTO);
+                break;
+            case SO_B2C:
+                resultDTOList = soB2cFeign.approve(baseApproveParamDTO);
                 break;
             case SO_CHANGE:
-                soChangeFeign.approve(baseApproveParamDTO);
+                ApiResult<List<BatchResultDTO>> approve = soChangeFeign.approve(baseApproveParamDTO);
+                resultDTOList = approve.getData();
                 break;
             case CUSTOMER_INFO:
-                customerFeign.approve(baseApproveParamDTO);
+                ApiResult<List<BatchResultDTO>> apiResult = customerFeign.approve(baseApproveParamDTO);
+                resultDTOList = apiResult.getData();
+                break;
+            case SO_PRICE:
+                ApiResult<List<BatchResultDTO>>  soPriceResult  = soPriceFeign.approve(baseApproveParamDTO);
+                resultDTOList = soPriceResult.getData();
+                break;
+            case SO_PRICE_CHANGE:
+                ApiResult<List<BatchResultDTO>> soPriceChangeResult  =  soPriceFeign.approveChange(baseApproveParamDTO);
+                resultDTOList = soPriceChangeResult.getData();
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);
+        }
+        BatchResultDTO resultDTO = resultDTOList.stream().filter(req -> !req.getSuccess()).findFirst().orElse(null);
+        if (resultDTO != null) {
+            throw new ServiceException(resultDTO.getMsg());
         }
         return Boolean.TRUE;
     }

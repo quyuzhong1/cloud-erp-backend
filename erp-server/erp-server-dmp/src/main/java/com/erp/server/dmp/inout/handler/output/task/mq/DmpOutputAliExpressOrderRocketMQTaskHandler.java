@@ -1,18 +1,12 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.common.business.dto.*;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
@@ -21,16 +15,9 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.dto.PlatformDeliveryDetailDTO;
-import com.common.business.dto.PlatformOrderDTO;
-import com.common.business.dto.PlatformOrderDetailDTO;
-import com.common.business.dto.PlatformOrderFinanceDTO;
-import com.common.business.dto.PlatformOrderLogisticsDTO;
-import com.common.business.dto.PlatformOrderReceiverDTO;
 import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.utils.ApplicationContextUtils;
-import com.common.business.utils.StringUtil;
 import com.common.core.entity.BaseEntity;
 import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
@@ -219,7 +206,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setInvalidType("");
         // 作废原因
         orderDTO.setInvalidRemark("");
-        
+		orderDTO.setNfeInvoiceStatus(dmpSoInfoEntity.getNfeInvoiceStatus());
         BigDecimal payAmount = dmpSoInfoEntity.getPayAmount();
 		orderDTO.setAmount(payAmount);
         String currencyCode = dmpSoInfoEntity.getCurrencyCode();
@@ -242,7 +229,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setPayAmount(payAmount);
         
         orderDTO.setDictPayMethod(dmpSoInfoEntity.getPayMethod());
-        //TODO
+
         orderDTO.setBuyerRemark(dmpSoInfoEntity.getBuyerRemark());
         
         // 订单备注
@@ -262,17 +249,24 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         orderDTO.setSourceId(thirdCode);
         // 来源编码
         orderDTO.setSourceCode(thirdCode);
+
+		// 税后支付金额
+		orderDTO.setTotalTaxFee(dmpSoInfoEntity.getTotalTaxFee());
+		// 税后支付金额
+		orderDTO.setAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
+		// 折扣金额
+		orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
         
         // 标签json
         orderDTO.setLabelJson(dmpSoInfoEntity.getExtendData());
 
         // 订单状态
         // （soB2cBillStatus字典类型）
-        orderDTO.setBillStatus(dmpSoInfoEntity.getOrderStatus());
+        orderDTO.setBillStatus(dmpSoInfoEntity.getDeliveryStatus());
 
         // 审核状态状态
         // （ApproveStatus字典类型）
-        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getApproveStatus());
+        orderDTO.setApproveStatusStr(dmpSoInfoEntity.getOrderStatus());
 
         // 付款状态（待付款、已付款）
         // （soB2cPayStatus字典类型）
@@ -283,11 +277,19 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         // 同步金蝶状态（默认0无需同步,1待同步,2同步中,3同步成功,4同步失败）
         orderDTO.setSyncKingdeeStatus("0");
         
+        orderDTO.setTotalCancelGoodsAmount(dmpSoInfoEntity.getTotalCancelGoodsAmount());
+        orderDTO.setCancelGoodsCurrency(dmpSoInfoEntity.getCancelGoodsCurrency());
+        orderDTO.setTotalDiscount(dmpSoInfoEntity.getTotalDiscount());
+        
         List<PlatformOrderLogisticsDTO> orderLogisticList = new ArrayList<>();
         if(CollUtil.isNotEmpty(dmpLogisticInfoEntityList)) {
         	for(DmpLogisticInfoEntity dmpLogisticInfoEntity : dmpLogisticInfoEntityList) {
+        		String logisticsNo = dmpLogisticInfoEntity.getLogisticsNo();
+        		if(dmpLogisticInfoEntityList.size() > 1 && StringUtils.isBlank(logisticsNo)) {
+        			continue;
+        		}
         		PlatformOrderLogisticsDTO logisticsDTO = new PlatformOrderLogisticsDTO();
-            	logisticsDTO.setCode(dmpLogisticInfoEntity.getLogisticsNo());
+				logisticsDTO.setCode(logisticsNo);
                 String logisticsServiceName = dmpLogisticInfoEntity.getLogisticsServiceName();
                 if(StringUtils.isBlank(logisticsServiceName)) {
                 	logisticsServiceName = "";
@@ -307,6 +309,7 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
         if(CollUtil.isNotEmpty(dmpSoDetailEntityList)) {
         	for(DmpSoDetailEntity dmpSoDetailEntity : dmpSoDetailEntityList) {
         		PlatformOrderDetailDTO detailDTO = new PlatformOrderDetailDTO();
+				detailDTO.setVariantProperty(dmpSoDetailEntity.getVariantProperty());
                 // 图片URL
                 detailDTO.setImageUrl(dmpSoDetailEntity.getSkuUrl());
                 // skuId
@@ -327,14 +330,16 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 // 数量
                 Integer qty = dmpSoDetailEntity.getQty();
 				detailDTO.setQty(qty);
-                
-                BigDecimal sellPriceOrigin = dmpSoDetailEntity.getSellPriceOrigin();
-                if(sellPriceOrigin != null && qty != null && qty.compareTo(0) != 0) {
-                	// 单价
-                	detailDTO.setPrice(sellPriceOrigin.divide(new BigDecimal(qty) , 2, RoundingMode.HALF_UP));
+
+				// 单价
+                BigDecimal sellPriceOrigin = null == dmpSoDetailEntity.getSellPriceOrigin() ? BigDecimal.ZERO : dmpSoDetailEntity.getSellPriceOrigin();
+				// 明细总价
+				BigDecimal amount = BigDecimal.ZERO;
+				if(qty != null && qty.compareTo(0) != 0) {
+                	amount = sellPriceOrigin.multiply(BigDecimal.valueOf(qty));
                 }
-                
-				detailDTO.setAmount(sellPriceOrigin);
+				detailDTO.setPrice(sellPriceOrigin);
+				detailDTO.setAmount(amount);
                 detailDTO.setCurrency(dmpSoDetailEntity.getCurrencyCode());
                 
                 // 汇率
@@ -355,26 +360,19 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
                 detailDTO.setWarehouseOrgName("");
                 // 库位
                 detailDTO.setWarehouseLocation("");
+				// 平台skuId
+				detailDTO.setPlatformSkuId(dmpSoDetailEntity.getPlatformSkuId());
                 
                 details.add(detailDTO);
         	}
         }
         orderDTO.setDetails(details);
-        
-        if(CollUtil.isNotEmpty(dmpSoOutstockDetailEntityList)) {
-        	List<PlatformDeliveryDetailDTO> platformDeliveryDetailDTOList = new ArrayList<>();
-        	for(DmpSoOutstockDetailEntity v : dmpSoOutstockDetailEntityList) {
-        		PlatformDeliveryDetailDTO deliveryDetailDTO = new PlatformDeliveryDetailDTO();
-                deliveryDetailDTO.setPlatformSkuNo(v.getPlatformSku());
-                deliveryDetailDTO.setQty(v.getQty());
-                deliveryDetailDTO.setPlatformWarehouseName(v.getWarehouseName());
-                deliveryDetailDTO.setPlatformSpuNo(v.getThirdDetailId());
-                deliveryDetailDTO.setPlatformSkuId(v.getSkuId());
-                deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
-                platformDeliveryDetailDTOList.add(deliveryDetailDTO);
-        	}
-        	orderDTO.setDeliveryDetailDTOList(platformDeliveryDetailDTOList);
-        }
+
+		// 订单明细总价
+		BigDecimal orderAmount = details.stream().map(PlatformOrderDetailDTO::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+		// 转换发货单DTO
+		List<PlatformDeliveryDTO> deliveryDTOList = convertDeliveryDTOList(dmpSoOutstockEntityList, dmpSoOutstockDetailEntityList, dmpSoInfoEntity, orderAmount, dmpSoDetailEntityList);
+		orderDTO.setDeliveryDTOList(deliveryDTOList);
         
         PlatformOrderReceiverDTO receiverDTO = new PlatformOrderReceiverDTO();
         if(dmpSoReceiverEntity != null) {
@@ -473,4 +471,98 @@ public class DmpOutputAliExpressOrderRocketMQTaskHandler extends DmpOutputRocket
 			dmpOutputTaskRequest.getChangeConvertInputDmpBaseEntityListMaps().put(childDmpCfgInputConvertEntity, childEntityList);
 		}
     }
+
+
+	/**
+	 * 转换发货单DTO列表
+	 */
+	private List<PlatformDeliveryDTO> convertDeliveryDTOList(List<DmpSoOutstockEntity> dmpSoOutstockEntityList, List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList, DmpSoInfoEntity dmpSoInfoEntity, BigDecimal orderAmount, List<DmpSoDetailEntity> dmpSoDetailEntityList) {
+		if (CollectionUtils.isEmpty(dmpSoOutstockEntityList)){
+			return Collections.emptyList();
+		}
+		Map<String, List<DmpSoDetailEntity>> soDetailMap = dmpSoDetailEntityList.stream().collect(Collectors.groupingBy(DmpSoDetailEntity::getPlatformSkuId));
+		List<PlatformDeliveryDTO> deliveryDTOList = new LinkedList<>();
+		for (DmpSoOutstockEntity dmpSoOutstockEntity : dmpSoOutstockEntityList) {
+			PlatformDeliveryDTO deliveryDTO =  convertDeliveryDTO(dmpSoOutstockEntity, dmpSoOutstockDetailEntityList, dmpSoInfoEntity, orderAmount, soDetailMap);
+			deliveryDTOList.add(deliveryDTO);
+		}
+		return deliveryDTOList;
+	}
+
+	/**
+	 * 转换单发货单
+	 */
+	private PlatformDeliveryDTO convertDeliveryDTO(DmpSoOutstockEntity dmpSoOutstockEntity,
+												   List<DmpSoOutstockDetailEntity> dmpSoOutstockDetailEntityList,
+												   DmpSoInfoEntity dmpSoInfoEntity,
+												   BigDecimal orderAmount,
+												   Map<String, List<DmpSoDetailEntity>> soDetailMap
+	) {
+		PlatformDeliveryDTO deliveryDTO = new PlatformDeliveryDTO();
+		deliveryDTO.setSourceCode(dmpSoOutstockEntity.getThirdCode());
+		// 物流单号
+		deliveryDTO.setTrackNo(dmpSoOutstockEntity.getLogisticsCode());
+		// 运单号
+		deliveryDTO.setTransportNo(dmpSoOutstockEntity.getTransportNo());
+		// 订单状态
+		deliveryDTO.setOrderStatus(dmpSoOutstockEntity.getPlatformStatus());
+		// 下发到仓时间戳
+		deliveryDTO.setDeliveryWarehouseTime(dmpSoOutstockEntity.getDeliveryTime());
+		// (速卖通)买家视角订单金额
+		deliveryDTO.setActualAmount(dmpSoInfoEntity.getActualAmount());
+		// (速卖通)买家视角订单金额币种
+		deliveryDTO.setActualCurrency(dmpSoInfoEntity.getActualCurrency());
+		// 订单明细结算币种总价
+		deliveryDTO.setOrderAmount(orderAmount);
+		// 订单明细结算币种
+		deliveryDTO.setOrderCurrency(dmpSoInfoEntity.getCurrencyCode());
+		// 订单税后总金额
+		deliveryDTO.setOrderAfterTaxAmount(dmpSoInfoEntity.getAfterTaxAmount());
+
+		String platformWarehouseName = "";
+		List<PlatformDeliveryDetailDTO> detailDTOList = new LinkedList<>();
+
+		List<DmpSoOutstockDetailEntity> dmpDetailList = dmpSoOutstockDetailEntityList.stream()
+				.filter(e -> e.getMainId().equalsIgnoreCase(dmpSoOutstockEntity.getId()))
+				.collect(Collectors.toList());
+
+		// 平台存在脏数据可能明细为空
+		if (CollectionUtils.isNotEmpty(dmpDetailList)){
+			for(DmpSoOutstockDetailEntity v : dmpDetailList) {
+				PlatformDeliveryDetailDTO deliveryDetailDTO = new PlatformDeliveryDetailDTO();
+				deliveryDetailDTO.setPlatformSkuNo(v.getPlatformSku());
+				deliveryDetailDTO.setQty(v.getQty());
+				deliveryDetailDTO.setPlatformWarehouseName(v.getWarehouseName());
+				deliveryDetailDTO.setPlatformSpuNo(v.getThirdDetailId());
+				deliveryDetailDTO.setPlatformSkuId(v.getSkuId());
+				deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
+				deliveryDetailDTO.setCurrency(v.getCurrency());
+				deliveryDetailDTO.setPayAmount(v.getPayAmount());
+				deliveryDetailDTO.setPayCurrency(v.getPayCurrency());
+				deliveryDetailDTO.setDiscountAmount(v.getDiscountAmount());
+				deliveryDetailDTO.setDiscountCurrency(v.getDiscountCurrency());
+				deliveryDetailDTO.setPrice(v.getSellPrice());
+				deliveryDetailDTO.setScItemId(v.getPlatformDetailId());
+				List<DmpSoDetailEntity> dmpSoDetailList = soDetailMap.get(v.getSkuId());
+				if (CollectionUtils.isNotEmpty(dmpSoDetailList)) {
+					deliveryDetailDTO.setOrderDetailPlatformStatus(dmpSoDetailList.get(0).getPlatformStatus());
+				} else {
+					deliveryDetailDTO.setOrderDetailPlatformStatus("");
+				}
+				// 唯一UD
+				deliveryDetailDTO.setUniqueId(v.getId());
+				detailDTOList.add(deliveryDetailDTO);
+				platformWarehouseName = v.getWarehouseName();
+			}
+		}
+
+		// 平台仓库名称
+		deliveryDTO.setPlatformWarehouseName(platformWarehouseName);
+		// 明细
+		deliveryDTO.setDetailDTOList(detailDTOList);
+		return deliveryDTO;
+	}
+
+
+
 }

@@ -9,7 +9,6 @@ import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
 
 
 /**
@@ -145,12 +144,12 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     * 商品总售价
     */
     @TableField("all_amount")
-    private BigDecimal allAmount;
+    private BigDecimal allAmount = BigDecimal.ZERO;
     /**
     * 运费收入
     */
     @TableField("shipping_amount")
-    private BigDecimal shippingAmount;
+    private BigDecimal shippingAmount = BigDecimal.ZERO;
     /**
     * 平台费
     */
@@ -226,6 +225,92 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     */
     @TableField("logistics_channel_name")
     private String logisticsChannelName;
+    /**
+     * 总优惠金额
+     */
+    @TableField("total_discount")
+    private BigDecimal totalDiscount = BigDecimal.ZERO;
+    /**
+     * 取消商品总价
+     */
+    @TableField("total_cancel_goods_amount")
+    private BigDecimal totalCancelGoodsAmount = BigDecimal.ZERO;
+    /**
+     * 取消商品币别
+     */
+    @TableField("cancel_goods_currency")
+    private String cancelGoodsCurrency = "";
+
+    /**
+     * 预估货品成本
+     */
+     @TableField("goods_cost")
+     private BigDecimal goodsCost;
+
+    /**
+     * VAT税费
+     */
+    @TableField("vat_cost")
+    private BigDecimal vatCost;
+    
+    /**
+     * 备注
+     */
+    @TableField("remark")
+    private String remark;
+    
+    /**
+     * 实际运费
+     */
+    @TableField("actual_shipping_fee")
+    private BigDecimal actualShippingFee = BigDecimal.ZERO;
+     
+    /**
+     * 预估运费
+     */
+    @TableField("estimated_shipping_fee")
+    private BigDecimal estimatedShippingFee = BigDecimal.ZERO;
+
+    /**
+     * 总税费
+     */
+    @TableField("total_tax_fee")
+    private BigDecimal totalTaxFee = BigDecimal.ZERO;
+
+    /**
+     * 总税后支付金额
+     */
+    @TableField("after_tax_amount")
+    private BigDecimal afterTaxAmount = BigDecimal.ZERO;
+
+    /**
+     * NF-E发票状态,nfeInvoiceStatus字典
+     */
+    @TableField("nfe_invoice_status")
+    private String nfeInvoiceStatus;
+    /**
+     * (速卖通)买家视角订单金额
+     */
+    @TableField("actual_amount")
+    private BigDecimal actualAmount = BigDecimal.ZERO;
+
+    /**
+     * (速卖通)买家视角订单金额币种
+     */
+    @TableField("actual_currency")
+    private String actualCurrency = "";
+
+    /**
+     * (旺店通)订单类型
+     * 1、网店销售
+     * 2、线下订单
+     * 3、售后换货
+     * 4、批发业务
+     * 7、现款销售
+     * 8、分销订单
+     */
+    @TableField("order_type")
+    private String orderType;
 
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
@@ -308,5 +393,7 @@ public class DmpSoInfoEntity extends BaseEntity<DmpSoInfoEntity> {
     public Serializable pkVal() {
         return null;
     }
+
+
 
 }

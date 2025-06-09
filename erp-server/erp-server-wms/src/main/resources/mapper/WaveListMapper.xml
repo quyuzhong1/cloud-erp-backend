@@ -48,7 +48,7 @@
         </if>
     </select>
     <select id="paging" resultType="com.erp.model.wms.entity.WaveListEntity">
-        select wl.id,
+        select  distinct wl.id,
                 wl.create_time,
                 wl.update_time,
                 wl.create_user_name,
@@ -64,16 +64,42 @@
                 wl.picking_user_id,
                 wl.picking_user_name,
                 wl.picking_time,
-                wl.is_out_stock
+                wl.print_time,
+                wl.is_out_stock,
+                wl.is_fully_managed,
+                wl.picking_print_status,
+                wl.picking_print_time,
+                sbdd.warehouse_id,
+                sbdd.warehouse_name,
+                wl.sku_barcode_print_status,
+                wl.sku_barcode_print_time
         from wave_list wl
-        where is_deleted = false
+        left join wave_list_detail wld on wl.id = wld.main_id and wld.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.id = wld.delivery_id and sbd.is_deleted = false
+        left join so_b2c_delivery_detail sbdd on sbdd.main_id = sbd.id and sbdd.is_deleted = false
+        where wl.is_deleted = false
         <if test="params.sqlMap.default != null and params.sqlMap.default != ''">
             and ${params.sqlMap.default}
         </if>
-        order by create_time desc
+        <!--权限-->
+        <if test="params != null and params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        order by wl.create_time desc
     </select>
     <select id="listTab" resultType="com.erp.model.wms.dto.WaveListDTO$TabDTO">
-        select status as tabFlag, count(1) as count from wave_list where is_deleted = false and status is not null group by status
+        select
+            wl.status as tabFlag, count(distinct wl.id) as count
+        from wave_list wl
+        left join wave_list_detail wld on wl.id = wld.main_id and wld.is_deleted = false
+        left join so_b2c_delivery sbd on sbd.id = wld.delivery_id and sbd.is_deleted = false
+        left join so_b2c_delivery_detail sbdd on sbdd.main_id = sbd.id and sbdd.is_deleted = false
+        where wl.is_deleted = false and wl.status is not null
+        <!--权限-->
+        <if test="params != null and params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        group by wl.status
     </select>
     <select id="listByDeliverIds" resultType="com.erp.model.wms.dto.WaveListDTO$WaveDeliveryDTO">
         select pw.code as waveCode, pwd.delivery_id
@@ -90,5 +116,25 @@
         from wave_list as pw
                  left join wave_list_detail as pwd on pw.id = pwd.main_id and pwd.is_deleted = false
         where pw.is_deleted = false and pw.code ${sql}
+    </select>
+    <select id="listDeliveryStatus" resultType="com.erp.model.wms.dto.WaveListDTO$WaveDeliveryStatusDTO">
+        SELECT
+            pw.ID,
+            pwd.delivery_id,
+            sbd.status
+        FROM
+            wave_list AS pw
+                LEFT JOIN wave_list_detail AS pwd ON pw.ID = pwd.main_id
+                AND pwd.is_deleted =
+                    FALSE LEFT JOIN so_b2c_delivery AS sbd ON sbd.ID = pwd.delivery_id
+                AND sbd.is_deleted = FALSE
+        WHERE
+            pw.is_deleted = FALSE
+          AND pw.status IN ( 'awaitPick', 'pickIng' )
+        <if test="deliveryId != null and deliveryId != ''">
+            AND pw.ID in(SELECT main_id FROM wave_list_detail WHERE delivery_id = #{deliveryId})
+        </if>
+        ORDER BY
+            pw.ID
     </select>
 </mapper>

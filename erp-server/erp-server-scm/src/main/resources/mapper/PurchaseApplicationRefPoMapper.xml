@@ -46,5 +46,15 @@
         </where>
 
     </select>
-
+    <select id="existsPurchaseApplicationByPurchaseOrderId" resultType="java.lang.Boolean" parameterType="java.lang.String">
+        SELECT
+            EXISTS (
+                SELECT 1
+                FROM purchase_application pa
+                         LEFT JOIN purchase_application_ref_po parp ON parp.is_deleted = FALSE
+                    AND pa.ID = parp.purchase_application_id
+                WHERE pa.is_deleted = FALSE
+                  AND parp.purchase_order_id = #{purchaseOrderId}
+            )
+    </select>
 </mapper>

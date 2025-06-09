@@ -5,6 +5,7 @@ import cn.hutool.json.JSONObject;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
 import com.common.core.utils.FieldValidUtil;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +38,6 @@ public class DeclareReconciliationConfigExcelListener extends AnalysisEventListe
     private List<String> headList;
 
 
-    public DeclareReconciliationConfigExcelListener() {
-    }
 
    /**
     * @description: 每解析一行数据回调一遍
@@ -91,15 +90,17 @@ public class DeclareReconciliationConfigExcelListener extends AnalysisEventListe
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        if(CollectionUtils.isEmpty(successList)){
+            return;
+        }
     }
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> headList = map.values().stream().map(obj -> obj.toString()).collect(Collectors.toList());
-        headList.add("错误信息");
+        List<String> currencyHeadList = map.values().stream().map(obj -> obj.toString()).collect(Collectors.toList());
+        currencyHeadList.add("错误信息");
         this.headMap = map;
-        this.headList = headList;
+        this.headList = currencyHeadList;
     }
 
     public List<String> getHeadList() {

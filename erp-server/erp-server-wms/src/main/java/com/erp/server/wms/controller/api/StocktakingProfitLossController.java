@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -56,6 +57,7 @@ public class StocktakingProfitLossController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "spld.warehouse_id",
             menuCode = "wms:stocktakingProfitLoss:paging",
             tableAlias = "spl"
     )
@@ -71,7 +73,7 @@ public class StocktakingProfitLossController extends BaseController {
     @PostMapping("/add")
     public ApiResult add(@RequestBody StocktakingProfitLossDTO.AddDTO dto) {
         String id = stocktakingProfitLossService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -88,7 +90,7 @@ public class StocktakingProfitLossController extends BaseController {
     )
     public ApiResult update(@RequestBody StocktakingProfitLossDTO.UpdateDTO dto) {
         String id = stocktakingProfitLossService.update(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -101,6 +103,7 @@ public class StocktakingProfitLossController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "spld.warehouse_id",
             menuCode = "wms:stocktakingProfitLoss:paging",
             tableAlias = "spl"
     )

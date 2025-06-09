@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -31,9 +32,9 @@ import com.erp.server.wms.mapper.WaveListPdaMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -65,6 +66,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 
     @Override
     public PagingVO<WaveListPdaDTO.ViewDTO> paging(PagingDTO<WaveListDTO.SearchParamDTO> pagingDTO) {
+        pagingDTO.getParams().setPermissionSql(pagingDTO.getPermissionSql());
         Page<Object> page = new Page<>(pagingDTO.getCurrPage(), pagingDTO.getPageSize());
         IPage<WaveListEntity> result = this.baseMapper.paging(page, pagingDTO.getParams());
         List<WaveListPdaDTO.ViewDTO> viewDTOList = fillViewList(result.getRecords());
@@ -190,13 +192,14 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ApiResult<?> exitPicking(WaveListDetailPdaDTO.ExitPickingDTO exitDTO) {
         waveListService.update(new UpdateWrapper<WaveListEntity>()
                 .eq("id", exitDTO.getId())
                 .set("picking_cart_code", "")
                 .set("picking_cart_type", "")
                 .set("is_out_stock", false)
-                .set("status", WaveStatusEnum.AWAIT_PICK.getCode()));
+                .set("status", WaveStatusEnum.PICK_ING.getCode()));
         List<WaveListDetailEntity> waveDetailList = waveDetailService.list(new LambdaQueryWrapper<WaveListDetailEntity>().eq(WaveListDetailEntity::getMainId, exitDTO.getId()));
         if(! waveDetailList.isEmpty()){
             List<String> deliveryIds = waveDetailList.stream().map(WaveListDetailEntity::getDeliveryId).collect(Collectors.toList());
@@ -204,6 +207,8 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
             List<String> pickingDetailIds = pickingDetailList.stream().map(BaseEntity::getId).collect(Collectors.toList());
             pickingDetailService.update(new LambdaUpdateWrapper<PickingDetailEntity>().set(PickingDetailEntity::getIsOutStock, false).in(PickingDetailEntity::getId, pickingDetailIds));
         }
+        //清除拣货单拣货数量
+        waveListService.cleanPickingList(waveListService.getById(exitDTO.getId()));
         return ApiResult.success();
     }
 
@@ -249,7 +254,7 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
 //            PickingCartTypeEntity pickingCartType = pickingCartTypeList.stream().filter(item -> item.getId().equals(pickingCart.getTypeId())).findFirst().orElse(new PickingCartTypeEntity());
 //            view.setPickingCartTypeName(pickingCartType.getName());
 
-            if(com.baomidou.mybatisplus.core.toolkit.StringUtils.isBlank(waveEntity.getPickingCartCode())){
+            if(CharSequenceUtil.isBlank(waveEntity.getPickingCartCode())){
                 List<WaveListCartTypeEntity> entityList = cartTypeMap.get(waveEntity.getId());
                 if(entityList != null && !entityList.isEmpty()){
                     List<String> typeIds = entityList.stream().map(WaveListCartTypeEntity::getPickingCartTypeId).collect(Collectors.toList());
@@ -278,5 +283,29 @@ public class WaveListPdaServiceImpl extends SuperServiceImpl<WaveListPdaMapper, 
         }
 
         return viewList;
+    }
+
+    @Override
+    public List<WaveListDTO.TabDTO> tabList(WaveListDTO.SearchParamDTO paramDTO) {
+        List<WaveListDTO.TabDTO> list = waveListService.tabList(paramDTO);
+        Map<String, WaveListDTO.TabDTO> map = list.stream().collect(Collectors.toMap(item1 -> item1.getTabFlag(), item2 -> item2));
+
+        List<WaveListDTO.TabDTO> resultList = new ArrayList<>();
+        WaveListDTO.TabDTO tab_wait = map.get(WaveStatusEnum.AWAIT_PICK.getCode());
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.AWAIT_PICK.getCode(), tab_wait != null ? tab_wait.getCount() : 0));
+
+        WaveListDTO.TabDTO tab_ing = map.get(WaveStatusEnum.PICK_ING.getCode());
+        WaveListDTO.TabDTO tab_hang = map.get(WaveStatusEnum.HANG_UP.getCode());
+        int ing = tab_ing != null ? tab_ing.getCount() : 0;
+        int hang = tab_hang != null ? tab_hang.getCount() : 0;
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.PICK_ING.getCode(), ing + hang));
+
+        WaveListDTO.TabDTO tab_finish = map.get(WaveStatusEnum.FINISH.getCode());
+        resultList.add(new WaveListDTO.TabDTO(WaveStatusEnum.FINISH.getCode(), tab_finish != null ? tab_finish.getCount() : 0));
+
+        for (WaveListDTO.TabDTO dto : resultList) {
+            dto.setTabFlagName(WaveStatusEnum.getNameByCode(dto.getTabFlag()));
+        }
+        return resultList;
     }
 }

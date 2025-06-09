@@ -20,7 +20,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_task_sys")
-public class ProjectTaskSysEntity extends BaseEntity implements Serializable {
+public class ProjectTaskSysEntity extends BaseEntity<ProjectTaskSysEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

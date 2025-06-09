@@ -1,15 +1,15 @@
 package com.erp.model.wms.entity;
 
-import java.math.BigDecimal;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import java.time.LocalDate;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 
 
 /**
@@ -114,10 +114,10 @@ public class PackageForecastEntity extends BaseEntity<PackageForecastEntity> {
 
     @TableField("transfer_status")
     private String transferStatus;
+    @TableField(exist = false)
+    private String shopId;
 
-
-
-    public static final String CODE = "code";
+    public static final String PACKAGE_FORECAST = "package_forecast";
 
     public static final String HANDOVER_NO = "handover_no";
 
@@ -148,8 +148,6 @@ public class PackageForecastEntity extends BaseEntity<PackageForecastEntity> {
     public static final String COLLECT_ADDRESS_ID = "collect_address_id";
 
     public static final String HANDOVER_STATUS = "handover_status";
-
-    public static final String REMARK = "remark";
 
     @Override
     public Serializable pkVal() {

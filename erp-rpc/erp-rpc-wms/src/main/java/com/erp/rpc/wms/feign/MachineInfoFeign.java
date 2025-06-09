@@ -1,15 +1,10 @@
 package com.erp.rpc.wms.feign;
 
 import com.erp.model.wms.dto.MachineInfoDTO;
-import com.erp.model.wms.dto.MachineRefSoDTO;
-import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.entity.MachineRefSoEntity;
-import com.erp.model.wms.entity.SoOutstockDetailEntity;
-import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 

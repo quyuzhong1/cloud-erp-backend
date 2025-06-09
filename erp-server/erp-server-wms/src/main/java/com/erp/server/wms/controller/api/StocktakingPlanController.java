@@ -1,8 +1,10 @@
 package com.erp.server.wms.controller.api;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.utils.RedisUtil;
@@ -18,6 +20,7 @@ import com.common.core.enums.LogActionEnum;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.wms.dto.StocktakingPlanDTO;
 import com.erp.model.wms.entity.StocktakingPlanEntity;
+import com.erp.server.wms.query.StocktakingPlanQueryHandler;
 import com.erp.server.wms.service.StocktakingPlanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,7 +43,7 @@ import java.util.List;
 @RequestMapping("/stocktakingPlan")
 public class StocktakingPlanController extends BaseController {
 
-    @Autowired
+    @Resource
     private StocktakingPlanService stocktakingPlanService;
     @Resource
     private RedisUtil redisUtil;
@@ -52,8 +55,9 @@ public class StocktakingPlanController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "spd.warehouse_id",
             menuCode = "wms:stocktakingPlan:paging",
-            tableAlias = "stocktaking_plan"
+            tableAlias = "sp"
     )
     public ApiResult<List<StocktakingPlanDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
        return success(stocktakingPlanService.tabList(dto));
@@ -69,9 +73,11 @@ public class StocktakingPlanController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "spd.warehouse_id",
             menuCode = "wms:stocktakingPlan:paging",
-            tableAlias = "stocktaking_plan"
+            tableAlias = "sp"
     )
+    @WebAdvanceQuery(handler = StocktakingPlanQueryHandler.class)
     public ApiResult<PagingVO<StocktakingPlanDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<StocktakingPlanDTO.PagingParamDTO> dto) {
         return success(stocktakingPlanService.paging(dto));
     }
@@ -85,10 +91,6 @@ public class StocktakingPlanController extends BaseController {
    */
    @LogAction(value = LogActionEnum.INSERT, desc = "新增盘点计划")
    @PostMapping("/add")
-//   @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//           tableField = "create_user_id",
-//           menuCode = "wms:stocktakingPlan:add",
-//           serviceClass = StocktakingPlanService.class)
    public ApiResult<String> add(@RequestBody @Validated StocktakingPlanDTO.AddDTO dto) {
       return success(stocktakingPlanService.add(dto));
    }
@@ -121,11 +123,6 @@ public class StocktakingPlanController extends BaseController {
     */
     @LogAction(value = LogActionEnum.ADD_AND_SUBMIT, desc = "新增并提交盘点计划")
     @PostMapping("/addAndSubmit")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "wms:stocktakingPlan:addAndSubmit",
-//            serviceClass = StocktakingPlanService.class,
-//            keyIdName = "id")
     public ApiResult<Void> addAndSubmit(@RequestBody @Validated StocktakingPlanDTO.AddDTO dto) {
         stocktakingPlanService.addAndSubmit(dto);
         return success();
@@ -216,7 +213,7 @@ public class StocktakingPlanController extends BaseController {
                 }
                 approveResult = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
                 // 删除盘点锁定的库存
-                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
+                redisUtil.keys(CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
                         .forEach(key -> redisUtil.del(key));
             }
             resultDTOS.add(approveResult);
@@ -246,7 +243,7 @@ public class StocktakingPlanController extends BaseController {
             try {
                 disApproveResult = stocktakingPlanService.disApprove(id);
                 // 删除盘点锁定的库存
-                redisUtil.keys(StrUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
+                redisUtil.keys(CharSequenceUtil.format(RedisKeyConstant.INVENTORY_LOCK_CODE, entity.getCode()))
                         .forEach(key -> redisUtil.del(key));
             }catch (Exception e){
                 log.error("盘点计划反审核失败",e);

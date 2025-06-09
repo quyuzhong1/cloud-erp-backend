@@ -87,7 +87,7 @@ public class ThirdShopServiceImpl extends SuperServiceImpl<ThirdShopMapper, Thir
     @Override
     public Boolean update(ThirdShopDTO.UpdateDTO updateDTO) {
         ThirdShopEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "第三方系统店铺单"));
+        old = Optional.ofNullable(old).orElseThrow(() -> new ServiceException(ApiError.NOT_EXIST_BILL, "第三方系统店铺单"));
         ThirdShopEntity thirdShopEntity = BeanMapperUtils.map(ThirdShopEntity.class, updateDTO);
 
         // 数据处理

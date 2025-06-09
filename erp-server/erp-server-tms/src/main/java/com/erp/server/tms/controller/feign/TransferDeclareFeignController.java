@@ -42,6 +42,15 @@ public class TransferDeclareFeignController {
     }
 
     /**
+     * 批量新增中转报关单
+     * @param dtoList
+     * @return
+     */
+    @PostMapping("/batchAdd")
+    public List<BaseResultDTO.AddDTO> batchAdd(@RequestBody List<TransferDeclareDTO.AddDTO> dtoList) {
+        return transferDeclareService.batchAdd(dtoList);
+    }
+    /**
      * @description 根据销售订单id 获取中转报关信息
      * @param soId 销售订单id
      * @author Lambda

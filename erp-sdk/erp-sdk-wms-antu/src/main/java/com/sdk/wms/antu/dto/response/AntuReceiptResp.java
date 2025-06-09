@@ -111,7 +111,8 @@ public class AntuReceiptResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class Item {
+    public static class Item implements Serializable{
+        private static final long serialVersionUID = 2405172041950251807L;
 
         //SKU
         @JSONField(name = "product_sku")

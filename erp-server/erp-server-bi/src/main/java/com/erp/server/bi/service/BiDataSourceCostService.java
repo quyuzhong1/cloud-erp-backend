@@ -94,7 +94,7 @@ public interface BiDataSourceCostService
      * @param dto
      * @return
      */
-    List<SeriesVO> getDeptCostProfit(BiFilterDTO dto);
+    List<SeriesVO<String>> getDeptCostProfit(BiFilterDTO dto);
 
     /**
      * 获取最新月份
@@ -114,14 +114,14 @@ public interface BiDataSourceCostService
      * @param dto
      * @return
      */
-    List<SeriesVO> getShopCostProfit(BiFilterDTO dto);
+    List<SeriesVO<String>> getShopCostProfit(BiFilterDTO dto);
 
     /**
      * 获取利润top20的平台
      * @param dto
      * @return
      */
-    List<SeriesVO> getPlatformCostProfit(BiFilterDTO dto);
+    List<SeriesVO<String>> getPlatformCostProfit(BiFilterDTO dto);
 
     /**
      * 获取平台毛利率占比分析
@@ -135,21 +135,21 @@ public interface BiDataSourceCostService
      * @param dto
      * @return
      */
-    List<SeriesVO> getMonthCostProfit(BiFilterDTO dto);
+    List<SeriesVO<String>> getMonthCostProfit(BiFilterDTO dto);
 
     /**
      * 季度成本分析
      * @param dto
      * @return
      */
-    List<SeriesVO> getQuarterCostProfit(BiFilterDTO dto);
+    List<SeriesVO<String>> getQuarterCostProfit(BiFilterDTO dto);
 
     /**
      * 年度成本分析
      * @param dto
      * @return
      */
-    List<SeriesVO> getYearCostProfit(BiFilterDTO dto);
+    List<SeriesVO<String>> getYearCostProfit(BiFilterDTO dto);
 
     /**
      * 获取事业部成本利润分析排名

@@ -3,6 +3,7 @@ package com.erp.server.workflow.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.erp.model.workflow.dto.ActivityDTO;
 import com.erp.model.workflow.entity.ActHistoryActivityEntity;
 import com.erp.server.workflow.mapper.ActHistoryActivityMapper;
@@ -86,7 +87,7 @@ public class ActHistoryActivityServiceImpl extends ServiceImpl<ActHistoryActivit
          */
         if (Objects.isNull(lastEntity)) {
             List<ActHistoryActivityEntity> list = getListByprocessInstanceId(processInstanceId);
-            if (CollectionUtils.isNotEmpty(list)) {
+            if (!CollectionUtils.isEmpty(list)) {
                 return list.get(0).getActivityId();
             } else {
                 return "";
@@ -131,7 +132,7 @@ public class ActHistoryActivityServiceImpl extends ServiceImpl<ActHistoryActivit
         queryWrapper.eq(ActHistoryActivityEntity::getActivityId, nowActivityId);
         queryWrapper.ne(ActHistoryActivityEntity::getPreActivityId, "");
         queryWrapper.orderByDesc(ActHistoryActivityEntity::getCreateTime);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         return this.getOne(queryWrapper);
     }
 
@@ -139,7 +140,7 @@ public class ActHistoryActivityServiceImpl extends ServiceImpl<ActHistoryActivit
         LambdaQueryWrapper<ActHistoryActivityEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ActHistoryActivityEntity::getProcessInstanceId, processInstanceId);
         queryWrapper.orderByDesc(ActHistoryActivityEntity::getCreateTime);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         return this.list(queryWrapper);
     }
 
@@ -156,7 +157,7 @@ public class ActHistoryActivityServiceImpl extends ServiceImpl<ActHistoryActivit
         LambdaQueryWrapper<ActHistoryActivityEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ActHistoryActivityEntity::getProcessInstanceId, processInstanceId);
         queryWrapper.orderByDesc(ActHistoryActivityEntity::getCreateTime);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         return baseMapper.selectOne(queryWrapper);
 
     }

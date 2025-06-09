@@ -107,7 +107,8 @@ public class ImlReceiptResp extends CleanBaseDTO implements Serializable {
 
     @Data
     @ToString
-    public static class Item {
+    public static class Item implements Serializable{
+        private static final long serialVersionUID = 1905122041950251207L;
 
         //SKU
         @JSONField(name = "product_sku")

@@ -16,7 +16,10 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.oms.dto.CustomerAddressDTO;
 import com.erp.model.oms.dto.CustomerB2bSellerChangeDTO;
 import com.erp.model.oms.dto.CustomerDTO;
+import com.erp.model.oms.dto.CustomerDTO.CustomerBatchUpdateDTO;
 import com.erp.model.oms.entity.CustomerInfoEntity;
+import com.erp.model.wms.dto.VirtualWarehouseDTO;
+import com.erp.model.wms.entity.VirtualWarehouseRelationEntity;
 import com.erp.server.oms.query.CustomerInfoQueryHandler;
 import com.erp.server.oms.service.CustomerAddressService;
 import com.erp.server.oms.service.CustomerB2bSellerChangeService;
@@ -98,7 +101,7 @@ public class CustomerInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "新增客户信息")
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated CustomerDTO.AddDTO dto) {
         String id = customerInfoService.add(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -117,9 +120,9 @@ public class CustomerInfoController extends BaseController {
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids"
     )
-    public ApiResult submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerInfoService.submit(dto.getIds());
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -169,7 +172,7 @@ public class CustomerInfoController extends BaseController {
             serviceClass = CustomerInfoService.class,
             keyIdName = "id"
     )
-    public ApiResult update(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
         String id = customerInfoService.updateCustomer(dto);
         return StringUtils.isNotBlank(id) ? success() : failure();
     }
@@ -188,9 +191,9 @@ public class CustomerInfoController extends BaseController {
             serviceClass = CustomerInfoService.class,
             keyIdName = "id"
     )
-    public ApiResult updateAndSubmit(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
+    public ApiResult<Object> updateAndSubmit(@RequestBody @Validated CustomerDTO.UpdateDTO dto) {
         Boolean result = customerInfoService.updateAndSubmit(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -273,9 +276,9 @@ public class CustomerInfoController extends BaseController {
             menuCode = "oms:customer:cancelProcess",
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids")
-    public ApiResult cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerInfoService.cancelProcess(dto.getIds());
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
 
@@ -293,9 +296,9 @@ public class CustomerInfoController extends BaseController {
             serviceClass = CustomerInfoService.class,
             keyIdName = "ids"
     )
-    public ApiResult delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> delete(@RequestBody @Valid BaseIdsDTO.IdsDTO dto) {
         Boolean result = customerInfoService.deleteByIds(dto.getIds());
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -303,9 +306,9 @@ public class CustomerInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出客户信息")
     @PostMapping("/export")
-    public ApiResult exportCustomer(@RequestBody @Valid CustomerDTO.ExportDTO dto) {
+    public ApiResult<Object> exportCustomer(@RequestBody @Valid CustomerDTO.ExportDTO dto) {
         Boolean result = customerInfoService.exportExcel(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -379,9 +382,9 @@ public class CustomerInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用或者停用客户：ids={ids},禁用状态={disabled}(true=禁用;false=启用)")
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+    public ApiResult<Object> updateStatus(@RequestBody @Validated CustomerBatchUpdateDTO dto) {
         Boolean result = customerInfoService.updateStatus(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -430,9 +433,9 @@ public class CustomerInfoController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE_WITHOUT_PARAMS, desc = "处理平台的历史数据")
     @GetMapping("/processData")
-    public ApiResult processData() {
+    public ApiResult<Object> processData() {
         Boolean result = customerInfoService.processData();
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -464,8 +467,8 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "保存销售员变更信息")
-    @PostMapping(value = "addSellerChange")
-    public ApiResult<List<BatchResultDTO>> saveSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) throws IOException {
+    @PostMapping(value = "/addSellerChange")
+    public ApiResult<List<BatchResultDTO>> saveSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) {
         List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchAdd(addDTOList);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
@@ -476,10 +479,47 @@ public class CustomerInfoController extends BaseController {
      * @return
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "保存并提交销售员变更信息")
-    @PostMapping(value = "addAndSubmitSellerChange")
-    public ApiResult<List<BatchResultDTO>> addAndSubmitSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) throws IOException {
+    @PostMapping(value = "/addAndSubmitSellerChange")
+    public ApiResult<List<BatchResultDTO>> addAndSubmitSellerChange(@RequestBody List<CustomerB2bSellerChangeDTO.AddDTO> addDTOList) {
         List<BatchResultDTO> batchResultDTOList = customerB2bSellerChangeService.batchAddAndSubmit(addDTOList);
         return batchResultDTOList.stream().allMatch(BatchResultDTO::getSuccess) ? success(batchResultDTOList) : failure(batchResultDTOList);
     }
 
+    /**
+     * 启用的客户列表(简称)
+     *
+     * @param dto
+     * @return java.util.List<com.erp.model.oms.dto.CustomerDTO.InfoDTO>
+     * @Author jack
+     * @Date 2024-11-06
+     **/
+    @PostMapping("/listSimpleName")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:customer:paging",
+            tableAlias = "customer_info"
+    )
+    public ApiResult<List<CustomerDTO.InfoDTO>> listSimpleName(@RequestBody CustomerDTO.PageSelectDTO dto) {
+        List<CustomerDTO.InfoDTO> list = customerInfoService.listSimpleName(dto);
+        return success(list);
+    }
+
+    /**
+     * 初始化处理客户销售部门数据
+     * @return
+     */
+    @PostMapping("/initHistoryCustomerDeptId")
+    public ApiResult initHistoryCustomerDeptId() {
+        customerInfoService.initHistoryCustomerDeptId();
+        return success();
+    }
+
+
+    /**
+     * 根据客户id查询虚拟仓
+     **/
+    @PostMapping("/getVirtualWarehouseByCustomerId")
+    public ApiResult<VirtualWarehouseDTO.VwDTO> getVirtualWarehouseByCustomerId(@RequestBody @Validated CustomerDTO.VirtualDTO dto) {
+        return success(customerInfoService.getVirtualWarehouseByCustomerId(dto));
+    }
 }

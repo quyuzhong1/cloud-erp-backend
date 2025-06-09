@@ -1,6 +1,7 @@
 package com.erp.rpc.tms.feign;
 
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -33,6 +34,10 @@ public interface LogisticsAuthFeign {
     @GetMapping("/feign/logisticsAuth/getAuthBySupplierId")
     LogisticsSupplierDTO.AuthDTO getAuthBySupplierId(@RequestParam("logisticsSupplierId") String logisticsSupplierId);
 
+
+    @GetMapping("/feign/logisticsAuth/listAuthBySupplierId")
+    List<LogisticsSupplierDTO.AuthDTO> listAuthBySupplierId(@RequestParam("logisticsSupplierIds") List<String> logisticsSupplierIds);
+
     /**
      * 根据渠道id查询渠道关联的平台信息
      * @Author Luo_WG
@@ -42,4 +47,16 @@ public interface LogisticsAuthFeign {
      **/
     @PostMapping("/feign/logisticsAuth/listAuthChannelView")
     List<LogisticsSupplierDTO.AuthChannelViewDTO> listAuthChannelView(@RequestBody List<String> channelIdList);
+
+    /**
+     * 获取所有海外仓发货的渠道
+     */
+    @PostMapping("/feign/logisticsAuth/listAllChannelByOverseas")
+    List<String> listAllChannelByOverseas();
+
+    /**
+     * 获取所有海外仓发货的渠道
+     */
+    @PostMapping("/feign/logisticsAuth/updateLogisticAuthFile")
+    Boolean updateLogisticAuthFile(@RequestBody List<LogisticsAuthFieldEntity> updateLogistic);
 }

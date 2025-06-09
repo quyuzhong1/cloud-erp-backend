@@ -757,6 +757,10 @@ public class TransferDeclareDTO implements Serializable {
          * 创建时间[可排序]
          */
         private LocalDateTime createTime;
+        /**
+         * 平台订单号
+         */
+        private String platformOrderCode;
 
         /**
          * 组包单号

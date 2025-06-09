@@ -40,6 +40,17 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
      */
     @TableField("sku_no")
     private String skuNo;
+    /**
+     * bom版本
+     */
+    @TableField("bom_version")
+    private String bomVersion;
+
+    /**
+     * 客户sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
 
     /**
      * 发货数量
@@ -95,6 +106,18 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
     @TableField("last_picking_qty")
     private Integer lastPickingQty;
 
+    /**
+     * 修改前数量
+     */
+    @TableField(exist = false)
+    private Integer changeBeforeQty;
+
+    /**
+     * 修改前sku编号
+     */
+    @TableField(exist = false)
+    private String changeBeforeSkuNo;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
@@ -109,7 +132,7 @@ public class SoDeliveryNoticeDetailEntity extends BaseEntity<SoDeliveryNoticeDet
 
     public static final String IS_CLOSE = "is_close";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

@@ -4,7 +4,9 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cDetailDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.plm.vo.SkuVO;
 
 import java.util.List;
 
@@ -19,6 +21,23 @@ public interface SoB2cSplitService extends SuperService<SoB2cEntity> {
      * @return
      */
     List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids);
+
+    /**
+     * 重置sku含税成本
+     * @param soB2cEntity
+     * @param detailEntity
+     * @param skuVOList
+     * @param childSkuList
+     */
+    void resetSkuVO(SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, List<SkuVO> skuVOList, List<String> childSkuList);
+
+    /**
+     * 重置sku含税成本
+     * @param soB2cEntity
+     * @param detailEntity
+     * @param skuVO
+     */
+    void resetSkuVO(SoB2cEntity soB2cEntity, SoB2cDetailEntity detailEntity, SkuVO skuVO);
 
     /**
      * 捆绑拆分
@@ -77,11 +96,23 @@ public interface SoB2cSplitService extends SuperService<SoB2cEntity> {
     List<SoB2cDTO.CheckCancelSplitDTO> checkCancelSplit(List<String> ids);
 
     /**
+     * @param id
+     * @param isCheckPlatform
+     * @return BatchResultDTO
      * @description: 取消合并
      * @author Will
      * @date: 2023/8/21 9:24
-     * @param id
-     * @return BatchResultDTO
      */
-    BatchResultDTO cancelSplit(String id);
+    BatchResultDTO cancelSplit(String id, Boolean isCheckPlatform);
+
+    /**
+     * 组合sku拆分数据
+     *
+     * @param soB2cEntity
+     * @param detailEntityList
+     * @param splitSkuDetailDTOS
+     * @param skuNo
+     * @return
+     */
+    SoB2cDTO.SplitSaveDTO buildSplitBySku(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> detailEntityList, List<SoB2cDTO.SplitSkuDetailDTO> splitSkuDetailDTOS, String skuNo);
 }

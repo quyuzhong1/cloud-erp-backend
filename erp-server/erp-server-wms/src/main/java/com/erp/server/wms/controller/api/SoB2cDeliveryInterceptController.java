@@ -2,8 +2,12 @@ package com.erp.server.wms.controller.api;
 
 
 import cn.hutool.core.util.ObjectUtil;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.wms.entity.SoB2cDeliveryInterceptEntity;
+import com.erp.server.wms.query.SoB2cDeliveryInterceptQueryHandler;
+import com.erp.server.wms.service.WaveListService;
+import com.erp.server.wms.service.WaveListService;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Resource;
@@ -40,6 +44,9 @@ public class SoB2cDeliveryInterceptController extends BaseController {
     @Resource
     private SoB2cDeliveryInterceptService soB2cDeliveryInterceptService;
 
+    @Resource
+    private WaveListService waveListService;
+
     /**
     * 新增
     * @author Luo_WG
@@ -63,6 +70,8 @@ public class SoB2cDeliveryInterceptController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "sbd.shop_id",
+            warehouseTableField = "sbdid.warehouse_id",
             menuCode = "wms:soB2cDeliveryIntercept:paging",
             tableAlias = "sbdi"
     )
@@ -80,9 +89,12 @@ public class SoB2cDeliveryInterceptController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            shopTableField = "sbd.shop_id",
+            warehouseTableField = "sbdid.warehouse_id",
             menuCode = "wms:soB2cDeliveryIntercept:paging",
             tableAlias = "sbdi"
     )
+    @WebAdvanceQuery(handler = SoB2cDeliveryInterceptQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDeliveryInterceptDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryInterceptDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryInterceptService.paging(dto));
     }
@@ -211,6 +223,11 @@ public class SoB2cDeliveryInterceptController extends BaseController {
             BatchResultDTO result;
             try {
                 result = soB2cDeliveryInterceptService.interceptFailure(id,dto.getIsAutoOut(),dto.getResultRemark() );
+                if(result.getSuccess()&&dto.getIsAutoOut()){
+                    //波次列表波次状态自动变更
+                    SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);
+                    waveListService.waveListStatusAutoChange(entity.getDeliveryId());
+                }
             }catch (Exception e){
                 log.error("发货拦截单 拦截失败处理异常",e);
                 SoB2cDeliveryInterceptEntity entity = soB2cDeliveryInterceptService.getById(id);

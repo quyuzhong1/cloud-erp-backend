@@ -36,8 +36,7 @@ public class BasicCategoryController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.INSERT, desc = "新增产品分类")
     @PostMapping("/save")
-    //@RequestPermissions("plm:category:save")
-    public ApiResult addCategory(@RequestBody @Validated SaveBasicCategoryDTO dto) {
+    public ApiResult<Object> addCategory(@RequestBody @Validated SaveBasicCategoryDTO dto) {
         categoryService.addCategory(dto);
         return success();
     }
@@ -50,8 +49,7 @@ public class BasicCategoryController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改产品分类:id={id},名称={name}")
     @PostMapping("/update")
-    //@RequestPermissions("plm:category:update")
-    public ApiResult update(@RequestBody @Validated UpdateBasicNameDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated UpdateBasicNameDTO dto) {
         categoryService.updateCategory(dto);
         return success();
     }
@@ -88,8 +86,7 @@ public class BasicCategoryController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.DELETE, desc = "删除产品分类")
     @RequestMapping(value = "/remove", method = {RequestMethod.POST})
-    //@RequestPermissions("plm:category:remove")
-    public ApiResult remove(String id) {
+    public ApiResult<Object> remove(String id) {
         Boolean flag = categoryService.deleteById(id);
         return flag == true ? success() : failure();
     }

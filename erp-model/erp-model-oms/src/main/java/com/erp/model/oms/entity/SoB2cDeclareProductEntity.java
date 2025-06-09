@@ -99,7 +99,16 @@ public class SoB2cDeclareProductEntity extends BaseEntity<SoB2cDeclareProductEnt
      */
     @TableField("declare_label")
     private String declareLabel;
-
+    /**
+     * 单价
+     */
+    @TableField("price")
+    private BigDecimal price;
+    /**
+     * 币别（原币）
+     */
+    @TableField("currency")
+    private String currency;
 
     public static final String SO_DETAIL_ID = "so_detail_id";
 

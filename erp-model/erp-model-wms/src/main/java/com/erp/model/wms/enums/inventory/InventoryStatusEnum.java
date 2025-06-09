@@ -40,10 +40,6 @@ public enum InventoryStatusEnum  implements EnumMessage {
         return controlLocation;
     }
 
-    public void setControlLocation(Boolean controlLocation) {
-        this.controlLocation = controlLocation;
-    }
-
 
     InventoryStatusEnum(String code, String name, Boolean controlLocation) {
         this.code = code;
@@ -51,10 +47,12 @@ public enum InventoryStatusEnum  implements EnumMessage {
         this.controlLocation = controlLocation;
     }
 
+    @Override
     public String getCode() {
         return code;
     }
 
+    @Override
     public String getName() {
         return name;
     }
@@ -94,4 +92,8 @@ public enum InventoryStatusEnum  implements EnumMessage {
      * 无库位
      */
     public final static List<InventoryStatusEnum> NO_WAREHOUSE_LOCATION = new ArrayList<>(Arrays.asList(InventoryStatusEnum.IN_TRANSIT,InventoryStatusEnum.WAIT_QC));
+    /**
+     * 不受关账限制
+     */
+    public final static List<String>  WITHOUT_LIMIT_CLOSE_ACCOUNT_STATUS = new ArrayList<>(Arrays.asList(InventoryStatusEnum.IN_TRANSIT.getCode(),InventoryStatusEnum.WAIT_QC.getCode()));
 }

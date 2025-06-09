@@ -98,8 +98,9 @@
 
     <select id="tabList" resultType="java.lang.Integer">
         SELECT
-        count(si.id)
+        count(distinct si.id)
         FROM  subcontract_issue si
+        inner join subcontract_issue_detail sid on si.id = sid.main_id and sid.is_deleted = false
         WHERE
         ${params.sqlMap.default}
         and si.is_deleted = FALSE

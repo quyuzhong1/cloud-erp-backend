@@ -1,6 +1,7 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
@@ -118,8 +119,8 @@ public class FirstMileDeliveryDTO implements Serializable {
 
      @Data
      @NoArgsConstructor
-     public static class PagingParamDTO extends SortDTO {
-
+     public static class PagingParamDTO extends SortDTO implements Serializable{
+         private static final long serialVersionUID = 1905122041950251207L;
          /**
           * 页面高级查询
           */
@@ -370,6 +371,14 @@ public class FirstMileDeliveryDTO implements Serializable {
          * FBA货件编码
          */
         private String fbaShipmentCode;
+        /**
+         * 中转仓库集合
+         */
+        private String transferWarehouseIds;
+        /**
+         * 中转仓库名称
+         */
+        private String transferWarehouseNames;
 
     }
     /**
@@ -628,6 +637,10 @@ public class FirstMileDeliveryDTO implements Serializable {
         * 库存组织名称
         */
         private String inventoryOrgName;
+        /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
 
         /**
          * 附件名集合
@@ -687,6 +700,10 @@ public class FirstMileDeliveryDTO implements Serializable {
         @NotBlank(message = "主键id不能为空")
         private String id;
 
+        /**
+         * 中转仓库集合
+         */
+        private List<String> transferWarehouseIdList;
         /**
          * 附件名集合
          */
@@ -1061,7 +1078,7 @@ public class FirstMileDeliveryDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
-    public static class GenerateLogisticReqDTO {
+    public static class GenerateLogisticReqDTO extends PermissionsDTO {
 
         /**
          * 装箱状态
@@ -1077,6 +1094,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货单ids
          */
         private List<String> ids;
+        /**
+         * 发货单编号
+         */
+        private List<String> deliveryCodeList;
         /**
          * 搜索发货单编码
          */
@@ -1113,6 +1134,10 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 发货单单号
          */
         private String outstockCode;
+        /**
+         * 业务单号
+         */
+        private String businessCode;
 
         /**
          * 店铺Id
@@ -1329,5 +1354,24 @@ public class FirstMileDeliveryDTO implements Serializable {
          * 第三方发货单号
          */
         private String overseasWarehouseCode;
+    }
+
+
+    @Getter
+    @Setter
+    public static class FbaShipmentDTO {
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 审核时间
+         */
+        private LocalDateTime approveTime;
+        /**
+         * FBA货件编码
+         */
+        private String fbaShipmentCode;
     }
 }

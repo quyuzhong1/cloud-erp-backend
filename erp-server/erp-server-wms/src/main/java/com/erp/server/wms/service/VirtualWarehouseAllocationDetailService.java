@@ -3,9 +3,10 @@ package com.erp.server.wms.service;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.service.SuperService;
-import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.dmp.dto.DmpPushTaskDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDTO;
 import com.erp.model.wms.dto.VirtualWarehouseAllocationDetailDTO;
+import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationDetailEntity;
 import com.erp.model.wms.entity.VirtualWarehouseAllocationEntity;
 
@@ -66,7 +67,7 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @param id
      * @return
      */
-    DmpPushTaskEntity viewSyncInfo(String id);
+    DmpPushTaskDTO.SyncInfoDTO viewSyncInfo(String id);
 
     VirtualWarehouseAllocationDTO.ThirdCodeDto view(String id);
 
@@ -102,4 +103,12 @@ public interface VirtualWarehouseAllocationDetailService extends SuperService<Vi
      * @return List<AllocationDataDTO>
      */
     List<VirtualWarehouseAllocationDetailDTO.AllocationDataDTO> listAllocationData(List<String> skuIdList, List<String> warehouseIdList, List<String> virtualWarehouseIdList);
+    /**
+     * 根据主表id集合查询
+     * @author will
+     * @date 2024/11/18 19:45
+     * @param mainIdList
+     * @return List<VirtualWarehouseAllocationDetailEntity>
+     */
+    List<VirtualWarehouseAllocationDetailEntity> listByMainIdList(List<String> mainIdList);
 }

@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -150,7 +151,18 @@ public class ProductDetailEntity extends BaseEntity<ProductDetailEntity> impleme
      */
     @TableField("warehouse_location_large")
     private String warehouseLocationLarge;
-
+    
+    /**
+     * 启用时间，取首次审核通过时间
+     */
+    @TableField("enable_time")
+    private LocalDateTime enableTime;
+    
+    /**
+     * ean码
+     */
+    @TableField(exist = false)
+    private String ean;
 
     /**
      * 目的国申报价

@@ -27,7 +27,7 @@ import java.util.List;
 @Ignore
 public class FbaInboundEligibilityApiTest {
 
-    private final FbaInboundEligibilityApi api = null;
+    private final FbaInboundEligibilityApi api = new FbaInboundEligibilityApi(null);
 
     
     /**

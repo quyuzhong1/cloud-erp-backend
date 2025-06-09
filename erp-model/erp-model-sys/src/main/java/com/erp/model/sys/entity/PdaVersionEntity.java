@@ -70,11 +70,11 @@ public class PdaVersionEntity extends BaseEntity<PdaVersionEntity> {
 
     public static final String PDA_VERSION = "pda_version";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
-    public static final String FORCE = "force";
+    public static final String FIELD_FORCE = "force";
 
-    public static final String URL = "url";
+    public static final String FIELD_URL = "url";
 
     @Override
     public Serializable pkVal() {

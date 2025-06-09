@@ -1,8 +1,11 @@
 package com.erp.server.dmp.service;
-import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
+import java.util.List;
+
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
 import com.erp.model.dmp.dto.DmpSoReturnInfoDTO;
+import com.erp.model.dmp.entity.DmpSoReturnInfoEntity;
+import com.erp.model.dmp.gyy.GyyReturnOrderEntity;
 
 /**
  * <p>
@@ -32,5 +35,8 @@ public interface DmpSoReturnInfoService extends SuperService<DmpSoReturnInfoEnti
     */
     Boolean update(DmpSoReturnInfoDTO.UpdateDTO dto);
 
+    void addGyyReturnOrder (List<GyyReturnOrderEntity> mongoData);
 
+
+    void sdyReturnOrderUpdate();
 }

@@ -1,5 +1,6 @@
 package com.erp.server.plm.controller.api;
 
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
@@ -8,6 +9,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.plm.dto.ProjectReportFormsDTO;
+import com.erp.server.plm.query.ProjectReportFormsQueryHandler;
 import com.erp.server.plm.service.ProjectReportFormsService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -37,12 +39,9 @@ public class ProjectReportFormsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
     @PostMapping(value = "/purchaseBusinessGatherTable")
-/*    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:ProjectReportForms:purchaseBusinessGatherTable",
-            tableAlias = "pod")*/
-    public ApiResult<PagingVO<List<ProjectReportFormsDTO.PagingView>>> projectReportFormsPaging(@RequestBody PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
-        PagingVO<List<ProjectReportFormsDTO.PagingView>> listPagingVO = projectReportFormsService.projectReportFormsPaging(dto);
+    @WebAdvanceQuery(handler = ProjectReportFormsQueryHandler.class)
+    public ApiResult<PagingVO<ProjectReportFormsDTO.PagingView>> projectReportFormsPaging(@RequestBody PagingDTO<ProjectReportFormsDTO.PagingParam> dto) {
+        PagingVO<ProjectReportFormsDTO.PagingView> listPagingVO = projectReportFormsService.projectReportFormsPaging(dto);
         return success(listPagingVO);
     }
 
@@ -54,11 +53,6 @@ public class ProjectReportFormsController extends BaseController {
      * @return com.common.core.controller.vo.ApiResult<java.util.List<com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO.PagingViewDTO>>
      **/
     @PostMapping(value = "/taskDetailView")
-/*    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "pricing_user_id",
-            menuCode = "scm:ProjectReportForms:taskDetailView",
-            serviceClass = ProductInfoService.class,
-            keyIdName = "id")*/
     public ApiResult<List<ProjectReportFormsDTO.TaskDetail>> taskDetailView(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
         List<ProjectReportFormsDTO.TaskDetail> list = projectReportFormsService.taskDetailView(dto);
         return success(list);
@@ -73,11 +67,7 @@ public class ProjectReportFormsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目报表")
     @PostMapping(value = "/exportExcelPurchaseBusiness")
-/*    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
-            tableAlias = "pod")*/
-    public ApiResult exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto) {
+    public ApiResult<Object> exportExcelProjectReportForms(@RequestBody ProjectReportFormsDTO.PagingParam dto) {
         Boolean flag = projectReportFormsService.exportExcelProjectReportForms(dto);
         return flag == true ? success() : failure();
     }
@@ -91,11 +81,8 @@ public class ProjectReportFormsController extends BaseController {
      **/
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出项目任务明细")
     @PostMapping(value = "/exportExcelTaskDetail")
-/*    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "scm:ProjectReportForms:exportExcelProjectReportForms",
-            tableAlias = "pod")*/
-    public ApiResult exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.TaskDetailParam dto) {
+    @WebAdvanceQuery(handler = ProjectReportFormsQueryHandler.class)
+    public ApiResult<Object> exportExcelTaskDetail(@RequestBody ProjectReportFormsDTO.PagingParam dto) {
         Boolean flag = projectReportFormsService.exportExcelTaskDetail(dto);
         return flag == true ? success() : failure();
     }

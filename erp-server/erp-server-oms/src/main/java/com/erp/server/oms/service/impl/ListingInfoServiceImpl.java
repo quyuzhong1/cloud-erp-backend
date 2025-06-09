@@ -1,8 +1,9 @@
 package com.erp.server.oms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.ReflectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -13,31 +14,35 @@ import com.common.business.enums.QueryConditionEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.oms.dto.ListingInfoDTO;
+import com.erp.model.oms.dto.ListingInfoParamDTO;
+import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ListingInfoEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.oms.entity.SkuMappingEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.FbaShipmentDTO;
 import com.erp.model.wms.dto.OverseasProviderWarehouseDTO;
+import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.WmsOverseasWarehouseFeign;
 import com.erp.server.oms.convert.SkuMappingConverter;
 import com.erp.server.oms.mapper.ListingInfoMapper;
-import com.erp.server.oms.service.ListingInfoService;
-import com.erp.server.oms.service.OperateLogService;
-import com.erp.server.oms.service.SkuMappingService;
 import com.erp.server.oms.service.*;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,6 +59,7 @@ import java.util.stream.Collectors;
  * @author Lambda
  * @since 2023-08-18
  */
+@Slf4j
 @Service
 public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, ListingInfoEntity> implements ListingInfoService {
 
@@ -71,7 +77,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
     @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private ShopInfoService shopInfoService;
 
     @Resource
@@ -82,16 +88,18 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
      *
      * @param skuNo
      * @param productName
+     * @param thirdBarcode
      * @return
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public String addWarehouseSku(String skuNo, String productName) {
+    public String addWarehouseSku(String skuNo, String productName, String thirdBarcode) {
         String id = IdWorker.getIdStr();
         ListingInfoEntity listingInfoEntity = new ListingInfoEntity();
         listingInfoEntity.setId(id);
         listingInfoEntity.setPlatformSkuNo(skuNo);
         listingInfoEntity.setPlatformSkuName(productName);
+        listingInfoEntity.setThirdBarcode(thirdBarcode);
         listingInfoEntity.setType(RuleTypeEnum.WAREHOUSE.getCode());
         if (this.save(listingInfoEntity)) {
             return id;
@@ -116,8 +124,16 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         return lambdaQuery().eq(ListingInfoEntity::getPlatformSkuNo, platformSkuNo).
                 eq(ListingInfoEntity::getPlatform, platform).
                 eq(ListingInfoEntity::getAuthId, authId).
-                last("LIMIT 1").
+                last( SqlConstants.LIMIT_1).
                 one();
+    }
+
+    @Override
+    public List<ListingInfoEntity> listByAuth(String type, List<String> platformSkuNoList, List<String> authIdList) {
+        return lambdaQuery().eq(ListingInfoEntity::getType, type).
+                in(ListingInfoEntity::getAuthId, authIdList).
+                in(ListingInfoEntity::getPlatformSkuNo, platformSkuNoList)
+                .list();
     }
 
     @Override
@@ -125,6 +141,15 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         return lambdaQuery().eq(ListingInfoEntity::getType, type).
                 eq(platform != null ,ListingInfoEntity::getPlatform, platform).
                 in(ListingInfoEntity::getPlatformSkuNo, skuNoList)
+                .list();
+    }
+
+
+    @Override
+    public List<ListingInfoEntity> listByParams(String type, List<String> platformList, List<String> platformSkuNoList) {
+        return lambdaQuery().eq(ListingInfoEntity::getType, type).
+                in(CollUtil.isNotEmpty(platformList),ListingInfoEntity::getPlatform, platformList).
+                in(ListingInfoEntity::getPlatformSkuNo, platformSkuNoList)
                 .list();
     }
 
@@ -174,7 +199,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             if (!skuMappingService.updateById(skuMapping)) {
                 throw new ServiceException("[SkuMapping] 首次映射修改失败");
             }
-            operateLogService.addModuleOperateLogByObj(oldSkuMapping, skuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】首次映射sku", UserContext.getDefaultLoginUser().getUserName()));
+            operateLogService.addModuleOperateLogByObj(oldSkuMapping, skuMapping, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(),  CharSequenceUtil.format("用户【{}】首次映射sku", UserContext.getDefaultLoginUser().getUserName()));
         } else {
             LocalDateTime now = LocalDateTime.now();
             skuMapping.setExpireTime(now);
@@ -214,7 +239,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
             skuMappingService.save(skuMappingEntity);
             // 记录日志
-            operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
+            operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(),  CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
             lastestSkuMapping = skuMappingEntity;
         }
         //速卖通相同店铺，skuNo,平台产品ID 有多个listingInfo, 需要同步映射关系
@@ -223,7 +248,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         }
 
         return lambdaUpdate()
-                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .set(ListingInfoEntity::getMatchResult, ListingMatchResultEnum.TRUE.getCode())
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
                 .update();
     }
@@ -253,7 +278,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 skuMappingEntity.setProductName(skuVO.getSkuName());
                 updateList.add(skuMappingEntity);
                 // 记录日志
-                operateLogService.addModuleOperateLogByObj(skuMappingEntity, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】首次映射sku", UserContext.getDefaultLoginUser().getUserName()));
+                operateLogService.addModuleOperateLogByObj(skuMappingEntity, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(),  CharSequenceUtil.format("用户【{}】首次映射sku", UserContext.getDefaultLoginUser().getUserName()));
             } else {
                 LocalDateTime now = LocalDateTime.now();
                 skuMappingEntity.setExpireTime(now);
@@ -275,11 +300,11 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 addSkuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
                 addList.add(addSkuMappingEntity);
                 // 记录日志
-                operateLogService.addModuleOperateLogByObj(skuMappingEntity, addSkuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
+                operateLogService.addModuleOperateLogByObj(skuMappingEntity, addSkuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMappingEntity.getListingId(),  CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
             }
         }
         lambdaUpdate()
-                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .set(ListingInfoEntity::getMatchResult, ListingMatchResultEnum.TRUE.getCode())
                 .in(ListingInfoEntity::getId, listingIds)
                 .update();
         service.batchOperation(updateList,addList);
@@ -317,20 +342,6 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 .collect(Collectors.toList());
     }
 
-    @Override
-    public ListingInfoEntity getByPlatformSkuNoAndSpu(String platformSkuNo, String platformSpuNo, String typeCode) {
-        return this.lambdaQuery().
-                eq(ListingInfoEntity::getPlatformSkuNo,platformSkuNo).
-                eq(ListingInfoEntity::getPlatformSpuNo,platformSpuNo).
-                eq(ListingInfoEntity::getType,typeCode).
-                last("LIMIT 1").one();
-    }
-
-    @Override
-    public void updateMatchResult(String listingId, Boolean matchResult) {
-        this.lambdaUpdate().set(ListingInfoEntity::getMatchResult,matchResult).
-                eq(ListingInfoEntity::getId,listingId).update(new ListingInfoEntity());
-    }
 
     @Override
     public PagingVO<ListingInfoDTO.PageDTO> paging(PagingDTO<ListingInfoDTO.PagingParamDTO> dto) {
@@ -338,7 +349,7 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         if(StringUtils.isBlank(pagingParamDTO.getWarehouseId()) && StringUtils.isBlank(pagingParamDTO.getShopId())){
             throw new ServiceException("店铺和仓库不能同时为空");
         }
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<T> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         //如果传仓库ID，查询服务商，如果服务商为空，则查询仓库id，如果传店铺id，查询店铺下SKU
         if(StringUtils.isNotBlank(dto.getParams().getWarehouseId())){
             List<OverseasProviderWarehouseDTO.ViewDTO> viewDTOS = wmsOverseasWarehouseFeign.listByWarehouseIdList(Arrays.asList(dto.getParams().getWarehouseId()));
@@ -412,10 +423,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
         skuMappingEntity.setExpireTime(now.plusYears(MathUtil.NUMBER_100));
         skuMappingService.save(skuMappingEntity);
 
-        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(), StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
+        operateLogService.addModuleOperateLogByObj(skuMapping, skuMappingEntity, ModuleTypeEnum.LISTING_INFO.getCode(), skuMapping.getListingId(),  CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName()));
 
         return lambdaUpdate()
-                .set(ListingInfoEntity::getMatchResult, Boolean.TRUE)
+                .set(ListingInfoEntity::getMatchResult, ListingMatchResultEnum.TRUE.getCode())
                 .eq(ListingInfoEntity::getId, listingInfoEntity.getId())
                 .update();
     }
@@ -441,10 +452,10 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
             skuMappingService.saveBatch(addSkuMappingList);
         }
         if (CollectionUtils.isNotEmpty(addLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】新增了sku映射表",UserContext.getDefaultLoginUser().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
+            operateLogService.batchAddModuleOperateLog( CharSequenceUtil.format("用户【{}】新增了sku映射表",UserContext.getDefaultLoginUser().getUserName())+"id为【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), addLogPairList,"新增操作");
         }
         if (CollectionUtils.isNotEmpty(updateLogPairList)) {
-            operateLogService.batchAddModuleOperateLog(StrUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
+            operateLogService.batchAddModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑sku映射表",UserContext.getDefaultLoginUser().getUserName())+"，【%s】", ModuleTypeEnum.LISTING_INFO.getCode(), updateLogPairList,"编辑操作");
         }
     }
 
@@ -469,5 +480,92 @@ public class ListingInfoServiceImpl extends SuperServiceImpl<ListingInfoMapper, 
                 v.setIsCombination(count > 0);
             }
         });
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public List<ListingInfoWithSkuMappingDTO> checkAndUpdateFnsku(ListingInfoParamDTO dto) {
+        if (!PlatformDictEnum.AMAZON.getCode().equalsIgnoreCase(dto.getPlatform())
+                || CollectionUtils.isEmpty(dto.getPlatformSkuNoList())
+                || CollectionUtils.isEmpty(dto.getShopIdList())){
+            return Collections.emptyList();
+        }
+        // 查询对应平台SKU
+        List<ListingInfoWithSkuMappingDTO> listDto = skuMappingService.findListDto(dto);
+        if (CollectionUtils.isEmpty(listDto)){
+            return Collections.emptyList();
+        }
+        List<ShopInfoEntity> shopInfoEntityList = shopInfoService.listByIds(dto.getShopIdList());
+        if (CollectionUtils.isEmpty(shopInfoEntityList)){
+            return Collections.emptyList();
+        }
+        // 过滤已存在Fnsku记录
+        // 根据listingId去重
+        List<ListingInfoWithSkuMappingDTO> listingFilterDTO = new ArrayList<>(listDto.stream()
+                .filter(e -> StringUtils.isBlank(e.getPlatformFnSku()))
+                .collect(Collectors.toMap(ListingInfoWithSkuMappingDTO::getListingId, e -> e, (existing, replacement) -> existing))
+                .values());
+        if (CollectionUtils.isEmpty(listingFilterDTO)){
+            return Collections.emptyList();
+        }
+        List<String> notFnskuPlatformSkuNoList = listingFilterDTO.stream().map(ListingInfoWithSkuMappingDTO::getPlatformSkuNo).distinct().collect(Collectors.toList());
+
+        Map<String, String> shopFbaWarehouseIdsMap = shopInfoEntityList
+                .stream()
+                .collect(Collectors.toMap(ShopInfoEntity::getId, ShopInfoEntity::getWarehouseId));
+
+        List<FbaInventoryEntity> fbaInventoryEntityList = FeignQuery.create(FbaInventoryEntity.class)
+                .in(FbaInventoryEntity::getMsku, notFnskuPlatformSkuNoList)
+                .in(FbaInventoryEntity::getWarehouseId, new ArrayList<>(shopFbaWarehouseIdsMap.values()))
+                .list();
+
+        if (CollectionUtils.isEmpty(fbaInventoryEntityList)){
+            return Collections.emptyList();
+        }
+
+        for (ListingInfoWithSkuMappingDTO mappingDTO : listingFilterDTO) {
+            String warehouseId = shopFbaWarehouseIdsMap.get(mappingDTO.getShopId());
+            if (StringUtils.isBlank(warehouseId)){
+                log.warn("检查更新FnSku：找不到仓库ID，店铺ID={}", mappingDTO.getShopId());
+                continue;
+            }
+            FbaInventoryEntity fbaInventoryEntity = fbaInventoryEntityList.stream()
+                    .filter(e -> e.getWarehouseId().equalsIgnoreCase(warehouseId) && e.getMsku().equals(mappingDTO.getPlatformSkuNo()))
+                    .findFirst()
+                    .orElse(null);
+            if (null == fbaInventoryEntity){
+                log.warn("检查更新FnSku：FBA库存: platformSkuNo={},仓库ID={}，店铺ID={}",mappingDTO.getPlatformSkuNo(), warehouseId, mappingDTO.getShopId());
+                continue;
+            }
+            // 记录FnSku
+            mappingDTO.setPlatformFnSku(fbaInventoryEntity.getFnSku());
+            boolean update = this.lambdaUpdate()
+                    .set(ListingInfoEntity::getPlatformFnSku, fbaInventoryEntity.getFnSku())
+                    .eq(ListingInfoEntity::getId, mappingDTO.getListingId())
+                    .update();
+            if (!update){
+                log.warn("检查更新FnSku失败：FBA库存: platformSkuNo={},仓库ID={}，店铺ID={}",mappingDTO.getPlatformSkuNo(), warehouseId, mappingDTO.getShopId());
+            }
+
+        }
+        return listingFilterDTO;
+    }
+
+    @Override
+    public List<ListingInfoDTO.SearchResultDTO> searchByKey(ListingInfoDTO.SearchParamDTO dto) {
+        if(StringUtils.isBlank(dto.getAuthId()) && (dto.getType().equals(RuleTypeEnum.WAREHOUSE.getCode()) || dto.getType().equals(RuleTypeEnum.CUSTOMER.getCode()))){
+            throw new ServiceException("客户（仓库）不能为空");
+        }
+        return baseMapper.searchByKey(dto);
+    }
+
+    @Override
+    public List<ListingInfoEntity> listByAuthIds(List<String> authIds) {
+        if (CollectionUtils.isNotEmpty(authIds)){
+            return lambdaQuery()
+                    .in(ListingInfoEntity::getAuthId, authIds)
+                    .list();
+        }
+        return Collections.emptyList();
     }
 }

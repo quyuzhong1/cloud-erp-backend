@@ -43,8 +43,8 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
      * @author yl
      * @date 2023-05-15 14:56
      */
-    List<CustomerDTO.PagingViewDTO> listExport(@Param("params") CustomerDTO.ExportDTO dto);
-    Page<CustomerDTO.PagingViewDTO> listExport(@Param("page") Page<CustomerDTO.PagingViewDTO> page, @Param("params") CustomerDTO.ExportDTO dto);
+    List<CustomerDTO.PagingExportDTO> listExport(@Param("params") CustomerDTO.ExportDTO dto);
+    Page<CustomerDTO.PagingExportDTO> listExport(@Param("page") Page<CustomerDTO.PagingViewDTO> page, @Param("params") CustomerDTO.ExportDTO dto);
 
     List<CustomerDTO.ApproveCountDTO> listApproveCount(@Param("permissionSql") String permissionSql);
 
@@ -63,4 +63,6 @@ public interface CustomerInfoMapper extends BaseMapper<CustomerInfoEntity> {
 
 
     IPage<CustomerDTO.PageSelectDTO> pageSelect(Page query, @Param("params") CustomerDTO.SelectDTO params);
+
+    List<CustomerDTO.PagingAddressContactExportDTO> listAddressContactExport (@Param("customerIdList") List<String> customerIdList);
 }

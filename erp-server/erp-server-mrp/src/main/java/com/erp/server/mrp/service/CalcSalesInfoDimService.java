@@ -1,0 +1,163 @@
+package com.erp.server.mrp.service;
+
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.dto.base.PermissionsDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.mrp.dto.CalcSalesInfoDimDTO;
+import com.erp.model.mrp.entity.CalcSalesInfoDimEntity;
+
+import javax.servlet.http.HttpServletResponse;
+import java.util.List;
+
+/**
+ * <p>
+ * 销量试算表 服务类
+ * </p>
+ *
+ * @author liaohui
+ * @since 2024-11-11
+ */
+public interface CalcSalesInfoDimService extends SuperService<CalcSalesInfoDimEntity> {
+
+
+    /**
+     * @param calcResultList 计算参数
+     * @param id             配置id
+     */
+    void calcSalesInfo(List<CalcSalesInfoDimDTO.CalcResultDTO> calcResultList, String id);
+
+    /**
+     * 分页
+     * @param params 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.PagingView> paging(PagingDTO<CalcSalesInfoDimDTO.PagingParamDTO> params);
+
+    /**
+     * 详情
+     * @param id id
+     */
+    CalcSalesInfoDimDTO.ViewDTO view(String id);
+
+    /**
+     * 历史销量
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.HistorySalesVO historySales(CalcSalesInfoDimDTO.HistorySalesDTO dto);
+
+
+    /**
+     * 日销量预估
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.SalesEstimateDTO salesEstimation(CalcSalesInfoDimDTO.HistorySalesDTO dto);
+
+    /**
+     * 导出
+     * @param dto 参数
+     */
+    void exportSalesInfo(CalcSalesInfoDimDTO.ExportSalesInfoDTO dto);
+
+    /**
+     * 导出
+     * @param dto 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.ExportResultDTO> getListExportData(PagingDTO<CalcSalesInfoDimDTO.ExportSalesInfoDTO> dto);
+
+    /**
+     * 试算详情
+     * @param params 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.DetailViewDTO> pagingDetail(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params);
+
+    /**
+     * 试算模板
+     * @param params 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.TemplateViewDTO> pagingTemplate(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> params);
+
+    /**
+     * 修改备注
+     * @param id 试算id
+     * @param remark 备注
+     */
+    BatchResultDTO updateRemark(String id, String remark);
+
+    /**
+     * 下载系统销量
+     *
+     * @param calcSalesInfoDimId 参数
+     */
+    void downloadHistorySales(String calcSalesInfoDimId, HttpServletResponse response);
+
+
+    /**
+     * 试算比较
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.CalcCompareDTO calcCompare(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto);
+
+    /**
+     * 试算比较基础数据
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.CalcCompareDataDTO calcCompareData(CalcSalesInfoDimDTO.CalcCompareParamsDTO dto);
+
+    /**
+     * 下载系统销量
+     *
+     * @param cfgRuleCalcId 参数
+     */
+    void downloadTemplateHistorySales(String cfgRuleCalcId, HttpServletResponse response);
+
+    /**
+     * 导出模具列表
+     * @param dto 参数
+     */
+    void exportSalesInfoList(CalcSalesInfoDimDTO.ParamDTO dto);
+
+    /**
+     * 导出试算列表
+     * @param dto 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoListDTO> exportMrpSalesCalcList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
+
+    /**
+     * tab
+     * @param dto 参数
+     */
+    List<CalcSalesInfoDimDTO.TabListDTO> tabList(PermissionsDTO dto);
+
+    /**
+     * 翻页id
+     * @param params 参数
+     */
+    List<CalcSalesInfoDimDTO.DataIdPageDTO> dataIdPage(CalcSalesInfoDimDTO.ParamDTO params);
+
+    /**
+     *
+     * 规则应用
+     * @param dto 参数
+     */
+    void rulesApply(CalcSalesInfoDimDTO.RulesApplyDTO dto);
+
+    /**
+     * 回显数据
+     * @param dto 参数
+     */
+    CalcSalesInfoDimDTO.RulesApplyDetailDTO rulesApplyDetail(CalcSalesInfoDimDTO.RulesApplyDTO dto);
+
+    /**
+     * 模板列表导出
+     * @param dto 参数
+     */
+    void exportSalesInfoTemplateList(CalcSalesInfoDimDTO.ParamDTO dto);
+
+    /**
+     * 导出模板列表
+     * @param dto 参数
+     */
+    PagingVO<CalcSalesInfoDimDTO.ExportSalesInfoTemplateListDTO> exportMrpSalesCalcTemplateList(PagingDTO<CalcSalesInfoDimDTO.ParamDTO> dto);
+
+}

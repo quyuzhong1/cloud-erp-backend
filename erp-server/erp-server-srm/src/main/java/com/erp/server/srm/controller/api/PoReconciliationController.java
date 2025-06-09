@@ -77,7 +77,7 @@ public class PoReconciliationController extends BaseController {
      */
     @PostMapping("/update")
     @LogAction(value = LogActionEnum.UPDATE, desc = "采购对账单修改")
-    public ApiResult<?> update(@RequestBody @Validated PoReconciliationDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated PoReconciliationDTO.UpdateDTO dto) {
         poReconciliationService.update(dto);
         return success();
     }
@@ -143,11 +143,11 @@ public class PoReconciliationController extends BaseController {
      * @author Will
      * @date: 2024/1/23 11:48
      * @param dto
-     * @return ApiResult<?>
+     * @return ApiResult<Object>
      */
     @PostMapping("/confirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "确认对账")
-    public ApiResult<?> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> confirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
@@ -173,11 +173,11 @@ public class PoReconciliationController extends BaseController {
      * @author Will
      * @date: 2024/1/23 11:48
      * @param dto
-     * @return ApiResult<?>
+     * @return ApiResult<Object>
      */
     @PostMapping("/cancelConfirm")
     @LogAction(value = LogActionEnum.CONFIRM, desc = "取消确认")
-    public ApiResult<?> cancelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> cancelConfirm(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;

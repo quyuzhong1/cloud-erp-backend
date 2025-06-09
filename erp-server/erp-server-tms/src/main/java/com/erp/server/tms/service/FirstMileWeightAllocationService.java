@@ -1,10 +1,14 @@
 package com.erp.server.tms.service;
-import com.common.business.vo.PagingVO;
-import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
-import com.common.business.service.SuperService;
-import com.common.business.dto.base.*;
-import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
 
+import com.common.business.dto.base.BatchResultDTO;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.service.SuperService;
+import com.common.business.vo.PagingVO;
+import com.erp.model.tms.dto.FirstMileWeightAllocationDTO;
+import com.erp.model.tms.entity.FirstMileWeightAllocationEntity;
+import org.springframework.web.multipart.MultipartFile;
+
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -38,12 +42,14 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
 
     /**
      * tab页统计
+     *
      * @param
+     * @param pagingParamDTO
      * @return
      * @date: 2024-08-22
      * @author: tanmujin
      */
-    List<FirstMileWeightAllocationDTO.TabDTO> tabList();
+    List<FirstMileWeightAllocationDTO.TabDTO> tabList(FirstMileWeightAllocationDTO.PagingParamDTO pagingParamDTO);
 
     /**
      * 重量重算
@@ -88,4 +94,29 @@ public interface FirstMileWeightAllocationService extends SuperService<FirstMile
      * @param sourceId
      */
     void updateCalculateMonthBySourceId(String sourceId);
+
+    /**
+     * 查看商品重量
+     * @param dto
+     * @return
+     */
+    List<FirstMileWeightAllocationDTO.ViewProductWeightDTO> viewProductWeight(FirstMileWeightAllocationDTO.ViewProductWeightParamDTO dto);
+
+    /**
+     * 导入Excel
+     * @param excelFile
+     * @param response
+     * @return
+     */
+    Boolean importExcel(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 根据业务单号查询重量分摊
+     * @param businessCodeList 业务单号
+     * @param sourceCodeList 来源单号
+     * @param transportNoList 物流单号
+     * @return
+     */
+    List<FirstMileWeightAllocationEntity> listBySourceCodeList(List<String> businessCodeList, List<String> sourceCodeList, List<String> transportNoList);
+
+    void downloadTemplate(HttpServletResponse response);
 }

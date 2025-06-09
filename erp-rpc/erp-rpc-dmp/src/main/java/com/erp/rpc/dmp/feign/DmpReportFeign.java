@@ -1,14 +1,11 @@
 package com.erp.rpc.dmp.feign;
 
 
-import com.erp.model.dmp.dto.DmpShopInfoDTO;
-import com.erp.model.dmp.dto.DmpSyncKingdeeDTO;
-import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import javax.validation.Valid;
+import com.erp.model.dmp.dto.DmpSyncReportScheduleDTO;
 
 /**
  * DMP远程调用接口

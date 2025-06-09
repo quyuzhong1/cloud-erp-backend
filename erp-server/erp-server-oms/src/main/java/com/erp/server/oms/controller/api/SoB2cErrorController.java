@@ -1,12 +1,16 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
+import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.enums.LogActionEnum;
+import com.erp.model.oms.dto.SoB2cAbnormalDTO;
 import com.erp.model.oms.dto.SoB2cErrorDTO;
 import com.erp.server.oms.service.SoB2cErrorService;
 import lombok.extern.slf4j.Slf4j;
@@ -60,7 +64,7 @@ public class SoB2cErrorController extends BaseController {
                 resultDTOS.add(resultDTO);
             } catch (Exception e) {
                 log.error("重新标记发货失败", e);
-                resultDTOS.add(BatchResultDTO.fail(id, id, StrUtil.format("标记发货失败：{}", e.getMessage())));
+                resultDTOS.add(BatchResultDTO.fail(id, id,  CharSequenceUtil.format("标记发货失败：{}", e.getMessage())));
             }
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
@@ -68,8 +72,14 @@ public class SoB2cErrorController extends BaseController {
 
 
 
-
-
-
+    /**
+     * 导出错误池
+     * @return
+     */
+    @PostMapping("/exportErrorPools")
+    public ApiResult exportErrorPools(){
+        Boolean flag =soB2cErrorService.exportErrorPools();
+        return flag == true ? success() : failure();
+    }
 
 }

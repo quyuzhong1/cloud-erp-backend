@@ -1,7 +1,7 @@
 package com.erp.server.wms.service;
+import com.common.business.service.SuperService;
 import com.erp.model.wms.dto.WmsDeliveryPlanDTO;
 import com.erp.model.wms.entity.WmsDeliveryPlanDetailEntity;
-import com.common.business.service.SuperService;
 
 import java.util.List;
 
@@ -52,4 +52,12 @@ public interface WmsDeliveryPlanDetailService extends SuperService<WmsDeliveryPl
      * @return void
      **/
     Boolean removeByMainIds(List<String> mainIds);
+    /**
+     * 根据发货计划明细查询
+     * @author will
+     * @date 2024/10/23 10:01
+     * @param idList
+     * @return List<WmsDeliveryPlanDetailEntity>
+     */
+    List<WmsDeliveryPlanDetailEntity> listBySourceIdList(List<String> idList);
 }

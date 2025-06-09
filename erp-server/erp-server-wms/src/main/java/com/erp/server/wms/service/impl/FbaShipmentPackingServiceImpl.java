@@ -1,9 +1,9 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.bean.copier.CopyOptions;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.annotation.DataIdempotent;
@@ -15,13 +15,11 @@ import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.wms.dto.FbaShipmentDTO;
-import com.erp.model.wms.dto.FbaShipmentPackingDTO;
-import com.erp.model.wms.dto.RequisitionApplicationDTO;
+import com.erp.model.wms.dto.*;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentPackingEntity;
-import com.erp.model.wms.entity.RequisitionApplicationDetailEntity;
 import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.SkuMappingFeign;
@@ -33,6 +31,7 @@ import com.erp.server.wms.service.WmsCartonService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -55,6 +54,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_FBA_SHIPMEN
 @Service
 public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentPackingMapper, FbaShipmentPackingEntity> implements FbaShipmentPackingService {
 
+    @Lazy
     @Resource
     private FbaShipmentService fbaShipmentService;
 
@@ -63,14 +63,14 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
 
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-    @Autowired
+    @Resource
     private WmsCartonService wmsCartonService;
 
     @Override
     @DataIdempotent(keyIdName = "data.boxNo")
     @Transactional(rollbackFor = Exception.class)
     public void handle(FbaShipmentPackingDTO.PackingDTO data) {
-        if(Objects.isNull(data) || StringUtils.isBlank(data.getFbaShipmentCode())|| StringUtils.isBlank(data.getBoxNo()) ||CollectionUtil.isEmpty(data.getDetailDTOList())){
+        if(Objects.isNull(data) || CharSequenceUtil.isBlank(data.getFbaShipmentCode())|| CharSequenceUtil.isBlank(data.getBoxNo()) || CollUtil.isEmpty(data.getDetailDTOList())){
             return;
         }
         FbaShipmentEntity fbaShipmentEntity = fbaShipmentService.getByCode(data.getFbaShipmentCode());
@@ -80,9 +80,9 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         String mainId = fbaShipmentEntity.getId();
         List<FbaShipmentPackingEntity> existList = getByMainIdAndBoxNo(mainId, data.getBoxNo());
         //已存在，如果已关联erp装箱明细，不处理，否则删除后新增
-        if(CollectionUtil.isNotEmpty(existList)){
+        if(CollUtil.isNotEmpty(existList)){
             FbaShipmentPackingEntity existEntity = existList.get(0);
-            if(StringUtils.isNotBlank(existEntity.getCartonId())){
+            if(CharSequenceUtil.isNotBlank(existEntity.getCartonId())){
                 return;
             }
             List<String> removeIds = existList.stream().map(BaseEntity::getId).collect(Collectors.toList());
@@ -96,7 +96,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
         paramDTO.setPlatformSkuNoList(mskuList);
         paramDTO.setShopIdList(Collections.singletonList(fbaShipmentEntity.getShopId()));
         paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-        paramDTO.setMatchResult(true);
+        paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
         paramDTO.setIsExpire(false);
         // 查询ListingInfo和skuMapping的关系
         List<ListingInfoWithSkuMappingDTO> listingedInfoWithSkuMappingList = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO);
@@ -109,25 +109,25 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
             FbaShipmentPackingEntity entity = FbaShipmentPackingConverter.INSTANCE.fbaShipmentPackingConvert(data.getBoxNo(),detailDTO,fbaShipmentEntity,listingInfoWithSkuMappingDTOMap.get(detailDTO.getMsku()));
             addList.add(entity);
         });
-        if(CollectionUtil.isNotEmpty(addList)){
+        if(CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
             if(!fbaShipmentEntity.getIsPackingDownload()){
-                fbaShipmentService.updatePackingStatus(Arrays.asList(fbaShipmentEntity.getId()));
+                fbaShipmentService.updatePackingStatus(Collections.singletonList(fbaShipmentEntity.getId()));
             }
         }
     }
 
     @Override
     public List<FbaShipmentPackingEntity> getByMainIdAndBoxNo(String mainId, String boxNo) {
-        if(StringUtils.isBlank(mainId)){
+        if(CharSequenceUtil.isBlank(mainId)){
             return new ArrayList<>();
         }
-        return lambdaQuery().eq(FbaShipmentPackingEntity::getMainId, mainId).eq(StringUtils.isNotBlank(boxNo),FbaShipmentPackingEntity::getBoxNo, boxNo).list();
+        return lambdaQuery().eq(FbaShipmentPackingEntity::getMainId, mainId).eq(CharSequenceUtil.isNotBlank(boxNo),FbaShipmentPackingEntity::getBoxNo, boxNo).list();
     }
 
     @Override
     public List<FbaShipmentPackingEntity> listByMains(List<String> mainIds) {
-        if(CollectionUtil.isEmpty(mainIds)){
+        if(CollUtil.isEmpty(mainIds)){
             return new ArrayList<>();
         }
         return lambdaQuery().in(FbaShipmentPackingEntity::getMainId,mainIds).list();
@@ -135,12 +135,12 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
 
     @Override
     public List<FbaShipmentPackingEntity> listByFbaCodes(List<String> fbaCodes) {
-        if(CollectionUtil.isEmpty(fbaCodes)){
+        if(CollUtil.isEmpty(fbaCodes)){
             return new ArrayList<>();
         }
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(fbaCodes);
         List<String> fbaIds = fbaShipmentEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
-        if(CollectionUtil.isNotEmpty(fbaIds)){
+        if(CollUtil.isNotEmpty(fbaIds)){
             List<FbaShipmentPackingEntity> list = lambdaQuery().in(FbaShipmentPackingEntity::getMainId,fbaIds).list();
             list.forEach(v->{
                 FbaShipmentEntity fbaShipmentEntity = fbaShipmentEntityList.stream().filter(obj->obj.getId().equals(v.getMainId())).findFirst().orElse(new FbaShipmentEntity());
@@ -156,8 +156,8 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
     public List<FbaShipmentPackingDTO.ViewDTO> listPacking(List<String> ids) {
         List<FbaShipmentEntity> fbaShipmentEntity = fbaShipmentService.listByIds(ids);
         List<String> errorCodes = fbaShipmentEntity.stream().filter(v->!v.getIsPackingDownload()).map(FbaShipmentEntity::getCode).collect(Collectors.toList());
-        if(CollectionUtil.isNotEmpty(errorCodes)){
-            throw new ServiceException(StrUtil.format("{}装箱清单未下载，无法查看",errorCodes));
+        if(CollUtil.isNotEmpty(errorCodes)){
+            throw new ServiceException(CharSequenceUtil.format("{}装箱清单未下载，无法查看",errorCodes));
         }
         return baseMapper.getPacking(ids);
     }
@@ -189,7 +189,7 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
             fbaShipmentPackingEntity.setCartonId(fbaBindShipmentViewDetailDTO.getCartonId());
             addList.add(fbaShipmentPackingEntity);
         }
-        if(CollectionUtil.isNotEmpty(addList)){
+        if(CollUtil.isNotEmpty(addList)){
             this.saveBatch(addList);
             List<String> fbaIds = addList.stream().map(FbaShipmentPackingEntity::getMainId).distinct().collect(Collectors.toList());
             fbaShipmentService.updatePackingStatus(fbaIds);
@@ -198,26 +198,34 @@ public class FbaShipmentPackingServiceImpl extends SuperServiceImpl<FbaShipmentP
 
     @Override
     public void removeByFbaCodeList(List<String> fbaCodeList) {
-        if(CollectionUtil.isEmpty(fbaCodeList)){
+        if(CollUtil.isEmpty(fbaCodeList)){
             return;
         }
         List<FbaShipmentEntity> fbaShipmentEntityList = fbaShipmentService.listByCodes(fbaCodeList);
         List<String> fbaIds = fbaShipmentEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
-        if(CollectionUtil.isNotEmpty(fbaIds)){
+        if(CollUtil.isNotEmpty(fbaIds)){
             lambdaUpdate().in(FbaShipmentPackingEntity::getMainId,fbaIds).remove();
         }
     }
 
     @Override
     public List<FbaShipmentPackingEntity> listByPackingTaskId(String taskId) {
-        if(StringUtils.isBlank(taskId)){
+        if(CharSequenceUtil.isBlank(taskId)){
             return new ArrayList<>();
         }
-        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Arrays.asList(taskId));
-        if(CollectionUtil.isEmpty(wmsCartonEntityList)){
+        List<WmsCartonEntity> wmsCartonEntityList = wmsCartonService.listByTaskIds(Collections.singletonList(taskId));
+        if(CollUtil.isEmpty(wmsCartonEntityList)){
             return new ArrayList<>();
         }
         List<String> cartonIds = wmsCartonEntityList.stream().map(v->v.getId()).collect(Collectors.toList());
+        return this.lambdaQuery().in(FbaShipmentPackingEntity::getCartonId,cartonIds).list();
+    }
+
+    @Override
+    public List<FbaShipmentPackingEntity> listByCartonIds(List<String> cartonIds) {
+        if (CollUtil.isEmpty(cartonIds)){
+            return Collections.emptyList();
+        }
         return this.lambdaQuery().in(FbaShipmentPackingEntity::getCartonId,cartonIds).list();
     }
 }

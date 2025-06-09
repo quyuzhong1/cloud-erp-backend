@@ -33,9 +33,6 @@ public class BomCombinationExcelListener extends AnalysisEventListener<BomCombin
      */
     private List<BomCombinationImportExcelDTO> successList = new ArrayList<>();
 
-    public BomCombinationExcelListener() {
-
-    }
 
     @Override
     public void invoke(BomCombinationImportExcelDTO importExcelDTO, AnalysisContext analysisContext) {
@@ -58,9 +55,10 @@ public class BomCombinationExcelListener extends AnalysisEventListener<BomCombin
     }
 
     @Override
-    public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+    public void doAfterAllAnalysed(AnalysisContext context) {
+        return;
     }
+
 
     public List<BomCombinationImportExcelDTO> getAllList(){
         return allList;

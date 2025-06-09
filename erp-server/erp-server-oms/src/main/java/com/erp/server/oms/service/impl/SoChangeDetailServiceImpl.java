@@ -1,7 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
@@ -12,15 +12,17 @@ import com.common.core.utils.StrUtils;
 import com.erp.model.oms.dto.SoChangeDetailDTO;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.wms.dto.SoDeliveryNoticeDetailDTO;
 import com.erp.model.wms.dto.SoOutstockDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
 import com.erp.model.wms.entity.SoDeliveryNoticeDetailEntity;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.rpc.scm.feign.*;
+import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.InventoryFeign;
 import com.erp.rpc.wms.feign.SoDeliveryNoticeFeign;
@@ -35,7 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -84,13 +85,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
     @Resource
     private SoDeliveryNoticeFeign soDeliveryNoticeFeign;
 
-    @Autowired
+    @Resource
     private CustomerAddressService customerAddressService;
 
-    @Autowired
+    @Resource
     private SoReturnService soReturnService;
 
-    @Autowired
+    @Resource
     private ScmTaskFeign scmTaskFeign;
 
     /**
@@ -140,9 +141,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, qty);
             soChangeDetail.setIsGift(isGift);
             soChangeDetail.setPrice(price);
             soChangeDetail.setCurrency(currency);
@@ -212,7 +213,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal price = item.getPrice();
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             item.setTaxPrice(taxPrice);
 
             BigDecimal oldPrice = item.getOldPrice();
@@ -221,7 +222,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+            BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
             item.setOldPrice(oldPrice);
             item.setOldTaxPrice(oldTaxPrice);
         }
@@ -267,7 +268,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 view.setOldTaxRate(oldTaxRate);
                 //含税单价=销售单价*（税率+1）
                 BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-                BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+                BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
                 view.setOldTaxPrice(oldTaxPrice);
                 view.setQty(0);
                 view.setTaxPrice(zero);
@@ -350,7 +351,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             view.setWarehouseOrgName(warehouseOrgName);
             //含税单价=销售单价*（税率+1）
             BigDecimal oldMultiplyTax = MathUtil.add(oldFlagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal oldTaxPrice = MathUtil.multiply(oldPrice, oldMultiplyTax);
+            BigDecimal oldTaxPrice = MathUtil.multiplyWithTwo(oldPrice, oldMultiplyTax);
             view.setOldTaxPrice(oldTaxPrice);
             view.setQty(0);
             view.setTaxPrice(zero);
@@ -502,10 +503,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
 
             //添加
             SoChangeTypeEnum addType = SoChangeTypeEnum.ADD;
-
+            //需要删除的明细id
             List<String> deleteSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(deleteType)).
                     map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
-            soDetailService.removeByIds(deleteSoDetailIdList);
             //关闭的销售订单id
             List<String> closeSoDetailIdList = soChangeDetailList.stream().filter(s -> s.getChangeType().equals(terminate)).
                     map(SoChangeDetailEntity::getSoDetailId).collect(Collectors.toList());
@@ -559,12 +559,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 this.handleDetailAmountByChange(saveOrUpdateList, soInfoMap, closeSoDetailIdList);
                 List<String> skuIdList = saveOrUpdateList.stream().map(SoDetailEntity::getSkuId).collect(Collectors.toList());
                 List<SkuVO> skuList = plmTaskFeign.listSkuCostByIds(skuIdList);
-                // 供应商id集合
-//                List<String> supplierIds = skuList.stream().filter(r -> StrUtil.isNotEmpty(r.getSupplierId())).map(SkuVO::getSupplierId).distinct().collect(Collectors.toList());
-//                List<PurchasePriceDTO.SupplierSkuPrice> purchasePriceList = Lists.newArrayList();
-//                if (CollUtil.isNotEmpty(supplierIds)) {
-//                    purchasePriceList = scmTaskFeign.listSupplierSkuPrice(supplierIds);
-//                }
+                List<BomChildrenSkuDTO> bomChildrenSkuDTOList = plmTaskFeign.listBomChildBySkuIds(skuIdList);
+                saveOrUpdateList.forEach(item -> {
+                    BomChildrenSkuDTO bomChildrenSkuDTO = bomChildrenSkuDTOList.stream().filter(b -> b.getParentSkuId().equals(item.getSkuId())).findFirst().orElse(null);
+                    if(Objects.nonNull(bomChildrenSkuDTO)){
+                        item.setBomVersion(bomChildrenSkuDTO.getBomVersion());
+                    }
+                });
                 Map<String, List<SoDetailEntity>> soDetailSaveMap = saveOrUpdateList.stream().collect(Collectors.groupingBy(SoDetailEntity::getMainId));
                 for (Map.Entry<String, List<SoDetailEntity>> soEntry : soDetailSaveMap.entrySet()) {
                     // 金额信息加上折扣额计算
@@ -582,10 +583,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             //关闭关联单据的关闭状态
             wmsTaskFeign.closeBySoDetailIds(closeSoDetailIdList);
             //释放明细库存
-            List<String> idList = saveOrUpdateList.stream().filter(obj -> StrUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
-            if (CollectionUtils.isNotEmpty(idList)) {
+            List<String> idList = saveOrUpdateList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getId())).map(SoDetailEntity::getId).distinct().collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(idList) || CollectionUtils.isNotEmpty(deleteSoDetailIdList)) {
+                idList.addAll(deleteSoDetailIdList);
                 soDetailService.batchUnLockVirtualInventory(idList,null);
             }
+            //删除销售明细
+            soDetailService.removeByIds(deleteSoDetailIdList);
         }
 
     }
@@ -657,15 +661,7 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         }
         //刪除
         SoChangeTypeEnum delete = SoChangeTypeEnum.DELETE;
-        List<SoChangeDetailDTO.AddDTO> notDeleteList = detailList.stream().filter(d -> !d.getChangeType().equals(delete)).collect(Collectors.toList());
-        long qtyCount = notDeleteList.stream().filter(n -> n.getQty() <= 0).count();
-        if (qtyCount > 0) {
-            throw new ServiceException("销售数量不能小于0");
-        }
-        long priceCount = notDeleteList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
-        if (priceCount > 0) {
-            throw new ServiceException("单价不能小于0");
-        }
+
         List<SoChangeDetailDTO.UpdateDTO> deleteDetailList = listDetailParamByType(detailList, delete);
         if (CollectionUtils.isNotEmpty(deleteDetailList)) {
             List<String> soDetailIdList = deleteDetailList.stream().
@@ -674,13 +670,37 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 throw new ServiceException(ApiError.ERROR_92015);
             }
             //下推单据的数量
-            Integer pushDownCount = wmsTaskFeign.getPushDownBySoDetailIds(soDetailIdList);
-            if (pushDownCount > 0) {
-                throw new ServiceException(ApiError.ERROR_92037);
+            List<SoDeliveryNoticeDetailDTO.PushDownDTO> pushDownDTOList = wmsTaskFeign.getPushDownBySoDetailIds(soDetailIdList);
+            if(CollUtil.isNotEmpty(pushDownDTOList)){
+                StringBuilder sb = new StringBuilder();
+                for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
+                    sb.append(String.format(ApiError.ERROR_92037.msg, pushDownDTO.getSkuNo()));
+                    sb.append("<br>");
+                }
+                throw new ServiceException(sb.toString());
+            }
+            //下推单据的数量
+            pushDownDTOList = soOutstockFeign.getPushDownBySoDetailIds(soDetailIdList);
+            if(CollUtil.isNotEmpty(pushDownDTOList)){
+                StringBuilder sb = new StringBuilder();
+                for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
+                    sb.append(String.format(ApiError.ERROR_92037.msg, pushDownDTO.getSkuNo()));
+                    sb.append("<br>");
+                }
+                throw new ServiceException(sb.toString());
             }
         }
         //这个是修改
         SoChangeTypeEnum update = SoChangeTypeEnum.UPDATE;
+        List<SoChangeDetailDTO.AddDTO> updateList = detailList.stream().filter(d -> d.getChangeType().equals(update)).collect(Collectors.toList());
+        long qtyCount = updateList.stream().filter(n -> n.getQty() <= 0).count();
+        if (qtyCount > 0) {
+            throw new ServiceException("销售数量不能小于0");
+        }
+        long priceCount = updateList.stream().filter(n -> !n.getIsGift() && !n.getIsReissue() && n.getPrice().compareTo(BigDecimal.ZERO) <= 0).count();
+        if (priceCount > 0) {
+            throw new ServiceException("单价不能小于0");
+        }
         List<SoChangeDetailDTO.UpdateDTO> updateDetailList = listDetailParamByType(detailList, update);
         if (CollectionUtils.isNotEmpty(updateDetailList)) {
             List<String> soDetailIdList = updateDetailList.stream().
@@ -717,10 +737,18 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
                 throw new ServiceException(ApiError.SO_CHANGE_TERMINATE_EXIST);
             }
 
+            //下推单据的数量
+            List<SoDeliveryNoticeDetailDTO.PushDownDTO> pushDownDTOList = soOutstockFeign.getPushDownBySoDetailIds(soDetailIdList);
+            if(CollUtil.isNotEmpty(pushDownDTOList)){
+                StringBuilder sb = new StringBuilder();
+                for (SoDeliveryNoticeDetailDTO.PushDownDTO pushDownDTO : pushDownDTOList) {
+                    sb.append(String.format(ApiError.ERROR_92166.msg, pushDownDTO.getSkuNo()));
+                    sb.append("<br>");
+                }
+                throw new ServiceException(sb.toString());
+            }
         }
-
     }
-
 
     private List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIdList,SoChangeTypeEnum typeEnum) {
         if (CollectionUtils.isEmpty(soDetailIdList)) {
@@ -821,9 +849,9 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
             BigDecimal flagTaxRate = MathUtil.divide(taxRate, MathUtil.BigDecimal_100);
             //含税单价=销售单价*（税率+1）
             BigDecimal multiplyTax = MathUtil.add(flagTaxRate, MathUtil.BigDecimal_1);
-            BigDecimal taxPrice = MathUtil.multiply(price, multiplyTax);
+            BigDecimal taxPrice = MathUtil.multiplyWithTwo(price, multiplyTax);
             //金额
-            BigDecimal amount = MathUtil.multiply(price, qty);
+            BigDecimal amount = MathUtil.multiplyWithTwo(price, qty);
             item.setPrice(price);
             item.setCurrencySymbol(symbol);
             item.setAmount(amount);
@@ -894,5 +922,13 @@ public class SoChangeDetailServiceImpl extends SuperServiceImpl<SoChangeDetailMa
         long count = this.lambdaQuery().eq(SoChangeDetailEntity::getMainId, mainId).
                 eq(SoChangeDetailEntity::getChangeType, SoChangeTypeEnum.ADD).count();
         return count > 0;
+    }
+
+    @Override
+    public List<SoChangeDetailEntity> listBySoDetailIdList(List<String> soDetailIds) {
+        if (CollectionUtils.isEmpty(soDetailIds)) {
+            return Collections.emptyList();
+        }
+        return lambdaQuery().in(SoChangeDetailEntity::getSoDetailId, soDetailIds).list();
     }
 }

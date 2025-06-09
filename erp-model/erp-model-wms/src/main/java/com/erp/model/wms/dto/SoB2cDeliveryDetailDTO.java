@@ -2,9 +2,9 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
+
 import javax.validation.constraints.*;
+import java.io.Serializable;
 
 /**
  * <p>
@@ -139,6 +139,22 @@ public class SoB2cDeliveryDetailDTO implements Serializable {
         @NotBlank(message = "来源详情id不能为空")
         @Size(max = 19,message = "来源详情id最大长度不能超过19位")
         private String sourceDetailId;
+        /**
+         * 发货仓库
+         */
+        private String warehouseId;
+        /**
+         * 仓库名称
+         */
+        private String warehouseName;
+        /**
+         * 仓位
+         */
+        private String warehouseLocation;
+        /**
+         * 虚拟仓id
+         */
+        private String virtualWarehouseId;
     }
 
 

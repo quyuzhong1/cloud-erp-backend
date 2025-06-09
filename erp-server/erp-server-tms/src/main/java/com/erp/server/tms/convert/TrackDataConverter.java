@@ -1,5 +1,7 @@
 package com.erp.server.tms.convert;
 
+import com.erp.model.dmp.dto.DmpLogisticsTrackRegisterDTO;
+import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.model.tms.entity.LogisticsTrackEntity;
 import com.erp.model.tms.enums.LogisticTrackStatusEnum;
 import com.sdk.tms.track123.dto.PlatformTrackDetail;
@@ -16,7 +18,6 @@ import java.util.List;
 /**
  * @author zdy
  * @ClassName TrackDataConverter
- * @description: TODO
  * @date 2023年11月23日
  * @version: 1.0
  */
@@ -28,29 +29,6 @@ public interface TrackDataConverter {
     LogisticsTrackEntity platformToTrack(PlatformTrackDetail detail);
 
     List<LogisticsTrackEntity> platformToTrack(List<PlatformTrackDetail> details);
-
-
-    @Mapping(target = "version", ignore = true)
-    @Mapping(target = "updateUserName", ignore = true)
-    @Mapping(target = "updateUserId", ignore = true)
-    @Mapping(target = "updateTime", ignore = true)
-    @Mapping(target = "transportType", ignore = true)
-    @Mapping(target = "trackTime", source = "trackingDetail.eventTime")
-    @Mapping(target = "trackNo", ignore = true)
-    @Mapping(target = "status", source = "trackingDetail.transitSubStatus", qualifiedByName = "convertTrackStatus")
-    @Mapping(target = "isDeleted", ignore = true)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "createUserName", ignore = true)
-    @Mapping(target = "createUserId", ignore = true)
-    @Mapping(target = "createTime", ignore = true)
-    @Mapping(target = "content", source = "trackingDetail.eventDetail")
-    LogisticsTrackEntity responseToTrack(TrackingDetail trackingDetail);
-    /**
-     * 物流原始数据同步
-     * @param trackingDetails
-     * @return
-     */
-    List<LogisticsTrackEntity> responseToTrack(List<TrackingDetail> trackingDetails);
 
     /**
      * INIT	待查询	单号正在查询中，请等待
@@ -91,4 +69,23 @@ public interface TrackDataConverter {
         }
         return LogisticTrackStatusEnum.NOT_FIND.getCode();
     }
+
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "updateUserName", ignore = true)
+    @Mapping(target = "updateUserId", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "transportType", ignore = true)
+    @Mapping(target = "trackTime", source = "eventTime")
+    @Mapping(target = "trackNo", ignore = true)
+    @Mapping(target = "status", source = "transitSubStatus",qualifiedByName = "convertTrackStatus")
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createUserName", ignore = true)
+    @Mapping(target = "createUserId", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "content", source = "eventDetail")
+    LogisticsTrackEntity convertWebHookToEntity(LogisticsTrackDTO.TrackingDetail trackingDetail);
+    List<LogisticsTrackEntity> convertWebHookToEntity(List<LogisticsTrackDTO.TrackingDetail> trackingDetails);
+
+    DmpLogisticsTrackRegisterDTO.AddDTO convertToDmpRegisterDTO(LogisticsTrackDTO.UpdateTrackDTO record);
 }

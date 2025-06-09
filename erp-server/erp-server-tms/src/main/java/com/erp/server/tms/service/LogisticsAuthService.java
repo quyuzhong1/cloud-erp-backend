@@ -6,7 +6,6 @@ import com.erp.model.tms.entity.LogisticsAuthEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.tms.dto.LogisticsAuthDTO;
-import com.erp.model.tms.entity.LogisticsChannelEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -125,7 +124,7 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @param authConfig
      * @return
      */
-    ApiResult authLogistics(String logisticsPlatform,Map<String, String> authConfig);
+    ApiResult<Object>authLogistics(String logisticsPlatform,Map<String, String> authConfig);
 
     /**
      *
@@ -142,4 +141,22 @@ public interface LogisticsAuthService extends SuperService<LogisticsAuthEntity> 
      * @return
      */
     List<LogisticsAuthEntity> listByMainIds(List<String> supplierIds);
+
+    /**
+     * 获取所有海外仓平台发货的物流渠道
+     * @return
+     */
+    List<String> listAllChannelByOverseas();
+
+
+    /**
+     * 虾皮新增店铺授权
+     *
+     * @param authMap
+     * @param logisticsPlatform
+     * @return
+     */
+    Map<String, String> addShopAuth(Map<String, String> authMap, String logisticsPlatform);
+
+    List<LogisticsSupplierDTO.AuthDTO> listAuthBySupplierId(List<String> logisticsSupplierIds);
 }

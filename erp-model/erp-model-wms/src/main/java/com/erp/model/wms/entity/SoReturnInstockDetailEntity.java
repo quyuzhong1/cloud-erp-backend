@@ -9,6 +9,7 @@ import lombok.experimental.Accessors;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 /**
  * <p>
@@ -140,6 +141,52 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
     @TableField("exchange_rate")
     private BigDecimal exchangeRate;
 
+    @TableField(exist = false)
+    private String returnId;
+
+    /**
+     * 退货入库单号
+     */
+    @TableField(exist = false)
+    private String code;
+
+    /**
+     * 审核时间
+     */
+    @TableField(exist = false)
+    private LocalDateTime approveTime;
+    /**
+     * 平台sku
+     */
+    @TableField("platform_sku_no")
+    private String platformSkuNo;
+
+    /**
+     * 是否子sku
+     */
+    private Boolean isChildSkuNo;
+
+    /**
+     *退货金额
+     */
+    @TableField("return_amount")
+    private BigDecimal returnAmount;
+    /**
+     *含税退货金额
+     */
+    @TableField("tax_return_amount")
+    private BigDecimal taxReturnAmount;
+    /**
+     *退货金额（本位币）
+     */
+    @TableField("return_amount_local_currency")
+    private BigDecimal returnAmountLocalCurrency;
+    /**
+     *含税退货金额（本位币）
+     */
+    @TableField("tax_return_amount_local_currency")
+    private BigDecimal taxReturnAmountLocalCurrency;
+
     public static final String MAIN_ID = "main_id";
 
     public static final String SKU_ID = "sku_id";
@@ -162,7 +209,7 @@ public class SoReturnInstockDetailEntity extends BaseEntity<SoReturnInstockDetai
 
     public static final String WAREHOUSE_LOCATION = "warehouse_location";
 
-    public static final String REMARK = "remark";
+    
 
     public static final String SOURCE_DETAIL_ID = "source_detail_id";
 

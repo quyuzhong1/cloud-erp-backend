@@ -30,7 +30,7 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = false)
 @TableName("project_task")
 @NoArgsConstructor
-public class ProjectTaskEntity extends BaseEntity implements Serializable {
+public class ProjectTaskEntity extends BaseEntity<ProjectTaskEntity> implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

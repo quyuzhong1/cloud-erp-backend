@@ -45,7 +45,7 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
      **/
     @Override
     public List<ProductVariantPropertyEntity> list(String variantId) {
-        LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductVariantPropertyEntity::getVariantId, variantId);
         return this.list(queryWrapper);
     }
@@ -93,7 +93,7 @@ public class ProductVariantPropertyServiceImpl extends ServiceImpl<ProductVarian
         if (entity.getOccupyStatus()) {
             throw new ServiceException(ApiError.ERROR_95168);
         }
-        LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductVariantPropertyEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductVariantPropertyEntity::getId, variantId);
         return this.remove(queryWrapper);
     }

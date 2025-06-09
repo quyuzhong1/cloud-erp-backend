@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 
 public class EncryptionUtils {
+
+    private EncryptionUtils(){}
+
     /**
      * 第一步提取除sign和access_token之外的所有查询参数。按字母顺序对参数的键重新排序
      * @param params 入参

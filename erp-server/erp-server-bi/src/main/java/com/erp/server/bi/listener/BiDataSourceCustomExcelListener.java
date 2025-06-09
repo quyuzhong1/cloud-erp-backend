@@ -73,14 +73,14 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         List<BiDataSourceCustomDetailEntity> detailList = new ArrayList<>();
         Integer yearDate = 0;
         //旧数据时记录
-        if (ObjectUtils.isNotEmpty(iterator)) {
+        if (ObjectUtils.isNotEmpty(iterator) && iterator != null) {
             while (iterator.hasNext()) {
-                Map.Entry entry = iterator.next();
+                Map.Entry<Integer, String> entry = iterator.next();
                 if (ObjectUtils.isEmpty(entry.getKey())) {
                     continue;
                 }
                 Integer mapKey = Integer.valueOf(entry.getKey().toString());
-                String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue().toString();
+                String value = ObjectUtils.isEmpty(entry.getValue()) ? "" : entry.getValue();
                 String key = headMap.get(mapKey);
                 //明细数据
                 BiDataSourceCustomDetailEntity detailEntity = new BiDataSourceCustomDetailEntity();
@@ -109,25 +109,21 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
                     continue;
                 }
                 //年导入
-                if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType)) {
-                    if ("实际值".equals(key)){
-                        detailEntity.setYear(yearDate);
-                        detailEntity.setValue(value);
-                        detailList.add(detailEntity);
-                    }
+                if (BiDataSourceCustomTypeEnum.YEAR.getCode().equals(importType) && "实际值".equals(key)) {
+                    detailEntity.setYear(yearDate);
+                    detailEntity.setValue(value);
+                    detailList.add(detailEntity);
                 }
                 //季度导入
-                if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(importType)) {
-                    if (CollectionUtils.isNotEmpty(quarterList)) {
-                        try {
-                            String quarter = quarterList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse("");
-                            detailEntity.setYear(yearDate);
-                            detailEntity.setQuarter(Integer.valueOf(quarter));
-                            detailEntity.setValue(value);
-                            detailList.add(detailEntity);
-                        } catch (Exception e){
-                            errorMsgList.add("季度格式有误，例如：Q1");
-                        }
+                if (BiDataSourceCustomTypeEnum.QUARTER.getCode().equals(importType) && CollectionUtils.isNotEmpty(quarterList)) {
+                    try {
+                        String quarter = quarterList.stream().filter(obj -> obj.getName().equals(key)).map(BiDictEntity::getValue).findFirst().orElse("");
+                        detailEntity.setYear(yearDate);
+                        detailEntity.setQuarter(Integer.valueOf(quarter));
+                        detailEntity.setValue(value);
+                        detailList.add(detailEntity);
+                    } catch (Exception e) {
+                        errorMsgList.add("季度格式有误，例如：Q1");
                     }
                 }
                 //月导入
@@ -188,13 +184,13 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
         if (CollectionUtils.isEmpty(detailList) && CollectionUtils.isEmpty(errorMsgList)) {
             errorMsgList.add("自助添加数据不能为空");
         }
-        String errStr = "";
-        if (errorMsgList.size() > 0) {
+        StringBuilder errStr = new StringBuilder();
+        if (!errorMsgList.isEmpty()) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+                errStr.append(indexTemp).append("、").append(errorMsgList.get(i)).append("；");
             }
-            map.put(head.size() - 1 ,errStr);
+            map.put(head.size() - 1 , errStr.toString());
             list.add(map);
             return;
         }
@@ -236,10 +232,10 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
 
     @Override
     public void invokeHeadMap(Map<Integer,String> map, AnalysisContext analysisContext) {
-        List<String> headList = map.values().stream().collect(Collectors.toList());
-        headList.add("错误信息");
+        List<String> listValue = map.values().stream().collect(Collectors.toList());
+        listValue.add("错误信息");
         this.headMap = map;
-        this.headList = headList;
+        this.headList = listValue;
     }
 
     public List<String> getHead(){
@@ -258,6 +254,6 @@ public class BiDataSourceCustomExcelListener extends AnalysisEventListener<Map<I
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 }

@@ -1,21 +1,24 @@
 package com.erp.model.wms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
+import cn.hutool.core.annotation.Alias;
 import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.AttachDTO;
 import com.common.business.dto.base.SortDTO;
 import com.erp.model.wms.entity.PackageForecastDetailEntity;
 import com.erp.tms.aliexpress.model.handover.UserInfo;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import javax.validation.constraints.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.validation.constraints.*;
 
 /**
  * <p>
@@ -28,6 +31,168 @@ import javax.validation.constraints.*;
 @Data
 @NoArgsConstructor
 public class PackageForecastDTO implements Serializable {
+
+    @Data
+    @NoArgsConstructor
+    public static class ProvidersAndCollectDTO{
+        /**
+         * 服务商编号
+         */
+        private String providerCode;
+        /**
+         * 服务商名称
+         */
+        private String providerName;
+
+        /**
+         * 预约日期集合
+         */
+        private List<CollectDataDTO> collectDataList;
+
+        @NoArgsConstructor
+        @Data
+        @AllArgsConstructor
+        public static class CollectDataDTO {
+
+            /**
+             * 揽收日期
+             */
+            private LocalDate collectDate;
+
+            /**
+             * 是否可以揽收
+             */
+            private Boolean canReserve;
+
+            /**
+             * 预约时间集合
+             */
+            private List<CollectTimeDTO> collectTimeDTOList;
+
+            @NoArgsConstructor
+            @Data
+            public static class CollectTimeDTO {
+
+                /**
+                 * 开始时间
+                 */
+                private LocalDateTime startTime;
+
+                /**
+                 * 结束时间
+                 */
+                private LocalDateTime endTime;
+                /**
+                 * 是否可以揽收
+                 */
+                private Boolean canReserve;
+            }
+        }
+
+    }
+
+    @NoArgsConstructor
+    @Data
+    public static class ReserveArrivedTimesDTO {
+
+        /**
+         * 日期
+         */
+        private LocalDate arrivedTime;
+        /**
+         * 是否可送货
+         */
+        private Boolean canReserve;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ShippingProviderDTO{
+        /**
+         * 物流服务商+揽收日期
+         */
+        private List<ProvidersAndCollectDTO> shippingProviderList;
+        /**
+         * 预计送货到仓日期
+         */
+        private List<ReserveArrivedTimesDTO> reserveArrivedTimes;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class SearchShippingProviderDTO{
+
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * 揽收方式
+         */
+        @NotBlank(message = "揽收方式不能为空")
+        private String collectMode;
+
+        @NotNull(message = "总重量不能为空")
+        private Integer weight;
+
+        /**
+         * 物流类型
+         */
+        private String deliveryOption;
+
+        /**
+         * 揽收地址id
+         */
+        @NotBlank(message = "揽收地址id不能为空")
+        private String addressId;
+
+
+    }
+    @Data
+    @NoArgsConstructor
+    public static class UploadFileViewDTO{
+
+        private String id;
+
+        /**
+         * 组包号码
+         */
+        private String code;
+        /**
+         * 交接单号
+         */
+        private String handoverNo;
+
+        /**
+         * 大包运单号
+         */
+        private String transportNo;
+
+        /**
+         * 文件
+         */
+        private AttachDTO attachDTO;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class UploadFileDTO{
+
+        @NotBlank(message = "id不能为空")
+        private String id;
+
+        @NotBlank(message = "大包运单号不能为空")
+        private String transportNo;
+
+        /**
+         * 文件
+         */
+        @NotEmpty(message = "文件不能为空")
+        private AttachDTO attachDTO;
+    }
+
 
     @Data
     @NoArgsConstructor
@@ -106,17 +271,70 @@ public class PackageForecastDTO implements Serializable {
         private List<String> ids;
 
         /**
-         * 揽收方式  来源 http://172.16.100.11:3002/project/92/interface/api/13147   type=collectMode
+         * 发货平台
          */
+        @NotBlank(message = "发货平台不能为空")
+        private String deliveryPlatform;
+
         @NotBlank(message = "揽收方式不能为空")
         private String collectMode;
-
 
         /**
          * 揽收地址id 来源 http://172.16.100.11:3002/project/128/interface/api/25783  type=collect
          */
-        @NotBlank(message = "揽收地址不能为空")
         private String collectAddressId;
+
+        /**
+         *  第三方地址id
+         */
+        private String addressId;
+
+        /**
+         * 物流类型
+         */
+        private String logisticType;
+
+        /**
+         * 发货箱数
+         */
+        private Integer totalBox;
+
+        /**
+         * 发货重量
+         */
+        private Integer deliveryWeight;
+
+        /**
+         * 服务商编号
+         */
+        private String providerCode;
+        /**
+         * 服务商名称
+         */
+        private String providerName;
+        /**
+         * 预约揽收日期
+         */
+        private LocalDate collectDate;
+
+        /**
+         * 预约揽收开始时间
+         */
+        private LocalDateTime startTime;
+
+        /**
+         * 预约揽收结束时间
+         */
+        private LocalDateTime endTime;
+
+        /**
+         * 预计送货日期
+         */
+        private LocalDate deliveryTime;
+        /**
+         * 预计送货到仓日期
+         */
+        private LocalDate arrivedTime;
     }
 
     /**
@@ -414,8 +632,8 @@ public class PackageForecastDTO implements Serializable {
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
+            if (this == o) { return true;}
+            if (o == null || getClass() != o.getClass()) { return false;}
             InstockForcastMergeDTO that = (InstockForcastMergeDTO) o;
             return Objects.equals(logisticsSupplierId, that.logisticsSupplierId) && Objects.equals(transferLogisticsSupplierId, that.transferLogisticsSupplierId) && Objects.equals(transferLogisticsChannelId, that.transferLogisticsChannelId);
         }

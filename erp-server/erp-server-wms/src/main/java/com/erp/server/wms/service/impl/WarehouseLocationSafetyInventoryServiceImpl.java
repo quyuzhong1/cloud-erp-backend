@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.EasyExcel;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
@@ -27,7 +28,6 @@ import com.erp.server.wms.service.DictBasicService;
 import com.erp.server.wms.service.WarehouseLocationSafetyInventoryService;
 import com.erp.server.wms.service.WarehouseLocationService;
 import com.erp.server.wms.service.WarehouseService;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
@@ -39,6 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,6 +63,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
     private DownloadTaskFeign downloadTaskFeign;
     @Override
     public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> paging(PagingDTO<WarehouseLocationSafetyInventoryDTO.SearchParamDTO> paramDto) {
+        paramDto.getParams().setPermissionSql(paramDto.getPermissionSql());
         Page<Object> page = new Page<>(paramDto.getCurrPage(), paramDto.getPageSize());
         IPage<WarehouseLocationSafetyInventoryDTO.ViewDTO> result = this.baseMapper.paging(page, paramDto.getParams());
         fillViewList(result.getRecords());
@@ -100,11 +102,11 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             return exportErrorFile(errorList, response);
         }
 
-        List<String> warehouseNameList = successList.stream().map(item -> item.getWarehouseName()).distinct().collect(Collectors.toList());
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.getByNames(warehouseNameList);
-        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(item1 -> item1.getName(), item2 -> item2.getId()));
+        List<String> warehouseNameList = successList.stream().map(WarehouseLocationSafetyInventoryDTO.importExcelDTO::getWarehouseName).distinct().collect(Collectors.toList());
+        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(warehouseNameList);
+        Map<String, String> warehouseMap = warehouseList.stream().collect(Collectors.toMap(WarehouseDTO.ListDTO::getName, WarehouseDTO.ListDTO::getId));
 
-        List<String> warehouseAreaNameList = successList.stream().map(item -> item.getWarehouseAreaName()).distinct().collect(Collectors.toList());
+        List<String> warehouseAreaNameList = successList.stream().map(WarehouseLocationSafetyInventoryDTO.importExcelDTO::getWarehouseAreaName).distinct().collect(Collectors.toList());
         List<WarehouseLocationEntity> areaList = warehouseLocationService.getBaseMapper().selectList(new QueryWrapper<WarehouseLocationEntity>()
                 .eq("type", "area")
                 .eq("is_deleted", false)
@@ -117,8 +119,8 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
             //填充仓库ID
             String warehouseId = warehouseMap.get(importExcelDto.getWarehouseName());
-            if(StringUtils.isBlank(warehouseId)){
-                importExcelDto.setErrorInfo(importExcelDto.getErrorInfo() + ", 仓库不存在");
+            if(CharSequenceUtil.isBlank(warehouseId)){
+                importExcelDto.setErrorInfo(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
                 errorList.add(importExcelDto);
                 continue;
             }
@@ -180,7 +182,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -192,6 +194,7 @@ public class WarehouseLocationSafetyInventoryServiceImpl extends SuperServiceImp
 
     @Override
     public PagingVO<WarehouseLocationSafetyInventoryDTO.ViewDTO> exportWarehouseLocationSafetyInventory(PagingDTO<WarehouseLocationSafetyInventoryDTO.exportParamDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<WarehouseLocationSafetyInventoryEntity> page = this.baseMapper.listByParam(new Page<>(dto.getCurrPage(), dto.getPageSize()), dto.getParams());
         List<WarehouseLocationSafetyInventoryDTO.ViewDTO> viewList = BeanMapper.copyList(page.getRecords(), WarehouseLocationSafetyInventoryDTO.ViewDTO.class);
         fillViewList(viewList);

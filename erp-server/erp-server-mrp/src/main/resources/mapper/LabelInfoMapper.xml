@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.mrp.mapper.LabelInfoMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.mrp.entity.LabelInfoEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="name" property="name" />
+       <result column="color" property="color" />
+       <result column="disabled" property="disabled" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        name, color, disabled
+    </sql>
+
+
+    <select id="listLabelByReplenishmentIds" resultType="com.erp.model.mrp.vo.LabelVO">
+        select rrl.ref_id as replenishmentId, li.name, li.color
+        from label_info li
+        inner join replenishment_ref_label rrl on rrl.is_deleted = false and rrl.label_id = li.id
+        where li.disabled = false and rrl.ref_id IN
+        <foreach collection="ids" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
+
+    <!-- 列表查询 -->
+    <select id="listLabelInfo" resultType="com.erp.model.mrp.dto.LabelInfoDTO$ListDTO">
+        select
+               <include refid="Base_Column_List" />
+        from label_info li
+        <where>
+            li.is_deleted = false
+        </where>
+        order by li.id desc
+    </select>
+    <select id="searchLabel" resultType="com.erp.model.mrp.dto.LabelInfoDTO$ListDTO">
+        select id , name, color, disabled
+        from label_info  where is_deleted = false
+        <if test="searchKeyword != null and searchKeyword != ''">
+            and name like concat('%',#{searchKeyword}::text ,'%')
+        </if>
+        <if test="searchKeyword != null and searchKeyword != ''">
+            order by
+            case when name ILIKE concat(#{searchKeyword}::text,'%') THEN 1
+            when name ILIKE concat('%',#{searchKeyword}::text) THEN 2
+            when name ILIKE concat('%',#{searchKeyword}::text,'%') THEN 3
+            end , name
+        </if>
+    </select>
+
+
+</mapper>

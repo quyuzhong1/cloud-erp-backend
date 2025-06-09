@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import cn.hutool.json.JSONArray;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
@@ -8,6 +9,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
@@ -27,7 +29,7 @@ import java.util.Map;
 @Data
 @NoArgsConstructor
 public class WmsDeliveryPlanDTO implements Serializable {
-
+    private static final long serialVersionUID = 1905122041950251207L;
 
      /**
      * 状态统计
@@ -255,6 +257,35 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 店铺名称
          */
         private String shopName;
+
+        /**
+         * 期望发货时间
+         */
+        private String expectDeliveryDate;
+
+        /**
+         * 期望物流方式
+         */
+        private String expectLogisticsMethod;
+
+        /**
+         * 期望物流方式名称
+         */
+        private String expectLogisticsMethodName;
+        /**
+         * 来源json
+         */
+        private JSONArray sourceJson;
+
+        /**
+         * 来源类型，deliverySuggestion发货建议
+         */
+        private String sourceType;
+
+        /**
+         * 来源编码
+         */
+        private String sourceCodes;
     }
 
     /**
@@ -411,7 +442,20 @@ public class WmsDeliveryPlanDTO implements Serializable {
         */
         private String remark;
 
+        /**
+         * 期望发货时间
+         */
+        private LocalDate expectDeliveryDate;
 
+        /**
+         * 期望物流方式
+         */
+        private String expectLogisticsMethod;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
     }
 
     /**
@@ -467,6 +511,11 @@ public class WmsDeliveryPlanDTO implements Serializable {
          * 明细id
          */
         private String sourceDetailId;
+
+        /**
+         * 要货数量
+         */
+        private Integer alreadyRequisitionQty;
 
         /**
          * 发货计划单号
@@ -541,6 +590,8 @@ public class WmsDeliveryPlanDTO implements Serializable {
         /**
          * 要货数量
          */
+        @NotNull(message = "要货数量不能为空")
+        @Min(value = 1, message = "要货数量不能小于1")
         private Integer requisitionQty;
 
         /**
@@ -705,5 +756,82 @@ public class WmsDeliveryPlanDTO implements Serializable {
         private String type;
     }
 
+    /**
+     * 发货计划及补货计划数据显示
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DeliverPlanViewDTO {
+        /**
+         * 发货计划编码
+         */
+        private String deliverPlanCode;
 
+        /**
+         * 状态
+         */
+        private String approveStatus;
+
+        /**
+         * 状态名称
+         */
+        private String approveStatusName;
+
+        /**
+         * 发货明细
+         */
+        private List<DeliverPlanDetailViewDTO> detailList;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class DeliverPlanDetailViewDTO {
+        /**
+         * mSku
+         */
+        private String mSku;
+        /**
+         * fnSku
+         */
+        private String fnSku;
+        /**
+         * sku编码
+         */
+        private String skuNo;
+        /**
+         * 计划数量
+         */
+        private Integer deliveryPlanQty;
+        /**
+         * 发货数量
+         */
+        private Integer hasDeliveryPlanQty;
+
+        /**
+         * 说明
+         */
+        private List<DescriptionViewDTO> descriptionList;
+    }
+
+    /**
+     * 说明
+     */
+    @Data
+    @NoArgsConstructor
+    public static class DescriptionViewDTO {
+        /**
+         * 备货建议编码
+         */
+        private String deliverySuggestCode;
+
+        /**
+         * 备货建议数量
+         */
+        private Integer deliverySuggestQty;
+
+        /**
+         * 已发货数量
+         */
+        private Integer hasDeliveryPlanQty;
+    }
 }

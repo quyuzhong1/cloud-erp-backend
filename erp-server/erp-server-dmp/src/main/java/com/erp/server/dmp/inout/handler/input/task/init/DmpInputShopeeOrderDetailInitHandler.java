@@ -9,11 +9,11 @@ import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
 
+import cn.hutool.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
@@ -105,7 +105,9 @@ public class DmpInputShopeeOrderDetailInitHandler extends DmpInputInitHandler{
     			}
     			try {
 					Thread.sleep(sleepTime);
-				} catch (InterruptedException e) {}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+				}
     			sleepTime = sleepTime + 1000;
     			count = count + 1;
     		}
@@ -113,7 +115,7 @@ public class DmpInputShopeeOrderDetailInitHandler extends DmpInputInitHandler{
         
     	JSONObject result = data.getResponse();
         DmpInputTaskInitDTO dmpInputTaskInitDTO = new DmpInputTaskInitDTO();
-		dmpInputTaskInitDTO.setMsg(result.getJSONArray("order_list").toJSONString());
+		dmpInputTaskInitDTO.setMsg(result.getJSONArray("order_list").toJSONString(0));
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);
     
 		return dmpInputTaskInitDTOList;

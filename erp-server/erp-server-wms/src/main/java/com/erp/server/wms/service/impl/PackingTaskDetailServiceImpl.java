@@ -1,27 +1,31 @@
 package com.erp.server.wms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.wms.dto.PackingTaskDTO;
 import com.erp.model.wms.entity.PackingTaskDetailEntity;
+import com.erp.model.wms.enums.SearchModeEnum;
 import com.erp.server.wms.mapper.PackingTaskDetailMapper;
 import com.erp.server.wms.service.PackingTaskDetailService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.erp.server.wms.service.OperateLogService;
-import com.erp.server.wms.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
 import java.util.*;
+import java.util.stream.Collectors;
+
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  * 装箱任务明细表 服务实现类
@@ -33,7 +37,7 @@ import com.common.core.enums.ApiError;
 @Slf4j
 @Service
 public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDetailMapper, PackingTaskDetailEntity> implements PackingTaskDetailService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -53,7 +57,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
         }
 
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱任务明细单" , packingTaskDetailEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "装箱任务明细单" , packingTaskDetailEntity.getId());
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLog(msg, null, packingTaskDetailEntity.getId(), "新增操作");
         // TODO 新增明细（如果有明细的话）
@@ -68,7 +72,9 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
     @Override
     public Boolean update(PackingTaskDetailDTO.UpdateDTO updateDTO) {
         PackingTaskDetailEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "装箱任务明细单"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "装箱任务明细单");
+        }
         PackingTaskDetailEntity packingTaskDetailEntity =  BeanMapperUtils.map(PackingTaskDetailEntity.class, updateDTO);
 
         // 数据处理
@@ -82,7 +88,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
         // 记录主单操作日志
             log.info("编辑 开始记录装箱任务明细单日志数据，id：【{}】", packingTaskDetailEntity.getId());
-            String msg = StrUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), packingTaskDetailEntity.getId(), "装箱任务明细单");
+            String msg = CharSequenceUtil.format("用户【{}】编辑id为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), packingTaskDetailEntity.getId(), "装箱任务明细单");
         // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
         operateLogService.addModuleOperateLogByObj(old, packingTaskDetailEntity, null, packingTaskDetailEntity.getId(), msg);
         return Boolean.TRUE;
@@ -98,7 +104,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
     @Override
     public void removeByMainId(String mainId) {
-        if (StrUtil.isNotBlank(mainId)){
+        if (CharSequenceUtil.isNotBlank(mainId)){
             lambdaUpdate().eq(PackingTaskDetailEntity::getMainId, mainId).remove();
         }
     }
@@ -117,7 +123,7 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
     @Override
     public Integer countDeliveryQty(String id) {
-        if (StrUtil.isNotBlank(id)){
+        if (CharSequenceUtil.isNotBlank(id)){
             return baseMapper.countDeliveryQty(id);
         }
         return 0;
@@ -125,15 +131,17 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
 
     /**
      * 模糊搜索装箱任务明细
+     *
      * @param searchKey
+     * @param searchMode
      * @return
      */
     @Override
-    public List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey) {
-        if (StrUtil.isBlank(searchKey)){
+    public List<PackingTaskDetailDTO.ViewDTO> searchProductBySearchKey(String taskId, String searchKey, String searchMode) {
+        if (CharSequenceUtil.isBlank(searchKey) && SearchModeEnum.PERFECT.getCode().equals(searchMode)){
             return Collections.emptyList();
         }
-        return baseMapper.searchProductBySearchKey(taskId, searchKey);
+        return baseMapper.searchProductBySearchKey(taskId, searchKey,searchMode);
     }
 
     @Override
@@ -142,6 +150,23 @@ public class PackingTaskDetailServiceImpl extends SuperServiceImpl<PackingTaskDe
             return Collections.emptyList();
         }
         return lambdaQuery().in(PackingTaskDetailEntity::getSourceDetailId, sourceDetailIds).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateByChange(List<PackingTaskDetailEntity> addList, List<PackingTaskDetailEntity> updateList, List<PackingTaskDetailEntity> deleteList) {
+        if (CollectionUtils.isNotEmpty(addList)) {
+            this.saveBatch(addList);
+        }
+
+        if (CollectionUtils.isNotEmpty(updateList)) {
+            this.updateBatchById(updateList);
+        }
+
+        if (CollectionUtils.isNotEmpty(deleteList)) {
+            List<String> deleteIds = deleteList.stream().map(v->v.getId()).collect(Collectors.toList());
+            this.removeByIds(deleteIds);
+        }
     }
 
 

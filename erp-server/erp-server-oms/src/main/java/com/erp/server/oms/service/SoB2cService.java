@@ -1,5 +1,7 @@
 package com.erp.server.oms.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.PlatformOrderDTO;
 import com.common.business.dto.PlatformSoOutStockDTO;
 import com.common.business.dto.PrintWayBillPdfDTO;
@@ -11,6 +13,7 @@ import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.oms.enums.SoB2cCategoryTypeEnum;
 import com.erp.model.oms.enums.SoB2cInvalidTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
 import com.erp.model.plm.entity.ProductCustomsEntity;
 import com.erp.model.tms.dto.SettingForecastDTO;
 import com.erp.model.tms.dto.TransferDeclareDTO;
@@ -18,9 +21,16 @@ import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.tms.dto.TransferDeclareGenerationSettingDTO;
 import com.erp.model.wms.dto.ReportOrderDataDTO;
 import com.erp.model.wms.dto.SoOutstockDTO;
+import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import com.erp.model.wms.dto.inventory.InventoryQtyDTO;
+import org.apache.poi.ss.formula.functions.T;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -82,13 +92,16 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO update(SoB2cDTO.UpdateDTO dto);
 
      /**
-     * 提交审核
-     * @author Will
-     * @date: 2023-08-18
-     * @param id
-     * @return
-     */
-    BatchResultDTO submit(String id,Boolean isProcess);
+      * 提交审核
+      *
+      * @param entity
+      * @param error
+      * @param soB2cLogisticsEntity
+      * @return
+      * @author Will
+      * @date: 2023-08-18
+      */
+    BatchResultDTO submit(SoB2cEntity entity, SoB2cErrorEntity error,SoB2cLogisticsEntity soB2cLogisticsEntity, Boolean isProcess);
 
     /**
     * 审核
@@ -164,6 +177,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     BatchResultDTO saveSoB2cDistribution(String id, SoB2cDTO.SaveSoB2cDistributionDTO dto);
 
     /**
+     * 检查订单是否符合物流黑名单限制
+     * @param soId
+     * @param logisticsChannelId
+     * @param existChannelId
+     */
+    void checkLogisticsChannelBlacklist(String soId, String logisticsChannelId, String existChannelId);
+
+    /**
      * @description: 获取物流单号
      * @author Will
      * @date: 2023/8/18 16:47
@@ -173,13 +194,14 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO getLogisticsCode(String id, Boolean isDelivery);
     /**
+     * @param id
+     * @param channelId
+     * @return BatchResultDTO
      * @description: 提交发货
      * @author Will
      * @date: 2023/8/18 16:49
-     * @param id
-     * @return BatchResultDTO
      */
-    BatchResultDTO submitDelivery(String id);
+    BatchResultDTO submitDelivery(String id, String channelId);
     /**
      * @description: 发货拦截
      * @author Will
@@ -229,7 +251,12 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     BatchResultDTO cancelMerge(String id);
 
-    void deleteById(List<String> ids);
+    /**
+     * 删除订单关联信息
+     * @param ids 需要删除的销售订单数据
+     * @param code 关联销售订单编码
+     */
+    void deleteById(List<String> ids, String code);
 
     void handleData(SoB2cEntity soB2cEntity, Boolean exchangeRateThrow, Boolean checkPayTime);
 
@@ -238,23 +265,7 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      */
     Map<String,Boolean> approveRule(String id, List<SoB2cDetailEntity> detailList, Map<String,Object> map);
 
-    /**
-     * 报表管理 销售统计
-     * @author yl
-     * @date 2023-09-01 11:19
-     * @param dto
-     * @return com.common.business.vo.PagingVO<com.erp.model.oms.dto.ReportDTO.ProductSalesPagingViewDTO>
-     */
-    PagingVO<ReportDTO.ProductSalesPagingViewDTO> productSalesPaging(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
 
-    /**
-     * 导出 销售统计
-     * @author yl
-     * @date 2023-09-04 16:39
-     * @param dto
-     * @return java.lang.Boolean
-     */
-    Boolean productSalesExport(ReportDTO.ProductSalesPagingParamDTO dto);
     /**
      * @description: 查看财务信息
      * @author Will
@@ -432,13 +443,15 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 修改b2c销售单状态
-     * @Author Luo_WG
-     * @Date 2023/12/27 20:19
+     *
      * @param soB2cIds
      * @param status
+     * @param isManualDelivery
      * @return java.lang.Boolean
+     * @Author Luo_WG
+     * @Date 2023/12/27 20:19
      **/
-    Boolean updateSoB2cStatus(List<String> soB2cIds, String status);
+    Boolean updateSoB2cStatus(List<String> soB2cIds, String status, Boolean isManualDelivery);
 
     /**
      * 修改b2c销售单状态发货时间
@@ -699,6 +712,8 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
      **/
     Boolean updateShippingOrderNo(List<TransferDeclareDTO.ShippingOrderDTO> list);
 
+    boolean isFullyManagedOrder(String platform);
+
     /**
      * 根据订单拆分sku
      */
@@ -886,17 +901,21 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
 
     /**
      * 校验是否缺货状态
+     *
      * @param inventoryList
      * @param waitDeliveryQtyList
      * @param ignoreInventorySkuIds
      * @param skuId
      * @param warehouseId
      * @param qty
+     * @param skuMappingDTOList
+     * @param warehouseList
+     * @param bomChildrenSkuDTOList
      * @return
      */
     Boolean isChildOutStock(List<InventoryQtyDTO.SkuInventoryStatusTotalDTO> inventoryList,
                             List<SoB2cDetailDTO.WaitDeliveryQtyDTO> waitDeliveryQtyList, List<String> ignoreInventorySkuIds,
-                            String skuId, String warehouseId, Integer qty);
+                            SoB2cDetailEntity soDetailEntity, String warehouseId, Integer qty, List<ListingInfoWithSkuMappingDTO> skuMappingDTOList, List<WarehouseDTO.UpdateDTO> warehouseList, List<BomChildrenSkuDTO> bomChildrenSkuDTOList);
 
 
     void updatePackageAndTransferStatus(String soId, String packageStatus, String transferStatus, Boolean isRegistration,Boolean isUpdateTransferStatus);
@@ -957,15 +976,150 @@ public interface SoB2cService extends SuperService<SoB2cEntity> {
     PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(PagingDTO<SoB2cDTO.ExportParamDTO> dto);
 
     /**
-     * 导出销售额
-     * @param dto 参数
-     */
-    PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto);
-    /**
      * 查询所有虚拟仓B2C销售订单数据
      * @author will
      * @date 2024/9/26 17:11
      * @return List<ViewDTO>
      */
     List<ReportOrderDataDTO.ViewDTO> listAllVirtualSoB2cDetail();
+
+    List<SoB2cDTO.GenerateSoB2cReturnViewDTO> generateSoB2cReturnView(List<String> ids);
+
+    Boolean generateSoB2cReturn(List<SoB2cDTO.GenerateSoB2cReturnViewDTO> list);
+
+    List<SoB2cEntity> getByPlatformCode(String platformCode);
+
+    /**
+     * 更换发货sku预览
+     * @param ids
+     * @return
+     */
+    List<SoB2cDTO.ChangeDeliverySkuViewDTO> changeDeliverySkuView(List<String> ids);
+
+    /**
+     * 更新是否更换sku状态
+     *
+     * @param ids
+     * @param isChangeSku
+     */
+    void updateIsChangeSku(List<String> ids, Boolean isChangeSku);
+    /**
+     * 拉取订单 -- dmp创建任务拉取
+     * @author jack
+     * @param ids
+     */
+    List<BatchResultDTO> fetchOrder(List<String> ids);
+
+    Boolean tempTikTokOrderDate();
+
+    /**
+     * 根据销售订单id获取订单 渠道+仓库+重量 基础信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(List<String> ids);
+
+    /**
+     * 重算订单预估费用
+     * @param sob2cIds
+     */
+    void autoCalcEstimatedShippingCost(List<String> sob2cIds);
+
+    /**
+     * 更新 超过订单金额比例标识
+     * @param b2cSoId
+     * @param isOverEstimatedShipCost
+     */
+    void updateOverEstimatedShipCost(String b2cSoId, Boolean isOverEstimatedShipCost);
+
+    List<SoB2cEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, int offset, List<String> platformList);
+    /**
+     * 同步销售出库单的单据日期
+     * @param soId
+     * @param soOutstockDate
+     */
+    void writeBackSoOutstockDate(String soId, String soOutstockDate);
+
+    String uploadLogisticLabel(SoB2cDTO.UploadFileDTO dto) throws IOException;
+
+    /**
+     * 获取物流面单
+     *
+     * @param entity
+     * @param soB2cLogisticsEntity
+     * @return
+     */
+    BatchResultDTO getLogisticsLabel(SoB2cEntity entity, SoB2cLogisticsEntity soB2cLogisticsEntity);
+
+    /**
+     * 销售统计
+     */
+    IPage<?> productSalesPaging(Page<T> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
+
+    /**
+     * 销售统计导出查询
+     */
+    Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(Page<ReportDTO.ProductSalesPagingViewDTO> query, ReportDTO.ProductSalesPagingParamDTO params, List<String> skuIdList);
+
+    /**
+     * 根据店铺更新未配置vat的订单
+     *
+     * @param shopId
+     * @param enableTime
+     * @param vatInvoiceStatus
+     * @return
+     */
+    void updateFbaNotVatInvoice(String shopId, LocalDateTime enableTime, String vatInvoiceStatus);
+
+    void importB2cFile(MultipartFile excelFile, HttpServletResponse response);
+    /**
+     * 根据nfe发票状态
+     * @author will
+     * @date 2025/4/11 16:35
+     * @param soId
+     * @param nfeInvoiceStatus
+     * @return void
+     */
+    void updateNfeInvoiceStatus(String soId, String nfeInvoiceStatus);
+
+    /**
+     * 根据销售订单id和平台获取分区id
+     * @param soId
+     * @param platform
+     * @return
+     */
+    String getPartitionId(String soId, String platform);
+
+    /**
+     * 根据条件查询销售订单
+     * @param billStatusList
+     * @param platformStatusList
+     * @param platformList
+     * @return
+     */
+    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(List<String> billStatusList, List<String> platformStatusList, List<String> platformList, List<String> codeList);
+
+    /**
+     * 根据主表更新扩展字段
+     * @param id
+     * @param extendDataDTO
+     */
+    void updateExtendData(String id, SoB2cDTO.ExtendDataDTO extendDataDTO);
+
+    /**
+     * 根据物流id标识是否匹配渠道规则
+     * @param dto
+     */
+    void uploadLogisticsStatus(SoB2cDTO.UpdateDTO dto);
+
+    List<SoB2cEntity> listWaitShipByWarehouseIds(List<String> warehouseId);
+
+    /**
+     * 根据订单更新金额
+     * @param id
+     * @param amount
+     */
+    void updateAmount(String id, BigDecimal amount);
+
+    void clearOutDateBySoIds(List<String> clearOutDateSoIds);
 }

@@ -35,6 +35,7 @@ public class Track123DmpHandler extends DmpInputDbConvertDmpHandler {
                 TreeMap<String, Object> dmpInputDmpBaseEntity = new TreeMap<>();
                 this.afterDmpInputMongoEntityFixedValue(dmpInputDmpBaseEntity);
                 dmpInputDmpBaseEntity.put("trackNo", rejectedMap.get("trackNo"));
+                dmpInputDmpBaseEntity.put("orderStatus", LogisticTrackStatusEnum.NOT_FIND.getCode());
                 dmpInputDmpBaseEntity.put("status", LogisticTrackStatusEnum.NOT_FIND.getCode());
                 if (ObjectUtil.isNotEmpty(rejectedMap.get("error"))) {
                     Map<String, Object> errorMap = (Map<String, Object>) rejectedMap.get("error");
@@ -45,6 +46,7 @@ public class Track123DmpHandler extends DmpInputDbConvertDmpHandler {
 
             } else {
                 Object localLogisticsInfo = dmpInputMongoBaseEntity.get("localLogisticsInfo");
+                String transitStatus = convertTrackStatus(String.valueOf(dmpInputMongoBaseEntity.get("transitStatus"))).toString();
                 if (ObjectUtil.isNotEmpty(localLogisticsInfo)) {
                     Map<String, Object> localLogisticsInfoMap = (Map<String, Object>) localLogisticsInfo;
                     if (ObjectUtil.isNotEmpty(localLogisticsInfoMap.get("trackingDetails"))) {
@@ -58,6 +60,7 @@ public class Track123DmpHandler extends DmpInputDbConvertDmpHandler {
                             dmpInputDmpBaseEntity.put("trackNo", dmpInputMongoBaseEntity.get("trackNo"));
                             dmpInputDmpBaseEntity.put("trackTime", trackingDetail.get("eventTime"));
                             dmpInputDmpBaseEntity.put("status", convertTrackStatus(trackingDetail.get("transitSubStatus").toString()));
+                            dmpInputDmpBaseEntity.put("orderStatus", transitStatus);
                             dmpInputDmpBaseEntity.put("content", trackingDetail.get("eventDetail").toString());
                             valueList.add(dmpInputDmpBaseEntity);
                         }
@@ -67,6 +70,7 @@ public class Track123DmpHandler extends DmpInputDbConvertDmpHandler {
                         dmpInputDmpBaseEntity.put("courierCode", localLogisticsInfoMap.get("courierCode"));
                         dmpInputDmpBaseEntity.put("courierName", localLogisticsInfoMap.get("courierNameCN"));
                         dmpInputDmpBaseEntity.put("trackNo", dmpInputMongoBaseEntity.get("trackNo"));
+                        dmpInputDmpBaseEntity.put("orderStatus", LogisticTrackStatusEnum.NOT_FIND.getCode());
                         valueList.add(dmpInputDmpBaseEntity);
                     }
                 }

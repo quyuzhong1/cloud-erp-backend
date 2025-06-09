@@ -85,12 +85,6 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
     private String purchaseDeptName;
 
     /**
-     * 新品首批（false否,true是）
-     */
-    @TableField("is_first_mass_product")
-    private Boolean isFirstMassProduct;
-
-    /**
      * 作废状态（false未作废，true已作废）
      */
     @TableField("invalid_status")
@@ -181,7 +175,11 @@ public class PurchaseOrderEntity extends BaseEntity<PurchaseOrderEntity> {
      */
     @TableField("subcontract_type")
     private String subcontractType;
-
+    /**
+     * 供应商账户id
+     */
+    @TableField("supplier_account_id")
+    private String supplierAccountId;
     @Override
     public Serializable pkVal() {
         return null;

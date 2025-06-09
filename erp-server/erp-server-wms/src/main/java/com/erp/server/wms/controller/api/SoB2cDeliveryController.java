@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.*;
 import com.common.business.dto.base.*;
@@ -14,22 +15,19 @@ import com.common.core.enums.LogActionEnum;
 import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
 import com.erp.model.wms.dto.SoB2cDeliveryDTO;
-import com.erp.model.wms.dto.SoB2cDeliveryInterceptDTO;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 import com.erp.model.wms.enums.DeliverTypeEnum;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import com.erp.server.wms.query.SoB2cDeliveryQueryHandler;
 import com.erp.server.wms.service.SoB2cDeliveryService;
+import com.erp.server.wms.service.WaveListService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -46,9 +44,8 @@ public class SoB2cDeliveryController extends BaseController {
 
     @Resource
     private SoB2cDeliveryService soB2cDeliveryService;
-
     @Resource
-    private SoB2cFeign soB2cFeign;
+    private WaveListService waveListService;
 
     /**
      * 新增
@@ -76,9 +73,9 @@ public class SoB2cDeliveryController extends BaseController {
      **/
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:soB2cDelivery:paging",
-            tableAlias = "sbd"
+            warehouseTableField = "sbdd.warehouse_id",
+            shopTableField = "sbd.shop_id",
+            menuCode = "wms:soB2cDelivery:paging"
     )
     public ApiResult<List<SoB2cDeliveryDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         return success(soB2cDeliveryService.tabList(dto));
@@ -93,11 +90,11 @@ public class SoB2cDeliveryController extends BaseController {
      * @Date 2023/12/13 19:13
      **/
     @PostMapping("/paging")
-//    @DataPermission(operationType = DataAttributeEnum.LIST,
-//            tableField = "create_user_id",
-//            menuCode = "wms:soB2cDelivery:paging",
-//            tableAlias = "sbd"
-//    )
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sbdd.warehouse_id",
+            shopTableField = "sbd.shop_id",
+            menuCode = "wms:soB2cDelivery:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cDeliveryQueryHandler.class)
     public ApiResult<PagingVO<SoB2cDeliveryDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<SoB2cDeliveryDTO.PagingParamDTO> dto) {
         return success(soB2cDeliveryService.paging(dto));
@@ -149,21 +146,24 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:delivery",
             serviceClass = SoB2cDeliveryService.class,
             keyIdName = "ids")
-    public ApiResult<List<BatchResultDTO>> delivery(@RequestBody SoB2cDeliveryDTO.DeliverDTO dto) {
-        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+    public ApiResult<List<BatchResultDTO>> delivery(@RequestBody @Validated SoB2cDeliveryDTO.DeliverDTO dto) {
+        List<String> ids = dto.getIds().stream().filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
         String deliveryType = dto.getType();
         Boolean isManual = DeliverTypeEnum.MANUAL.getCode().equals(deliveryType);
-        String type = SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode();
-        for (String id : dto.getIds()) {
+        for (String id : ids) {
             BatchResultDTO result;
             try {
-                result = soB2cDeliveryService.delivery(id, deliveryType);
+                result = soB2cDeliveryService.delivery(id, deliveryType, dto.getDeliveryDate());
                 Boolean isSuccess = result.getSuccess();
                 SoB2cDeliveryEntity entity = soB2cDeliveryService.getById(id);
                 if (isManual && isSuccess) {
-                    //生成销售出库单
+                    //波次列表波次状态自动变更
+                    waveListService.waveListStatusAutoChange(id);
+                    //生产直接调拨单
                     Boolean isOutStock = soB2cDeliveryService.pushTransferInfoError(entity);
                     if (isOutStock) {
+                        //生成销售出库单
                         soB2cDeliveryService.generateB2cSoOutstock(entity);
                     }
                 }
@@ -231,8 +231,11 @@ public class SoB2cDeliveryController extends BaseController {
             menuCode = "wms:soB2cDelivery:printPickingView",
             tableAlias = "sbd"
     )
-    public ApiResult<List<SoB2cDeliveryDTO.PrintPickingViewDTO>> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
-        return success(soB2cDeliveryService.printPickingView(dto.getIds()));
+    public ApiResult<SoB2cDeliveryDTO.PrintPickingDTO> printPickingView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        SoB2cDeliveryDTO.PrintPickingDTO printPickingDTO = new SoB2cDeliveryDTO.PrintPickingDTO();
+        printPickingDTO.setPrintPickingViewDTOList(soB2cDeliveryService.printPickingView(dto.getIds(), false));
+        printPickingDTO.setCombinationPrintDetailList(soB2cDeliveryService.getDeliveryDetail(dto.getIds()));
+        return success(printPickingDTO);
     }
 
     /**
@@ -251,7 +254,7 @@ public class SoB2cDeliveryController extends BaseController {
 
     /**
      * 取消打印拣货单
-     * 1.24。2版本调整为取消打印（拣货单，物流单）
+     * 1.24。2版本调整为取消打印（拣货单，物流单，SKU条码）
      * @param dto
      * @return com.common.core.controller.vo.ApiResult
      * @Author Luo_WG
@@ -313,7 +316,6 @@ public class SoB2cDeliveryController extends BaseController {
      * @Author Luo_WG
      * @Date 2023/12/13 20:13
      **/
-
     @PostMapping("/printLogisticsBillConfirm")
     @Idempotent
     public void printLogisticsBillConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintLogisticsBillConfirmDTO dto, HttpServletResponse response) {
@@ -517,5 +519,75 @@ public class SoB2cDeliveryController extends BaseController {
             resultDTOS.add(receiverResult);
         }
         return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 批量修改中转仓库
+     * @author zdy
+     * @date:  2024-10-24
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/updateTransferWarehouse")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "批量修改中转仓库")
+    public ApiResult<List<BatchResultDTO>> updateTransferWarehouse(@RequestBody @Validated BaseIdsDTO.ChangeDTO dto) {
+        List<String> ids = dto.getIds().stream().distinct().collect(Collectors.toList());
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<SoB2cDeliveryEntity> entityList = soB2cDeliveryService.listByIds(ids);
+        for (String id : ids) {
+            BatchResultDTO resultDTO;
+            SoB2cDeliveryEntity entity = entityList.stream().filter(v->v.getId().equals(id)).findFirst().orElse(null);
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"B2C发货单记录不存在"));
+                continue;
+            }
+            try {
+                resultDTO = soB2cDeliveryService.updateTransferWarehouse(entity, dto.getChangeIds());
+            }catch (Exception e){
+                log.error("B2C发货单修改中转仓库失败",e);
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(id, id, "B2C发货单不存在, 修改中转仓库失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
+    /**
+     * 打印条码列表展示
+     *
+     * @param dto
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.wms.dto.SoB2cDeliveryDTO.PrintSkuBarcodeDTO>>
+     * @Author zdy
+     * @Date 2025/02/13 20:13
+     **/
+    @PostMapping("/printSkuBarcodeView")
+    public ApiResult<List<SoB2cDeliveryDTO.PrintSkuBarcodeDTO>> printSkuBarcodeView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(soB2cDeliveryService.printSkuBarcodeView(dto.getIds()));
+    }
+
+    /**
+     * 打印SKU条码确认
+     *
+     * @param dto
+     * @return
+     * @Author zdy
+     * @Date 2025/02/13 20:13
+     **/
+    @PostMapping("/printSkuBarcodeConfirm")
+    @Idempotent
+    public void printSkuBarcodeConfirm(@RequestBody @Validated SoB2cDeliveryDTO.PrintSkuBarcodeConfirmDTO dto, HttpServletResponse response) {
+        soB2cDeliveryService.printSkuBarcodeConfirm(dto, response);
+    }
+    /**
+     * 完成打印（SKU条码）
+     */
+    @PostMapping("/printSkuBarcodeFinish")
+    public ApiResult<?> printSkuBarcodeFinish(@RequestBody BaseIdsDTO.IdsDTO idsDTO){
+        return soB2cDeliveryService.printSkuBarcodeFinish(idsDTO);
     }
 }

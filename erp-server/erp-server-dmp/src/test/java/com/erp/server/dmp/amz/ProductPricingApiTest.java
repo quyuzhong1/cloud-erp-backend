@@ -13,22 +13,41 @@
 
 package com.erp.server.dmp.amz;
 
+import com.common.core.exception.ServiceException;
+import com.erp.model.dmp.dto.AmazonShopInfoDTO;
+import com.erp.sdk.oms.amz.spapi.api.ListingsApi;
 import com.erp.sdk.oms.amz.spapi.api.ProductPricingApi;
 import com.erp.sdk.oms.amz.spapi.client.ApiException;
+import com.erp.sdk.oms.amz.spapi.client.JSON;
 import com.erp.sdk.oms.amz.spapi.model.productpricing.GetOffersResponse;
 import com.erp.sdk.oms.amz.spapi.model.productpricing.GetPricingResponse;
+import com.erp.sdk.oms.amz.spapi.utils.AmazonSpApiInitUtils;
+import com.erp.server.dmp.ErpServerDmpApplication;
+import com.erp.server.dmp.service.CfgAppClientService;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Profile;
+import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.annotation.Resource;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * API tests for ProductPricingApi
  */
-@Ignore
+@RunWith(SpringRunner.class)
+@SpringBootTest(classes = {ErpServerDmpApplication.class}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
+@Profile("dev")
 public class ProductPricingApiTest {
+    @Resource
+    private CfgAppClientService cfgAppClientService;
 
-    private final ProductPricingApi api = null;
+
+    private final ProductPricingApi api = new ProductPricingApi(null);
 
     
     /**
@@ -96,13 +115,25 @@ public class ProductPricingApiTest {
      */
     @Test
     public void getPricingTest() throws ApiException {
-        String marketplaceId = null;
-        String itemType = null;
+        String marketplaceId = "A13V1IB3VIYZZH";
+        String itemType = "Sku";
         List<String> asins = null;
-        List<String> skus = null;
+        List<String> skus = Arrays.asList("2958-EU2");
         String itemCondition = null;
-        GetPricingResponse response = api.getPricing(marketplaceId, itemType, asins, skus, itemCondition);
+//        String sellerId = "A1FND2G4OYN01O";
+//        String sku = "2958-EU2";
+        String shopId = "1735512797405515786";
+        // 获取店铺授权信息
+        AmazonShopInfoDTO shopInfoDTO = cfgAppClientService.cacheAndFindShopAuth(shopId);
+        if (null == shopInfoDTO) {
+            throw new ServiceException("未找到店铺授权:" + shopId);
+        }
+        // 亚马逊订单下载
+        ProductPricingApi api = AmazonSpApiInitUtils.create(ProductPricingApi.class, shopInfoDTO, false);
 
+        GetPricingResponse response = api.getPricing(marketplaceId, itemType, asins, skus, itemCondition);
+        System.out.println("结果");
+        System.out.println(JSON.toJsonStr(response));
         // TODO: test validations
     }
     

@@ -45,6 +45,11 @@ public class PagingDTO<T> extends PermissionsDTO {
      * 排序字符
      */
     private String orderBy;
+    
+    /**
+     * 是否查询总数
+     */
+    private Boolean isSearchCount = true;
 
     /**
      * 排序割断，如：updateTime-DESC

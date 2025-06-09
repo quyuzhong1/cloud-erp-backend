@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * 发送邮件通用数据传输类
@@ -56,14 +58,6 @@ public class EmailDTO<T> implements Serializable {
      * @return
      */
     String connectAddress(String[] emails) {
-        StringBuffer sb = null;
-        for (String email : emails) {
-            if (sb != null) {
-                sb.append(",").append(email);
-            } else {
-                sb = new StringBuffer(email);
-            }
-        }
-        return sb.toString();
+        return String.join(",", emails);
     }
 }

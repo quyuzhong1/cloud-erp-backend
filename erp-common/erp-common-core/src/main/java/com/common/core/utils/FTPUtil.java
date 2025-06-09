@@ -410,7 +410,7 @@
 //						//ftpClient.retrieveFileStream使用了流，需要释放一下，不然会返回空指针
 //						ftpClient.completePendingCommand();
 //						//这里就把一个txt文件完整解析成了个字符串，就可以调用实际需要操作的方法
-//						System.out.println(buffer.toString());
+//						log.info(buffer.toString());
 //					}
 //				}
 //				//判断为文件夹，递归

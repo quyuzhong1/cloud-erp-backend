@@ -1,8 +1,9 @@
 package com.erp.server.oms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -14,15 +15,16 @@ import com.common.core.anno.LogSystemModule;
 import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.entity.BaseEntity;
 import com.common.core.enums.LogActionEnum;
+import com.common.core.exception.ServiceException;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoDetailDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
 import com.erp.model.oms.dto.listAddDetailViewDTO;
-import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoChangeEntity;
 import com.erp.model.oms.entity.SoDetailEntity;
 import com.erp.model.oms.entity.SoInfoEntity;
-import com.erp.model.scm.dto.SkuCostProfitDTO;
 import com.erp.server.oms.query.SoInfoQueryHandler;
 import com.erp.server.oms.service.SoChangeService;
 import com.erp.server.oms.service.SoDetailService;
@@ -39,9 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -70,6 +70,12 @@ public class SoInfoController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            warehouseTableField = "si.warehouse_id",
+            menuCode = "oms:so:paging",
+            tableAlias = "si"
+    )
     public ApiResult<List<SoInfoDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<SoInfoDTO.TabListDTO> tabList = soDetailService.tabList(dto);
         return success(tabList);
@@ -84,6 +90,7 @@ public class SoInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
+            warehouseTableField = "si.warehouse_id",
             menuCode = "oms:so:paging",
             tableAlias = "si"
     )
@@ -102,6 +109,7 @@ public class SoInfoController extends BaseController {
     @PostMapping("/pagingTotal")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id,seller_id",
+            warehouseTableField = "si.warehouse_id",
             menuCode = "oms:so:paging",
             tableAlias = "si"
     )
@@ -281,16 +289,46 @@ public class SoInfoController extends BaseController {
      * @author Will
      * @date: 2023/7/19 14:58
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新销售订单明细备注:ids={ids},备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新销售订单明细备注:备注={remark}", keyIdName = "ids")
     @PostMapping("/updateDetailRemark")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id,seller_id",
 //            menuCode = "oms:so:update",
 //            serviceClass = SoInfoService.class,
 //            keyIdName = "ids")
-    public ApiResult updateDetailRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = soInfoService.updateDetailRemark(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> updateDetailRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new LinkedList<>();
+        List<SoDetailEntity> detailList = soDetailService.listByIds(dto.getIds());
+        Map<String, SoDetailEntity> detailMap = detailList.stream().collect(Collectors.toMap(BaseEntity::getId, e -> e));
+        List<String> mainIds = detailList.stream().map(SoDetailEntity::getMainId).distinct().collect(Collectors.toList());
+        Map<String, SoInfoEntity> entityMap = soInfoService.mapByIds(mainIds);
+        for (String id : dto.getIds()) {
+            SoDetailEntity detailEntity = detailMap.get(id);
+            if(Objects.isNull(detailEntity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"订单不存在"));
+                continue;
+            }
+            SoInfoEntity entity = entityMap.get(detailEntity.getMainId());
+            if(Objects.isNull(entity)){
+                resultDTOS.add(BatchResultDTO.fail(id,id,"订单不存在"));
+                continue;
+            }
+            try {
+                Boolean flag = soInfoService.updateDetailRemark(
+                        Collections.singletonList(id),
+                        dto.getRemark()
+                        );
+                if (flag){
+                    resultDTOS.add(BatchResultDTO.success(id, entity.getCode(),"更新明细备注成功"));
+                } else {
+                    resultDTOS.add(BatchResultDTO.fail(id, entity.getCode(),"更新明细备注失败"));
+                }
+            }catch (Exception e){
+                log.error("更新明细备注失败",e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
     /**
@@ -301,16 +339,30 @@ public class SoInfoController extends BaseController {
      * @author Will
      * @date: 2023/7/19 14:58
      */
-    @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "更新销售订单备注:ids={ids},备注={remark}")
+    @LogAction(value = LogActionEnum.CUSTOM_BATCH_UPDATE, desc = "更新销售订单备注:备注={remark}", keyIdName = "ids")
     @PostMapping("/updateRemark")
 //    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
 //            tableField = "create_user_id,seller_id",
 //            menuCode = "oms:so:update",
 //            serviceClass = SoInfoService.class,
 //            keyIdName = "ids")
-    public ApiResult updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
-        Boolean flag = soInfoService.updateRemark(dto);
-        return flag == true ? success() : failure();
+    public ApiResult<?> updateRemark(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
+        List<SoInfoEntity> soInfoEntityList = soInfoService.listByIds(dto.getIds());
+        for (String id : dto.getIds()) {
+            SoInfoEntity entity = soInfoEntityList.stream().filter(v -> v.getId().equals(id)).findFirst().orElse(null);
+            if (Objects.isNull(entity)) {
+                resultDTOS.add(BatchResultDTO.fail(id, id, "销售订单不存在"));
+                continue;
+            }
+            try {
+                resultDTOS.add(soInfoService.updateRemark(entity, dto.getRemark()));
+            } catch (Exception e) {
+                log.error("B2B更新销售订单备注失败", e);
+                resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
+            }
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 
 
@@ -463,6 +515,24 @@ public class SoInfoController extends BaseController {
     }
 
     /**
+     * 查询销售订单合同PDF数据
+     * @author will
+     * @date 2024/11/5 9:34
+     * @param id
+     * @return ApiResult<ExportPdfDTO>
+     */
+    @GetMapping("/listSoContractPdf")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id,seller_id",
+            menuCode = "oms:so:exportSoContractPdf",
+            serviceClass = SoInfoService.class,
+            keyIdName = "id")
+    public ApiResult<SoInfoDTO.ExportPdfDTO> listSoContractPdf(@RequestParam("id") String id) {
+        SoInfoDTO.ExportPdfDTO result = soInfoService.listSoContractPdf(id);
+        return success(result);
+    }
+
+    /**
      * 导出销售订单合同PDF
      *
      * @return
@@ -470,15 +540,14 @@ public class SoInfoController extends BaseController {
      * @date 2023-05-18 12:01
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出销售订单合同PDF")
-    @GetMapping("/exportSoContractPdf")
+    @PostMapping("/exportSoContractPdf")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id,seller_id",
             menuCode = "oms:so:exportSoContractPdf",
             serviceClass = SoInfoService.class,
             keyIdName = "id")
-    public ApiResult<SoInfoDTO.ExportPdfDTO> exportSoContractPdf(@RequestParam("id") String id) {
-        SoInfoDTO.ExportPdfDTO result = soInfoService.exportSoContractPdf(id);
-        return success(result);
+    public void exportSoContractPdf(@RequestBody @Valid BaseIdDTO dto, HttpServletResponse response) {
+         soInfoService.exportSoContractPdf(dto.getId(),response);
     }
 
     /**
@@ -572,14 +641,16 @@ public class SoInfoController extends BaseController {
     }
 
     /**
-     * 根据sku id和数量计算成本毛利
-     *
-     * @param costParam
-     * @return
-     */
-    @PostMapping("/getSkuCostProfit")
-    public ApiResult<SkuCostProfitDTO.SkuCostProfitResult> getSkuCostProfit(@RequestBody @Validated SkuCostProfitDTO.SkuCostProfitParam costParam) {
-        return success(soInfoService.getSkuCostProfit(costParam));
+     * 下推销售退货订单-列表查询-计算退货金额
+     * @param  calDTO
+     * @return com.common.core.controller.vo.ApiResult<java.util.List < com.erp.model.oms.dto.SoInfoDTO.GenerateSoReturnView>>
+     * @Author jack
+     * @Date 2024-11-25
+     **/
+    @PostMapping("/calReturnAmountByQty")
+    public ApiResult<List<SoInfoDTO.GenerateSoReturnView>> calReturnAmountByQty(@RequestBody SoInfoDTO.CalDetailDTO calDTO) {
+        List<SoInfoDTO.GenerateSoReturnView> list = soInfoService.calReturnAmountByQty(calDTO.getDetails());
+        return success(list);
     }
 
     /**
@@ -781,7 +852,7 @@ public class SoInfoController extends BaseController {
                     resultDTOS.add(resultDTO);
                     continue;
                 }
-                resultDTO = BatchResultDTO.fail(entity.getId(), StrUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
+                resultDTO = BatchResultDTO.fail(entity.getId(),  CharSequenceUtil.format("【{}】{}",soInfoEntity.getCode(),entity.getSkuNo()), e.getMessage());
             }
             resultDTOS.add(resultDTO);
         }
@@ -802,6 +873,32 @@ public class SoInfoController extends BaseController {
         return result ? success():failure();
     }
 
+    /**
+     * 批量上传物流面单
+     * @param files
+     * @return
+     */
+    @PostMapping("/batchUploadLogisticLabel")
+    public ApiResult<List<BatchResultDTO>> batchUploadLogisticLabel(@ModelAttribute @Validated List<MultipartFile> files) {
+        if (CollUtil.isEmpty(files)){
+            throw new ServiceException("上传文件不能为空");
+        }
+//        if (files.size() > 20){
+//            throw new ServiceException("单次上传不要超过20个文件");
+//        }
+        List<BatchResultDTO> resultDTOS = soInfoService.batchUploadLogisticLabel(files);
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
 
-
+    /**
+     * 单个上传物流面单
+     *
+     * @param dto
+     * @return
+     */
+    @PostMapping("/singleUploadLogisticLabel")
+    public ApiResult<BatchResultDTO> singleUploadLogisticLabel(@ModelAttribute @Validated SoB2cDTO.UploadFileDTO dto) {
+        BatchResultDTO result = soInfoService.singleUploadLogisticLabel(dto.getFile(), dto.getId());
+        return result.getSuccess() ? success(result) : failure(result);
+    }
 }

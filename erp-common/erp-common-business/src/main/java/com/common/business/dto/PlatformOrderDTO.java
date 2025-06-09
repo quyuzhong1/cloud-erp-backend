@@ -1,5 +1,6 @@
 package com.common.business.dto;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -37,6 +38,11 @@ public class PlatformOrderDTO extends UniqueDto {
     private String dictPlatform;
 
     /**
+     * NF-E发票状态,nfeInvoiceStatus字典
+     */
+    private String nfeInvoiceStatus;
+
+    /**
      * 店铺
      */
     private String shopId;
@@ -65,6 +71,7 @@ public class PlatformOrderDTO extends UniqueDto {
      * 付款状态（待付款、已付款）
      */
     private String payStatus;
+
 
     /**
      * 订单金额
@@ -202,15 +209,26 @@ public class PlatformOrderDTO extends UniqueDto {
      * 卖家订单编号
      */
     private String sellerOrderCode;
+
+    /**
+     * 总税费
+     */
+    private BigDecimal totalTaxFee;
+
+    /**
+     * 总税后支付金额
+     */
+    private BigDecimal afterTaxAmount;
+
     /**
      * 订单明细
      */
     private List<PlatformOrderDetailDTO> details;
 
     /**
-     * 发货明细
+     * 订单发货明细（1个订单存在多个发货单）
      */
-    private List<PlatformDeliveryDetailDTO> deliveryDetailDTOList;
+    private List<PlatformDeliveryDTO> deliveryDTOList;
 
     /**
      * 订单财务信息
@@ -227,6 +245,10 @@ public class PlatformOrderDTO extends UniqueDto {
      */
     private PlatformOrderReceiverDTO receiver;
 
+    /**
+     * 订单扩展表
+     */
+    private PlatformOrderExtendDTO extend;
 
     /**
      * 平台订单来源状态
@@ -243,6 +265,42 @@ public class PlatformOrderDTO extends UniqueDto {
      * 平台是否取消
      */
     private Boolean isCancel;
+
+    /**
+     * 退货单
+     */
+    private List<PlatformReturnOrderDTO> returnDTOList;
+
+    /**
+     * 退款单
+     */
+    private List<PlatformRefundOrderDTO> refundDTOList;
+
+    /**
+     * 总优惠金额
+     */
+    private BigDecimal totalDiscount;
+
+    /**
+     * 取消商品总价
+     */
+    private BigDecimal totalCancelGoodsAmount;
+
+    /**
+     * 取消商品币别
+     */
+    private String cancelGoodsCurrency;
+
+    /**
+     * 第三方来源系统
+     */
+    private String thirdSystem = "";
+
+    /**
+     * 第三方编号
+     */
+    private String thirdCode = "";
+
 
     /**
      * 检查订单新增作废状态
@@ -263,6 +321,18 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSkuNo)
+                .filter(CharSequenceUtil::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+    /**
+     * 明细平台SKU列表
+     */
+    public List<String> convertPlatformSkuIdList() {
+        return this.getDetails()
+                .stream()
+                .map(PlatformOrderDetailDTO::getPlatformSkuId)
+                .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }
@@ -274,6 +344,7 @@ public class PlatformOrderDTO extends UniqueDto {
         return this.getDetails()
                 .stream()
                 .map(PlatformOrderDetailDTO::getPlatformSpuNo)
+                .filter(CharSequenceUtil::isNotBlank)
                 .distinct()
                 .collect(Collectors.toList());
     }

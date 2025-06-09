@@ -1,9 +1,9 @@
 package com.erp.server.wms.sdk.delivery;
 
 import cn.hutool.core.lang.Tuple;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.PlatformShipOrderDTO;
-import com.common.business.enums.PlatformDictEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.IPlatformService;
 import com.common.core.enums.ApiError;
@@ -15,17 +15,13 @@ import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cRefEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cSourcePlatformEnum;
-import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.rpc.oms.feign.SoB2cFeign;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -49,7 +45,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
      */
     public List<SoB2cDetailEntity> handleSplit(List<SoB2cDetailEntity> detailList, boolean falseDeliveryFlag){
         List<SoB2cDetailEntity> allDetailList = detailList;
-        detailList = detailList.stream().filter(v -> StringUtils.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
+        detailList = detailList.stream().filter(v -> CharSequenceUtil.isNotBlank(v.getSplitDetailId())).collect(Collectors.toList());
         //没有捆绑商品拆分，直接返回
         if (CollectionUtils.isEmpty(detailList)) {
             return allDetailList;
@@ -72,7 +68,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
                     filterDetailList.addAll(value.stream().map(v -> v.getId()).collect(Collectors.toList()));
                 } else {
                     //将数量设置为拆分前的数量
-                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Arrays.asList(key));
+                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Collections.singletonList(key));
                     if (CollectionUtils.isNotEmpty(soB2cDetailEntity)) {
                         value.forEach(v -> v.setQty(soB2cDetailEntity.get(0).getQty()));
                     }
@@ -83,7 +79,7 @@ public abstract class AbstractShipOrder implements IPlatformService {
                     filterDetailList.addAll(value.stream().map(v -> v.getId()).collect(Collectors.toList()));
                 } else {
                     //将数量设置为拆分前的数量
-                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Arrays.asList(key));
+                    List<SoB2cDetailEntity> soB2cDetailEntity = soB2cFeign.listDetailContainDeleted(Collections.singletonList(key));
                     if (CollectionUtils.isNotEmpty(soB2cDetailEntity)) {
                         value.forEach(v -> v.setQty(soB2cDetailEntity.get(0).getQty()));
                     }

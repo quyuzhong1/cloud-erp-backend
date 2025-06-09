@@ -6,8 +6,6 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 import java.io.Serializable;
-import java.time.LocalDateTime;
-import java.util.Date;
 
 /**
  * @Classname 交付的文档
@@ -18,7 +16,7 @@ import java.util.Date;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @TableName("task_delivery_docs")
-public class TaskDeliveryDocsEntity extends BaseEntity implements Serializable {
+public class TaskDeliveryDocsEntity extends BaseEntity<TaskDeliveryDocsEntity> implements Serializable {
 
     /**
      * 产品id

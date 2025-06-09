@@ -38,7 +38,7 @@ public interface WmsTaskFeign {
      * 根据仓库名称查询
      */
     @PostMapping("feign/warehouse/listWarehouseByNameList")
-    List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(@RequestBody List<String> warehouseNameList);
+    List<WarehouseDTO.ListDTO> listWarehouseByNameList(@RequestBody List<String> warehouseNameList);
 
     /**
      * 查询所有审核通过并启用的仓库
@@ -74,7 +74,7 @@ public interface WmsTaskFeign {
      * 根据来采购订单明细ids查询入库明细
      */
     @PostMapping("feign/purchaseStockIn/listDetailByPodIds")
-    List<PoInstockDetailEntity> listPurchaseStockInDetailByPodIds(List<String> PodIds);
+    List<PoInstockDetailEntity> listPurchaseStockInDetailByPodIds(List<String> podIds);
 
     /**
      * 批量新增入库单
@@ -178,8 +178,7 @@ public interface WmsTaskFeign {
      * @return java.lang.Integer
      */
     @PostMapping("feign/soDeliveryNotice/getPushDownBySoDetailIds")
-    Integer getPushDownBySoDetailIds(@RequestBody List<String> soDetailIdList);
-
+    List<SoDeliveryNoticeDetailDTO.PushDownDTO> getPushDownBySoDetailIds(@RequestBody List<String> soDetailIdList);
 
     /**
      * 根据销售订单ids 获取是否有下推的单据
@@ -351,4 +350,36 @@ public interface WmsTaskFeign {
      */
     @PostMapping("feign/wmsWorkOption/transferInfoApprove")
     List<BatchResultDTO> transferInfoApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 发货通知变更审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/noticeChangeApprove")
+    List<BatchResultDTO> noticeChangeApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 要货申请变更审核
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/requisitionChangeApprove")
+    List<BatchResultDTO> requisitionChangeApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 波次状态自动更新
+     * @author jack
+     * @date 2024/11/28
+     */
+    @GetMapping("/feign/waveList/waveListStatusAutoChange")
+    void waveListStatusAutoChange(@RequestParam("deliveryId") String deliveryId);
+
+    /**
+     * 新中台查询同步
+     * @param syncParamDTO
+     * @return
+     */
+    @PostMapping("/feign/wmsSyncTask/newFindDataSendSyncTask")
+    Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
 }

@@ -1,15 +1,13 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.AdvanceQueryContainer;
-import com.common.business.dto.PlatformOutboundDTO;
-import com.common.business.dto.PlatformSoOutStockDTO;
-import com.common.business.dto.PlatformSoOutStockDetailDTO;
+import com.common.business.dto.*;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.PlatformGenerateSoOutstockDTO;
 import com.erp.model.oms.dto.SoInfoDTO;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TmsDeclareBillDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
@@ -19,6 +17,7 @@ import com.erp.model.wms.entity.SoOutstockEntity;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +49,15 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
      **/
     List<SoOutstockEntity> listBySoIds(@RequestBody List<String> soIds);
+
+    /**
+     * 销售订单ids获取销售出库单主表信息
+     * @Author Luo_WG
+     * @Date 2023/5/25 15:42
+     * @param soIds
+     * @return java.util.List<com.erp.model.wms.entity.SoOutstockEntity>
+     **/
+    SoOutstockEntity getBySoId(String soId);
 
     /**
      * 添加销售出库单a
@@ -387,6 +395,11 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
      * @return 
      */
     Boolean generateB2cSoOutstock(String b2cSoId);
+    /**
+     * 生成B2C销售出库单
+     * 根据传入明细，时间生成
+     */
+    Boolean generateOutstockByDetailAndTime(SoB2cEntity soB2cEntity, List<SoB2cDetailEntity> soB2cDetailEntityList , LocalDateTime outTime,String warehouseId,String trackNo);
 
     /**
      * 生成B2C销售出库单
@@ -534,4 +547,17 @@ public interface SoOutstockService extends SuperService<SoOutstockEntity> {
     void deleteTransferInfo(List<SoOutstockEntity> list);
 
     PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto);
+
+
+    List<SoOutstockEntity> queryToSdy(LocalDate startDate, LocalDate endDate, Integer pageSize, Integer offset);
+    /**
+     * 修复旺店通数据
+     * @author will
+     * @date 2024/12/31 18:45
+     * @param id
+     * @return BatchResultDTO
+     */
+    BatchResultDTO handleWdtData(String id);
+
+    List<SoOutstockDTO.AmountDTO> listAmountBySkuIds(SoOutstockDTO.ListAmountParamDTO params);
 }

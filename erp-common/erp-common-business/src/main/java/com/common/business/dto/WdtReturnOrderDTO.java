@@ -1,6 +1,5 @@
 package com.common.business.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -71,6 +70,7 @@ public class WdtReturnOrderDTO extends UniqueDto {
      * 第三方单据编号
      */
     private String thirdCode;
+    private String logisticsNo;
 
     /**
      * 创建人名称

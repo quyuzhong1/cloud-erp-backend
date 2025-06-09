@@ -3,6 +3,7 @@ package com.erp.server.oms.service;
 import com.common.business.service.SuperService;
 import com.erp.model.oms.dto.OmsAttachmentDTO;
 import com.erp.model.oms.entity.OmsAttachmentEntity;
+import com.erp.model.scm.dto.AttachmentDTO;
 
 import java.util.List;
 
@@ -29,6 +30,14 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      * @return void
      */
     void batchSave(List<String> attachmentUrlList, List<String> attachmentNameList, String type, String businessId);
+    /**
+     * 批量更新或修改
+     * @author will
+     * @date 2025/4/18 18:25
+     * @param addOrUpdateList
+     * @return void
+     */
+    void batchAddOrUpdate(List<OmsAttachmentDTO.UpdateDTO> addOrUpdateList);
 
 
     /**
@@ -50,6 +59,22 @@ public interface OmsAttachmentService extends SuperService<OmsAttachmentEntity> 
      */
     void removeAttachment(OmsAttachmentDTO.DeleteDTO dto);
 
-    
 
+    /**
+     * 根据业务表id 集合删除
+     * @author yl
+     * @date 2023-03-20 11:52
+     * @param businessIdList
+     * @return void
+     */
+    void deleteByBusinessIds(List<String> businessIdList);
+
+    /**
+     * 根据业务表id 获取附件信息
+     * @author yl
+     * @date 2023-03-27 9:37
+     * @param businessId
+     * @return com.erp.model.scm.dto.AttachmentDTO.UpdateDTO
+     */
+    List<AttachmentDTO.UpdateDTO> getByBusinessId(String businessId);
 }

@@ -6,18 +6,21 @@ package com.common.core.constant;
  * @Date 2023-01-29 8:47
  * @Created by yl
  */
-public interface BaseStateConstants {
+public class BaseStateConstants {
+
+    private BaseStateConstants(){
+    }
 
 
-    Integer OPEN_STATE = 1;
+    public static final Integer OPEN_STATE = 1;
 
-    Integer CLOSE_STATE = 0;
+    public static final Integer CLOSE_STATE = 0;
 
-    Boolean DELETED_YES = true;
+    public static final Boolean DELETED_YES = true;
 
-    Boolean DELETED_NO = false;
+    public static final Boolean DELETED_NO = false;
 
-    Boolean OPEN = true;
+    public static final Boolean OPEN = true;
 
-    Boolean CLOSE = false;
+    public static final Boolean CLOSE = false;
 }

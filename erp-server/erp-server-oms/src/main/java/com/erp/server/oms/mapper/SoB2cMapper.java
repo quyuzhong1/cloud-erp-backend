@@ -4,13 +4,17 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.erp.model.oms.dto.*;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.tms.dto.TransferDeclareDetailDTO;
 import com.erp.model.wms.dto.WmsDataCompareTaskDTO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -30,7 +34,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param params
      * @return
      */
-    IPage<SoB2cDTO.ListDTO> paging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+    IPage<SoB2cDTO.ListDTO> paging(Page query, @Param("params") SoB2cDTO.PagingParamDTO params,  @Param("isOutStock") Boolean isOutStock);
 
     /**
      * 状态数量
@@ -38,7 +42,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param params
      * @return
      */
-    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    Integer listCount(@Param("params") SoB2cDTO.PagingParamDTO params);
 
     /**
      * @param query
@@ -48,7 +52,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 16:10
      */
-    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params") SoB2cDTO.MergePagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    IPage<SoB2cDTO.MergeListDTO> mergePaging(Page query, @Param("params") SoB2cDTO.MergePagingParamDTO params);
 
     /**
      * @param params
@@ -57,7 +61,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 16:10
      */
-    List<Integer> mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    List<Integer> mergePagingCount(@Param("params") SoB2cDTO.MergePagingParamDTO params);
 
     /**
      * @param mergeParamDTO
@@ -66,7 +70,7 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2023/8/22 18:36
      */
-    List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params") SoB2cDTO.MergeParamDTO mergeParamDTO, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    List<SoB2cDTO.MergeMainDTO> listMerge(@Param("params") SoB2cDTO.MergeParamDTO mergeParamDTO);
 
     /**
      * 销售订单统计
@@ -85,7 +89,6 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @param skuIdList
      * @return
      */
-    List<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(@Param("params") ReportDTO.ProductSalesPagingParamDTO params, @Param("skuIdList") List<String> skuIdList);
     Page<ReportDTO.ProductSalesPagingViewDTO> listProductSalesExport(@Param("page")Page<ReportDTO.ProductSalesPagingViewDTO> page, @Param("params") ReportDTO.ProductSalesPagingParamDTO params, @Param("skuIdList") List<String> skuIdList);
 
     /**
@@ -161,41 +164,25 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
      * @author Will
      * @date: 2024/4/16 15:10
      */
-    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
-    Page<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("page") Page<SoB2cDTO.ExcelExportDTO> page, @Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
+    Page<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("page") Page<SoB2cDTO.ExcelExportDTO> page, @Param("params") SoB2cDTO.ExportParamDTO params, @Param("isOutStock") Boolean isOutStock);
+    Page<SoB2cDTO.ExcelExportDTO> exportFullyManagedExcel(@Param("page") Page<SoB2cDTO.ExcelExportDTO> page, @Param("params") SoB2cDTO.ExportParamDTO params,  @Param("isOutStock") Boolean isOutStock);
 
-    /**
-     * @param params
-     * @param shopAuthResultDTO
-     * @param isOutStock
-     * @return Integer
-     * @description: 导出excel数量查询
-     * @author Will
-     * @date: 2024/4/29 17:55
-     */
-    Integer countExportExcel(@Param("params") SoB2cDTO.ExportParamDTO params, @Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO, @Param("isOutStock") Boolean isOutStock);
-    List<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
-    Page<SoB2cDTO.ExcelExportDTO> exportExcel(@Param("page") Page<SoB2cDTO.ExcelExportDTO> page, @Param("params") SoB2cDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
     /**
      * @description: 异常订单分页查询
      * @author Will
      * @date: 2024/4/22 17:55
      * @param params
-     * @param shopAuthResultDTO
      * @return PagingVO<ListDTO>
      */
-    IPage<SoB2cAbnormalDTO.ListDTO> abnormalPaging(Page query, @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
+    IPage<SoB2cAbnormalDTO.ListDTO> abnormalPaging(Page query, @Param("params") SoB2cAbnormalDTO.PagingParamDTO params);
     /**
      * @description: 异常订单导出
      * @author Will
      * @date: 2024/4/22 19:57
      * @param params
-     * @param shopAuthResultDTO
      * @return List<ListDTO>
      */
-    List<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
-    Page<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel( @Param("page") Page<SoB2cAbnormalDTO.ListDTO> page,@Param("params") SoB2cAbnormalDTO.PagingParamDTO params,@Param("shopAuthResultDTO") SoB2cDTO.ShopAuthResultDTO shopAuthResultDTO);
-
+    Page<SoB2cAbnormalDTO.ListDTO> abnormalExportExcel(@Param("page") Page<SoB2cAbnormalDTO.ListDTO> page, @Param("params") SoB2cAbnormalDTO.PagingParamDTO params);
     /**
      * 批量更新审核信息
      * @param updateList
@@ -203,4 +190,81 @@ public interface SoB2cMapper extends BaseMapper<SoB2cEntity> {
     void updateBatchApproveById(@Param("updateList") List<SoB2cEntity> updateList);
 
     IPage<SoB2cForeignDTO.OrderDeliveryResp> getForeignOrderDeliveryInfo(Page query, @Param("params") SoB2cForeignDTO.OrderDeliveryReq orderDeliveryReq);
+
+    List<SoB2cDTO.GenerateSoB2cReturnViewDTO> generateSoB2cReturnView(@Param("ids")List<String> ids);
+
+
+    List<SoB2cDetailEntity> listTikTokOrder();
+    List<SoB2cDetailEntity> listTikTokOrderAll(@Param("ids") List<String> mainIds);
+    void tikTokOrderUpdate(@Param("id") String id);
+    void tikTokOrderUpdateDetail(@Param("id") String id
+            ,@Param("sourceDetailId") String sourceDetailId
+            ,@Param("platformLineNumber") String platformLineNumber
+            ,@Param("platformPackageId") String platformPackageId);
+
+    /**
+     * 更换发货sku预览
+     * @param ids
+     * @return
+     */
+    List<SoB2cDTO.ChangeDeliverySkuViewDTO> listChangeDeliverySkuView(@Param("ids") List<String> ids);
+
+    List<SoB2cEntity> queryToSdy(@Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate, @Param("pageSize") Integer pageSize, @Param("offset") Integer offset, @Param("platformList") List<String> platformList);
+
+    /**
+     * 根据销售订单id获取订单 渠道+仓库+重量 基础信息
+     * @param ids
+     * @return
+     */
+    List<SoB2cDTO.LogisticsDTO> getB2cLogisticsByIds(@Param("ids") List<String> ids);
+
+    /**
+     * 根据店铺和启用时间更新订单vat发票状态
+     * @param shopId
+     * @param enableTime
+     * @param vatInvoiceStatus
+     */
+    void updateFbaNotVatInvoice(@Param("shopId") String shopId, @Param("enableTime") LocalDateTime enableTime, @Param("vatInvoiceStatus") String vatInvoiceStatus);
+    /**
+     * 全托管分页查询
+     *
+     * @param query
+     * @param params
+     * @return
+     */
+    IPage<SoB2cDTO.ListDTO> fullyManagedPaging(@Param("query") Page query, @Param("params") SoB2cDTO.PagingParamDTO params, @Param("isOutStock") Boolean isOutStock);
+
+    /**
+     * 全托管数量查询
+     * @param params
+     * @return
+     */
+    Integer listFullManagedCount(@Param("params") SoB2cDTO.PagingParamDTO params);
+
+    /**
+     * 更新超时预警时间
+     * @param platformList
+     * @param offsetMinutes
+     */
+    void updateTimeOutConfig(@Param("platformList") List<String> platformList, @Param("offsetMinutes") Integer offsetMinutes);
+
+    /**
+     * 根据参数据查询需要发货的订单
+     *
+     * @param billStatusList
+     * @param platformStatusList
+     * @param platformList
+     * @param codeList
+     * @return
+     */
+    List<SoB2cDTO.DeliveryDTO> listDeliveryOrderByParam(@Param("billStatusList") List<String> billStatusList, @Param("platformStatusList") List<String> platformStatusList, @Param("platformList") List<String> platformList, @Param("codeList")List<String> codeList);
+
+    /**
+     * 更新
+     * @param id
+     * @param extendData
+     */
+    void updateExtendData(@Param("id") String id, @Param("extendData") String extendData);
+
+    List<SoB2cEntity> listWaitShipByWarehouseIds(@Param("warehouseIds") List<String> warehouseIds);
 }

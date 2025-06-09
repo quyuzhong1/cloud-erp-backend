@@ -6,7 +6,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,25 +18,26 @@ import org.slf4j.LoggerFactory;
 
 import com.common.core.exception.ServiceException;
 
+import lombok.extern.slf4j.Slf4j;
+
 
 /**
  * 签名算法
  */
+@Slf4j
 public class SignUtil {
+	private SignUtil() {
+		
+	}
 
     private static final Logger logger = LoggerFactory.getLogger(SignUtil.class);
 
-    public static void buildPayParams(StringBuilder sb, Map<String, String> payParams, boolean encoding) {
-        List<String> keys = new ArrayList<String>(payParams.keySet());
+    public static void buildPayParams(StringBuilder sb, Map<String, String> payParams) {
+        List<String> keys = new ArrayList<>(payParams.keySet());
         Collections.sort(keys);
         for (String key : keys) {
             sb.append(key).append("=");
-
-            if (encoding) {
-                sb.append(payParams.get(key));
-            } else {
-                sb.append(payParams.get(key));
-            }
+            sb.append(payParams.get(key));
             sb.append("&");
         }
         if (sb.length() > 0) {
@@ -49,7 +49,7 @@ public class SignUtil {
         if (sArray == null || sArray.size() == 0) {
             return sArray;
         }
-        Map<String, String> result = new HashMap<String, String>(sArray.size());
+        Map<String, String> result = new HashMap<>(sArray.size());
         if (sArray.size() <= 0) {
             return result;
         }
@@ -75,9 +75,9 @@ public class SignUtil {
      * @param key       秘钥
      * @return
      */
-    public static boolean checkSign(Object signData, String charset, String sign_type, String sign,
+    public static boolean checkSign(Object signData, String charset, String signType, String sign,
                                     String key) {
-        return StringUtils.equalsIgnoreCase(genSign(getSignStr(signData), charset, sign_type, key), sign);
+        return StringUtils.equalsIgnoreCase(genSign(getSignStr(signData), charset, signType, key), sign);
     }
 
     public static boolean equalsAny(final CharSequence string, final CharSequence... searchStrings) {
@@ -123,11 +123,11 @@ public class SignUtil {
      * @param key       秘钥
      * @return
      */
-    public static String genSign(String signData, String charset, String sign_type, String key) {
+    public static String genSign(String signData, String charset, String signType, String key) {
         String sign;
-        if (SignType.AES.equalsIgnoreCase(sign_type)) {
+        if (SignType.AES.equalsIgnoreCase(signType)) {
             sign = AESUtil.encrypt(signData, key, charset);
-        } else if (SignType.MD5.equalsIgnoreCase(sign_type)){
+        } else if (SignType.MD5.equalsIgnoreCase(signType)){
             sign = MD5.str2md5(signData+key);
         }else {
         	throw new ServiceException("不支持的加密方式");
@@ -149,7 +149,7 @@ public class SignUtil {
             return null;
         }
 
-        Map<String, Object> objFields = new TreeMap<String, Object>();
+        Map<String, Object> objFields = new TreeMap<>();
         ObjUtils.obj2Map(input, false, objFields);
         objFields.remove("sign");
         objFields.remove("requestIp");
@@ -192,7 +192,7 @@ public class SignUtil {
         for (Map.Entry<String, String> entry : params.entrySet()) {
             // 移除值为空或为null的字段，不拼接到k=v串中
             if (removeBlankField
-                    && (entry.getValue() == null || "".equals(entry.getValue().toString()))) {
+                    && (entry.getValue() == null || "".equals(entry.getValue()))) {
                 continue;
             }
             if (first) {
@@ -200,7 +200,7 @@ public class SignUtil {
             } else {
                 sb.append("&");
             }
-            sb.append(entry.getKey()).append("=").append(entry.getValue().toString());
+            sb.append(entry.getKey()).append("=").append(entry.getValue());
         }
         return sb.toString();
     }
@@ -236,30 +236,26 @@ public class SignUtil {
         String ciphertext = null;
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-1");
-            byte[] digest = md.digest(content.toString().getBytes());
+            byte[] digest = md.digest(content.getBytes());
             ciphertext = byteToStr(digest);
         } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
+        	log.error("没有此算法");
         }
-        return ciphertext != null && ciphertext.equals(signature.toUpperCase());
+        return ciphertext != null && ciphertext.equalsIgnoreCase(signature);
     }
     private static String byteToStr(byte[] byteArray) {
-        String strDigest = "";
+    	StringBuilder strDigest = new StringBuilder();
         for (int i = 0; i < byteArray.length; i++) {
-            strDigest += byteToHexStr(byteArray[i]);
+        	strDigest.append(byteToHexStr(byteArray[i]));
         }
-        return strDigest;
+        return strDigest.toString();
     }
     private static String byteToHexStr(byte mByte) {
-        char[] Digit = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
+        char[] digit = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F' };
         char[] tempArr = new char[2];
-        tempArr[0] = Digit[(mByte >>> 4) & 0X0F];
-        tempArr[1] = Digit[mByte & 0X0F];
-        String s = new String(tempArr);
-        return s;
-    }
-    public static void main(String[] args) {
-        System.out.println(new Date().getTime());
+        tempArr[0] = digit[(mByte >>> 4) & 0X0F];
+        tempArr[1] = digit[mByte & 0X0F];
+        return new String(tempArr);
     }
 
 }

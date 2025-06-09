@@ -1,22 +1,21 @@
 package com.erp.model.wms.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Size;
 
 /**
  * <p>
@@ -177,6 +176,15 @@ public class PackingTaskDTO implements Serializable {
          * 关联订单编号【可排序】
          */
         private String sourceCode;
+        /**
+         * 业务id
+         */
+        private String businessId;
+
+        /**
+         * 业务单号【可排序】
+         */
+        private String businessCode;
 
         /**
          * 单据类型(B2B,FBA,third) 【可排序】
@@ -376,6 +384,7 @@ public class PackingTaskDTO implements Serializable {
         private String taskId;
         private String skuId;
         private String skuNo;
+        private String fnSku;
         /**
          * 发货数量
          */
@@ -384,7 +393,7 @@ public class PackingTaskDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ProductNum {
+    public static class ProductDTO {
         private String taskId;
         /**
          * 产品种类
@@ -423,5 +432,15 @@ public class PackingTaskDTO implements Serializable {
          * 装箱id
          */
         private List<String> cartonIds;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class CartonDetailDTO {
+        /**
+         * 外箱单号(关联单号{发货单}-箱号)
+         */
+        @NotBlank(message = "箱号不能为空")
+        private String outBoxNo;
     }
 }

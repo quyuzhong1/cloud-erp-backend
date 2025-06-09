@@ -1,10 +1,12 @@
 package com.erp.server.dmp.inout.handler.output.task.mq;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
@@ -80,6 +82,46 @@ public abstract class DmpOutputRocketMQTaskHandler extends DmpOutputTaskHandler{
 	public void pushData(DmpCfgOutputEntity dmpCfgOutputEntity , DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
 		String typeId = dmpCfgOutputEntity.getTypeId();
 		String id = dmpOutputTaskRecordEntity.getId();
+		
+		boolean pushLastDataFlag = false;
+		String extendJson = dmpCfgOutputEntity.getExtendJson();
+		if(StringUtils.isNotBlank(extendJson)) {
+			JSONObject parseObject = JSON.parseObject(extendJson);
+			if(parseObject != null) {
+				Boolean pushLastDataFlagValue = parseObject.getBoolean("pushLastDataFlag");
+				if(pushLastDataFlagValue != null && pushLastDataFlagValue) {
+					pushLastDataFlag = true;
+				}
+			}
+		}
+		if(pushLastDataFlag) {
+			dmpOutputTaskRecordService.lambdaUpdate()
+			.eq(DmpOutputTaskRecordEntity::getDataId, dmpOutputTaskRecordEntity.getDataId())
+			.ne(DmpOutputTaskRecordEntity::getId, id)
+			.le(DmpOutputTaskRecordEntity::getCreateTime, dmpOutputTaskRecordEntity.getCreateTime())
+			.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+			.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+			.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+			.setSql(" response_data = concat('配置同一dataid，推送最新的记录id="+ id +"' , response_data) ")
+			.update();
+		}else {
+			Integer count = dmpOutputTaskRecordService.lambdaQuery()
+					.eq(DmpOutputTaskRecordEntity::getDataId, dmpOutputTaskRecordEntity.getDataId())
+					.ne(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+					.le(DmpOutputTaskRecordEntity::getCreateTime, dmpOutputTaskRecordEntity.getCreateTime())
+					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.count();
+			if(count != null && count > 0) {
+				dmpOutputTaskRecordService.lambdaUpdate()
+					.set(DmpOutputTaskRecordEntity::getResponseData, "单据上一步操作未推送成功，同一dataId")
+					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
+					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
+					.update();
+				return;
+			}
+		}
+		
 		try {
 			String requestData = dmpOutputTaskRecordEntity.getRequestData();
 			DmpCfgMqEntity dmpCfgMqEntity = dmpHandlerCache.getRocketMQDmpCfgMqCache(typeId);

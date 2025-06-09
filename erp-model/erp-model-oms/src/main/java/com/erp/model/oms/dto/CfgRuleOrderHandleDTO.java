@@ -295,6 +295,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 收货人处理
          */
         private ReceiveHandleContent receiveHandleContent;
+        /**
+         * 订单号处理
+         */
+        private OrderCodeHandleContent orderCodeHandleContent;
     }
 
     /**
@@ -324,7 +328,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 省/州替换为。。。
          */
         private String provinceReplaceText;
-
+        /**
+         * 省/州为空填充文本
+         */
+        private String provinceFillText;
         /**
          * 处理城市开关
          */
@@ -344,7 +351,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 城市替换为。。。
          */
         private String cityReplaceText;
-
+        /**
+         * 城市为空填充文本
+         */
+        private String cityFillText;
         /**
          * 收货地址1过滤开关
          */
@@ -425,6 +435,11 @@ public class CfgRuleOrderHandleDTO implements Serializable {
     @NoArgsConstructor
     public static class ZipCodeHandleContent{
         /**
+         * 处理邮编的规则 {@link com.erp.model.oms.enums.RuleOrderHandleEnum.ZipCodeContentEnum}
+         * oms/common/enumDropDown?type=ZipCodeContent
+         */
+        private String handleZipCodeRule;
+        /**
          * 邮编过滤特殊符号开关
          */
         private boolean zipCodeFilterSwitch;
@@ -448,6 +463,10 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * 邮编为空填充字符
          */
         private String zipCodeEmptyFillText;
+        /**
+         * 处理邮编开关
+         */
+        private boolean zipCodeSwitch;
     }
     /**
      * 收货人处理
@@ -487,6 +506,32 @@ public class CfgRuleOrderHandleDTO implements Serializable {
          * oms/common/enumDropDown?type=ReceiveFilter
          */
         private List<String> filterReceiveTextNameList;
+    }
+    /**
+     * 订单处理
+     */
+    @Data
+    @NoArgsConstructor
+    public static class OrderCodeHandleContent{
+        /**
+         * 订单号开关
+         */
+        private boolean orderCodeSwitch;
+        /**
+         * 处理订单号的规则 {@link RuleOrderHandleEnum.OrderCodeRuleContentEnum}
+         * oms/common/enumDropDown?type=OrderCodeRuleContent
+         */
+        private String handleOrderCodeRule;
+
+        /**
+         * 省/州待替换文本
+         */
+        private String orderCodeWaitReplaceText;
+
+        /**
+         * 省/州替换为。。。
+         */
+        private String orderCodeReplaceText;
     }
 
     /**

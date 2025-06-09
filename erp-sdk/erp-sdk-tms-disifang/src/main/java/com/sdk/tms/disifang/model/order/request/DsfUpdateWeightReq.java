@@ -1,7 +1,6 @@
 package com.sdk.tms.disifang.model.order.request;
 
 import cn.hutool.core.annotation.Alias;
-import com.alibaba.fastjson.annotation.JSONField;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

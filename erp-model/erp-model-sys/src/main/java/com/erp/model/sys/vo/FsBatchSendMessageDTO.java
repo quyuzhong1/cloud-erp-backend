@@ -17,6 +17,7 @@ import java.util.*;
 public class FsBatchSendMessageDTO implements Serializable {
 
 
+    public static final String CONTENT = "content";
     /**
      * 飞书的union_id
      */
@@ -28,13 +29,13 @@ public class FsBatchSendMessageDTO implements Serializable {
 
     public static Map<String, Object> getCardMessageMap(String messageContent, String productContent, String url) {
 
-        Map textMap = new HashMap();
+        Map<String, Object> textMap = new HashMap<>();
         textMap.put("tag", "lark_md");
-        textMap.put("content", productContent);
+        textMap.put(CONTENT, productContent);
 
         Map<String, Object> actionTextMap = new HashMap<>();
         actionTextMap.put("tag", "plain_text");
-        actionTextMap.put("content", "查看详情");
+        actionTextMap.put(CONTENT, "查看详情");
 
         Map<String, Object> actionValueMap = new HashMap<>();
         actionValueMap.put("chosen", "approve");
@@ -50,15 +51,14 @@ public class FsBatchSendMessageDTO implements Serializable {
         actionMap.put("text", actionTextMap);
         actionMap.put("value", actionValueMap);
 
-        List<Map> actionList = new ArrayList<>();
-//        actionList.add(actionMap);
+        List<Map<String, Object>> actionList = new ArrayList<>();
 
-        List<Map> fieldMapList = new ArrayList<>();
+        List<Map<String, Object>> fieldMapList = new ArrayList<>();
         fieldMapList.add(fieldMap);
 
         Map<String, String> titleMap = new HashMap<>();
         titleMap.put("tag", "plain_text");
-        titleMap.put("content", messageContent);
+        titleMap.put(CONTENT, messageContent);
 
         Map<String, Object> fieldAllMap = new LinkedHashMap<>();
         fieldAllMap.put("tag", "div");
@@ -75,7 +75,7 @@ public class FsBatchSendMessageDTO implements Serializable {
         Map<String, Object> headerMap = new HashMap<>();
         headerMap.put("title", titleMap);
 
-        List<Map> elements = new ArrayList<>();
+        List<Map<String, Object>> elements = new ArrayList<>();
         elements.add(fieldAllMap);
         elements.add(actionAllMap);
 

@@ -18,6 +18,9 @@ import java.util.Set;
  */
 public class ConvertUtil {
 
+    private ConvertUtil() {
+    }
+
     public static String toStr(Object value, String defaultValue) {
         if (null == value) {
             return defaultValue;
@@ -598,7 +601,7 @@ public class ConvertUtil {
             return new BigDecimal((Long) value);
         }
         if (value instanceof Double) {
-            return new BigDecimal((Double) value);
+            return BigDecimal.valueOf((Double) value);
         }
         if (value instanceof Integer) {
             return new BigDecimal((Integer) value);
@@ -798,9 +801,7 @@ public class ConvertUtil {
                 c[i] = (char) (c[i] - 65248);
             }
         }
-        String returnString = new String(c);
-
-        return returnString;
+        return new String(c);
     }
 
 }

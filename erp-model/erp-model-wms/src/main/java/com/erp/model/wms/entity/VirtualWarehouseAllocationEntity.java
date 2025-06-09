@@ -1,13 +1,14 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.time.LocalDate;
 
 
 /**
@@ -60,18 +61,17 @@ public class VirtualWarehouseAllocationEntity extends BaseEntity<VirtualWarehous
     @TableField("invalid_description")
     private String invalidDescription;
 
+    /**
+     * 是否计入统计，true是，false否
+     */
+    @TableField("is_statistics")
+    private Boolean isStatistics;
 
-    public static final String DISABLED = "disabled";
-
-    public static final String CODE = "code";
-
-    public static final String TYPE = "type";
-
-    public static final String STATUS = "status";
-
-    public static final String REMARK = "remark";
-
-    public static final String DIRECTION = "direction";
+    /**
+     * 处理日期
+     */
+    @TableField("handle_date")
+    private LocalDate handleDate;
 
     public static final String INVALID_DESCRIPTION = "invalid_description";
 

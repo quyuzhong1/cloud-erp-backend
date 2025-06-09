@@ -27,7 +27,7 @@ public interface SubcontractOrderMapper extends BaseMapper<SubcontractOrderEntit
     * @param params
     * @return
     */
-    IPage<SubcontractOrderDTO.ListDTO> paging(Page query, @Param("params") SubcontractOrderDTO.PagingParamDTO params);
+    IPage<SubcontractOrderDTO.ListDTO> paging(Page<SubcontractOrderDTO.PagingParamDTO> query, @Param("params") SubcontractOrderDTO.PagingParamDTO params);
 
     /**
     * 状态数量

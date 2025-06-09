@@ -48,11 +48,14 @@
     <!--获取状态统计-->
     <select id="tabList" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$TabListDTO">
         SELECT
-        status AS tabFlag,
-        count(*)  AS count
-        FROM  requisition_application
-        WHERE is_deleted=FALSE
-        GROUP BY status
+        ra.status AS tabFlag,
+        count(distinct ra.id)  AS count
+        FROM requisition_application ra
+        WHERE ra.is_deleted=FALSE
+        <if test="params.permissionSql != null and params.permissionSql != ''">
+            ${params.permissionSql}
+        </if>
+        GROUP BY ra.status
     </select>
 
     <!--分页查询-->
@@ -93,7 +96,16 @@
         (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
         where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = rad.sku_id) as packingQty,
         pt.packing_status as packingStatus,
-            (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId
+            (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId,
+        EXISTS (
+        SELECT 1
+        FROM requisition_application_change rac
+        INNER JOIN requisition_application_change_detail racd on rac.id = racd.main_id
+        WHERE rac.business_id = ra.id  and rac.is_deleted = false and rac.invalid_status = false and rac.approve_status != 'approve'
+        and racd.business_detail_id = rad.id
+        ) AS isChange,
+        ra.pick_push_down_status,
+        ra.delivery_push_down_status
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         LEFT JOIN packing_task pt on pt.source_id = ra.id and pt.is_deleted = false
@@ -121,6 +133,7 @@
             ra.requisition_warehouse_id AS requisitionWarehouseId,
             ra.requisition_warehouse_name AS requisitionWarehouseName,
             ra.type,
+            ra.channel_id as channelId,
             rad.from_virtual_warehouse_id as fromVirtualWarehouseId,
         rad.from_virtual_warehouse_name as fromVirtualWarehouseName,
             ra.status AS status,
@@ -208,7 +221,9 @@
         (select sum(wcd.pack_qty) from wms_carton_detail wcd inner join wms_carton wc on wcd.main_id = wc.id and wc.is_deleted = false
         where wc.packing_task_id = pt.id  and wcd.is_deleted = false and wcd.sku_id = rad.sku_id) as packingQty,
         pt.packing_status as packingStatus,
-        (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId
+        (select id from fba_shipment fs where fs.is_deleted = false and fs.code = ra.fba_shipment_code limit 1) as shipmentId,
+        ra.pick_push_down_status,
+        ra.delivery_push_down_status
         FROM requisition_application ra
         INNER JOIN requisition_application_detail rad ON rad.main_id = ra.id AND rad.is_deleted = FALSE
         LEFT JOIN packing_task pt on pt.source_id = ra.id and pt.is_deleted = false
@@ -271,7 +286,14 @@
         inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false
         where ${param.sqlMap.default}
         and ra.is_deleted = false
-        and ra.id = #{param.id} and rad.approve_qty > rad.picking_qty
+        and ra.id = #{param.id}
+        and rad.approve_qty - rad.picking_qty > 0
+        and not exists(
+        SELECT 1 from picking_lists pl
+        inner join picking_detail pd on pl.id = pd.main_id and pd.is_deleted = false
+        where pl.is_deleted = false
+        and pd.source_detail_id = rad.id
+        )
         <if test="ignoreInventorySkus != null and ignoreInventorySkus.size > 0">
             and rad.sku_no not in
             <foreach collection="ignoreInventorySkus" item="sku" open="(" separator="," close=")">
@@ -370,5 +392,160 @@
         where fmd.is_deleted = false and fmd.source_id = #{id}
         group by fmd.code,fmd.create_time,fmd.approve_status,owi.code
         order by fmd.create_time desc
+    </select>
+    <select id="listPrintPreviewByIds" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$PrintFnskuDetailDTO">
+        SELECT
+            ra.ID,
+            rad.ID AS detailId,
+            rad.sku_id AS skuId,
+            rad.sku_no AS skuNo,
+            rad.platform_fn_sku AS platformFnSku,
+            rad.platform_sku,
+            rad.platform_spu,
+            rad.picking_qty
+        FROM
+            requisition_application_detail rad
+                INNER JOIN requisition_application ra ON rad.main_id = ra.ID
+                AND ra.is_deleted = FALSE
+        WHERE
+            rad.is_deleted = FALSE
+        <if test="ids!=null and ids.size>0 ">
+            AND rad.id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+                #{id}
+            </foreach>
+        </if>
+        order by ra.ID,rad.create_time desc
+    </select>
+    <select id="pagingSkuByDeliveryPlan" resultType="com.erp.model.wms.dto.RequisitionApplicationDTO$PagingSkuByDeliveryPlanDTO">
+        select
+            wdpd.platform_sku as platformSku,
+            wdpd.platform_sku_name as platformSkuName,
+            wdpd.sku_id as skuId,
+            wdpd.sku_no as skuNo,
+            wdpd.platform_sku as msku,
+            wdpd.platform_fn_sku as fnSku,
+            wdpd.platform_spu as asin,
+            wdpd.is_combination as isCombination,
+            wdpd.id as sourceDetailId
+        from wms_delivery_plan wdp
+        inner join wms_delivery_plan_detail wdpd on wdp.id = wdpd.main_id and wdpd.is_deleted = false
+        where  ${params.sqlMap.default}
+        and wdp.is_deleted = false
+        and wdp.id = #{id}
+    </select>
+
+    <!-- 查询头程流水数据 -->
+    <select id="rebuildFirstMileVirtualFlow" resultType="com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO$OutInStockDTO">
+        --要货申请冻结
+        select
+            rad.sku_id,
+            rad.sku_no,
+            rad.from_virtual_warehouse_id as virtual_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
+            'requisitionApplication' as source_type,
+            ra.id as source_id,
+            ra.code as source_code,
+            rad.id as source_detail_id,
+            ra.handle_time as bill_date,
+            ra.handle_time as trade_time,
+            rad.virtual_frozen_qty as qty
+        from requisition_application ra
+        inner join requisition_application_detail rad on ra.id = rad.main_id and rad.is_deleted = false and rad.from_virtual_warehouse_id != '' and ra.status in ('handleIng','handle') and rad.virtual_frozen_qty > 0
+        where ra.is_deleted = false
+        --加工单出库(海外仓/不走货件的fba)
+        union all
+        SELECT
+            md.sku_id,
+            md.sku_no,
+            rad.from_virtual_warehouse_id as virtual_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
+            'machineInfo' as source_type,
+            mi.id as source_id,
+            mi.code as source_code,
+            md.id as source_detail_id,
+            mi.approve_time as bill_date,
+            mi.approve_time as trade_time,
+            md.qty as qty
+        FROM requisition_application ra
+        INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false AND rad.from_virtual_warehouse_id != ''
+        INNER JOIN first_mile_delivery fmd ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.approve_status = 'approve'
+        INNER JOIN first_mile_delivery_detail fmdd ON  fmdd.is_deleted = false and fmdd.source_detail_id = rad.id and fmd.id = fmdd.main_id
+        inner join machine_ref_so mrs on fmd.id = mrs.so_id and fmdd.id = mrs.so_detail_id and mrs.is_deleted = false
+        inner join machine_detail md on mrs.machine_detail_id = md.id and md.is_deleted = false and md.qty > 0
+        inner join machine_info mi on mi.id = md.main_id and mi.is_deleted = false and mi.approve_status = 'approve'
+        WHERE ra.is_deleted = false
+        --加工单出库(fba)
+        union all
+        SELECT
+            md.sku_id,
+            md.sku_no,
+            rad.from_virtual_warehouse_id as virtual_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
+            'machineInfo' as source_type,
+            mi.id as source_id,
+            mi.code as source_code,
+            md.id as source_detail_id,
+            mi.approve_time as bill_date,
+            mi.approve_time as trade_time,
+            md.qty as qty
+        FROM requisition_application ra
+        INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false and ra.type = 'fba' AND rad.from_virtual_warehouse_id != ''
+        INNER JOIN first_mile_delivery fmd ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.approve_status = 'approve'
+        INNER join (
+            select fmdd.id,fmdd.main_id,fmdd.delivery_qty,fsd.sku_id,fsd.fn_sku from first_mile_delivery_detail fmdd
+            inner join fba_shipment_detail fsd on fsd.is_deleted = false and fmdd.source_detail_id = fsd.id
+            where fmdd.is_deleted = false
+        ) fmdd on fmd.id = fmdd.main_id and rad.sku_id = fmdd.sku_id and rad.platform_fn_sku = fmdd.fn_sku
+            inner join machine_ref_so mrs on fmd.id = mrs.so_id and fmdd.id = mrs.so_detail_id and mrs.is_deleted = false
+            inner join machine_detail md on mrs.machine_detail_id = md.id and md.is_deleted = false and md.qty > 0
+            inner join machine_info mi on mi.id = md.main_id and mi.is_deleted = false and mi.approve_status = 'approve'
+        WHERE ra.is_deleted = false
+        --直接调拨单出库(海外仓)
+        union all
+        SELECT
+            tid.sku_id,
+            tid.sku_no,
+            rad.from_virtual_warehouse_id as virtual_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
+            'transferInfo' as source_type,
+            ti.id as source_id,
+            ti.code as source_code,
+            tid.id as source_detail_id,
+            ti.approve_time as bill_date,
+            ti.approve_time as trade_time,
+            tid.qty as qty
+        FROM requisition_application ra
+        INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false  AND rad.from_virtual_warehouse_id != ''
+        INNER JOIN first_mile_delivery fmd ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.approve_status = 'approve'
+        INNER JOIN first_mile_delivery_detail fmdd ON  fmdd.is_deleted = false and fmdd.source_detail_id = rad.id and fmd.id = fmdd.main_id
+        inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false and fmd.delivery_warehouse_id = tid.out_warehouse_id and tid.qty > 0
+        inner join transfer_info ti on ti.id = tid.main_id and ti.is_deleted = false and ti.approve_status = 'approve'
+        WHERE ra.is_deleted = false
+        --直接调拨单出库(fba)
+        union all
+        SELECT
+            tid.sku_id,
+            tid.sku_no,
+            rad.from_virtual_warehouse_id as virtual_warehouse_id,
+            rad.from_warehouse_id as warehouse_id,
+            'transferInfo' as source_type,
+            ti.id as source_id,
+            ti.code as source_code,
+            tid.id as source_detail_id,
+            ti.approve_time as bill_date,
+            ti.approve_time as trade_time,
+            tid.qty as qty
+        FROM requisition_application ra
+        INNER JOIN requisition_application_detail rad ON ra.id = rad.main_id AND rad.is_deleted = false and ra.type = 'fba' AND rad.from_virtual_warehouse_id != ''
+        INNER JOIN first_mile_delivery fmd ON fmd.source_id = ra.id AND fmd.is_deleted = false AND fmd.approve_status = 'approve'
+            INNER join (
+            select fmdd.id,fmdd.main_id,fmdd.delivery_qty,fsd.sku_id,fsd.fn_sku from first_mile_delivery_detail fmdd
+            inner join fba_shipment_detail fsd on fsd.is_deleted = false and fmdd.source_detail_id = fsd.id
+            where fmdd.is_deleted = false
+            ) fmdd on fmd.id = fmdd.main_id and rad.sku_id = fmdd.sku_id and rad.platform_fn_sku = fmdd.fn_sku
+        inner join transfer_info_detail tid on tid.source_detail_id = fmdd.id and tid.is_deleted = false and fmd.delivery_warehouse_id = tid.out_warehouse_id and tid.qty > 0
+        inner join transfer_info ti on ti.id = tid.main_id and ti.is_deleted = false and ti.approve_status = 'approve'
+        WHERE ra.is_deleted = false
     </select>
 </mapper>

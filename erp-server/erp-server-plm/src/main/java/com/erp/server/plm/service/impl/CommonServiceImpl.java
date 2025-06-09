@@ -1,13 +1,20 @@
 package com.erp.server.plm.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.FindUserDTO;
-import com.common.business.interceptor.CommonInterceptor;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.ImageUtil;
 import com.common.business.validator.ValidList;
-import com.common.business.vo.LoginUser;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.FastDFSClientUtil;
+import com.common.core.utils.FileUtil;
+import com.common.core.utils.MathUtil;
+import com.erp.model.dmp.entity.CfgSettingEntity;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.sys.dto.FindUserByThirdDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.rpc.sys.feign.SysUserFeign;
@@ -17,7 +24,10 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -118,4 +128,63 @@ public class CommonServiceImpl implements CommonService {
         return  businessIds;
     }
 
+    @Override
+    public List<String> uploadImg(MultipartFile[] multipartFileList) {
+        if (ObjectUtil.isNull(multipartFileList)) {
+            throw new ServiceException(ApiError.ERROR_95185);
+        }
+        Long size = 0L;
+        //获取压缩图片大小的配置
+        CfgSettingEntity cfgSettingEntity = getCfgSettingEntity(SettingEnum.IMG_UPLOAD_SIZE_KEY);
+        if (ObjectUtil.isNotEmpty(cfgSettingEntity) && ObjectUtil.isNotNull(cfgSettingEntity.getValue())) {
+            size = Long.valueOf(cfgSettingEntity.getValue());
+        }
+        List<String> list = new ArrayList<>();
+        for (MultipartFile multipartFile : multipartFileList) {
+            //图片压缩
+            MultipartFile newMultipartFile = compressImage(multipartFile, size);
+            //上传fastdfs
+            String filePath = FastDFSClientUtil.uploadFile(newMultipartFile);
+            list.add(filePath);
+        }
+        return list;
+    }
+
+    /**
+     * 图片压缩
+     * @author will
+     * @date 2024/12/26 19:39
+     * @param multipartFile
+     * @param size
+     * @return MultipartFile
+     */
+    private MultipartFile compressImage (MultipartFile multipartFile,Long size) {
+        //压缩大小=0，则不压缩
+        if (MathUtil.compareTo(size,MathUtil.ZERO) == MathUtil.ZERO) {
+            return multipartFile;
+        }
+        //类型转换
+        File file = FileUtil.multiToFile(multipartFile);
+        try {
+            multipartFile = ImageUtil.compressImageMultipartFile(file, size * 1024);
+        } catch (IOException e) {
+            throw new ServiceException("图片压缩失败");
+        }
+        return multipartFile;
+    }
+
+    /**
+     * 查询配置
+     * @author will
+     * @date 2024/12/26 19:36
+     * @param settingEnum
+     * @return CfgSettingEntity
+     */
+    private  CfgSettingEntity getCfgSettingEntity(SettingEnum settingEnum) {
+        List<CfgSettingEntity> list = FeignQuery.create(CfgSettingEntity.class)
+                .eq(CfgSettingEntity::getKey, settingEnum.getKey())
+                .eq(CfgSettingEntity::getType, settingEnum.getType())
+                .list();
+        return CollUtil.isEmpty(list) ? new CfgSettingEntity() : list.get(0);
+    }
 }

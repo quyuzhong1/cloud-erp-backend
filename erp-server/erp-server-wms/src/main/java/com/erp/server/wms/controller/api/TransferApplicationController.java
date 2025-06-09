@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -58,6 +59,7 @@ public class TransferApplicationController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
+            warehouseTableField = "ta.in_warehouse_id,ta.out_warehouse_id",
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
     )
@@ -77,6 +79,7 @@ public class TransferApplicationController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "apply_user_id",
+            warehouseTableField = "ta.in_warehouse_id,ta.out_warehouse_id",
             menuCode = "wms:transferApplication:paging",
             tableAlias = "ta"
     )
@@ -101,7 +104,7 @@ public class TransferApplicationController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated TransferApplicationDTO.AddDTO dto) {
         String id = transferApplicationService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -120,7 +123,7 @@ public class TransferApplicationController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated TransferApplicationDTO.AddDTO dto) {
         String id = transferApplicationService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

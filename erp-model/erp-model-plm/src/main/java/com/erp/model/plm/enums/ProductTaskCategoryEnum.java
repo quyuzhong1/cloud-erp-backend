@@ -29,14 +29,14 @@ public enum ProductTaskCategoryEnum {
     public static String getNameByCode(Integer code) {
         ProductTaskCategoryEnum[] enums = values();
         for (ProductTaskCategoryEnum productTaskCategoryEnum : enums) {
-            if (productTaskCategoryEnum.getCode() == code) {
+            if (productTaskCategoryEnum.getCode().equals(code)) {
                 return productTaskCategoryEnum.getName();
             }
         }
         return null;
     }
 
-    public static ProductTaskCategoryEnum getEnumByType(String code){
+    public static ProductTaskCategoryEnum getEnumByType(Integer code){
         ProductTaskCategoryEnum[] enums = values();
         for (ProductTaskCategoryEnum productTaskCategoryEnum : enums) {
             if (productTaskCategoryEnum.getCode().equals(code)) {

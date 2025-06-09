@@ -1,8 +1,6 @@
 package com.erp.model.sys.dto;
 
-import cn.hutool.core.annotation.Alias;
 import com.common.business.dto.AdvanceQueryDTO;
-import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;

@@ -3,7 +3,6 @@ package com.erp.server.workflow.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.wms.dto.WarehouseReceiveDTO;
 import com.erp.model.workflow.dto.WorkOptionDTO;
 import com.erp.model.workflow.entity.WorkOptionEntity;
 import org.apache.ibatis.annotations.Mapper;
@@ -38,7 +37,7 @@ public interface WorkOptionMapper extends BaseMapper<WorkOptionEntity> {
      * @param param
      * @return java.util.List<com.erp.model.workflow.dto.WorkOptionDTO.ApproveViewDTO>
      **/
-    IPage<WorkOptionDTO.ApproveViewDTO> approveView(Page query, @Param("params") WorkOptionDTO.ApproveViewParamDTO param);
+    IPage<WorkOptionDTO.ApproveViewDTO> approveView(Page<?> query, @Param("params") WorkOptionDTO.ApproveViewParamDTO param);
 
     /**
      * 审核中心列表

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.pda;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
@@ -50,6 +51,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "tid.in_warehouse_id,tid.out_warehouse_id",
             menuCode = "wms:pdaTransferInfo:paging",
             tableAlias = "ti"
     )
@@ -68,6 +70,7 @@ public class PdaTransferInfoController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "tid.in_warehouse_id,tid.out_warehouse_id",
             menuCode = "wms:pdaTransferInfo:paging",
             tableAlias = "ti"
     )
@@ -92,7 +95,7 @@ public class PdaTransferInfoController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated TransferInfoDTO.AddDTO dto) {
         String id = transferInfoService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -111,7 +114,7 @@ public class PdaTransferInfoController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated TransferInfoDTO.AddDTO dto) {
         String id = transferInfoService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**

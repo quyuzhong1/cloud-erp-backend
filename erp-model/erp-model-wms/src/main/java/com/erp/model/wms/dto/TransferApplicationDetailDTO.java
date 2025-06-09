@@ -69,6 +69,11 @@ public class TransferApplicationDetailDTO implements Serializable {
         private String productName;
 
         /**
+         * 商品状态
+         */
+        private String saleStateName;
+
+        /**
          * 单位
          */
         private String unit;
@@ -80,4 +85,38 @@ public class TransferApplicationDetailDTO implements Serializable {
 
     }
 
+    @Data
+    @NoArgsConstructor
+    public class ApproveDTO extends AddDTO {
+
+        /**
+         * 主键id
+         */
+        private String id;
+
+        /**
+         * 主数据ID
+         */
+        private String mainId;
+
+        /**
+         * 入库仓库名称
+         */
+        private String inWarehouseName;
+
+        /**
+         * 入库仓管员ID
+         */
+        private String inWarehouseChargeId;
+
+        /**
+         * 出库仓库名称
+         */
+        private String outWarehouseName;
+
+        /**
+         * 出库仓管员ID
+         */
+        private String outWarehouseChargeId;
+    }
 }

@@ -15,7 +15,6 @@ import javax.annotation.Resource;
  * 分拨组包
  * @author Lambda
  * @Classname PackageController
- * @Description TODO
  * @Date 2024-01-26 14:33
  * @Created by yl
  */

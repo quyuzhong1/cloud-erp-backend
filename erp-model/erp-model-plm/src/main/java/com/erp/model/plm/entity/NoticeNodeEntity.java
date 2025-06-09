@@ -16,7 +16,7 @@ import java.util.Date;
  */
 @TableName(value = "notice_node")
 @Data
-public class NoticeNodeEntity extends BaseEntity implements Serializable {
+public class NoticeNodeEntity extends BaseEntity<NoticeNodeEntity> implements Serializable {
     /**
      * 节点名称
      */

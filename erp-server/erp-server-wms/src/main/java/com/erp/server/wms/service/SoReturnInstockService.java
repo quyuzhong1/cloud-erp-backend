@@ -1,6 +1,5 @@
 package com.erp.server.wms.service;
 
-import com.common.business.dto.base.BaseApproveParamDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -11,9 +10,11 @@ import com.erp.model.wms.dto.SoReturnInstockDTO;
 import com.erp.model.wms.dto.SoReturnReceiveDTO;
 import com.erp.model.wms.entity.SoReturnInstockDetailEntity;
 import com.erp.model.wms.entity.SoReturnInstockEntity;
-import com.erp.model.wms.entity.SoReturnNoticeEntity;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -114,6 +115,8 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
      * @return java.lang.Boolean
      **/
     BatchResultDTO disApprove(SoReturnInstockEntity entity, Boolean isPushKingDee);
+    
+    BatchResultDTO generateLogisticsBill(SoReturnInstockEntity entity);
 
     /**
      * 取消流程
@@ -299,4 +302,29 @@ public interface SoReturnInstockService extends SuperService<SoReturnInstockEnti
     Boolean pdaUpdateAndSubmit(SoReturnInstockDTO.Update dto);
 
     PagingVO<SoReturnInstockDTO.PagingView> exportSoReturnInStock(PagingDTO<SoReturnInstockDTO.PagingParam> dto);
+
+    PagingVO<SoReturnInstockDTO.SearchDTO> pagingSelect(PagingDTO<SoReturnInstockDTO.SelectDTO> searchDTO);
+
+    SoReturnInstockEntity getByThirdCode(String thirdCode);
+
+    void addByThirdWarehouse(SoReturnInstockEntity soReturnInstockEntity, List<SoReturnInstockDetailEntity> detailEntityList);
+
+    List<SoReturnInstockEntity> queryToSdy(LocalDate toLocalDate, LocalDate toLocalDate1, Integer pageSize, int offset);
+    /**
+     * 下载模板
+     * @author will
+     * @date 2025/4/24 19:48
+     * @param response
+     * @return void
+     */
+    void downloadTemplate(HttpServletResponse response);
+    /**
+     * 导入
+     * @author will
+     * @date 2025/4/24 19:49
+     * @param excelFile
+     * @param response
+     * @return Boolean
+     */
+    Boolean importFile(MultipartFile excelFile, HttpServletResponse response);
 }

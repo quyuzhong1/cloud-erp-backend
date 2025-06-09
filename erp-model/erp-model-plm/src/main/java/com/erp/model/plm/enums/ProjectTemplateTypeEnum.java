@@ -37,14 +37,14 @@ public enum ProjectTemplateTypeEnum {
     public static String getNameByCode(Integer code) {
         ProjectTemplateTypeEnum[] projectTemplateTypeEnums = values();
         for (ProjectTemplateTypeEnum projectTemplateTypeEnum : projectTemplateTypeEnums) {
-            if (projectTemplateTypeEnum.getCode() == code) {
+            if (projectTemplateTypeEnum.getCode().equals(code)) {
                 return projectTemplateTypeEnum.getName();
             }
         }
         return null;
     }
 
-    public static ProjectTemplateTypeEnum getEnumByType(String code){
+    public static ProjectTemplateTypeEnum getEnumByType(Integer code){
         ProjectTemplateTypeEnum[] projectTemplateTypeEnums = values();
         for (ProjectTemplateTypeEnum projectTemplateTypeEnum : projectTemplateTypeEnums) {
             if (projectTemplateTypeEnum.getCode().equals(code)) {

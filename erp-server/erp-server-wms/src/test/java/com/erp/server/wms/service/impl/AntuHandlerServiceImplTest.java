@@ -3,7 +3,6 @@ package com.erp.server.wms.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.alibaba.fastjson.TypeReference;
 import com.common.business.enums.OmsPlatformEnum;
-import com.common.business.feign.BaseDataFeign;
 import com.common.core.controller.vo.ApiResult;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
@@ -15,10 +14,8 @@ import com.erp.server.wms.handler.ThirdWarehouseRegistry;
 import com.erp.server.wms.service.ThirdWarehouseService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
-import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.context.annotation.Profile;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.TestPropertySources;
@@ -152,7 +149,7 @@ public class AntuHandlerServiceImplTest {
 //                        .collectZipcode("13214564")
 //                        .collectStreet("21")
 //                        .build())
-//                .items(Arrays.asList(ThirdWarehouseCreateInboundReq.Item.builder()
+//                .items(Collections.singletonList(ThirdWarehouseCreateInboundReq.Item.builder()
 //                        .productSku("BGQH2N-000900EU")
 //                        .boxNo(1)
 //                        .quantity(1)

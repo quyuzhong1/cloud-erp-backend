@@ -7,6 +7,7 @@ import com.erp.model.dmp.entity.DmpMongoHandleTaskEntity;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.enums.ListingMatchResultEnum;
 import com.erp.model.oms.enums.RuleTypeEnum;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -85,7 +86,7 @@ public class AmzReportFbaMyiAllInventoryHandler extends DmpMongoHandler {
             paramDTO.setPlatformSkuNoList(sellerSkuList);
             paramDTO.setShopIdList(shopIds);
             paramDTO.setType(RuleTypeEnum.PLATFORM.getCode());
-            paramDTO.setMatchResult(true);
+            paramDTO.setMatchResult(ListingMatchResultEnum.TRUE.getCode());
             paramDTO.setIsExpire(false);
             listingInfoMap = skuMappingFeign.listingInfoWithSkuMappingList(paramDTO)
                     .stream()

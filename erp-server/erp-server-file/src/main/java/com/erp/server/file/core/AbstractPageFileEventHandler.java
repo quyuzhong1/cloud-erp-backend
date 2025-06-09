@@ -22,7 +22,7 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
     public List<T> listSeqData(P p) {
         PagingDTO<P> dto = new PagingDTO<>();
         dto.setPageSize(getPageSize());
-        dto.setCurrPage(1);
+        dto.setCurrPage(getFirstPage());
         List<T> dataList = new ArrayList<>();
         boolean hasNext = true;
         int totalCount = 0;
@@ -35,8 +35,14 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
             if (totalCount == 0) {
                 totalCount = data.getTotalCount();
             }
-            if (totalCount <= dto.getCurrPage() * getPageSize()) {
-                hasNext = false;
+            if (1 == getFirstPage()) {
+                if (totalCount <= dto.getCurrPage() * getPageSize()) {
+                    hasNext = false;
+                }
+            } else {
+                if (totalCount <= (dto.getCurrPage() + 1) * getPageSize()) {
+                    hasNext = false;
+                }
             }
             dto.setCurrPage(dto.getCurrPage() + 1);
         }
@@ -47,7 +53,14 @@ public abstract class AbstractPageFileEventHandler<T, P> extends AbstractFileEve
      * 分页大小，可重写
      */
     protected int getPageSize() {
-        return 1000;
+        return 5000;
+    }
+
+    /**
+     * 分页大小，可重写
+     */
+    protected int getFirstPage() {
+        return 1;
     }
     /**
      * 分批获取数据

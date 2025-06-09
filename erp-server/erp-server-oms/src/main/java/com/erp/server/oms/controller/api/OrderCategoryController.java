@@ -70,9 +70,9 @@ public class OrderCategoryController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult add(@RequestBody @Validated OrderCategoryDTO.AddDTO dto) {
+    public ApiResult<Object> add(@RequestBody @Validated OrderCategoryDTO.AddDTO dto) {
         Boolean result = orderCategoryService.add(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
 
@@ -82,9 +82,9 @@ public class OrderCategoryController extends BaseController {
      * @return
      */
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated OrderCategoryDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated OrderCategoryDTO.UpdateDTO dto) {
         Boolean result = orderCategoryService.updateCategory(dto);
-        return result ? success() : failure();
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
     /**
@@ -107,7 +107,7 @@ public class OrderCategoryController extends BaseController {
      * @date 2023-08-22 14:37
      */
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
+    public ApiResult<Object> updateStatus(@RequestBody @Validated UpdateStateDTO.BatchUpdateDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         List<String> ids = dto.getIds();
         Boolean disabled = dto.getDisabled();
@@ -120,7 +120,6 @@ public class OrderCategoryController extends BaseController {
                     submit = BatchResultDTO.fail(id, id, "订单分类不存在");
                 } else {
                     submit = orderCategoryService.updateStatus(orderCategory, disabled);
-                    flagCode = orderCategory.getGroupName();
                 }
             } catch (Exception e) {
                 log.error("店铺更改状态失败>>>>{}", e);

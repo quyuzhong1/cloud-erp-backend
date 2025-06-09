@@ -17,5 +17,5 @@ public enum ThirdPlatformEnums {
     QYWX("QYWX","企业微信");
 
     public String code;
-    public String name;
+    public String enumName;
 }

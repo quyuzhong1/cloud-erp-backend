@@ -1,6 +1,6 @@
 package com.erp.server.wms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
@@ -25,7 +25,6 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.server.wms.mapper.PoInstockDetailMapper;
 import com.erp.server.wms.service.*;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -119,7 +118,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
      * 查询需要删除的数据
      */
     private List<String> getDeleteIds(List<PoInstockDetailDTO.UpdateDTO> newList, List<PoInstockDetailEntity> oldList) {
-        List<String> newIds = newList.stream().filter(g -> StringUtils.isNotBlank(g.getId())).
+        List<String> newIds = newList.stream().filter(g -> CharSequenceUtil.isNotBlank(g.getId())).
                 map(PoInstockDetailDTO.UpdateDTO::getId).collect(Collectors.toList());
         List<String> oldIds = oldList.stream().map(PoInstockDetailEntity
                 ::getId).collect(Collectors.toList());
@@ -160,7 +159,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
      */
     private void doOpHandleDetails (List<PoInstockDetailEntity> newList, String mainId, Boolean isUpdate) {
 
-        List<PoInstockDetailEntity> addList = newList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
+        List<PoInstockDetailEntity> addList = newList.stream().filter(c -> CharSequenceUtil.isBlank(c.getId())).collect(Collectors.toList());
         //采购明细信息
         List<String> podIds = newList.stream().map(PoInstockDetailEntity::getPurchaseOrderDetailId).collect(Collectors.toList());
         List<PurchaseOrderDetailEntity> purchaseOrderDetailList = scmTaskFeign.listPurchaseOrderDetailById(podIds);
@@ -182,7 +181,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             entity.setCurrency(detailEntity.getCurrency());
             entity.setCurrencySymbol(detailEntity.getCurrencySymbol());
             //修改操作日志
-            if (StringUtils.isNotBlank(entity.getId())) {
+            if (CharSequenceUtil.isNotBlank(entity.getId())) {
                 PoInstockDetailEntity old = this.getById(entity.getId());
                 if (ObjectUtils.isEmpty(old)) {
                     throw new ServiceException(ApiError.ERROR_98002);
@@ -297,7 +296,7 @@ public class PoInstockDetailServiceImpl extends SuperServiceImpl<PoInstockDetail
             CfgApiAuthDTO.WarehouseLocationValidateDTO warehouseLocationValidateDTO = JSONUtil.toBean(cfgApiAuthEntity.getValue(), CfgApiAuthDTO.WarehouseLocationValidateDTO.class);
             warehouseIdList = Arrays.stream(warehouseLocationValidateDTO.getWarehouseIds().split(",")).collect(Collectors.toList());
         }
-        long count = list.stream().filter(obj -> StrUtil.isBlank(obj.getWarehouseLocation())).count();
+        long count = list.stream().filter(obj -> CharSequenceUtil.isBlank(obj.getWarehouseLocation())).count();
         //判断仓位是否需要必填
         if (warehouseIdList.contains(warehouseEntity.getId()) && count > 0) {
             throw new ServiceException(ApiError.ERROR_WAREHOUSE_LOCATION_NOT_NULL,warehouseEntity.getName());

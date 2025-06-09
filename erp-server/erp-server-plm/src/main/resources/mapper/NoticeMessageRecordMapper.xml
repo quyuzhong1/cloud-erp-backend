@@ -8,7 +8,7 @@
          SELECT id,task_id,product_id,task_name,product_name,
          create_time,update_time,message_content,notice_node,
          notice_message_id,notice_user_id,plan_end_time,is_task,
-         charge_id,charge_name FROM notice_message_log
+         charge_id,charge_name FROM notice_message_record
          WHERE notice_user_id=#{params.flagId} AND is_deleted = FALSE
          <if test="params.searchKeyword!=null and   params.searchKeyword !='' ">
           AND product_name ILIKE concat('%',#{params.searchKeyword}::text,'%'))

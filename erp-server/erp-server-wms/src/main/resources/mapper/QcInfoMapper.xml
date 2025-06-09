@@ -225,7 +225,8 @@
             qb.source_type AS sourceType,
             qb.source_id AS sourceId,
             qb.source_code AS sourceCode,
-            qb.qc_finish_time as qcFinishTime
+            qb.qc_finish_time as qcFinishTime,
+            qi.purchase_order_detail_id as purchaseOrderDetailId
         FROM qc_info qb
         LEFT JOIN qc_result qi ON qb.id=qi.main_id AND qi.is_deleted=FALSE
         LEFT JOIN qc_product qp ON qp.main_id=qi.main_id AND qp.is_deleted=FALSE
@@ -248,6 +249,8 @@
         SELECT
             qb.id,
             qb.code,
+            qb.source_code as sourceCode,
+            qb.source_type as sourceType,
             qb.qc_dept_id as qcDeptId,
             qb.qc_dept_name as qcDeptName,
             qb.qc_user_id as qcUserId,

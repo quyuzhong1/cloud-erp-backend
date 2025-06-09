@@ -1,5 +1,6 @@
 package com.erp.model.oms.dto;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.oms.enums.SoChangeTypeEnum;
 import lombok.Data;
@@ -67,6 +68,12 @@ public class SoChangeDetailDTO implements Serializable {
          * 币种
          */
         private String currency;
+
+        /**
+         * 币种符号
+         */
+        private String currencySymbol;
+
 
 
         /**

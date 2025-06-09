@@ -5,12 +5,12 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.ProductPlanExcelDTO;
+import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.plm.vo.ProjectTaskTimeRecordPageVO;
-import com.erp.server.plm.query.PilotApplicationQueryHandler;
+import com.erp.server.plm.query.*;
 import com.erp.server.plm.service.*;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,7 +43,14 @@ public class ExportPlmFeignController {
     private ProjectTaskViewService projectTaskViewService;
     @Resource
     private PilotApplicationService pilotApplicationService;
+    @Resource
+    private MouldInfoService mouldInfoService;
+    @Resource
+    private ProductInfoService productInfoService;
+    @Resource
+    private ProductDetailService productDetailService;
     @PostMapping("/exportBom")
+    @WebAdvanceQuery(handler = BomInfoHandler.class)
     public PagingVO<BomExportExcelVO> exportBom(@RequestBody PagingDTO<SearchPagingDTO> dto) {
        return bomInfoService.exportBom(dto);
     }
@@ -76,6 +83,7 @@ public class ExportPlmFeignController {
         return productPlanService.productPlan(dto);
     }
     @PostMapping("/productPurchaseBusiness")
+    @WebAdvanceQuery(handler = ProjectReportFormsQueryHandler.class)
     public PagingVO<ProjectReportFormsDTO.PagingView> exportProductPurchaseBusiness(@RequestBody PagingDTO<ProjectReportFormsDTO.PagingParam> dto){
         return projectReportFormsService.exportProductPurchaseBusiness(dto);
     }
@@ -92,5 +100,38 @@ public class ExportPlmFeignController {
     @WebAdvanceQuery(handler = PilotApplicationQueryHandler.class)
     public PagingVO<PilotApplicationDTO.ListDTO> exportPilotApplication(@RequestBody @Validated PagingDTO<PilotApplicationDTO.PagingParamDTO> dto) {
         return pilotApplicationService.paging(dto);
+    }
+
+    @PostMapping("/mouldInfo")
+    @WebAdvanceQuery(handler = MouldInfoQueryHandler.class)
+    public PagingVO<MouldInfoDTO.MouldInfoExportDTO> exportMouldInfo(@RequestBody PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
+        return mouldInfoService.exportMouldInfo(dto);
+    }
+
+    @PostMapping("/orderTracking")
+    @WebAdvanceQuery(handler = OrderTrackingHandler.class)
+    public PagingVO<MouldInfoDTO.OrderTrackingExportDTO> exportOrderTracking(@RequestBody PagingDTO<MouldInfoDTO.PagingParamDTO> dto) {
+        return mouldInfoService.exportOrderTracking(dto);
+    }
+
+    @PostMapping("/orderTrackingDetail")
+    @WebAdvanceQuery
+    public PagingVO<MouldInfoDTO.OrderTrackingDetailExportDTO> exportOrderTrackingDetail(@RequestBody PagingDTO<MouldInfoDTO.OrderTrackingDetailParamDTO> dto) {
+        return mouldInfoService.exportOrderTrackingDetail(dto);
+    }
+
+    @PostMapping("/productShow")
+    public PagingVO<ProductShowDTO> exportProductShow(@RequestBody @Validated PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        return productInfoService.exportProductShow(dto);
+    }
+
+    @PostMapping("/projectTask")
+    public PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProjectTask(@RequestBody @Validated PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        return productInfoService.exportProductTaskExcelDTO(dto);
+    }
+
+    @PostMapping("/exportProductDetail")
+    public PagingVO<ProductDetailExcelExportDTO> exportProductDetail(@RequestBody @Validated PagingDTO<ProductSkuExcelDTO> dto) {
+        return productDetailService.exportProductDetail(dto);
     }
 }

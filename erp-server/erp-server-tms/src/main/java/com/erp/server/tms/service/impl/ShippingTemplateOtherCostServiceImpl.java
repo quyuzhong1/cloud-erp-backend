@@ -1,7 +1,6 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -22,7 +21,6 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +46,7 @@ import javax.annotation.Resource;
 @Slf4j
 @Service
 public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<ShippingTemplateOtherCostMapper, ShippingTemplateOtherCostEntity> implements ShippingTemplateOtherCostService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
 
@@ -56,7 +54,7 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
     @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private ShippingTemplateCostSettingService shippingTemplateCostSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -121,14 +119,14 @@ public class ShippingTemplateOtherCostServiceImpl extends SuperServiceImpl<Shipp
 
     @Override
     public IPage<ShippingCalculationDTO.ListDTO> paging(Page query, ShippingCalculationDTO.PagingParamDTO params) {
-        BigDecimal volume = MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight());
+        BigDecimal volume = MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight());
         params.setVolume(volume);
         return baseMapper.paging(query,params);
     }
 
     @Override
     public List<ShippingCalculationDTO.ListDTO> listByExportExcel(ShippingCalculationDTO.PagingParamDTO params) {
-        BigDecimal volume = MathUtil.multiply(MathUtil.multiply(params.getLength(), params.getWidth()), params.getHeight());
+        BigDecimal volume = MathUtil.multiplyWithTwo(MathUtil.multiplyWithTwo(params.getLength(), params.getWidth()), params.getHeight());
         params.setVolume(volume);
         return baseMapper.listByExportExcel(params);
     }

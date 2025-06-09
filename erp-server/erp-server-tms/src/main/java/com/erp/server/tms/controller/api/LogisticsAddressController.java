@@ -3,6 +3,7 @@ package com.erp.server.tms.controller.api;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -18,10 +19,10 @@ import com.erp.model.tms.dto.LogisticsAddressDTO;
 import com.erp.model.tms.entity.LogisticsAddressEntity;
 import com.erp.server.tms.service.LogisticsAddressService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +38,7 @@ import java.util.List;
 @RequestMapping("/logisticsAddress")
 public class LogisticsAddressController extends BaseController {
 
-    @Autowired
+    @Resource
     private LogisticsAddressService logisticsAddressService;
 
 
@@ -53,6 +54,7 @@ public class LogisticsAddressController extends BaseController {
             menuCode = "tms:logisticsAddress:paging",
             tableAlias = "la"
     )
+    @WebAdvanceQuery
     public ApiResult<PagingVO<LogisticsAddressDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<LogisticsAddressDTO.PagingParamDTO> dto) {
         PagingVO<LogisticsAddressDTO.PagingViewDTO> pagingVO = logisticsAddressService.paging(dto);
         return success(pagingVO);
@@ -66,7 +68,8 @@ public class LogisticsAddressController extends BaseController {
      * @return
      */
     @PostMapping("/export")
-    public ApiResult exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto) {
+    @WebAdvanceQuery
+    public ApiResult<Object>exportExcel(@Validated @RequestBody LogisticsAddressDTO.ExportDTO dto) {
         Boolean result = logisticsAddressService.exportExcel(dto);
         return result ? success() : failure();
     }
@@ -100,7 +103,7 @@ public class LogisticsAddressController extends BaseController {
             menuCode = "tms:logisticsAddress:update",
             serviceClass = LogisticsAddressService.class,
             keyIdName = "id")
-    public ApiResult update(@Validated @RequestBody LogisticsAddressDTO.UpdateDTO dto) {
+    public ApiResult<Object>update(@Validated @RequestBody LogisticsAddressDTO.UpdateDTO dto) {
         logisticsAddressService.update(dto);
         return success();
     }

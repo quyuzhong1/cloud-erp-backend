@@ -109,7 +109,7 @@ public class AttachmentServiceImpl extends SuperServiceImpl<AttachmentMapper, At
         queryWrapper.eq(AttachmentEntity::getBusinessId, businessId);
         List<AttachmentEntity> list = this.list(queryWrapper);
         if (CollectionUtils.isEmpty(list)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         return BeanMapper.copyList(list, AttachmentDTO.UpdateDTO.class);
     }

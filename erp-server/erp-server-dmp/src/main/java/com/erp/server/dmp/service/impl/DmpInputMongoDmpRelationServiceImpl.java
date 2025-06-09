@@ -63,7 +63,7 @@ public class DmpInputMongoDmpRelationServiceImpl extends SuperServiceImpl<DmpInp
     @Override
     public Boolean update(DmpInputMongoDmpRelationDTO.UpdateDTO updateDTO) {
         DmpInputMongoDmpRelationEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "mongo与dmp关联单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "mongo与dmp关联单"));
         DmpInputMongoDmpRelationEntity dmpInputMongoDmpRelationEntity =  BeanMapperUtils.map(DmpInputMongoDmpRelationEntity.class, updateDTO);
 
         // 数据处理

@@ -2,15 +2,12 @@ package com.erp.server.tms.schedule;
 
 import cn.hutool.core.collection.ListUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
-import com.common.business.vo.PagingVO;
 import com.common.core.utils.MathUtil;
 import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
-import com.erp.model.tms.dto.LogisticsTrackDTO;
-import com.erp.model.tms.entity.LogisticsBillDetailEntity;
 import com.erp.model.tms.dto.LogisticsTrackDTO;
 import com.erp.rpc.dmp.feign.DmpMongoDbFeign;
 import com.erp.server.tms.service.LogisticsBaseService;
@@ -18,19 +15,16 @@ import com.erp.server.tms.service.LogisticsBillDetailService;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
-import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.rtfparserkit.rtf.Command.li;
-import static com.rtfparserkit.rtf.Command.page;
 
 /**
  * @author zdy
@@ -59,16 +53,27 @@ public class LogisticsChannelJob {
      */
     @XxlJob("registerLogisticsNumber")
     public ReturnT registerLogisticsNumber() {
-
+        Integer registerStatus = 0;
         XxlJobHelper.log("====开始注册物流单号====");
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> trackNoList = new ArrayList<>();
+        List<String> transportNoList = new ArrayList<>();
+        if (StringUtils.isNotBlank(jobParam)){
+            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
+            trackNoList = jsonObject.getBeanList("trackNoList", String.class);
+            transportNoList = jsonObject.getBeanList("transportNoList", String.class);
+            registerStatus = jsonObject.getInt("registerStatus", 0);
+        }
         long current = 1;
         //获取物流编号
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .size(pageSize)
                 .current(current)
-                .registerStatus(0)
+                .registerStatus(registerStatus)
                 .trackEnable(true)
+                .transportNoList(transportNoList)
+                .trackNoList(trackNoList)
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
         getRegisterData(query);
@@ -83,16 +88,27 @@ public class LogisticsChannelJob {
      */
     @XxlJob("registerOceanLogisticsNumber")
     public ReturnT registerOceanLogisticsNumber() {
-
+        Integer registerStatus = 0;
         XxlJobHelper.log("====开始注册物流单号====");
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> trackNoList = new ArrayList<>();
+        List<String> transportNoList = new ArrayList<>();
+        if (StringUtils.isNotBlank(jobParam)){
+            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
+            trackNoList = jsonObject.getBeanList("trackNoList", String.class);
+            transportNoList = jsonObject.getBeanList("transportNoList", String.class);
+            registerStatus = jsonObject.getInt("registerStatus", 0);
+        }
         long current = 1;
         //获取物流编号
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .size(pageSize)
                 .current(current)
-                .registerStatus(0)
+                .registerStatus(registerStatus)
                 .trackEnable(true)
+                .transportNoList(transportNoList)
+                .trackNoList(trackNoList)
                 .transportType(LogisticsTransportTypeEnum.OCEAN.getCode())
                 .build();
         getRegisterData(query);
@@ -151,14 +167,26 @@ public class LogisticsChannelJob {
      */
     @XxlJob("synLogisticsTrack")
     public ReturnT synLogisticsTrack() {
-        XxlJobHelper.log("====开始同步物流轨迹====");
+        Integer registerStatus = 1;
+        XxlJobHelper.log("====开始注册物流单号====");
+        String jobParam = XxlJobHelper.getJobParam();
+        List<String> trackNoList = new ArrayList<>();
+        List<String> transportNoList = new ArrayList<>();
+        if (StringUtils.isNotBlank(jobParam)){
+            cn.hutool.json.JSONObject jsonObject = JSONUtil.parseObj(jobParam);
+            trackNoList = jsonObject.getBeanList("trackNoList", String.class);
+            transportNoList = jsonObject.getBeanList("transportNoList", String.class);
+            registerStatus = jsonObject.getInt("registerStatus", 1);
+        }
         long current = 1;
         //获取物流编号
         LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
                 .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
                 .size(pageSize)
                 .current(current)
-                .registerStatus(1)
+                .registerStatus(registerStatus)
+                .trackNoList(trackNoList)
+                .transportNoList(transportNoList)
                 .trackEnable(true)
                 .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
                 .build();
@@ -189,25 +217,20 @@ public class LogisticsChannelJob {
     }
 
     private void getTrackData(LogisticsBillDetailQueryDTO query) {
-        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
+        XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
         //列表查询
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
         XxlJobHelper.log("获取列表数：{}", list.size());
-//        if (list.size() > MathUtil.NUMBER_100){
-            //列表数据较多情况下，进行分割集合
-            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
-            XxlJobHelper.log("拆分列表数：{}", partition.size());
-            //物流商数据处理
-            partition.forEach(e -> logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
-//        }else {
-//            //物流商数据处理
-//            logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(),list, query.getTransportType());
-//        }
+        //列表数据较多情况下，进行分割集合
+        List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
+        XxlJobHelper.log("拆分列表数：{}", partition.size());
+        //物流商数据处理
+        partition.forEach(e -> logisticsBaseService.processTrackData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
         log.info("========同步物流轨迹数据完成==========");
     }
 
     private void getRegisterData(LogisticsBillDetailQueryDTO query) {
-        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
+        XxlJobHelper.log("获取列表请求参数：{}", JSON.toJSONString(query));
         List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
         XxlJobHelper.log("获取列表数：{}", list.size());
         if (list.size() > MathUtil.NUMBER_100){
@@ -218,50 +241,6 @@ public class LogisticsChannelJob {
             partition.forEach(e -> logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
         }else {
             logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), list,query.getTransportType());
-        }
-        log.info("========同步物流轨迹数据完成==========");
-    }
-
-    private void processRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records,String transportType) {
-        if (CollectionUtils.isNotEmpty(records)) {
-            logisticsBaseService.processRegisterData(LogisticsPlatformEnum.TRACK123.getCode(), records,transportType);
-        }
-    }
-    /**
-     * 同步小包（快递）物流轨迹 从dmp到tms
-     */
-    @XxlJob("synLogisticsMongoTrack")
-    public ReturnT synLogisticsMongoTrack() {
-        XxlJobHelper.log("====开始同步物流轨迹====");
-        long current = 1;
-        //获取物流编号
-        LogisticsBillDetailQueryDTO query = LogisticsBillDetailQueryDTO.builder()
-                .trackQueryMode(LogisticsPlatformEnum.TRACK123.getCode())
-                .size(pageSize)
-                .current(current)
-                .registerStatus(1)
-                .trackEnable(true)
-                .transportType(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode())
-                .build();
-        getMongoTrackData(query);
-        XxlJobHelper.log("====结束同步物流轨迹====");
-        return ReturnT.SUCCESS;
-    }
-
-    private void getMongoTrackData(LogisticsBillDetailQueryDTO query) {
-        XxlJobHelper.log("获取列表请求参数：{}", JSONObject.toJSONString(query));
-        //列表查询
-        List<LogisticsTrackDTO.UpdateTrackDTO> list = logisticsBillDetailService.listTrackDto(query);
-        XxlJobHelper.log("获取列表数：{}", list.size());
-        if (list.size() > MathUtil.NUMBER_100){
-            //列表数据较多情况下，进行分割集合
-            List<List<LogisticsTrackDTO.UpdateTrackDTO>> partition = ListUtil.partition(list, MathUtil.NUMBER_100);
-            XxlJobHelper.log("拆分列表数：{}", partition.size());
-            //物流商数据处理
-            partition.forEach(e -> logisticsBaseService.processMongoTrackData(LogisticsPlatformEnum.TRACK123.getCode(),e, query.getTransportType()));
-        }else {
-            //物流商数据处理
-            logisticsBaseService.processMongoTrackData(LogisticsPlatformEnum.TRACK123.getCode(),list, query.getTransportType());
         }
         log.info("========同步物流轨迹数据完成==========");
     }

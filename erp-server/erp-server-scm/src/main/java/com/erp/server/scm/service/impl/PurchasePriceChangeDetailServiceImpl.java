@@ -1,5 +1,7 @@
 package com.erp.server.scm.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
@@ -8,14 +10,13 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
+import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
+import com.common.core.utils.date.LocalDateUtil;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchasePriceChangeDetailDTO;
 import com.erp.model.scm.dto.PurchasePriceDetailDTO;
-import com.erp.model.scm.entity.PurchasePriceChangeDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceChangeEntity;
-import com.erp.model.scm.entity.PurchasePriceDetailEntity;
-import com.erp.model.scm.entity.PurchasePriceHistoryEntity;
+import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -69,7 +70,8 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
     @Resource
     private SyncKingdeePurchasePriceService syncKingdeePurchasePriceService;
 
-
+    @Resource
+    private PurchasePriceChangeService purchasePriceChangeService;
 
     /**
      * 根据变更表id 获取明细
@@ -183,7 +185,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             }
         }
         //数据验证
-        checkPriceChangeDetail(addList);
+        checkPriceChangeDetail(purchasePriceChangeId,addList);
         this.saveBatch(addList);
     }
 
@@ -288,7 +290,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
         }
 
         //数据验证
-        checkPriceChangeDetail(saveOrUpdateList);
+        checkPriceChangeDetail(purchasePriceChangeId,saveOrUpdateList);
 
         //这是要添加的
         List<PurchasePriceChangeDetailEntity> addList = saveOrUpdateList.stream().filter(c -> StringUtils.isBlank(c.getId())).collect(Collectors.toList());
@@ -378,7 +380,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
             return;
         }
 
-        Map<String, List<PurchasePriceChangeDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getPriceCode));
+        Map<String, List<PurchasePriceChangeDetailEntity>> map = detailList.stream().collect(Collectors.groupingBy(PurchasePriceChangeDetailEntity::getSupplierId));
 
         for (Map.Entry<String, List<PurchasePriceChangeDetailEntity>> entry :map.entrySet()) {
 
@@ -387,7 +389,7 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
 
             List<PurchasePriceDetailEntity> list = updateList.stream().filter(obj -> purchasePriceDetailIdList.contains(obj.getId())).collect(Collectors.toList());
             //报价信息验证
-            purchasePriceDetailService.checkPurchasePriceDetail(value.get(0).getSupplierId(),purchasePriceChangeList.get(0).getPurchaseOrgId(),list);
+            purchasePriceDetailService.checkPurchasePriceDetail(entry.getKey(),purchasePriceChangeList.get(0).getPurchaseOrgId(),list);
         }
     }
 
@@ -430,15 +432,160 @@ public class PurchasePriceChangeDetailServiceImpl extends SuperServiceImpl<Purch
      * @date: 2024/1/15 17:41
      * @param list
      */
-    private void checkPriceChangeDetail (List<PurchasePriceChangeDetailEntity> list) {
+    private void checkPriceChangeDetail (String purchasePriceChangeId,List<PurchasePriceChangeDetailEntity> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
         }
-        for (PurchasePriceChangeDetailEntity entity : list) {
-            //检验失效时间需要大于等于生效时间
+        PurchasePriceChangeEntity purchasePriceChangeEntity = purchasePriceChangeService.getById(purchasePriceChangeId);
+        if (ObjUtil.isEmpty(purchasePriceChangeEntity)) {
+            throw new ServiceException(ApiError.ERROR_98028);
+        }
+        //区间验证
+        checkPurchasePriceChangeDetail(purchasePriceChangeEntity.getPurchaseOrgId(),list);
+    }
+
+    /**
+     * 数据校验
+     * @author will
+     * @date 2025/5/7 09:31
+     * @param purchaseOrgId
+     * @param list
+     * @return void
+     */
+    public void checkPurchasePriceChangeDetail (String purchaseOrgId,List<PurchasePriceChangeDetailEntity> list) {
+        if (CollectionUtils.isEmpty(list)) {
+            return;
+        }
+        //查询供应商信息
+        List<String> supplierIdList = list.stream().map(PurchasePriceChangeDetailEntity::getSupplierId).distinct().collect(Collectors.toList());
+        List<String> skuIdList = list.stream().map(PurchasePriceChangeDetailEntity::getSkuId).collect(Collectors.toList());
+        //已存在的采购调价明细数据
+        List<PurchasePriceChangeDetailEntity> purchaseDetailList = listCheckPurchasePriceChangeDetail(supplierIdList, purchaseOrgId, skuIdList);
+        if (CollectionUtils.isNotEmpty(purchaseDetailList)) {
+            List<String> oldIdList = list.stream().map(PurchasePriceChangeDetailEntity::getId).collect(Collectors.toList());
+            purchaseDetailList = purchaseDetailList.stream().filter(obj -> !oldIdList.contains(obj.getId())).collect(Collectors.toList());
+        }
+        //采购价目表明细数据
+        List<PurchasePriceDetailDTO.ViewDTO> purchasePriceDetailList = purchasePriceDetailService.listCheckPurchasePriceDetail(supplierIdList, purchaseOrgId, skuIdList);
+        if (CollectionUtils.isNotEmpty(purchasePriceDetailList)) {
+            List<String> priceDetailIdList = list.stream().map(PurchasePriceChangeDetailEntity::getPurchasePriceDetailId).collect(Collectors.toList());
+            purchasePriceDetailList = purchasePriceDetailList.stream().filter(obj -> !priceDetailIdList.contains(obj.getId())).collect(Collectors.toList());
+        }
+        /**
+         * 校验
+         * 1、数据与新增同类数据校验
+         * 2、数据与调价表未审核数据进行校验
+         * 3、数据与价目表数据进行校验
+         */
+        for (int i = 0;i < list.size();i++) {
+            PurchasePriceChangeDetailEntity entity = list.get(i);
+            //检验失效时间需要大于生效时间
             if (entity.getExpireDate().isBefore(entity.getEffectiveDate())) {
                 throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE,entity.getSkuNo());
             }
+            //校验区间到需要大于区间从
+            if (entity.getMaxQty().compareTo(entity.getMinQty()) <= MathUtil.ZERO) {
+                throw new ServiceException(ApiError.ERROR_SO_PRICE_INTERVAL_SIZE,entity.getSkuNo());
+            }
+
+            //1、数据与新增同类数据校验
+            for (int j = 0;j < list.size();j++) {
+                PurchasePriceChangeDetailEntity detailEntity = list.get(j);
+                if (i == j || !StrUtil.equals(entity.getSkuId(),detailEntity.getSkuId())) {
+                    continue;
+                }
+                //验证是否重叠
+                checkOverlap(entity,detailEntity);
+            }
+
+            //2、数据与调价表未审核数据进行校验
+            List<PurchasePriceChangeDetailEntity> oldList = purchaseDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(),entity.getSupplierId()) &&  StrUtil.equals(obj.getSkuId(), entity.getSkuId())).map(obj -> BeanMapperUtils.map(PurchasePriceChangeDetailEntity.class,obj) ).collect(Collectors.toList());
+            if (CollectionUtils.isNotEmpty(oldList)) {
+                //验证是否重叠
+                oldList.forEach(obj -> checkOverlap(entity,obj));
+            }
+
+            //3、数据与价目表数据进行校验
+            List<PurchasePriceDetailEntity> oldPriceDetailList = purchasePriceDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSupplierId(),entity.getSupplierId()) &&  StrUtil.equals(obj.getSkuId(), entity.getSkuId())).map(obj -> BeanMapperUtils.map(PurchasePriceDetailEntity.class,obj) ).collect(Collectors.toList());
+            if (ObjUtil.isNotEmpty(oldPriceDetailList)) {
+                oldPriceDetailList.forEach(obj -> checkOverlap(entity,obj));
+            }
         }
+    }
+
+    /**
+     * 验证是否重叠
+     * @author will
+     * @date 2025/5/7 09:59
+     * @param entity
+     * @param detailEntity
+     * @return void
+     */
+    private void checkOverlap (PurchasePriceChangeDetailEntity entity,PurchasePriceChangeDetailEntity detailEntity) {
+        //区间重叠时
+        if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
+                && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
+            //时间不能重叠
+            boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
+            if (overlap) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+            }
+        }
+        //时间重叠时
+        boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
+        if (overlap) {
+            //区间不能重叠
+            if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
+                    && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
+                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+            }
+        }
+    }
+
+    /**
+     * 验证是否重叠
+     * @author will
+     * @date 2025/5/7 09:59
+     * @param entity
+     * @param detailEntity
+     * @return void
+     */
+    private void checkOverlap (PurchasePriceChangeDetailEntity entity,PurchasePriceDetailEntity detailEntity) {
+        //区间重叠时
+        if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
+                && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
+            //时间不能重叠
+            boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
+            if (overlap) {
+                throw new ServiceException(ApiError.ERROR_PURCHASE_PRICE_DATE_OVERLAP,entity.getSkuNo());
+            }
+        }
+        //时间重叠时
+        boolean overlap = LocalDateUtil.isOverlap(entity.getEffectiveDate(), entity.getExpireDate(), detailEntity.getEffectiveDate(), detailEntity.getExpireDate());
+        if (overlap) {
+            //区间不能重叠
+            if (entity.getMinQty().compareTo(detailEntity.getMaxQty()) < MathUtil.ZERO
+                    && detailEntity.getMinQty().compareTo(entity.getMaxQty()) < MathUtil.ZERO ) {
+                throw new ServiceException(ApiError.ERROR_INTERVAL_SUPPLIER_OVERLAP);
+            }
+        }
+    }
+
+    /**
+     * 查询未审核通过数据
+     * @author will
+     * @date 2025/5/7 09:58
+     * @param supplierIdList
+     * @param purchaseOrgId
+     * @param skuIdList
+     * @return List<PurchasePriceChangeDetailEntity>
+     */
+    public List<PurchasePriceChangeDetailEntity> listCheckPurchasePriceChangeDetail(List<String> supplierIdList, String purchaseOrgId, List<String> skuIdList) {
+        List<String> statusList = new ArrayList<>(4);
+        statusList.add(ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+        statusList.add(ApproveStatusEnum.APPROVE_ING.getStatus());
+        statusList.add(ApproveStatusEnum.REJECT.getStatus());
+        List<PurchasePriceChangeDetailEntity> list = baseMapper.listCheckPurchasePriceChangeDetail(supplierIdList, statusList, purchaseOrgId, skuIdList);
+        return list;
     }
 }

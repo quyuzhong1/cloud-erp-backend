@@ -65,7 +65,7 @@ public class DmpSoOutstockPositionServiceImpl extends SuperServiceImpl<DmpSoOuts
     @Override
     public Boolean update(DmpSoOutstockPositionDTO.UpdateDTO updateDTO) {
         DmpSoOutstockPositionEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台销售订单出库详情"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台销售订单出库详情"));
         DmpSoOutstockPositionEntity dmpSoOutstockPositionEntity =  BeanMapperUtils.map(DmpSoOutstockPositionEntity.class, updateDTO);
 
         // 数据处理

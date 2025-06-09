@@ -1,7 +1,7 @@
 package com.erp.server.admin.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -87,7 +87,6 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
     @Override
     public List<SysMenuVO> treeList() {
         //获取到餐单的所有列表
-        //  List<SysMenuEntity> allList = menuList(dto);
         List<MenuEntity> allList=list();
         List<SysMenuVO> menuList = BeanMapperUtils.copyList(SysMenuVO.class, allList);
         return menuList.stream().
@@ -126,7 +125,7 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
         List<MenuEntity> menuList = this.listByParentId(sysMenu.getParentId());
         //大于等于当前序号的同级别的菜单重新排序
         List<MenuEntity> levelMenuList = menuList.stream().filter(obj -> MathUtil.compareTo(obj.getIndex(), sysMenu.getIndex()) >= MathUtil.ZERO
-                        && !StrUtil.equals(sysMenu.getMenuId(),obj.getMenuId()))
+                        && !CharSequenceUtil.equals(sysMenu.getMenuId(),obj.getMenuId()))
                 .sorted(Comparator.comparing(MenuEntity::getIndex)).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(levelMenuList)) {
             return ;
@@ -168,10 +167,9 @@ public class MenuServiceImpl extends ServiceImpl<MenuMapper, MenuEntity> impleme
      * @return List<MenuEntity>
      */
     private List<MenuEntity> listByParentId(String parentId) {
-        List<MenuEntity> list = lambdaQuery().eq(MenuEntity::getParentId, parentId)
+        return lambdaQuery().eq(MenuEntity::getParentId, parentId)
                 .orderByAsc(MenuEntity::getIndex)
                 .list();
-        return list;
     }
 
     /**

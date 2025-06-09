@@ -182,12 +182,12 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
     /**
      * 根据业务单号获取对账明细
      *
-     * @param businessCodes
+     * @param sourceIds
      * @param status
      * @param type
      * @return
      */
-    List<TmsFirstMileReconciliationDetailEntity> listBySourceIdsAndStatus(List<String> businessCodes, String status, String type);
+    List<TmsFirstMileReconciliationDetailEntity> listBySourceIdsAndStatus(List<String> sourceIds, String status, String type);
 
     /**
      * 更新对账明细
@@ -198,4 +198,15 @@ public interface TmsFirstMileReconciliationDetailService extends SuperService<Tm
 
     PagingVO<TmsFirstMileReconciliationDetailDTO.ExportDetailDTO> exportFirstMileReconciliationDetail(PagingDTO<TmsFirstMileReconciliationDetailDTO.ExportDTO> dto);
 
+    /**
+     * 重置总物流单费用
+     * @param codeList
+     */
+    void initTotalLogisticsCost(List<String> codeList);
+
+    /**
+     * 根据关联单号查询对账详情
+     * @param relationCodeList
+     */
+    List<TmsFirstMileReconciliationDetailEntity> listByRelationCode(List<String> relationCodeList);
 }

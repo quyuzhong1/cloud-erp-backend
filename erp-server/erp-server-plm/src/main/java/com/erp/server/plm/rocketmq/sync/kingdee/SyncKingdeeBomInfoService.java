@@ -2,8 +2,11 @@ package com.erp.server.plm.rocketmq.sync.kingdee;
 
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.plm.entity.BomInfoEntity;
+import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Will
@@ -19,4 +22,8 @@ public interface SyncKingdeeBomInfoService {
      * @param entity
      */
     List<DmpPushTaskEntity> syncDataToKingdee(BomInfoEntity entity, String operate);
+    
+    void syncDataToSdy(BomInfoEntity entity, String operate);
+    
+    Map<String, Object> newSyncDataToSdy(ProductBomSkuHistoryEntity entity, String operate);
 }

@@ -9,9 +9,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
-import com.alibaba.excel.util.CollectionUtils;
-import com.common.core.exception.ServiceException;
-import com.common.core.utils.FastDFSClientUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,10 +19,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
+import com.alibaba.excel.util.CollectionUtils;
 import com.alibaba.fastjson.JSON;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
+import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.sys.dto.OpenApiInputDTO;
 import com.erp.model.sys.dto.OpenApiReqDTO;
 import com.erp.model.sys.entity.SysRefererConfigEntity;
@@ -36,8 +37,6 @@ import com.erp.server.auth.utils.SignUtil;
 
 import cn.hutool.core.collection.CollUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 @Controller
 @Slf4j
@@ -47,22 +46,25 @@ public class OpenApiController {
     @Value("${spring.profiles.active}")
     private String currentEnvironment;
     
-    private final static Map<String, String> secretKeyMap = new HashMap<>();
+    private static final Map<String, String> secretKeyMap = new HashMap<>();
 
     @Resource
     private OpenApiService openApiService;
 
     @PostMapping("/upload")
-    public @ResponseBody ApiResult<?> unitPlatformServiceUpload(@Valid OpenApiReqDTO input, HttpServletRequest request, MultipartFile file){
-        log.warn("平台上传接口统一请求报文：{}" , JSON.toJSONString(input));
+    public @ResponseBody ApiResult<String> unitPlatformServiceUpload(@Valid OpenApiReqDTO input, HttpServletRequest request, MultipartFile file){
+        log.warn("平台上传接口统一请求报文：{},文件名:{}" , JSON.toJSONString(input),file.getOriginalFilename());
         MultipartHttpServletRequest multipartRequest = (MultipartHttpServletRequest) request;
         Map<String, MultipartFile> fileMap = multipartRequest.getFileMap();
-        String referer = request.getHeader("Referer");
+        String referer = request.getHeader("appId");
+        if(StringUtils.isBlank(referer)) {
+        	referer = request.getHeader("Referer");
+        }
         if(StringUtils.isBlank(referer)) {
             referer = request.getHeader("referer");
         }
         if(StringUtils.isBlank(referer)) {
-            return ApiResult.error(500, "请求头referer不能为空");
+            return ApiResult.error(500, "请求头appId或referer不能为空");
         }
         if (CollectionUtils.isEmpty(fileMap) || 1 != fileMap.size()){
             return ApiResult.error(500, "仅能上传一个文件");
@@ -93,18 +95,25 @@ public class OpenApiController {
         }
         ApiResult<String> success = ApiResult.success(fileUrl);
         log.warn("平台上传接口统一响应报文：{}" , JSON.toJSONString(success));
+        //仓库设备发送文件信息，为了响应时间，需要在此处保存文件信息
+        if("hczn".equals(referer)){
+            openApiService.addByWarehouseEquipment(fileUrl, file.getOriginalFilename());
+        }
 		return success;
     }
 
     @PostMapping("/service")
     @ResponseBody
-    public ApiResult<?> service(@Validated @RequestBody OpenApiReqDTO req, HttpServletRequest request){
-    	String referer = request.getHeader("Referer");
+    public ApiResult<Object> service(@Validated @RequestBody OpenApiReqDTO req, HttpServletRequest request){
+    	String referer = request.getHeader("appId");
+        if(StringUtils.isBlank(referer)) {
+        	referer = request.getHeader("Referer");
+        }
     	if(StringUtils.isBlank(referer)) {
     		referer = request.getHeader("referer");
     	}
     	if(StringUtils.isBlank(referer)) {
-    		return ApiResult.error(500, "请求头referer不能为空");
+    		return ApiResult.error(500, "请求头appId或referer不能为空");
     	}
     	log.warn("{}平台接口统一请求报文：{}" , referer , JSON.toJSONString(req));
     	
@@ -117,7 +126,7 @@ public class OpenApiController {
 		openApiInputDTO.setSecretKey(secretKey);
         openApiInputDTO.setRequestIp(IPUtils.getIpAddr(request));
         
-        ApiResult<?> result = openApiService.unitPlatformService(openApiInputDTO);
+        ApiResult<Object> result = openApiService.unitPlatformService(openApiInputDTO);
         log.warn("平台接口统一响应报文：{}" , JSON.toJSONString(result));
         return result;
     }

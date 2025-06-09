@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.common.core.constant.SqlConstants;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.workflow.dto.BusinessTableDTO;
 import com.erp.model.workflow.dto.WorkflowBusinessProcessDTO;
@@ -15,7 +16,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.camunda.bpm.engine.HistoryService;
 import org.camunda.bpm.engine.history.HistoricTaskInstance;
-import org.springframework.beans.factory.annotation.Autowired;
+import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,10 +33,10 @@ import java.util.stream.Collectors;
 public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusinessProcessMapper, WorkflowBusinessProcessEntity> implements WorkflowBusinessProcessService {
 
 
-    @Autowired
+    @Resource
     private ProcessTaskService processTaskService;
 
-    @Autowired
+    @Resource
     private HistoryService historyService;
 
 
@@ -51,13 +52,13 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
     public WorkflowBusinessProcessEntity getByProcessId(String processId) {
         LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WorkflowBusinessProcessEntity::getProcessId, processId);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         return this.getOne(queryWrapper);
     }
 
     @Override
     public List<WorkflowBusinessProcessEntity> getByProcessIds(List<String> processIds) {
-        if (CollectionUtils.isNotEmpty(processIds)) {
+        if (!CollectionUtils.isEmpty(processIds)) {
             LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(WorkflowBusinessProcessEntity::getProcessId, processIds);
             return this.list(queryWrapper);
@@ -97,10 +98,9 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
     public MyToDoTaskVO getProcessByBusinessTable(BusinessTableDTO dto) {
         //获取到我的待办任务
         List<MyToDoTaskVO> list = processTaskService.getMyToDoTasks(dto.getUserId());
-        MyToDoTaskVO taskVO = list.stream().
+        return list.stream().
                 filter(m -> StringUtils.isNotBlank(m.getBusinessTableId()) && m.getBusinessTableId().
                         equals(dto.getBusinessTableId())).findFirst().orElse(null);
-        return taskVO;
     }
 
 
@@ -118,7 +118,7 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
         queryWrapper.in(WorkflowBusinessProcessEntity::getBusinessTableId, businessTableIds);
         List<WorkflowBusinessProcessEntity> list = this.list(queryWrapper);
         List<ProcessCurrentAuditorVO> resultList = new ArrayList<>(list.size());
-        if (CollectionUtils.isNotEmpty(list)) {
+        if (!CollectionUtils.isEmpty(list)) {
             for (WorkflowBusinessProcessEntity item : list) {
                 ProcessCurrentAuditorVO vo = new ProcessCurrentAuditorVO();
                 vo.setBusinessTableId(item.getBusinessTableId());
@@ -153,12 +153,12 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
      */
     @Override
     public List<WorkflowBusinessProcessDTO> getProcessByTables(List<String> businessTableIds) {
-        if (CollectionUtils.isNotEmpty(businessTableIds)) {
+        if (!CollectionUtils.isEmpty(businessTableIds)) {
             LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.in(WorkflowBusinessProcessEntity::getBusinessTableId, businessTableIds);
             queryWrapper.orderByDesc(WorkflowBusinessProcessEntity::getCreateTime);
             List<WorkflowBusinessProcessEntity> list = this.list(queryWrapper);
-            List<WorkflowBusinessProcessDTO> resultList = new ArrayList<>();
+            List<WorkflowBusinessProcessDTO> resultList;
             resultList = BeanMapper.copyList(list, WorkflowBusinessProcessDTO.class);
             return resultList;
         }
@@ -183,7 +183,7 @@ public class WorkflowBusinessProcessServiceImpl extends ServiceImpl<WorkflowBusi
         LambdaQueryWrapper<WorkflowBusinessProcessEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(WorkflowBusinessProcessEntity::getBusinessTableId, id);
         queryWrapper.orderByDesc(WorkflowBusinessProcessEntity::getCreateTime);
-        queryWrapper.last("LIMIT 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         WorkflowBusinessProcessEntity businessProcess = this.getOne(queryWrapper);
         if (businessProcess != null) {
             vo.setBusinessTableId(businessProcess.getBusinessTableId());

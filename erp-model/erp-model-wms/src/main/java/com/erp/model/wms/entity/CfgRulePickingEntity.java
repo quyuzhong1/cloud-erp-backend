@@ -47,15 +47,6 @@ public class CfgRulePickingEntity extends BaseEntity<CfgRulePickingEntity> {
     @TableField("description")
     private String description;
 
-
-    public static final String NAME = "name";
-
-    public static final String DISABLED = "disabled";
-
-    public static final String PRIORITY = "priority";
-
-    public static final String DESCRIPTION = "description";
-
     @Override
     public Serializable pkVal() {
         return null;

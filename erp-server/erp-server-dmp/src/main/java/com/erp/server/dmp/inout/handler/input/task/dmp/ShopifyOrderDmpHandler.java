@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.fastjson.JSON;
+import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.ParamData;
 import com.common.core.enums.PannoEnum;
@@ -62,7 +63,6 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 //状态
                 Object financialStatusObj = dmpDataMap.get("platformOriginalStatus");
                 if (financialStatusObj != null) {
-                    dmpDataMap.put("invalidStatus", Boolean.FALSE);
                     String financialStatus = String.valueOf(financialStatusObj);
 
                     ShopifyOrderFinancialStatusEnum statusEnum = ShopifyOrderFinancialStatusEnum.getByCode(financialStatus);
@@ -128,13 +128,19 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                     dmpDataMap.put("buyerRemark", customerMap.get("note"));
                 }
 
+                //总优惠
+                Object totalDiscountsObj = dmpDataMap.get("totalDiscounts");
+                if (totalDiscountsObj != null) {
+                    dmpDataMap.put("totalDiscount", totalDiscountsObj);
+                }
 
                 //交易信息
                 Map<String, Object> transactionsMap = dmpInputTransactionsMongoChildList.stream()
                         .filter(req -> String.valueOf(req.get("orderId")).equals(String.valueOf(dmpDataMap.get("thirdCode"))))
                         .findFirst().orElse(null);
-                if (ObjectUtil.isNotEmpty(transactionsMap)) {
-                    dmpDataMap.put("payTime", transactionsMap.get("createdAt"));
+                boolean payStatus = Boolean.parseBoolean(dmpDataMap.getOrDefault("payStatus", false).toString());
+                if (ObjectUtil.isNotEmpty(transactionsMap) && payStatus) {
+                    dmpDataMap.put("payTime", transactionsMap.get("processedAt"));
                     dmpDataMap.put("payMethod", transactionsMap.get("gateway"));
                 }
 
@@ -158,6 +164,8 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                     }
                 }
 
+                // 是否明细退款
+                boolean hasRefundLineItems = false;
                 //退款
                 Object refundsObj = dmpDataMap.get("refunds");
                 if (ObjectUtil.isNotEmpty(refundsObj)) {
@@ -177,7 +185,7 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                                         .distinct()
                                         .collect(Collectors.toList());
                                 refundedLineItemIds.addAll(sourceFundedLineItemIds);
-
+                                hasRefundLineItems = true;
                             }
                         }
                     }
@@ -189,6 +197,24 @@ public class ShopifyOrderDmpHandler extends ShopifyDmpHandler {
                 lableMap.put("sellerOrderCode", name);
 
                 dmpDataMap.put("extendData", JSONUtil.toJsonStr(lableMap));
+
+                // ERP需要的作废状态
+                String financialStatusStr= dmpDataMap.getOrDefault("platformOriginalStatus", "").toString();
+                dmpDataMap.put("invalidStatus", ShopifyOrderFinancialStatusEnum.VOIDED.getCode().equalsIgnoreCase(financialStatusStr));
+
+                // dmp退款状态
+                String dmpReturnStatus = dmpDataMap.getOrDefault("returnStatus", "notReturn").toString();
+                // 平台订单原始取消状态(已退款,部分退款)
+                DmpOrderReturnStatusEnum dmpBasicSystemCodeEnum = DmpOrderReturnStatusEnum.getByCode(dmpReturnStatus);
+                // 整单退款 或 明细存在退货 才推送取消状态
+                if (DmpOrderReturnStatusEnum.ORDER_RETURN.equals(dmpBasicSystemCodeEnum)
+                        || hasRefundLineItems
+                ) {
+                    dmpDataMap.put("isCancel", Boolean.TRUE);
+                } else {
+                    dmpDataMap.put("isCancel", Boolean.FALSE);
+                }
+
             }
         }
     }

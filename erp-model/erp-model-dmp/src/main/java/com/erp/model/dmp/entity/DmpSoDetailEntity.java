@@ -89,7 +89,7 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 是否赠品：true/false
     */
     @TableField("is_gift")
-    private Boolean isGift;
+    private Boolean isGift = false;
     /**
     * 仓库编码
     */
@@ -134,7 +134,7 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
     * 折扣后订单总金额
     */
     @TableField("after_amount")
-    private BigDecimal afterAmount;
+    private BigDecimal afterAmount = BigDecimal.ZERO;
     /**
     * 运费
     */
@@ -180,6 +180,101 @@ public class DmpSoDetailEntity extends BaseEntity<DmpSoDetailEntity> {
      */
     @TableField("platform_package_id")
     private String platformPackageId;
+    /**
+     * 优惠额（亚马逊）
+     */
+    @TableField("discount")
+    private BigDecimal discount;
+
+    /**
+     * 子单平台状态
+     */
+    @TableField("platform_status")
+    private String platformStatus;
+
+    /**
+     * 售后退款数量
+     */
+    @TableField("refund_num")
+    private BigDecimal refundNum;
+
+    /**
+     * 平台货品名称
+     */
+    @TableField("api_goods_name")
+    private String apiGoodsName;
+
+    /**
+     * 平台规格名称
+     */
+    @TableField("api_spec_name")
+    private String apiSpecName;
+
+    /**
+     * 产品销售税
+     */
+    @TableField("item_tax")
+    private BigDecimal itemTax;
+
+    /**
+     * 运费税
+     */
+    @TableField("shipping_tax")
+    private BigDecimal shippingTax;
+
+    /**
+     * 礼品包装费(备用)
+     */
+    @TableField("gift_wrap_cost")
+    private BigDecimal giftWrapCost;
+
+    /**
+     * 礼品包装税
+     */
+    @TableField("gift_wrap_tax")
+    private BigDecimal giftWrapTax;
+
+    /**
+     * 监管费(备用)
+     */
+    @TableField("regulatory_cost")
+    private BigDecimal regulatoryCost;
+
+    /**
+     * 监管税费(备用)
+     */
+    @TableField("regulatory_tax")
+    private BigDecimal regulatoryTax;
+
+    /**
+     * 促销折扣税
+     */
+    @TableField("promotion_discount_tax")
+    private BigDecimal promotionDiscountTax;
+
+    /**
+     * 运费折扣税
+     */
+    @TableField("shipping_discount_tax")
+    private BigDecimal shippingDiscountTax;
+
+    /**
+     * 销售费用
+     */
+    @TableField("sale_fee")
+    private BigDecimal saleFee;
+
+    /**
+     * 变体属性
+     */
+    @TableField("variant_property")
+    private String variantProperty;
+    /**
+     * 平台SKU ID
+     */
+    @TableField("platform_sku_id")
+    private String platformSkuId;
+
 
     public static final String MAIN_ID = "main_id";
 

@@ -33,6 +33,10 @@ public class LogisticsOrderVO implements Serializable {
      */
     private String oaid;
     /**
+     * 订单对应物流id
+     */
+    private Long shipmentId;
+    /**
      * 顺丰月结卡号
      */
     private String monthlyCard;
@@ -91,7 +95,21 @@ public class LogisticsOrderVO implements Serializable {
      * 平台订单号
      */
     private String platformCode;
+    /**
+     * 包裹号【虾皮下单使用】
+     */
+    private String packageNumber;
 
+    /**
+     * 包裹id【tiktok下单使用】
+     */
+    private String packageId;
+    /**
+     * 配送方式/发货方式（上门揽收DOOR_PICKUP, 自寄SELF_POST, 自送SELF_SEND）
+     * DeliveryTypeEnum
+     * 字典接口地址  http://172.16.100.11:3002/project/128/interface/api/25522   key = deliveryType
+     */
+    private String deliveryType;
     /**
      * 来源id(订单id)
      */

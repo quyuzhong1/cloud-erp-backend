@@ -43,4 +43,11 @@ public interface OverseasInventoryMapper extends BaseMapper<OverseasInventoryEnt
      */
     List<OverseasInventoryDTO.ListDTO> listByParams(@Param("params") OverseasInventoryDTO.PagingParamDTO params);
     Page<OverseasInventoryDTO.ListDTO> listByParams(@Param("page") Page<OverseasInventoryDTO.ListDTO> page, @Param("params") OverseasInventoryDTO.PagingParamDTO params);
+
+    /**
+     * 根据sku和仓库获取三方仓库存列表
+     * @param query
+     * @return
+     */
+    List<OverseasInventoryEntity> listBySkuAndWarehouseCode(@Param("query") OverseasInventoryDTO.QueryDTO query);
 }

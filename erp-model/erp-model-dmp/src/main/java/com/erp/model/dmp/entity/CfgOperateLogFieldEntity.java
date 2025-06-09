@@ -52,8 +52,8 @@ public class CfgOperateLogFieldEntity extends BaseEntity<CfgOperateLogFieldEntit
     /**
     * true|false对应值,竖线分隔
     */
-    @TableField("boolean_value")
-    private String booleanValue;
+    @TableField("value")
+    private String value;
 
 
     public static final String FIELD = "field";

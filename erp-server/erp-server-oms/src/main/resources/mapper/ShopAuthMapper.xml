@@ -50,12 +50,17 @@
         <if test="type != null and type != ''">
             and auth.type = #{type}
         </if>
+        <if test="dictPlatform != null and dictPlatform != ''">
+            and info.dict_platform = #{dictPlatform}
+        </if>
 
+        ORDER BY auth.update_time desc
     </select>
     <select id="getAuthShopByPlatformType" resultType="com.erp.model.oms.entity.ShopAuthEntity">
         SELECT
             auth.*,
-            info.extend_data AS extendData
+            info.extend_data AS extendData,
+            info.dict_area_code as areaCode
         FROM
             shop_auth auth
                 LEFT JOIN shop_info info ON auth.shop_id = info."id" and info.auth_status = 'already'

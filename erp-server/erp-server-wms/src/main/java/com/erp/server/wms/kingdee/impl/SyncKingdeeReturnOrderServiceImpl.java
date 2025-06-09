@@ -2,6 +2,7 @@ package com.erp.server.wms.kingdee.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
@@ -20,6 +21,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.dto.CfgSettingDTO;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
@@ -111,8 +113,15 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(PoReturnEntity entity, String operate) {
-        //生成任务
-        return saveTask(entity,operate,this.newSyncDataToKingdee(entity, operate));
+    	if (SourceTypeEnum.QC_INFO.getCode().equals(entity.getSourceType())) {
+            return null;
+        }
+    	//生成任务
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -178,7 +187,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         PurchaseOrderEntity purchaseOrderEntity = new PurchaseOrderEntity();
 
         //如果上游单据未发送成功则无需发送
-        if (StringUtils.isNotBlank(entity.getPurchaseOrderId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getPurchaseOrderId())) {
             //采购订单
             purchaseOrderEntity = scmTaskFeign.getPurchaseOrderById(entity.getPurchaseOrderId());
             /*DmpPushTaskEntity purchaseOrderTask = dmpMqFeign.getByParam(new DmpSyncTaskDTO.OneDTO(SourceTypeEnum.PURCHASE_ORDER.getCode(), purchaseOrderEntity.getId(), PlatformEnum.KINGDEE.getDesc(), PlatformEnum.ERP.getDesc()));
@@ -220,7 +229,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
 
         //采购员
         String purchaseUserId = entity.getPurchaseUserId();
-        if (StringUtils.isNotBlank(entity.getPurchaseUserId())) {
+        if (CharSequenceUtil.isNotBlank(entity.getPurchaseUserId())) {
             //获取用户部门id
             SysDepartmentUserNumberDTO departmentDTO = sysUserFeign.getDeptByUserId(entity.getPurchaseUserId());
             //采购部门
@@ -304,7 +313,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
         WarehouseEntity warehouseEntity = warehouseService.getById(entity.getReturnWarehouseId());
 
         //是否支持下推仓位
-        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Arrays.asList(entity.getReturnWarehouseId()));
+        List<CfgSettingDTO.WarehouseLocationSettingDTO> pushKingdeeList = dmpTaskFeign.isPushKingdeeWarehouseLocation(Collections.singletonList(entity.getReturnWarehouseId()));
 
         List<JSONObject> list = new ArrayList<>();
         for (PoReturnDetailEntity detail : detailList) {
@@ -333,7 +342,7 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
             //退款单价
             jsonObject.set("returnPrice", detail.getReturnPrice());
             //是否下推仓位
-            Boolean isPush = pushKingdeeList.stream().filter(obj -> StrUtil.equals(obj.getWarehouseId(), entity.getReturnWarehouseId()))
+            Boolean isPush = pushKingdeeList.stream().filter(obj -> CharSequenceUtil.equals(obj.getWarehouseId(), entity.getReturnWarehouseId()))
                     .map(CfgSettingDTO.WarehouseLocationSettingDTO::getIsPush).findFirst().orElse(Boolean.FALSE);
             if (isPush) {
                 //仓位
@@ -349,11 +358,11 @@ public class SyncKingdeeReturnOrderServiceImpl implements SyncKingdeeReturnOrder
                 jsonObject.set("subCode", purchaseOrderEntity.getSourceCode());
 
                 //金蝶明细id
-                String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> StrUtil.equals(purchaseOrderDetailEntity.getSourceDetailId(), obj.getId())).map(SubcontractOrderDetailEntity::getKingdeeDetailId).findFirst().orElse("");
+                String subKingdeeDetailId = subcontractOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(purchaseOrderDetailEntity.getSourceDetailId(), obj.getId())).map(SubcontractOrderDetailEntity::getKingdeeDetailId).findFirst().orElse("");
                 jsonObject.set("subKingdeeDetailId", subKingdeeDetailId);
             }
 
-            if (StringUtils.isNotBlank(entity.getPurchaseOrderCode())) {
+            if (CharSequenceUtil.isNotBlank(entity.getPurchaseOrderCode())) {
                 List<Map<String,Object>> mapList = new ArrayList<>();
                 Map<String,Object> entityMap = new HashMap<>();
                 entityMap.put("poKingdeeDetailId", purchaseOrderDetailEntity.getKingdeeDetailId());

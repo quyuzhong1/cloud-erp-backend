@@ -27,9 +27,6 @@ public interface WorkflowService {
     //驳回到上一级
     void rejectGoBackProcess(ApproveProcessDTO dto);
 
-    //驳回到某一个节点
-    //  void rejectNodeProcess();
-
 
     //启动一个流程
     ProcessNodeDTO startProcess(StartProcessDTO dto);

@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
  * 产品管理批量修改字段枚举
  */
 public enum ProductBatchFieldEnum implements EnumMessage  {
+
     PRODUCT_STATE("product_state","产品开发状态", "product_detail", "id"),
     SALE_STATE("sale_state","销售状态", "product_sale", "sku_id"),
     IS_MARKETABLE("is_marketable","是否可销售(0否，1是)", "product_sale", "sku_id"),

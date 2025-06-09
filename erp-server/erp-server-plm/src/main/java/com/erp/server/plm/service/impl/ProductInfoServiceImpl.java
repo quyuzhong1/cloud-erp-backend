@@ -1,9 +1,9 @@
 package com.erp.server.plm.service.impl;
 
-import com.alibaba.excel.EasyExcel;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.alibaba.excel.ExcelWriter;
 import com.alibaba.excel.write.metadata.WriteSheet;
-import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -13,19 +13,21 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.common.business.constant.IsConstant;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.SyncOperateEnum;
 import com.common.business.service.impl.RedisService;
 import com.common.business.threadlocal.UserContext;
+import com.common.business.utils.RedisUtil;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.constant.SqlConstants;
 import com.common.core.enums.ApiError;
-import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.date.DateUtil;
-import com.common.message.service.mq.MQProducerService;
+import com.common.message.constant.RedisKeyConstant;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.dto.excel.TaskExportDTO;
 import com.erp.model.plm.entity.*;
@@ -38,6 +40,8 @@ import com.erp.server.plm.constant.ProductManyDetailConstant;
 import com.erp.server.plm.constant.ProjectPlanConstant;
 import com.erp.server.plm.constant.TaskConstant;
 import com.erp.server.plm.mapper.ProductInfoMapper;
+import com.erp.server.plm.rocketmq.sync.lingxing.SyncLingXingProductDetailService;
+import com.erp.server.plm.rocketmq.sync.wangdian.SyncWangDianProductDetailService;
 import com.erp.server.plm.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -60,14 +64,17 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.common.business.enums.FileTaskEventEnum.*;
+import static com.alibaba.excel.EasyExcelFactory.write;
+import static com.alibaba.excel.EasyExcelFactory.writerSheet;
+import static com.alibaba.fastjson.JSON.toJSONString;
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_PLM_PRODUCT;
 
 /**
  * <p>
@@ -177,10 +184,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     private BasicDictService basicDictService;
 
     @Autowired
-    private SysCodeService sysCodeService;
-
-
-    @Autowired
     private ProductStatusTimeService productStatusTimeService;
 
     @Autowired
@@ -209,12 +212,21 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Autowired
     private ProjectTaskProgressService projectTaskProgressService;
     @Resource
-    private DownloadTaskFeign downloadTaskFeign;
+    private ApplicationCategoryService applicationCategoryService;
 
-    @Autowired
-    private MQProducerService mQProducerService;
+    @Resource
+    private SyncWangDianProductDetailService syncWangDianProductDetailService;
+
+    @Resource
+    private SyncLingXingProductDetailService syncLingXingProductDetailService;
+
+    @Resource
+    private RedisUtil redisUtil;
 
     private static final String CLASSPATH = String.valueOf(ProductInfoEntity.class);
+
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
 
     /**
      * 查询 分类id 下有多少产品
@@ -297,10 +309,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         entity.setChargeName(chargeName);
         entity.setIsFinishedProductDev(1);
         Boolean flag = this.saveOrUpdate(entity);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
 
         /**
          * 表示是新添加的
@@ -346,7 +354,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productOperateRecordDTO.setProductId(entity.getId());
             List<String> remarkList = new ArrayList<>();
             remarkList.add("新增了一个产品：[" + entity.getName() + "]");
-            productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
+            productOperateRecordDTO.setRemark(toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
             //操作日志
             sysLogService.addSysLogBySave("生成了一个产品：[" + entity.getName() + "]", CLASSPATH, entity.getId(), entity.getId());
@@ -388,6 +396,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-17 11:17
      */
     @Override
+    @Transactional
     public Boolean updateCategory(MoveCategoryDTO dto) {
         BasicCategoryEntity category = basicCategoryService.getById(dto.getCategoryId());
         if (Objects.isNull(category)) {
@@ -395,8 +404,31 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
         List<ProductInfoEntity> list = new ArrayList<>();
 
+        //查所有父级类及本身
+        List<BasicCategoryEntity> basicCategoryList = basicCategoryService.listParentEntity(dto.getCategoryId());
+        String categoryNames = CollUtil.isEmpty(basicCategoryList) ? "" : basicCategoryList.stream().map(BasicCategoryEntity::getName).collect(Collectors.joining("/"));
+
+        List<ProductDetailDTO.NoticeDTO> noticeDTOList = new ArrayList<>();
+        Map<String, List<ProductDetailEntity>> detailMap = productDetailService.lambdaQuery().in(ProductDetailEntity::getProductId, dto.getProductIds()).list().stream().collect(Collectors.groupingBy(ProductDetailEntity::getProductId));
         dto.getProductIds().forEach(req -> {
             ProductInfoEntity productInfoEntity = this.getById(req);
+            ProductInfoDTO productInfoDTO = new  ProductInfoDTO();
+            BeanMapper.copy(productInfoEntity, productInfoDTO);
+            productInfoDTO.setCategory(basicCategoryList.get(0).getName());
+            productInfoDTO.setCategoryId(dto.getCategoryId());
+            List<ProductDetailDTO.SkuChangeInfoDTO> productBasicChangeField = productDetailService.getProductBasicChangeField(productInfoDTO, productInfoEntity);
+            //发送通知
+            for (ProductDetailEntity productDetailEntity : detailMap.get(productInfoEntity.getId())) {
+                ProductDetailDTO.NoticeDTO noticeDTO = new ProductDetailDTO.NoticeDTO();
+                noticeDTO.setProductId(productInfoEntity.getId());
+                noticeDTO.setName(productInfoEntity.getName());
+                noticeDTO.setChargeId(productInfoEntity.getChargeId());
+                noticeDTO.setChargeName(productInfoEntity.getChargeName());
+                noticeDTO.setSkuNo(productDetailEntity.getSkuNo());
+                noticeDTO.setProductBasicChangeField(productBasicChangeField);
+                noticeDTOList.add(noticeDTO);
+            }
+
             productInfoEntity.setCategory(category.getName());
             productInfoEntity.setCategoryId(dto.getCategoryId());
             list.add(productInfoEntity);
@@ -405,23 +437,46 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             productOperateRecordDTO.setProductId(req);
             List<String> remarkList = new ArrayList<>();
             remarkList.add("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]");
-            productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
+            productOperateRecordDTO.setRemark(toJSONString(remarkList));
             productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
 
             //新增操作日志
             sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
-                    .setOperation("产品分类变更").setContent("转移分类[分类]由[" + productInfoEntity.getChargeName() + "]改为[" + category.getName() + "]"));
+                    .setOperation("更新产品分类").setContent(CharSequenceUtil.format("对SPU【{}】更新产品分类为【{}】",productInfoEntity.getSpuNo(),categoryNames)));
         });
         if (CollectionUtils.isNotEmpty(list)) {
             this.saveOrUpdateBatch(list);
 
-            //同步到SCM
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), list, IdUtil.simpleUUID());
-            //同步到WMS
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), list, IdUtil.simpleUUID());
+            //发送通知
+            productDetailService.handleProductChangeNotification(noticeDTOList,Boolean.TRUE);
+
+            List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            //推送至金蝶、旺店通、领星
+            sendPushTask(productIdList,SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         }
         return Boolean.TRUE;
+    }
+
+    //推送至金蝶、旺店通、领星
+    private void sendPushTask(List<String> productIdList,String operate ){
+        //只同步审核通过的
+        List<ProductDetailEntity> productDetailEntities = productDetailService.listSkuByProductIds(productIdList)
+                .stream()
+                .filter(v -> v.getStatus().equals(ProductDetailStatusEnum.APPROVAL_PASS.getCode()))
+                .collect(Collectors.toList());
+        if(CollUtil.isNotEmpty(productDetailEntities)){
+            //增加缓存清除
+            List<String> productDetailIdList = productDetailEntities.stream().map(ProductDetailEntity::getId).collect(Collectors.toList());
+            redisUtil.hdel(RedisKeyConstant.LIST_SKU_INFO,productDetailIdList.toArray());
+
+            //审核通过发送金蝶
+            productDetailService.sendPushTask(productDetailEntities, operate);
+            //审核通过发送旺店通
+            syncWangDianProductDetailService.syncDataToWangDian(productDetailEntities);
+            //审核通过发送领星
+            syncLingXingProductDetailService.syncDataToLingxing(productDetailEntities);
+        }
     }
 
 
@@ -444,11 +499,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 throw new ServiceException(ApiError.ERROR_95009);
             }
             entity.setIsDeleted(Boolean.TRUE);
-            //同步到SCM
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-            //同步到WMS
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-
             flag = this.removeById(productId);
             //当保存成功 就要去删除对应的任务了
             if (flag) {
@@ -488,7 +538,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             response.reset();
             // 设置文件头
             response.setHeader("Content-Disposition",
-                    "attchement;filename=" + new String("project.xlsx".getBytes("gb2312"), "ISO8859-1"));
+                    "attchement;filename=" + new String("project.xlsx".getBytes("gb2312"), StandardCharsets.ISO_8859_1));
             response.setContentType("application/msexcel");
             wb.write(output);
             wb.close();
@@ -509,26 +559,25 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public PagingVO paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<ProductSearchDTO.PagingParamDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO.PagingParamDTO params = dto.getParams();
         //这个是点击左侧分类获取到的产品id
         List<String> productIdList = params.getProductIds();
-        //如果productIds 不等于null 就是正常的搜索 ;
         if (productIdList != null && productIdList.size() == 0) {
-            return new PagingVO(new Page());
+            return new PagingVO<>();
         }
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO(new Page());
-        }
-        IPage pageData = baseMapper.paging(query, params, categoryIdList);
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
+        IPage<ProductShowDTO> pageData = baseMapper.paging(query, params, categoryIdList);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -574,7 +623,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @param deptIdList
      * @return List<String>
      */
-    private List<String> handleDept(List<String> deptIdList) {
+    @Override
+    public List<String> handleDept(List<String> deptIdList) {
         if (CollectionUtils.isEmpty(deptIdList)) {
             return Collections.EMPTY_LIST;
         }
@@ -597,13 +647,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public PagingVO<ProductShowDTO> myProject(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<ProductSearchDTO.PagingParamDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO.PagingParamDTO params = dto.getParams();
         //这个是点击左侧分类获取到的产品id
         List<String> productIdList = params.getProductIds();
-        //如果productIds 不等于null 就是正常的搜索 ;
         if (productIdList != null && productIdList.size() == 0) {
-            return new PagingVO(new Page());
+            return new PagingVO<>();
         }
         //分类id
         String categoryId = params.getCategoryId();
@@ -611,14 +660,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = UserContext.getDefaultLoginUser().getUid();
         //我的项目
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO(new Page());
-        }
-        IPage pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
+        IPage<ProductShowDTO> pageData = baseMapper.myProjectPaging(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
 
     }
 
@@ -632,13 +681,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public PagingVO<ProductShowDTO> collect(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<ProductSearchDTO.PagingParamDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO.PagingParamDTO params = dto.getParams();
         //这个是点击左侧分类获取到的产品id
         List<String> productIdList = params.getProductIds();
-        //如果productIds 不等于null 就是正常的搜索 ;
         if (productIdList != null && productIdList.size() == 0) {
-            return new PagingVO(new Page());
+            return new PagingVO<>();
         }
         //分类id
         String categoryId = params.getCategoryId();
@@ -646,14 +694,14 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         String userId = UserContext.getDefaultLoginUser().getUid();
         //收藏的项目
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return new PagingVO(new Page());
-        }
-        IPage pageData = baseMapper.collect(query, params, categoryIdList, userId);
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return new PagingVO<>();
+//        }
+        IPage<ProductShowDTO> pageData = baseMapper.collect(query, params, categoryIdList, userId);
         //填充分页数据
         fillPagingDb(pageData.getRecords());
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
 
     }
 
@@ -836,7 +884,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             List<ProjectTaskEntity> taskList = projectTaskService.getByProductIds(productIds);
             //工时统计
             List<ProjectTaskTimeRecordDTO.TaskWorkTimeDTO> taskTimeList = projectTaskTimeRecordService.listByProductIds(productIds);
-
+            List<String> applicationCategoryId = list.stream().map(ProductShowDTO::getApplicationCategoryId).distinct().collect(Collectors.toList());
+            List<ApplicationCategoryEntity> categoryEntityList = applicationCategoryService.listByIds(applicationCategoryId);
+            Map<String, String> categoryMap = categoryEntityList.stream()
+                    .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
 
             //根据产品id 获取到对应的要交付的文档数
             List<CountDTO> productDocs = taskDeliveryService.getTaskDocsCountByProductId();
@@ -848,6 +899,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             //完成的任务的状态
             List<Integer> finishedList = Arrays.asList(TaskStateEnum.FINISH.getCode());
             for (ProductShowDTO item : list) {
+                item.setApplicationCategoryName(categoryMap.get(item.getApplicationCategoryId()));
                 if (CollectionUtils.isNotEmpty(myCollectProductIds) && myCollectProductIds.contains(item.getProductId())) {
                     item.setIfAddProduct(true);
                     item.setIsAddProductName("是");
@@ -943,8 +995,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (projectTaskCount != 0) {
                     projectProgress = ((double) projectFinishTaskCount / projectTaskCount) * 100;
                 }
-                approvalProgress = Math.round(approvalProgress * 100) / 100;
-                projectProgress = Math.round(projectProgress * 100) / 100;
+                approvalProgress = (double)  Math.round(approvalProgress * 100) / 100;
+                projectProgress = (double)  Math.round(projectProgress * 100) / 100;
                 item.setApprovalProgress(approvalProgress);
                 item.setProjectProgress(projectProgress);
             }
@@ -955,18 +1007,16 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public List<BasicDTO> listProductInfo(ProductSearchDTO.PagingParamDTO params) {
         List<BasicDTO> dataList = new ArrayList<>();
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
-        String userId = loginUser.getUid();
         //获取到归档的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            return dataList;
-        }
+//        Boolean isFlag = handlePagingDept(params);
+//        if (isFlag) {
+//            return dataList;
+//        }
         dataList = baseMapper.listNotPaging(params, archiveProductIds, categoryIdList);
         return dataList;
     }
@@ -981,7 +1031,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      * @date 2022-09-16 17:16
      */
     private void checkName(String name, String id) {
-        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductInfoEntity::getName, name);
         if (StringUtils.isNotBlank(id)) {
             queryWrapper.ne(ProductInfoEntity::getId, id);
@@ -1078,19 +1128,12 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         productOperateRecordDTO.setProductId(productId);
         List<String> remarkList = new ArrayList<>();
         remarkList.add("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]");
-        productOperateRecordDTO.setRemark(JSONObject.toJSONString(remarkList));
+        productOperateRecordDTO.setRemark(toJSONString(remarkList));
         productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
         //新增操作日志
         sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(productId).setPid(productId)
                 .setOperation("产品状态变更").setContent("编辑了[产品状态]由[" + ApprovalStatusEnum.getName(productInfoEntity.getApprovalStatus()) + "]改为[" + name + "]"));
         this.update(updateWrapper);
-
-        ProductInfoEntity infoEntity = this.getById(productId);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(infoEntity), IdUtil.simpleUUID());
-
     }
 
     /**
@@ -1133,6 +1176,10 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             result.setChargeIds(Arrays.asList(chargeId.split(",")));
         } else {
             result.setChargeIds(new ArrayList<>());
+        }
+        ApplicationCategoryEntity applicationCategory = applicationCategoryService.getById(entity.getApplicationCategoryId());
+        if (ObjectUtils.isNotEmpty(applicationCategory)) {
+            result.setApplicationCategoryName(applicationCategory.getName());
         }
         String chargeName = entity.getChargeName();
         if (StringUtils.isNotBlank(chargeName)) {
@@ -1187,11 +1234,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         }
 
         this.saveOrUpdate(productInfoEntity);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
-
         return productInfoEntity.getId();
     }
 
@@ -1274,10 +1316,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
 
             Boolean updateFlag = this.updateById(newProduct);
-            //同步到SCM
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(newProduct), IdUtil.simpleUUID());
-            //同步到WMS
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(newProduct), IdUtil.simpleUUID());
 
             //当修改成功 且是已立项 就要创建项目了
             if (yesApproval && updateFlag) {
@@ -1391,28 +1429,28 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
                 if (!Arrays.asList(yesStartStatus, ingStatus).contains(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95182);
                 }
+                break;
                 //暂停
             case SUSPEND:
-                if (finishStatus.equals(currentStatus) || suspendStatus.equals(currentStatus) || terminateStatus.equals(currentStatus)) {
+                if (finishStatus.equals(currentStatus) || suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95180);
                 }
-
+                break;
             case NOT_START:
                 if (suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95193);
                 }
+                break;
             case YES_START:
                 if (suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95193);
                 }
+                break;
             case ING:
                 if (suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95193);
                 }
-            case TERMINATE:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95192);
-                }
+                break;
         }
     }
 
@@ -1440,31 +1478,31 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         switch (status) {
             //立项
             case APPROVAL:
-                if (approvalStatus.equals(currentStatus) || suspendStatus.equals(currentStatus) || terminateStatus.equals(currentStatus)) {
+                if (approvalStatus.equals(currentStatus) || suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95183);
                 }
+                break;
                 //暂停
             case SUSPEND:
-                if (approvalStatus.equals(currentStatus) || suspendStatus.equals(currentStatus) || terminateStatus.equals(currentStatus)) {
+                if (approvalStatus.equals(currentStatus) || suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95181);
                 }
-
+                break;
             case WAIT:
                 if (suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95193);
                 }
+                break;
             case PROBE:
                 if (suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95193);
                 }
+                break;
             case ID_DESIGN_ING:
                 if (suspendStatus.equals(currentStatus)) {
                     throw new ServiceException(ApiError.ERROR_95193);
                 }
-            case TERMINATE:
-                if (terminateStatus.equals(currentStatus)) {
-                    throw new ServiceException(ApiError.ERROR_95192);
-                }
+                break;
         }
 
 
@@ -1524,33 +1562,40 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         switch (ProjectStateEnum.getEnum(projectState)) {
             case YES_START:
                 //如果状态为已启动，更新产品信息{产品开发状态}：开发中
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.DEVELOP_AFOOT.getCode(),detailIds,0);
                 break;
             case ING:
                 //如果状态为进行中，更新产品信息{产品开发状态}：开发中
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.DEVELOP_AFOOT.getCode(),detailIds,0);
                 break;
             case FINISH:
                 //如果状态改为已完成，更新产品信息{产品开发状态}：开发完成；
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_FINISH.getCode());
-                //{销售状态}更新为是
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 1).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.DEVELOP_FINISH.getCode(),detailIds,1);
                 break;
             case TERMINATE:
                 //如果状态改为已中止，更新产品信息{产品开发状态}：中止开发；
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode(),detailIds,0);
                 break;
             case SUSPEND:
                 //如果状态改为暂停，更新产品信息{产品开发状态}：暂停；
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.SUSPEND_DEVELOP.getCode(),detailIds,0);
                 break;
             default:
                 break;
         }
+    }
+    /**
+     * 更新产品信息
+     * @author will
+     * @date 2024/11/16 14:16
+     * @param productInfoIds
+     * @param state
+     * @param detailIds
+     * @param isMarketable
+     */
+    private void updateProductData (List<String> productInfoIds,Integer state,List<String> detailIds,Integer isMarketable) {
+        productDetailService.updateProductStateByProductIdList(productInfoIds, state);
+        productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, isMarketable).in(ProductSaleEntity::getSkuId, detailIds).update();
     }
 
     /**
@@ -1680,7 +1725,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (StringUtils.isNotBlank(spuNo)) {
             queryWrapper.eq(ProductInfoEntity::getSpuNo, spuNo);
         }
-        queryWrapper.last("limit 1");
+        queryWrapper.last(SqlConstants.LIMIT_1);
         ProductInfoEntity entity = this.getOne(queryWrapper);
         if (ObjectUtils.isNotEmpty(entity)) {
             ProductInfoDTO dto = new ProductInfoDTO();
@@ -1714,11 +1759,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             }
 
             this.saveOrUpdate(productInfoEntity);
-            //同步到SCM
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
-            //同步到WMS
-//            mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(productInfoEntity), IdUtil.simpleUUID());
-
         }
 
     }
@@ -1754,11 +1794,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             throw new ServiceException(ApiError.ERROR_95010);
         }
         entity.setProgressStatus(dto.getProgressStatus());
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-
         return this.updateById(entity);
     }
 
@@ -1776,11 +1811,6 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
             throw new ServiceException(ApiError.ERROR_95010);
         }
         entity.setImageUrl(dto.getImageUrl());
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), Arrays.asList(entity), IdUtil.simpleUUID());
-
         return this.updateById(entity);
     }
 
@@ -1891,7 +1921,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     private String getFileName(List<Integer> exportDatas) {
         int size = exportDatas.size();
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
         if (size == 2) {
             sb.append("产品管理");
@@ -1934,11 +1964,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         try {
             response.setHeader("Content-Disposition", "attachment;filename=" + URLEncoder.encode(fileName, "utf-8"));
             outputStream = response.getOutputStream();
-            excelWriter = EasyExcel.write(outputStream)
+            excelWriter = write(outputStream)
                     .build();
-            WriteSheet productSheet = EasyExcel.writerSheet("产品列表").head(ProductExcelDTO.class).build();
+            WriteSheet productSheet = writerSheet("产品列表").head(ProductExcelDTO.class).build();
             excelWriter.write(productList, productSheet);
-            WriteSheet taskSheet = EasyExcel.writerSheet("任务列表").head(TaskExcelDTO.class).build();
+            WriteSheet taskSheet = writerSheet("任务列表").head(TaskExcelDTO.class).build();
             excelWriter.write(taskExcelList, taskSheet);
         } catch (Exception e) {
             log.error(" exportExcel", e);
@@ -2025,7 +2055,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      **/
     @Override
     public ProductInfoEntity getProductByName(String name) {
-        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper();
+        LambdaQueryWrapper<ProductInfoEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(ProductInfoEntity::getName, name);
         queryWrapper.last("LIMIT 1");
         return this.getOne(queryWrapper);
@@ -2093,9 +2123,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public Boolean batchEstablish(ProductInfoDTO.IdsDateDto dto) {
-        List<String> productIdList = dto.getIds();
-        LocalDate projectInitDate = dto.getLocalDate();
+    public Boolean batchEstablish(List<String> productIdList, LocalDate projectInitDate) {
         List<ProductInfoEntity> productInfoList = this.listByIds(productIdList);
         Integer suspendCode = ApprovalStatusEnum.SUSPEND.getCode();
         Integer terminateCode = ApprovalStatusEnum.TERMINATE.getCode();
@@ -2120,16 +2148,11 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         projectTaskService.checkTaskFinish(taskFinish);
         preTaskService.checkPreTaskFinish(taskIdList);
         projectTaskService.checkSonTaskFinish(taskIdList, taskFinish);
-        LocalDateTime now = LocalDateTime.now();
         for (ProductInfoEntity product : productInfoList) {
             product.setApprovalTime(projectInitDate.atTime(0, 0));
             product.setApprovalStatus(approvalCode);
         }
         Boolean result = this.updateBatchById(productInfoList);
-        //同步到SCM
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_SCM_PRODUCT_INFO_TAG.getName(), productInfoList, IdUtil.simpleUUID());
-        //同步到WMS
-//        mQProducerService.asyncClassMsg(RocketMqTopic.SYNC_PLM_TO_WMS_PRODUCT_TOPIC, RocketMqTagEnum.SYNC_WMS_PRODUCT_INFO_TAG.getName(), productInfoList, IdUtil.simpleUUID());
 
         if (result) {
             //批量添加获取修改产品
@@ -2190,10 +2213,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         if (endTime != null) {
             Integer finishState = ProjectStateEnum.FINISH.getState();
             //表示未完成
-            if (!finishState.equals(projectStatus)) {
-                if (now.compareTo(endTime) > 0) {
-                    isDelay = true;
-                }
+            if (!finishState.equals(projectStatus) && now.compareTo(endTime) > 0) {
+                 isDelay = true;
             }
         }
         info.setIsDelay(isDelay);
@@ -2383,7 +2404,7 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
         ProductMilepostShowDTO milepostShow = projectTaskProgressService.getMilepostTaskListByProductId(productId);
         info.setProductMilepostShow(milepostShow);
         //任务进度
-        productProgressShowDTO progress = projectTaskProgressService.getFinishProgressList(productId);
+        ProductProgressShowDTO progress = projectTaskProgressService.getFinishProgressList(productId);
         info.setProductProgressShow(progress);
 
         return info;
@@ -2435,97 +2456,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean allExport(ProductSearchDTO.ExportDTO params) {
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = params.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
-//        String name = size == 2 ? "产品列表" : ProductConstant.PRODUCT_EXPORT.equals(flag) ? "产品列表" : "任务列表";
-//        downloadTaskFeign.saveDownloadTask(name, EXPORT_PLM_PRODUCT_ALL.getCode(), params);
-
-
-        params.setPermissionSql(params.getPermissionSql());
-        //分类id
-        String categoryId = params.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-        //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
-        //两个都是
-        if (size == 2) {
-            List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
-            fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listAllTaskExport(params, categoryIdList);
-            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                Integer status = item.getStatus();
-                String statusName = TaskStateEnum.getName(status);
-                item.setTaskStatusName(statusName);
-            }
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productDevelop.xlsx";
-            String name = "产品列表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                log.error("产品列表列表导出出错 >>>>>{}", e);
-                return Boolean.FALSE;
-            }
-
-
-        }
-        if (size != 2) {
-            //产品导出
-            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-                List<ProductShowDTO> list = baseMapper.listAllExport(params, categoryIdList);
-                fillPagingDb(list);
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/product.xlsx";
-                String name = "产品列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    log.error("产品列表列表导出出错 >>>>>{}", e);
-                    return Boolean.FALSE;
-                }
-            }
-
-            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listAllTaskExport(params, categoryIdList);
-                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                    Integer status = item.getStatus();
-                    String statusName = TaskStateEnum.getName(status);
-                    item.setTaskStatusName(statusName);
-                }
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/productTask.xlsx";
-                String name = "任务列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    log.error("产品开发管理任务列表导出出错 >>>>>{}", e);
-                    return Boolean.FALSE;
-                }
-
-            }
-        }
-
-        return Boolean.TRUE;
-
+        params.setExportType("2");
+        return commonExport(params);
     }
 
 
@@ -2539,98 +2471,75 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean myProjectExport(ProductSearchDTO.ExportDTO params) {
+        params.setExportType("0");
+        return commonExport(params);
+    }
 
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = params.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
-//        String name = size == 2 ? "产品列表" : ProductConstant.PRODUCT_EXPORT.equals(flag) ? "产品列表" : "任务列表";
-//        downloadTaskFeign.saveDownloadTask(name, EXPORT_PLM_PRODUCT_MY_PROJECT.getCode(), params);
-
+    private Boolean commonExport(ProductSearchDTO.ExportDTO params) {
+        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+        StringBuilder builder = new StringBuilder();
+        builder.append("产品开发导出").append(date);
 
         //分类id
         String categoryId = params.getCategoryId();
         List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        params.setCategoryIdList(categoryIdList);
+
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        params.setUserId(userId);
+        if(CollUtil.isNotEmpty(params.getProductIds())){
+            params.setIds(params.getProductIds());
+        }
+        downloadTaskFeign.saveDownloadTask(builder.toString(), EXPORT_PLM_PRODUCT.getCode(), params);
+        return Boolean.TRUE;
+    }
+
+
+    @Override
+    public PagingVO<ProductShowDTO> exportProductShow(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        String exportType = dto.getParams().getExportType();
+        //分类id
+        String categoryId = dto.getParams().getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
         String userId = UserContext.getDefaultLoginUser().getUid();
 
-
-        //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
-        //两个都是
-        if (size == 2) {
-            List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
-            fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
-            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                Integer status = item.getStatus();
-                String statusName = TaskStateEnum.getName(status);
-                item.setTaskStatusName(statusName);
-            }
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productDevelop.xlsx";
-            String name = "产品列表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                log.error("产品列表列表导出出错 >>>>>{}", e);
-                return Boolean.FALSE;
-            }
-        }
-        if (size != 2) {
-            //产品导出
-            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-                //我的项目
-                List<ProductShowDTO> list = baseMapper.listMyProjectExport(params, categoryIdList, userId);
-                fillPagingDb(list);
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/product.xlsx";
-                String name = "产品列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    log.error("产品列表列表导出出错 >>>>>{}", e);
-                    return Boolean.FALSE;
-                }
-            }
-            //任务导出
-            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.listMyProjectTaskExport(params, categoryIdList, userId);
-                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                    Integer status = item.getStatus();
-                    String statusName = TaskStateEnum.getName(status);
-                    item.setTaskStatusName(statusName);
-                }
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/productTask.xlsx";
-                String name = "任务列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    log.error("产品开发管理任务列表导出出错 >>>>>{}", e);
-                    return Boolean.FALSE;
-                }
-            }
+        //我的项目
+        Page<ProductSearchDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<ProductShowDTO> pageData = baseMapper.listMyProjectExport(query,dto.getParams(), categoryIdList, userId);
+        if(exportType.equals("0")){
+            pageData = baseMapper.listMyProjectExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("1")){
+            pageData = baseMapper.collectExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("2")){
+            pageData = baseMapper.listAllExport(query,dto.getParams(), categoryIdList);
         }
 
+        fillPagingDb(pageData.getRecords());
+        return new PagingVO<>(pageData);
+    }
 
-        return Boolean.TRUE;
-
+    @Override
+    public PagingVO<TaskExportDTO.ProductTaskExcelDTO> exportProductTaskExcelDTO(PagingDTO<ProductSearchDTO.ExportDTO> dto) {
+        String exportType = dto.getParams().getExportType();
+        //分类id
+        String categoryId = dto.getParams().getCategoryId();
+        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        Page<ProductSearchDTO.ExportDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
+        IPage<TaskExportDTO.ProductTaskExcelDTO> pageData = null;
+        if(exportType.equals("0")){
+            pageData = baseMapper.listMyProjectTaskExport(query,dto.getParams(), categoryIdList, userId);
+        }else if(exportType.equals("1")){
+            pageData = baseMapper.collectTaskExport(query,dto.getParams(),categoryIdList,userId);
+        }else if(exportType.equals("2")){
+            pageData = baseMapper.listAllTaskExport(query,dto.getParams(), categoryIdList);
+        }
+        for (TaskExportDTO.ProductTaskExcelDTO item : pageData.getRecords()) {
+            Integer status = item.getStatus();
+            String statusName = TaskStateEnum.getName(status);
+            item.setTaskStatusName(statusName);
+        }
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -2643,98 +2552,8 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
      */
     @Override
     public Boolean collectExport(ProductSearchDTO.ExportDTO params) {
-
-        /**
-         * 导出数据 类型
-         * 0，产品列表
-         * 1. 任务列表
-         */
-        List<Integer> exportDataList = params.getExportDataList();
-        int size = exportDataList.size();
-        Integer flag = exportDataList.get(0);
-//        String name = size == 2 ? "产品列表" : ProductConstant.PRODUCT_EXPORT.equals(flag) ? "产品列表" : "任务列表";
-//        downloadTaskFeign.saveDownloadTask(name, EXPORT_PLM_PRODUCT_COLLECT.getCode(), params);
-
-        //分类id
-        String categoryId = params.getCategoryId();
-        List<String> categoryIdList = basicCategoryService.getChildrenCategoryIds(categoryId);
-
-        //部门处理
-        Boolean isFlag = handlePagingDept(params);
-        if (isFlag) {
-            throw new ServiceException(ApiError.TIME_NOT_NULL,"部门人员");
-        }
-
-        //两个都是
-        if (size == 2) {
-            //收藏的项目
-            List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
-            fillPagingDb(list);
-            List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.collectTaskExport(params, categoryIdList);
-            for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                Integer status = item.getStatus();
-                String statusName = TaskStateEnum.getName(status);
-                item.setTaskStatusName(statusName);
-            }
-            StringBuffer sb = new StringBuffer();
-            String excelPath = "excel/productDevelop.xlsx";
-            String name = "产品列表";
-            String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-            sb.append(date);
-            sb.append(name);
-            try {
-                new ExcelPrintUtils().patchSheetExport(list, taskList, response, sb.toString(), excelPath);
-            } catch (IOException e) {
-                log.error("产品列表列表导出出错 >>>>>{}", e);
-                return Boolean.FALSE;
-            }
-        }
-
-        if (size != 2) {
-            //产品导出
-            if (ProductConstant.PRODUCT_EXPORT.equals(flag)) {
-                //我的项目
-                List<ProductShowDTO> list = baseMapper.collectExport(params, categoryIdList);
-                fillPagingDb(list);
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/product.xlsx";
-                String name = "产品列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    log.error("产品列表列表导出出错 >>>>>{}", e);
-                    return Boolean.FALSE;
-                }
-            }
-            //任务导出
-            if (ProductConstant.PRODUCT_TASK_EXPORT.equals(flag)) {
-                List<TaskExportDTO.ProductTaskExcelDTO> taskList = baseMapper.collectTaskExport(params, categoryIdList);
-                for (TaskExportDTO.ProductTaskExcelDTO item : taskList) {
-                    Integer status = item.getStatus();
-                    String statusName = TaskStateEnum.getName(status);
-                    item.setTaskStatusName(statusName);
-                }
-                StringBuffer sb = new StringBuffer();
-                String excelPath = "excel/productTask.xlsx";
-                String name = "任务列表";
-                String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-                sb.append(date);
-                sb.append(name);
-                try {
-                    new ExcelPrintUtils().patchExport(taskList, response, sb.toString(), excelPath);
-                } catch (IOException e) {
-                    log.error("产品开发管理任务列表导出出错 >>>>>{}", e);
-                    return Boolean.FALSE;
-                }
-            }
-        }
-
-
-        return Boolean.TRUE;
-
+        params.setExportType("1");
+        return commonExport(params);
     }
 
     @Override
@@ -2745,6 +2564,41 @@ public class ProductInfoServiceImpl extends ServiceImpl<ProductInfoMapper, Produ
     @Override
     public List<ProductDetailDTO.ProductDTO> listProductBySkuIds(List<String> skuIds) {
         return baseMapper.listProductBySkuIds(skuIds);
+    }
+
+    @Override
+    @Transactional
+    public Boolean updateApplicationCategory(MoveApplicationCategoryDTO dto) {
+
+        List<ProductInfoEntity> list = new ArrayList<>();
+        List<ApplicationCategoryEntity> applicationCategoryList= applicationCategoryService.list();
+        Map<String, String> applicationMap = applicationCategoryList.stream()
+                .collect(Collectors.toMap(ApplicationCategoryEntity::getId, ApplicationCategoryEntity::getName, (o1, o2) -> o1));
+        dto.getProductIds().forEach(req -> {
+            ProductInfoEntity productInfoEntity = this.getById(req);
+            String oldName = applicationMap.get(productInfoEntity.getApplicationCategoryId());
+            productInfoEntity.setApplicationCategoryId(dto.getApplicationCategoryId());
+            list.add(productInfoEntity);
+            //新增产品操作日志
+            ProductOperateRecordDTO productOperateRecordDTO = new ProductOperateRecordDTO();
+            productOperateRecordDTO.setProductId(req);
+            List<String> remarkList = new ArrayList<>();
+            remarkList.add("转移应用分类[应用分类]由[" + oldName + "]改为[" + applicationMap.get(dto.getApplicationCategoryId()) + "]");
+            productOperateRecordDTO.setRemark(toJSONString(remarkList));
+            productOperateRecordService.saveOrUpdate(productOperateRecordDTO);
+
+            //新增操作日志
+            sysLogService.addSysLogByOther(new SysLogEntity().setClassPath(CLASSPATH).setBusinessId(req).setPid(req)
+                    .setOperation("更新应用分类").setContent(CharSequenceUtil.format("对SPU【{}】更新应用分类为【{}】",productInfoEntity.getSpuNo(),applicationMap.get(dto.getApplicationCategoryId()))));
+        });
+        if (CollectionUtils.isNotEmpty(list)) {
+            this.saveOrUpdateBatch(list);
+
+            List<String> productIdList = list.stream().map(ProductInfoEntity::getId).collect(Collectors.toList());
+            //推送至金蝶、旺店通、领星
+            sendPushTask(productIdList,SyncOperateEnum.OPERATE_APPROVE.getCode());
+        }
+        return Boolean.TRUE;
     }
 
 

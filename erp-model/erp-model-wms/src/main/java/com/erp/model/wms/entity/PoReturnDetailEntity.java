@@ -114,13 +114,19 @@ public class PoReturnDetailEntity extends BaseEntity<PoReturnDetailEntity> {
      * 金蝶明细id
      */
     @TableField("kingdee_detail_id")
-    private String KingdeeDetailId;
+    private String kingdeeDetailId;
 
     /**
      * 仓位
      */
     @TableField("warehouse_location")
     private String warehouseLocation;
+
+    /**
+     * 采购订单仓位
+     */
+    @TableField(exist = false)
+    private String purchaseWarehouseLocation;
 
     @TableField(exist = false)
     private String approveStatus;

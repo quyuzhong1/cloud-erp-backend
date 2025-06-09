@@ -7,12 +7,12 @@ import java.util.List;
 import javax.annotation.Resource;
 import javax.net.ssl.SSLHandshakeException;
 
+import cn.hutool.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.CfgAppClientEntity;
@@ -64,7 +64,7 @@ public class DmpInputShopeeProductInitHandler extends DmpInputInitHandler{
 		ShopAuthEntity shopAuthEntity = shopAuthEntityList.get(0);
 		ProductRequest productRequest = ProductRequest.builder()
                 .host(cfgAppClientEntity.getUrl())
-                .offset(null)
+                .offset(0)
                 .token(shopAuthEntity.getAccessToken())
                 .shopId(Long.parseLong(shopAuthEntity.getShopeeId()))
                 .partnerId(Long.parseLong(cfgAppClientEntity.getClientId()))
@@ -90,17 +90,22 @@ public class DmpInputShopeeProductInitHandler extends DmpInputInitHandler{
 	    			}
 	    			try {
 						Thread.sleep(sleepTime);
-					} catch (InterruptedException e) {}
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+					}
 	    			sleepTime = sleepTime + 1000;
 	    			count = count + 1;
 	    		}
 	    	}
 	    	JSONObject result = data.getResponse();
-	    	hasNextPage = result.getBoolean("has_next_page");
+	    	hasNextPage = result.getBool("has_next_page");
 	    	if(hasNextPage) {
-	    		productRequest.setOffset(result.getInteger("next_offset"));
+	    		productRequest.setOffset(result.getInt("next_offset"));
 	    	}
-	    	item.addAll(result.getJSONArray("item"));
+	    	cn.hutool.json.JSONArray itemData = result.getJSONArray("item");
+	    	if(CollUtil.isNotEmpty(itemData)) {
+	    		item.addAll(itemData);
+	    	}
 		}
 		dmpInputTaskInitDTO.setMsg(item.toJSONString());
 		dmpInputTaskInitDTOList.add(dmpInputTaskInitDTO);

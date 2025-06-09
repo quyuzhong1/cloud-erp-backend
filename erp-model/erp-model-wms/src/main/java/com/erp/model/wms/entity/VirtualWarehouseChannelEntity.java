@@ -1,13 +1,14 @@
 package com.erp.model.wms.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
-import com.baomidou.mybatisplus.annotation.TableField;
-import java.io.Serializable;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
-import com.common.business.enums.ApproveStatusEnum;
+
+import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -43,12 +44,27 @@ public class VirtualWarehouseChannelEntity extends BaseEntity<VirtualWarehouseCh
     */
     @TableField("relation_id")
     private String relationId;
+    /**
+     * 分区列表
+     */
+    @TableField(exist = false)
+    private List<String> partitionIds;
+    /**
+     * 分区id
+     */
+    @TableField(exist = false)
+    private String partitionId;
+    /**
+     * 对分区进行加密
+     */
+    @TableField(exist = false)
+    private String partitionIdMd5;
 
     public static final String VIRTUAL_WAREHOUSE_ID = "virtual_warehouse_id";
 
     public static final String DICT_PLATFORM = "dict_platform";
 
-    public static final String TYPE = "type";
+    
 
     public static final String RELATION_ID = "relation_id";
 

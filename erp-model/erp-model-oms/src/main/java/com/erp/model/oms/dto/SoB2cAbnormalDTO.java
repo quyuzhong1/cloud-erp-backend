@@ -5,6 +5,8 @@ import com.common.business.dto.base.SortDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +26,26 @@ public class SoB2cAbnormalDTO  implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    public static class ClearAbnormalDTO  {
+
+        /**
+         * 表 ids
+         */
+        @NotEmpty(message = "ids不能为空")
+        private List<String> ids;
+
+        /**
+         * remark
+         */
+        @NotBlank(message = "备注不能为空")
+        private String remark;
+
+    }
+    /**
+     * 分页查询参数
+     */
+    @Data
+    @NoArgsConstructor
     public static class PagingParamDTO  extends SortDTO {
 
         /**
@@ -38,6 +60,47 @@ public class SoB2cAbnormalDTO  implements Serializable {
     }
 
     /**
+     * 错误池
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PoolsDTO {
+        /**
+         * 错误id
+         */
+        private String errorIds;
+        private String dictPlatform;
+        /**
+         * 类型
+         */
+        private String type;
+        /**
+         * 功能模块
+         */
+        private String modules;
+        /**
+         * 来源系统
+         */
+        private String sourceSystem;
+        /**
+         * 提示码
+         */
+        private String code;
+        /**
+         * 提示错误信息
+         */
+        private String message;
+        /**
+         * 是否转化
+         */
+        private String needPrompt;
+        /**
+         * 友好提示信息
+         */
+        private String tip;
+    }
+
+    /**
      * 分页列表
      */
     @Data
@@ -49,6 +112,15 @@ public class SoB2cAbnormalDTO  implements Serializable {
          */
         private String id;
 
+        /**
+         * 异常订单主键
+         */
+        private String errorId;
+
+        /**
+         * 异常订单类型
+         */
+        private String errorType;
         /**
          * 销售订单明细主键id
          */
@@ -138,6 +210,15 @@ public class SoB2cAbnormalDTO  implements Serializable {
          * 异常生成时间【可排序】
          */
         private LocalDateTime signOrderErrorTime;
+        /**
+         * 失败原因
+         */
+        private String failureReason;
+
+        /**
+         * 解决方案
+         */
+        private String solution;
     }
 
 }

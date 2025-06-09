@@ -93,30 +93,78 @@
     <select id="listVirtualWarehouseIdListAndSkuIdList"
             resultType="com.erp.model.wms.dto.VirtualInventoryDTO$ListInventoryDTO">
         select
-               vi.id,
-               vi.warehouse_id,
-               vi.sku_id,
-               vi.dict_inventory_status,
-               COALESCE(vi.qty,0) as virtualQty,
-               vi.virtual_warehouse_id,
-               (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'usable') as usableQty,
-               (select  COALESCE(sum(qty),0) from inventory where is_deleted = false and sku_id = vi.sku_id and warehouse_id = vi.warehouse_id and dict_inventory_status = 'frozen') as frozenQty
-        from virtual_inventory vi
+            id,
+            skuId,
+            warehouseId,
+            virtualWarehouseId,
+            virtualQty,
+            virtualUsableQty,
+            virtualFrozenQty,
+            realQty,
+            usableQty,
+            frozenQty,
+            inTransitQty,
+            waitQcQty
+        from
+        (WITH VirtualInventory AS (
+        SELECT
+            min(id) as id,
+            sku_id,
+            warehouse_id,
+            virtual_warehouse_id,
+            SUM(qty) AS virtualQty,
+            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS virtualUsableQty,
+            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS virtualFrozenQty
+            FROM
+            virtual_inventory
+            WHERE
+            is_deleted = false
+            GROUP BY
+            sku_id, warehouse_id, virtual_warehouse_id
+        ),
+        Inventory AS (
+            SELECT
+            sku_id,
+            warehouse_id,
+            SUM(CASE WHEN dict_inventory_status = 'usable' THEN qty ELSE 0 END) AS usableQty,
+            SUM(CASE WHEN dict_inventory_status = 'frozen' THEN qty ELSE 0 END) AS frozenQty,
+            SUM(CASE WHEN dict_inventory_status = 'inTransit' THEN qty ELSE 0 END) AS inTransitQty,
+            SUM(CASE WHEN dict_inventory_status = 'waitQc' THEN qty ELSE 0 END) AS waitQcQty
+            FROM
+            inventory
+            WHERE
+            is_deleted = false
+            GROUP BY
+            sku_id, warehouse_id
+        )
+        SELECT
+            vi.id,
+            i.sku_id AS skuId,
+            i.warehouse_id AS warehouseId,
+            vi.virtual_warehouse_id as virtualWarehouseId,
+            COALESCE(vi.virtualQty, 0) as virtualQty,
+            COALESCE(vi.virtualUsableQty, 0) as virtualUsableQty,
+            COALESCE(vi.virtualFrozenQty, 0) as virtualFrozenQty,
+            COALESCE(i.usableQty, 0) + COALESCE(i.frozenQty, 0) as realQty,
+            COALESCE(i.usableQty, 0) AS usableQty,
+            COALESCE(i.frozenQty, 0) AS frozenQty,
+            COALESCE(i.inTransitQty, 0) AS inTransitQty,
+            COALESCE(i.waitQcQty, 0) AS waitQcQty
+        FROM VirtualInventory vi
+        LEFT JOIN  Inventory i ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
         <where>
-            vi.is_deleted = false
-            and vi.sku_id in
+             vi.sku_id in
             <foreach collection="skuIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-
             <if test="virtualWarehouseIdList != null and virtualWarehouseIdList.size > 0">
                 and vi.virtual_warehouse_id in
                 <foreach collection="virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
                     #{item}
                 </foreach>
             </if>
-
         </where>
+        ) diff
     </select>
 
     <!-- 库存差异分页查询 -->
@@ -136,7 +184,8 @@
             frozenQty,
             inTransitQty,
             waitQcQty,
-            totalVirtualQty
+            totalVirtualQty,
+            createTime
         from
         (WITH VirtualInventory AS (
             SELECT
@@ -176,6 +225,7 @@
             pd.name AS productName,
             i.warehouse_id AS warehouseId,
             wh.name AS warehouseName,
+            wh.create_time AS createTime,
             COALESCE(vi.virtualQty, 0) as virtualQty,
             COALESCE(vi.virtualUsableQty, 0) as virtualUsableQty,
             COALESCE(vi.virtualFrozenQty, 0) as virtualFrozenQty,
@@ -184,7 +234,7 @@
             COALESCE(i.frozenQty, 0) AS frozenQty,
             COALESCE(i.inTransitQty, 0) AS inTransitQty,
             COALESCE(i.waitQcQty, 0) AS waitQcQty,
-            sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id) AS totalVirtualQty
+            COALESCE(sum(vi.virtualQty)over(PARTITION BY vi.warehouse_id,vi.sku_id),0) AS totalVirtualQty
         FROM
         Inventory i
         LEFT JOIN (
@@ -196,9 +246,6 @@
         warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
         <where>
             1 = 1
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
-            </if>
             <if test="params.isViewVirtual != null and params.isViewVirtual == true">
                 and  vi.sku_id is not null
             </if>
@@ -221,6 +268,9 @@
             <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory == true">
                 and (diff.virtualQty > 0 or diff.virtualUsableQty > 0 or diff.virtualFrozenQty > 0 or diff.realQty > 0 or diff.usableQty > 0 or diff.frozenQty > 0 or diff.inTransitQty > 0 or diff.waitQcQty > 0 or diff.totalVirtualQty > 0)
             </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         </where>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -228,7 +278,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        diff.id
+        diff.skuId asc,diff.warehouseId asc
     </select>
 
     <!-- 库存差异列表数量 -->
@@ -361,9 +411,6 @@
         virtual_warehouse vw ON vi.virtual_warehouse_id = vw.id AND vw.is_deleted = false
          <where>
             1 = 1
-            <if test="params.permissionSql != null and params.permissionSql != ''">
-                ${params.permissionSql}
-            </if>
              <if test="params.isViewVirtual != null and params.isViewVirtual == true">
                  and  vi.sku_id is not null
              </if>
@@ -386,6 +433,9 @@
             <if test="params.isDeleteZeroInventory != null and params.isDeleteZeroInventory == true">
                 and (diff.virtualQty > 0 or diff.virtualUsableQty > 0 or diff.virtualFrozenQty > 0 or diff.realQty > 0 or diff.usableQty > 0 or diff.frozenQty > 0 or diff.inTransitQty > 0 or diff.waitQcQty > 0 or diff.totalVirtualQty > 0)
             </if>
+            <if test="params.permissionSql != null and params.permissionSql != ''">
+                ${params.permissionSql}
+            </if>
         </where>
         order by
         <if test="params.sortList != null and params.sortList.size > 0">
@@ -393,7 +443,7 @@
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        diff.id
+        diff.id asc,diff.virtualWarehouseId asc
     </select>
 
 
@@ -459,8 +509,11 @@
             <foreach collection="params.virtualWarehouseIdList" item="item" open="(" close=")" separator=",">
                 #{item}
             </foreach>
-            <if test="params.dictInventoryStatus != null and params.dictInventoryStatus != ''">
-                and vi.dict_inventory_status = #{params.dictInventoryStatus}
+            <if test="params.dictInventoryStatusList != null and params.dictInventoryStatusList.size > 0">
+                and vi.dict_inventory_status in
+                <foreach collection="params.dictInventoryStatusList" item="item" open="(" close=")" separator=",">
+                    #{item}
+                </foreach>
             </if>
         </where>
         group by  vi.sku_id,vi.warehouse_id,vi.virtual_warehouse_id,vi.dict_inventory_status
@@ -567,6 +620,124 @@
             </if>
         </where>
         ORDER BY diff.invId
+    </select>
+
+    <!-- 按SKU显示库存分配差异 -->
+    <select id="listDiffSkuSendNotice"
+            resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$SendNoticeSkuDTO">
+        select
+            id,
+            skuId,
+            skuNo,
+            warehouseId,
+            warehouseName,
+            realQty,
+            distributionQty,
+            unDistributionQty
+        from
+        (WITH VirtualInventory AS (
+        SELECT
+            sku_id,
+            warehouse_id,
+            SUM(qty) AS virtualQty
+            FROM
+            virtual_inventory
+            WHERE
+            is_deleted = false
+            GROUP BY
+            sku_id, warehouse_id
+        ),
+        Inventory AS (
+        SELECT
+            min(id) as id,
+            sku_id,
+            warehouse_id,
+            SUM(CASE WHEN dict_inventory_status in ('usable','frozen') THEN qty ELSE 0 END) AS realQty
+        FROM
+        inventory
+        WHERE
+        is_deleted = false
+        GROUP BY
+        sku_id, warehouse_id
+        )
+        SELECT
+        i.id,
+        i.sku_id AS skuId,
+        pd.sku_no AS skuNo,
+        pd.name AS productName,
+        i.warehouse_id AS warehouseId,
+        wh.name AS warehouseName,
+        COALESCE(i.realQty, 0) as realQty,
+        COALESCE(vi.virtualQty, 0) as distributionQty,
+        COALESCE(i.realQty, 0) - COALESCE(vi.virtualQty, 0) as unDistributionQty
+        FROM
+        Inventory i
+        LEFT JOIN
+        VirtualInventory vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
+        LEFT JOIN
+        product_detail pd ON i.sku_id = pd.id AND pd.is_deleted = false
+        LEFT JOIN
+        warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
+        where vi.sku_id is not null
+        ) diff
+        where  diff.distributionQty > diff.realQty
+    </select>
+
+    <!-- 按汇总显示库存分配差异 -->
+    <select id="listDiffTotalSendNotice"
+            resultType="com.erp.model.wms.dto.VirtualInventoryDiffDTO$SendNoticeTotalDTO">
+        select
+            id,
+            skuId,
+            skuNo,
+            warehouseId,
+            warehouseName,
+            diffQty
+        from
+            (WITH VirtualInventory AS (
+                SELECT
+                    sku_id,
+                    warehouse_id,
+                    SUM(qty) AS virtualQty
+                FROM
+                    virtual_inventory
+                WHERE
+                    is_deleted = false
+                GROUP BY
+                    sku_id, warehouse_id
+            ),
+                  Inventory AS (
+                      SELECT
+                          min(id) as id,
+                          sku_id,
+                          warehouse_id,
+                          SUM(CASE WHEN dict_inventory_status in ('usable','frozen') THEN qty ELSE 0 END) AS realQty
+                      FROM
+                          inventory
+                      WHERE
+                          is_deleted = false
+                      GROUP BY
+                          sku_id, warehouse_id
+                  )
+             SELECT
+                 i.id,
+                 i.sku_id AS skuId,
+                 pd.sku_no AS skuNo,
+                 pd.name AS productName,
+                 i.warehouse_id AS warehouseId,
+                 wh.name AS warehouseName,
+                 COALESCE(vi.virtualQty, 0) - COALESCE(i.realQty, 0) as diffQty
+             FROM
+                 Inventory i
+                     LEFT JOIN
+                 VirtualInventory vi ON vi.sku_id = i.sku_id AND vi.warehouse_id = i.warehouse_id
+                     LEFT JOIN
+                 product_detail pd ON i.sku_id = pd.id AND pd.is_deleted = false
+                     LEFT JOIN
+                 warehouse wh ON i.warehouse_id = wh.id AND wh.is_deleted = false
+             where vi.sku_id is not null
+            ) diff
+        where  diff.diffQty > 0
     </select>
 
 </mapper>

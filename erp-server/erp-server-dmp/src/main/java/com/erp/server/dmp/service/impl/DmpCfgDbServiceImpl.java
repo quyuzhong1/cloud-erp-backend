@@ -62,7 +62,7 @@ public class DmpCfgDbServiceImpl extends SuperServiceImpl<DmpCfgDbMapper, DmpCfg
     @Override
     public Boolean update(DmpCfgDbDTO.UpdateDTO updateDTO) {
         DmpCfgDbEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输入输出db信息"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "输入输出db信息"));
         DmpCfgDbEntity dmpCfgDbEntity =  BeanMapperUtils.map(DmpCfgDbEntity.class, updateDTO);
 
         // 数据处理

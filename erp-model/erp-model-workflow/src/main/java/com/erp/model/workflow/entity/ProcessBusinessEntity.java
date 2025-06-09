@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
 import com.erp.model.workflow.dto.ProcessDefinitionDTO;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -23,6 +24,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("process_business")
+@EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
 public class ProcessBusinessEntity extends BaseEntity<ProcessBusinessEntity> {
 
@@ -57,7 +59,7 @@ public class ProcessBusinessEntity extends BaseEntity<ProcessBusinessEntity> {
 
     public static final String START_CONDITION = "start_condition";
 
-    public static final String DISABLED = "disabled";
+    public static final String FIELD_DISABLED = "disabled";
 
     public ProcessBusinessEntity(ProcessDefinitionDTO.AddOrUpdateDTO dto) {
         this.processDefinitionId  = dto.getId();

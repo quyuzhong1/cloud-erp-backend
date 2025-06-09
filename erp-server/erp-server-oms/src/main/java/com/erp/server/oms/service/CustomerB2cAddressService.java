@@ -64,7 +64,7 @@ public interface CustomerB2cAddressService extends SuperService<CustomerB2cAddre
      */
     CustomerAddressDTO.ViewDTO getCustomerAddressById(String customerAddressId);
 
-    void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity);
+    void saveOrUpdateEntity(PlatformOrderDTO dto, CustomerB2cEntity mainEntity, SoB2cReceiverEntity receiverEntity ,boolean notUpdateAddress);
 
     CustomerB2cAddressEntity getByMainId(String mainId);
 }

@@ -14,6 +14,9 @@ import lombok.NoArgsConstructor;
 
 public class DictBasicDTO {
 
+    private DictBasicDTO(){
+    }
+
     /**
      * 下拉列表返回值
      */

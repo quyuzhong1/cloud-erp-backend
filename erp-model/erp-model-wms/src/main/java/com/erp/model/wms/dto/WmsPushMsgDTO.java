@@ -2,12 +2,11 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import java.io.Serializable;
-import java.time.LocalDateTime;
-import javax.validation.constraints.NotNull;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.List;
 
 /**
  * <p>
@@ -166,4 +165,12 @@ public class WmsPushMsgDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ParamDTO {
+        /**
+         * 虚拟仓流水id
+         */
+        private List<String> flowIdList;
+    }
 }

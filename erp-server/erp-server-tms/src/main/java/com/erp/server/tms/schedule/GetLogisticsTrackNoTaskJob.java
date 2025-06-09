@@ -1,6 +1,8 @@
 package com.erp.server.tms.schedule;
 
 import cn.hutool.core.util.IdUtil;
+import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
 import com.common.business.enums.LogisticsPlatformEnum;
 import com.common.business.enums.LogisticsTransportTypeEnum;
 import com.common.business.enums.PlatformDictEnum;
@@ -8,6 +10,7 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.oms.dto.SoB2cDTO;
 import com.erp.model.oms.dto.SoB2cLogisticsDTO;
 import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.tms.dto.LogisticsBillDTO;
@@ -63,8 +66,17 @@ public class GetLogisticsTrackNoTaskJob {
 
     @XxlJob("getLogisticsTrackNo")
     public void getLogisticsTrackNo() {
+        XxlJobHelper.log("====开始获取物流跟踪号====");
+        String jobParam = XxlJobHelper.getJobParam();
+        SoB2cDTO.QueryDTO queryDTO = new SoB2cDTO.QueryDTO();
+        List<String> dictPlatformList = new ArrayList<>();
+        if (StringUtils.isNotBlank(jobParam)) {
+            JSONObject jsonObject = JSONUtil.parseObj(jobParam);
+            dictPlatformList = jsonObject.getBeanList("dictPlatformList", String.class);
+        }
+        queryDTO.setDictPlatformList(dictPlatformList);
         //获取到了为空的跟踪单号
-        List<SoB2cLogisticsDTO.TrackNoDTO> list = soB2cFeign.listTrackNoEmptyList();
+        List<SoB2cLogisticsDTO.TrackNoDTO> list = soB2cFeign.listTrackNoEmptyList(queryDTO);
         List<String> channelIdList = list.stream().map(SoB2cLogisticsDTO.TrackNoDTO::getLogisticsChannelId).distinct().collect(Collectors.toList());
         List<LogisticsChannelDTO.LogisticsPlatformDTO> platformList = logisticsChannelService.listChannelPlatform(channelIdList);
         //平台分组
@@ -76,7 +88,7 @@ public class GetLogisticsTrackNoTaskJob {
             //平台
             String logisticsPlatform = entry.getKey();
 
-            Boolean isAliExpress = aliExpress.equals(logisticsPlatform);
+            boolean isAliExpress = aliExpress.equals(logisticsPlatform);
 
             List<LogisticsChannelDTO.LogisticsPlatformDTO> platformLogisticsList = entry.getValue();
             //这个平台对应的渠道id
@@ -103,8 +115,6 @@ public class GetLogisticsTrackNoTaskJob {
                         SoB2cLogisticsDTO.TrackNoDTO trackNoDTO = finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).findFirst().orElse(null);
 
                         String b2cLogisticsId = Objects.nonNull(trackNoDTO) ? trackNoDTO.getId() : "";
-//                                finalQueryList.stream().filter(f -> f.getTransportNo().equals(item.getTransportNo())).
-//                                map(SoB2cLogisticsDTO.TrackNoDTO::getId).findFirst().orElse("");
                         if (StringUtils.isNotBlank(b2cLogisticsId) && StringUtils.isNotBlank(item.getTrackNo())){
                             LogisticsBillDTO.TrackDTO dto = LogisticsBillDTO.TrackDTO.builder()
                                     .transportNo(item.getTransportNo())

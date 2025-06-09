@@ -34,8 +34,8 @@ public class WarehouseFeignController {
      * @return List<UpdateDTO>
      */
     @PostMapping("/listWarehouseByNameList")
-    public List<WarehouseDTO.UpdateDTO> listWarehouseByNameList(@RequestBody List<String> warehouseNameList) {
-        return warehouseService.listWarehouseByNameList(warehouseNameList);
+    public List<WarehouseDTO.ListDTO> listWarehouseByNameList(@RequestBody List<String> warehouseNameList) {
+        return warehouseService.listByNames(warehouseNameList);
     }
 
     /**
@@ -46,7 +46,7 @@ public class WarehouseFeignController {
      */
     @GetMapping("/listApproveWarehouse")
     public List<WarehouseDTO.ListDTO> listApproveWarehouse() {
-        return warehouseService.listApproveWarehouse();
+        return warehouseService.listApproveWarehouse(Boolean.FALSE);
     }
 
     /**

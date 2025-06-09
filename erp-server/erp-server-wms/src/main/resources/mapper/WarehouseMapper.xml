@@ -21,75 +21,31 @@
          kingdee_warehouse_code AS kingdeeWarehouseCode,
          is_virtual AS isVirtual,
          approve_status AS approveStatus,
-         is_enable_location as isEnableLocation
+         is_enable_location as isEnableLocation,
+         channel_affiliation channelAffiliation,
+         shipping_organization shippingOrganization,
+         financial_organization financialOrganization,
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+            id = ANY(#{params.warehouseIdList,jdbcType=ARRAY,typeHandler=com.erp.server.wms.handler.PgStringArrayTypeHandler}::varchar[]) as isAuth,
+        </if>
+        <if test="params.warehouseIdList== null or params.warehouseIdList.size == 0">
+            false as isAuth,
+        </if>
+         open_time openTime,
+         close_time closeTime
       FROM  warehouse  WHERE ${params.sqlMap.default}
         and is_deleted=false
-        <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-            AND create_user_id IN
-            <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                #{createUserId}
-            </foreach>
-        </if>
-        <if test="params.disabled != null ">
-            AND  disabled = #{params.disabled}
-        </if>
-        <if test="params.isVirtual != null ">
-            AND  is_virtual = #{params.isVirtual}
-        </if>
-        <!--仓库经营类型-->
-        <if test="params.warehouseManageType != null and params.warehouseManageType!=''">
-            AND  warehouse_manage_type = #{params.warehouseManageType}
-        </if>
-
-        <!--地理位置-->
-        <if test="params.geographyLocation != null and params.geographyLocation!=''">
-            AND  geography_location = #{params.geographyLocation}
-        </if>
-        <if test="params.isEnableLocation != null ">
-            AND  is_enable_location = #{params.isEnableLocation}
-        </if>
-        <if test="params.address !=null  and params.address!=''">
-           AND  address ILIKE concat('%', #{params.address}::text ,'%')
-        </if>
-        <if test="params.kingdeeWarehouseCode !=null  and params.kingdeeWarehouseCode!=''">
-            AND  kingdee_warehouse_code ILIKE concat('%', #{params.kingdeeWarehouseCode}::text ,'%')
-        </if>
-        <if test="params.name !=null  and params.name!=''">
-            AND  name ILIKE concat('%', #{params.name}::text ,'%')
-        </if>
-        <if test="params.contacts !=null  and params.contacts!=''">
-            AND  contacts ILIKE concat('%', #{params.contacts}::text ,'%')
-        </if>
-        <if test="params.orgIdList !=null and params.orgIdList.size>0">
-            AND org_id IN
-            <foreach collection="params.orgIdList" item="item" open="(" separator="," close=")">
-                #{item}
-            </foreach>
-        </if>
-        <if test="params.typeIdList !=null and params.typeIdList.size>0">
-            AND type_id IN
-            <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
-                #{typeId}
-            </foreach>
-        </if>
-        <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
-            AND approve_status IN
-            <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
-                #{approveStatus}
-            </foreach>
-        </if>
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
         </if>
-
         ORDER BY
         <if test="params.sortList != null and params.sortList.size > 0">
             <foreach collection="params.sortList" item="item" separator="," close=",">
                 ${item.field} ${item.sort}
             </foreach>
         </if>
-        create_time desc
+        isAuth DESC,create_time desc
     </select>
 
     <select id="getExport" resultType="com.erp.model.wms.dto.WarehouseDTO$PagingViewDTO">
@@ -111,70 +67,13 @@
         is_virtual AS isVirtual,
         approve_status AS approveStatus,
         is_enable_location AS isEnableLocation,
-        onway_warehouse_name AS onwayWarehouseName
-
-        FROM warehouse WHERE is_deleted=false
-      <choose>
-          <when test="params.ids!=null and params.ids.size>0">
-              AND id IN
-              <foreach collection="params.ids" item="id" open="(" separator="," close=")">
-                  #{id}
-              </foreach>
-          </when>
-          <otherwise>
-              <if test="params.createUserIdList !=null and params.createUserIdList.size>0">
-                  AND create_user_id IN
-                  <foreach collection="params.createUserIdList" item="createUserId" open="(" separator="," close=")">
-                      #{createUserId}
-                  </foreach>
-              </if>
-              <if test="params.disabled != null ">
-                  AND  disabled = #{params.disabled}
-              </if>
-              <if test="params.isEnableLocation != null ">
-                  AND  is_enable_location = #{params.isEnableLocation}
-              </if>
-              <!--仓库经营类型-->
-              <if test="params.warehouseManageType != null and params.warehouseManageType!=''">
-                  AND  warehouse_manage_type = #{params.warehouseManageType}
-              </if>
-              <!--地理位置-->
-              <if test="params.geographyLocation != null and params.geographyLocation!=''">
-                  AND  geography_location = #{params.geographyLocation}
-              </if>
-              <if test="params.address !=null  and params.address!=''">
-                  AND  address ILIKE concat('%', #{params.address}::text ,'%')
-              </if>
-              <if test="params.kingdeeWarehouseCode !=null  and params.kingdeeWarehouseCode!=''">
-                  AND  kingdee_warehouse_code ILIKE concat('%', #{params.kingdeeWarehouseCode}::text ,'%')
-              </if>
-              <if test="params.name !=null  and params.name!=''">
-                  AND  name ILIKE concat('%', #{params.name}::text ,'%')
-              </if>
-              <if test="params.contacts !=null  and params.contacts!=''">
-                  AND  contacts ILIKE concat('%', #{params.contacts}::text ,'%')
-              </if>
-              <if test="params.orgIdList !=null and params.orgIdList.size>0">
-                  AND org_id IN
-                  <foreach collection="params.orgIdList" item="item" open="(" separator="," close=")">
-                      #{item}
-                  </foreach>
-              </if>
-              <if test="params.typeIdList !=null and params.typeIdList.size>0">
-                  AND type_id IN
-                  <foreach collection="params.typeIdList" item="typeId" open="(" separator="," close=")">
-                      #{typeId}
-                  </foreach>
-              </if>
-              <if test="params.approveStatusList !=null and params.approveStatusList.size>0">
-                  AND approve_status IN
-                  <foreach collection="params.approveStatusList" item="approveStatus" open="(" separator="," close=")">
-                      #{approveStatus}
-                  </foreach>
-              </if>
-          </otherwise>
-      </choose>
-
+        onway_warehouse_name AS onwayWarehouseName,
+         channel_affiliation channelAffiliation,
+         shipping_organization shippingOrganization,
+         financial_organization financialOrganization,
+         open_time openTime,
+         close_time closeTime
+        FROM warehouse WHERE ${params.sqlMap.default} and is_deleted=false
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -300,10 +199,12 @@
     </select>
 
     <!--根据仓库id查询映射信息-->
-    <select id="getByNames" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
+    <select id="listByNames" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
         SELECT
         id,
         name,
+        org_id AS orgId,
+        approve_status AS approveStatus,
         disabled
         FROM warehouse  WHERE is_deleted=false and approve_status = 'approve'
         <if test="nameList != null and nameList.size > 0">
@@ -311,6 +212,10 @@
             <foreach collection="nameList" item="name" open="(" close=")" separator=",">
                 #{name}
             </foreach>
+        </if>
+        <!--权限-->
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
         </if>
     </select>
 
@@ -336,6 +241,10 @@
         from warehouse wh
         where
         wh.is_deleted = false
+        <!--权限-->
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
         <if test="params.searchKeyword != null and params.searchKeyword != ''">
             and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
         </if>
@@ -381,6 +290,10 @@
             from warehouse wh
             where
             wh.is_deleted = false
+            <!--权限-->
+            <if test="params.permissionSql!=null and params.permissionSql!=''">
+                ${params.permissionSql}
+            </if>
             <if test="params.searchKeyword != null and params.searchKeyword != ''">
                 and ((wh.kingdee_warehouse_code = #{params.searchKeyword}) or (wh.id = #{params.searchKeyword})  or wh.name ilike concat('%', #{params.searchKeyword}::text ,'%'))
             </if>
@@ -420,5 +333,40 @@
         </if>
         wh.disabled , wh.index asc
         ) wls
+    </select>
+    <select id="listApproveWarehouse" resultType="com.erp.model.wms.dto.WarehouseDTO$ListDTO">
+        select id,name,type_id,org_id,disabled,approve_status,kingdee_warehouse_code
+        from warehouse where is_deleted = false
+        <if test="permissionSql!=null and permissionSql!=''">
+            ${permissionSql}
+        </if>
+    </select>
+    <select id="listByParam" resultType="com.erp.model.wms.entity.WarehouseEntity">
+        select id,name,type_id,org_id,disabled,approve_status,kingdee_warehouse_code
+        from warehouse where is_deleted = false
+        <if test="params.permissionSql!=null and params.permissionSql!=''">
+            ${params.permissionSql}
+        </if>
+        <if test="params.warehouseName != null and params.warehouseName != ''">
+            and name = #{params.warehouseName}
+        </if>
+        <if test="params.orgIdList != null and params.orgIdList.size > 0">
+            and org_id in
+            <foreach collection="params.orgIdList" item="orgId" open="(" close=")" separator=",">
+                #{orgId}
+            </foreach>
+        </if>
+        <if test="params.warehouseIdList != null and params.warehouseIdList.size > 0">
+            and id in
+            <foreach collection="params.warehouseIdList" item="warehouseId" open="(" close=")" separator=",">
+                #{warehouseId}
+            </foreach>
+        </if>
+        <if test="params.typeIdList != null and params.typeIdList.size > 0">
+            and type_id in
+            <foreach collection="params.typeIdList" item="typeId" open="(" close=")" separator=",">
+                #{typeId}
+            </foreach>
+        </if>
     </select>
 </mapper>

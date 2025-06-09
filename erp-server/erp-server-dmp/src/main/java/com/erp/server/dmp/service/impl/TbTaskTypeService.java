@@ -1,22 +1,24 @@
 package com.erp.server.dmp.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.common.business.constant.TaskConstant;
 import com.common.business.dto.CreateJobDTO;
 import com.common.business.dto.JobTaskDTO;
+import com.common.core.entity.BaseEntity;
 import com.erp.model.dmp.dto.DmpCfgInputDetailDTO;
 import com.erp.model.dmp.dto.DmpCfgOutputDetailDTO;
 import com.erp.model.dmp.dto.PlatformTaskDTO;
-import com.erp.model.dmp.entity.DmpBasicSystemEntity;
-import com.erp.model.dmp.entity.DmpCfgInputEntity;
-import com.erp.model.dmp.entity.DmpCfgOutputEntity;
-import com.erp.model.dmp.entity.PlatformApiTaskEntity;
+import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpInputTaskTaskTypeEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.wms.entity.OverseasProviderEntity;
+import com.erp.model.wms.entity.OverseasProviderWarehouseEntity;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
 import com.erp.server.dmp.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
@@ -71,6 +73,9 @@ public class TbTaskTypeService {
 
     @Resource
     private DmpCfgOutputDetailService dmpCfgOutputDetailService;
+
+    @Resource
+    private DmpCfgInputConvertService dmpCfgInputConvertService;
 
     @Value("${openApi.mabang.timeoutHour:24}")
     public void setTimeoutMabangHours(Long timeoutMabangHours) {
@@ -168,6 +173,68 @@ public class TbTaskTypeService {
         Boolean result = shopInfoFeign.updateShopInfoById(new ShopInfoEntity(shopInfo.getId(), Boolean.TRUE));
     }
 
+
+    /**
+     * 三方仓添加新任务
+     */
+    public void addNewDmpTask(OverseasProviderEntity overseasProviderEntity) {
+        //根据授权的系统编码查询新中台系统表
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(overseasProviderEntity.getCode());
+        if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
+            log.error("三方仓授权编码【" + overseasProviderEntity.getCode() + "】 在新中台系统表中不存在！");
+            return;
+        }
+
+        //获取系统id
+        String systemId = dmpBasicSystemEntity.getId();
+
+        //根据系统id查询所有主任务
+        List<DmpCfgInputEntity> cfgInputEntityList = dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getSystemId, systemId)
+                .eq(DmpCfgInputEntity::getDisabled, false)
+                .list();
+        List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(cfgInputIds)) {
+            return;
+        }
+
+        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery().in(DmpCfgInputDetailEntity::getMainId, cfgInputIds).list();
+
+        //每一个主任务都需要添加任务详情
+        for (DmpCfgInputEntity dmpCfgInputEntity : cfgInputEntityList) {
+            DmpCfgInputDetailEntity dmpCfgInputDetailEntity = list.stream().filter(req -> req.getNextLevelId().equals(overseasProviderEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(dmpCfgInputDetailEntity)) {
+                //添加输入任务
+                addInputDetail(overseasProviderEntity, dmpCfgInputEntity);
+            }
+        }
+
+        List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, cfgInputIds).list();
+        List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollUtil.isEmpty(convertIds)) {
+            return;
+        }
+        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getInputConvertId, convertIds).list();
+
+        List<String> outputIds = outputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(outputIds)) {
+            return;
+        }
+
+        List<DmpCfgOutputDetailEntity> cfgOutputDetailEntities = dmpCfgOutputDetailService.lambdaQuery().in(DmpCfgOutputDetailEntity::getMainId, outputIds).list();
+
+        //添加输出任务详情
+        for (DmpCfgOutputEntity dmpCfgOutputEntity : outputEntityList) {
+            DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity = cfgOutputDetailEntities.stream().filter(req -> req.getNextLevelId().equals(overseasProviderEntity.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(dmpCfgOutputDetailEntity)) {
+                DmpCfgOutputDetailDTO.AddDTO addDTO = new DmpCfgOutputDetailDTO.AddDTO();
+                addDTO.setMainId(dmpCfgOutputEntity.getId());
+                addDTO.setNextLevelId(overseasProviderEntity.getId());
+                dmpCfgOutputDetailService.add(addDTO);
+            }
+        }
+
+    }
     /**
      * 添加新中台任务
      * @Author Luo_WG
@@ -192,26 +259,52 @@ public class TbTaskTypeService {
                 .eq(DmpCfgInputEntity::getIsMainTask, Boolean.TRUE)
                 .list();
 
+        List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(cfgInputIds)) {
+            return;
+        }
+        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery().in(DmpCfgInputDetailEntity::getMainId, cfgInputIds).list();
+
         //每一个主任务都需要添加任务详情
         for (DmpCfgInputEntity dmpCfgInputEntity : cfgInputEntityList) {
-
-            //添加输入任务
-            addInputDetail(shopInfo, dmpCfgInputEntity);
+            DmpCfgInputDetailEntity dmpCfgInputDetailEntity = list.stream().filter(req -> req.getNextLevelId().equals(shopInfo.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(dmpCfgInputDetailEntity)) {
+                //添加输入任务
+                addInputDetail(shopInfo, dmpCfgInputEntity);
+            }
         }
 
-        //根据系统id查询输出任务
-        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery()
-                .eq(DmpCfgOutputEntity::getSystemId, systemId)
+
+        //根据系统id查询所有主任务
+        List<DmpCfgInputEntity> listAll = dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getSystemId, systemId)
                 .list();
+        List<String> inputIds = listAll.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+
+        List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, inputIds).list();
+        List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollUtil.isEmpty(convertIds)) {
+            return;
+        }
+        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getInputConvertId, convertIds).list();
+
+        List<String> outputIds = outputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(outputIds)) {
+            return;
+        }
+
+        List<DmpCfgOutputDetailEntity> cfgOutputDetailEntities = dmpCfgOutputDetailService.lambdaQuery().in(DmpCfgOutputDetailEntity::getMainId, outputIds).list();
 
         //添加输出任务详情
         for (DmpCfgOutputEntity dmpCfgOutputEntity : outputEntityList) {
-            DmpCfgOutputDetailDTO.AddDTO addDTO = new DmpCfgOutputDetailDTO.AddDTO();
-            addDTO.setMainId(dmpCfgOutputEntity.getId());
-            addDTO.setNextLevelId(shopInfo.getId());
-            dmpCfgOutputDetailService.add(addDTO);
+            DmpCfgOutputDetailEntity dmpCfgOutputDetailEntity = cfgOutputDetailEntities.stream().filter(req -> req.getNextLevelId().equals(shopInfo.getId())).findFirst().orElse(null);
+            if (ObjectUtil.isEmpty(dmpCfgOutputDetailEntity)) {
+                DmpCfgOutputDetailDTO.AddDTO addDTO = new DmpCfgOutputDetailDTO.AddDTO();
+                addDTO.setMainId(dmpCfgOutputEntity.getId());
+                addDTO.setNextLevelId(shopInfo.getId());
+                dmpCfgOutputDetailService.add(addDTO);
+            }
         }
-
     }
 
     /**
@@ -249,6 +342,39 @@ public class TbTaskTypeService {
         dmpCfgInputDetailService.add(addDTO);
     }
 
+    /**
+     * 添加输入任务
+     * @param dmpCfgInputEntity
+     */
+    private void addInputDetail(OverseasProviderEntity overseasProviderEntity, DmpCfgInputEntity dmpCfgInputEntity) {
+        //添加基础任务
+        DmpCfgInputDetailDTO.AddDTO addDTO = new DmpCfgInputDetailDTO.AddDTO();
+        addDTO.setMainId(dmpCfgInputEntity.getId());
+        addDTO.setNextLevelId(overseasProviderEntity.getId());
+        addDTO.setLastTime(LocalDateTime.now());
+        addDTO.setNextTime(LocalDateTime.now().plusSeconds(600));
+        addDTO.setIntervalTime(600);
+        addDTO.setOverrideTime(120);
+        addDTO.setMaxRetryCount(3);
+        addDTO.setExecTimeout(1200);
+        addDTO.setDealyTime(60);
+        addDTO.setTaskType(DmpInputTaskTaskTypeEnum.NORMAL.getCode());
+        dmpCfgInputDetailService.add(addDTO);
+
+        //添加历史任务
+        DmpCfgInputDetailDTO.AddDTO addHistoryDTO = new DmpCfgInputDetailDTO.AddDTO();
+        addHistoryDTO.setMainId(dmpCfgInputEntity.getId());
+        addHistoryDTO.setNextLevelId(overseasProviderEntity.getId());
+        addHistoryDTO.setLastTime(overseasProviderEntity.getEnableDate().atStartOfDay());
+        addHistoryDTO.setNextTime(overseasProviderEntity.getEnableDate().atStartOfDay().plusHours(6));
+        addHistoryDTO.setIntervalTime(21600);
+        addHistoryDTO.setOverrideTime(0);
+        addHistoryDTO.setMaxRetryCount(3);
+        addHistoryDTO.setExecTimeout(1200);
+        addHistoryDTO.setDealyTime(86400);
+        addHistoryDTO.setTaskType(DmpInputTaskTaskTypeEnum.HISTORY.getCode());
+        dmpCfgInputDetailService.add(addDTO);
+    }
 
     public List<LocalDateTime> splitTimeRange(LocalDateTime startTime, LocalDateTime endTime, Duration interval) {
         List<LocalDateTime> timeList = new ArrayList<>();
@@ -261,5 +387,56 @@ public class TbTaskTypeService {
             timeList.add(endTime);
         }
         return timeList;
+    }
+
+    public void removeThirdWarehouseTask(OverseasProviderEntity overseasProviderEntity) {
+        //根据授权的系统编码查询新中台系统表
+        DmpBasicSystemEntity dmpBasicSystemEntity = dmpBasicSystemService.listByCode(overseasProviderEntity.getCode());
+        if (ObjectUtil.isEmpty(dmpBasicSystemEntity)) {
+            log.error("三方仓授权编码【" + overseasProviderEntity.getCode() + "】 在新中台系统表中不存在！");
+            return;
+        }
+
+        //获取系统id
+        String systemId = dmpBasicSystemEntity.getId();
+
+        //根据系统id查询所有主任务
+        List<DmpCfgInputEntity> cfgInputEntityList = dmpCfgInputService.lambdaQuery()
+                .eq(DmpCfgInputEntity::getSystemId, systemId)
+                .eq(DmpCfgInputEntity::getDisabled, false)
+                .list();
+        List<String> cfgInputIds = cfgInputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(cfgInputIds)) {
+            return;
+        }
+
+        List<DmpCfgInputDetailEntity> list = dmpCfgInputDetailService.lambdaQuery()
+                .in(DmpCfgInputDetailEntity::getMainId, cfgInputIds)
+                .eq(DmpCfgInputDetailEntity::getNextLevelId, overseasProviderEntity.getId())
+                .list();
+        if(CollectionUtils.isNotEmpty(list)){
+            dmpCfgInputDetailService.removeByIds(list.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+        }
+
+        List<DmpCfgInputConvertEntity> cfgInputConvertEntities = dmpCfgInputConvertService.lambdaQuery().in(DmpCfgInputConvertEntity::getMainId, cfgInputIds).list();
+        List<String> convertIds = cfgInputConvertEntities.stream().map(req -> req.getId()).collect(Collectors.toList());
+        if (CollUtil.isEmpty(convertIds)) {
+            return;
+        }
+        List<DmpCfgOutputEntity> outputEntityList = dmpCfgOutputService.lambdaQuery().in(DmpCfgOutputEntity::getInputConvertId, convertIds).list();
+
+        List<String> outputIds = outputEntityList.stream().map(req -> req.getId()).distinct().collect(Collectors.toList());
+        if (CollUtil.isEmpty(outputIds)) {
+            return;
+        }
+
+        List<DmpCfgOutputDetailEntity> cfgOutputDetailEntities = dmpCfgOutputDetailService.lambdaQuery()
+                .in(DmpCfgOutputDetailEntity::getMainId, outputIds)
+                .eq(DmpCfgOutputDetailEntity::getNextLevelId, overseasProviderEntity.getId())
+                .list();
+
+        if(CollectionUtils.isNotEmpty(cfgOutputDetailEntities)){
+            dmpCfgOutputDetailService.removeByIds(cfgOutputDetailEntities.stream().map(BaseEntity::getId).collect(Collectors.toList()));
+        }
     }
 }

@@ -1,24 +1,25 @@
 package com.erp.model.tms.dto;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-
+import com.common.business.annotation.Dict;
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
-
-import java.time.LocalDateTime;
-import java.util.List;
-
+import com.common.core.anno.StateEnumValue;
+import com.erp.model.oms.enums.SoB2cPayStatusEnum;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.Serializable;
-import javax.validation.constraints.*;
-
-import com.common.business.dto.AdvanceQueryDTO;
-import org.springframework.format.annotation.DateTimeFormat;
-
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -105,6 +106,18 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 审核名称
          */
         private String approveStatusName;
+
+        /**
+         * 支付状态
+         */
+        private String payStatus;
+
+        private String PayStatusName;
+
+        /**
+         * 支付时间【可排序】
+         */
+        private LocalDateTime payTime;
 
         /**
          * 审核人id【可排序】
@@ -196,6 +209,16 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 费用合计【可排序】
          */
         private BigDecimal totalCost;
+        
+        /**
+         * 费用合计币种
+         */
+        private String totalCostCurrency = "CNY";
+        
+        /**
+         * 费用合计币种符号
+         */
+        private String totalCostCurrencySymbol = "¥";
 
         /**
          * 审核不通过原因【可排序】
@@ -206,21 +229,61 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 实际物流费用【可排序】
          */
         private BigDecimal actualShippingCost;
+        
+        /**
+         * 实际物流费用币种
+         */
+        private String actualShippingCostCurrency = "CNY";
+        
+        /**
+         * 实际物流费用币种符号
+         */
+        private String actualShippingCostCurrencySymbol = "¥";
 
         /**
          * 实际报关费【可排序】
          */
         private BigDecimal actualDeclareCost;
+        
+        /**
+         * 实际报关费币种
+         */
+        private String actualDeclareCostCurrency = "CNY";
+        
+        /**
+         * 实际报关费币种符号
+         */
+        private String actualDeclareCostCurrencySymbol = "¥";
 
         /**
          * 实际其他费【可排序】
          */
         private BigDecimal actualOtherCost;
+        
+        /**
+         * 实际其他费币种
+         */
+        private String actualOtherCostCurrency = "CNY";
+        
+        /**
+         * 实际其他费币种符号
+         */
+        private String actualOtherCostCurrencySymbol = "¥";
 
         /**
          * 实际其他税费【可排序】
          */
         private BigDecimal actualOtherTaxCost;
+        
+        /**
+         * 实际其他税费币种
+         */
+        private String actualOtherTaxCostCurrency = "CNY";
+        
+        /**
+         * 实际其他税费币种符号
+         */
+        private String actualOtherTaxCostCurrencySymbol = "¥";
 
         /**
          * 实际计费重【可排序】
@@ -231,6 +294,16 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 实际重量单位【可排序】
          */
         private String actualWeightUnit;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
+
+        /**
+         * 更新时间
+         */
+        private LocalDateTime updateTime;
     }
 
     /**
@@ -355,6 +428,10 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
          * 审核不通过原因
          */
         private String reason;
+        /**
+         * 明细数量
+         */
+        private Integer detailCount;
 
         /**
          * 明细列表
@@ -466,4 +543,26 @@ public class TmsFirstMileReconciliationDTO implements Serializable {
     }
 
 
+    /**
+     * 更新付款状态入参
+     */
+    @Data
+    @NoArgsConstructor
+    public static class UpdatePayStatusDTO {
+        /**
+         * 勾选的id集合
+         */
+        private List<String> ids;
+        /**
+         * 付款状态：
+         * 接口：/oms/drop/down/dict/list?type=soB2cPayStatus
+         */
+        @StateEnumValue(clazz = SoB2cPayStatusEnum.class,message = "付款状态有误")
+        private String payStatus;
+
+        /**
+         * 付款时间
+         */
+        private LocalDateTime payTime;
+    }
 }

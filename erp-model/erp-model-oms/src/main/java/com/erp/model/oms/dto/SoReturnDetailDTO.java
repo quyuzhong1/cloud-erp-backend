@@ -7,7 +7,6 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
-import java.util.List;
 
 public class SoReturnDetailDTO {
     /**
@@ -40,6 +39,49 @@ public class SoReturnDetailDTO {
          * 销售单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * listing_id
+         */
+        private String listingId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 平台sku名称
+         */
+        private String platformSkuName;
+
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 
     /**
@@ -80,13 +122,50 @@ public class SoReturnDetailDTO {
          */
         private String remark;
         /**
-         * sku
-         */
-        private String skuNo;
-        /**
          * 销售单明细表id
          */
         private String sourceDetailId;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+        /**
+         * skuNo
+         */
+        private String skuNo;
+        /**
+         * listing_id
+         */
+        private String listingId;
+        /**
+         * 平台sku
+         */
+        private String platformSkuNo;
+        /**
+         * 平台sku名称
+         */
+        private String platformSkuName;
+        /**
+         * 汇率
+         */
+        private BigDecimal exchangeRate;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 
     /**
@@ -163,5 +242,21 @@ public class SoReturnDetailDTO {
          * 备注
          */
         private String remark;
+        /**
+         *退货金额
+         */
+        private BigDecimal returnAmount;
+        /**
+         *含税退货金额
+         */
+        private BigDecimal taxReturnAmount;
+        /**
+         *退货金额（本位币）
+         */
+        private BigDecimal returnAmountLocalCurrency;
+        /**
+         *含税退货金额（本位币）
+         */
+        private BigDecimal taxReturnAmountLocalCurrency;
     }
 }

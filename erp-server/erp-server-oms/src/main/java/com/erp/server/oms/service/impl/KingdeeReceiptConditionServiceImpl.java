@@ -1,7 +1,7 @@
 package com.erp.server.oms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -14,12 +14,11 @@ import com.erp.server.oms.service.KingdeeReceiptConditionService;
 import com.erp.server.oms.service.OperateLogService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.List;
-import java.util.Optional;
 /**
  * <p>
  * 金蝶收款条件 服务实现类
@@ -31,7 +30,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 public class KingdeeReceiptConditionServiceImpl extends SuperServiceImpl<KingdeeReceiptConditionMapper, KingdeeReceiptConditionEntity> implements KingdeeReceiptConditionService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
 
@@ -42,11 +41,10 @@ public class KingdeeReceiptConditionServiceImpl extends SuperServiceImpl<Kingdee
     @Override
     public Boolean update(KingdeeReceiptConditionDTO.UpdateDTO updateDTO) {
         KingdeeReceiptConditionEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶收款条件"));
+        if(null == old){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "金蝶收款条件");
+        }
         KingdeeReceiptConditionEntity kingdeeReceiptConditionEntity =  BeanMapperUtils.map(KingdeeReceiptConditionEntity.class, updateDTO);
-
-        // 数据处理
-        handleData(kingdeeReceiptConditionEntity);
         log.info("编辑 开始修改金蝶收款条件数据，单号：【{}】", old.getCode());
         boolean save = super.updateById(kingdeeReceiptConditionEntity);
         if(!save) {
@@ -55,8 +53,7 @@ public class KingdeeReceiptConditionServiceImpl extends SuperServiceImpl<Kingdee
 
         // 记录主单操作日志
             log.info("编辑 开始记录金蝶收款条件日志数据，单号：【{}】", kingdeeReceiptConditionEntity.getCode());
-            String msg = StrUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kingdeeReceiptConditionEntity.getCode(), "金蝶收款条件");
-        // TODO 此处的null需修改为日志模块类型，moduleType查看ModuleTypeEnum枚举类
+            String msg =  CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【{}】单据 ", UserContext.getDefaultLoginUser().getUserName(), kingdeeReceiptConditionEntity.getCode(), "金蝶收款条件");
         operateLogService.addModuleOperateLogByObj(old, kingdeeReceiptConditionEntity, null, kingdeeReceiptConditionEntity.getId(), msg);
         return Boolean.TRUE;
     }
@@ -67,13 +64,5 @@ public class KingdeeReceiptConditionServiceImpl extends SuperServiceImpl<Kingdee
             this.lambdaUpdate().set(KingdeeReceiptConditionEntity::getDisabled, disable).
                     in(KingdeeReceiptConditionEntity::getId, ids).update();
         }
-    }
-
-
-    /**
-    * 新增修改处理数据
-    */
-    private void handleData(KingdeeReceiptConditionEntity kingdeeReceiptConditionEntity) {
-    // TODO 验证数据 & 数据赋值
     }
 }

@@ -1,14 +1,11 @@
 package com.erp.model.tms.vo.request;
 
-import com.erp.model.tms.entity.LogisticsAuthEntity;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,6 +32,10 @@ public class LogisticsQueryBaseVO implements Serializable {
      * 订单id(erp销售订单id)
      */
     String orderId;
+    /**
+     * 包裹id
+     */
+    String packageId;
     /**
      * 运单号
      */

@@ -35,6 +35,10 @@ public class RocketMqTopic {
      */
     public static final String SYNC_WANGDIAN_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_wangdian_erp_topic";
     /**
+     * 推送数据到金蝶
+     */
+    public static final String SYNC_LINGXING_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_lingxing_erp_topic";
+    /**
      * 推送Plm产品信息到dmp
      */
     public static final String SYNC_PLM_PRODUCT_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_plm_product_topic";
@@ -122,5 +126,24 @@ public class RocketMqTopic {
      * 异步组包发货
      */
     public static final String ASYNC_MERGE_PACKAGE_DELIVERY_TOPIC = "${spring.cloud.nacos.discovery.namespace}-async_merge_package_delivery_topic";
+
+    /**
+     * 推送数据到数帝云
+     */
+    public static final String SYNC_SUDUYUN_ERP_TOPIC = "${spring.cloud.nacos.discovery.namespace}-sync_sudiyun_erp_topic";
+
+    /**
+     * 同步虚拟仓库存明细
+     */
+    public static final String WMS_VIRTUAL_DETAIL_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-wms_virtual_detail_msg_topic";
+    /**
+     * 同步track123 物流轨迹更新记录
+     */
+    public static final String TMS_123_LOGISTICS_TRACK = "${spring.cloud.nacos.discovery.namespace}-tms_track123_logistics_track_msg_topic";
+
+    /**
+     *  DMP 微信订阅消息 消费者 Subscribe
+     */
+    public static final String DMP_WECHAT_SUBSCRIBE_MSG_TOPIC = "${spring.cloud.nacos.discovery.namespace}-dmp_wechat_subscribe_msg_topic";
 
 }

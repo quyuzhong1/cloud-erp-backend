@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -13,13 +14,11 @@ import com.common.core.anno.LogViewService;
 import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
-import com.erp.model.oms.entity.CustomerB2cEntity;
 import com.erp.model.wms.dto.TransferInDTO;
 import com.erp.model.wms.entity.TransferInEntity;
 import com.erp.server.wms.query.TransferInQueryHandler;
 import com.erp.server.wms.service.TransferInService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +53,12 @@ public class TransferInController extends BaseController {
      * @return
      */
     @PostMapping("/tabList")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "ti.out_warehouse_id,ti.in_warehouse_id",
+            menuCode = "wms:transfer:in:paging",
+            tableAlias = "ti"
+    )
     public ApiResult<List<TransferInDTO.TabListDTO>> tabList(@RequestBody PermissionsDTO dto) {
         List<TransferInDTO.TabListDTO> tabList = transferInService.tabList(dto);
         return success(tabList);
@@ -68,7 +72,8 @@ public class TransferInController extends BaseController {
      */
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
+            warehouseTableField = "ti.out_warehouse_id,ti.in_warehouse_id",
             menuCode = "wms:transfer:in:paging",
             tableAlias = "ti"
     )
@@ -105,7 +110,7 @@ public class TransferInController extends BaseController {
     @LogAction(value = LogActionEnum.SUBMIT, desc = "提交分布式调入单")
     @PostMapping("/submit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:submit",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -125,7 +130,7 @@ public class TransferInController extends BaseController {
     @LogViewService
     @PostMapping("/view")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:view",
             serviceClass = TransferInService.class,
             keyIdName = "id"
@@ -144,14 +149,14 @@ public class TransferInController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE, desc = "修改分布式调入单")
     @PostMapping("/update")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:update",
             serviceClass = TransferInService.class,
             keyIdName = "id"
     )
     public ApiResult update(@RequestBody @Validated TransferInDTO.UpdateDTO dto) {
         String id = transferInService.updateTransferIn(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
 
     }
 
@@ -164,7 +169,7 @@ public class TransferInController extends BaseController {
     @LogAction(value = LogActionEnum.UPDATE_AND_SUBMIT, desc = "修改并提交分布式调入单")
     @PostMapping("/updateAndSubmit")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:update",
             serviceClass = TransferInService.class,
             keyIdName = "id"
@@ -184,7 +189,7 @@ public class TransferInController extends BaseController {
     @LogAction(value = LogActionEnum.APPROVE, desc = "审核分布式调入单")
     @PostMapping("/approve")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:approve",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -200,7 +205,7 @@ public class TransferInController extends BaseController {
                 continue;
             }
             try {
-                resultDTOS.add(transferInService.approve(dto, entity));
+                resultDTOS.add(transferInService.approve(new ApproveOneDTO(id, dto.getType(),dto.getComment()), entity));
             }catch (Exception e){
                 log.error("分布式调入单审核失败",e);
                 resultDTOS.add(BatchResultDTO.fail(entity.getId(), entity.getCode(), e.getMessage()));
@@ -219,7 +224,7 @@ public class TransferInController extends BaseController {
     @LogAction(value = LogActionEnum.CANCEL, desc = "撤销分布式调入单")
     @PostMapping("/cancelProcess")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:cancelProcess",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -235,7 +240,7 @@ public class TransferInController extends BaseController {
     @LogAction(value = LogActionEnum.DISAPPROVE, desc = "反审核分布式调入单")
     @PostMapping("/disApprove")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:disApprove",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -269,7 +274,7 @@ public class TransferInController extends BaseController {
     @LogAction(value = LogActionEnum.DELETE, desc = "删除分布式调入单")
     @PostMapping("/delete")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:delete",
             serviceClass = TransferInService.class,
             keyIdName = "ids"
@@ -291,7 +296,7 @@ public class TransferInController extends BaseController {
     @LogAction(value = LogActionEnum.INVALID, desc = "作废分布式调入单")
     @PostMapping("/invalid")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "warehouse_keeper_id",
+            tableField = "create_user_id",
             menuCode = "wms:transfer:in:invalid",
             serviceClass = TransferInService.class,
             keyIdName = "ids"

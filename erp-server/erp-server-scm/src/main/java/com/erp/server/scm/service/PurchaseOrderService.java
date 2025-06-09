@@ -3,7 +3,6 @@ package com.erp.server.scm.service;
 import com.common.business.dto.base.*;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
-import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.vo.BomExportExcelVO;
 import com.erp.model.scm.dto.*;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
@@ -13,7 +12,6 @@ import com.erp.model.wms.dto.PurchaseReturnOrderDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletResponse;
-import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -65,7 +63,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param ids
      * @return Boolean
      */
-    Boolean delete(List<String> ids);
+    BatchResultDTO delete(PurchaseOrderEntity entity);
     /**
      * @description: 批量审核
      * @author Will
@@ -75,14 +73,22 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     BatchResultDTO approve(ApproveOneDTO approveOneDTO);
 
     /**
+     * 自动批量审核
+     * @author will
+     * @date 2024/12/4 15:23
+     * @param baseApproveParamDTO
+     * @return Boolean
+     */
+    Boolean autoBatchApprove(BaseApproveParamDTO baseApproveParamDTO);
+    /**
      * @description: 结束审核
      * @author Will
      * @date: 2023/7/11 14:21
      * @param dto
-     * @param entity
+     * @param list
      * @return Boolean
      */
-    Boolean approveEnd(ApproveOneDTO dto, PurchaseOrderEntity entity);
+    Boolean approveEnd(ApproveOneDTO dto, List<PurchaseOrderEntity> list);
 
     /**
      * @description: 批量反审核
@@ -99,7 +105,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param ids
      * @return Boolean
      */
-    Boolean cancelProcess(List<String> ids);
+    BatchResultDTO cancelProcess(PurchaseOrderEntity entity);
 
     /**
      * 根据ids查询
@@ -113,7 +119,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param id
      * @return PurchaseOrderDTO.ExportPdfDTO
      */
-    PurchaseOrderDTO.ExportPdfDTO exportPurchaseContractPdf(String id);
+    PurchaseOrderDTO.ExportPdfDTO listPurchaseContractPdf(String id);
     /**
      * @description: 导入
      * @author Will
@@ -146,7 +152,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param dto
      * @return Boolean
      */
-    Boolean addAndSubmit(PurchaseOrderDTO.AddDTO dto);
+    BatchResultDTO addAndSubmit(PurchaseOrderDTO.AddDTO dto);
     /**
      * @description:
      * @author Will
@@ -170,7 +176,7 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @param remark
      * @return Boolean
      */
-    Boolean invalid(List<String> ids, String remark);
+    BatchResultDTO invalid(PurchaseOrderEntity entity, String remark);
     /**
      * @description: 下推签收单弹框数据显示
      * @author Will
@@ -206,13 +212,22 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PurchaseOrderDTO.GetOneDTO getPurchaseOrder(String id);
 
     /**
-     * 根据采购订单id 获取对应产品信息
+     * 根据采购订单明细id 获取对应产品信息
      * @author yl
      * @date 2023-04-17 18:27
      * @param purchaseOrderId
      * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
      */
     PurchaseOrderDTO.GetQcProductDTO getQcProductInfo(String purchaseOrderId);
+
+    /**
+     * 根据采购订单明细id 获取对应产品信息
+     * @author jack
+     * @date 2025-03-27
+     * @param purchaseOrderDetailId
+     * @return com.erp.model.scm.dto.PurchaseOrderDTO.GetQcProductDTO
+     */
+    PurchaseOrderDTO.GetQcProductDTO getQcProductInfoByDetailId(String purchaseOrderDetailId);
     /**
      * @description: 更新金蝶发送状态
      * @author Will
@@ -361,10 +376,10 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * 根据采购日期查询采购采购单
      * @Author Luo_WG
      * @Date 2023/9/13 18:21
-     * @param purchaseDateList
+     * @param queryPurchaseDTO
      * @return java.util.List<com.erp.model.scm.entity.PurchaseOrderEntity>
      **/
-    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(List<LocalDate> purchaseDateList);
+    List<SkuCostDTO> listPurchaseOrderByPurchaseDate(SkuCostDTO.QueryPurchaseDTO queryPurchaseDTO);
     /**
      * @description: 根据skuId集合查询采购成本数据
      * @author Will
@@ -421,10 +436,6 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PurchaseStatisticsDTO.StatusDTO statisticsExecutionStatus(PurchaseStatisticsDTO.RequestDTO requestDTO);
 
     /**
-     * 同步已审核 已确认订单到srm
-     */
-    void syncConfirmOrder();
-    /**
      * 导入结束交货
      * @author Will
      * @date: 2024/3/5 11:12
@@ -466,4 +477,32 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
     PagingVO<BomExportExcelVO> exportPurchaseOrderContract(PagingDTO<String> dto);
 
     PagingVO<PurchaseOrderDTO.ListDTO> exportPurchaseOrder(PagingDTO<PurchaseOrderDTO.SearchParamDTO> dto);
+    /**
+     * 导出采购合同pdf
+     * @author will
+     * @date 2024/11/5 10:33
+     * @param id
+     * @param response
+     */
+    void exportPurchaseContractPdf(String id, HttpServletResponse response);
+    /**
+     * 采购编码分页查询
+     * @author will
+     * @date 2024/11/11 11:39
+     * @param dto
+     * @return PagingVO<SourceCodeDTO>
+     */
+    PagingVO<PurchaseOrderDTO.SourceCodeDTO> purchaseCodePaging(PagingDTO<PurchaseOrderDTO.SourceCodeParamDTO> dto);
+
+    /**
+     * 通过sku 供应商查询所有采购订单
+     * @param purchaseCalcQtyParamsDTO 参数
+     */
+    List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
+
+
+    /**
+     * 单提交
+     */
+    BatchResultDTO submitEntity(PurchaseOrderEntity entity, Boolean isStartProcess);
 }

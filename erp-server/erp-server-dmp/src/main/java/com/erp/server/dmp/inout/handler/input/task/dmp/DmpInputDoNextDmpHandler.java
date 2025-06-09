@@ -2,6 +2,7 @@ package com.erp.server.dmp.inout.handler.input.task.dmp;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +41,7 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 	@Override
 	protected Map<List<Map<String, Object>>, List<TreeMap<String, Object>>> convertData(
 			List<Map<String, Object>> dmpInputMongoEntityList) {
+		this.beforeConvertData(dmpInputMongoEntityList);
 		parentDmpCfgInputConvertEntity = this.getMainConvertId();
 		parentServiceImpl = this.getServiceImpl(parentDmpCfgInputConvertEntity.getStorageName());
 		QueryWrapper<?> wrapper = new QueryWrapper<>();
@@ -61,7 +63,7 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 					keySb.append(listMap.get(parentUniqueField).toString());
 					keySb.append("_");
 				}
-				uniqueFieldIdMap.put(keySb.toString(), listMap.get(BaseEntity.ID).toString());
+				uniqueFieldIdMap.put(keySb.toString(), listMap.get(BaseEntity.FIELD_ID).toString());
 			}
 		}
 		
@@ -83,6 +85,15 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 		String fixedValueJson = parentDmpCfgInputConvertEntity.getFixedValueJson();
 		if(StringUtils.isNotBlank(fixedValueJson)) {
 			fixedValue = JSON.parseObject(fixedValueJson);
+		}
+		
+		if(isDeleteInsert()) {
+			Collection<String> mainValues = uniqueFieldIdMap.values();
+			if(CollUtil.isNotEmpty(mainValues)) {
+				wrapper = new QueryWrapper<>();
+				wrapper.in(MAIN_ID, mainValues);
+				dmpEntityServiceImpl.remove(wrapper);
+			}
 		}
 		for(Map<String, Object> dmpInputMongoEntity : dmpInputMongoEntityList) {
 			StringBuilder keySb = new StringBuilder();
@@ -130,5 +141,9 @@ public class DmpInputDoNextDmpHandler extends DmpInputDbConvertDmpHandler{
 	
 	protected List<Map<String, Object>> getDetailList(Map<String, Object> dmpInputMongoEntity){
 		return Arrays.asList(dmpInputMongoEntity);
+	}
+	
+	protected boolean isDeleteInsert() {
+		return false;
 	}
 }

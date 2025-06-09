@@ -3,7 +3,6 @@ package com.erp.model.wms.dto.extension;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.BeanUtils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

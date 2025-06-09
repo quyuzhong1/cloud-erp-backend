@@ -1,5 +1,6 @@
 package com.erp.model.wms.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,7 +11,7 @@ import java.time.LocalDateTime;
 /**
  * @author Lambda
  * @Classname OperateLogDTO
- * @Description TODO
+ * @Description 操作日志
  * @Date 2023-08-21 18:15
  * @Created by yl
  */
@@ -18,6 +19,7 @@ public class OperateLogDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class AddModuleOperateLogDTO {
         private String content;
 
@@ -112,5 +114,7 @@ public class OperateLogDTO implements Serializable {
          * 父级id(用于综合数据查询)
          */
         private String pid;
+
+        private String searchKey;
     }
 }

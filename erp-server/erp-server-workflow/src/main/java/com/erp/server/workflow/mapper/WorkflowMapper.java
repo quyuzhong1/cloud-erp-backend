@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Param;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @Classname WorkflowMapper
@@ -14,7 +15,7 @@ import java.util.List;
  * @Created by yl
  */
 @Mapper
-public interface WorkflowMapper  extends BaseMapper {
+public interface WorkflowMapper  extends BaseMapper<Objects> {
 
 
     void deleteTaskByIdArray(@Param("taskIdList") List<String> taskIdList);

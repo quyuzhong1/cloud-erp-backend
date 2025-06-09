@@ -7,6 +7,7 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.wms.dto.WeightingOutboundDTO;
+import com.erp.server.wms.service.WaveListService;
 import com.erp.server.wms.service.WeightingOutboundService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -26,6 +27,8 @@ public class WeighingOutboundController extends BaseController {
 
     @Resource
     private WeightingOutboundService weightingOutboundService;
+    @Resource
+    private WaveListService waveListService;
     /**
      * 扫描
      * @param dto
@@ -37,6 +40,8 @@ public class WeighingOutboundController extends BaseController {
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "称重出库扫描:{businessCode}")
     public ApiResult<WeightingOutboundDTO.ViewDTO> scan(@RequestBody @Validated WeightingOutboundDTO.ScanDTO dto) {
         WeightingOutboundDTO.ViewDTO list = weightingOutboundService.scan(dto);
+        //波次列表波次状态自动变更
+        waveListService.waveListStatusAutoChange(list.getId());
         return success(list);
     }
 
@@ -49,7 +54,7 @@ public class WeighingOutboundController extends BaseController {
      */
     @GetMapping("/reset")
     @LogAction(value = LogActionEnum.UPDATE, desc = "重置")
-    public ApiResult<?> reset(@RequestParam(value = "id") @NotBlank(message = "ID不能为空") String id) {
+    public ApiResult reset(@RequestParam(value = "id") @NotBlank(message = "ID不能为空") String id) {
         weightingOutboundService.reset(id);
         return success();
     }

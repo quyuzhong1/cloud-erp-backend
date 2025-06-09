@@ -62,14 +62,39 @@ public class PilotApplicationEntity extends BaseEntity<PilotApplicationEntity> {
      */
     @TableField("bill_date")
     private LocalDate billDate;
+    /**
+     * 作废状态
+     */
+    @TableField("invalid_status")
+    private Boolean invalidStatus;
+    /**
+     * 作废原因
+     */
+    @TableField("invalid_remark")
+    private String invalidRemark;
+    /**
+     * 作废时间
+     */
+    @TableField("invalid_time")
+    private LocalDateTime invalidTime;
+    /**
+     * 作废人id
+     */
+    @TableField("invalid_user_id")
+    private String invalidUserId;
+    /**
+     * 作废人名称
+     */
+    @TableField("invalid_user_name")
+    private String invalidUserName;
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String ORDER_STATUS = "order_status";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String APPROVE_USER_ID = "approve_user_id";
 

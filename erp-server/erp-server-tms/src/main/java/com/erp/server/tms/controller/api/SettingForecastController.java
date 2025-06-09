@@ -53,7 +53,7 @@ public class SettingForecastController extends BaseController {
      * @return
      */
     @PostMapping("/add")
-    public ApiResult batchAdd(@RequestBody @Validated ValidList<SettingForecastDTO.SaveOrUpdateDTO> list) {
+    public ApiResult<Object>batchAdd(@RequestBody @Validated ValidList<SettingForecastDTO.SaveOrUpdateDTO> list) {
         Boolean result = settingForecastService.addOrUpdate(list);
         return result ? success() : failure();
     }
@@ -64,7 +64,7 @@ public class SettingForecastController extends BaseController {
      * @return
      */
     @PostMapping("/checkIsUpdate")
-    public ApiResult checkIsUpdate(@RequestBody  List<SettingForecastDTO.SaveOrUpdateDTO> list) {
+    public ApiResult<Object>checkIsUpdate(@RequestBody  List<SettingForecastDTO.SaveOrUpdateDTO> list) {
         Boolean result = settingForecastService.checkIsUpdate(list);
         return success(result);
     }
@@ -77,7 +77,7 @@ public class SettingForecastController extends BaseController {
      * @return
      */
     @PostMapping("/delete")
-    public ApiResult delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object>delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> idList = dto.getIds();
         Boolean result = settingForecastService.delete(idList);
         return result ? success() : failure();

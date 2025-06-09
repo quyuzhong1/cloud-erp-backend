@@ -5,18 +5,13 @@ import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.common.business.utils.CollectionUtils;
 import com.common.core.anno.ParamData;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.PannoEnum;
-import com.common.core.utils.ObjectUtils;
-import com.common.core.utils.StrUtils;
 import com.erp.model.dmp.entity.DmpCfgInputConvertEntity;
 import com.erp.model.dmp.entity.DmpInputTaskEntity;
-import com.erp.model.dmp.entity.DmpProductInfoEntity;
 import com.erp.server.dmp.inout.handler.input.task.mongo.DmpInputMongoHandler;
 import com.erp.server.dmp.service.DmpProductInfoService;
-import jodd.util.StringUtil;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +20,6 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @Scope("prototype")
@@ -161,7 +155,7 @@ public class TikTokSkuDmpHandler extends DmpInputDoChildDmpHandler {
         Map<String, String> billNoIdMap = new HashMap<>();
         if (CollUtil.isNotEmpty(listMaps)) {
             for (Map<String, Object> listMap : listMaps) {
-                billNoIdMap.put(listMap.get("spu_id").toString(), listMap.get(BaseEntity.ID).toString());
+                billNoIdMap.put(listMap.get("spu_id").toString(), listMap.get(BaseEntity.FIELD_ID).toString());
             }
         }
         for (Map<String, Object> dmpInputMongoChildEntity : dmpInputMongoChildEntityList) {

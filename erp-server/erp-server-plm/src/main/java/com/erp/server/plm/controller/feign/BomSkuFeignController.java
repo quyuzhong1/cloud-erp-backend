@@ -1,6 +1,8 @@
 package com.erp.server.plm.controller.feign;
 
+import com.common.core.controller.vo.ApiResult;
 import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.dto.BomDTO;
 import com.erp.model.plm.dto.ProductBomInfoDTO;
 import com.erp.model.plm.dto.BomSkuPageDTO;
 import com.erp.model.plm.entity.BomInfoEntity;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -120,7 +123,7 @@ public class BomSkuFeignController {
      * @return java.util.List<com.erp.model.plm.dto.ProductBomInfoDTO.skuBomVersion>
      **/
     @PostMapping("/listBomVersionBySkuNos")
-    public List<ProductBomInfoDTO.skuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos) {
+    public List<ProductBomInfoDTO.SkuBomVersion> listBomVersionBySkuNos(@RequestBody List<String> skuNos) {
         return bomSkuService.listBomVersionBySkuNos(skuNos);
     }
 
@@ -134,5 +137,29 @@ public class BomSkuFeignController {
     @PostMapping("/listAllLevelSku")
     public BomSkuPageDTO.ListAllSkuDTO listAllLevelSku(@RequestBody BomSkuPageDTO.AllSkuParamDTO params) {
         return bomSkuService.listAllLevelSku(params);
+    }
+
+    /**
+     * 查询bom (可以查询全部)
+     * @return
+     */
+    @PostMapping("/listAllBom")
+    public List<BomDTO.BomSku> listAllBom(@RequestBody List<String> childSkuIdList){
+        return bomSkuService.listAllBom(childSkuIdList);
+    }
+
+    /**
+     * @description: 根据父级skuNos查询子集sku
+     * @author jack
+     * @date: 2024-11-08
+     * @param skuNos
+     * @return List<BomChildrenSkuDTO>
+     */
+    @PostMapping("/checkExistAndListCombinationSku")
+    public List<BomChildrenSkuDTO> checkExistAndListCombinationSku(@RequestBody List<String> skuNos) {
+        if (CollectionUtils.isEmpty(skuNos)) {
+            return Collections.emptyList();
+        }
+        return bomSkuService.checkExistAndListCombinationSku(skuNos);
     }
 }

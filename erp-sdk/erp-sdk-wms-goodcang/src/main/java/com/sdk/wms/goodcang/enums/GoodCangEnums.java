@@ -3,6 +3,7 @@ package com.sdk.wms.goodcang.enums;
 
 import com.common.business.enums.OverseasInstockStatusEnum;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.wms.enums.ReturnTypeEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import com.erp.model.wms.enums.OverseasCustomsTypeNewEnum;
 import com.erp.model.wms.enums.OverseasDeliveryModeEnum;
@@ -466,6 +467,53 @@ public enum GoodCangEnums {
                     .findFirst()
                     .map(OrderStatusEnum::getName)
                     .orElse(null);
+        }
+    }
+
+
+    /**
+     * 退件类型
+     */
+    @Getter
+    public enum ReturnInstockTypeEnum {
+        RETURNS_FROM_SERVICE_PROVIDERS(0,"服务商退件", ReturnTypeEnum.RETURNS_FROM_SERVICE_PROVIDERS),
+        CUSTOMER_RETURNS(1,"客户退件", ReturnTypeEnum.CUSTOMER_RETURNS),
+        ;
+        private final Integer code;
+        private final String name;
+        private final ReturnTypeEnum erpEnum;
+
+        ReturnInstockTypeEnum(Integer code, String name, ReturnTypeEnum erpEnum) {
+            this.code = code;
+            this.name = name;
+            this.erpEnum = erpEnum;
+        }
+
+        public static Integer getCodeByErp(String erpCode){
+            if(StringUtils.isBlank(erpCode)){
+                return null;
+            }
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(item -> erpCode.equals(item.getErpEnum().getCode()))
+                    .findFirst()
+                    .map(ReturnInstockTypeEnum::getCode)
+                    .orElse(null);
+        }
+
+        public static ReturnInstockTypeEnum getByCode(Integer code) {
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(e -> e.getCode().equals(code))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        public static String getErpStatus(String code){
+            return Arrays.stream(ReturnInstockTypeEnum.values())
+                    .filter(item -> item.getCode().toString().equalsIgnoreCase(code))
+                    .findFirst()
+                    .map(ReturnInstockTypeEnum::getErpEnum)
+                    .map(ReturnTypeEnum::getCode)
+                    .orElse("");
         }
     }
 }

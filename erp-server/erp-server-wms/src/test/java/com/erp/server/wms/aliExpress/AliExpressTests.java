@@ -1,30 +1,25 @@
 package com.erp.server.wms.aliExpress;
 
 import cn.hutool.core.exceptions.ExceptionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.oms.entity.SoB2cEntity;
-import com.erp.model.tms.entity.TmsCarrierEntity;
 import com.erp.oms.aliexpress.api.IopClient;
 import com.erp.oms.aliexpress.api.IopClientImpl;
 import com.erp.oms.aliexpress.api.IopRequest;
 import com.erp.oms.aliexpress.api.IopResponse;
 import com.erp.oms.aliexpress.constants.AliexpressConstants;
-import com.erp.oms.aliexpress.dto.AliExpressShopInfoDTO;
 import com.erp.oms.aliexpress.dto.request.DeclareDeliverRequest;
 import com.erp.oms.aliexpress.enums.Protocol;
-import com.erp.oms.aliexpress.service.AliExpressOrderService;
 import com.erp.oms.aliexpress.util.ApiException;
 import com.erp.server.wms.ErpServerWmsApplication;
 import com.erp.server.wms.service.FbaShipmentReceiveService;
 import com.erp.server.wms.service.FbaShipmentService;
-import com.erp.tms.aliexpress.model.order.response.AllCarrierResponse;
 import com.erp.tms.aliexpress.model.query.request.QueryShipmentOrder;
-import io.seata.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -82,13 +77,13 @@ public class AliExpressTests {
         QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
                 .send_type("all")
 //                .sub_trade_order_index("LP00659545751639")
-                .sub_trade_order_index("1")
-                .shipment_list(Arrays.asList(shipment))
+                .sub_trade_order_index(1)
+                .shipment_list(Collections.singletonList(shipment))
                 .build();
 
         QueryShipmentOrder declareDeliverRequest = QueryShipmentOrder.builder()
                 .trade_order_id("1106029852145370")
-                .sub_trade_order_list(Arrays.asList(tradeOrder))
+                .sub_trade_order_list(Collections.singletonList(tradeOrder))
                 .build();
 
 //        DeclareDeliverRequest declareDeliverRequest = DeclareDeliverRequest.builder().
@@ -119,7 +114,7 @@ public class AliExpressTests {
             Boolean success = jsonObject.getBool("result_success", Boolean.FALSE);
             if (!success) {
                 String msg = jsonObject.getOrDefault("result_error_desc", "").toString();
-                throw new ServiceException(ApiError.Default, msg);
+                throw new ServiceException(ApiError.DEFAULT, msg);
             }
         } catch (Exception e) {
             throw new ServiceException("查询速卖通订单地址失败" + JSONUtil.toJsonStr(e));
@@ -146,7 +141,7 @@ public class AliExpressTests {
         SoB2cEntity mainEntity = new SoB2cEntity();
         mainEntity.setCode("1106059230784298");
         mainEntity.setPlatformCode("1106059230784298");
-        List<String> subTradeOrderList = Arrays.asList("");
+        List<String> subTradeOrderList = Collections.singletonList("");
 
         DeclareDeliverRequest declareDeliverRequest = DeclareDeliverRequest.builder()
                 .outRef(mainEntity.getPlatformCode())
@@ -167,17 +162,17 @@ public class AliExpressTests {
                     .logistics_no(declareDeliverRequest.getLogisticsNo())
                     .service_name(declareDeliverRequest.getServiceName())
                     .build();
-            if (StringUtils.isNotBlank(declareDeliverRequest.getActualCarrier())){
+            if (CharSequenceUtil.isNotBlank(declareDeliverRequest.getActualCarrier())){
                 shipment.setActual_carrier(declareDeliverRequest.getActualCarrier());
             }
-            if (StringUtils.isNotBlank(declareDeliverRequest.getTrackingWebSite())){
+            if (CharSequenceUtil.isNotBlank(declareDeliverRequest.getTrackingWebSite())){
                 shipment.setTracking_web_site(declareDeliverRequest.getTrackingWebSite());
             }
             List<QueryShipmentOrder.SubTradeOrder> subTradeOrders = new LinkedList<>();
             for (String subOrder : subTradeOrderList) {
                 QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
                         .send_type(declareDeliverRequest.getSendType())
-                        .sub_trade_order_index(subOrder)
+                        .sub_trade_order_index(Integer.valueOf(subOrder))
                         .shipment_list(Collections.singletonList(shipment))
                         .build();
                 subTradeOrders.add(tradeOrder);
@@ -204,16 +199,15 @@ public class AliExpressTests {
             if (!success){
                 String errorMsg = resultJson.getStr("error_msg", "");
                 Integer errorCode = resultJson.getInt("error_code", -1000000);
-                if (StringUtils.isNotBlank(errorMsg)){
+                if (CharSequenceUtil.isNotBlank(errorMsg)){
                     ServiceException.runError(errorCode, errorMsg);
                 } else {
                     ServiceException.runError(errorCode, JSONUtil.toJsonStr(body));
                 }
             }
         } catch (ServiceException e) {
-            if (-353 == e.getCode()) {
+            if (Integer.valueOf(-353).equals(e.getCode())) {
                 log.warn("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示重复操作(忽略) >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
-//                return signShippedDetailList;
                 return;
             }
             log.error("【速卖通标记发货】销售订单【{}】,平台订单【{}】速卖通标记发货API提示异常 >>>>{}", mainEntity.getCode(), mainEntity.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
@@ -265,15 +259,15 @@ public class AliExpressTests {
                 .logistics_no(declareDeliverRequest.getLogisticsNo())
                 .service_name(declareDeliverRequest.getServiceName())
                 .build();
-        if (StringUtils.isNotBlank(declareDeliverRequest.getActualCarrier())) {
+        if (CharSequenceUtil.isNotBlank(declareDeliverRequest.getActualCarrier())) {
             shipment.setActual_carrier(declareDeliverRequest.getActualCarrier());
         }
-        if (StringUtils.isNotBlank(declareDeliverRequest.getTrackingWebSite())) {
+        if (CharSequenceUtil.isNotBlank(declareDeliverRequest.getTrackingWebSite())) {
             shipment.setTracking_web_site(declareDeliverRequest.getTrackingWebSite());
         }
         QueryShipmentOrder.SubTradeOrder tradeOrder = QueryShipmentOrder.SubTradeOrder.builder()
                 .send_type(declareDeliverRequest.getSendType())
-                .sub_trade_order_index("1")
+                .sub_trade_order_index(Integer.valueOf("1"))
                 .shipment_list(Collections.singletonList(shipment))
                 .build();
         QueryShipmentOrder requestParams = QueryShipmentOrder.builder()

@@ -1,18 +1,24 @@
 package com.erp.model.wms.dto;
 
-import com.baomidou.mybatisplus.annotation.TableField;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.common.business.dto.AdvanceQueryDTO;
+import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
+import com.common.core.exception.ServiceException;
 import com.erp.model.wms.enums.SeparateRuleEnum;
 import com.erp.model.wms.enums.StocktakingModeEnum;
 import com.erp.model.wms.enums.StocktakingStatusEnum;
 import com.erp.model.wms.enums.StocktakingTypeEnum;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
-import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -20,6 +26,7 @@ import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 盘点任务
@@ -48,6 +55,10 @@ public class StocktakingTaskDTO implements Serializable {
          * 数量
          */
         private Integer count;
+        /**
+         * 标识
+         */
+        private String tabFlagName;
 
     }
 
@@ -88,68 +99,13 @@ public class StocktakingTaskDTO implements Serializable {
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
-         * 盘点计划单号/盘点任务单号
+         * 页面高级查询
          */
-        private String code;
-
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
         /**
-         * 单据状态集合
+         * sqlMap 默认key default
          */
-        private List<String> approveStatusList;
-
-        /**
-         * 盘点状态集合
-         */
-        private List<String> stocktakingStatusList;
-
-        /**
-         * 盘点方式集合
-         */
-        private List<String> stocktakingModeList;
-
-        /**
-         * 盘点类型集合
-         */
-        private List<String> stocktakingTypeList;
-
-
-        /**
-         * 分单规则集合
-         */
-        private List<String> separateRuleList;
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> createTimeList;
-
-        /**
-         * 创建人id
-         */
-        private List<String> createUserIdList;
-
-
-        /**
-         * 创建时间
-         */
-        private List<LocalDate> approveTimeList;
-
-        /**
-         * 审核人id
-         */
-        private List<String> approveUserIdList;
-
-        /**
-         * 仓库
-         */
-        private String warehouseId;
-        /**
-         * 标识
-         */
-        @StateEnumValue(strValues = {"all", "waitSubmit", "waitApprove", "approveIng", "approve"}, message = "tab类型有误")
-        @NotBlank(message = "tab不能为空")
-        private String tabFlag;
-
+        private Map<String, String> sqlMap;
     }
 
     /**
@@ -470,4 +426,44 @@ public class StocktakingTaskDTO implements Serializable {
         private Integer frozenQty;
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class BaseIdDTO extends PagingParamDTO {
+
+//        @NotBlank(message = "id不能为空")
+        private String id;
+
+        private String name;
+
+        public BaseIdDTO() {
+        }
+
+        public String checkAndGetMainId() {
+            String mainId = this.getId();
+            // 兼容前端高级查询传参
+            if (StringUtils.isBlank(mainId)){
+                Object idsObj = super.getAdvanceQueryDTOList()
+                        .stream()
+                        .filter(e -> "st.id".equalsIgnoreCase(e.getField()))
+                        .map(AdvanceQueryDTO::getValue)
+                        .findFirst().orElse(null);
+                if (null == idsObj){
+                    throw new ServiceException("盘点任务ID为空");
+                }
+                JSONArray jsonArray = JSONArray.parseArray(JSON.toJSONString(idsObj));
+                if (CollectionUtils.isEmpty(jsonArray)){
+                    throw new ServiceException("盘点任务IDS为空");
+                }
+                if (jsonArray.size() > 1){
+                    throw new ServiceException("盘点任务明细导出IDS数量不能超过1");
+                }
+                mainId = jsonArray.get(0).toString();
+            }
+            if (StringUtils.isBlank(mainId)){
+                throw new ServiceException("盘点任务ID不能为空");
+            }
+            return mainId;
+        }
+
+    }
 }

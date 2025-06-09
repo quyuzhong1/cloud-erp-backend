@@ -59,7 +59,7 @@ public class SysLogRecordFieldEntity extends BaseEntity<SysLogRecordFieldEntity>
     private String booleanValue;
 
 
-    public static final String FIELD = "field";
+    public static final String FIELD_FIELD = "field";
 
     public static final String FIELD_NAME = "field_name";
 

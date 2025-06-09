@@ -1,6 +1,7 @@
 package com.erp.server.wms.service;
 
 import cn.hutool.core.lang.Tuple;
+import com.common.business.dto.AdvanceQueryContainer;
 import com.common.business.dto.PlatformFbaShipmentReceiveDTO;
 import com.common.business.dto.base.BaseIdsDTO;
 import com.common.business.dto.base.BatchResultDTO;
@@ -10,6 +11,7 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.wms.dto.FbaShipmentDTO;
+import com.erp.model.wms.dto.FbaTransitCalculateReportDTO;
 import com.erp.model.wms.dto.FirstMileDeliveryDTO;
 import com.erp.model.wms.entity.FbaShipmentEntity;
 import com.erp.model.wms.entity.FbaShipmentReceiveEntity;
@@ -253,4 +255,34 @@ public interface FbaShipmentService extends SuperService<FbaShipmentEntity> {
     PagingVO<FbaShipmentDTO.SearchResultDTO> searchByCodeWithRequisition(PagingDTO<FbaShipmentDTO.SearchDTO> dto);
 
     List<FbaShipmentDTO.SearchResultDTO> requisitionFbaQuickPaste(FbaShipmentDTO.QuickPasteDTO dto);
+
+    /**
+     * 本期签收的货件
+     *
+     * @param reportMonth
+     * @param shipmentCode
+     * @param asin
+     * @param msku
+     * @return
+     */
+    List<FbaTransitCalculateReportDTO.FbaReceiveDTO> listByReceiveAndReportMonth(LocalDate reportMonth, String shipmentCode, String asin, String msku);
+
+
+    /**
+     * 货件最新同步任务
+     *
+     */
+    PagingVO<FbaShipmentDTO.SyncViewDTO> syncPaging(PagingDTO<AdvanceQueryContainer> advanceQueryDTO);
+    /**
+     * 货件列表
+     *
+     */
+    List<FbaShipmentDTO.ListDTO> viewList(FbaShipmentDTO.ViewListReqDTO dto);
+
+    /**
+     * 调整签收
+     * @param dtoList
+     * @return
+     */
+    List<BatchResultDTO> changeReceived(List<FbaShipmentDTO.ReceivedDTO> dtoList);
 }

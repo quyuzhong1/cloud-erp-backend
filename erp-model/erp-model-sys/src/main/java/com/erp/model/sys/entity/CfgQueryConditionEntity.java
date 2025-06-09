@@ -92,23 +92,23 @@ public class CfgQueryConditionEntity extends BaseEntity<CfgQueryConditionEntity>
     @TableField(value = "option_list", typeHandler = JacksonTypeHandler.class)
     private List<Map<String,Object>> optionList;
 
-    public static final String CODE = "code";
+    public static final String FIELD_CODE = "code";
 
-    public static final String VALUE = "value";
+    public static final String FIELD_VALUE = "value";
 
-    public static final String LABEL = "label";
+    public static final String FIELD_LABEL = "label";
 
     public static final String QUERY_OPTION_ID = "query_option_id";
 
-    public static final String CONTROLS = "controls";
+    public static final String FIELD_CONTROLS = "controls";
 
     public static final String DATA_TYPE = "data_type";
 
     public static final String DATE_TYPE = "date_type";
 
-    public static final String PROPS = "props";
+    public static final String FIELD_PROPS = "props";
 
-    public static final String INDEX = "index";
+    public static final String FIELD_INDEX = "index";
 
     public static final String IS_EXTEND = "is_extend";
 

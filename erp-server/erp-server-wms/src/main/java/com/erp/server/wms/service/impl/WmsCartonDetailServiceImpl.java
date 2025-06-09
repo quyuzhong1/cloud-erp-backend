@@ -1,34 +1,32 @@
 package com.erp.server.wms.service.impl;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringPool;
 import com.common.business.enums.UnitEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
-import com.common.core.utils.BeanMapper;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.CartonDTO;
-import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.dto.WmsCartonDetailDTO;
-import com.erp.model.wms.entity.WmsCartonEntity;
+import com.erp.model.wms.dto.WmsCartonSpecDTO;
 import com.erp.model.wms.entity.WmsCartonDetailEntity;
+import com.erp.model.wms.entity.WmsCartonEntity;
 import com.erp.model.wms.entity.WmsCartonSpecEntity;
+import com.erp.server.wms.convert.CartonConverter;
 import com.erp.server.wms.mapper.WmsCartonDetailMapper;
 import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.WmsCartonDetailService;
 import com.erp.server.wms.service.WmsCartonService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import javax.annotation.Resource;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -42,9 +40,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetailMapper, WmsCartonDetailEntity> implements WmsCartonDetailService {
-    @Autowired
+    @Resource
     private WmsCartonService wmsCartonService;
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Override
@@ -81,7 +79,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     public void add(WmsCartonSpecDTO.AddDTO addDTO, WmsCartonEntity wmsCartonEntity, WmsCartonSpecEntity wmsCartonSpecEntity) {
         //校验必填
         for (WmsCartonDetailDTO.AddDTO detail : addDTO.getDetailList()) {
-            if (StringUtils.isBlank(detail.getSkuId()) || StringUtils.isBlank(detail.getSkuNo())) {
+            if (CharSequenceUtil.isBlank(detail.getSkuId()) || CharSequenceUtil.isBlank(detail.getSkuNo())) {
                 throw new ServiceException(ApiError.PACKING_SKU_IS_NOT_NULL, wmsCartonSpecEntity.getBoxSpecNo());
             }
             if (detail.getPackQty() == null || detail.getPackQty() <= 0) {
@@ -92,7 +90,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
             }
         }
 
-        List<WmsCartonDetailEntity> detailEntityList = BeanMapper.copyList(addDTO.getDetailList(), WmsCartonDetailEntity.class);
+        List<WmsCartonDetailEntity> detailEntityList = buildCartonDetail(addDTO.getDetailList());
         // 数据处理
         handleData(detailEntityList, wmsCartonEntity.getId());
         if(CollectionUtils.isNotEmpty(detailEntityList)){
@@ -107,6 +105,26 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
         }
     }
 
+    /**
+     * 合并相同 sku+fuSku的明细行
+     * @param detailList
+     * @return
+     */
+    private List<WmsCartonDetailEntity> buildCartonDetail(List<WmsCartonDetailDTO.AddDTO> detailList) {
+        Map<String, List<WmsCartonDetailDTO.AddDTO>> map = detailList.stream().collect(Collectors.groupingBy(e -> e.getSkuId() + e.getFnSku()));
+        List<WmsCartonDetailEntity> detailEntityList = new ArrayList<>(map.keySet().size());
+        map.keySet().forEach(key ->{
+            List<WmsCartonDetailDTO.AddDTO> addDTOS = map.get(key);
+            WmsCartonDetailEntity detailEntity = CartonConverter.INSTANCE.AddDetailToCartonDetail(addDTOS.get(0));
+            int packQty = addDTOS.stream().mapToInt(WmsCartonDetailDTO.AddDTO::getPackQty).sum();
+            BigDecimal grossWeight = addDTOS.stream().map(WmsCartonDetailDTO.AddDTO::getGrossWeight).filter(Objects::nonNull).reduce(BigDecimal.ZERO, BigDecimal::add);
+            detailEntity.setPackQty(packQty);
+            detailEntity.setGrossWeight(grossWeight);
+            detailEntityList.add(detailEntity);
+        });
+        return detailEntityList;
+    }
+
     @Override
     public List<WmsCartonDetailDTO.BoxDTO> listCartonDetailByMainIds(List<String> cartonIds) {
         if (CollectionUtils.isEmpty(cartonIds)){
@@ -119,10 +137,16 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
     * 新增修改处理数据
     */
     private void handleData(List<WmsCartonDetailEntity> detailEntityList, String mainId) {
+        //查询原装箱信息
+        List<WmsCartonDetailEntity> detailEntityList1 = listByMainIds(Collections.singletonList(mainId));
         for (WmsCartonDetailEntity wmsCartonDetailEntity : detailEntityList) {
             wmsCartonDetailEntity.setMainId(mainId);
-            if (StringUtils.isBlank(wmsCartonDetailEntity.getWeightUnit())){
+            if (CharSequenceUtil.isBlank(wmsCartonDetailEntity.getWeightUnit())){
                 wmsCartonDetailEntity.setWeightUnit(UnitEnum.WeightUnitEnum.KG.code);
+            }
+            if (CollectionUtils.isNotEmpty(detailEntityList1)){
+                WmsCartonDetailEntity wmsCartonDetailEntity1 = detailEntityList1.stream().filter(e -> Objects.equals(e.getSkuNo(), wmsCartonDetailEntity.getSkuNo()) && Objects.equals(e.getFnSku(), wmsCartonDetailEntity.getFnSku())).findFirst().orElse(null);
+                wmsCartonDetailEntity.setId(Objects.nonNull(wmsCartonDetailEntity1) ? wmsCartonDetailEntity1.getId() : null);
             }
         }
     }
@@ -137,7 +161,7 @@ public class WmsCartonDetailServiceImpl extends SuperServiceImpl<WmsCartonDetail
      * @return void
      **/
     private void firstMileCartonBillSave(Integer boxQty, List<WmsCartonDetailEntity> detailEntityList, String cartonId, String sourceId) {
-        List<WmsCartonEntity> firstMileCartonBillEntities = wmsCartonService.listByTaskIds(Arrays.asList(sourceId));
+        List<WmsCartonEntity> firstMileCartonBillEntities = wmsCartonService.listByTaskIds(Collections.singletonList(sourceId));
         Integer maxBoxNo = 0;
         if (CollectionUtils.isNotEmpty(firstMileCartonBillEntities)) {
             maxBoxNo = firstMileCartonBillEntities.stream().max(Comparator.comparingInt(WmsCartonEntity::getBoxNo)).map(WmsCartonEntity::getBoxNo).get();

@@ -1,9 +1,11 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.PagingVO;
 import com.common.core.controller.BaseController;
@@ -135,7 +137,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000001", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000001", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -144,7 +146,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000002", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000002", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -153,7 +155,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000003", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000003", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -162,7 +164,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000004", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000004", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -171,7 +173,7 @@ public class WarehouseLocationController extends BaseController {
 //        warehouseLocationEntity = new WarehouseLocationEntity();
 //        warehouseLocationEntity.setWarehouseId(warehouseId);
 //        warehouseLocationEntity.setType(WarehouseLocationTypeEnum.LOCATION.getCode());
-//        warehouseLocationEntity.setCode(StrUtil.format("{}000005", prefix));
+//        warehouseLocationEntity.setCode(CharSequenceUtil.format("{}000005", prefix));
 //        warehouseLocationEntity.setName(warehouseLocationEntity.getCode());
 //        warehouseLocationEntity.setStatus(WarehouseLocationStatusEnum.IDLE.getCode());
 //        warehouseLocationEntity.setParentId(areaId);
@@ -983,6 +985,10 @@ public class WarehouseLocationController extends BaseController {
      * 分页查询仓位
      */
     @PostMapping("/pagingByParam")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "wl.warehouse_id",
+            menuCode = "wms:warehouseLocation:pagingByParam"
+    )
     @WebAdvanceQuery(handler = WarehouseLocationInfoQueryHandler.class)
     public ApiResult<PagingVO<WarehouseLocationDTO.ViewDto>> pagingByParam(@RequestBody @Validated PagingDTO<WarehouseLocationDTO.SearchParamDTO> dto){
         PagingVO<WarehouseLocationDTO.ViewDto> list = warehouseLocationService.pagingByParam(dto);
@@ -1039,7 +1045,7 @@ public class WarehouseLocationController extends BaseController {
      * 启用/禁用仓位
      */
     @PostMapping("/updateStatus")
-    public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationDTO.updateStatusDto dto){
+    public ApiResult<Void> updateStatus(@RequestBody @Validated WarehouseLocationDTO.UpdateStatusDto dto){
         warehouseLocationService.updateDisabled(dto);
         return ApiResult.success();
     }
@@ -1058,7 +1064,7 @@ public class WarehouseLocationController extends BaseController {
      * 编辑更新仓位
      */
     @PostMapping("/edit")
-    public ApiResult<Void> edit(@RequestBody @Validated WarehouseLocationDTO.updateDto dto){
+    public ApiResult<Void> edit(@RequestBody @Validated WarehouseLocationDTO.UpdateDto dto){
         warehouseLocationService.update(dto);
         return ApiResult.success();
     }
@@ -1067,7 +1073,7 @@ public class WarehouseLocationController extends BaseController {
      * 仓位管理tab接口
      */
     @GetMapping("/tabList")
-    public ApiResult<List<WarehouseLocationDTO.tabDto>> tabList(){
+    public ApiResult<List<WarehouseLocationDTO.TabDto>> tabList(){
         return ApiResult.success(warehouseLocationService.tabList());
     }
 

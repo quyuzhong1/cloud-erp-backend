@@ -68,8 +68,6 @@ public class InstockForcastDetailEntity extends BaseEntity<InstockForcastDetailE
 
     public static final String SKU_NO = "sku_no";
 
-    public static final String QTY = "qty";
-
     public static final String PRODUCT_NAME = "product_name";
 
     @Override

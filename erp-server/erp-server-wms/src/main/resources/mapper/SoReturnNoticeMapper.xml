@@ -5,7 +5,9 @@
         SELECT
             srn.id,
             srnd.id as detailId,
+            srn.so_id as soId,
             srn.source_id AS sourceId,
+            srn.type,
             srnd.source_detail_id AS sourceDetailId,
             srn.code,
             srn.source_code AS sourceCode,
@@ -26,9 +28,17 @@
             srnd.return_type_dict AS returnTypeDict,
             srnd.return_reason_dict AS returnReasonDict,
             srn.create_time AS createTime,
-            srn.return_logistic_code as returnLogisticCode
+            srn.return_logistic_code as returnLogisticCode,
+            srn.currency,
+            srn.currency_symbol,
+            srnd.exchange_rate ,
+            srnd.return_amount ,
+            srnd.tax_return_amount ,
+            srnd.return_amount_local_currency ,
+            srnd.tax_return_amount_local_currency
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
+        left join so_b2c sb on sb.id = srn.so_id and sb.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
          and   srn.is_deleted = FALSE
@@ -50,6 +60,7 @@
         count(distinct srn.id)
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
+        left join so_b2c sb on sb.id = srn.so_id and sb.is_deleted=FALSE
         WHERE srn.is_deleted = FALSE
         <if test="params.approveStatusList != null and params.approveStatusList.size > 0">
             and srn.approve_status in
@@ -86,9 +97,17 @@
         srnd.return_type_dict AS returnTypeDict,
         srnd.return_reason_dict AS returnReasonDict,
         srn.create_time AS createTime,
-        srn.return_logistic_code as returnLogisticCode
+        srn.return_logistic_code as returnLogisticCode,
+        srn.currency,
+        srn.currency_symbol,
+        srnd.exchange_rate ,
+        srnd.return_amount ,
+        srnd.tax_return_amount ,
+        srnd.return_amount_local_currency ,
+        srnd.tax_return_amount_local_currency
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
+        left join so_b2c sb on sb.id = srn.so_id and sb.is_deleted=FALSE
         WHERE
         ${params.sqlMap.default}
         and    srn.is_deleted = FALSE
@@ -108,6 +127,7 @@
         SELECT
             srnd.id,
             srnd.main_id,
+            srn.type,
             srn.source_id,
             srn.warehouse_id,
             srn.inventory_org_id,
@@ -124,7 +144,9 @@
             srnd.return_reason_dict,
             srnd.remark,
             srn.approve_status,
-            srn.return_logistic_code
+            srn.return_logistic_code,
+            srnd.platform_sku_no,
+            srnd.is_child_sku_no
         FROM so_return_notice_detail srnd
         INNER JOIN so_return_notice srn ON srn.id = srnd.main_id AND srnd.is_deleted = FALSE
         WHERE srn.is_deleted = FALSE

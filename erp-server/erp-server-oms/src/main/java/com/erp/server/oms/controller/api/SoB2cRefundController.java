@@ -1,0 +1,65 @@
+package com.erp.server.oms.controller.api;
+
+
+import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.DataAttributeEnum;
+import com.common.business.vo.PagingVO;
+import com.common.core.controller.BaseController;
+import com.common.core.controller.vo.ApiResult;
+import com.erp.model.oms.dto.SoB2cRefundDTO;
+import com.erp.server.oms.service.SoB2cRefundService;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import javax.annotation.Resource;
+
+/**
+ * <p>
+ * 退款订单 前端控制器
+ * </p>
+ *
+ * @author Lambda
+ * @since 2024-09-12
+ */
+@RestController
+@RequestMapping("/refundOrder")
+public class SoB2cRefundController extends BaseController {
+
+
+    @Resource
+    private SoB2cRefundService soB2cRefundService;
+
+    /**
+     * 退款订单分页
+     *
+     * @return
+     */
+    @PostMapping("/paging")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "ro.shop_id",
+            menuCode = "oms:refundOrder:paging"
+    )
+    @WebAdvanceQuery
+    public ApiResult<PagingVO<SoB2cRefundDTO.PagingViewDTO>> queryByPage(@RequestBody @Validated PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
+        PagingVO<SoB2cRefundDTO.PagingViewDTO> pagingVO = soB2cRefundService.paging(dto);
+        return success(pagingVO);
+    }
+
+
+    /**
+     * 退款订单导出
+     *
+     * @return
+     */
+    @PostMapping("/export")
+    @WebAdvanceQuery
+    public ApiResult<Object> export(@RequestBody @Validated SoB2cRefundDTO.PagingParamDTO dto) {
+        soB2cRefundService.exportExcel(dto);
+        return success();
+    }
+}

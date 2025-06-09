@@ -86,6 +86,7 @@ public class SubcontractReturnController extends BaseController {
     @PostMapping("/tabList")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srd.warehouse_id",
             menuCode = "wms:subcontractReturn:paging",
             tableAlias = "sr"
     )
@@ -103,6 +104,7 @@ public class SubcontractReturnController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "srd.warehouse_id",
             menuCode = "wms:subcontractReturn:paging",
             tableAlias = "sr"
     )
@@ -417,11 +419,6 @@ public class SubcontractReturnController extends BaseController {
      * @return ApiResult<PagingVO<SubcontractIssueDTO.SubcontractDetailListDTO>>
      */
     @PostMapping("/listSubcontractDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:subcontractReturn:listSubcontractDetail",
-            tableAlias = "sr"
-    )
     public ApiResult<List<SubcontractReturnDTO.SubcontractDetailListDTO>> listSubcontractDetail(@RequestBody @Validated SubcontractReturnDTO.DetailPagingParamDTO dto) {
         return success(subcontractReturnService.listSubcontractDetail(dto));
     }

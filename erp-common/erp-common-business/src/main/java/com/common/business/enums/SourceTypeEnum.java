@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.annotation.EnumValue;
 import com.fasterxml.jackson.annotation.JsonValue;
 import lombok.NoArgsConstructor;
 
-import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -39,7 +38,9 @@ public enum SourceTypeEnum {
     SO_RETURN_RECEIVE("soReturnReceive", "销售退货签收单","so_return_receive"),
     SO_RETURN_INSTOCK("soReturnInstock", "销售退货入库单","so_return_instock"),
     SO_DELIVERY_NOTICE("soDeliveryNotice", "销售发货通知单","so_delivery_notice"),
+    SO_DELIVERY_NOTICE_CHANGE("soDeliveryNoticeChange", "销售发货通知变更单","so_delivery_notice_change"),
     TRANSFER_OUT("transferOut", "分布式调出单","transfer_out"),
+    TRANSFER_IN("transferIn", "分布式调入单","transfer_in"),
     TRANSFER_INFO("transferInfo", "直接调拨单","transfer_info"),
     MACHINE_INFO("machineInfo", "加工单","machine_info"),
     SO_OUTSTOCK("soOutstock", "销售出库单","so_outstock"),
@@ -50,6 +51,7 @@ public enum SourceTypeEnum {
     OTHER_OUTSTOCK("otherOutstock", "其他出库","other_outstock"),
     WDT_OTHER_OUTSTOCK("wdtOtherOutstock", "其他出库","other_outstock"),
     WAREHOUSE("warehouse", "仓库","warehouse"),
+    SDY_WAREHOUSE("sdy_warehouse", "仓库","warehouse"),
     SO_B2C_DELIVERY("soB2cDelivery", "B2C发货单","so_b2c_delivery"),
     SO_B2C_DELIVERY_INTERCEPT("soB2cDeliveryIntercept", "B2C发货单拦截","so_b2c_delivery_intercept"),
     PLATFORM_SO_OUT_STOCK("platformSoOutStock", "平台销售出库单",""),
@@ -68,6 +70,7 @@ public enum SourceTypeEnum {
     DELIVERY_PLAN("deliveryPlan", "发货计划","wms_delivery_plan"),
     OVERSEAS_INBOUND("overseasInbound", "海外仓入库单","overseas_warehouse_inbound"),
     REQUISITION_APPLICATION("requisitionApplication", "要货申请","requisition_application"),
+    REQUISITION_APPLICATION_CHANGE("requisitionApplicationChange", "要货申请变更单","requisition_application_change"),
     REQUISITION_APPLICATION_HANDLE("requisitionApplicationHandle", "要货申请(处理)","requisition_application"),
     REQUISITION_APPLICATION_FINISH("requisitionApplicationFinish", "要货申请(完成)","requisition_application"),
 
@@ -77,12 +80,17 @@ public enum SourceTypeEnum {
     VIRTUAL_WAREHOUSE_ALLOCATION("virtualWarehouseAllocation", "分货单","virtual_warehouse_allocation"),
     PICKING_LISTS_ADD("pickingListsAdd", "拣货单新增","picking_lists_add"),
     PICKING_LISTS_SUBTRACT("pickingListsSubtract", "拣货单减少","picking_lists_subtract"),
+    PICKING_LISTS("pickingLists", "拣货单","picking_lists"),
+    QC_NOTICE("qcNotice", "质检通知单","qc_notice"),
 
     //OMS
     SO_RETURN("soReturn", "销售退货订单","so_return"),
+    SO_B2C_RETURN("soB2cReturn", "B2c销售退货订单","so_return"),
     SO_INFO("soInfo", "B2B销售订单","so_info"),
+    SO_INFO_TRANSFER_INFP("soInfoTransferInfo", "B2B销售订单(中转调拨)","so_info"),
     SO_CHANGE("soChange", "销售变更单","so_change"),
     CUSTOMER_INFO( "customerInfo", "客户表","customer_info"),
+    SDY_CUSTOMER_INFO( "sdy_customerInfo", "客户表","customer_info"),
     CUSTOMER_B2B_CHANGE_SELLER( "customerB2bChangeSeller", "B2B客户表变更销售员","customer_b2b_seller_change"),
     SO_B2C( "soB2c", "B2C销售订单","so_b2c"),
     SO_MULTI_CHANNEL( "soMultiChannel", "多渠道订单","so_multi_channel"),
@@ -91,6 +99,10 @@ public enum SourceTypeEnum {
     CUSTOMER_CONTACT( "customerContact", "客户联系人","customer_contact"),
     CUSTOMER_GROUP( "customerGroup", "客户分组","customer_group"),
     LISTING_INFO( "listingInfo", "产品信息","listing_info"),
+    SDY_SKU_MAPPING( "sdy_skuMapping", "sku映射","sku_mapping"),
+    CFG_VAT_INVOICE( "cfgVatInvoice", "VAT发票设置","cfg_vat_invoice"),
+    SO_PRICE( "soPrice", "销售价目表","so_price"),
+    SO_PRICE_CHANGE( "soPriceChange", "销售调价表","so_price_change"),
 
     //SRM
     DELIVERY_ORDER( "deliveryOrder", "送货单","delivery_order"),
@@ -107,14 +119,20 @@ public enum SourceTypeEnum {
 
     // PLM
     PRODUCT_BOM_INFO("productBomInfo", "BOM管理","product_bom_info"),
+    SDY_PRODUCT_BOM_INFO("sdy_productBomInfo", "BOM管理","product_bom_info"),
     PRODUCT_COMBINATION("productCombination", "组合产品",""),
 
     PRODUCT_DETAIL("productDetail", "产品管理","product_detail"),
+    SDY_PRODUCT_DETAIL("sdy_productDetail", "产品管理","product_detail"),
     WDT_PRODUCT_DETAIL("wdtProductDetail", "产品管理","product_detail"),
     PROJECT_TASK("projectTask", "任务列表","project_task"),
     PRODUCT_CHANGE("productChange", "变更管理","product_change"),
     BASIC_CATEGORY("basicCategory", "产品分类","basic_category"),
+    APPLICATION_CATEGORY("applicationCategory", "应用分类","application_category"),
     PRODUCT_LOGISTICS("ProductLogistics", "物流产品","product_logistics"),
+    MOULD_INFO("mouldInfo", "模具管理","mould_info"),
+
+    LX_PRODUCT_DETAIL("lx_productDetail", "产品管理","product_detail"),
 
 
     //SYS
@@ -140,6 +158,18 @@ public enum SourceTypeEnum {
 
     LOGISTICS_BILL("logisticsBill", "物流单","logistics_bill"),
     TMS_FIRST_MILE_RECONCILIATION("tmsFirstMileReconciliation", "头程对账单","tms_first_mile_reconciliation"),
+
+    SMALL_BAG_COST_ALLOCATION("smallBagCostAllocation", "小包费用分摊","small_bag_cost_allocation"),
+    TRANSFER_DECLARE_COST_ALLOCATION("transferDeclareCostAllocation", "中转费用分摊","transfer_declare_cost_allocation"),
+    FIRST_MILE_COST_ALLOCATION("firstMileCostAllocation", "头程费用分摊","first_mile_cost_allocation"),
+
+
+
+    //MRP
+    REPLENISHMENT_SUGGESTION("replenishmentSuggestion", "补货建议","replenishment_suggestion"),
+    DELIVERY_SUGGESTION("deliverySuggestion", "发货建议","delivery_suggestion"),
+    PURCHASE_SUGGESTION("purchaseSuggestion", "采购建议","purchase_suggestion"),
+    PURCHASE_SUGGESTION_MERGE("purchaseSuggestionMerge", "采购建议(合并)","purchase_suggestion_merge"),
 
 
     //Mabang
@@ -172,6 +202,10 @@ public enum SourceTypeEnum {
     THIRD_WAREHOUSE_CANCEL_INBOUND_BILL("thirdWarehouseCancelInboundBill", "第三方仓取消入库单","dmp_push_task"),
     THIRD_WAREHOUSE_CREATE_OUTBOUND_BILL("thirdWarehouseCreateOutboundBill", "第三方仓创建出库单","dmp_push_task"),
     THIRD_WAREHOUSE_CANCEL_OUTBOUND_BILL("thirdWarehouseCancelOutboundBill", "第三方仓取消出库单","dmp_push_task"),
+    THIRD_WAREHOUSE_CALCULATE_FEE("thirdWarehouseCalculateFee", "第三方仓运费试算","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_FILE("thirdWarehouseUploadFile", "第三方仓上传附件","dmp_push_task"),
+    THIRD_WAREHOUSE_UPLOAD_ORDER_LABEL("thirdWarehouseUploadOrderLabel", "第三方仓上传面单","dmp_push_task"),
+    THIRD_WAREHOUSE_REFRESH_TOKEN("thirdWarehouseRefreshToken", "第三方仓刷新token","dmp_pull_task"),
 
     TRANSFER_LOGISTICS_GET_SHIPPING("transferLogisticsGetShipping", "物流报关商获取物流产品数据","dmp_pull_task"),
     TRANSFER_LOGISTICS_CREATE_ORDER("transferLogisticsCreateOrder", "物流报关商创建订单","dmp_push_task"),
@@ -187,7 +221,7 @@ public enum SourceTypeEnum {
 
     // 亚马逊相关
     AMZ_REPORT_CONSUMER("amzReportConsumer", "亚马逊报告消费处理","amz_report_task"),
-
+    PLATFORM_RETURN_INSTOCK("platform_return_instock", "平台仓退货入库单","dmp_third_return_inbound"),
 
     // 旺店通相关
     WDT_OUT_STOCK("wdt_out_stock", "旺店通销售出库单","dmp_pull_task"),
@@ -202,6 +236,22 @@ public enum SourceTypeEnum {
     QIMEN_RETURN_ORDER("qimen_return_order", "奇门销售退货入库单", "dmp_pull_task"),
     PILOT_APPLICATION("pilotApplication", "试产量产单", "pilot_application"),
     FIRST_MILE_ESTIMATED("first_mile_estimated", "头程暂估账单", "first_mile_estimated_bill"),
+    THIRD_WAREHOUSE_RETURN_INSTOCK("third_warehouse_return_instock", "三方仓退货入库单","dmp_pull_task"),
+
+
+    //速帝云
+    SDY_DELIVERY_ORDER("sdyDeliveryOrder", "速帝云配货单","so_b2c"),
+    SDY_OFFLINE_ORDER("sdyOfflineOrder", "速帝云B2B订单","so_info"),
+    SDY_ONLINE_ORDER("sdyOnlineOrder", "速帝云线上订单","dmp_so_info"),
+    SDY_SO_OUTSTOCK("sdySoOutstock", "速帝云销售出库订单","so_outstock"),
+    SDY_SO_RETURN_INSTOCK("sdySoReturnInstock", "速帝云退货入库单","so_return_instock"),
+    SDY_LOGISTICS_BILL("sdyLogisticsBill", "速帝云运单","logistics_bill"),
+    SDY_SELF_DELIVERY_ORDER("sdySelfDeliveryOrder", "速帝云自发货配货单","so_b2c_delivery"),
+    SDY_ALIEXPRESS_DELIVERY_ORDER("sdyAliExpressDeliveryOrder", "速帝云速卖通配货单","aliexpress_delivery"),
+
+
+    //售后申请
+    AFTER_SALE("afterSale", "售后申请","after_sale"),
     ;
 
     /**

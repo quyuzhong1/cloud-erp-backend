@@ -3,6 +3,7 @@ package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -36,9 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import javax.annotation.Resource;
+import java.util.*;
 
 /**
  * <p>
@@ -52,13 +52,13 @@ import java.util.Optional;
 @Service
 public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, PickingCartEntity> implements PickingCartService {
 
-    @Autowired
+    @Resource
     private DocNoGenHelper docNoGenHelper;
 
-    @Autowired
+    @Resource
     private CfgRuleConditionService cfgRuleConditionService;
 
-    @Autowired
+    @Resource
     private WaveListService waveListService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -89,7 +89,9 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
     @Override
     public Boolean update(PickingCartDTO.UpdateDTO updateDTO) {
         PickingCartEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "拣货车管理"));
+        if (Objects.isNull(old)){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "拣货车管理");
+        }
         PickingCartEntity pickingCartEntity =  BeanMapperUtils.map(PickingCartEntity.class, updateDTO);
 
         // 数据处理
@@ -120,10 +122,10 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
         PickingCartEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到拣货车数据"));
 
         //判断拣货车是否被波次使用
-        List<WaveListEntity> waveList = waveListService.listByPickingCartCodeList(Arrays.asList(entity.getCode()));
-        long count = waveList.stream().filter(obj -> !StrUtil.equals(obj.getStatus(), WaveStatusEnum.FINISH.getCode())).count();
+        List<WaveListEntity> waveList = waveListService.listByPickingCartCodeList(Collections.singletonList(entity.getCode()));
+        long count = waveList.stream().filter(obj -> !CharSequenceUtil.equals(obj.getStatus(), WaveStatusEnum.FINISH.getCode())).count();
         if (count > 0) {
-            throw new ServiceException(StrUtil.format("拣货车【{}】已被波次列表使用，不支持删除",entity.getCode()));
+            throw new ServiceException(CharSequenceUtil.format("拣货车【{}】已被波次列表使用，不支持删除",entity.getCode()));
         }
 
         // 删除主单数据
@@ -155,7 +157,7 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
         PickingCartEntity entity = super.getByIdOpt(dto.getId()).orElseThrow(() -> new ServiceException("未找到拣货车数据"));
         if (dto.getDisabled().equals(entity.getDisabled())) {
             String disabledName = dto.getDisabled() ? "禁用" : "启用";
-            throw new ServiceException(StrUtil.format("拣货车已【{}】，不支持再次【{}】",disabledName,disabledName));
+            throw new ServiceException(CharSequenceUtil.format("拣货车已【{}】，不支持再次【{}】",disabledName,disabledName));
         }
         return lambdaUpdate().eq(PickingCartEntity::getId,dto.getId())
                 .set(PickingCartEntity::getDisabled,dto.getDisabled())
@@ -174,7 +176,7 @@ public class PickingCartServiceImpl extends SuperServiceImpl<PickingCartMapper, 
      *  分页数据处理
      */
     private void fillList (List<PickingCartDTO.ListDTO> list) {
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return;
         }
     }

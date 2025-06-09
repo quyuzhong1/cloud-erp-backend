@@ -66,7 +66,7 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 	protected static final String MONGO_BASE_UNIQUEENCRYPT = "uniqueEncrypt";
 	protected static final String MONGO_BASE_DATAENCRYPT = "dataEncrypt";
 	protected static final String MONGO_BASE_MONGOCREATETIME = "mongoCreateTime";
-	protected static final String MONGO_BASE_MONGOUPDATETIME = "mongoUpdateTime";
+	public static final String MONGO_BASE_MONGOUPDATETIME = "mongoUpdateTime";
 	
 	public static List<String> mongoBaseFiledList = new ArrayList<>();
 	static {
@@ -296,7 +296,7 @@ public abstract class DmpInputMongoHandler extends DmpInputTaskHandler{
 					waitEntity.put(MONGO_BASE_MONGOCREATETIME, findEntity.get(MONGO_BASE_MONGOCREATETIME).toString());
 					updateDmpInputMongoEntityList.add(waitEntity);
 					if(!findEntity.get(MONGO_BASE_DATAENCRYPT).toString().equals(waitEntity.get(MONGO_BASE_DATAENCRYPT).toString())) {
-						updateDmpInputMongoEntityList.add(waitEntity);
+						changeConvertInputMongoEntityList.add(waitEntity);
 					}
 				}else {
 					saveDmpInputMongoEntityList.add(waitEntity);

@@ -9,6 +9,7 @@ import com.erp.server.tms.mapper.CfgOperateLogFieldMapper;
 import com.erp.server.tms.service.CfgOperateLogFieldService;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.Resource;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,6 +24,9 @@ import java.util.List;
 @Service
 public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLogFieldMapper, CfgOperateLogFieldEntity> implements CfgOperateLogFieldService {
 
+
+    @Resource
+    private CfgOperateLogFieldServiceImpl cfgOperateLogFieldService;
 
     @Override
     public List<CfgOperateLogFieldEntity> listByClassPaths(List<String> classPaths) {
@@ -52,7 +56,7 @@ public class CfgOperateLogFieldServiceImpl extends SuperServiceImpl<CfgOperateLo
 
 
         );
-        return this.saveBatch(logFields);
+        return cfgOperateLogFieldService.saveBatch(logFields);
 
     }
 }

@@ -1,6 +1,6 @@
 package com.erp.server.tms.schedule;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.json.JSONUtil;
 import com.common.business.constant.ThirdConstants;
 import com.erp.model.oms.entity.ShopInfoEntity;
@@ -77,8 +77,8 @@ public class FmLogisticWarnJob {
         //处理抄送人消息发送
         int totalWarnCount = pagingVOS.size();
         int todayCount = todayPagingVOS.size();
-        String titleContent = StrUtil.format("总计{}票货物出现异常，今天新增{}异常，请即时跟进", totalWarnCount,todayCount);
-        String msgContent = StrUtil.format("通知类型：在途异常通知");
+        String titleContent = CharSequenceUtil.format("总计{}票货物出现异常，今天新增{}异常，请即时跟进", totalWarnCount,todayCount);
+        String msgContent = CharSequenceUtil.format("通知类型：在途异常通知");
         this.sendMsgWhenOverdue(new ArrayList<>(),titleContent,msgContent);
 
         //处理店铺负责人消息推送
@@ -104,8 +104,8 @@ public class FmLogisticWarnJob {
             List<TmsFirstMileLogisticDTO.PagingVO> todayWarnByCharge = value.stream().filter(v-> v.getWarnHour() > -24).collect(Collectors.toList());
             int totalWarnCountByCharge = value.size();
             int todayCountByCharge = todayWarnByCharge.size();
-            String titleContentByCharge = StrUtil.format("总计{}票货物出现异常，今天新增{}异常，请即时跟进", totalWarnCountByCharge,todayCountByCharge);
-            String msgContentByCharge = StrUtil.format("通知类型：在途异常通知");
+            String titleContentByCharge = CharSequenceUtil.format("总计{}票货物出现异常，今天新增{}异常，请即时跟进", totalWarnCountByCharge,todayCountByCharge);
+            String msgContentByCharge = CharSequenceUtil.format("通知类型：在途异常通知");
             this.sendMsgWhenOverdueByCharge(Arrays.asList(key),titleContentByCharge,msgContentByCharge);
         });
     }

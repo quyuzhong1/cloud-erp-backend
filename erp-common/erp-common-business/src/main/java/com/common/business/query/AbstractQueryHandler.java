@@ -1,6 +1,5 @@
 package com.common.business.query;
 
-import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.enums.QueryConditionEnum;
 import com.common.business.enums.QueryDataTypeEnum;
@@ -69,5 +68,16 @@ public abstract class AbstractQueryHandler implements IQueryHandler{
 
     protected String getQueryAllSql(){
         return " 1 = 1 ";
+    }
+
+    /**
+     * 等于，在列表，包含
+     */
+    protected Boolean isContain(){
+        return QueryConditionEnum.EQ.equals(AdvanceQueryContext.getCompareCode())
+                ||QueryConditionEnum.IN_LIST.equals(AdvanceQueryContext.getCompareCode())
+                ||QueryConditionEnum.ENDS_WITH.equals(AdvanceQueryContext.getCompareCode())
+                ||QueryConditionEnum.CONTAINS.equals(AdvanceQueryContext.getCompareCode())
+                ;
     }
 }

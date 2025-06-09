@@ -70,7 +70,7 @@ public class AttachmentController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除附件信息")
     @PostMapping("/delete")
-    public ApiResult removeAttachment(@RequestBody BaseIdDTO dto) {
+    public ApiResult<Object> removeAttachment(@RequestBody BaseIdDTO dto) {
         plmAttachmentService.removeAttachment(dto);
         return success();
     }
@@ -82,9 +82,26 @@ public class AttachmentController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "根据URL删除附件信息")
     @PostMapping("/deleteByUrl")
-    public ApiResult removeAttachment(@RequestBody AttachmentDTO.DeleteDTO dto) {
+    public ApiResult<Object> removeAttachment(@RequestBody AttachmentDTO.DeleteDTO dto) {
         plmAttachmentService.removeAttachmentByUrl(dto);
         return success();
     }
 
+    /**
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getById")
+    public ApiResult<List<AttachmentDTO.CommonDTO>> getUrlById(@RequestBody BaseIdDTO dto) {
+        return success( plmAttachmentService.getUrlById(dto.getId()));
+    }
+
+    /**
+     * @param dto
+     * @return
+     */
+    @PostMapping("/getSkuUrlByPid")
+    public ApiResult<List<AttachmentDTO.CommonDTO>> getSkuUrlByPid(@RequestBody BaseIdDTO dto) {
+        return success( plmAttachmentService.getSkuUrlByPid(dto.getId()));
+    }
 }

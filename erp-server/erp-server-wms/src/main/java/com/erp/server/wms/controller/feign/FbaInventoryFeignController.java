@@ -1,13 +1,9 @@
 package com.erp.server.wms.controller.feign;
 
 import com.common.core.controller.BaseController;
-import com.erp.model.wms.dto.FbaInventoryDTO;
-import com.erp.model.wms.dto.QcInfoDTO;
 import com.erp.model.wms.entity.FbaInventoryEntity;
 import com.erp.rpc.wms.feign.WmsFbaInventoryFeign;
 import com.erp.server.wms.service.FbaInventoryService;
-import com.erp.server.wms.service.QcInfoService;
-import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +30,7 @@ public class FbaInventoryFeignController extends BaseController implements WmsFb
      * @Author Jim
      * @Date 2023-11-08
      **/
+    @Override
     @PostMapping("/allBatchSave")
     public Boolean allBatchSave(@RequestBody List<FbaInventoryEntity> inventoryEntityList) {
        return fbaInventoryService.allBatchSave(inventoryEntityList);

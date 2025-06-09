@@ -5,6 +5,8 @@ import com.common.core.constant.EnumMessage;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Objects;
+
 /**
  * 分货单方向
  * @author hyj
@@ -46,7 +48,7 @@ public enum VwAllocationDirectionEnum implements EnumMessage {
     public static String getName(String code) {
         if (StringUtils.isNotBlank(code)) {
             for (VwAllocationDirectionEnum item : VwAllocationDirectionEnum.values()) {
-                if (code.equals(item.getCode())) {
+                if (Objects.equals(code,item.getCode())) {
                     return item.getName();
                 }
             }

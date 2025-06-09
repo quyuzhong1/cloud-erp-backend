@@ -1,5 +1,7 @@
 package com.common.business.threadlocal;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,7 +10,11 @@ import java.util.Map;
  * @date 2023年11月16日 17:38
  * 第三方仓上下文
  */
+@Slf4j
 public class ThirdWarehouseContext {
+
+    private ThirdWarehouseContext() {
+    }
 
     /**
      * 存放调用第三方接口返回JSON

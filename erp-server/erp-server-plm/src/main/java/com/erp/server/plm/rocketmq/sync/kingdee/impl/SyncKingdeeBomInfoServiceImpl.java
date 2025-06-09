@@ -1,8 +1,10 @@
 package com.erp.server.plm.rocketmq.sync.kingdee.impl;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,11 +36,16 @@ import com.erp.model.plm.entity.BomInfoEntity;
 import com.erp.model.plm.entity.PlmPushMsgEntity;
 import com.erp.model.plm.entity.ProductBomHistoryEntity;
 import com.erp.model.plm.entity.ProductBomSkuHistoryEntity;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.enums.BomStateEnum;
+import com.erp.model.plm.enums.BomTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.plm.rocketmq.sync.kingdee.SyncKingdeeBomInfoService;
+import com.erp.server.plm.service.BomInfoService;
 import com.erp.server.plm.service.PlmPushMsgService;
 import com.erp.server.plm.service.ProductBomHistoryService;
 import com.erp.server.plm.service.ProductBomSkuHistoryService;
+import com.erp.server.plm.service.ProductDetailService;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
@@ -63,6 +70,12 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
     
     @Resource
     private PlmPushMsgService plmPushMsgService;
+    
+    @Resource
+    private BomInfoService bomInfoService;
+    
+    @Resource
+    private ProductDetailService productDetailService;
 
     /**
      * 组装数据发送到金蝶
@@ -75,13 +88,13 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         //bom历史数据
         List<ProductBomHistoryEntity> bomHistoryList = productBomHistoryService.listByBomId(entity.getId());
         if (CollectionUtils.isEmpty(bomHistoryList)) {
-            throw new ServiceException("bom历史数据不能为空");
+            return null;
         }
         //bom历史明细数据
         List<String> bomHistoryIdList = bomHistoryList.stream().map(ProductBomHistoryEntity::getId).collect(Collectors.toList());
         List<ProductBomSkuHistoryEntity> skuHistoryList = productBomSkuHistoryService.getSkuByHistoryIds(bomHistoryIdList);
         if (CollectionUtils.isEmpty(skuHistoryList)) {
-            throw new ServiceException("bom历史明细数据不能为空");
+            return null;
         }
 
         List<Map<String, Object>> listMap = new ArrayList<>();
@@ -186,4 +199,70 @@ public class SyncKingdeeBomInfoServiceImpl implements SyncKingdeeBomInfoService 
         
         return null;
     }
+
+	@Override
+	public void syncDataToSdy(BomInfoEntity entity, String operate) {
+		if(!BomTypeEnum.COMBINATION.getType().equals(entity.getType())) {
+			return;
+		}
+		List<ProductBomHistoryEntity> bomHistoryList = productBomHistoryService.lambdaQuery()
+			.eq(ProductBomHistoryEntity::getBomId, entity.getId())
+			.eq(ProductBomHistoryEntity::getBomVersion, entity.getBomVersion())
+			.list();
+		List<String> bomHistoryIdList = bomHistoryList.stream().map(ProductBomHistoryEntity::getId).collect(Collectors.toList());
+        List<ProductBomSkuHistoryEntity> skuHistoryList = productBomSkuHistoryService.getSkuByHistoryIds(bomHistoryIdList);
+        
+        if(CollUtil.isNotEmpty(skuHistoryList)) {
+        	List<PlmPushMsgEntity> plmPushMsgEntityList = new ArrayList<>();
+        	for(ProductBomSkuHistoryEntity skuHistory : skuHistoryList) {
+        		PlmPushMsgEntity plmPushMsgEntity = new PlmPushMsgEntity();
+                plmPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
+                plmPushMsgEntity.setSourceType(SourceTypeEnum.SDY_PRODUCT_BOM_INFO.getCode());
+                plmPushMsgEntity.setSourceId(skuHistory.getId());
+                plmPushMsgEntity.setSourceCode(skuHistory.getSkuNo());
+                plmPushMsgEntity.setSyncOperate(operate);
+                plmPushMsgEntity.setPushData(JSON.toJSONString(this.newSyncDataToSdy(skuHistory, operate)));
+                plmPushMsgEntityList.add(plmPushMsgEntity);
+            }
+        	plmPushMsgService.saveBatch(plmPushMsgEntityList);
+        }
+	}
+
+	@Override
+	public Map<String, Object> newSyncDataToSdy(ProductBomSkuHistoryEntity entity, String operate) {
+		ProductBomHistoryEntity productBomHistoryEntity = productBomHistoryService.getById(entity.getBomHistoryId());
+		BomInfoEntity bomInfoEntity = bomInfoService.getById(productBomHistoryEntity.getBomId());
+		
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		
+		Map<String, String> productIdNameMap = productDetailService.listByIds(Arrays.asList(entity.getSkuId() , entity.getParentSkuId()))
+				.stream().collect(Collectors.toMap(ProductDetailEntity::getId, ProductDetailEntity::getName));
+		
+		Map<String, Object> resultMap = new HashMap<>();
+		resultMap.put("biz_uni_key", entity.getId());
+		resultMap.put("combination_type", BomTypeEnum.getName(bomInfoEntity.getType()));
+		resultMap.put("msku", entity.getParentSkuNo());
+		resultMap.put("msku_description", productIdNameMap.get(entity.getParentSkuId()));
+		resultMap.put("sku", entity.getSkuNo());
+		resultMap.put("sku_description", productIdNameMap.get(entity.getSkuId()));
+		resultMap.put("product_code", entity.getSkuNo());
+		resultMap.put("product_name", productIdNameMap.get(entity.getSkuId()));
+		Integer quantity = entity.getQuantity();
+		if(quantity != null) {
+			resultMap.put("product_quota", quantity.toString());
+		}
+		LocalDateTime createTime = entity.getCreateTime();
+		if(createTime != null) {
+			resultMap.put("create_time", createTime.format(formatter));
+		}
+		resultMap.put("owner", entity.getCreateUserName());
+		resultMap.put("version", bomInfoEntity.getBomVersion());
+		
+		if(SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+			resultMap.put("status", "已删除");
+		}else {
+			resultMap.put("status", BomStateEnum.getName(bomInfoEntity.getState()));
+		}
+		return resultMap;
+	}
 }

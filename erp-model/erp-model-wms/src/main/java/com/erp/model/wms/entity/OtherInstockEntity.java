@@ -183,10 +183,6 @@ public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
     @TableField(exist = false)
     private OtherInStockImportExcelDTO importExcelDTO;
 
-
-
-    public static final String CODE = "code";
-
     public static final String APPROVE_STATUS = "approve_status";
 
     public static final String BILL_DATE = "bill_date";
@@ -208,8 +204,6 @@ public class OtherInstockEntity extends BaseEntity<OtherInstockEntity> {
     public static final String ORG_ID = "org_id";
 
     public static final String ORG_NAME = "org_name";
-
-    public static final String TYPE = "type";
 
     public static final String INVALID_STATUS = "invalid_status";
 

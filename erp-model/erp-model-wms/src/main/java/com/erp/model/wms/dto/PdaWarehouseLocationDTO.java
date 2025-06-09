@@ -8,7 +8,9 @@ import java.util.List;
 
 @Data
 public class PdaWarehouseLocationDTO {
-
+    private PdaWarehouseLocationDTO() {
+        throw new IllegalStateException("Utility PdaWarehouseLocationDTO class");
+    }
     @Data
     @NoArgsConstructor
     public static class WarehouseAreaDTO {

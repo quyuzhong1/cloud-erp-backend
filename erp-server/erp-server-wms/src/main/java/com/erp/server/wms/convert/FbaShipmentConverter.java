@@ -9,6 +9,8 @@ import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
+
 /**
  * FBA货件实体映射工具
  * @Author Luo_WG
@@ -28,7 +30,8 @@ public interface FbaShipmentConverter {
     FbaShipmentDetailDTO.ViewDTO fbaShipmentDetailToViewDTO(FbaShipmentDetailEntity detailEntity);
 
     @Mapping(target = "receiveTime", source = "receiveDate")
-    FbaShipmentDTO.ReceiveRecordView fbaShipmentReceiveEntityToView(FbaShipmentReceiveEntity entities);
+    @Mapping(target = "sourceTypeName", expression = "java(com.erp.model.wms.enums.SignSourceTypeEnum.getName(entity.getSourceType()))")
+    FbaShipmentDTO.ReceiveRecordView fbaShipmentReceiveEntityToView(FbaShipmentReceiveEntity entity);
 
     @Mapping(target = "shipmentStatus", source = "platformShipmentStatus")
     FbaShipmentDTO.ShipmentStatusRecordView fbaShipmentStatusEntityToView(FbaShipmentStatusEntity entities);
@@ -147,4 +150,51 @@ public interface FbaShipmentConverter {
             @Mapping(target = "platformSku", source = "msku"),
     })
     RequisitionApplicationDetailDTO.AddDTO DeliveryPlanDetailGRA(FbaShipmentDTO.GenerateRequisitionApplicationViewDTO dto);
+
+    @Mappings({
+            @Mapping(target = "id", ignore = true),
+            @Mapping(target = "createTime", ignore = true),
+            @Mapping(target = "createUserId", ignore = true),
+            @Mapping(target = "createUserName", ignore = true),
+            @Mapping(target = "updateTime", ignore = true),
+            @Mapping(target = "updateUserId", ignore = true),
+            @Mapping(target = "updateUserName", ignore = true),
+            @Mapping(target = "isDeleted", ignore = true),
+            @Mapping(target = "version", ignore = true),
+            @Mapping(target = "customerId", ignore = true),
+            @Mapping(target = "customerName", ignore = true),
+            @Mapping(target = "shipmentId", source = "shipmentEntity.id"),
+            @Mapping(target = "shipmentStatus", source = "shipmentEntity.platformShipmentStatus")
+    })
+    FbaTransitCalculateReportEntity fbaShipmentToTransit(String shipmentCode, LocalDate reportMonth, FbaShipmentEntity shipmentEntity);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "createUserName", ignore = true)
+    @Mapping(target = "createUserId", ignore = true)
+    @Mapping(target = "updateUserName", ignore = true)
+    @Mapping(target = "updateUserId", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "detailId", source = "detailEntity.id")
+    @Mapping(target = "fbaShipmentId", source = "mainEntity.code")
+    @Mapping(target = "asin", source = "detailEntity.asin")
+    @Mapping(target = "msku", source = "detailEntity.msku")
+    @Mapping(target = "fnSku", source = "detailEntity.fnSku")
+    @Mapping(target = "skuNo", source = "detailEntity.skuNo")
+    @Mapping(target = "declareQty", source = "detailEntity.declareQty")
+    @Mapping(target = "deliveryQty", source = "detailEntity.deliveryQty")
+    @Mapping(target = "diffQty", source = "detailEntity.diffQty")
+    @Mapping(target = "receiveQty", source = "dto.receivedQty")
+    @Mapping(target = "receiveDate", source = "detailEntity.receiveDate")
+    @Mapping(target = "receiveLocaleDate", ignore = true)
+    @Mapping(target = "fulfillmentCenter", ignore = true)
+    @Mapping(target = "uniqueMd5", ignore = true)
+    @Mapping(target = "uniqueIndex", ignore = true)
+    @Mapping(target = "handleStatus", constant = "already")
+    @Mapping(target = "sourcePlatform", constant = "erp")
+    @Mapping(target = "sourceType", constant = "change")
+    @Mapping(target = "receiveUTCDate", ignore = true)
+    FbaShipmentReceiveEntity receivedDTOToEntity(FbaShipmentDTO.ReceivedDTO dto, FbaShipmentEntity mainEntity, FbaShipmentDetailEntity detailEntity);
 }

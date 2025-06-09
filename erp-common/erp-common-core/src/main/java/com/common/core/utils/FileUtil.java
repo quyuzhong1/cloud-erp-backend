@@ -3,22 +3,29 @@ package com.common.core.utils;
 
 import cn.hutool.core.codec.Base64;
 import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.util.EntityUtils;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * 文件工具，用于读取或写入文件
  */
+@Slf4j
 public class FileUtil {
 
     /**
@@ -28,22 +35,24 @@ public class FileUtil {
      * @return
      */
     public static String readText(String filePath) {
-
-        String s;
-        StringBuffer sb = new StringBuffer();
-
+        StringBuilder sb = new StringBuilder();
+        // 使用 try-with-resources 确保资源关闭
         try {
             File f = new File(filePath);
             if (!f.exists()) {
-                f.createNewFile();
+                boolean newFile = f.createNewFile();
+                if (!newFile) {
+                    log.warn("createNewFile 文件已存在");
+                }
             }
-            BufferedReader input = new BufferedReader(new FileReader(f));
-            while ((s = input.readLine()) != null) {
-                sb.append(s);
+            try (BufferedReader input = new BufferedReader(new FileReader(f))) {
+                String line;
+                while ((line = input.readLine()) != null) {
+                    sb.append(line);
+                }
             }
-            input.close();
-        } catch (Exception ex) {
-            ex.printStackTrace();
+        } catch (IOException ex) {
+            log.error("文件读取失败", ex);
         }
 
         return sb.toString();
@@ -57,36 +66,28 @@ public class FileUtil {
      * @param data
      */
     public static synchronized void append(String filePath, String data) {
-
-        String s;
-        StringBuffer sb = new StringBuffer();
-
         try {
+            // 创建目录（如果不存在）
             String dirPath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
             File dir = new File(dirPath);
-
             if (!dir.exists()) {
                 dir.mkdirs();
             }
-
+            // 创建文件（如果不存在）
             File f = new File(filePath);
             if (!f.exists()) {
-                f.createNewFile();
+                boolean newFile = f.createNewFile();
+                if (!newFile) {
+                    log.warn("createNewFile 文件已存在");
+                }
             }
-            BufferedReader input = new BufferedReader(new FileReader(f));
-
-
-            while ((s = input.readLine()) != null) {
-                sb.append(s);
-                sb.append("\n");
+            // 使用 try-with-resources 进行文件写入（追加模式）
+            try (BufferedWriter output = new BufferedWriter(new FileWriter(f, true))) {
+                output.write(data);
+                output.newLine(); // 换行以保持追加内容清晰
             }
-            input.close();
-            sb.append(data);
-            BufferedWriter output = new BufferedWriter(new FileWriter(f));
-            output.write(sb.toString());
-            output.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
+            log.error("文件追加失败: {}", filePath, e);
         }
     }
 
@@ -97,55 +98,56 @@ public class FileUtil {
      * @param data
      */
     public static synchronized void write(String filePath, String data) {
-
-        StringBuffer sb = new StringBuffer(data);
-
         try {
-
-            //创建文件夹
+            // 创建文件夹
             String dirPath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
             File dir = new File(dirPath);
-
-            if (!dir.exists()) {
-                dir.mkdirs();
+            if (!dir.exists() && !dir.mkdirs()) {
+                log.error("创建目录失败: {}", dirPath);
+                return;
             }
 
+            // 创建文件（如果不存在）
             File f = new File(filePath);
-            if (!f.exists()) {
-                f.createNewFile();
+            if (!f.exists() && !f.createNewFile()) {
+                log.error("创建文件失败: {}", filePath);
+                return;
             }
 
-            BufferedWriter output = new BufferedWriter(new FileWriter(f));
-            output.write(sb.toString());
-            output.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+            // 使用 try-with-resources 自动关闭 BufferedWriter
+            try (BufferedWriter output = new BufferedWriter(new FileWriter(f))) {
+                output.write(data);
+            }
+        } catch (IOException e) {
+            log.error("文件写入失败: {}", filePath, e);
         }
     }
 
 
 
-    public static void write(String filePath,byte[] fileBytes){
+    public static void write(String filePath, byte[] fileBytes) {
         try {
+            // 创建文件夹
             String dirPath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
             File dir = new File(dirPath);
-            if (!dir.exists()) {
-                dir.mkdirs();
+            if (!dir.exists() && !dir.mkdirs()) {
+                log.error("创建目录失败: {}", dirPath);
+                return;
             }
-
+            // 创建文件（如果不存在）
             File f = new File(filePath);
-            if (!f.exists()) {
-                f.createNewFile();
+            if (!f.exists() && !f.createNewFile()) {
+                log.error("创建文件失败: {}", filePath);
+                return;
             }
-            BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream("a.xls"));
-            bos.write(fileBytes);
-            bos.flush();
-            bos.close();
-
-        }catch (Exception e){
-
+            // 使用 try-with-resources 确保 BufferedOutputStream 自动关闭
+            try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(f))) {
+                bos.write(fileBytes);
+                bos.flush(); // 可选，但加上更安全
+            }
+        } catch (IOException e) {
+            log.error("写入文件失败: {}", filePath, e);
         }
-
     }
     /**
      * 读入TXT文件
@@ -167,7 +169,7 @@ public class FileUtil {
     }
 
 
-    private static Pattern humpPattern = Pattern.compile("[A-Z]");
+    private static final Pattern humpPattern = Pattern.compile("[A-Z]");
 
 
     /**
@@ -243,7 +245,7 @@ public class FileUtil {
      */
     public static Integer fileType(String fileName) {
         String postfix = getFileExtension(fileName);
-        Integer result = 0;
+        int result = 0;
         if ("bmp,jpg,jpeg,png,tif,gif,pcx,tga,exif,fpx,svg,psd,cdr,pcd,dxf,ufo,eps,ai,raw,wmf,webp,sketch".contains(postfix)) {
             result = 1;
         } else if ("vob,mpg,avi,mp4,mkv,mov".contains(postfix)) {
@@ -282,39 +284,24 @@ public class FileUtil {
     }
 
     public static void base64ToFile(String base64, String fileName, String filePath) {
-        File file = null;
-        //创建文件目录
+        // 创建文件目录
         File dir = new File(filePath);
         if (!dir.exists() && !dir.isDirectory()) {
             dir.mkdirs();
         }
-        BufferedOutputStream bos = null;
-        FileOutputStream fos = null;
-        byte[] bytes = Base64.decode(base64);
-        file = new File(filePath + "\\" + fileName);
-        try {
-            fos = new FileOutputStream(file);
-            bos = new BufferedOutputStream(fos);
-            bos.write(bytes);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            if (bos != null) {
-                try {
-                    bos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
 
+        // 解析 Base64 数据并创建文件
+        byte[] bytes = Base64.decode(base64); // 使用标准库的 Base64 解码
+        File file = new File(filePath + "\\" + fileName); // 更规范的路径拼接方式
+
+        // 使用 try-with-resources 自动关闭流
+        try (FileOutputStream fos = new FileOutputStream(file);
+             BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+            bos.write(bytes);
+            bos.flush(); // 确保数据完全写入文件
+        } catch (Exception e) {
+            log.error("写入文件失败: {}", file.getAbsolutePath(), e);
+        }
     }
 
     public static String convertPdfUrlToBase64(String pdfUrl) throws IOException {
@@ -327,7 +314,7 @@ public class FileUtil {
         try {
             URL url = new URL(pdfUrl);
             //打开链接
-            HttpURLConnection conn = null;;
+            HttpURLConnection conn = null;
             conn = (HttpURLConnection) url.openConnection();
             //设置请求方式为"GET"
             conn.setRequestMethod("GET");
@@ -357,7 +344,7 @@ public class FileUtil {
         try {
             URL url = new URL(pdfUrl);
             //打开链接
-            HttpURLConnection conn = null;;
+            HttpURLConnection conn = null;
             conn = (HttpURLConnection) url.openConnection();
             //设置请求方式为"GET"
             conn.setRequestMethod("GET");
@@ -425,6 +412,148 @@ public class FileUtil {
         } catch (IOException e) {
             // 捕获异常并抛出自定义的 ServiceException
             throw new ServiceException("未能获取文件");
+        }
+    }
+
+    /**
+     * 传文件名
+     * @author will
+     * @date 2025/4/25 15:42
+     * @param filePath
+     * @param fileName
+     * @return MultipartFile
+     */
+    public static MultipartFile toMultipartFile(String filePath, String fileName, String defaultSuffix) {
+        try {
+            // 处理文件名：无后缀时添加默认后缀
+            String processedFileName = processFileName(fileName, defaultSuffix);
+
+            // 处理文件路径（替换空格和反斜杠）
+            String fileUrl = filePath.replace(" ", "%20").replace("\\", "/");
+
+            // 打开 URL 连接
+            URL url = new URL(fileUrl);
+            URLConnection conn = url.openConnection();
+
+            // 读取文件内容到字节数组
+            try (BufferedInputStream inputStream = new BufferedInputStream(conn.getInputStream());
+                 ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+                byte[] buffer = new byte[8192];
+                int bytesRead;
+                while ((bytesRead = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, bytesRead);
+                }
+                byte[] bytes = outputStream.toByteArray();
+
+                // 创建 MultipartFile（动态设置 MIME 类型）
+                return new MockMultipartFile(
+                        "file",
+                        processedFileName,
+                        getMimeType(processedFileName),
+                        new ByteArrayInputStream(bytes)
+                );
+            }
+        } catch (IOException e) {
+            throw new ServiceException("文件处理失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 处理文件名：无后缀时添加默认后缀
+     */
+    private static String processFileName(String fileName, String defaultSuffix) {
+        if (fileName == null || fileName.isEmpty()) {
+            throw new IllegalArgumentException("文件名不能为空");
+        }
+
+        int lastDotIndex = fileName.lastIndexOf('.');
+        if (lastDotIndex == -1 || lastDotIndex == 0) {
+            // 无后缀 或 后缀在开头（如 .gitignore）
+            return fileName + "." + defaultSuffix;
+        } else {
+            // 已有合法后缀，保留原名称
+            return fileName;
+        }
+    }
+
+    /**
+     * 根据后缀推断 MIME 类型
+     */
+    private static String getMimeType(String fileName) {
+        String extension = fileName.substring(fileName.lastIndexOf('.') + 1).toLowerCase();
+        switch (extension) {
+            case "pdf": return "application/pdf";
+            case "xml": return "text/xml";
+            default: return "application/octet-stream";
+        }
+    }
+
+    /**
+     * 去除文件后缀名
+     * @param fileName
+     * @return
+     */
+    public static String removeExtension(String fileName) {
+        if (fileName == null || fileName.isEmpty()) {
+            return fileName;
+        }
+
+        // 获取最后一个点的位置
+        int lastDotIndex = fileName.lastIndexOf(".");
+
+        // 如果没有点或点是第一个字符，返回原文件名
+        if (lastDotIndex == -1 || lastDotIndex == 0) {
+            return fileName;
+        }
+
+        // 截取文件名的部分（去掉后缀）
+        return fileName.substring(0, lastDotIndex);
+    }
+
+    public static String convertToBase64AndCheckIfPdf(MultipartFile multipartFile) throws IOException {
+        // 检查文件是否为空
+        if (multipartFile == null || multipartFile.isEmpty()) {
+            throw new ServiceException("文件不能为空");
+        }
+
+        // 将文件内容转换为Base64编码的字符串
+        byte[] fileContent = multipartFile.getBytes();
+        String base64Encoded = Base64.encode(fileContent);
+        // 返回结果
+        return base64Encoded;
+    }
+
+
+    // 文件下载方法（带超时和重试）
+    public static byte[] downloadFile(String url) {
+        int retry = 3;
+        while (retry-- > 0) {
+            try (CloseableHttpClient httpClient = HttpClients.custom()
+                    .setConnectionTimeToLive(10, TimeUnit.SECONDS)
+                    .build()) {
+
+                HttpGet httpGet = new HttpGet(url);
+                try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+                    if (response.getStatusLine().getStatusCode() == 200) {
+                        return EntityUtils.toByteArray(response.getEntity());
+                    }
+                }
+            } catch (Exception e) {
+                if (retry == 0) throw new ServiceException("下载失败: " + url, e);
+            }
+        }
+        throw new ServiceException("无法下载文件: " + url);
+    }
+
+    // 文件名处理（防止非法字符）
+    public static String getFileNameFromUrl(String url) {
+        try {
+            String path = new URI(url).getPath();
+            String rawName = path.substring(path.lastIndexOf('/') + 1);
+            return rawName.replaceAll("[\\\\/:*?\"<>|]", "_"); // 替换非法字符
+        } catch (URISyntaxException e) {
+            return "file_" + DigestUtils.md5Hex(url) + ".xml";
         }
     }
 }

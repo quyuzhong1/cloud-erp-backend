@@ -2,7 +2,7 @@ package com.erp.model.workflow.entity;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.business.dto.FindUserDTO;
@@ -148,7 +148,7 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
 
     public static final String APPROVE_TIME = "approve_time";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
     public static final String PRE_ACTIVITY_ID = "pre_activity_id";
 
@@ -164,9 +164,9 @@ public class ProcessTaskManagementEntity extends BaseEntity<ProcessTaskManagemen
         this.taskId = taskId;
         this.startTime = startTime;
         this.taskStatus = approveStatus;
-        this.timeoutHandleTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? LocalDateUtil.plusHours(startTime, propertiesDTO.getTimeoutInterval()) : startTime;
+        this.timeoutHandleTime = CharSequenceUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? LocalDateUtil.plusHours(startTime, propertiesDTO.getTimeoutInterval()) : startTime;
         this.timeoutHandleType = propertiesDTO.getTimeoutHandling();
-        this.timeoutWarnTime = StrUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? LocalDateUtil.plusHours(startTime, propertiesDTO.getTimeoutWarnInterval()) : startTime;
+        this.timeoutWarnTime = CharSequenceUtil.isNotBlank(propertiesDTO.getTimeoutInterval()) ? LocalDateUtil.plusHours(startTime, propertiesDTO.getTimeoutWarnInterval()) : startTime;
         this.curApproveId = findUserDTO.getUserId();
         this.curApproveName = findUserDTO.getUserName();
         this.executionId = executionId;

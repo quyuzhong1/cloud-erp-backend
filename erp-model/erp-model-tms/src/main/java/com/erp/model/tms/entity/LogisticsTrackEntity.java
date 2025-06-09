@@ -24,7 +24,6 @@ import java.time.LocalDateTime;
 @Accessors(chain = true)
 @TableName("logistics_track")
 public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
-
     /**
     * 运单号
     */
@@ -50,21 +49,36 @@ public class LogisticsTrackEntity extends BaseEntity<LogisticsTrackEntity> {
     */
     @TableField("content")
     private String content;
+    /**
+     * 地址
+     */
+    @TableField("address")
+    private String address;
 
     /**
      * 运输类型
      */
     @TableField("transport_type")
     private String transportType;
-
+    /**
+     * trackNo+content+trackTime的md5
+     * DigestUtil.md5Hex
+     */
+    @TableField("md5")
+    private String md5;
+    /**
+     * 订单轨迹状态
+     */
+    @TableField(exist = false)
+    private String orderStatus;
 
     public static final String TRACK_NO = "track_no";
 
     public static final String TRACK_TIME = "track_time";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
-    public static final String CONTENT = "content";
+    public static final String FIELD_CONTENT = "content";
 
     @Override
     public Serializable pkVal() {

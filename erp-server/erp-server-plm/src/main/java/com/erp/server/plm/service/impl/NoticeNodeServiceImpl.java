@@ -1,6 +1,6 @@
 package com.erp.server.plm.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.erp.model.plm.dto.NoticeNodeDTO;
 import com.erp.model.plm.entity.NoticeNodeEntity;
@@ -8,6 +8,8 @@ import com.erp.server.plm.mapper.NoticeNodeMapper;
 import com.erp.server.plm.service.NoticeNodeService;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,11 +47,19 @@ public class NoticeNodeServiceImpl extends ServiceImpl<NoticeNodeMapper, NoticeN
      */
     @Override
     public List<Map<String, Object>> getList() {
-        LambdaQueryWrapper<NoticeNodeEntity> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.select(NoticeNodeEntity::getId, NoticeNodeEntity::getNodeName);
-        queryWrapper.notInSql(NoticeNodeEntity::getId,"select node_id from notice_message");
-//        queryWrapper.eq(NoticeNodeEntity::getExistAdd, IsConstant.NO);
-        return this.listMaps(queryWrapper);
+        List<NoticeNodeEntity> list = baseMapper.list();
+        if(CollUtil.isEmpty(list)){
+            return Collections.emptyList();
+        }
+
+        List<Map<String, Object>> result = CollUtil.newArrayList();
+        for (NoticeNodeEntity noticeNodeEntity : list) {
+            Map<String, Object> map = new HashMap<>();
+            map.put("nodeName", noticeNodeEntity.getNodeName());
+            map.put("id", noticeNodeEntity.getId());
+            result.add(map);
+        }
+        return result;
     }
 }
 

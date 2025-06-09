@@ -1,22 +1,39 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.collection.CollUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.common.business.dto.DmpSyncMqDTO;
 import com.common.business.dto.DmpSyncMqDTO.SyncParamDTO;
+import com.common.business.dto.DmpSyncMqDTO.SyncParamDetailDTO;
+import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.enums.OrderTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.enums.SyncOperateEnum;
+import com.common.business.wrapper.FeignQuery;
 import com.erp.model.dmp.dto.DmpPushWdtDTO;
 import com.erp.model.dmp.dto.DmpPushWdtDetailDTO;
 import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
+import com.erp.model.oms.entity.DictBasicEntity;
+import com.erp.model.oms.entity.*;
+import com.erp.model.oms.enums.DictBasicTypeEnum;
+import com.erp.model.plm.dto.BomChildrenSkuDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.sys.entity.*;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.BillTypeEnum;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.dmp.feign.DmpPushWdtFeign;
-import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
+import com.erp.rpc.oms.feign.SoB2cFeign;
+import com.erp.rpc.oms.feign.SoInfoFeign;
+import com.erp.rpc.oms.feign.SoReturnFeign;
+import com.erp.rpc.plm.feign.PlmTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.wms.kingdee.*;
 import com.erp.server.wms.mabang.SyncMabangMachineService;
 import com.erp.server.wms.mabang.SyncMabangTransferService;
@@ -31,11 +48,7 @@ import org.springframework.transaction.support.TransactionSynchronizationAdapter
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -102,6 +115,24 @@ public class SyncTaskServiceImpl implements SyncTaskService {
     private TransferInfoService transferInfoService;
 
     @Resource
+    private TransferInService transferInService;
+
+    @Resource
+    private TransferInDetailService transferInDetailService;
+
+    @Resource
+    private SyncKingdeeTransferInService syncKingdeeTransferInService;
+
+    @Resource
+    private TransferOutService transferOutService;
+
+    @Resource
+    private TransferOutDetailService transferOutDetailService;
+
+    @Resource
+    private SyncKingdeeTransferOutService syncKingdeeTransferOutService;
+
+    @Resource
     private SyncKingdeeTransferInfoService syncKingdeeTransferInfoService;
 
     @Resource
@@ -133,6 +164,36 @@ public class SyncTaskServiceImpl implements SyncTaskService {
 
     @Resource
     private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+    @Resource
+    private SoOutstockDetailService soOutstockDetailService;
+
+    @Resource
+    private SoReturnInstockDetailService soReturnInstockDetailService;
+
+    @Resource
+    private SyncSoReturnInstockService syncSoReturnInstockService;
+
+    @Resource
+    private TransferInfoDetailService transferInfoDetailService;
+
+    @Resource
+    private PlmTaskFeign plmTaskFeign;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private SoReturnFeign soReturnFeign;
+
+    @Resource
+    private SoReturnReceiveService soReturnReceiveService;
+
+    @Resource
+    private SoB2cFeign soB2cFeign;
+
+    @Resource
+    private SoInfoFeign soInfoFeign;
 
 
     @Override
@@ -306,7 +367,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SubcontractIssueEntity> list = subcontractIssueService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncWarehouse >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -329,7 +390,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<WarehouseEntity> list = warehouseService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncWarehouse >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -352,15 +413,29 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<TransferInfoEntity> list = transferInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncTransferInfo >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
+        List<String> ids = list.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
+        //直接调拨单明细
+        List<TransferInfoDetailEntity> transferInfoDetailEntityList = transferInfoDetailService.listByMainIds(ids);
+        Map<String, List<TransferInfoDetailEntity>> transferDetailMap = transferInfoDetailEntityList.stream().collect(Collectors.groupingBy(TransferInfoDetailEntity::getMainId));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             TransferInfoEntity entity = list.stream().filter(obj -> obj.getId().equals(syncParamDetailDTO.getSourceId())).findFirst().orElse(null);
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            List<TransferInfoDetailEntity> transferInfoDetailEntityList1 = transferDetailMap.get(entity.getId());
+            transferInfoDetailEntityList1 = CollUtil.isNotEmpty(transferInfoDetailEntityList1) ? transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+            if (CollUtil.isEmpty(transferInfoDetailEntityList1)){
+                continue;
+            }
+            DmpPushTaskEntity pushTaskEntity = syncKingdeeTransferInfoService.syncDataToKingdee(entity, transferInfoDetailEntityList1, syncParamDetailDTO.getSyncOperate());
             resultList.add(pushTaskEntity);
         }
         return resultList;
@@ -375,7 +450,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<StocktakingProfitLossEntity> list = stocktakingProfitLossService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncStocktakingTaskProfitLoss >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -403,7 +478,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SoReturnInstockEntity> list = soReturnInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncSoReturnInstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -426,7 +501,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<SoOutstockEntity> list = soOutstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncSoOutstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -461,7 +536,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<PoReturnEntity> list = poReturnService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoReturn >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -484,7 +559,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<WarehouseReceiveEntity> list = warehouseReceiveService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoReceive >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -507,7 +582,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<PoInstockEntity> list = poInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncPoInstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -530,7 +605,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<OtherInstockEntity> list = otherInstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncOtherInstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -554,7 +629,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<OtherOutstockEntity> list = otherOutstockService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncOtherOutstock >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -577,7 +652,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<MachineInfoEntity> list = machineInfoService.listByIds(sourceIdList);
         if (CollectionUtils.isEmpty(list)) {
             log.error("syncMachineInfo >>>> 未找到数据！");
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
         List<DmpPushTaskEntity> resultList = new ArrayList<>();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
@@ -639,13 +714,28 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             case SUBCONTRACT_ISSUE:
                 resultList = newSyncSubcontractIssue(sourceDetailList);
                 break;
+            case SDY_WAREHOUSE:
+            	resultList = newSdySyncWarehouse(sourceDetailList);
+            	break;
+            case SDY_SO_OUTSTOCK:
+            	resultList = newSdySyncSoOutstock(sourceDetailList);
+            	break;
+            case SDY_SO_RETURN_INSTOCK:
+            	resultList = newSdySyncSoReturnInstock(sourceDetailList);
+            	break;
+            case TRANSFER_IN:
+                resultList = newSyncTransferIn(sourceDetailList);
+                break;
+            case TRANSFER_OUT:
+                resultList = newSyncTransferOut(sourceDetailList);
+                break;
             default:
                 break;
         }
 		return resultList;
 	}
 
-	private Map<String , Map<String, Object>> newSyncMachineInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    private Map<String , Map<String, Object>> newSyncMachineInfo(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
 		Map<String , Map<String, Object>> resultList = new HashMap<>();
 		List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
         List<MachineInfoEntity> list = machineInfoService.listByIds(sourceIdList);
@@ -686,7 +776,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeOtherOutstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
+            Map<String, Object> newSyncDataToKingdee = syncKingdeeOtherOutstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            if(newSyncDataToKingdee == null) {
+            	continue;
+            }
+			resultList.put(syncParamDetailDTO.getDataId(), newSyncDataToKingdee);
         }
         return resultList;
     }
@@ -711,7 +805,11 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeOtherInstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
+            Map<String, Object> newSyncDataToKingdee = syncKingdeeOtherInstockService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
+            if(newSyncDataToKingdee == null) {
+            	continue;
+            }
+			resultList.put(syncParamDetailDTO.getDataId(), newSyncDataToKingdee);
         }
         return resultList;
     }
@@ -891,6 +989,14 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             log.error("syncTransferInfo >>>> 未找到数据！");
             return resultList;
         }
+        List<String> ids = list.stream().map(TransferInfoEntity::getId).distinct().collect(Collectors.toList());
+        //直接调拨单明细
+        List<TransferInfoDetailEntity> transferInfoDetailEntityList = transferInfoDetailService.listByMainIds(ids);
+        Map<String, List<TransferInfoDetailEntity>> transferDetailMap = transferInfoDetailEntityList.stream().collect(Collectors.groupingBy(TransferInfoDetailEntity::getMainId));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
         	String sourceId = syncParamDetailDTO.getSourceId();
             TransferInfoEntity entity = list.stream().filter(obj -> {
@@ -899,11 +1005,92 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             if (ObjectUtils.isEmpty(entity)) {
                 continue;
             }
-            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeTransferInfoService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
+            List<TransferInfoDetailEntity> transferInfoDetailEntityList1 = transferDetailMap.get(entity.getId());
+            transferInfoDetailEntityList1 = CollUtil.isNotEmpty(transferInfoDetailEntityList1) ? transferInfoDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+            if (CollUtil.isEmpty(transferInfoDetailEntityList1)){
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeTransferInfoService.newSyncDataToKingdee(entity, transferInfoDetailEntityList1,syncParamDetailDTO.getSyncOperate()));
         }
         return resultList;
     }
-    
+
+    /**
+     * 分步式调入
+     * @param sourceDetailList
+     */
+    private Map<String , Map<String, Object>> newSyncTransferIn(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<TransferInEntity> list = transferInService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncTransferInfo >>>> 未找到数据！");
+            return resultList;
+        }
+        List<String> ids = list.stream().map(TransferInEntity::getId).distinct().collect(Collectors.toList());
+        //直接调拨单明细
+        List<TransferInDetailEntity> transferInDetailEntityList = transferInDetailService.listByMainIdList(ids);
+        Map<String, List<TransferInDetailEntity>> transferDetailMap = transferInDetailEntityList.stream().collect(Collectors.groupingBy(TransferInDetailEntity::getMainId));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            TransferInEntity entity = list.stream().filter(obj -> {
+                return obj.getId().equals(sourceId);
+            }).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            List<TransferInDetailEntity> transferInDetailEntityList1 = transferDetailMap.get(entity.getId());
+            transferInDetailEntityList1 = CollUtil.isNotEmpty(transferInDetailEntityList1) ? transferInDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+            if (CollUtil.isEmpty(transferInDetailEntityList1)){
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeTransferInService.newSyncDataToKingdee(entity, transferInDetailEntityList1,syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
+    /**
+     * 分步式调出
+     * @param sourceDetailList
+     */
+    private Map<String , Map<String, Object>> newSyncTransferOut(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+        List<TransferOutEntity> list = transferOutService.listByIds(sourceIdList);
+        if (CollectionUtils.isEmpty(list)) {
+            log.error("syncTransferInfo >>>> 未找到数据！");
+            return resultList;
+        }
+        List<String> ids = list.stream().map(TransferOutEntity::getId).distinct().collect(Collectors.toList());
+        //直接调拨单明细
+        List<TransferOutDetailEntity> transferOutDetailEntityList = transferOutDetailService.listByMainIds(ids);
+        Map<String, List<TransferOutDetailEntity>> transferDetailMap = transferOutDetailEntityList.stream().collect(Collectors.groupingBy(TransferOutDetailEntity::getMainId));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+        for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+            String sourceId = syncParamDetailDTO.getSourceId();
+            TransferOutEntity entity = list.stream().filter(obj -> {
+                return obj.getId().equals(sourceId);
+            }).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                continue;
+            }
+            List<TransferOutDetailEntity> transferOutDetailEntityList1 = transferDetailMap.get(entity.getId());
+            transferOutDetailEntityList1 = CollUtil.isNotEmpty(transferOutDetailEntityList1) ? transferOutDetailEntityList1.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+            if (CollUtil.isEmpty(transferOutDetailEntityList1)){
+                continue;
+            }
+            resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeTransferOutService.newSyncDataToKingdee(entity, transferOutDetailEntityList1,syncParamDetailDTO.getSyncOperate()));
+        }
+        return resultList;
+    }
+
     /**
      * 仓库
      * @param sourceDetailList
@@ -929,6 +1116,27 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         return resultList;
     }
     
+    private Map<String , Map<String, Object>> newSdySyncWarehouse(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+    	Map<String , Map<String, Object>> resultList = new HashMap<>();
+    	List<String> sourceIdList = sourceDetailList.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+    	List<WarehouseEntity> list = warehouseService.listByIds(sourceIdList);
+    	if (CollectionUtils.isEmpty(list)) {
+    		log.error("syncSdyWarehouse >>>> 未找到数据！");
+    		return resultList;
+    	}
+    	for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
+    		String sourceId = syncParamDetailDTO.getSourceId();
+    		WarehouseEntity entity = list.stream().filter(obj -> {
+    			return obj.getId().equals(sourceId);
+    		}).findFirst().orElse(null);
+    		if (ObjectUtils.isEmpty(entity)) {
+    			continue;
+    		}
+    		resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeWarehouseService.newSyncDataToSdy(entity, syncParamDetailDTO.getSyncOperate()));
+    	}
+    	return resultList;
+    }
+
     /**
      * 仓库
      * @param sourceDetailList
@@ -951,6 +1159,92 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             }
             resultList.put(syncParamDetailDTO.getDataId(), syncKingdeeSubcontractIssueService.newSyncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate()));
         }
+        return resultList;
+    }
+
+    /**
+     * 销售出库单
+     * @param sourceDetailList
+     * @return
+     */
+    public Map<String ,Map<String, Object>> newSdySyncSoOutstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        Map<String, List<SyncParamDetailDTO>> operateMaps = sourceDetailList.stream().collect(Collectors.groupingBy(DmpSyncMqDTO.SyncParamDetailDTO::getSyncOperate));
+        for(Map.Entry<String, List<SyncParamDetailDTO>> operateMap : operateMaps.entrySet()) {
+        	List<SyncParamDetailDTO> value = operateMap.getValue();
+        	List<String> sourceIdList = value.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+            //订单同步数帝云是详情级别同步，所以查询详情
+            List<SoOutstockDetailEntity> soOutstockDetailEntityList = soOutstockDetailService.listByIds(sourceIdList);
+            if (CollectionUtils.isEmpty(soOutstockDetailEntityList)) {
+                log.error("newSdySyncSoOutstock >>>> 未找到数据！");
+                continue;
+            }
+            List<String> outstockIds = soOutstockDetailEntityList.stream().map(SoOutstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
+            List<SoOutstockEntity> soOutstockEntities = soOutstockService.listByIds(outstockIds);
+
+            Map<String, Map<String, Object>> syncBatchDataToSdy = syncKingdeeSoOutstockService.syncBatchDataToSdy(soOutstockEntities, soOutstockDetailEntityList, operateMap.getKey() , false, value.get(0).isNewQuerySync());
+            for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  value) {
+                String sourceId = syncParamDetailDTO.getSourceId();
+                SoOutstockDetailEntity soOutstockDetailEntity = soOutstockDetailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(soOutstockDetailEntity)) {
+                    continue;
+                }
+                SoOutstockEntity entity = soOutstockEntities.stream().filter(req -> req.getId().equals(soOutstockDetailEntity.getMainId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(entity)) {
+                    continue;
+                }
+                Map<String, Object> map = syncBatchDataToSdy.get(sourceId);
+                if(map == null) {
+                	continue;
+                }
+                resultList.put(syncParamDetailDTO.getDataId(), map);
+            }
+        }
+        return resultList;
+    }
+
+    /**
+     * 销售退货入库单
+     * @param sourceDetailList
+     * @return
+     */
+    public Map<String ,Map<String, Object>> newSdySyncSoReturnInstock(List<DmpSyncMqDTO.SyncParamDetailDTO> sourceDetailList) {
+        Map<String , Map<String, Object>> resultList = new HashMap<>();
+        
+        Map<String, List<SyncParamDetailDTO>> operateMaps = sourceDetailList.stream().collect(Collectors.groupingBy(DmpSyncMqDTO.SyncParamDetailDTO::getSyncOperate));
+        for(Map.Entry<String, List<SyncParamDetailDTO>> operateMap : operateMaps.entrySet()) {
+        	List<SyncParamDetailDTO> value = operateMap.getValue();
+        	
+        	List<String> sourceIdList = value.stream().map(DmpSyncMqDTO.SyncParamDetailDTO::getSourceId).collect(Collectors.toList());
+            //订单同步数帝云是详情级别同步，所以查询详情
+            List<SoReturnInstockDetailEntity> detailEntityList = soReturnInstockDetailService.listByIds(sourceIdList);
+            if (CollectionUtils.isEmpty(detailEntityList)) {
+                log.error("newSdySyncSoReturnInstock >>>> 未找到数据！");
+                continue;
+            }
+            List<String> instockIds = detailEntityList.stream().map(SoReturnInstockDetailEntity::getMainId).distinct().collect(Collectors.toList());
+            List<SoReturnInstockEntity> list = soReturnInstockService.listByIds(instockIds);
+
+            Map<String, Map<String, Object>> syncBatchDataToSdy = syncSoReturnInstockService.syncBatchDataToSdy(list, detailEntityList, operateMap.getKey() , false, value.get(0).isNewQuerySync());
+            
+            for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  value) {
+                String sourceId = syncParamDetailDTO.getSourceId();
+                SoReturnInstockDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(detailEntity)) {
+                    continue;
+                }
+                SoReturnInstockEntity entity = list.stream().filter(req -> req.getId().equals(detailEntity.getMainId())).findFirst().orElse(null);
+                if (ObjectUtils.isEmpty(entity)) {
+                    continue;
+                }
+                Map<String, Object> map = syncBatchDataToSdy.get(sourceId);
+                if(map == null) {
+                	continue;
+                }
+                resultList.put(syncParamDetailDTO.getDataId(), map);
+            }
+        }
+        
         return resultList;
     }
 }

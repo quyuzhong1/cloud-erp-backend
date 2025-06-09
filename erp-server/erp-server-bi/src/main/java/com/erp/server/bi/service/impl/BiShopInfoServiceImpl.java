@@ -1,7 +1,8 @@
 package com.erp.server.bi.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -69,19 +70,19 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     private BiOrderInfoService biOrderInfoService;
 
     @Resource
-    private MQProducerService mQProducerService;
+    private MQProducerService<JSONObject> mQProducerService;
 
 
     @Override
     public PagingVO<DmpShopInfoShowDTO> paging(PagingDTO<DmpShopInfoSearchDTO> dto) {
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<Object> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         DmpShopInfoSearchDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         IPage<DmpShopInfoShowDTO> pageData = baseMapper.paging(query, params);
         if (CollectionUtils.isNotEmpty(pageData.getRecords())) {
             pageData.getRecords().forEach(obj -> obj.setStatusName(BiStateEnum.getName(obj.getStatus())));
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     /**
@@ -137,12 +138,9 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
     @Transactional
     public Boolean changeChargeName(DmpShopInfoChangeDTO dto) {
         BiShopInfoEntity biShopInfoEntity = this.getById(dto.getId());
-
-      /*  if (ObjectUtils.isNotEmpty(dmpShopInfoEntity.getEnableTime()) && ObjectUtils.isNotEmpty(dto.getEnableTime())) {
-            if (dmpShopInfoEntity.getEnableTime().isAfter(dto.getEnableTime())) {
-                throw new ServiceException(ApiError.ERROR_97013);
-            }
-        }*/
+        if (ObjectUtil.isEmpty(biShopInfoEntity)) {
+            return Boolean.FALSE;
+        }
         BiShopChangeLogEntity logEntity = new BiShopChangeLogEntity();
         logEntity.setShopId(dto.getId());
         logEntity.setChargeId(StringUtils.isBlank(biShopInfoEntity.getChargeId()) ? "-" : biShopInfoEntity.getChargeId());
@@ -193,8 +191,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         });
         //更新启用日期后的店铺业务部门
         updateChargeDept(dto.getChargeId(), dto.getEnableTime(), sysDepartmentDTO);
-        biOrderInfoService.updateBatchById(list, 2000);
-        return Boolean.TRUE;
+        return biOrderInfoService.updateBatchById(list, 2000);
     }
 
     @Override
@@ -208,7 +205,6 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         List<DmpShopInfoExcelDTO> excelList = BeanMapperUtils.copyList(DmpShopInfoExcelDTO.class, list);
         String fileName = biOrderInfoService.getFileName("店铺数据导出");
         ExcelUtil.export(fileName, "店铺数据导出", excelList, DmpShopInfoExcelDTO.class, response);
-        return;
     }
 
     @Override
@@ -291,14 +287,13 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
                 .eq(null != status, BiShopInfoEntity::getStatus, status)
                 .orderByAsc(BiShopInfoEntity::getName)
                 .list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
+        return list.stream()
                 .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getName()))
                 .distinct()
                 .collect(Collectors.toList());
-        return result;
     }
 
     @Override
@@ -307,15 +302,14 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         List<BiShopInfoEntity> list = this.lambdaQuery()
                 .eq(BiShopInfoEntity::getStatus, 1)
                 .list();
-        if (CollectionUtil.isEmpty(list)) {
+        if (CollUtil.isEmpty(list)) {
             return Collections.emptyList();
         }
-        List<ShopDropDownVO.ShopDropDownNameVO> result = list.stream()
+        return list.stream()
                 .map(x -> new ShopDropDownVO.ShopDropDownNameVO(x.getSite()))
                 .distinct()
-                .filter(x -> StrUtil.isNotEmpty(x.getName()))
+                .filter(x -> CharSequenceUtil.isNotEmpty(x.getName()))
                 .collect(Collectors.toList());
-        return result;
     }
 
     private List<BiShopInfoEntity> getSiteShopList() {
@@ -344,7 +338,7 @@ public class BiShopInfoServiceImpl extends ServiceImpl<BiShopInfoMapper, BiShopI
         jsonObject.set("enableTime", enableTime);
         jsonObject.set("userId", userId);
         jsonObject.set("userName", userName);
-        if (ObjectUtils.isNotEmpty(sysUserDeptDTO)) {
+        if (ObjectUtils.isNotEmpty(sysUserDeptDTO) && sysUserDeptDTO != null) {
             jsonObject.set("deptId", sysUserDeptDTO.getDeptId());
             jsonObject.set("deptName", sysUserDeptDTO.getDeptName());
         }

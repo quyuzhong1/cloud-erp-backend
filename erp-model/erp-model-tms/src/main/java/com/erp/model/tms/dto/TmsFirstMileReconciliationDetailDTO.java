@@ -182,6 +182,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 对账月份【导出使用】
          */
         private String reconciliationMonthStr;
+        
+        private String shippingCostStr;
+        private String declareCostStr;
+        private String otherTaxCostStr;
+        private String otherCostStr;
 
         public String getActualWeightWithUnit() {
             BigDecimal actualWeight = this.getActualWeight();
@@ -189,7 +194,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
                 return "0".concat(this.getActualWeightUnit());
             }
             return actualWeight.setScale(2, RoundingMode.DOWN)
-                    .stripTrailingZeros().toString()
+                    .toString()
                     .concat(this.getActualWeightUnit());
         }
 
@@ -199,7 +204,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
                 return "0".concat(this.getBillingWeightUnit());
             }
             return billingWeight.setScale(2, RoundingMode.DOWN)
-                    .stripTrailingZeros().toString()
+                    .toString()
                     .concat(this.getBillingWeightUnit());
         }
 
@@ -209,7 +214,7 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
                 return "0".concat(this.getVolumeWeightUnit());
             }
             return volumeWeight.setScale(2, RoundingMode.DOWN)
-                    .stripTrailingZeros().toString()
+                    .toString()
                     .concat(this.getVolumeWeightUnit());
         }
     }
@@ -354,6 +359,11 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          * 总物流费用
          */
         private BigDecimal totalLogisticsCost;
+        
+        /**
+         * 总物流费用币别符号
+         */
+        private String totalLogisticsCostCurrencySymbol = "¥";
 
         /**
          * 实际重量【箱包装重量】
@@ -386,23 +396,60 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
         private String billingWeightUnit;
 
         /**
-         * 物流运费用【预计物流费用】
+         * 物流运费(总)
          */
         private BigDecimal shippingCost;
+        
+        /**
+         * 物流运费(总)币别
+         */
+        private String shippingCostCurrency;
+        /**
+         * 物流运费(总)币别符号
+         */
+        private String shippingCostCurrencySymbol;
 
         /**
-         * 报关费用【预计报关费用】
+         * 报关费用(总)
          */
         private BigDecimal declareCost;
+        
+        /**
+         * 物流运费(总)币别
+         */
+        private String declareCostCurrency;
+        /**
+         * 物流运费(总)币别符号
+         */
+        private String declareCostCurrencySymbol;
 
         /**
-         * 其他费用【预计其他费用】
+         * 其他费用(总)
          */
         private BigDecimal otherCost;
+        
         /**
-         * 其他税费【预计其他税费】
+         * 其他费用(总)币别
+         */
+        private String otherCostCurrency;
+        /**
+         * 其他费用(总)币别符号
+         */
+        private String otherCostCurrencySymbol;
+        
+        /**
+         * 其他税费(总)
          */
         private BigDecimal otherTaxCost;
+        
+        /**
+         * 其他税费(总)币别
+         */
+        private String otherTaxCurrency;
+        /**
+         * 其他税费(总)币别符号
+         */
+        private String otherTaxCurrencySymbol;
 
         /**
          * 备注
@@ -945,23 +992,44 @@ public class TmsFirstMileReconciliationDetailDTO implements Serializable {
          */
         @Digits(integer = 12, fraction = 4, message = "实际物流运费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal shippingCost;
+        
+        /**
+         * 物流运费用币别
+         */
+        private String shippingCostCurrency;
 
         /**
          * 报关费用
          */
         @Digits(integer = 12, fraction = 4, message = "实际报关费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal declareCost;
+        
+        /**
+         * 报关费用币别
+         */
+        private String declareCostCurrency;
 
         /**
          * 其他费用
          */
         @Digits(integer = 12, fraction = 4, message = "实际其他费用整数位不能超过12位，小数位不能超过4位")
         private BigDecimal otherCost;
+        
+        /**
+         * 其他费用币别
+         */
+        private String otherCostCurrency;
+        
         /**
          * 其他税费
          */
         @Digits(integer = 12, fraction = 4, message = "实际其他税费整数位不能超过12位，小数位不能超过4位")
         private BigDecimal otherTaxCost;
+        
+        /**
+         * 其他税费币别
+         */
+        private String otherTaxCurrency;
 
         /**
          * 备注

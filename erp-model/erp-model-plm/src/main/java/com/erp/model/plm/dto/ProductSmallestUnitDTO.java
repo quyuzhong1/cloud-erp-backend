@@ -22,7 +22,6 @@ import java.util.List;
 @NoArgsConstructor
 public class ProductSmallestUnitDTO implements Serializable {
 
-
     /**
      * 产品spu基础信息表
      */

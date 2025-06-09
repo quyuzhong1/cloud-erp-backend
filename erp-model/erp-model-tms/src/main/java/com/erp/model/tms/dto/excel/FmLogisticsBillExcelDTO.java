@@ -3,8 +3,6 @@ package com.erp.model.tms.dto.excel;
 import com.alibaba.excel.annotation.ExcelProperty;
 import com.common.business.utils.LocalDateStringConverter;
 import com.common.core.anno.FieldValid;
-import com.common.core.enums.CurrencyEnum;
-import com.erp.model.plm.enums.ProductDetailStateEnum;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
 import com.erp.model.wms.enums.LogisticsMethodEnum;
 import lombok.Data;
@@ -18,9 +16,16 @@ public class FmLogisticsBillExcelDTO implements Serializable {
     /**
      * 来源单
      */
-    @ExcelProperty(value = "*来源单")
-    @FieldValid(fieldName = "来源单",isNotBlank = true,maxLength = 32)
+    @ExcelProperty(value = "来源单号")
+    @FieldValid(fieldName = "来源单号",maxLength = 32)
     private String outstockCode;
+
+    /**
+     * 业务单号
+     */
+    @ExcelProperty(value = "业务单号")
+    @FieldValid(fieldName = "业务单号",maxLength = 32)
+    private String businessCode;
 
     /**
      * 运输方式

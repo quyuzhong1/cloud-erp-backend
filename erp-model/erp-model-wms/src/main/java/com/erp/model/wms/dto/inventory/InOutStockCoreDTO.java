@@ -17,14 +17,6 @@ import java.time.LocalDate;
 public class InOutStockCoreDTO implements Serializable {
 
     /**
-     * 仓库组织
-     */
-    /*
-        private String orgId;
-     */
-
-
-    /**
      * 仓库
      */
     private String warehouseId;

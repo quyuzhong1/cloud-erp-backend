@@ -249,4 +249,9 @@ public class ProductInfoEntity extends BaseEntity<ProductInfoEntity> implements 
     @TableField(value = "suspend_before_status")
     private Integer suspendBeforeStatus;
 
+    /**
+     * 应用分类id
+     */
+    @TableField(value = "application_category_id")
+    private String applicationCategoryId;
 }

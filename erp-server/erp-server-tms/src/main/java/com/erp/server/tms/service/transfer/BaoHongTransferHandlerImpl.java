@@ -2,7 +2,6 @@ package com.erp.server.tms.service.transfer;
 
 import com.common.business.annotation.TransferLogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
-import com.common.business.threadlocal.ThirdWarehouseContext;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.CurrencyEnum;
 import com.erp.model.tms.dto.transfer.*;
@@ -21,15 +20,12 @@ import com.sdk.tms.baohong.api.product.RecordItemResponse;
 import com.sdk.tms.baohong.dto.response.BaoHongResponse;
 import com.sdk.tms.baohong.service.BaoHongService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Resource;
 import javax.validation.Valid;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * 保宏中转报关服务商
@@ -153,9 +149,6 @@ public class BaoHongTransferHandlerImpl extends AbstractTransferLogisticsHandler
         return success(response.getData());
     }
 
-    private boolean isSuccess(BaoHongResponse<?> response){
-        return response.getAsk().equals("1");
-    }
 
     private boolean isFailure(BaoHongResponse<?> response){
         return response.getAsk().equals("0");

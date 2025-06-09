@@ -27,7 +27,7 @@ import java.util.List;
 @Ignore
 public class UploadsApiTest {
 
-    private final UploadsApi api = null;
+    private final UploadsApi api = new UploadsApi(null);
 
     
     /**

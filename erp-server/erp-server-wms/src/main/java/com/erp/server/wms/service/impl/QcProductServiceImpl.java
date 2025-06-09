@@ -1,5 +1,6 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -7,25 +8,27 @@ import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.plm.vo.SkuVO;
+import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.wms.dto.QcProductDTO;
+import com.erp.model.wms.dto.QcProductLogDTO;
 import com.erp.model.wms.dto.WmsAttachmentDTO;
 import com.erp.model.wms.entity.QcProductEntity;
-import com.erp.model.wms.entity.TransferInfoDetailEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.server.wms.constant.WmsConstant;
 import com.erp.server.wms.mapper.QcProductMapper;
+import com.erp.server.wms.service.OperateLogService;
 import com.erp.server.wms.service.QcProductService;
 import com.erp.server.wms.service.WmsAttachmentService;
 import io.seata.spring.annotation.GlobalTransactional;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -46,6 +49,9 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
     @Resource
     private PlmTaskFeign plmTaskFeign;
 
+    @Resource
+    private OperateLogService operateLogService;
+
     /**
      * 质检产品信息 暂存
      *
@@ -59,19 +65,28 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public void add(String billId, QcProductDTO.AddDTO qcProduct,String skuId) {
-        if(StringUtils.isBlank(skuId)){
+        if(CharSequenceUtil.isBlank(skuId)){
             throw new ServiceException(ApiError.ERROR_95107);
         }
         QcProductEntity qcProductEntity = new QcProductEntity();
         BeanMapper.copy(qcProduct, qcProductEntity);
+        QcProductEntity oldEntity = null;
         String id = qcProduct.getId();
-        if (StringUtils.isBlank(id)) {
+        if (CharSequenceUtil.isBlank(id)) {
             id = IdWorker.getIdStr();
+        }else{
+            oldEntity = getById(id);
         }
         qcProductEntity.setMainId(billId);
         qcProductEntity.setSkuId(skuId);
         qcProductEntity.setId(id);
-        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Arrays.asList(skuId));
+
+        List<String> skuIdList = new ArrayList<>();
+        skuIdList.add(skuId);
+        if (!Objects.isNull(oldEntity)) {
+            skuIdList.add(oldEntity.getSkuId());
+        }
+        List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(skuIdList);
 
         SkuVO skuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(skuId)).findFirst().orElse(null);
         if(skuVO!=null){
@@ -90,7 +105,27 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         this.saveOrUpdate(qcProductEntity);
 
         //标记SKU
-        plmTaskFeign.updateOccupyStatus(Arrays.asList(qcProductEntity.getSkuId()));
+        plmTaskFeign.updateOccupyStatus(Collections.singletonList(qcProductEntity.getSkuId()));
+
+        //操作日志
+        if (Objects.isNull(oldEntity)) {
+            operateLogService.addModuleOperateLog("新增了质检单的产品信息", ModuleTypeEnum.QC_ORDER.getCode(),billId , "新增操作");
+        }else {
+            QcProductLogDTO oldQcProductLogDTO = new QcProductLogDTO();
+            QcProductLogDTO newQcProductLogDTO = new QcProductLogDTO();
+            BeanMapper.copy(oldEntity, oldQcProductLogDTO);
+            BeanMapper.copy(qcProductEntity, newQcProductLogDTO);
+
+            SkuVO oldSkuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(oldQcProductLogDTO.getSkuId())).findFirst().orElse(null);
+            if(oldSkuVO!=null){
+                oldQcProductLogDTO.setSkuName(oldSkuVO.getSkuName());
+            }
+            SkuVO newSkuVO = skuVOList.stream().filter(s -> s.getSkuId().equals(newQcProductLogDTO.getSkuId())).findFirst().orElse(null);
+            if(newSkuVO!=null){
+                newQcProductLogDTO.setSkuName(newSkuVO.getSkuName());
+            }
+            operateLogService.addModuleOperateLogByObj(oldQcProductLogDTO, newQcProductLogDTO, ModuleTypeEnum.QC_ORDER.getCode(), billId, "","编辑了质检单的产品信息");
+        }
     }
 
 
@@ -109,7 +144,7 @@ public class QcProductServiceImpl extends SuperServiceImpl<QcProductMapper, QcPr
         if (product != null) {
             BeanMapper.copy(product, productView);
             List<SkuVO> skuVOList = plmTaskFeign.listSkuProductByIds(Collections.singletonList(product.getSkuId()));
-            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Arrays.asList(product.getId()));
+            List<WmsAttachmentDTO.UpdateDTO> attachmentList = wmsAttachmentService.getByBusinessIds(Collections.singletonList(product.getId()));
             List<String> boxImageUrlList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
             List<String> boxNameList = attachmentList.stream().filter(b -> b.getType().equals(WmsConstant.QC_BOX)).map(WmsAttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
 

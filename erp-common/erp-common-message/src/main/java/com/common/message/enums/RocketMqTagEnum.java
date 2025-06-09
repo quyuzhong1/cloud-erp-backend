@@ -1,6 +1,7 @@
 package com.common.message.enums;
 
 import cn.hutool.core.collection.CollectionUtil;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
  * @Author Cloud
  * @Date 2023/2/6 10:32
  **/
+@Slf4j
 public enum RocketMqTagEnum {
 
     //---------------------------------中台数据抓取从1开始------------------------------------------------------------------------------------------
@@ -156,6 +158,16 @@ public enum RocketMqTagEnum {
      * 领星FBA货件信息tag
      */
     LX_FBA_SHIPMENT_RECEIVE_TAG(29, RocketMqTagEnum.FBA_SHIPMENT,"lx_fba_shipment_receive_tag"),
+
+    /**
+     * 虚拟仓明细信息tag
+     */
+    WMS_VIRTUAL_DETAIL_MSG_TAG(30,RocketMqTagEnum.SYNC_WMS,"wms_virtual_detail_msg_tag"),
+
+    /**
+     * 虚拟仓明细信息tag DMP_WECHAT_SUBSCRIBE_MSG
+     */
+    DMP_WECHAT_SUBSCRIBE_MSG_TAG(31,RocketMqTagEnum.WECHAT_SUBSCRIBE,"dmp_wechat_subscribe_msg_tag"),
 
     //---------------------------------金蝶数据同步code从1001开始------------------------------------------------------------------------------------------
 
@@ -325,6 +337,16 @@ public enum RocketMqTagEnum {
      * 业务员同步金蝶
      */
     KINGDEE_OPERATOR_TAG(1033, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_operator_tag"),
+
+    /**
+     * 分步式调出单同步金蝶
+     */
+    KINGDEE_TRANSFER_OUT_TAG(1034, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_out_tag"),
+
+    /**
+     * 分步式调入单同步金蝶
+     */
+    KINGDEE_TRANSFER_IN_TAG(1035, RocketMqTagEnum.SYNC_KINGDEE,"kingdee_transfer_in_tag"),
     //-----------------------------dmp数据更新编码从2001开始---------------------------------------------------------------
 
     /**
@@ -551,6 +573,10 @@ public enum RocketMqTagEnum {
      * 异步获取平台打印面单标签
      */
     ASYNC_GET_PLATFORM_LABEL_TAG(10001, RocketMqTagEnum.SYNC_TMS,"async_get_platform_label_tag"),
+    /**
+     * 异步更新物流获取记录
+     */
+    ASYNC_GET_TRACK123_LOGISTICS_TRACK(10002, RocketMqTagEnum.SYNC_TMS, "async_get_logistics_track"),
 
     //-----------------------------旺店通编码从11001开始------------------------------------------------------------------
     /**
@@ -563,6 +589,15 @@ public enum RocketMqTagEnum {
     WDT_OTHER_IN_STOCK_TAG(11003, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_other_in_stock_tag"),
     WDT_OTHER_OUT_STOCK_TAG(11004, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_other_out_stock_tag"),
     WDT_VIRTUAL_ALLOCATION_HANDLE_DETAIL_TAG(11005, RocketMqTagEnum.SYNC_WANGDIAN, "wdt_virtual_allocation_handle_detail_tag"),
+
+    /**
+     * 同步产品资料到领星
+     */
+    LINGXING_PRODUCT_DETAIL_TAG(11001, RocketMqTagEnum.SYNC_LINGXING,"lingxing_product_detail_tag"),
+    /**
+     * 速帝云通用推送
+     */
+    SDY_GENERAL_PUSH_TAG(11006, RocketMqTagEnum.SYNC_WANGDIAN, "sdy_general_push_tag"),
     ;
     public static final String SALES_ORDER = "sales";
     public static final String DELIVERY_ORDER = "delivery";
@@ -606,6 +641,10 @@ public enum RocketMqTagEnum {
 
     public static final String SYNC_WANGDIAN = "sync_wangdian";
 
+    public static final String SYNC_LINGXING = "sync_lingxing";
+
+    public static final String WECHAT_SUBSCRIBE = "wechat_subscribe";
+
     private Integer code;
 
     private String type;
@@ -632,15 +671,17 @@ public enum RocketMqTagEnum {
     }
 
     public static List<RocketMqTagEnum> listByType(String type) {
-        List<RocketMqTagEnum> collect = Arrays.stream(values()).filter(value -> value.getType().equals(type))
+        return Arrays.stream(values()).filter(value -> value.getType().equals(type))
                 .collect(Collectors.toList());
-        return collect;
     }
 
     public static RocketMqTagEnum getByCode(Integer code) {
-        return Arrays.stream(values()).filter(value -> value.getCode().equals(code))
-                .findFirst().orElseGet(null);
+        return Arrays.stream(values())
+                .filter(value -> value.getCode().equals(code))
+                .findFirst()
+                .orElse(null);
     }
+
     public static String getTagStrByType(String type){
         List<RocketMqTagEnum> tagList = listByType(type);
         if (CollectionUtil.isEmpty(tagList)){
@@ -651,7 +692,8 @@ public enum RocketMqTagEnum {
 
     public static void main(String[] args) {
         String tagStrByType = getTagStrByType(SKU_INFO);
-        System.out.println("tagStrByType = " + tagStrByType);
+
+        log.info("tagStrByType = " + tagStrByType);
     }
 
 

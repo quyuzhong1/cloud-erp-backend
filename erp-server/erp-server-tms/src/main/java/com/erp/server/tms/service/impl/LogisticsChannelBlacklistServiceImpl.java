@@ -1,6 +1,8 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.core.exception.ServiceException;
@@ -9,17 +11,15 @@ import com.erp.model.sys.entity.DictCityEntity;
 import com.erp.model.sys.entity.DictCountryEntity;
 import com.erp.model.tms.dto.LogisticsChannelBlacklistDTO;
 import com.erp.model.tms.entity.LogisticsChannelBlacklistEntity;
-import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.rpc.sys.feign.SysDictFeign;
 import com.erp.server.tms.mapper.LogisticsChannelBlacklistMapper;
 import com.erp.server.tms.service.LogisticsChannelBlacklistService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.annotation.Resource;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<LogisticsChannelBlacklistMapper, LogisticsChannelBlacklistEntity> implements LogisticsChannelBlacklistService {
 
 
-    @Autowired
+    @Resource
     private SysDictFeign sysDictFeign;
 
     @Transactional(rollbackFor = Exception.class)
@@ -114,6 +114,14 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         }
     }
 
+    @Override
+    public List<LogisticsChannelBlacklistEntity> listChannelBlacklist(List<String> channelIdList) {
+        if (CollUtil.isEmpty(channelIdList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelIdList).list();
+    }
+
     public List<LogisticsChannelBlacklistEntity> listDbByChannelId(String channelId) {
         return this.lambdaQuery().eq(LogisticsChannelBlacklistEntity::getLogisticsChannelId, channelId).list();
     }
@@ -137,6 +145,13 @@ public class LogisticsChannelBlacklistServiceImpl extends SuperServiceImpl<Logis
         for (LogisticsChannelBlacklistDTO.AddDTO item : list) {
             String country = item.getCountry();
             List<LogisticsChannelBlacklistDTO.CommonDTO> cityList = item.getCityList();
+            if(CollUtil.isEmpty(cityList)){
+                LogisticsChannelBlacklistEntity add = new LogisticsChannelBlacklistEntity();
+                add.setCountry(country);
+                add.setLogisticsChannelId(channelId);
+                addList.add(add);
+                continue;
+            }
             for (LogisticsChannelBlacklistDTO.CommonDTO common : cityList) {
                 LogisticsChannelBlacklistEntity add = new LogisticsChannelBlacklistEntity();
                 add.setCountry(country);

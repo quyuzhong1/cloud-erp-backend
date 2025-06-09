@@ -3,6 +3,7 @@ package com.erp.model.sys.entity;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.common.core.entity.BaseEntity;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.experimental.Accessors;
@@ -21,6 +22,7 @@ import java.io.Serializable;
 @Setter
 @Accessors(chain = true)
 @TableName("dict_bank")
+@EqualsAndHashCode
 public class DictBankEntity extends BaseEntity<DictBankEntity> {
 
     /**
@@ -42,7 +44,7 @@ public class DictBankEntity extends BaseEntity<DictBankEntity> {
     private String headquarterAddress;
 
 
-    public static final String NAME = "name";
+    public static final String FIELD_NAME = "name";
 
     public static final String SERVICES_PHONE = "services_phone";
 

@@ -27,7 +27,7 @@ import java.util.List;
 @Ignore
 public class AplusContentApiTest {
 
-    private final AplusContentApi api = null;
+    private final AplusContentApi api = new AplusContentApi(null);
 
     
     /**

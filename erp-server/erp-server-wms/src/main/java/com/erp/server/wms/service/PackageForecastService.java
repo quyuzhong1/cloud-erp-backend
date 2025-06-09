@@ -8,10 +8,12 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
 import com.erp.model.tms.dto.LogisticsAddressDTO;
+import com.erp.model.wms.dto.DictBasicDTO;
 import com.erp.model.wms.dto.PackageForecastDTO;
 import com.erp.model.wms.entity.PackageForecastEntity;
 import com.erp.model.wms.entity.SoB2cDeliveryEntity;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
 /**
@@ -155,4 +157,22 @@ public interface PackageForecastService extends SuperService<PackageForecastEnti
      * 导出组包预报
      */
     PagingVO<PackageForecastDTO.ExportViewDTO> exportPackageForecast(PagingDTO<PackageForecastDTO.ExportDTO> dto);
+
+    Boolean uploadFileDTO(List<PackageForecastDTO.UploadFileDTO> uploadFileDTO);
+
+    List<PackageForecastDTO.UploadFileViewDTO> uploadLabelView(List<String> ids);
+
+    void batchPrint(List<String> ids, HttpServletResponse response);
+
+    List<DictBasicDTO.DropDownDTO> getLogisticsType(String dictPlatform, String shopId);
+
+    String getDeliveryPlatform(List<String> ids);
+
+    List<DictBasicDTO.DropDownDTO> getLogisticType(String platform);
+
+    PackageForecastDTO.ShippingProviderDTO searchShippingProvider(PackageForecastDTO.SearchShippingProviderDTO dto);
+
+    BatchResultDTO uploadTikTokFully(PackageForecastDTO.UploadDTO dto);
+
+    List<BatchResultDTO> confirmDelivery(List<String> ids);
 }

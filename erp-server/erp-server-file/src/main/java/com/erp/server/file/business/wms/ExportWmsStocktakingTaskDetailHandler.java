@@ -4,6 +4,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.FileTaskEventEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.wms.dto.StocktakingTaskDTO;
 import com.erp.model.wms.dto.StocktakingTaskDetailDTO;
 import com.erp.rpc.wms.feign.ExportWmsFeign;
 import com.erp.server.file.core.AbstractPageFileEventHandler;
@@ -19,7 +20,7 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_STOCKTAKING
 
 @Component
 @Slf4j
-public class ExportWmsStocktakingTaskDetailHandler extends AbstractPageFileEventHandler<StocktakingTaskDetailDTO.ExportDTO, BaseIdDTO> {
+public class ExportWmsStocktakingTaskDetailHandler extends AbstractPageFileEventHandler<StocktakingTaskDetailDTO.ExportDTO, StocktakingTaskDTO.BaseIdDTO> {
 
     @Resource
     private ExportWmsFeign exportWmsFeign;
@@ -35,14 +36,14 @@ public class ExportWmsStocktakingTaskDetailHandler extends AbstractPageFileEvent
 
     @Override
     protected List<StocktakingTaskDetailDTO.ExportDTO> getData(FileTask fileTask) {
-        BaseIdDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<BaseIdDTO>() {
+        StocktakingTaskDTO.BaseIdDTO dto = readValue(fileTask.getMetaInfo(), new TypeReference<StocktakingTaskDTO.BaseIdDTO>() {
         });
         return listSeqData(dto);
     }
 
 
     @Override
-    protected PagingVO<StocktakingTaskDetailDTO.ExportDTO> getPageData(PagingDTO<BaseIdDTO> dto) {
+    protected PagingVO<StocktakingTaskDetailDTO.ExportDTO> getPageData(PagingDTO<StocktakingTaskDTO.BaseIdDTO> dto) {
         return exportWmsFeign.exportStocktakingTaskDetail(dto);
     }
 }

@@ -30,7 +30,7 @@ public enum StoreSignEnum {
         return name;
     }
 
-    public static String getName(Integer code) {
+    public static String getName(String code) {
         for (StoreSignEnum state : StoreSignEnum.values()) {
             if (code.equals(state.getCode())) {
                 return state.getName();

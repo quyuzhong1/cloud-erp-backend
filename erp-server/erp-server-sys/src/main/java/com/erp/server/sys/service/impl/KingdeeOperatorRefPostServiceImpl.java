@@ -2,6 +2,8 @@ package com.erp.server.sys.service.impl;
 
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -96,7 +98,8 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
         addEntity.setTypeCode(typeCode);
         addEntity.setUseOrgId(userPost.getUseOrgId());
         addEntity.setUseOrgName(userPost.getUseOrgName());
-        handleDb(addEntity);
+        addEntity.setCode(userPost.getCode());
+//        handleDb(addEntity);
         Boolean result = this.save(addEntity);
         if (result) {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeOperatorService.syncDataToKingdee(addEntity, SyncOperateEnum.OPERATE_ADD.getCode());
@@ -289,30 +292,30 @@ public class KingdeeOperatorRefPostServiceImpl extends SuperServiceImpl<KingdeeO
 
     @Override
     public List<UserInfoDTO.BusinessOperationUserDTO> listInfo(KingdeeBusinessOperatorDTO.ListBusinessOperatorDTO dto) {
-        List<UserInfoDTO.BusinessOperationUserDTO> resultList = new ArrayList<>(10);
         List<UserInfoDTO.BusinessOperationUserDTO> dbList = baseMapper.listInfo(dto);
-        String userId = UserContext.getDefaultLoginUser().getUid();
-        UserInfoDTO.BusinessOperationUserDTO findUser = dbList.stream().filter(d -> d.getUserId().equals(userId)).findFirst().orElse(null);
-        if (findUser != null) {
-            findUser.setIsMyState(1);
-            resultList.add(findUser);
-        } else {
-            dbList.forEach(d -> d.setIsMyState(0));
+        if (CollUtil.isEmpty(dbList)){
+            return Collections.emptyList();
         }
-        List<UserInfoDTO.BusinessOperationUserDTO> wantList = dbList.stream().filter(d -> !userId.equals(d.getUserId())).collect(Collectors.toList());
-        resultList.addAll(wantList);
-        Integer zero = MathUtil.ZERO;
-        for (UserInfoDTO.BusinessOperationUserDTO item : resultList) {
+        String userId = UserContext.getDefaultLoginUser().getUid();
+        dbList.forEach(item -> {
+            if (CharSequenceUtil.isNotBlank(item.getUserId()) && item.getUserId().equals(userId)){
+                item.setIsMyState(1);
+            }else {
+                item.setIsMyState(0);
+            }
             Integer deleteState = item.getDeleteState();
             Integer userState = item.getUserState();
-            if (zero.equals(deleteState) || zero.equals(userState)) {
+            if (MathUtil.ZERO.equals(deleteState) || MathUtil.ZERO.equals(userState)) {
                 item.setDisabled(Boolean.TRUE);
             } else {
                 item.setDisabled(Boolean.FALSE);
             }
-        }
-
-        return resultList;
+            //部门为空时设置为时效
+            if (CharSequenceUtil.isBlank(item.getDepartmentId()) || CharSequenceUtil.isBlank(item.getDepartmentName())){
+                item.setDisabled(Boolean.TRUE);
+            }
+        });
+        return dbList;
     }
 
     @Override

@@ -3,8 +3,8 @@ package com.erp.server.tms.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseDropDownDTO;
 import com.common.business.dto.base.BaseIdDTO;
+import com.erp.model.tms.dto.LogisticsBillDetailQueryDTO;
 import com.erp.model.tms.dto.LogisticsChannelDTO;
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
 import com.erp.model.tms.entity.LogisticsChannelEntity;
@@ -74,4 +74,24 @@ public interface LogisticsChannelMapper extends BaseMapper<LogisticsChannelEntit
      */
     List<LogisticsChannelEntity> listByMainIdsAndName(@Param("mainIdList") List<String> mainIdList,@Param("params") LogisticsSupplierDTO.PagingParamDTO params);
     IPage<LogisticsChannelDTO.PagingSelectDTO> pagingSelect(Page query, @Param("params") LogisticsChannelDTO.SelectDTO params);
+
+    /**
+     * 根据渠道汇总时间段内未更新运单号记录
+     * @return
+     */
+    List<LogisticsChannelDTO.WarnReportDTO> getWarnReportByChannel(@Param("query") LogisticsBillDetailQueryDTO query);
+
+    /**
+     * 获取物流类型/仓库类型下 渠道列表
+     * @param platform
+     * @param authStatus
+     * @param warehousePlatformType
+     * @param disabled
+     * @return
+     */
+    List<LogisticsChannelDTO.ChannelWarehouseDTO> listChannelWarehouse(@Param("platform") String platform, @Param("authStatus") String authStatus, @Param("warehousePlatformType") String warehousePlatformType, @Param("disabled") Boolean disabled);
+
+    Boolean estimateIsOutOfRangeDelivery(@Param("logisticsChannelId")String logisticsChannelId, @Param("country")String country, @Param("postCode")String postCode);
+
+    IPage<LogisticsChannelDTO.PagingViewDTO> paging(Page<LogisticsChannelDTO.PagingViewDTO> query, @Param("params") LogisticsChannelDTO.PagingParamDTO params);
 }

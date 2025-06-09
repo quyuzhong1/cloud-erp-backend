@@ -27,13 +27,5 @@ public class TestController extends BaseController {
     @Autowired
     private ProductDetailService productDetailService;
 
-    @PostMapping("/test")
-    public ApiResult test() {
-        List<ProductDetailEntity> list = productDetailService.getProductDetailAll();
-        wmsSyncProductService.syncProductInfoToWms();
-        wmsSyncProductService.syncProductSkuToWms(list);
-        wmsSyncProductService.syncProductSkuSaleToWms();
-        return success();
-    }
 
 }

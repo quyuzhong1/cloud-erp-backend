@@ -88,10 +88,15 @@ public class FbaShipmentDetailEntity extends BaseEntity<FbaShipmentDetailEntity>
     @TableField("delivery_qty")
     private Integer deliveryQty;
 
+    /**
+     * 货件编码
+     */
+    @TableField(exist = false)
+    private String shipmentCode;
+
 
     public static final String MAIN_ID = "main_id";
 
-    public static final String ASIN = "asin";
 
     public static final String FN_SKU = "fn_sku";
 

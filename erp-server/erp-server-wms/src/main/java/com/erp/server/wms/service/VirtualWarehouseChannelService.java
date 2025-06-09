@@ -21,33 +21,12 @@ import java.util.List;
 public interface VirtualWarehouseChannelService extends SuperService<VirtualWarehouseChannelEntity> {
 
     /**
-     * 新增
-     *
-     * @param dto
-     * @return
-     * @author hyj
-     * @date: 2024-06-02
-     */
-    BaseResultDTO.AddDTO add(VirtualWarehouseChannelDTO.AddDTO dto);
-
-    /**
      * 批量新增
      *
-     * @param batchAddDTO
+     * @param batchUpdateDTO
      * @return
      */
-    BaseResultDTO.AddDTO batchAdd(VirtualWarehouseChannelDTO.BatchAddDTO batchAddDTO);
-
-
-    /**
-     * 修改
-     *
-     * @param dto
-     * @return
-     * @author hyj
-     * @date: 2024-06-02
-     */
-    Boolean update(VirtualWarehouseChannelDTO.UpdateDTO dto);
+    BaseResultDTO.AddDTO batchUpdate(VirtualWarehouseChannelDTO.BatchUpdateDTO batchUpdateDTO);
 
     /**
      * 通过虚拟仓id获取关联渠道
@@ -81,6 +60,26 @@ public interface VirtualWarehouseChannelService extends SuperService<VirtualWare
      * @return List<VirtualWarehouseRelationDTO.ListPlatformDTO>
      */
     List<VirtualWarehouseRelationDTO.ListPlatformDTO> listVirtualWarehouseByPlatform(VirtualWarehouseChannelDTO.ListPlatformDTO listPlatformDTO);
+    /**
+     * 根据平台查询虚拟仓配置信息
+     * @author will
+     * @date 2024/9/3 18:13
+     * @param platformList
+     * @return List<CfgRuleVirtualWarehouseDTO>
+     */
+    List<VirtualWarehouseDTO.CfgRuleVirtualWarehouseDTO> listCfgRuleVirtualWarehouse(List<String> platformList);
 
-    List<VirtualWarehouseDTO.BindChannelDto> getByParams(VirtualWarehouseChannelDTO.ChannelAddDTO newChannel);
+    /**
+     * 获取渠道配置信息
+     * @param id
+     * @return
+     */
+    VirtualWarehouseChannelDTO.ViewDTO view(String id);
+
+    /**
+     * 校验已绑定的渠道不能重复绑定
+     * @param curChannelEntitieList
+     * @param hasPartitionIds
+     */
+    void checkBoundChannel(List<VirtualWarehouseChannelEntity> curChannelEntitieList, Boolean hasPartitionIds);
 }

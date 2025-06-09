@@ -39,8 +39,7 @@ public class UserProductController extends BaseController {
      */
     @LogAction(value = LogActionEnum.INSERT, desc = "产品列表-收藏产品")
     @PostMapping("/userAddProduct")
-    //   @RequestPermissions("plm:user:product:userAddProduct")
-    public ApiResult userAddProduct(@RequestParam(value = "productId") String productId) {
+    public ApiResult<Object> userAddProduct(@RequestParam(value = "productId") String productId) {
         boolean flag = userAddProductService.userAddProduct(productId);
         return flag == true ? success() : failure();
     }
@@ -55,8 +54,7 @@ public class UserProductController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "产品列表-取消收藏产品")
     @PostMapping("/userCancelProduct")
-    //  @RequestPermissions("plm:user:product:userCancelProduct")
-    public ApiResult userCancelProduct(@RequestParam(value = "productId") String productId) {
+    public ApiResult<Object> userCancelProduct(@RequestParam(value = "productId") String productId) {
         boolean flag = userAddProductService.userCancelProduct(productId);
         return flag == true ? success() : failure();
     }
@@ -70,8 +68,7 @@ public class UserProductController extends BaseController {
      * @date 2022-10-09 14:38
      */
     @PostMapping("/list")
-    //  @RequestPermissions("plm:user:product:list")
-    public ApiResult list() {
+    public ApiResult<Object> list() {
         List<Map<String, Object>> list = userAddProductService.listByUserId();
         return success(list);
     }

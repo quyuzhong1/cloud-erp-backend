@@ -6,6 +6,7 @@ package com.erp.model.plm.dto;/**
  * @Created by yl
  */
 
+import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
 import com.common.core.utils.LengthConverterUtil;
 import lombok.Data;
@@ -17,10 +18,12 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Description TODO
@@ -29,7 +32,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class LogisticsProductDTO {
+public class LogisticsProductDTO implements Serializable {
 
 
     @Data
@@ -217,11 +220,21 @@ public class LogisticsProductDTO {
     @NoArgsConstructor
     public static class TabListDTO {
         /**
+         * 类型(toBeApprove 待审核，reject 审核不通过，approve 已审核)
+         */
+        private String tabFlag;
+
+        /**
+         * tab名称
+         */
+        private String tabFlagName;
+
+        /**
          * 数量
          */
         private Integer count;
 
-        private String type;
+//        private String type;
     }
 
     @Data
@@ -261,6 +274,16 @@ public class LogisticsProductDTO {
          * 操作时间
          */
         private List<LocalDate> operateTimeList;
+
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -398,6 +421,15 @@ public class LogisticsProductDTO {
          */
         private List<LocalDate> updateTimeList;
 
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
 
     }
 
@@ -1065,8 +1097,6 @@ public class LogisticsProductDTO {
 
         private String imagesUrl;
 
-//       private BigDecimal price;
-
         private BigDecimal amount;
 
        private String spuNo;
@@ -1219,6 +1249,16 @@ public class LogisticsProductDTO {
          * 组合品申报类型
          */
         private String combinationDeclareType;
+
+        /**
+         * 不含税成本
+         */
+        private BigDecimal actualNoTaxCost;
+
+        /**
+         * 含税成本
+         */
+        private BigDecimal actualTaxCost;
 
     }
 

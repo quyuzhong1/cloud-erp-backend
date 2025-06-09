@@ -46,7 +46,7 @@ public interface SkuMappingRuleService extends SuperService<SkuMappingRuleEntity
 
     List<String> getSkuRuleTest(SkuMappingRuleDTO.RuleTestDTO dto);
 
-    void handleSkuMapping();
+    void handleSkuMapping(List<String> skuMappingIds);
 
     PagingVO<SkuMappingRuleDTO.ListDTO> paging(PagingDTO<SkuMappingRuleDTO.ParamsDTO> dto);
 }

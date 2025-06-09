@@ -1,9 +1,11 @@
 package com.erp.server.wms.convert;
 
 import com.erp.model.wms.dto.PackingTaskDetailDTO;
-import com.erp.model.wms.dto.WmsCartonDTO;
+import com.erp.model.wms.dto.WmsCartonDetailDTO;
 import com.erp.model.wms.dto.WmsCartonSpecDTO;
-import com.erp.model.wms.entity.*;
+import com.erp.model.wms.entity.WmsCartonDetailEntity;
+import com.erp.model.wms.entity.WmsCartonEntity;
+import com.erp.model.wms.entity.WmsCartonSpecEntity;
 import com.erp.server.wms.convert.tool.TypeConversionWorker;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -111,4 +113,21 @@ public interface CartonConverter {
             @Mapping(target = "mainId", ignore = true)
     })
     WmsCartonSpecEntity convertDtoToCartonSpec(WmsCartonSpecDTO.SpecSaveDTO dto);
+
+    @Mapping(target = "productName", ignore = true)
+    @Mapping(target = "detailId", source = "id")
+    WmsCartonDetailDTO.BoxDetailDTO convertCartonDetailToBoxDTO(WmsCartonDetailEntity detailEntity);
+    List<WmsCartonDetailDTO.BoxDetailDTO> convertCartonDetailToBoxDTO(List<WmsCartonDetailEntity> detailEntityList);
+
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "updateUserName", ignore = true)
+    @Mapping(target = "updateUserId", ignore = true)
+    @Mapping(target = "updateTime", ignore = true)
+    @Mapping(target = "taskId", ignore = true)
+    @Mapping(target = "mainId", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "createUserName", ignore = true)
+    @Mapping(target = "createUserId", ignore = true)
+    @Mapping(target = "createTime", ignore = true)
+    WmsCartonDetailEntity AddDetailToCartonDetail(WmsCartonDetailDTO.AddDTO addDTO);
 }

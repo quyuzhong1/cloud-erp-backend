@@ -2,13 +2,12 @@ package com.sdk.tms.express.model.order.request;
 
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
 import java.io.Serializable;
 
 /**
  * @author zdy
  * @ClassName Service
- * @description: TODO
+
  * @date 2023年10月30日
  * @version: 1.0
  */

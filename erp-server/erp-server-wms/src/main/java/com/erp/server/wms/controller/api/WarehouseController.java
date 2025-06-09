@@ -1,10 +1,14 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
 import com.common.business.enums.DataAttributeEnum;
+import com.common.business.threadlocal.UserContext;
+import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
 import com.common.core.anno.LogAction;
 import com.common.core.anno.LogSystemModule;
@@ -13,12 +17,16 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.utils.BeanMapper;
+import com.erp.model.sys.dto.SysUserDTO;
 import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.server.wms.query.WarehouseQueryHandler;
+import com.erp.model.wms.dto.WarehouseDTO.WarehouseUpdateStateDTO;
 import com.erp.model.wms.entity.WarehouseEntity;
+import com.erp.rpc.sys.feign.AuthDataFeign;
+import com.erp.server.wms.query.WarehouseQueryHandler;
 import com.erp.server.wms.service.WarehouseService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.util.CollectionUtils;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +37,9 @@ import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
+
+import static com.common.business.threadlocal.UserContext.getLoginUser;
 
 /**
  * 仓库管理
@@ -44,7 +55,8 @@ public class WarehouseController extends BaseController {
 
     @Resource
     private WarehouseService warehouseService;
-
+    @Resource
+    private AuthDataFeign authDataFeign;
 
     /**
      * 仓库分页列表
@@ -55,6 +67,7 @@ public class WarehouseController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "id",
             menuCode = "wms:warehouse:paging",
             tableAlias = "warehouse"
     )
@@ -63,7 +76,24 @@ public class WarehouseController extends BaseController {
         PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
         return success(pagingVO);
     }
-
+    /**
+     * 仓库自定义分页列表
+     * 产品要求不同的高级搜索
+     * @param
+     * @return
+     */
+    @PostMapping("/pagingCustom")
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
+    public ApiResult<PagingVO<WarehouseDTO.PagingViewDTO>> pagingCustom(@RequestBody @Validated PagingDTO<WarehouseDTO.PagingParamDTO> dto) {
+        if (Objects.nonNull(dto.getParams()) && CharSequenceUtil.isNotBlank(dto.getParams().getUserId())) {
+            List<SysUserDTO.WarehouseDTO> warehouseUserList = authDataFeign.getWarehouseUserList(dto.getParams().getUserId());
+            if (CollUtil.isNotEmpty(warehouseUserList)){
+                dto.getParams().setWarehouseIdList(warehouseUserList.stream().map(SysUserDTO.WarehouseDTO::getWarehouseId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList()));
+            }
+        }
+        PagingVO<WarehouseDTO.PagingViewDTO> pagingVO = warehouseService.paging(dto);
+        return success(pagingVO);
+    }
     /**
      * 添加仓库
      *
@@ -79,7 +109,7 @@ public class WarehouseController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated WarehouseDTO.AddDTO dto) {
         String id = warehouseService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -127,7 +157,7 @@ public class WarehouseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.CUSTOM_UPDATE, desc = "启用仓库:id={id},状态值={state}(true=禁用,false=启用)")
     @PostMapping("/updateStatus")
-    public ApiResult updateStatus(@RequestBody @Validated UpdateStateDTO dto) {
+    public ApiResult updateStatus(@RequestBody @Validated WarehouseUpdateStateDTO dto) {
         Boolean result = warehouseService.updateStatus(dto);
         return result == true ? success() : failure();
     }
@@ -148,7 +178,7 @@ public class WarehouseController extends BaseController {
             keyIdName = "id")
     public ApiResult update(@RequestBody @Validated WarehouseDTO.UpdateDTO dto) {
         String id  = warehouseService.updateWarehouse(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
 
@@ -283,6 +313,7 @@ public class WarehouseController extends BaseController {
      */
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出仓库数据")
     @PostMapping("/exportWarehouse")
+    @WebAdvanceQuery(handler = WarehouseQueryHandler.class)
     public ApiResult exportWarehouse(@RequestBody @Valid WarehouseDTO.ExportDTO dto) {
         warehouseService.exportWarehouse(dto);
         return success();
@@ -315,8 +346,11 @@ public class WarehouseController extends BaseController {
      * 仓库列表
      */
     @GetMapping("/list")
-    public ApiResult<List<WarehouseDTO.ListDTO>> list() {
-        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse();
+    public ApiResult<List<WarehouseDTO.ListDTO>> list(@RequestParam(required = false) Boolean showByAuth) {
+        if (Objects.isNull(showByAuth)){
+            showByAuth = Boolean.TRUE;
+        }
+        List<WarehouseDTO.ListDTO> list = warehouseService.listApproveWarehouse(showByAuth);
         return success(list);
     }
 
@@ -330,6 +364,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/selectPaging")
     public ApiResult<PagingVO<WarehouseDTO.ListDTO>> selectPaging(@RequestBody PagingDTO<WarehouseDTO.SelectDTO> dto) {
+        if (Objects.isNull(dto.getParams().getShowByAuth())){
+            dto.getParams().setShowByAuth(Boolean.TRUE);
+        }
         PagingVO<WarehouseDTO.ListDTO> pagingVO = warehouseService.selectPaging(dto);
         return success(pagingVO);
     }
@@ -343,6 +380,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/listWarehouseInventoryQty")
     public ApiResult<List<WarehouseDTO.ListInventoryQtyDTO>> listWarehouseInventoryQty(@RequestBody @Valid WarehouseDTO.ListInventoryQtyParamDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);
+        }
         List<WarehouseDTO.ListInventoryQtyDTO> list = warehouseService.listWarehouseInventoryQty(dto);
         return success(list);
     }
@@ -352,6 +392,9 @@ public class WarehouseController extends BaseController {
      */
     @PostMapping("/listWarehouseByParams")
     public ApiResult<List<WarehouseDTO.ListDTO>> listWarehouseByParams(@RequestBody @Valid WarehouseDTO.ListParamDTO dto) {
+        if (Objects.isNull(dto.getShowByAuth())){
+            dto.setShowByAuth(Boolean.TRUE);
+        }
         List<WarehouseDTO.ListDTO> list = warehouseService.listWarehouseByParams(dto);
         return success(list);
     }
@@ -363,8 +406,8 @@ public class WarehouseController extends BaseController {
      * @date 2023-11-29
      */
     @GetMapping("/listOverseasWarehouse")
-    public ApiResult<List<WarehouseDTO.ListDTO>> listOverseasWarehouse() {
-        List<WarehouseDTO.ListDTO> list = warehouseService.listOverseasWarehouse();
+    public ApiResult<List<WarehouseDTO.PullDownDTO>> listOverseasWarehouse() {
+        List<WarehouseDTO.PullDownDTO> list = warehouseService.listOverseasWarehouse();
         return success(list);
     }
 

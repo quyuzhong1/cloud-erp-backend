@@ -1,5 +1,6 @@
 package com.erp.server.oms.convert;
 
+import com.erp.model.oms.dto.SkuMappingDTO;
 import com.erp.model.oms.entity.SkuMappingEntity;
 import com.erp.model.oms.entity.SkuMappingExtendEntity;
 import org.mapstruct.Mapper;
@@ -7,6 +8,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
 import org.mapstruct.factory.Mappers;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Mapper
 @Component
@@ -27,4 +30,8 @@ public interface SkuMappingConverter {
             @Mapping(target = "version", ignore = true),
     })
     SkuMappingExtendEntity copySkuMappingExtendEntity(SkuMappingExtendEntity entity);
+
+    @Mapping(target = "productSkuNo", source = "skuNo")
+    SkuMappingDTO.ListSkuDTO convertSkuDTO(SkuMappingDTO.ListSkuParamDTO dataList);
+    List<SkuMappingDTO.ListSkuDTO> convertSkuDTO(List<SkuMappingDTO.ListSkuParamDTO> dataList);
 }

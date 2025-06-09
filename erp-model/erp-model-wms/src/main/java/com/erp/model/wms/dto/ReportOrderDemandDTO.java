@@ -131,9 +131,19 @@ public class ReportOrderDemandDTO implements Serializable {
         private Integer virtualScarceQty;
 
         /**
+         * 实体仓未分配
+         */
+        private Integer unDistributionQty;
+
+        /**
          * 更新时间
          */
         private LocalDateTime updateTime;
+
+        /**
+         * 创建时间
+         */
+        private LocalDateTime createTime;
     }
 
     /**
@@ -349,6 +359,12 @@ public class ReportOrderDemandDTO implements Serializable {
         */
         @NotNull(message = "虚拟仓可用库存不能为空")
         private Integer virtualUsableQty;
+
+        /**
+         * 实体仓未分配
+         */
+        @NotNull(message = "实体仓未分配不能为空")
+        private Integer unDistributionQty;
 
         /**
         * 是否缺货，true是，false否

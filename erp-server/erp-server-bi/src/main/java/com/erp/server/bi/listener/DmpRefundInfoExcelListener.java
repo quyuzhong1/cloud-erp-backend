@@ -29,8 +29,6 @@ import java.util.List;
 import java.util.Map;
 
 public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundInfoImportExcelDTO> {
-    private Integer importType;
-
 
     private BiOrderInfoService biOrderInfoService;
 
@@ -46,9 +44,8 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
 
     private List<BiRefundInfoEntity> refundList;
 
-    public DmpRefundInfoExcelListener(Integer importType, List<BiRefundInfoEntity> refundList, BiOrderInfoService biOrderInfoService, BiRefundInfoService biRefundInfoService
+    public DmpRefundInfoExcelListener(List<BiRefundInfoEntity> refundList, BiOrderInfoService biOrderInfoService, BiRefundInfoService biRefundInfoService
             , BiShopInfoService biShopInfoService, BiRefundItemService biRefundItemService, PlmTaskFeign plmTaskFeign) {
-        this.importType = importType;
         this.biOrderInfoService = biOrderInfoService;
         this.biShopInfoService = biShopInfoService;
         this.biRefundInfoService = biRefundInfoService;
@@ -132,13 +129,13 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
             }
         }
 
-        String errStr = "";
-        if (errorMsgList.size() > 0) {
+        StringBuilder errStr = new StringBuilder();
+        if (!errorMsgList.isEmpty()) {
             for (int i = 0; i < errorMsgList.size(); i++) {
                 Integer indexTemp = i + 1;
-                errStr = errStr + indexTemp + "、" + errorMsgList.get(i) + "；";
+                errStr.append(indexTemp).append("、").append(errorMsgList.get(i)).append("；");
             }
-            dto.setErrorMsg(errStr);
+            dto.setErrorMsg(errStr.toString());
             list.add(dto);
             return;
         }
@@ -175,6 +172,6 @@ public class DmpRefundInfoExcelListener extends AnalysisEventListener<DmpRefundI
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
-
+        // document why this method is empty
     }
 }

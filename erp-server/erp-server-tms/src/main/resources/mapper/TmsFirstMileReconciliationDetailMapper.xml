@@ -83,6 +83,10 @@
             declare_cost,
             other_tax_cost,
             other_cost,
+            shipping_cost_currency,
+            declare_cost_currency,
+            other_tax_currency,
+            other_cost_currency,
             remark,
             status,
             confirm_date,
@@ -168,6 +172,10 @@
         tfmrd.declare_cost,
         tfmrd.other_tax_cost,
         tfmrd.other_cost,
+        tfmrd.shipping_cost_currency,
+        tfmrd.declare_cost_currency,
+        tfmrd.other_tax_currency,
+        tfmrd.other_cost_currency,
         tfmrd.remark,
         tfmrd.status,
         tfmrd.confirm_date,
@@ -178,6 +186,7 @@
         tfmrd.logistics_channel_id,
         tfmrd.transport_no,
         tfmrd.reconciliation_count,
+        tfmrd.business_code,
         tfmr.reconciliation_month,
         to_char(tfmr.reconciliation_month, 'YYYY-MM') AS reconciliationMonthStr
         from tms_first_mile_reconciliation_detail tfmrd
@@ -335,6 +344,10 @@
             tfmrd.declare_cost,
             tfmrd.other_tax_cost,
             tfmrd.other_cost,
+            tfmrd.shipping_cost_currency,
+        	tfmrd.declare_cost_currency,
+        	tfmrd.other_tax_currency,
+        	tfmrd.other_cost_currency,
             tfmrd.remark,
             tfmrd.status,
             tfmrd.confirm_date,
@@ -346,7 +359,9 @@
             tfmrd.transport_no,
             tfmrd.reconciliation_count,
             tfmrd.reconciliation_type,
-            tfmr.reconciliation_month
+            tfmr.reconciliation_month,
+            tfmr.currency,
+            tfmr.exchange_rate
         from tms_first_mile_reconciliation_detail tfmrd
         left join tms_first_mile_reconciliation tfmr on tfmrd.main_id = tfmr.id and tfmr.is_deleted = false
         where tfmrd.is_deleted = false

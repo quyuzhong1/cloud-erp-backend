@@ -1,5 +1,6 @@
 package com.erp.model.plm.dto;
 
+
 import com.common.core.anno.FieldValid;
 import com.common.core.enums.FieldFormatPatternTypeEnum;
 import com.erp.model.plm.enums.*;
@@ -34,8 +35,14 @@ public class ProductDetailExcelDTO {
     /**
      * 二级分类
      */
-    @FieldValid(fieldName = "二级分类", isNotBlank = true)
+    @FieldValid(fieldName = "二级分类")
     private String secondaryCategory;
+
+    /**
+     * 应用分类名
+     */
+    @FieldValid(fieldName = "应用分类", isNotBlank = true)
+    private String applicationCategoryName;
 
     /**
      * 产品经理
@@ -361,6 +368,12 @@ public class ProductDetailExcelDTO {
      * 报关产品属性
      */
     private String productProperty;
+
+    /**
+     * 保险属性
+     */
+    @FieldValid(fieldName = "保险属性", isNotBlank = true)
+    private String insuranceProperty;
 
     /**
      * 报关申报价（$）

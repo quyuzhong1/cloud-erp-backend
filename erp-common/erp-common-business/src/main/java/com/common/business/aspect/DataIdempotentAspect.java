@@ -43,7 +43,7 @@ public class DataIdempotentAspect {
     @Resource
     private RedissonClient redissonClient;
 
-    private static final ThreadLocal<List<RLock>> LOCK_THREAD = new ThreadLocal<>();
+//    private static final ThreadLocal<List<RLock>> LOCK_THREAD = new ThreadLocal<>();
 
     @Pointcut("@annotation(com.common.business.annotation.DataIdempotent)")
     public void dataPointCut() {
@@ -79,15 +79,14 @@ public class DataIdempotentAspect {
             }
         }
         log.debug("幂等切面获取参数：" + sb.toString());
+        List<RLock> rLocks = new ArrayList<>();
         if (StringUtils.isNotEmpty(sb)) {
-            List<RLock> rLocks = new ArrayList<>();
             String submitKey = "DataIdempotent:" + sb + "_" + businessType;
             try {
                 log.info("分布式锁上锁，key：{}，lockTime：{}", submitKey, leaseTime);
                 RLock clientLock = redissonClient.getLock(submitKey);
 
                 //不设置 lockTime watch dog会 默认 锁定30s 10s重试
-//                boolean locked = clientLock.tryLock(waitTime, leaseTime, TimeUnit.SECONDS);
                 boolean locked = clientLock.tryLock(waitTime, TimeUnit.SECONDS);
                 if (!locked) {
                     log.error("{}上锁失败", submitKey);
@@ -107,30 +106,49 @@ public class DataIdempotentAspect {
                 }
                 throw new ServiceException(ApiError.ERROR_1026);
             }
-            if (CollectionUtil.isNotEmpty(rLocks)) {
-                LOCK_THREAD.set(rLocks);
-            }
         }
+        Object proceed = null;
         // 调用目标方法
-        return proceedingJoinPoint.proceed();
+        try {
+        	proceed = proceedingJoinPoint.proceed();
+		} catch (Exception e) {
+			log.info("调用目标方法失败" , e);
+			throw e;
+		}finally {
+			if (CollectionUtil.isNotEmpty(rLocks)) {
+				try {
+	                rLocks.forEach(rLock -> {
+	                    log.info("任务执行完成，当前锁状态：{}", rLock.isLocked());
+	                    // 无需判断锁是否存在，直接调用 unlock
+	                    if (rLock.isLocked()) {
+	                        rLock.unlock();
+	                        log.info("释放锁");
+	                    }
+	                });
+	            } catch (Exception exception) {
+	            	log.error("释放分布式锁失败" , exception);
+	            }
+			}
+		}
+        return proceed;
     }
 
     /*** 处理完请求后执行
      *  @param joinPoint 切点
      */
-    @AfterReturning(value = "dataPointCut()", returning = "apiResult")
-    public void doAfterReturning(JoinPoint joinPoint, Object apiResult) {
-        handleData();
-    }
+//    @AfterReturning(value = "dataPointCut()", returning = "apiResult")
+//    public void doAfterReturning(JoinPoint joinPoint, Object apiResult) {
+//        handleData();
+//    }
 
     /*** 拦截异常操作
      * ** @param joinPoint 切点
      * * @param e         异常
      * */
-    @AfterThrowing(value = "dataPointCut()", throwing = "e")
-    public void doAfterThrowing(JoinPoint joinPoint, Exception e) {
-        handleData();
-    }
+//    @AfterThrowing(value = "dataPointCut()", throwing = "e")
+//    public void doAfterThrowing(JoinPoint joinPoint, Exception e) {
+//        handleData();
+//    }
 
     /**
      * 根据切入点获取执行的方法
@@ -139,37 +157,35 @@ public class DataIdempotentAspect {
         String methodName = joinPoint.getSignature().getName();
         //获取目标类的所有方法，找到当前要执行的方法
         Method[] methods = joinPoint.getTarget().getClass().getMethods();
-        Method resultMethod = null;
         for (Method method : methods) {
             if (method.getName().equals(methodName)) {
-                resultMethod = method;
-                break;
+                return method;
             }
         }
-        return resultMethod;
+        return null;
     }
 
-    private void handleData() {
-        List<RLock> rLocks = LOCK_THREAD.get();
-        if (CollectionUtil.isNotEmpty(rLocks)) {
-            try {
-                rLocks.forEach(rLock -> {
-                    log.info("任务执行完成，当前锁状态：{}", rLock.isLocked());
-                    // 无需判断锁是否存在，直接调用 unlock
-                    if (rLock.isLocked()) {
-                        rLock.unlock();
-                        log.info("释放锁");
-                    }
-                });
-            } catch (Exception exception) {
-                throw new ServiceException(ApiError.ERROR_1026);
-            } finally {
-                LOCK_THREAD.remove();
-            }
-        }
-    }
+//    private void handleData() {
+//        List<RLock> rLocks = LOCK_THREAD.get();
+//        if (CollectionUtil.isNotEmpty(rLocks)) {
+//            try {
+//                rLocks.forEach(rLock -> {
+//                    log.info("任务执行完成，当前锁状态：{}", rLock.isLocked());
+//                    // 无需判断锁是否存在，直接调用 unlock
+//                    if (rLock.isLocked()) {
+//                        rLock.unlock();
+//                        log.info("释放锁");
+//                    }
+//                });
+//            } catch (Exception exception) {
+//                throw new ServiceException(ApiError.ERROR_1026);
+//            } finally {
+//                LOCK_THREAD.remove();
+//            }
+//        }
+//    }
 
-    private Object getNestedField(Object obj, String fieldName) throws Exception {
+    private Object getNestedField(Object obj, String fieldName) {
         String[] fieldNames = fieldName.split("\\.");
         try {
             Object value = "";

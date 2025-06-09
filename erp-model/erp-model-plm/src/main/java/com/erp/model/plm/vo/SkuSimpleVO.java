@@ -2,10 +2,8 @@ package com.erp.model.plm.vo;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 
 /**
  * @Classname SkuVO
@@ -26,10 +24,6 @@ public class SkuSimpleVO implements Serializable {
      */
     private String skuNo;
 
-    /**
-     * sku 名称
-     */
-//    private String skuName = "";
     /**
      * 是否是捆绑商品:true=是，false=否
      * (可能字段为null，需添加查询)

@@ -24,7 +24,6 @@ import com.erp.server.plm.service.*;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
-import org.python.modules.itertools.product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -383,11 +382,10 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
      */
 
     @Override
-    public PagingVO<List<ProductShowDTO>> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
+    public PagingVO<ProductShowDTO> paging(PagingDTO<ProductSearchDTO.PagingParamDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<ProductSearchDTO.PagingParamDTO> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         ProductSearchDTO.PagingParamDTO params = dto.getParams();
-        IPage pageData = new Page();
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
         LoginUser loginUser = UserContext.getDefaultLoginUser();
@@ -400,9 +398,9 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         //部门处理
         Boolean isFlag = productInfoService.handlePagingDept(params);
         if (isFlag) {
-            return new PagingVO(new Page());
+            return new PagingVO<>();
         }
-        pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
+        IPage<ProductShowDTO> pageData = baseMapper.paging(query, params, archiveProductIds, categoryIdList);
         Integer finish = TaskStateEnum.FINISH.getCode();
         Integer approvalPass = TaskStateEnum.APPROVAL_PASS.getCode();
         List<ProductShowDTO> list = pageData.getRecords();
@@ -494,21 +492,19 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
                 if (projectTaskCount != 0) {
                     projectProgress = ((double) projectFinishTaskCount / projectTaskCount) * 100;
                 }
-                approvalProgress = Math.round(approvalProgress * 100) / 100;
-                projectProgress = Math.round(projectProgress * 100) / 100;
+                approvalProgress = (double) Math.round(approvalProgress * 100) / 100;
+                projectProgress = (double) Math.round(projectProgress * 100) / 100;
                 item.setApprovalProgress(approvalProgress);
                 item.setProjectProgress(projectProgress);
             }
         }
-        return new PagingVO(pageData);
+        return new PagingVO<>(pageData);
     }
 
     @Override
     public List<BasicDTO> listProjectInfo(ProductSearchDTO.PagingParamDTO params) {
         //获取@RequestPermissions的产品id
         List<String> archiveProductIds = archiveService.getArchiveProductIds();
-        LoginUser loginUser = UserContext.getDefaultLoginUser();
-        String userId = loginUser.getUid();
         List<BasicDTO> list = new ArrayList<>();
         //部门处理
         Boolean isFlag = productInfoService.handlePagingDept(params);
@@ -669,33 +665,41 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         switch (ProjectStateEnum.getEnum(projectState)) {
             case YES_START:
                 //如果状态为已启动，更新产品信息{产品开发状态}：开发中
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.DEVELOP_AFOOT.getCode(),detailIds,0);
                 break;
             case ING:
                 //如果状态为进行中，更新产品信息{产品开发状态}：开发中
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_AFOOT.getCode());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.DEVELOP_AFOOT.getCode(),detailIds,0);
                 break;
             case FINISH:
                 //如果状态改为已完成，更新产品信息{产品开发状态}：开发完成；
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DEVELOP_FINISH.getCode());
-                //{销售状态}更新为是
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 1).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.DEVELOP_FINISH.getCode(),detailIds,1);
                 break;
             case TERMINATE:
                 //如果状态改为已中止，更新产品信息{产品开发状态}：中止开发；
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.DISCONTINUE_DEVELOP.getCode(),detailIds,0);
                 break;
             case SUSPEND:
                 //如果状态改为暂停，更新产品信息{产品开发状态}：暂停；
-                productDetailService.updateProductStateByProductIdList(productInfoIds, ProductDetailStateEnum.SUSPEND_DEVELOP.getCode());
-                productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, 0).in(ProductSaleEntity::getSkuId, detailIds).update();
+                updateProductData(productInfoIds,ProductDetailStateEnum.SUSPEND_DEVELOP.getCode(),detailIds,0);
                 break;
             default:
                 break;
         }
+    }
+
+    /**
+     * 更新产品信息
+     * @author will
+     * @date 2024/11/16 14:29
+     * @param productInfoIds
+     * @param state
+     * @param detailIds
+     * @param isMarketable
+     */
+    private void updateProductData (List<String> productInfoIds,Integer state,List<String> detailIds,Integer isMarketable) {
+        productDetailService.updateProductStateByProductIdList(productInfoIds, state);
+        productSaleService.lambdaUpdate().set(ProductSaleEntity::getIsMarketable, isMarketable).in(ProductSaleEntity::getSkuId, detailIds).update();
     }
 
     /**
@@ -1112,9 +1116,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         PhaseDistributeDTO phaseDistribute = new PhaseDistributeDTO();
 
         List<String> phaseNameList = projectPhaseService.getPhaseNameName(productId);
-        //以阶段名分组
-//        Map<String, List<ProjectTaskEntity>> map = taskList.parallelStream().
-//                collect(Collectors.groupingBy(ProjectTaskEntity::getPhaseName));
         //状态列表
         List<Map<String, Object>> statusList = new LinkedList<>();
         List<ProductPhaseDistributeDTO> phaseDistributeList = new LinkedList<>();
@@ -1263,7 +1264,6 @@ public class ProjectInfoServiceImpl extends ServiceImpl<ProjectInfoMapper, Proje
         approvalPassMap.put("value", approvalPassValue);
         list.add(approvalPassMap);
 
-        // return list.stream().filter(m -> (Integer) m.get("value") != 0).collect(Collectors.toList());
         return list;
     }
 

@@ -1,6 +1,7 @@
 package com.erp.server.scm.controller.api;
 
 import com.common.business.annotation.DataPermission;
+import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
@@ -44,6 +45,7 @@ public class ReportFormsManageController extends BaseController {
             tableField = "create_user_id",
             menuCode = "scm:ReportFormsManage:purchaseBusinessGatherTablePaging",
             tableAlias = "pod")
+    @WebAdvanceQuery
     public ApiResult<PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>>> purchaseBusinessGatherTablePaging(@RequestBody PagingDTO<PurchaseBusinessGatherTableDTO.PagingParamDTO> dto) {
         PagingVO<List<PurchaseBusinessGatherTableDTO.PagingViewDTO>> listPagingVO = reportFormsManageService.purchaseBusinessGatherTablePaging(dto);
         return success(listPagingVO);

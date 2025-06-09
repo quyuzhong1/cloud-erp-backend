@@ -1,7 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
-import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.StrUtil;
+import org.apache.commons.collections4.CollectionUtils;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.PagingDTO;
@@ -81,9 +81,9 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     @Override
     public PagingVO<ProcessDefinitionDTO.ListDTO> paging(PagingDTO<ProcessDefinitionDTO.QueryDTO> dto) {
         // 分页查询
-        Page query = new Page(dto.getCurrPage(), dto.getPageSize());
+        Page<?> query = new Page<>(dto.getCurrPage(), dto.getPageSize());
         IPage<ProcessDefinitionDTO.ListDTO> pageData = this.baseMapper.paging(query, dto.getParams());
-        if(CollectionUtil.isEmpty(pageData.getRecords())) {
+        if(CollectionUtils.isEmpty(pageData.getRecords())) {
             return new PagingVO<>(pageData);
         }
         return new PagingVO<>(pageData);
@@ -98,7 +98,7 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
         // 已发布的流程不能再次发布
-        if(definitionEntity.getIsDeploy()){
+        if(Boolean.TRUE.equals(definitionEntity.getIsDeploy())){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_ALREADY_DEPLOY);
         }
         Deployment deploy = repositoryService.createDeployment()
@@ -127,13 +127,12 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
         if(null != businessEntity){
             businessKey = businessEntity.getBusinessKey();
         }
-        if(StrUtil.isNotBlank(entity.getBpmnXml())){
+        if(CharSequenceUtil.isNotBlank(entity.getBpmnXml())){
             // 替换流程定义id
-            String bpmnXml = entity.getBpmnXml().replaceAll(entity.getId(), StrUtil.format("act_{}", System.currentTimeMillis()));
+            String bpmnXml = entity.getBpmnXml().replaceAll(entity.getId(), CharSequenceUtil.format("act_{}", System.currentTimeMillis()));
             entity.setBpmnXml(bpmnXml);
         }
-        ProcessDefinitionDTO.CopyResultDTO resultDTO = new ProcessDefinitionDTO.CopyResultDTO(entity, businessKey);
-        return  resultDTO;
+        return new ProcessDefinitionDTO.CopyResultDTO(entity, businessKey);
     }
 
     @Override
@@ -147,17 +146,17 @@ public class ProcessDefinitionServiceImpl extends SuperServiceImpl<ProcessDefini
     public boolean deleteByIds(List<String> ids) {
         // 查询数据是否存在
         List<ProcessDefinitionEntity> entityList = listByIds(ids);
-        if(CollectionUtil.isEmpty(entityList)){
+        if(CollectionUtils.isEmpty(entityList)){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
         }
         // 已发布的流程不能删除
         List<ProcessDefinitionEntity> deployList = entityList.stream().filter(x -> x.getIsDeploy()).collect(Collectors.toList());
-        if(CollectionUtil.isNotEmpty(deployList)){
+        if(!CollectionUtils.isEmpty(deployList)){
             throw new ServiceException(ApiError.PROCESS_DEFINITION_DEPLOY_DELETE);
         }
         // 删除关联业务数据
         List<ProcessBusinessEntity> processBusinessList = processBusinessService.getByDefinitionIds(ids);
-        if(CollectionUtil.isNotEmpty(processBusinessList)){
+        if(!CollectionUtils.isEmpty(processBusinessList)){
             List<String> businessIds = processBusinessList.stream().map(ProcessBusinessEntity::getId).collect(Collectors.toList());
             processBusinessService.removeByIds(businessIds);
         }

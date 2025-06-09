@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -111,7 +112,7 @@ public class DmpFbaInventoryEntity extends BaseEntity<DmpFbaInventoryEntity> {
     @TableField("inbound_receiving_qty")
     private Integer inboundReceivingQty;
     /**
-     * FBI可售
+     * FBA可售
      */
     @TableField("fulfillable_qty")
     private Integer fulfillableQty;

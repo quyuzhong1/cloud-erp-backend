@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.logistics;
 
-import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.json.JSON;
 import cn.hutool.json.JSONUtil;
 import com.common.business.annotation.LogisticsPlatformType;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -13,13 +14,11 @@ import com.erp.model.tms.enums.BusinessTypeEnum;
 import com.erp.model.tms.enums.RequestStatusEnums;
 import com.erp.model.tms.vo.request.*;
 import com.erp.model.tms.vo.response.*;
-import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsChannelConverter;
+import com.erp.server.tms.convert.LogisticsOperationOrderConverter;
 import com.erp.server.tms.convert.LogisticsOrderConverter;
 import com.erp.server.tms.handler.AbstractLogisticsHandler;
 import com.erp.server.tms.service.LogisticsOperateService;
-import com.sdk.tms.weishi.dto.request.WeiShiUpdateWeightRequest;
-import com.sdk.tms.weishi.dto.response.WeiShiResponse;
 import com.sdk.tms.yuntu.dto.request.*;
 import com.sdk.tms.yuntu.dto.response.*;
 import com.sdk.tms.yuntu.server.YunTuService;
@@ -31,7 +30,10 @@ import javax.annotation.Resource;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -77,12 +79,13 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
         YunTuCreateOrderRequest request = LogisticsOrderConverter.INSTANCE.orderRequestByYunTu(logisticsOrderVO);
         request.setTaxNumber(getTaxNumberByCountry(logisticsOrderVO.getCountry(), logisticsOrderVO.getVoecTaxNo(), request.getTaxNumber()));
         ValidatorUtil.validateEntity(request);
+        String iossCode = request.getIossCode();
         try {
             YunTuResponse<List<YunTuCreateOrder>> yunTuResponse = yunTuService.createOrder(Collections.singletonList(request),logisticsOrderVO.getAuthMap());
             if(isFailure(yunTuResponse.getCode())){
                 List<YunTuCreateOrder> yunTuCreateOrders = yunTuResponse.getData();
                 String remark = "";
-                if(CollectionUtil.isNotEmpty(yunTuCreateOrders)){
+                if(CollUtil.isNotEmpty(yunTuCreateOrders)){
                     remark = yunTuCreateOrders.get(0).getRemark();
                 }else if (StringUtils.isNotEmpty(yunTuResponse.getResultDesc())){
                     remark = yunTuResponse.getResultDesc();
@@ -100,6 +103,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                     .transportNo(yunTuCreateOrder.getWayBillNumber())
                     .deliveryNo(yunTuCreateOrder.getCustomerOrderNumber())
                     .trackNo(yunTuCreateOrder.getTrackingNumber())
+                    .iossTaxNo(iossCode)
                     .build());
         }catch (Exception e){
             logisticsOperateService.pushOperateLog(logisticsOrderVO.getSourceId(),
@@ -154,7 +158,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
             for(YunTuPrintLabel yunTuPrintLabel : yunTuPrintLabels){
                 //成功的订单
                 List<String> successList = yunTuPrintLabel.getOrderInfos().stream().filter(v->v.getCode().equals(100)).map(YunTuPrintLabel.OrderInfo::getCustomerOrderNumber).collect(Collectors.toList());
-                if(CollectionUtil.isNotEmpty(successList)){
+                if(CollUtil.isNotEmpty(successList)){
                     LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
                     response.setBase64(FileUtil.convertPdfUrlToBase64(yunTuPrintLabel.getUrl()));
                     response.setDeliveryNoList(successList);
@@ -163,7 +167,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                 }
                 //失败的订单
                 List<YunTuPrintLabel.OrderInfo> failureList = yunTuPrintLabel.getOrderInfos().stream().filter(v->!v.getCode().equals(100)).collect(Collectors.toList());
-                if(CollectionUtil.isNotEmpty(failureList)){
+                if(CollUtil.isNotEmpty(failureList)){
                     isSuccess = false;
                     for(YunTuPrintLabel.OrderInfo orderInfo : failureList){
                         LogisticsPrintLabelResponse response = new LogisticsPrintLabelResponse();
@@ -298,6 +302,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
                             RequestStatusEnums.SUCCESS.getCode(), JSONUtil.toJsonStr(cancelOrderVO), JSONUtil.toJsonStr(yunTuResponse), false);
                 }
             }catch (Exception e){
+                log.error("云途取消物流单异常,传参：{}", JSONUtil.toJsonStr(request), e);
                 isSuccess = false;
                 cancelResponseVO.failure(getPlatForm().getName(),cancelOrderVO.getDeliveryNo(),e.getMessage());
                 logisticsOperateService.pushOperateLog(cancelOrderVO.getOrderId(),
@@ -345,7 +350,7 @@ public class YunTuLogisticsHandlerImpl extends AbstractLogisticsHandler {
      * @return
      */
     @Override
-    public ApiResult authorization(Map<String, String> authMap){
+    public ApiResult<Object>authorization(Map<String, String> authMap){
         try {
             YunTuResponse<List<YunTuChannel>> yunTuResponse = yunTuService.getAllChannel(authMap);
             if (isFailure(yunTuResponse.getCode())) {

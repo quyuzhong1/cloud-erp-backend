@@ -1,12 +1,13 @@
 package com.erp.server.tms.service.impl;
 
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.OperationTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
+import com.common.core.constant.SqlConstants;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
@@ -24,7 +25,6 @@ import com.erp.server.tms.service.*;
 import io.seata.common.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,24 +44,28 @@ import java.util.*;
 @Slf4j
 @Service
 public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferLogisticsAuthMapper, TransferLogisticsAuthEntity> implements TransferLogisticsAuthService {
-    @Autowired
+    @Resource
     private OperateLogService operateLogService;
 
     @Resource
     private TransferLogisticsRegistry transferLogisticsRegistry;
 
-    @Autowired
+    @Resource
     private TransferLogisticsSupplierService transferLogisticsSupplierService;
 
-    @Autowired
+    @Resource
     private TransferLogisticsChannelService transferLogisticsChannelService;
 
-    @Autowired
+    @Resource
     private TransferLogisticsAuthFieldService transferLogisticsAuthFieldService;
 
     @Lazy
     @Resource
     private AsyncService asyncService;
+
+    @Lazy
+    @Resource
+    private TransferLogisticsAuthServiceImpl service;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -84,7 +88,7 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
         //保存或者修改授权字段
         transferLogisticsAuthFieldService.saveOrUpdateAuthField(logisticsAuthEntity.getId(), addDTO.getFieldMap());
         // 操作日志
-        String msg = StrUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流授权单", logisticsAuthEntity.getId());
+        String msg = CharSequenceUtil.format("用户【{}】新增【{}】单据id为【{}】", UserContext.getDefaultLoginUser().getUserName(), "物流授权单", logisticsAuthEntity.getId());
         operateLogService.addModuleOperateLog(msg, null, logisticsAuthEntity.getId(), "新增操作");
 
         return new BaseResultDTO.AddDTO(logisticsAuthEntity.getId(), logisticsAuthEntity.getName());
@@ -138,7 +142,7 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
 
     @Override
     public TransferLogisticsAuthEntity getByMainId(String id, String mainId) {
-        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), TransferLogisticsAuthEntity::getId, id).eq(TransferLogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), TransferLogisticsAuthEntity::getId, id).eq(TransferLogisticsAuthEntity::getMainId, mainId).last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -155,26 +159,25 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
     }
 
     @Override
-    public ApiResult authLogistics(String id, String logisticsPlatform) {
-        TransferLogisticsService service = transferLogisticsRegistry.getHandler(logisticsPlatform);
-        if (Objects.isNull(service)){
+    public ApiResult<Object>authLogistics(String id, String logisticsPlatform) {
+        TransferLogisticsService logisticService = transferLogisticsRegistry.getHandler(logisticsPlatform);
+        if (Objects.isNull(logisticService)){
             return ApiResult.error(-1,"功能未开发");
         }
         Map<String, String> authConfig = this.getLogisticsAuthConfig(id, logisticsPlatform);
         if (CollectionUtils.isEmpty(authConfig)){
             return ApiResult.error(-1,"未找到配置信息");
         }
-        ApiResult authorization = service.authorization(authConfig);
-        return authorization;
+        return logisticService.authorization(authConfig);
     }
 
     @Override
-    public ApiResult authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
-        TransferLogisticsService service = transferLogisticsRegistry.getHandler(logisticsPlatform);
-        if (Objects.isNull(service)){
+    public ApiResult<Object>authLogistics(String logisticsPlatform, Map<String, String> authConfig) {
+        TransferLogisticsService logisticService = transferLogisticsRegistry.getHandler(logisticsPlatform);
+        if (Objects.isNull(logisticService)){
             return ApiResult.error(-1,"功能未开发");
         }
-        return service.authorization(authConfig);
+        return logisticService.authorization(authConfig);
     }
 
     @Override
@@ -189,7 +192,7 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
     }
 
     public TransferLogisticsAuthEntity getDbByMainId(String mainId){
-        return this.lambdaQuery().eq(TransferLogisticsAuthEntity::getMainId, mainId).last("LIMIT 1").one();
+        return this.lambdaQuery().eq(TransferLogisticsAuthEntity::getMainId, mainId).last(SqlConstants.LIMIT_1).one();
     }
 
     @Override
@@ -208,7 +211,7 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
             throw new ServiceException(ApiError.ERROR_CANCEL_CONDITION);
         }
 
-        this.removeById(entity.getId());
+        service.removeById(entity.getId());
         supplierEntity.setAuthStatus(LogisticsAuthStatusEnum.NOT.getCode());
         transferLogisticsSupplierService.updateById(supplierEntity);
         return BatchResultDTO.success(supplierEntity.getId(), supplierEntity.getSupplierName(), OperationTypeEnum.UPDATE_STATUS);
@@ -245,19 +248,6 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
 
     }
 
-    /**
-     * @param id
-     * @param mainId
-     * @param logisticsPlatform
-     * @return
-     */
-    private TransferLogisticsAuthEntity getByMainIdAndPlatform(String id, String mainId, String logisticsPlatform) {
-        return this.lambdaQuery().ne(StringUtils.isNotBlank(id), TransferLogisticsAuthEntity::getId, id).
-                eq(TransferLogisticsAuthEntity::getMainId, mainId).
-                eq(TransferLogisticsAuthEntity::getLogisticsPlatform, logisticsPlatform).
-                last("LIMIT 1").one();
-    }
-
     @Override
     public Map<String, String> getTransferLogisticsAuthConfig(String authId,String logisticsPlatform) {
         Map<String, String> map = new HashMap<>();
@@ -265,11 +255,13 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
         if (StringUtils.isNoneBlank(authId)) {
             map.put("id", authId);
             TransferLogisticsAuthEntity authEntity = this.getById(authId);
-            if (Objects.isNull(authEntity)) return null;
+            if (Objects.isNull(authEntity)){
+                return Collections.emptyMap();
+            }
             map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
             fieldEntities = transferLogisticsAuthFieldService.listByLogisticsAuthId(authId);
         }
-        if (CollectionUtils.isNotEmpty(fieldEntities)) {
+        if (Objects.nonNull(fieldEntities) && CollectionUtils.isNotEmpty(fieldEntities)) {
             fieldEntities.forEach(logisticsAuthFieldEntity -> {
                 map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
             });
@@ -306,21 +298,6 @@ public class TransferLogisticsAuthServiceImpl extends SuperServiceImpl<TransferL
 
     @Override
     public Map<String, String> getLogisticsAuthConfig(String authId,String logisticsPlatform) {
-        Map<String, String> map = new HashMap<>();
-        List<TransferLogisticsAuthFieldEntity> fieldEntities = null;
-
-        if (StringUtils.isNoneBlank(authId)) {
-            map.put("id", authId);
-            TransferLogisticsAuthEntity authEntity = this.getById(authId);
-            if (Objects.isNull(authEntity)) return null;
-            map.put("logisticsPlatform", authEntity.getLogisticsPlatform());
-            fieldEntities = transferLogisticsAuthFieldService.listByLogisticsAuthId(authId);
-        }
-        if (CollectionUtils.isNotEmpty(fieldEntities)) {
-            fieldEntities.forEach(logisticsAuthFieldEntity -> {
-                map.put(logisticsAuthFieldEntity.getFieldCode(), logisticsAuthFieldEntity.getFieldValue());
-            });
-        }
-        return map;
+        return getTransferLogisticsAuthConfig(authId,logisticsPlatform);
     }
 }

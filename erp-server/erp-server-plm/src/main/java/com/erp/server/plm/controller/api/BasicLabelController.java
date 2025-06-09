@@ -98,7 +98,7 @@ public class BasicLabelController extends BaseController {
      */
     @LogAction(value = LogActionEnum.UPDATE, desc = "更新基础标签")
     @PostMapping("/update")
-    public ApiResult update(@RequestBody @Validated BasicLabelDTO.UpdateDTO dto) {
+    public ApiResult<Object> update(@RequestBody @Validated BasicLabelDTO.UpdateDTO dto) {
         basicLabelService.update(dto);
         return success();
     }
@@ -108,7 +108,7 @@ public class BasicLabelController extends BaseController {
      */
     @LogAction(value = LogActionEnum.DELETE, desc = "删除新增基础标签")
     @PostMapping("/remove")
-    public ApiResult delete(@RequestBody @Validated BasicLabelDTO.DeleteDTO dto) {
+    public ApiResult<Object> delete(@RequestBody @Validated BasicLabelDTO.DeleteDTO dto) {
         basicLabelService.removeBasicLabelById(dto.getId());
         return success();
     }

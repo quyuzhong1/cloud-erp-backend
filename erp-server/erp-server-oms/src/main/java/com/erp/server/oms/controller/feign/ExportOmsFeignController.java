@@ -7,6 +7,8 @@ import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.oms.dto.*;
 import com.erp.model.oms.dto.excel.CustomerB2bSellerExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceChangeExportExcelDTO;
+import com.erp.model.oms.dto.excel.SoPriceExportExcelDTO;
 import com.erp.server.oms.query.*;
 import com.erp.server.oms.service.*;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,6 +31,8 @@ public class ExportOmsFeignController {
     @Resource
     private SoB2cService soB2cService;
     @Resource
+    private SoB2cErrorService soB2cErrorService;
+    @Resource
     private SoB2cDeclareProductService soB2cDeclareProductService;
     @Resource
     private SkuMappingService skuMappingService;
@@ -39,6 +43,26 @@ public class ExportOmsFeignController {
     @Resource
     private SoInfoService soInfoService;
 
+    @Resource
+    private SoB2cRefundService soB2cRefundService;
+
+    @Resource
+    private SoB2cReturnService soB2cReturnService;
+    @Resource
+    private ReportManagerService reportManagerService;
+    @Resource
+    private InvoiceInfoService invoiceInfoService;
+    @Resource
+    private CfgInvoiceInvalidService cfgInvoiceInvalidService;
+    @Resource
+    private FullyManagedOrderService fullyManagedOrderService;
+
+    @Resource
+    private SoPriceService soPriceService;
+    @Resource
+    private SoPriceChangeService soPriceChangeService;
+
+
     @PostMapping("/customerB2BSellerChange")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
     public PagingVO<CustomerB2bSellerExcelDTO> exportCustomerB2BSellerChange(@RequestBody PagingDTO<CustomerB2bSellerChangeDTO.ParamDTO> dto) {
@@ -46,6 +70,12 @@ public class ExportOmsFeignController {
     }
 
     @PostMapping("/soChange")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "si.warehouse_id",
+            menuCode = "oms:soChange:paging",
+            tableAlias = "sc"
+    )
     @WebAdvanceQuery(handler = SoChangeQueryHandler.class)
     public PagingVO<SoChangeDTO.PagingViewDTO> exportSoChange(@RequestBody PagingDTO<SoChangeDTO.PagingParamDTO> dto) {
         return soChangeService.exportSoChange(dto);
@@ -54,6 +84,7 @@ public class ExportOmsFeignController {
     @PostMapping("/soReturn")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
+            warehouseTableField = "sr.warehouse_id",
             menuCode = "oms:soReturn:paging",
             tableAlias = "sr"
     )
@@ -63,15 +94,40 @@ public class ExportOmsFeignController {
     }
 
     @PostMapping("/soB2CAbnormal")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
     public PagingVO<SoB2cAbnormalDTO.ListDTO> exportSoB2CAbnormal(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
         return soB2cService.exportSoB2CAbnormal(dto);
     }
+    @PostMapping("/soB2CAbnormalPools")
+    @WebAdvanceQuery(handler = SoB2cAbnormalQueryHandler.class)
+    public PagingVO<SoB2cAbnormalDTO.PoolsDTO> exportSoB2CAbnormalPools(@RequestBody PagingDTO<SoB2cAbnormalDTO.PagingParamDTO> dto) {
+        return soB2cErrorService.exportSoB2CAbnormalPools(dto);
+    }
 
     @PostMapping("/soB2C")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:soB2c:paging"
+    )
     @WebAdvanceQuery(handler = SoB2cQueryHandler.class)
     public PagingVO<SoB2cDTO.ExcelExportDTO> exportSoB2C(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
         return soB2cService.exportSoB2C(dto);
+    }
+    @PostMapping("/exportFullyManagedOrder")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            warehouseTableField = "sb2cd.warehouse_id",
+            shopTableField = "sb2c.shop_id",
+            menuCode = "oms:fully:paging"
+    )
+    @WebAdvanceQuery(handler = FullyManagedQueryHandler.class)
+    public PagingVO<SoB2cDTO.ExcelExportDTO> exportFullyManagedOrder(@RequestBody PagingDTO<SoB2cDTO.ExportParamDTO> dto) {
+        return fullyManagedOrderService.exportFullyManagedOrder(dto);
     }
 
     @PostMapping("/soB2CDeclare")
@@ -80,26 +136,44 @@ public class ExportOmsFeignController {
     }
 
     @PostMapping("/soB2CProductSales")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sb.shop_id",
+            menuCode = "oms:reportManager:productSalesPaging"
+    )
+    @WebAdvanceQuery
     public PagingVO<ReportDTO.ProductSalesPagingViewDTO> exportSoB2CProductSales(@RequestBody PagingDTO<ReportDTO.ProductSalesPagingParamDTO> dto) {
-        return soB2cService.exportSoB2CProductSales(dto);
+        return reportManagerService.exportSoB2CProductSales(dto);
     }
 
     @PostMapping("/platformSku")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sm.shop_id",
+            menuCode = "oms:skuMaping:platformPaging"
+    )
+    @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.PagingViewDTO> exportPlatformSku(@RequestBody PagingDTO<SkuMappingDTO.ExportDTO> dto) {
         return skuMappingService.exportPlatformSku(dto);
     }
 
     @PostMapping("/warehouseSku")
+    @WebAdvanceQuery
     public PagingVO<SkuMappingDTO.WarehousePagingViewDTO> exportWarehouseSku(@RequestBody PagingDTO<SkuMappingDTO.ExportWarehouseSkuDTO> dto) {
         return skuMappingService.exportWarehouseSku(dto);
     }
 
+    @PostMapping("/customerSku")
+    @WebAdvanceQuery
+    public PagingVO<SkuMappingDTO.CustomerPagingViewDTO> exportCustomerSku(@RequestBody PagingDTO<SkuMappingDTO.CustomerPagingParamDTO> dto) {
+        dto.getParams().setExport(true);
+        return skuMappingService.customerPaging(dto);
+    }
     @PostMapping("/shop")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+    @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "create_user_id",
-            menuCode = "oms:shop:export",
-            serviceClass = ShopInfoService.class,
-            keyIdName = "id")
+            shopTableField = "si.id",
+            menuCode = "oms:shop:paging",
+            tableAlias = "si"
+    )
     @WebAdvanceQuery(handler = ShopQueryHandler.class)
     public PagingVO<ShopDTO.PagingViewDTO> exportShop(@RequestBody PagingDTO<ShopDTO.ExportDTO> dto) {
         return shopInfoService.exportShop(dto);
@@ -107,13 +181,81 @@ public class ExportOmsFeignController {
 
     @PostMapping("/customer")
     @WebAdvanceQuery(handler = CustomerInfoQueryHandler.class)
-    public PagingVO<CustomerDTO.PagingViewDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto) {
+    public PagingVO<CustomerDTO.PagingExportDTO> exportCustomer(@RequestBody PagingDTO<CustomerDTO.ExportDTO> dto) {
         return customerInfoService.exportCustomer(dto);
     }
 
     @PostMapping("/so")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id,seller_id",
+            warehouseTableField = "si.warehouse_id",
+            menuCode = "oms:so:paging",
+            tableAlias = "si"
+    )
     @WebAdvanceQuery(handler = SoInfoQueryHandler.class)
     public PagingVO<SoInfoDTO.PagingViewDTO> exportSo(@RequestBody PagingDTO<SoInfoDTO.ExportDTO> dto) {
         return soInfoService.exportSo(dto);
+    }
+
+    @PostMapping("/exportRefund")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "ro.shop_id",
+            menuCode = "oms:refundOrder:paging"
+    )
+    @WebAdvanceQuery
+    public PagingVO<SoB2cRefundDTO.PagingViewDTO> exportRefund(@RequestBody PagingDTO<SoB2cRefundDTO.PagingParamDTO> dto) {
+        return soB2cRefundService.exportRefund(dto);
+    }
+
+    @PostMapping("/exportSoB2cReturn")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            shopTableField = "sbr.shop_id",
+            menuCode = "oms:soB2cReturn:paging"
+    )
+    @WebAdvanceQuery(handler = SoB2cReturnQueryHandler.class)
+    public PagingVO<SoB2cReturnDTO.PagingViewDTO> exportSoB2cReturn(@RequestBody PagingDTO<SoB2cReturnDTO.PagingParamDTO> dto) {
+        return soB2cReturnService.paging(dto);
+    }
+
+    @PostMapping("/exportInvoice")
+    @WebAdvanceQuery
+    public PagingVO<InvoiceInfoDTO.PagingViewDTO> exportInvoice(@RequestBody PagingDTO<InvoiceInfoDTO.PagingParamDTO> dto) {
+        return invoiceInfoService.paging(dto, true);
+    }
+
+    @PostMapping("/exportInvoiceInvalid")
+    @WebAdvanceQuery
+    public PagingVO<CfgInvoiceInvalidDTO.PagingViewDTO> exportInvoiceInvalid(@RequestBody PagingDTO<CfgInvoiceInvalidDTO.PagingParamDTO> dto) {
+        return cfgInvoiceInvalidService.paging(dto);
+    }
+
+    /**
+     * 销售价目表导出
+     * @param dto
+     * @return PurchasePriceExportExcelDTO
+     */
+    @PostMapping("/soPrice")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "oms:so:price:paging",
+            tableAlias = "sp")
+    @WebAdvanceQuery(handler = SoPriceQueryHandler.class)
+    public PagingVO<SoPriceExportExcelDTO> exportSoPrice(@RequestBody PagingDTO<SoPriceDTO.PagingParamDTO> dto) {
+        return soPriceService.exportSoPrice(dto);
+    }
+
+    /**
+     * 销售调价表导出
+     * @param dto
+     * @return PurchasePriceExportExcelDTO
+     */
+    @PostMapping("/soPriceChange")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "pricing_user_id",
+            menuCode = "oms:soPriceChange:paging",
+            tableAlias = "sp")
+    @WebAdvanceQuery(handler = SoPriceChangeQueryHandler.class)
+    public PagingVO<SoPriceChangeExportExcelDTO> exportSoPriceChange(@RequestBody PagingDTO<SoPriceChangeDTO.PagingParamDTO> dto) {
+        return soPriceChangeService.exportSoPriceChange(dto);
     }
 }

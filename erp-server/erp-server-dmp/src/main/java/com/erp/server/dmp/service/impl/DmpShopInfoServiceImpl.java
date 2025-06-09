@@ -65,7 +65,7 @@ public class DmpShopInfoServiceImpl extends SuperServiceImpl<DmpShopInfoMapper, 
     @Override
     public Boolean update(DmpShopInfoDTO.UpdateDTO updateDTO) {
         DmpShopInfoEntity old = super.getById(updateDTO.getId());
-        Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台店铺单"));
+        old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "中台店铺单"));
         DmpShopInfoEntity dmpShopInfoEntity =  BeanMapperUtils.map(DmpShopInfoEntity.class, updateDTO);
 
         // 数据处理

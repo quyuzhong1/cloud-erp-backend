@@ -27,7 +27,7 @@ import java.util.List;
 @Ignore
 public class ServiceApiTest {
 
-    private final ServiceApi api = null;
+    private final ServiceApi api = new ServiceApi(null);
 
     
     /**

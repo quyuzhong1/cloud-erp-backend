@@ -10,7 +10,6 @@ import lombok.experimental.Accessors;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
 
 
@@ -154,20 +153,40 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
     @TableField("shipping_cost")
     private BigDecimal shippingCost;
     /**
+     * 运费用币别
+     */
+    @TableField("shipping_cost_currency")
+    private String shippingCostCurrency;
+    /**
      * 报关费用
      */
     @TableField("declare_cost")
     private BigDecimal declareCost;
+    /**
+     * 报关费用币别
+     */
+    @TableField("declare_cost_currency")
+    private String declareCostCurrency;
     /**
      * 其他费用
      */
     @TableField("other_cost")
     private BigDecimal otherCost;
     /**
+     * 其他费用币别
+     */
+    @TableField("other_cost_currency")
+    private String otherCostCurrency;
+    /**
      * 其他税费
      */
     @TableField("other_tax_cost")
     private BigDecimal otherTaxCost;
+    /**
+     * 其他税费币别
+     */
+    @TableField("other_tax_currency")
+    private String otherTaxCurrency;
     /**
      * 备注
      */
@@ -205,6 +224,16 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
      */
     @TableField(exist = false)
     private LocalDate reconciliationMonth;
+    /**
+     * 币别
+     */
+    @TableField(exist = false)
+    private String currency;
+    /**
+     * 直接汇率
+     */
+    @TableField(exist = false)
+    private BigDecimal exchangeRate;
 
     /**
      * 账单类型： actual=实际， initPeriod=期初
@@ -251,7 +280,7 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
     public static final String FEE_RULE_NAME = "fee_rule_name";
 
-    public static final String TYPE = "type";
+    public static final String FIELD_TYPE = "type";
 
     public static final String TOTAL_LOGISTICS_COST = "total_logistics_cost";
 
@@ -273,9 +302,9 @@ public class TmsFirstMileReconciliationDetailEntity extends BaseEntity<TmsFirstM
 
     public static final String ACTUAL_OTHER_COST = "actual_other_cost";
 
-    public static final String REMARK = "remark";
+    public static final String FIELD_REMARK = "remark";
 
-    public static final String STATUS = "status";
+    public static final String FIELD_STATUS = "status";
 
     public static final String CONFIRM_DATE = "confirm_date";
 

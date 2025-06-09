@@ -1,6 +1,6 @@
 package com.erp.server.oms.service.impl;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.enums.ApiError;
@@ -83,8 +83,8 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
         SoB2cEntity soB2cEntity = soB2cService.getById(mainId);
         String oldValue = categoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
         String newValue = soB2cRefCategoryList.stream().map(SoB2cRefCategoryEntity::getCategoryName).collect(Collectors.joining(","));
-        if (!StrUtil.equals(oldValue,newValue)) {
-            operateLogService.addModuleOperateLog(StrUtil.format("用户【{}】编辑单号为【{}】的【B2C销售订单表】单据编辑了【分类信息】由[{}]变更为[{}]", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), oldValue, newValue), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "编辑操作");
+        if (!CharSequenceUtil.equals(oldValue,newValue)) {
+            operateLogService.addModuleOperateLog( CharSequenceUtil.format("用户【{}】编辑单号为【{}】的【B2C销售订单表】单据编辑了【分类信息】由[{}]变更为[{}]", UserContext.getDefaultLoginUser().getUserName(), soB2cEntity.getCode(), oldValue, newValue), ModuleTypeEnum.SO_B2C.getCode(), soB2cEntity.getId(), "编辑操作");
         }
         return update;
     }
@@ -154,5 +154,13 @@ public class SoB2cRefCategoryServiceImpl extends SuperServiceImpl<SoB2cRefCatego
             String categoryName = orderCategoryDetailList.stream().filter(obj -> obj.getId().equals(entity.getCategoryId())).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             entity.setCategoryName(categoryName);
         }
+    }
+
+    @Override
+    public List<SoB2cRefCategoryDTO.CategoryNamesDTO> listCategoryNamesBySoIds(List<String> soIds) {
+        if (CollectionUtils.isEmpty(soIds)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listCategoryNamesBySoIds(soIds);
     }
 }

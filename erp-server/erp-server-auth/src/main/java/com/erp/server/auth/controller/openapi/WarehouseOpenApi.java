@@ -1,7 +1,9 @@
 package com.erp.server.auth.controller.openapi;
 
+import javax.annotation.Resource;
+import javax.validation.Valid;
+
 import com.common.core.controller.vo.ApiResult;
-import com.common.core.utils.FastDFSClientUtil;
 import com.erp.model.sys.openapi.CollectorPacksDTO;
 import com.erp.model.sys.openapi.DimensionalWeightDTO;
 import com.erp.model.sys.openapi.ReturnTrackingDTO;
@@ -9,10 +11,6 @@ import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.wms.feign.PackingTaskFeign;
 import com.erp.rpc.wms.feign.SoB2cDeliveryFeign;
 import com.erp.server.auth.config.OpenApi;
-import org.springframework.web.multipart.MultipartFile;
-
-import javax.annotation.Resource;
-import javax.validation.Valid;
 
 /**
  * <p>

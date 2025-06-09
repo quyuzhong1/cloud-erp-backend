@@ -40,6 +40,11 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
     OverseasProviderWarehouseEntity getByWarehouseId(String warehouseId);
 
     /**
+     * 根据仓库id查询绑定关系(未禁用)
+     **/
+    OverseasProviderWarehouseEntity getByWarehouseIdWithNotDisabled(String warehouseId);
+
+    /**
      * 根据仓库ids查询绑定关系
      * @Author Luo_WG
      * @Date 2023/11/17 12:18
@@ -91,4 +96,18 @@ public interface OverseasProviderWarehouseService extends SuperService<OverseasP
      * @return
      */
     Boolean isApiWarehouse(String destWarehouseId);
+
+
+    /**
+     * 高级查询查code
+     * @param compareCodeSplicingValueSql sql
+     */
+    List<String> listProviderWarehouseBySql(String compareCodeSplicingValueSql);
+
+    /**
+     * 独立站配送信息查询
+     * @param shippedDTO
+     * @return
+     */
+    List<OverseasProviderWarehouseDTO.ShippedViewDTO> getShippedInfo(OverseasProviderWarehouseDTO.ShippedDTO shippedDTO);
 }

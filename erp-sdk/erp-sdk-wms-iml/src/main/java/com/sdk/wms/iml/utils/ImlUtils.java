@@ -9,7 +9,9 @@ import com.sdk.wms.iml.soap.Ec_Service;
 import jodd.util.StringUtil;
 
 public class ImlUtils {
-
+    private ImlUtils() {
+        throw new IllegalStateException("Utility ImlUtils class");
+    }
     public static String callService(String service, Object obj){
         Ec_Service ecService = new Ec_Service();
         Ec ec = ecService.getEcSOAP();

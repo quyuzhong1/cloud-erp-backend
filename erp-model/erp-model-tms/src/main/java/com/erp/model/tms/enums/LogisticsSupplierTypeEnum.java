@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
  * 物流类型枚举
  * @author Lambda
  * @Classname LogisticsAddressEnums
- * @Description TODO
  * @Date 2023-11-03 10:54
  * @Created by yl
  */

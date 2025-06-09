@@ -4,10 +4,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.Digits;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * @Description 产品物流信息表
@@ -148,6 +148,12 @@ public class ProductLogisticsDTO implements Serializable {
      * 电池容量单位 dict type=batteryCapacityUnit
      */
     private String batteryCapacityUnit;
+
+    /**
+     * 保险属性
+     */
+    private String insuranceProperty;
+    private List<String> insurancePropertyList;
 
     private static final long serialVersionUID = 1L;
 }

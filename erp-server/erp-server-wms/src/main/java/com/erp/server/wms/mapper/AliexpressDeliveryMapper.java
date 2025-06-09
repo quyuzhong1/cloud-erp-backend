@@ -29,7 +29,7 @@ public interface AliexpressDeliveryMapper extends BaseMapper<AliexpressDeliveryE
      * @param params
      * @return com.baomidou.mybatisplus.core.metadata.IPage<com.erp.model.wms.dto.FbaShipmentDTO.ListDTO>
      **/
-    IPage<AliexpressDeliveryDTO.ListDTO> paging(Page query, @Param("params") AliexpressDeliveryDTO.SearchParamDTO params);
+    IPage<AliexpressDeliveryDTO.ListDTO> paging(Page<AliexpressDeliveryDTO.ListDTO> query, @Param("params") AliexpressDeliveryDTO.SearchParamDTO params);
 
     /**
      * 导出excel
@@ -38,7 +38,5 @@ public interface AliexpressDeliveryMapper extends BaseMapper<AliexpressDeliveryE
      * @param dto
      * @return java.util.List<com.erp.model.wms.dto.AliexpressDeliveryDTO.ListDTO>
      **/
-    List<AliexpressDeliveryDTO.ListDTO> listExportExcel(@Param("params") AliexpressDeliveryDTO.SearchParamDTO dto);
-
     Page<AliexpressDeliveryDTO.ListDTO> listExportExcel(@Param("page") Page<AliexpressDeliveryDTO.ListDTO> page, @Param("params") AliexpressDeliveryDTO.SearchParamDTO dto);
 }

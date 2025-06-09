@@ -7,21 +7,26 @@ import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.DmpPushTaskFeignDTO;
 import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
+import com.erp.model.dmp.constant.DmpOutputConstant;
 import com.erp.model.dmp.entity.CfgSettingEntity;
 import com.erp.model.dmp.entity.DmpPushTaskEntity;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.model.dmp.enums.PlatformEnum;
 import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.sys.entity.KingdeeDepartmentEntity;
+import com.erp.model.sys.entity.SysAccountingCompanyEntity;
 import com.erp.model.sys.entity.SysPushMsgEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.server.sys.rocketmq.sync.kingdee.SyncKingdeeSysDeptService;
 import com.erp.server.sys.service.KingdeeDepartmentService;
 import com.erp.server.sys.service.SysPushMsgService;
+import com.erp.server.sys.service.impl.SysAccountingCompanyImpl;
 
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +57,8 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
     @Resource
     private SysPushMsgService sysPushMsgService;
 
+    
+    
     /**
      * 组装数据发送到金蝶
      */
@@ -59,32 +66,12 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
     public DmpPushTaskEntity syncDataToKingdee(KingdeeDepartmentEntity entity, String operate) {
-
-        if (ObjectUtils.isEmpty(entity)) {
-            throw new ServiceException("金蝶部门信息不存在");
-        }
-
-        Map<String, Object> resultMap = new HashMap<>();
-
-        //业务id
-        resultMap.put("id",entity.getId());
-
-        //名称
-        resultMap.put("name",entity.getKingdeeDeptName());
-        //金蝶id
-        resultMap.put("syncKingdeeId",entity.getKingdeeId());
-        //操作（枚举SyncKingdeeOperateEnum）
-        resultMap.put("operate", operate);
-        String useOrgCode = entity.getUseOrgCode();
-        resultMap.put("createOrgCode", useOrgCode);
-        resultMap.put("useOrgCode",useOrgCode);
-        //上级负责部门编码
-        KingdeeDepartmentEntity parent = kingdeeDepartmentService.getById(entity.getParentId());
-        if (ObjectUtils.isNotEmpty(parent)) {
-            resultMap.put("parentCode", parent.getKingdeeDeptCode());
-        }
-        //生成任务
-        return saveTask(entity,operate,resultMap);
+    	//生成任务
+    	if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate)) {
+    		return saveTask(entity, operate, DmpOutputConstant.getQuerySyncMap());
+    	}else {
+    		return saveTask(entity, operate, this.newSyncDataToKingdee(entity, operate));
+    	}
     }
 
     /**
@@ -129,4 +116,35 @@ public class SyncKingdeeSysDeptServiceImpl implements SyncKingdeeSysDeptService 
         
         return null;
     }
+
+	@Override
+	public Map<String, Object> newSyncDataToKingdee(KingdeeDepartmentEntity entity, String operate) {
+		if (ObjectUtils.isEmpty(entity)) {
+            throw new ServiceException("金蝶部门信息不存在");
+        }
+
+        Map<String, Object> resultMap = new HashMap<>();
+
+        //业务id
+        resultMap.put("id",entity.getId());
+
+        //名称
+        resultMap.put("name",entity.getKingdeeDeptName());
+        //金蝶id
+        resultMap.put("syncKingdeeId",entity.getKingdeeId());
+        //操作（枚举SyncKingdeeOperateEnum）
+        resultMap.put("operate", operate);
+        SysAccountingCompanyEntity sysAccountingCompanyEntity = ApplicationContextUtils.getBean(SysAccountingCompanyImpl.class).getById(entity.getUseOrgId());
+        if(sysAccountingCompanyEntity != null) {
+        	String useOrgCode = sysAccountingCompanyEntity.getCode();
+            resultMap.put("createOrgCode", useOrgCode);
+            resultMap.put("useOrgCode",useOrgCode);
+        }
+        //上级负责部门编码
+        KingdeeDepartmentEntity parent = kingdeeDepartmentService.getById(entity.getParentId());
+        if (ObjectUtils.isNotEmpty(parent)) {
+            resultMap.put("parentCode", parent.getKingdeeDeptCode());
+        }
+        return resultMap;
+	}
 }

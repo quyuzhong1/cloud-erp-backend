@@ -1,9 +1,12 @@
 package com.erp.model.wms.dto;
 
+import com.common.business.annotation.Dict;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.business.dto.base.UpdateStateDTO;
 import com.common.business.enums.ApproveStatusEnum;
+import com.common.business.enums.ServiceCodeNameEnum;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -147,6 +150,31 @@ public class WarehouseDTO implements Serializable {
         @NotBlank(message = "地理位置不能空")
         private String geographyLocation;
 
+        /**
+         * 所属渠道 来源 http://172.16.100.11:3002/project/110/interface/api/13435 type=salesPlatform  详情显示名称字段加name
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.OMS , queryTypeField = "salesPlatform")
+        private String channelAffiliation;
+        
+        /**
+         * 发货组织 来源 http://172.16.100.11:3002/project/36/interface/api/30795  详情显示名称字段加name
+         */
+        @NotBlank(message = "发货组织不能空")
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+        private String shippingOrganization;
+        
+        /**
+         * 财务组织 来源 http://172.16.100.11:3002/project/36/interface/api/30795  详情显示名称字段加name
+         */
+        @NotBlank(message = "财务组织不能空")
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+        private String financialOrganization;
+        
+        /**
+         * 启用日期
+         */
+        private LocalDateTime openTime;
+        
     }
 
 
@@ -161,6 +189,23 @@ public class WarehouseDTO implements Serializable {
         private String id;
 
         private Integer index;
+        
+        /**
+         * 停用日期
+         */
+        private LocalDateTime closeTime;
+    }
+    
+    /**
+     * 修改仓库状态
+     */
+    @Data
+    @NoArgsConstructor
+    public static class WarehouseUpdateStateDTO extends UpdateStateDTO {
+    	/**
+         * 启用日期
+         */
+        private LocalDateTime enableTime;
     }
 
     /**
@@ -212,6 +257,10 @@ public class WarehouseDTO implements Serializable {
          * 仓库类型 对应dict 表id
          */
         private String typeId;
+        /**
+         * 类型名称
+         */
+        private String typeName;
 
         /**
          * 组织id
@@ -276,7 +325,7 @@ public class WarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class ListInventoryQtyParamDTO {
+    public static class ListInventoryQtyParamDTO extends SortDTO{
 
         /**
          * 明细信息
@@ -297,7 +346,10 @@ public class WarehouseDTO implements Serializable {
          * 启用状态
          */
         private Boolean disabled;
-
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
     }
 
     @Data
@@ -344,6 +396,31 @@ public class WarehouseDTO implements Serializable {
         private List<String> warehouseIdList;
 
         private Boolean isSupplier;
+        /**
+         * 仓库类型 字典 warehouseType
+         * factory	生产工厂
+         * supplier	供应商仓库
+         * selfSupport	普通仓库
+         * hwc	海外仓
+         * gnzyc	国内自营仓
+         * gwzyc	海外自营仓
+         * wlzzc	物流中转仓
+         * qdc	渠道仓
+         * fcspc	发出商品仓
+         * ztc	在途仓
+         * FBA	平台仓
+         * overseas	海外第三方仓
+         */
+        private List<String> typeCodeList;
+        private List<String> typeIdList;
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
+        /**
+         * 权限sql
+         */
+        private String permissionSql;
 
     }
 
@@ -452,7 +529,7 @@ public class WarehouseDTO implements Serializable {
         /**
          * 创建人
          */
-        private String CreateUserName;
+        private String createUserName;
 
         /**
          * 是否启用仓位
@@ -488,6 +565,38 @@ public class WarehouseDTO implements Serializable {
          * 地理位置名
          */
         private String geographyLocationName;
+        
+        /**
+         * 所属渠道，名称为字段后面加Name
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.OMS , queryTypeField = "salesPlatform")
+        private String channelAffiliation;
+        
+        /**
+         * 发货组织，名称为字段后面加Name
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+        private String shippingOrganization;
+        
+        /**
+         * 财务组织，名称为字段后面加Name
+         */
+        @Dict(serviceCode = ServiceCodeNameEnum.SYS , queryFieldName = "id" , returnFieldName = "company_name" , tableName = "sys_accounting_company")
+        private String financialOrganization;
+        
+        /**
+         * 启用日期
+         */
+        private LocalDateTime openTime;
+        
+        /**
+         * 停用日期
+         */
+        private LocalDateTime closeTime;
+        /**
+         * 是否存在授权
+         */
+        private Boolean isAuth;
     }
 
 
@@ -497,80 +606,6 @@ public class WarehouseDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
-
-
-
-
-        /**
-         * 仓库名
-         */
-        private String name;
-
-
-        /**
-         * 仓库地址
-         */
-        private String address;
-
-        /**
-         * 是否虚拟仓 true 是 false 不是
-         */
-        private Boolean isVirtual;
-
-        /**
-         * 状态
-         * 是否禁用
-         * true 禁用
-         */
-        private Boolean disabled;
-
-        /**
-         * 联系人
-         */
-        private String contacts;
-
-        /**
-         * 是否启用仓位
-         */
-        private Boolean isEnableLocation;
-
-        /**
-         * 金蝶仓库编号
-         */
-        private String kingdeeWarehouseCode;
-
-        /**
-         * 经营类型 来源  http://172.16.100.11:3002/project/92/interface/api/13147 type=warehouseManageType
-         */
-        private String warehouseManageType;
-
-
-        /**
-         * 地理位置 来源 http://172.16.100.11:3002/project/92/interface/api/13147 type=geographyLocation
-         */
-        private String geographyLocation;
-
-
-        /**
-         * 创建人id
-         */
-        private List<String> createUserIdList;
-
-
-        /**
-         * 审核状态
-         */
-        private List<String> approveStatusList;
-
-        /**
-         * 类型id 集合
-         */
-        private List<String> typeIdList;
-
-        /**
-         * 库存组织id 集合
-         */
-        private List<String> orgIdList;
         /**
          * 页面高级查询
          */
@@ -579,6 +614,14 @@ public class WarehouseDTO implements Serializable {
          * sqlMap 默认key default
          */
         private Map<String,String> sqlMap;
+        /**
+         * 展示对应用的的权限集合
+         */
+        private String userId;
+        /**
+         * 仓库列表【后端使用】
+         */
+        private List<String> warehouseIdList = new ArrayList<>();;
     }
 
 
@@ -669,12 +712,16 @@ public class WarehouseDTO implements Serializable {
 
     @Data
     @NoArgsConstructor
-    public static class SelectDTO {
+    public static class SelectDTO extends SortDTO{
 
         /**
          * 关键词
          */
         private String searchKeyword;
+        /**
+         * 是否过滤权限
+         */
+        private Boolean showByAuth;
 
         /**
          * 是否需要过滤组织
@@ -879,6 +926,25 @@ public class WarehouseDTO implements Serializable {
             this.warehouseLocation = viewDTO.getWarehouseLocation();
             this.warehouseName = viewDTO.getWarehouseName();
         }
+    }
+
+    /**
+     * 仓库列表
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PullDownDTO {
+
+        /**
+         * id
+         */
+        private String id;
+
+        /**
+         * 名称
+         */
+        private String name;
+
     }
 
 }

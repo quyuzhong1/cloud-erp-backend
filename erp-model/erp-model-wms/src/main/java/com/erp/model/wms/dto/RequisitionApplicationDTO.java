@@ -6,6 +6,7 @@ import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.anno.StateEnumValue;
 import com.erp.model.wms.enums.RequisitionApplicationStatusEnum;
 import lombok.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.validation.Valid;
 import javax.validation.constraints.*;
@@ -63,7 +64,7 @@ public class RequisitionApplicationDTO implements Serializable {
 
         @NotEmpty(message = "详情不能为空")
         @Valid
-        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;;
+        private List<FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
     }
     /**
      * fba下推发货单绑定货件View
@@ -569,6 +570,112 @@ public class RequisitionApplicationDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    public static class PagingSkuByDeliveryPlanDTO {
+        /**
+         * 要货申请明细id
+         */
+        private String requisitionDetailId;
+
+        /**
+         * 变更类型
+         */
+        private String changeType;
+        /**
+         * 变更类型名称
+         */
+        private String changeTypeName;
+        /**
+         * bom版本
+         */
+        private String bomVersion;
+
+        /**
+         * 原要货数量
+         */
+        private Integer originRequisitionQty;
+        /**
+         * 发货计划明细id
+         */
+        private String sourceDetailId;
+        /**
+         * 第三方sku
+         */
+        private String platformSku;
+
+        /**
+         * 第三方产品名称
+         */
+        private String platformSkuName;
+
+        /**
+         * skuId
+         */
+        private String skuId;
+
+        /**
+         * sku
+         */
+        private String skuNo;
+
+        /**
+         * 品名
+         */
+        private String productName;
+
+        /**
+         * 图片
+         */
+        private String imagesUrl;
+        /**
+         * mSKU
+         */
+        private String mSKU;
+
+        /**
+         * FNSKU
+         */
+        private String fnSku;
+
+        /**
+         * ASIN
+         */
+        private String asin;
+        /**
+         * 是否组合品
+         */
+        private Boolean isCombination;
+        /**
+         * 应拣数量
+         */
+        private Integer pickQty;
+    }
+    /**
+     * 列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PagingSkuByDeliveryPlanParamDTO extends SortDTO {
+        /**
+         * 页面高级查询
+         */
+        private List<AdvanceQueryDTO> advanceQueryDTOList;
+
+        /**
+         * sqlMap 默认key default
+         */
+        private Map<String, String> sqlMap;
+
+        /**
+         * 要货申请id
+         */
+        @NotBlank(message = "id不能为空")
+        private String id;
+    }
+    /**
+     * 列表查询参数
+     */
+    @Data
+    @NoArgsConstructor
     public static class PagingParamDTO extends SortDTO {
         /**
          * 页面高级查询
@@ -671,6 +778,11 @@ public class RequisitionApplicationDTO implements Serializable {
          * 明细id
          */
         private String detailId;
+
+        /**
+         * 是否关联变更
+         */
+        private Boolean isChange;
 
         /**
          * 单据编号
@@ -860,6 +972,19 @@ public class RequisitionApplicationDTO implements Serializable {
          * 装箱数量
          */
         private Integer packingQty;
+
+        /**
+         * 拣货单下推状态 not:未生成 part:部分生成 finish:已生成
+         */
+        private String pickPushDownStatus;
+
+        private String pickPushDownStatusName;
+        /**
+         * 发货单下推状态 not:未生成 part:部分生成 finish:已生成
+         */
+        private String deliveryPushDownStatus;
+
+        private String deliveryPushDownStatusName;
     }
 
     /**
@@ -916,6 +1041,10 @@ public class RequisitionApplicationDTO implements Serializable {
          * 产品名称
          */
         private String productName;
+        /**
+         * 渠道id
+         */
+        private String channelId;
         /**
          * 要货数量
          */
@@ -1452,5 +1581,113 @@ public class RequisitionApplicationDTO implements Serializable {
          * 标记
          */
         private Boolean isFlag;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExcelImportDTO {
+        /**
+         * 导入文件
+         */
+        @NotNull(message = "导入文件不能为空")
+        private MultipartFile excelFile;
+        /**
+         * 明细
+         */
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> fbaBindShipmentViewDTOS;
+        /**
+         * 要货申请id
+         */
+        private String id;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<RequisitionApplicationDTO.FbaBindShipmentViewDetailDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
+
+    /**
+     * 打印fnsku的详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintFnskuBillConfirmDTO {
+        private List<RequisitionApplicationDTO.PrintFnskuDetailDTO> details;
+    }
+
+    /**
+     * 打印fnsku的详情
+     */
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PrintFnskuDetailDTO {
+
+        /**
+         * 要货申请id
+         */
+        private String id;
+        /**
+         *
+         */
+        private String skuId;
+        /**
+         *
+         */
+        private String skuNo;
+        /**
+         * fnsku
+         */
+        private String platformFnSku;
+        /**
+         * 平台skun/msku
+         */
+        private String platformSku;
+
+        /**
+         * 平台产品id/ASIN
+         */
+        private String platformSpu;
+        /**
+         * sku对照表id
+         */
+        private String skuMappingId;
+        /**
+         * 对应平台sku表id
+         */
+        private String listingId;
+        /**
+         * 产品物流信息表id
+         */
+        private String productLogisticsId;
+        /**
+         * 产品属性
+         */
+        private String productProperty;
+        /**
+         * 报关中文名
+         */
+        private String declareChineseName;
+        /**
+         * 报关英文名
+         */
+        private String declareEnglishName;
+        /**
+         * 拣货数量
+         */
+        private Integer pickingQty;
+        /**
+         * 打印数量
+         */
+        private Integer printNum;
     }
 }

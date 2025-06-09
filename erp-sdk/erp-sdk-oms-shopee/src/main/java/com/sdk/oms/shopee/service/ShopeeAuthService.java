@@ -26,12 +26,15 @@ public class ShopeeAuthService {
         ShopeeAuthService shopeeAuthService = new ShopeeAuthService();
         AuthRequest authRequest = AuthRequest.builder()
                 .host(host)
+                .redirect(redirect_url)
                 .refreshToken(shop_refresh_token)
                 .partnerId(partner_id)
                 .tmpPartnerKey(tmp_partner_key)
                 .shopId(shop_id)
                 .build();
-        shopeeAuthService.refreshShopToken(authRequest);
+        String codeUrl = shopeeAuthService.getCodeUrl(authRequest);
+        System.out.println(codeUrl);
+//        shopeeAuthService.refreshShopToken(authRequest);
 //        shopeeAuthService.refreshMerchantToken(host,merchant_refresh_token,partner_id,tmp_partner_key, merchant_id);
 
     }

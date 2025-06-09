@@ -31,7 +31,7 @@ public enum ModuleEnum {
     public static String getNameByCode(String code) {
         for (ModuleEnum item : ModuleEnum.values()) {
             if (code.equals(item.getCode())) {
-                item.getName();
+                return item.getName();
             }
         }
         return "";

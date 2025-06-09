@@ -1,30 +1,31 @@
 package com.erp.server.wms.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.config.DocNoGenHelper;
+import com.common.business.constant.ApproveType;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.*;
-import com.common.business.enums.ApproveStatusEnum;
-import com.common.business.enums.ApproveTypeEnum;
-import com.common.business.enums.BusinessNoTypeEnum;
-import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.validator.ValidList;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.ValidatorUtil;
+import com.erp.model.dmp.dto.ThirdMappingDTO;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.enums.InvalidStatusEnum;
@@ -34,39 +35,43 @@ import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.InventoryTransferDTO;
 import com.erp.model.wms.dto.inventory.TransferDTO;
-import com.erp.model.wms.entity.TransferInDetailEntity;
-import com.erp.model.wms.entity.TransferInEntity;
-import com.erp.model.wms.entity.TransferOutDetailEntity;
-import com.erp.model.wms.entity.TransferOutEntity;
+import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.DictBasicEnum;
 import com.erp.model.wms.enums.TransferDirectionEnum;
 import com.erp.model.wms.enums.TransferTypeEnum;
 import com.erp.model.wms.enums.TransitOwnerEnum;
 import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.server.wms.kingdee.SyncKingdeeTransferOutService;
 import com.erp.server.wms.mapper.TransferOutMapper;
 import com.erp.server.wms.service.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.sdk.wangdian.sdk.api.wms.stockin.dto.CreateOtherStockinRequest;
+import com.sdk.wangdian.sdk.api.wms.stockout.dto.CreateOtherStockoutRequest;
 import io.seata.spring.annotation.GlobalTransactional;
+import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.math3.util.Pair;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.text.CharSequenceUtil.format;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_OUT;
 
 /**
@@ -81,43 +86,56 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_TRANSFER_OU
 @Service
 public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, TransferOutEntity> implements TransferOutService {
 
-    @Autowired
+    @Resource
     private SysUserFeign sysUserFeign;
 
     @Resource
     private OperateLogService operateLogService;
 
-    @Autowired
+    @Resource
     private WarehouseService warehouseService;
 
-    @Autowired
+    @Resource
     private PlmTaskFeign plmTaskFeign;
 
-    @Autowired
+    @Resource
     private TransferOutDetailService transferOutDetailService;
 
-    @Autowired
+    @Resource
     private DictBasicService dictBasicService;
 
-    @Autowired
+    @Resource
     private InventoryService inventoryService;
 
-    @Autowired
+    @Resource
     private InventoryTransCoreService inventoryTransCoreService;
 
-    @Autowired
+    @Resource
     private WorkflowFeign workflowFeign;
 
-    @Autowired
+    @Resource
     private TransferInService transferInService;
 
-    @Autowired
+    @Resource
     private TransferInDetailService transferInDetailService;
 
     @Resource
     private DocNoGenHelper docNoGenHelper;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Resource
+    private WarehouseLocationService warehouseLocationService;
+
+    @Resource
+    private DmpThirdMappingFeign dmpThirdMappingFeign;
+
+    @Resource
+    private AbstractWdtService abstractWdtService;
+
+    @Resource
+    private SyncKingdeeTransferOutService syncKingdeeTransferOutService;
+
+
     @Override
     public List<TransferOutEntity> listBySourceIds(List<String> ids) {
         return lambdaQuery()
@@ -185,7 +203,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         pageApproveStatusMap.put(PageListTypeEnum.TO_BE_APPROVE,  Lists.newArrayList(ApproveStatusEnum.APPROVE_ING));
         pageApproveStatusMap.put(PageListTypeEnum.APPROVE,  Lists.newArrayList(ApproveStatusEnum.APPROVE));
         pageApproveStatusMap.put(PageListTypeEnum.REJECT,  Lists.newArrayList(ApproveStatusEnum.REJECT));
-        Arrays.asList(PageListTypeEnum.values()).stream().forEach(pageListTypeEnum -> {
+        Arrays.stream(PageListTypeEnum.values()).forEach(pageListTypeEnum -> {
             // 获取对应的业务单据状态
             List<ApproveStatusEnum> approveStatusEnumList = pageApproveStatusMap.get(pageListTypeEnum);
             if(Objects.nonNull(approveStatusEnumList)) {
@@ -203,8 +221,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Override
     public void update(TransferOutDTO.UpdateDTO updateDTO) {
         TransferOutEntity originTransferOutEntity = super.getById(updateDTO.getId());
-        Optional.ofNullable(originTransferOutEntity).orElseThrow(()->new ServiceException("未找到分步式调出单"));
-
+        if (Objects.isNull(originTransferOutEntity)){
+            throw new ServiceException("未找到分步式调出单");
+        }
         // 调入仓库和调出仓库不能一样
         ValidatorUtil.isTrue(!Objects.equals(updateDTO.getInWarehouseId(), updateDTO.getOutWarehouseId()),()->new ServiceException("分布式调出单调入仓库和调出仓库不能一样"));
         ValidatorUtil.isTrue((Objects.equals(originTransferOutEntity.getApproveStatus(), ApproveStatusEnum.WAIT_SUBMIT.getStatus()) || Objects.equals(originTransferOutEntity.getApproveStatus(), ApproveStatusEnum.REJECT.getStatus()) )
@@ -270,45 +289,85 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 修改
         this.update(dto);
         // 提交
-        this.submit(Arrays.asList(dto.getId()));
+        this.submit(Collections.singletonList(dto.getId()));
     }
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BatchResultDTO approve(BaseApproveParamDTO baseApproveParamDTO,TransferOutEntity entity) {
-        List<String> ids = Arrays.asList(entity.getId());// 提交审核的单据id
-        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(baseApproveParamDTO.getType());
-        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(baseApproveParamDTO.getComment())) {
+    public BatchResultDTO approve(ApproveOneDTO dto,TransferOutEntity entity) {
+        ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
+        if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
             throw new ServiceException("审核不通过请填写审核意见");
         }
-        List<TransferOutEntity> list = Arrays.asList(entity);
-        ValidatorUtil.isTrue(CollUtil.isNotEmpty(list),()->new ServiceException("未找到分步式调出单数据"));
-        Map<String, TransferOutEntity> transferOutEntityMap = list.stream().collect(Collectors.toMap(TransferOutEntity::getId, Function.identity()));
-        // 只有审核中的数据允许审核
-        ids.stream().forEach(id->{
-            ValidatorUtil.isTrue(transferOutEntityMap.containsKey(id),()->new ServiceException("分步式调出单数据不存在"));
-            ValidatorUtil.isTrue(Objects.equals(transferOutEntityMap.get(id).getApproveStatus(), ApproveStatusEnum.APPROVE_ING.getStatus()),()->new ServiceException("只有审核中数据支持审核"));
-        });
-        String hisStatusName = ApproveStatusEnum.APPROVE_ING.getName(); // 原单据审核状态
-        ApproveStatusEnum approveStatus = Objects.equals(ApproveTypeEnum.PASS, approveType) ? ApproveStatusEnum.APPROVE : ApproveStatusEnum.REJECT; // 新审核状态
-        String content = "";
-        if(Objects.equals(ApproveTypeEnum.PASS, approveType)) { // 审核通过
-            content = StrUtil.format("状态由【{}】变更为【{}】, 意见：{}", hisStatusName, approveStatus.getName(), baseApproveParamDTO.getComment());
-            // TODO 审核通过流程
-            this.updateInventoryTransCore(list);
-        } else if (Objects.equals(ApproveTypeEnum.REJECT, approveType)) { // 审核不通过
-            content = StrUtil.format("状态由【{}】变更为【{}】, 不通过原因：{}", hisStatusName, approveStatus.getName(), baseApproveParamDTO.getComment());
-            // TODO 中止当前审批流程
+        if (!CharSequenceUtil.equals(ApproveStatusEnum.APPROVE_ING.getStatus(),entity.getApproveStatus())) {
+            throw new ServiceException(ApiError.ERROR_98006);
         }
-        log.info("审核 开始修改分步式调出单状态数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        updateForApprove(ids, approveStatus.getStatus()); // 修改单据状态
-
+        //调用审核流程
+        approveProcess(entity, dto);
         //操作日志
-        log.info("审核 开始修改分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        List<Pair<String, String>> pairList = list.stream().
-                map(obj -> new Pair<>(obj.getId(), "")).collect(Collectors.toList());
-        operateLogService.batchAddModuleOperateLog(content, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "状态变更");
+        log.info("审核 开始修改分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(entity.getId()));
+        // 操作日志
+        String msg = format("用户【{}】单号为【{}】的【{}】单据审核操作  审核结果：【{}】 审核意见 ：【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "分步式调出单", approveType.getName(), dto.getComment());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_OUT.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(),entity.getCode(),"操作成功");
+    }
+
+    /**
+     * 流程审核
+     * @author will
+     * @date 2025/4/22 15:18
+     * @param entity
+     * @param dto
+     * @return void
+     */
+    private void approveProcess(TransferOutEntity entity , ApproveOneDTO dto) {
+        LoginUser userInfo = UserContext.getDefaultLoginUser();
+        ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
+        approveDTO.setBusinessId(entity.getId());
+        approveDTO.setBusinessKey(SourceTypeEnum.TRANSFER_IN.getCode());
+        approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
+        approveDTO.setComment(dto.getComment());
+        approveDTO.setUserId(userInfo.getUid());
+        approveDTO.setVariablesMap(BeanUtil.beanToMap(entity));
+        ApiResult<ProcessManagementDTO.ApproveResultDTO> approveResult = workflowFeign.approve(approveDTO);
+        Integer code = approveResult.getCode();
+        if (200 != code) {
+            throw new ServiceException(ApiError.ERROR_94006);
+        }
+        ProcessManagementDTO.ApproveResultDTO data = approveResult.getData();
+        if (ObjectUtil.isEmpty(data.getIsExistProcess()) || !data.getIsExistProcess()) {
+            // 无需走流程的数据则直接更新状态
+            approveEnd(dto, entity);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
+    public Boolean approveEnd(ApproveOneDTO dto, TransferOutEntity entity) {
+        if (ObjectUtil.isEmpty(entity)) {
+            return Boolean.FALSE;
+        }
+        ApproveStatusEnum approveStatus;
+        if (dto.getType().equals(ApproveType.PASS)) {
+            //审核通过
+            approveStatus = ApproveStatusEnum.APPROVE;
+        } else {
+            //审核不通过
+            approveStatus = ApproveStatusEnum.REJECT;
+        }
+         this.updateForApprove(Collections.singletonList(entity.getId()), approveStatus.getCode());
+
+        if (!dto.getType().equals(ApproveType.PASS)) {
+            return Boolean.TRUE;
+        }
+        //更新库存
+        updateInventoryTransCore(Collections.singletonList(entity));
+        //推送旺店通
+        syncApproveInfoToWdt(entity, SyncOperateEnum.OPERATE_APPROVE);
+        //推送金蝶
+        syncApproveInfoToKingdee(entity,SyncOperateEnum.OPERATE_APPROVE);
+        return Boolean.TRUE;
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -324,7 +383,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         });
         // 删除日志数据
         log.info("删除 开始删除分步式调出单日志数据，id集合：【{}】", JSONObject.toJSONString(ids));
-        String msg = StrUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferOutEntity::getCode).collect(Collectors.joining(",")));
+        String msg = CharSequenceUtil.format("用户【{}】删除了单据编号为【{}】的分步式调出单", UserContext.getDefaultLoginUser().getUserName(), list.stream().map(TransferOutEntity::getCode).collect(Collectors.joining(",")));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog(msg, ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "删除操作");
         // 删除明细数据
@@ -334,6 +393,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 删除主单数据
         log.info("删除 开始删除分步式调出单主单数据，id集合：【{}】", JSONObject.toJSONString(ids));
         super.removeByIds(ids);
+
+        //推送金蝶
+        list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_DELETE));
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -354,7 +416,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                 .set(TransferOutEntity::getInvalidStatus, InvalidStatusEnum.VOIDED.getStatus())
                 .set(TransferOutEntity::getInvalidRemark, remark)
                 .update();
-
+        //推送金蝶
+        list.forEach(obj -> syncApproveInfoToKingdee(obj,SyncOperateEnum.OPERATE_INVALID));
         log.info("作废 开始记录操作日志，id集合：【{}】", JSONObject.toJSONString(ids));
         List<Pair<String, String>> pairList = list.stream().map(obj -> new Pair<>(obj.getId(), obj.getCode())).collect(Collectors.toList());
         operateLogService.batchAddModuleOperateLog("作废了一个分步式调出单【%s】，作废原因：".concat(remark), ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "作废操作");
@@ -386,8 +449,8 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BatchResultDTO disApprove(TransferOutEntity transferOutEntity) {
-        List<String> ids = Arrays.asList(transferOutEntity.getId());
-        List<TransferOutEntity> list = Arrays.asList(transferOutEntity);
+        List<String> ids = Collections.singletonList(transferOutEntity.getId());
+        List<TransferOutEntity> list = Collections.singletonList(transferOutEntity);
         list.forEach(v-> ValidatorUtil.isTrue(Objects.equals(v.getApproveStatus(), ApproveStatusEnum.APPROVE.getStatus()),()->new ServiceException("只有已审核数据支持反审核")));
         // 检查是否已经有下推单据
         List<TransferInEntity> transferInEntityList = transferInService.listBySourceIds(ids);
@@ -405,7 +468,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         operateLogService.batchAddModuleOperateLog("反审核了一个分步式调出单【%s】", ModuleTypeEnum.TRANSFER_OUT.getCode(), pairList, "反审核操作");
         // 库存交易反审核
         inventoryTransCoreService.batchUnApprove(new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.TRANSFER_OUT, ids));
-        // TODO 流程
+        //推送旺店通
+        syncDisApproveInfoToWdt(transferOutEntity, SyncOperateEnum.OPERATE_DISAPPROVE);
+        //推送金蝶
+        syncApproveInfoToKingdee(transferOutEntity,SyncOperateEnum.OPERATE_DISAPPROVE);
+
         return BatchResultDTO.success(transferOutEntity.getId(),transferOutEntity.getCode(),"操作成功");
     }
 
@@ -419,7 +486,11 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<String> skuIds = dataList.stream().map(TransferOutDTO.ViewGenerateTransferInDTO::getSkuId).collect(Collectors.toList());
         List<ProductDetailEntity> skuList = plmTaskFeign.getByIdList(skuIds);
         Map<String,ProductDetailEntity> skuMap = skuList.stream().collect(Collectors.toMap(ProductDetailEntity::getId, Function.identity()));
-
+        //所有调出仓库id
+        List<String> outWarehouseIds = dataList.stream().map(TransferOutDTO.ViewGenerateTransferInDTO::getOutWarehouseId).distinct().collect(Collectors.toList());
+        //所有调出仓位列表
+        List<String> warehouseLocationCodeList = dataList.stream().map(r-> StrUtils.null2EmptyWithTrim(r.getOutWarehouseLocation())).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndCodeList(outWarehouseIds, warehouseLocationCodeList);
         // 调拨方向
         List<DictBasicDTO.ListDTO> transferDirectionList = dictBasicService.getByKey(DictBasicEnum.TRANSFER_DIRECTION.getKey());
 
@@ -449,6 +520,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             } else {
                 data.setPlanQty(data.getQty() - pushedQty);
             }
+            String outWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), data.getOutWarehouseId())
+                    && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(data.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
+            data.setOutWarehouseLocationName(outWarehouseLocationName);
         });
         return dataList;
     }
@@ -498,7 +572,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
                     pushedQty = transferInDetailMap.get(pushData.getSourceDetailId()).stream().map(TransferInDetailEntity::getQty).reduce(MathUtil.ZERO, Integer::sum);
                 }
                 if(pushData.getPlanQty() + pushedQty > transferOutDetailEntity.getQty()) {
-                    throw new ServiceException(StrUtil.format("【{}】已下推数量合计不能大于调出数量", transferOutDetailEntity.getSkuNo()));
+                    throw new ServiceException(CharSequenceUtil.format("【{}】已下推数量合计不能大于调出数量", transferOutDetailEntity.getSkuNo()));
                 }
                 TransferInDTO.ViewGenerateTransferInDTO transferInDTO = wrapTransferIn(transferType, transferDirection, pushData, transferOutDetailEntity);
                 transferInList.add(transferInDTO);
@@ -521,12 +595,48 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
 
     @Override
     public PagingVO<TransferOutDTO.PagingViewDTO> exportTransferOut(PagingDTO<TransferOutDTO.ExportDTO> dto) {
-
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
         Page<TransferOutDTO.PagingViewDTO> page = this.baseMapper.exportList(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if(!CollUtil.isEmpty(page.getRecords())) {
             filling(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public Boolean updateSyncKingdeeId(String businessId, String syncKingdeeId) {
+        return  this.lambdaUpdate()
+                .eq(TransferOutEntity::getId,businessId)
+                .set(CharSequenceUtil.isNotBlank(syncKingdeeId),TransferOutEntity::getSyncKingdeeId,syncKingdeeId)
+                .update();
+    }
+
+
+    @Override
+    public List<TransferOutDTO.PutawayDetailDTO> listPutawayDetail(String detailId) {
+        List<TransferOutDTO.PutawayDetailDTO> putawayDetailDTOS = this.baseMapper.listPutawayDetail(detailId);
+        if(CollUtil.isNotEmpty(putawayDetailDTOS)){
+            List<String> outIds = putawayDetailDTOS.stream().map(TransferOutDTO.PutawayDetailDTO::getInId).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(outIds)){
+                List<OperateLogEntity> operateLogEntityList  = operateLogService.lambdaQuery()
+                        .eq(OperateLogEntity::getModuleType, ModuleTypeEnum.TRANSFER_IN.getCode())
+                        .in(OperateLogEntity::getBusinessId, outIds)
+//                        .like(OperateLogEntity::getContent, "审核通过")
+                        .list();
+                Map<String, List<OperateLogEntity>> map = operateLogEntityList.stream()
+                        .filter(e -> e.getContent().contains("审核通过") || e.getContent().contains("已审核"))
+                        .collect(Collectors.groupingBy(OperateLogEntity::getBusinessId));
+
+                for (TransferOutDTO.PutawayDetailDTO detailDTO : putawayDetailDTOS) {
+                    if(map.containsKey(detailDTO.getInId())){
+                        List<OperateLogEntity> list = map.get(detailDTO.getInId());
+                        list.sort(Comparator.comparing(OperateLogEntity::getCreateTime).reversed());
+                        detailDTO.setInApproveTime(list.get(0).getCreateTime());
+                    }
+                }
+            }
+        }
+        return putawayDetailDTOS;
     }
 
     /**
@@ -605,7 +715,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             transferOutEntity.setType(TransferTypeEnum.CROSS_ORG.getCode());
         }
         //仓管员
-        if (StringUtils.isNotBlank(transferOutEntity.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(transferOutEntity.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(transferOutEntity.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 transferOutEntity.setWarehouseKeeperName(userDTO.getUserName());
@@ -661,7 +771,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         // 调拨类型
         data.setTypeName(TransferTypeEnum.getNameByCode(data.getType()));
         // 仓管员名称
-        if (StringUtils.isNotBlank(data.getWarehouseKeeperId())) {
+        if (CharSequenceUtil.isNotBlank(data.getWarehouseKeeperId())) {
             FindUserDTO userDTO = sysUserFeign.getUserByUserId(data.getWarehouseKeeperId());
             if (ObjectUtils.isNotEmpty(userDTO)) {
                 data.setWarehouseKeeperName(userDTO.getUserName());
@@ -673,6 +783,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         List<String> skuIds = viewDetailList.stream().map(TransferOutDetailDTO.ViewDTO::getSkuId).distinct().collect(Collectors.toList());
         List<SkuVO> skuList = plmTaskFeign.listSkuProductByIds(skuIds);
         Map<String, List<SkuVO>> skuMap = skuList.stream().collect(Collectors.groupingBy(SkuVO::getSkuId));
+        String outWarehouseId = data.getOutWarehouseId();
+        List<String> warehouseLocationCodeList = viewDetailList.stream().map(r-> StrUtils.null2EmptyWithTrim(r.getOutWarehouseLocation())).distinct().collect(Collectors.toList());
+        List<WarehouseLocationEntity> warehouseLocationList = warehouseLocationService.listByWarehouseIdsAndCodeList(Collections.singletonList(outWarehouseId), warehouseLocationCodeList);
         viewDetailList.stream().forEach(member->{
             //产品名称
             if(skuMap.containsKey(member.getSkuId()) && CollUtil.isNotEmpty(skuMap.get(member.getSkuId()))) {
@@ -683,6 +796,9 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
             //根据组织、仓库、仓位、sku查询可用库存
             Integer curInventoryQty = inventoryService.getUsableInventoryTotal(data.getOutWarehouseId(), member.getSkuId(), member.getOutWarehouseLocation());
             member.setCurInventoryQty(curInventoryQty);
+            String outWarehouseLocationName = warehouseLocationList.stream().filter(r -> Objects.equals(r.getWarehouseId(), data.getOutWarehouseId())
+                    && Objects.equals(StrUtils.null2EmptyWithTrim(r.getCode()), StrUtils.null2EmptyWithTrim(member.getOutWarehouseLocation()))).map(o->StrUtils.null2EmptyWithTrim(o.getName())).findFirst().orElse("");
+            member.setOutWarehouseLocationName(outWarehouseLocationName);
         });
         data.setDetailList(viewDetailList);
     }
@@ -745,6 +861,7 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         transferInDTO.setOutWarehouseId(pushData.getOutWarehouseId());
         transferInDTO.setOutWarehouseLocation(pushData.getOutWarehouseLocation());
         transferInDTO.setInWarehouseId(pushData.getInWarehouseId());
+        transferInDTO.setInWarehouseLocation(pushData.getInWarehouseLocation());
         transferInDTO.setSkuId(pushData.getSkuId());
         transferInDTO.setSkuNo(pushData.getSkuNo());
         transferInDTO.setOutQty(transferOutDetailEntity.getQty());
@@ -753,6 +870,91 @@ public class TransferOutServiceImpl extends SuperServiceImpl<TransferOutMapper, 
         return transferInDTO;
     }
 
+    /**
+     * 分步式调出单推审核送旺店通
+     * @author will
+     * @date 2025/4/22 14:24
+     * @param entity
+     * @param syncOperateEnum
+     * @return void
+     */
+    private void syncApproveInfoToWdt(TransferOutEntity entity, SyncOperateEnum syncOperateEnum) {
+        //查询调拨单明细数据
+        List<TransferOutDetailEntity> transferDetailList = transferOutDetailService.listByMainId(entity.getId());
+        if(transferDetailList.isEmpty()){
+            throw new ServiceException(ApiError.ERROR_95107);
+        }
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getOutWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        //每个调入仓转换为一个其他出库单
+        List<CreateOtherStockoutRequest.GoodsList> outGoodsList = new ArrayList<>();
+        for (TransferOutDetailEntity detailEntity : transferDetailList) {
+            CreateOtherStockoutRequest.GoodsList outGoods = new CreateOtherStockoutRequest.GoodsList();
+            outGoods.setSpecNo(detailEntity.getSkuNo());
+            outGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
+            outGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getOutWarehouseLocation()) ? detailEntity.getOutWarehouseLocation() : "");
+            outGoods.setWarehouseId(entity.getOutWarehouseId());
+            outGoods.setRemark(detailEntity.getRemark());
+            outGoodsList.add(outGoods);
+        }
+        abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), outGoodsList, SourceTypeEnum.OTHER_OUTSTOCK);
+    }
+
+    /**
+     * 分步式调出单推反审核送旺店通
+     * @author will
+     * @date 2025/4/22 14:21
+     * @param entity
+     * @param syncOperateEnum
+     * @return void
+     */
+    private void syncDisApproveInfoToWdt(TransferOutEntity entity, SyncOperateEnum syncOperateEnum) {
+        //查询分步式调入单明细数据
+        List<TransferOutDetailEntity> transferDetailList = transferOutDetailService.listByMainId(entity.getId());
+        //查询三方仓库映射
+        List<ThirdMappingDTO.WarehouseMappingDTO> mappingList = dmpThirdMappingFeign.listMappingBySysIds(Collections.singletonList(entity.getOutWarehouseId()), "wdt");
+        if(mappingList.isEmpty()){
+            return;
+        }
+        //审核转其他入库单
+        List<CreateOtherStockinRequest.GoodsList> inGoodsList = new ArrayList<>();
+        for (TransferOutDetailEntity detailEntity : transferDetailList) {
+            CreateOtherStockinRequest.GoodsList inGoods = new CreateOtherStockinRequest.GoodsList();
+            inGoods.setSpecNo(detailEntity.getSkuNo());
+            inGoods.setNum(BigDecimal.valueOf(detailEntity.getQty()));
+            inGoods.setPositionNo(CharSequenceUtil.isNotBlank(detailEntity.getOutWarehouseLocation()) ? detailEntity.getOutWarehouseLocation() : "");
+            inGoods.setWarehouseId(entity.getOutWarehouseId());
+            inGoods.setRemark(detailEntity.getRemark());
+            inGoodsList.add(inGoods);
+        }
+        abstractWdtService.transfer(syncOperateEnum, entity.getId(), entity.getCode(), inGoodsList, SourceTypeEnum.OTHER_INSTOCK);
+    }
+
+    /**
+     * 推送金蝶
+     * @author will
+     * @date 2025/4/22 16:34
+     * @param entity
+     * @param syncOperateEnum
+     * @return void
+     */
+    private void syncApproveInfoToKingdee(TransferOutEntity entity, SyncOperateEnum syncOperateEnum) {
+
+        //直接调拨单明细
+        List<TransferOutDetailEntity> transferOutDetailList = transferOutDetailService.listByMainIds(Collections.singletonList(entity.getId()));
+        //服务sku
+        List<SkuVO> noInventorySku = plmTaskFeign.getNoInventorySku();
+        List<String> ignoreInventorySkuIds = CollUtil.isNotEmpty(noInventorySku) ?
+                noInventorySku.stream().map(SkuVO::getSkuId).distinct().collect(Collectors.toList()) : Collections.emptyList();
+        transferOutDetailList = CollUtil.isNotEmpty(transferOutDetailList) ? transferOutDetailList.stream().filter(e -> !ignoreInventorySkuIds.contains(e.getSkuId())).collect(Collectors.toList()) : Collections.emptyList();
+        //删除或者非服务sku不为空时推金蝶
+        if (SyncOperateEnum.OPERATE_DELETE.getCode().equals(syncOperateEnum.getCode()) || CollUtil.isNotEmpty(transferOutDetailList)){
+            syncKingdeeTransferOutService.syncDataToKingdee(entity,transferOutDetailList, syncOperateEnum.getCode());
+        }
+    }
 
 
 }

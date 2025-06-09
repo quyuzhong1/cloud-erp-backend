@@ -1,24 +1,25 @@
 package com.erp.server.auth.utils;
 
+import com.common.core.exception.ServiceException;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.security.Security;
 import java.util.Arrays;
 import java.util.UUID;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
-
-import org.apache.commons.codec.binary.Base64;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.common.core.exception.ServiceException;
-
 /**
  * AES 加解密
  */
+@Slf4j
 public class AESUtil {
 
     private static final Logger logger = LoggerFactory.getLogger(AESUtil.class);
@@ -91,15 +92,20 @@ public class AESUtil {
 
     public static void main(String[] args) {
         String key = UUID.randomUUID().toString().replace("-", "").substring(0, 16);
-        System.out.println(key);
+        log.info(key);
         String sign = encrypt("test", key);
-        System.out.println(sign);
+        log.info(sign);
         String str = decrypt(sign, key);
-        System.out.println(str);
+        log.info(str);
     }
 
-    private static byte[] queryKeyByte(String keyBytesStr, String charset) throws Exception {
-        byte[] keyBytes = keyBytesStr.getBytes(charset);
+    private static byte[] queryKeyByte(String keyBytesStr, String charset) {
+        byte[] keyBytes = null;
+        try {
+            keyBytes = keyBytesStr.getBytes(charset);
+        } catch (UnsupportedEncodingException e) {
+            throw new ServiceException("加密不支持此字符");
+        }
         // 如果密钥不足16位，那么就补足.  这个if 中的内容很重要
         int base = 16;
         if (keyBytes.length % base != 0) {

@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import cn.hutool.core.text.CharSequenceUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.dto.base.*;
@@ -55,6 +56,7 @@ public class OtherOutstockController extends BaseController {
     @PostMapping("/paging")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "oo.warehouse_id",
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
@@ -74,6 +76,7 @@ public class OtherOutstockController extends BaseController {
     @PostMapping("/listCount")
     @DataPermission(operationType = DataAttributeEnum.LIST,
             tableField = "warehouse_keeper_id",
+            warehouseTableField = "oo.warehouse_id",
             menuCode = "wms:otherOutstock:paging",
             tableAlias = "oo"
     )
@@ -98,7 +101,7 @@ public class OtherOutstockController extends BaseController {
             keyIdName = "id")
     public ApiResult add(@RequestBody @Validated OtherOutstockDTO.AddDTO dto) {
         String id = otherOutstockService.add(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -117,7 +120,7 @@ public class OtherOutstockController extends BaseController {
             keyIdName = "id")
     public ApiResult addAndSubmit(@RequestBody @Validated OtherOutstockDTO.AddDTO dto) {
         String id = otherOutstockService.addAndSubmit(dto);
-        return StringUtils.isNotBlank(id) ? success() : failure();
+        return CharSequenceUtil.isNotBlank(id) ? success() : failure();
     }
 
     /**
@@ -354,7 +357,7 @@ public class OtherOutstockController extends BaseController {
      * {@code @date:} 2024/03/21
      */
     @GetMapping("/downloadTemplate")
-    public ApiResult<?> downloadTemplate(HttpServletResponse response) {
+    public ApiResult downloadTemplate(HttpServletResponse response) {
         otherOutstockService.downloadTemplate(response);
         return success();
     }
@@ -366,7 +369,7 @@ public class OtherOutstockController extends BaseController {
      */
     @LogAction(value = LogActionEnum.IMPORT, desc = "导入其他出库单")
     @PostMapping("/import")
-    public ApiResult<?> exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
+    public ApiResult exportWarehouse(@RequestParam(value = "excelFile") MultipartFile excelFile, HttpServletResponse response) {
         Boolean result = otherOutstockService.importFile(excelFile, response);
         return result ? success() : failure();
     }

@@ -1,14 +1,16 @@
 package com.erp.model.wms.dto;
 
 import com.baomidou.mybatisplus.annotation.TableField;
-import com.common.core.anno.StateEnumValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.Valid;
-import javax.validation.constraints.*;
+import javax.validation.constraints.Digits;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.List;
@@ -305,11 +307,6 @@ public class WmsCartonSpecDTO implements Serializable {
         private String id;
 
         /**
-         * 箱子id
-         */
-//        private String cartonId;
-
-        /**
          * 箱数
          */
         private Integer boxQty;
@@ -416,6 +413,31 @@ public class WmsCartonSpecDTO implements Serializable {
          */
         private String platformSkuNo;
 
+        /**
+         * 箱子尺寸（长）
+         */
+        private BigDecimal boxLength;
+        /**
+         * 箱子尺寸（宽）
+         */
+        private BigDecimal boxWidth;
+        /**
+         * 箱子尺寸（高）
+         */
+        private BigDecimal boxHeight;
+        /**
+         * 尺寸单位
+         */
+        private String sizeUnit;
+
+        /**
+         * 实际箱重（设备更新）
+         */
+        private BigDecimal packageWeight;
+        /**
+         * 重量单位（kg） 页面展示kg，数据库存储kg
+         */
+        private String weightUnit;
     }
 
     /**
@@ -515,14 +537,6 @@ public class WmsCartonSpecDTO implements Serializable {
          * 重量单位（kg） 页面展示kg，数据库存储kg
          */
         private String packWeightUnit;
-//        /**
-//         * 预计毛重(本箱已装-预计毛重)
-//         */
-//        private BigDecimal grossWeight;
-//        /**
-//         * 重量单位（kg） 页面展示kg，数据库存储kg
-//         */
-//        private String weightUnit;
         /**
          * 装箱信息-箱规
          */
@@ -535,6 +549,10 @@ public class WmsCartonSpecDTO implements Serializable {
     @Data
     @NoArgsConstructor
     public static class NoPackingView {
+        /**
+         * 发货单号
+         */
+        private String deliveryCode;
         /**
          * 单据id
          */
@@ -642,6 +660,22 @@ public class WmsCartonSpecDTO implements Serializable {
     @AllArgsConstructor
     public static class NoPackingViewDTO {
         /**
+         * 装箱id
+         */
+        private String taskId;
+        /**
+         * 装箱编码
+         */
+        private String taskCode;
+        /**
+         * 来源id
+         */
+        private String sourceId;
+        /**
+         * 来源编码
+         */
+        private String sourceCode;
+        /**
          * skuId
          */
         private String skuId;
@@ -649,6 +683,10 @@ public class WmsCartonSpecDTO implements Serializable {
          * skuNo
          */
         private String skuNo;
+        /**
+         * fnSku
+         */
+        private String fnSku;
         /**
          * 发货数量
          */
@@ -986,5 +1024,32 @@ public class WmsCartonSpecDTO implements Serializable {
          * 长度单位 cm
          */
         private String sizeUnit;
+    }
+    @Data
+    @NoArgsConstructor
+    public static class DeleteCartonDTO {
+        /**
+         * 装箱id
+         */
+        @NotBlank(message = "装箱任务ID不能为空")
+        private String taskId;
+        /**
+         * 箱子id
+         */
+        @NotBlank(message = "箱子ID不能为空")
+        private String cartonId;
+    }
+
+
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class PackingCartonSpecDTO {
+        private String mainId;
+        private Integer boxQty;
+        private BigDecimal packageWeight;
+        private String weightUnit;
     }
 }

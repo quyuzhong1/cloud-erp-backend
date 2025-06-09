@@ -248,10 +248,15 @@ public class PoReturnEntity extends BaseEntity<PoReturnEntity> {
     @TableField("return_type")
     private String returnType;
 
+    /**
+     * 采购订单的交货仓库
+     */
+    @TableField(exist = false)
+    private String deliveryWarehouseId;
 
     public static final String APPROVE_STATUS = "approve_status";
 
-    public static final String CODE = "code";
+    
 
     public static final String PURCHASE_ORDER_ID = "purchase_order_id";
 
