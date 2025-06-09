@@ -44,7 +44,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         queryWrapper.in(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode());
         List<CfgQueryOptionEntity> common = baseMapper.selectList(queryWrapper);
         common.stream().forEach(item -> {
-            item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.TABLE.getName()+"-"+item.getConditionFieldName());
+            item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getName()+"-"+item.getConditionFieldName());
         });
 
         queryWrapper.clear();

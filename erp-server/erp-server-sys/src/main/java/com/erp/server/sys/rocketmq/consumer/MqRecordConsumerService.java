@@ -190,6 +190,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
         mqParamsDTO.setTableName(dto.getTable());
         mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
+        //查询出common 、表头、明细的配置
         List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
         if (CollUtil.isEmpty(cfgQueryOptionList)) {
             return true;
@@ -251,19 +252,38 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                         List<CfgApproveSyncFieldMapEntity> fieldList = fieldMap.get(noticeEntity.getId()).stream()
                                 .sorted(Comparator.comparing(CfgApproveSyncFieldMapEntity::getSort))
                                 .collect(Collectors.toList());
+                        //获取需要推送的表字段（包括common、主表、明细）
+                        List<String> fieldIds = fieldList.stream().map(CfgApproveSyncFieldMapEntity::getFieldId).collect(Collectors.toList());
 
-                        List<String> fieldId = fieldList.stream().map(CfgApproveSyncFieldMapEntity::getFieldId).collect(Collectors.toList());
-
-                        Map<String, CfgQueryOptionEntity> cfgQueryOptionMap = cfgQueryOptionList.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getId, e -> e));
-
-                        CfgQueryOptionEntity cfgQueryOptionDetail = cfgQueryOptionList.stream().filter(e -> fieldId.contains(e.getId()) && e.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode())).findFirst().orElse(null);
-
-                        List<BaseEntity> detailList = new ArrayList<>();
-                        if (Objects.nonNull(cfgQueryOptionDetail)) {//存在明细表，则需要查出来
-                            CfgQueryOptionEntity detailEntity = cfgQueryOptionList.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
-                            if (Objects.isNull(detailEntity)) {
-                                break;
+                        //过滤出需要推送的表字段，并且根据字段所属单据类型进行分组
+                        Map<String, List<CfgQueryOptionEntity>> fieldBelongsTypeByMap = cfgQueryOptionList.stream()
+                                .collect(Collectors.groupingBy(CfgQueryOptionEntity::getFieldBelongsType));
+                        //获取主表字段配置
+                        List<CfgQueryOptionEntity> mainCfgQueryOptionList = fieldBelongsTypeByMap.get(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode());
+                        //遍历
+                        for (Map.Entry<String, List<CfgQueryOptionEntity>> entry : fieldBelongsTypeByMap.entrySet()) {
+                            //common和主表不需要再查询
+                            if(entry.getKey().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()) || entry.getKey().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
+                                continue;
                             }
+                            //判断fieldIds 里是否存在某个明细的字段
+                            List<CfgQueryOptionEntity> value = entry.getValue();
+                            CfgQueryOptionEntity cfgQueryOptionDetail = value.stream().filter(e -> fieldIds.contains(e.getId())).findFirst().orElse(null);
+                            if(Objects.isNull(cfgQueryOptionDetail)){
+                                continue;
+                            }
+                            //如果存在，则需要找对明细表里的关联字段，并根据该字段来进行FeignQuery查询出对应的明细列表
+                            CfgQueryOptionEntity detailEntity = value.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
+                            if (Objects.isNull(detailEntity)) {
+                                continue;
+                            }
+
+                            //获取关联记录
+                            String parentId = detailEntity.getParentId();
+                            CfgQueryOptionEntity refEntity = mainCfgQueryOptionList.stream().filter(e -> e.getId().equals(parentId)).findFirst().orElse(null);
+                            String refField = refEntity.getConditionField();
+                            String refValue = String.valueOf(variablesMap.get(refField));
+
                             String classpath = cfgQueryOptionDetail.getClasspath();
                             classpath = classpath.replace("class ", "");
                             Class<BaseEntity> clazz = null;
@@ -272,45 +292,54 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                             } catch (ClassNotFoundException e) {
                                 throw new ServiceException(classpath + "实体不存在");
                             }
-                            String conditionField = StrUtils.underlineByhump(detailEntity.getConditionField());
-                            detailList = FeignQuery.create(clazz)
-                                    .eq(conditionField, businessId)
+                            List<BaseEntity> detailList = FeignQuery.create(clazz)
+                                    .eq(detailEntity.getConditionField(), refValue)
                                     .list();
 
                             if (CollUtil.isEmpty(detailList)) {
-                                break;
+                                continue;
                             }
                             //明细数据
-                            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+                            variablesMap.put(entry.getKey() , BeanUtil.copyToList(detailList,Map.class));
                         }
 
                         //进行值映射处理
                         Map<String,String> handlerValueMap = new HashMap<>();
                         Map<String,String> remoteValues = new HashMap<>();
                         for (CfgApproveSyncFieldMapEntity entity : fieldList) {
+                            //获取CfgApproveSyncFieldMap对应该的配置记录
+                            CfgQueryOptionEntity queryOptionEntity = cfgQueryOptionList.stream().filter(e -> Objects.equals(entity.getFieldId(), e.getId())).findFirst().orElse(null);
+                            if(Objects.isNull(queryOptionEntity)){
+                                continue;
+                            }
                             //设置原始值
                             handlerValueMap.put(entity.getFieldId(),String.valueOf(variablesMap.getOrDefault(entity.getFieldSource(), "")));
 
-                            String fieldSourceValueStr = getFieldSourceValueStr(entity.getFieldSource(), variablesMap);
-                            if(StringUtils.isNotBlank(fieldSourceValueStr)){
-                                handlerValueMap.put(entity.getFieldId(),fieldSourceValueStr);
-                            }else{
-                                if(variablesMap.containsKey(ThirdConstants.DETAIL_LIST)){
-                                    List<Object> detail =( List<Object> ) variablesMap.get(ThirdConstants.DETAIL_LIST);
-                                    if(CollUtil.isNotEmpty(detailList)){
-                                        StringBuffer sb = new StringBuffer();
-                                        for (Object object : detail) {
-                                            Map<String, Object> map = BeanUtil.beanToMap(object);
-                                            String string = getFieldSourceValueStr(entity.getFieldSource(), map);
-                                            if(StringUtils.isNotBlank(string)){
-                                                sb.append(string);
-                                                sb.append(";");
-                                            }
+                            //判断是类型是common、主表还是明细
+                            if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode())
+                                    || queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
+                                String fieldSourceValueStr = getFieldSourceValueStr(entity.getFieldSource(), variablesMap);
+                                if(StringUtils.isNotBlank(fieldSourceValueStr)){
+                                    handlerValueMap.put(entity.getFieldId(),fieldSourceValueStr);
+                                }
+                            }else{//其余均为明细表
+                                List<Object> detail =( List<Object> ) variablesMap.get(queryOptionEntity.getFieldBelongsType());
+                                if(CollUtil.isNotEmpty(detail)){
+                                    StringBuffer sb = new StringBuffer();
+                                    for (Object object : detail) {
+                                        Map<String, Object> map = BeanUtil.beanToMap(object);
+                                        String string = getFieldSourceValueStr(entity.getFieldSource(), map);
+                                        if(StringUtils.isNotBlank(string)){
+                                            sb.append(string);
+                                            sb.append(",");
                                         }
-                                        String fieldSourceDetailValueStr = sb.toString();
-                                        if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
-                                            handlerValueMap.put(entity.getFieldId(),fieldSourceValueStr);
+                                    }
+                                    String fieldSourceDetailValueStr = sb.toString();
+                                    if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
+                                        if (fieldSourceDetailValueStr.endsWith(",")) {
+                                            fieldSourceDetailValueStr = fieldSourceDetailValueStr.substring(0, fieldSourceDetailValueStr.length() - 1); // 移除最后一个逗号
                                         }
+                                        handlerValueMap.put(entity.getFieldId(),fieldSourceDetailValueStr);
                                     }
                                 }
                             }

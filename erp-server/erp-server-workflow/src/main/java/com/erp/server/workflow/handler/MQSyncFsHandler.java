@@ -2,7 +2,6 @@ package com.erp.server.workflow.handler;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
-import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
@@ -21,6 +20,7 @@ import com.google.gson.Gson;
 import com.lark.oapi.service.approval.v4.model.*;
 import jodd.util.StringUtil;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -141,40 +141,44 @@ public class MQSyncFsHandler {
             List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionService.listByIds(fieldIds);
             //参数map
             Map<String, Object> variablesMap = dto.getVariablesMap();
-            List<Object> detailList = new ArrayList<>();
-            if(variablesMap.containsKey(ThirdConstants.DETAIL_LIST)){
-                detailList =( List<Object> ) variablesMap.get(ThirdConstants.DETAIL_LIST);
-
-            }
             //用户提交审批时填写的表单数据,用于所有审批列表中展示。最多展示3个
             int len = fieldMapEntities.size() > 5 ? 5 : fieldMapEntities.size();
             Map<String,String> handlerValueMap = new HashMap<>();
-            for (CfgApproveSyncFieldMapEntity entry : fieldMapEntities.subList(0, len)) {
-                CfgQueryOptionEntity queryOptionEntity = cfgQueryOptionList.stream().filter(e -> Objects.equals(entry.getFieldId(), e.getId())).findFirst().orElse(null);
+            for (CfgApproveSyncFieldMapEntity entity : fieldMapEntities.subList(0, len)) {
+                //获取CfgApproveSyncFieldMap对应该的配置记录
+                CfgQueryOptionEntity queryOptionEntity = cfgQueryOptionList.stream().filter(e -> Objects.equals(entity.getFieldId(), e.getId())).findFirst().orElse(null);
                 if(Objects.isNull(queryOptionEntity)){
                     continue;
                 }
-                //判断是表头还是明细
-                if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode())){
-                    if(CollUtil.isNotEmpty(detailList)){
+                //设置原始值
+                handlerValueMap.put(entity.getFieldId(),String.valueOf(variablesMap.getOrDefault(entity.getFieldSource(), "")));
+
+                //判断是类型是common、主表还是明细
+                if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode())
+                        || queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
+                    String fieldSourceValueStr = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entity.getFieldSource(), variablesMap);
+                    if(StringUtils.isNotBlank(fieldSourceValueStr)){
+                        handlerValueMap.put(entity.getFieldId(),fieldSourceValueStr);
+                    }
+                }else{//其余均为明细表
+                    List<Object> detail =( List<Object> ) variablesMap.get(queryOptionEntity.getFieldBelongsType());
+                    if(CollUtil.isNotEmpty(detail)){
                         StringBuffer sb = new StringBuffer();
-                        for (Object object : detailList) {
+                        for (Object object : detail) {
                             Map<String, Object> map = BeanUtil.beanToMap(object);
-                            String str = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entry.getFieldSource(), map);
-                            if(StringUtils.isNotBlank(str)){
-                                sb.append(str);
-                                sb.append(";");
+                            String string = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entity.getFieldSource(), map);
+                            if(StringUtils.isNotBlank(string)){
+                                sb.append(string);
+                                sb.append(",");
                             }
                         }
                         String fieldSourceDetailValueStr = sb.toString();
                         if(StringUtils.isNotBlank(fieldSourceDetailValueStr)){
-                            handlerValueMap.put(entry.getFieldId(),fieldSourceDetailValueStr);
+                            if (fieldSourceDetailValueStr.endsWith(",")) {
+                                fieldSourceDetailValueStr = fieldSourceDetailValueStr.substring(0, fieldSourceDetailValueStr.length() - 1); // 移除最后一个逗号
+                            }
+                            handlerValueMap.put(entity.getFieldId(),fieldSourceDetailValueStr);
                         }
-                    }
-                }else{
-                    String fieldSourceValueStr = cfgApproveSyncBuildHandler.getFieldSourceValueStr(entry.getFieldSource(), variablesMap);
-                    if(StringUtils.isNotBlank(fieldSourceValueStr)){
-                        handlerValueMap.put(entry.getFieldId(),fieldSourceValueStr);
                     }
                 }
             }

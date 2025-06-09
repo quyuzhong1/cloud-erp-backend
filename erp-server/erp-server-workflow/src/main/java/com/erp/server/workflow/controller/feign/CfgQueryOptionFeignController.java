@@ -3,12 +3,10 @@ package com.erp.server.workflow.controller.feign;
 import com.common.core.controller.BaseController;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -48,4 +46,13 @@ public class CfgQueryOptionFeignController extends BaseController {
         return cfgQueryOptionExtService.getRemoteValues(handlerValueMap);
     }
 
+    /**
+     * 根据单据类型查询配置(只查询明细类型)
+     */
+    @GetMapping("/listByBusinessKey")
+    public List<CfgQueryOptionEntity> listByBusinessKey(@RequestParam("businessKey") String businessKey){
+        return cfgQueryOptionService.lambdaQuery()
+                .in(CfgQueryOptionEntity::getBussinessKey, businessKey)
+                .list();
+    }
 }
