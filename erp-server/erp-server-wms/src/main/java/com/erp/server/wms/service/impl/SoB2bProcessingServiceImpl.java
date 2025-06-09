@@ -119,7 +119,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
          * 2、b2b组合品走加工单出库
          */
         List<String> deliveryNoticeIdList = list.stream().map(SoB2bProcessingEntity::getDeliveryNoticeId).distinct().collect(Collectors.toList());
-        List<List<String>> sourceIdListPartition = Lists.partition(deliveryNoticeIdList, 50000);
+        List<List<String>> sourceIdListPartition = Lists.partition(deliveryNoticeIdList, 30000);
 
         //查询加工单数据
         List<SoB2bProcessingDTO.ResponseDTO> machineList = new ArrayList<>();
@@ -132,7 +132,7 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
             //销售订单id集合
             List<String> soIdList = list.stream().filter(obj -> sourceIdPartition.contains(obj.getDeliveryNoticeId()))
                     .map(SoB2bProcessingEntity::getSoId).distinct().collect(Collectors.toList());
-
+            soIdList.addAll(sourceIdPartition);
             List<SoB2bProcessingDTO.ResponseDTO> machinePageList = machineDetailService.listMachineBySourceIdList(soIdList);
             if (CollectionUtils.isNotEmpty(machinePageList)) {
                 machineList.addAll(machinePageList);
@@ -152,10 +152,12 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
         List<List<SoB2bProcessingDTO.AddOrUpdateDTO>> result =  list.parallelStream().map(entity -> {
-            //根据类型更新出库数据
-            handleOutstockByType(machineList,transferList,soOutstockList,entity);
-            log.warn("根据类型处理成功！code = {}",entity.getSoCode());
-
+            //判断是否需要出库
+            if (entity.getIsOutstock()) {
+                //根据类型更新出库数据
+                handleOutstockByType(machineList,transferList,soOutstockList,entity);
+                log.warn("根据类型处理成功！code = {}",entity.getSoCode());
+            }
             // 新增数据
             List<SoB2bProcessingDTO.AddOrUpdateDTO> localList = new ArrayList<>();
             addBomList(localList,entity,bomMap.get(CharSequenceUtil.format("{}_{}",entity.getSkuId(),BomTypeEnum.COMBINATION.getType())));
@@ -218,10 +220,9 @@ public class SoB2bProcessingServiceImpl extends SuperServiceImpl<SoB2bProcessing
 
         //加工单
         SoB2bProcessingDTO.ResponseDTO machineResponseDTO = machineList.stream().filter(obj ->
-                        CharSequenceUtil.isNotBlank(entity.getDeliveryNoticeId())
-                        && CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId())
-                        && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus())
-                        &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
+                        (CharSequenceUtil.equals(SourceTypeEnum.SO_INFO.getCode(),obj.getSourceType())  && CharSequenceUtil.equals(obj.getSourceId(), entity.getSoId()) &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getSoDetailId())
+                                || CharSequenceUtil.equals(SourceTypeEnum.SO_DELIVERY_NOTICE.getCode(),obj.getSourceType())  && CharSequenceUtil.equals(obj.getSourceId(), entity.getDeliveryNoticeId()) &&  CharSequenceUtil.equals(obj.getSourceDetailId(), entity.getDeliveryNoticeDetailId()))
+                                && CharSequenceUtil.equals(obj.getApproveStatus(),ApproveStatusEnum.APPROVE.getStatus()))
                 .findFirst().orElse(null);
         if (ObjectUtil.isNotEmpty(machineResponseDTO)) {
             handleOutstock (entity,machineResponseDTO, SourceTypeEnum.MACHINE_INFO.getCode());
