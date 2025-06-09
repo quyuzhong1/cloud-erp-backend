@@ -21,7 +21,7 @@ import java.util.List;
  * @Version: 1.0
  */
 
-public interface UpdateBillStatusHandler {
+public interface CreateBillHandler {
     default boolean isMatch(String event) {
         return getEvent().name().equals(event);
     }
@@ -29,5 +29,5 @@ public interface UpdateBillStatusHandler {
     CfgQueryOptionBussinessKeyEnum getEvent();
 
 
-    void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
+    void createBill(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
 }

@@ -732,7 +732,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         Map<String, List<CfgProcessValueMapEntity>> collect = valueMaps.stream().collect(Collectors.groupingBy(CfgProcessValueMapEntity::getFieldMapId));
 
         // 第二步：根据字段映射和值映射转换为系统映射
-        return processMapping(feishuIdValueMap, groupedSysMaps, collect);
+        return processMapping(feishuIdValueMap, groupedFieldMaps, collect);
     }
 
     /**
@@ -812,16 +812,19 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 for (int i = 0; i < names.length; i++) {
                     nameToUrl.put(names[i], fileArray.get(i).toString());
                 }
-                return nameToUrl; //TODO 先进行上传，得到url
+                //TODO 先进行上传，得到url
+                return nameToUrl;
             case "department":
                 JSONArray deptValues = field.getJSONArray("value");
+                //TODO 部门映射
                 return deptValues.stream()
                         .map(dept -> ((JSONObject) dept).getStr("open_id"))
-                        .collect(Collectors.toList()).get(0); //部门目前只取一个
+                        .collect(Collectors.toList()).get(0);
             case "contact":
+                //TODO 用户映射
                 return field.getJSONArray("value").get(0);
             case "amount":
-                return field.get("value").toString() + "," + field.getJSONObject("ext").get("currency");
+                return field.getBigDecimal("value").toString() + "," + field.getJSONObject("ext").get("currency");
             default:
                 return field.get("value");
         }
@@ -914,9 +917,10 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                 "imageV2".equals(fieldMap.getThirdFieldType()) ||
                 "image".equals(fieldMap.getThirdFieldType()) ||
                 "contact".equals(fieldMap.getThirdFieldType()) ||
-                "department".equals(fieldMap.getThirdFieldType())) {
+                "department".equals(fieldMap.getThirdFieldType())||
+                "amount".equals(fieldMap.getSysFieldType())) {
             // 对于金额这种复合字段，如果其类型为 "amount"
-            if ("amount".equals(fieldMap.getThirdFieldType())) {
+            if ("amount".equals(fieldMap.getThirdFieldType()) || "amount".equals(fieldMap.getSysFieldType())) {
                 // feishuOriginalValue 可能是 [value, currency] 形式的 List
                 if (feishuOriginalValue instanceof List && ((List<?>) feishuOriginalValue).size() == 2) {
                     List<?> parts = (List<?>) feishuOriginalValue;
@@ -926,7 +930,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
                     // 也可能是 "100.00,CNY" 这种字符串形式
                     String[] parts = valueStr.split(",");
                     if (parts.length == 2) {
-                        return fieldMap.getIndex() == 0 ? parts[0] : parts[1];
+                        return fieldMap.getIndex() == 1 ? parts[0] : findSysValue(parts[1], valueMappings);
                     }
                 }
             }
@@ -1029,6 +1033,745 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     public static LocalDateTime convertRFC3339ToLocalDateTime(String rfc3339Date) {
         OffsetDateTime offsetDateTime = OffsetDateTime.parse(rfc3339Date);
         return offsetDateTime.toLocalDateTime();
+    }
+
+    @Override
+    public List<ApproveTaskDetailDTO.AddDTO> generatePushDetailDTO(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, Map<String, Object> variablesMap) {
+        // 按照 thirdParentId 或 thirdFieldId 分组字段映射
+        Map<String, List<CfgProcessFieldMapEntity>> groupedFieldMaps = fieldMapList.stream()
+                .collect(Collectors.groupingBy(entity -> {
+                    String key = entity.getThirdParentId();
+                    return (key == null || key.isEmpty()) ? entity.getThirdFieldId() : key;
+                }));
+
+        List<ApproveTaskDetailDTO.AddDTO> list = new ArrayList<>();
+
+        for (int i = 0; i < formArray.size(); i++) {
+            JSONObject jsonObject = formArray.getJSONObject(i);
+            String id = jsonObject.getStr("id");
+            String type = jsonObject.getStr("type");
+            String name = jsonObject.getStr("name");
+
+            // 处理明细表格
+            if (type.equals(CfgQueryOptionFieldTypeEnum.FIELDLIST.getCode())) {
+                // 获取明细表格数据
+                JSONArray detailValue = jsonObject.getJSONArray("value");
+                if (detailValue == null || detailValue.isEmpty()) {
+                    continue;
+                }
+
+                // 获取明细表格对应的系统字段
+                List<CfgProcessFieldMapEntity> parentFieldMaps = groupedFieldMaps.get(id);
+                if (parentFieldMaps == null || parentFieldMaps.isEmpty()) {
+                    continue;
+                }
+
+                CfgProcessFieldMapEntity parentFieldMap = parentFieldMaps.get(0);
+                String sysParentId = parentFieldMap.getSysParentId();
+
+                // 获取系统明细数据
+                List<Map<String, Object>> sysDetailList = (List<Map<String, Object>>) variablesMap.get(sysParentId);
+
+                // 处理每一行明细
+                for (int j = 0; j < detailValue.size(); j++) {
+                    JSONArray rowArray = detailValue.getJSONArray(j);
+
+                    // 获取当前行的系统数据
+                    Map<String, Object> rowSysData = (sysDetailList != null && j < sysDetailList.size()) ?
+                            sysDetailList.get(j) : new HashMap<>();
+
+                    // 处理行中的每个字段
+                    for (int k = 0; k < rowArray.size(); k++) {
+                        JSONObject fieldObj = rowArray.getJSONObject(k);
+                        String fieldId = fieldObj.getStr("id");
+                        String fieldType = fieldObj.getStr("type");
+
+                        // 获取字段映射
+                        List<CfgProcessFieldMapEntity> fieldMapEntities = fieldMapList.stream()
+                                .filter(entity -> fieldId.equals(entity.getThirdFieldId()))
+                                .collect(Collectors.toList());
+
+                        if (fieldMapEntities.isEmpty()) {
+                            continue;
+                        }
+
+                        // 处理字段并添加到列表
+                        processDetailFieldForDTO(fieldObj, fieldType, fieldMapEntities, rowSysData, list, j , name);
+                    }
+                }
+            } else {
+                // 处理普通字段
+                List<CfgProcessFieldMapEntity> cfgProcessFieldMapEntityList = groupedFieldMaps.get(id);
+                if (cfgProcessFieldMapEntityList == null || cfgProcessFieldMapEntityList.isEmpty()) {
+                    continue;
+                }
+
+                // 处理字段并添加到列表
+                processFieldForDTO(jsonObject, type, cfgProcessFieldMapEntityList, variablesMap, list, null);
+            }
+        }
+
+        return list;
+    }
+
+    /**
+     * 处理明细表格中的字段并生成DTO
+     */
+    private void processDetailFieldForDTO(JSONObject jsonObject, String type, List<CfgProcessFieldMapEntity> fieldMapList,
+                                          Map<String, Object> rowSysData, List<ApproveTaskDetailDTO.AddDTO> list, Integer rowIndex,String name) {
+
+        String id = jsonObject.getStr("id");
+
+        // 处理金额字段
+        if (type.equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())) {
+            String thirdCurrency = jsonObject.getStr("currency");
+            BigDecimal thirdValue = jsonObject.getBigDecimal("value", BigDecimal.ZERO);
+
+            fieldMapList.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex));
+            CfgProcessFieldMapEntity currencyObj = fieldMapList.get(0);
+            CfgProcessFieldMapEntity thirdValueObj = fieldMapList.get(1);
+
+            String currencyField = currencyObj.getSysField();
+            String thirdValueField = thirdValueObj.getSysField();
+
+            // 从行数据中获取系统值
+            Object sysCurrencyObj = rowSysData.get(currencyField);
+            Object sysValueObj = rowSysData.get(thirdValueField);
+
+            String sysCurrency = sysCurrencyObj != null ? sysCurrencyObj.toString() : "";
+            BigDecimal sysValue = (sysValueObj instanceof BigDecimal) ?
+                    (BigDecimal) sysValueObj : new BigDecimal(sysValueObj != null ? sysValueObj.toString() : "0");
+
+            // 创建货币单位DTO
+            ApproveTaskDetailDTO.AddDTO currencyAddDTO = BeanUtil.copyProperties(currencyObj, ApproveTaskDetailDTO.AddDTO.class);
+            currencyAddDTO.setSysFieldValue(sysCurrency);
+            currencyAddDTO.setThirdFieldValue(thirdCurrency);
+            currencyAddDTO.setEntityName(name);
+            currencyAddDTO.setEntityCode(currencyObj.getSysParentId());
+            currencyAddDTO.setIndex(rowIndex);
+
+            // 创建金额值DTO
+            ApproveTaskDetailDTO.AddDTO thirdValueAddDTO = BeanUtil.copyProperties(thirdValueObj, ApproveTaskDetailDTO.AddDTO.class);
+            thirdValueAddDTO.setSysFieldValue(sysValue.toString());
+            thirdValueAddDTO.setThirdFieldValue(thirdValue.toString());
+            thirdValueAddDTO.setEntityName(name);
+            thirdValueAddDTO.setEntityCode(thirdValueObj.getSysParentId());
+            thirdValueAddDTO.setIndex(rowIndex);
+
+            list.add(currencyAddDTO);
+            list.add(thirdValueAddDTO);
+            return;
+        }
+
+        // 处理部门字段
+        if (type.equals(CfgQueryOptionFieldTypeEnum.DEPARTMENT.getCode())) {
+            CfgProcessFieldMapEntity fieldMap = fieldMapList.get(0);
+            Object value = jsonObject.getObj("value");
+
+            // 从行数据中获取系统值
+            String sysField = fieldMap.getSysField();
+            Object sysValue = rowSysData.get(sysField);
+
+            if (value == null) {
+                // 创建空值DTO
+                ApproveTaskDetailDTO.AddDTO emptyDTO = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+                emptyDTO.setThirdFieldValue("");
+                emptyDTO.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+                emptyDTO.setIndex(rowIndex);
+                list.add(emptyDTO);
+                return;
+            }
+
+            List<JSONObject> options = (List<JSONObject>) value;
+
+            // 获取部门ID
+            List<String> openId = new ArrayList<>();
+            for (JSONObject option : options) {
+                List<String> ids = (List<String>) option.getObj("open_id");
+                if (ids != null && !ids.isEmpty()) {
+                    openId.addAll(ids);
+                }
+            }
+
+            ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+            addDTO.setThirdFieldValue(openId.isEmpty() ? "" : openId.get(0));
+            addDTO.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+            addDTO.setEntityName(name);
+            addDTO.setEntityCode(fieldMap.getSysParentId());
+            addDTO.setIndex(rowIndex);
+
+            list.add(addDTO);
+            return;
+        }
+
+        // 处理联系人、附件、图片、多选等列表类型字段
+        if (type.equals(CfgQueryOptionFieldTypeEnum.CONTACT.getCode()) ||
+                type.equals(CfgQueryOptionFieldTypeEnum.ATTACHMENTV2.getCode()) ||
+                type.equals(CfgQueryOptionFieldTypeEnum.IMAGEV2.getCode()) ||
+                type.equals(CfgQueryOptionFieldTypeEnum.IMAGE.getCode()) ||
+                type.equals(CfgQueryOptionFieldTypeEnum.CHECKBOXV2.getCode())) {
+
+            CfgProcessFieldMapEntity fieldMap = fieldMapList.get(0);
+            Object valueObj = jsonObject.get("value");
+            List<String> values;
+
+            if (valueObj instanceof List) {
+                values = new ArrayList<>();
+                for (Object item : (List<?>) valueObj) {
+                    values.add(item != null ? item.toString() : "");
+                }
+            } else {
+                values = Collections.singletonList(valueObj != null ? valueObj.toString() : "");
+            }
+
+            // 从行数据中获取系统值
+            String sysField = fieldMap.getSysField();
+            Object sysValue = rowSysData.get(sysField);
+
+            ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+            addDTO.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+            addDTO.setThirdFieldValue(String.join(",", values));
+            addDTO.setEntityName(name);
+            addDTO.setEntityCode(fieldMap.getSysParentId());
+            addDTO.setIndex(rowIndex);
+
+            list.add(addDTO);
+            return;
+        }
+
+        // 处理其他普通字段
+        CfgProcessFieldMapEntity fieldMap = fieldMapList.get(0);
+        Object thirdValue = jsonObject.get("value");
+
+        // 从行数据中获取系统值
+        String sysField = fieldMap.getSysField();
+        Object sysValue = rowSysData.get(sysField);
+
+        ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+        addDTO.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+        addDTO.setThirdFieldValue(thirdValue != null ? thirdValue.toString() : "");
+        addDTO.setEntityName(name);
+        addDTO.setEntityCode(fieldMap.getSysParentId());
+        addDTO.setIndex(rowIndex);
+
+        list.add(addDTO);
+    }
+
+    /**
+     * 处理普通字段并生成DTO
+     */
+    private void processFieldForDTO(JSONObject jsonObject, String type, List<CfgProcessFieldMapEntity> fieldMapList,
+                                    Map<String, Object> variablesMap, List<ApproveTaskDetailDTO.AddDTO> list, Integer rowIndex) {
+
+        String id = jsonObject.getStr("id");
+
+        // 处理金额字段
+        if (type.equals(CfgQueryOptionFieldTypeEnum.AMOUNT.getCode())) {
+            String thirdCurrency = jsonObject.getStr("currency");
+            BigDecimal thirdValue = jsonObject.getBigDecimal("value", BigDecimal.ZERO);
+
+            fieldMapList.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex));
+            CfgProcessFieldMapEntity currencyObj = fieldMapList.get(0);
+            CfgProcessFieldMapEntity thirdValueObj = fieldMapList.get(1);
+
+            String currencyField = currencyObj.getSysField();
+            String thirdValueField = thirdValueObj.getSysField();
+
+            String sysCurrency = variablesMap.get(currencyField) != null ?
+                    variablesMap.get(currencyField).toString() : "";
+
+            Object sysValueObj = variablesMap.get(thirdValueField);
+            BigDecimal sysValue = (sysValueObj instanceof BigDecimal) ?
+                    (BigDecimal) sysValueObj : new BigDecimal(sysValueObj != null ? sysValueObj.toString() : "0");
+
+            // 创建货币单位DTO
+            ApproveTaskDetailDTO.AddDTO currencyAddDTO = BeanUtil.copyProperties(currencyObj, ApproveTaskDetailDTO.AddDTO.class);
+            currencyAddDTO.setSysFieldValue(sysCurrency);
+            currencyAddDTO.setThirdFieldValue(thirdCurrency);
+
+            // 创建金额值DTO
+            ApproveTaskDetailDTO.AddDTO thirdValueAddDTO = BeanUtil.copyProperties(thirdValueObj, ApproveTaskDetailDTO.AddDTO.class);
+            thirdValueAddDTO.setSysFieldValue(sysValue.toString());
+            thirdValueAddDTO.setThirdFieldValue(thirdValue.toString());
+
+            list.add(currencyAddDTO);
+            list.add(thirdValueAddDTO);
+            return;
+        }
+
+        // 处理部门字段
+        if (type.equals(CfgQueryOptionFieldTypeEnum.DEPARTMENT.getCode())) {
+            CfgProcessFieldMapEntity fieldMap = fieldMapList.get(0);
+            Object value = jsonObject.getObj("value");
+
+            // 获取系统值
+            String sysField = fieldMap.getSysField();
+            Object sysValue = variablesMap.get(sysField);
+
+            if (value == null) {
+                // 创建空值DTO
+                ApproveTaskDetailDTO.AddDTO emptyDTO = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+                emptyDTO.setThirdFieldValue("");
+                emptyDTO.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+                list.add(emptyDTO);
+                return;
+            }
+
+            List<JSONObject> options = (List<JSONObject>) value;
+
+            // 获取部门ID
+            List<String> openId = new ArrayList<>();
+            for (JSONObject option : options) {
+                List<String> ids = (List<String>) option.getObj("open_id");
+                if (ids != null && !ids.isEmpty()) {
+                    openId.addAll(ids);
+                }
+            }
+
+            ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+            addDTO.setThirdFieldValue(openId.isEmpty() ? "" : openId.get(0));
+            addDTO.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+
+            list.add(addDTO);
+            return;
+        }
+
+        // 处理联系人、附件、图片、多选等列表类型字段
+        if (type.equals(CfgQueryOptionFieldTypeEnum.CONTACT.getCode()) ||
+                type.equals(CfgQueryOptionFieldTypeEnum.ATTACHMENTV2.getCode()) ||
+                type.equals(CfgQueryOptionFieldTypeEnum.IMAGEV2.getCode()) ||
+                type.equals(CfgQueryOptionFieldTypeEnum.IMAGE.getCode()) ||
+                type.equals(CfgQueryOptionFieldTypeEnum.CHECKBOXV2.getCode())) {
+
+            CfgProcessFieldMapEntity fieldMap = fieldMapList.get(0);
+            Object valueObj = jsonObject.get("value");
+            List<String> values;
+
+            if (valueObj instanceof List) {
+                values = new ArrayList<>();
+                for (Object item : (List<?>) valueObj) {
+                    values.add(item != null ? item.toString() : "");
+                }
+            } else {
+                values = Collections.singletonList(valueObj != null ? valueObj.toString() : "");
+            }
+
+            // 获取系统值
+            String sysField = fieldMap.getSysField();
+            Object sysValue = variablesMap.get(sysField);
+
+            ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+            addDTO.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+            addDTO.setThirdFieldValue(String.join(",", values));
+
+            list.add(addDTO);
+            return;
+        }
+
+        // 处理其他普通字段
+        CfgProcessFieldMapEntity fieldMap = fieldMapList.get(0);
+        Object thirdValue = jsonObject.get("value");
+
+        // 获取系统值
+        String sysField = fieldMap.getSysField();
+        Object sysValue = variablesMap.get(sysField);
+
+        ApproveTaskDetailDTO.AddDTO addDTO = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+        addDTO.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+        addDTO.setThirdFieldValue(thirdValue != null ? thirdValue.toString() : "");
+
+        list.add(addDTO);
+    }
+
+    /**
+     * 拉取产生的三方生成查询记录
+     * @param formArray
+     * @param variablesMap
+     * @param fieldMapList
+     * @return
+     */
+    public List<ApproveTaskDetailDTO.AddDTO> generatePullDetailDTO(
+            JSONArray formArray,
+            Map<String, Object> variablesMap,
+            List<CfgProcessFieldMapEntity> fieldMapList) {
+
+        // 创建结果列表
+        List<ApproveTaskDetailDTO.AddDTO> detailList = new ArrayList<>();
+
+        // 按照 thirdFieldId 分组字段映射
+        Map<String, List<CfgProcessFieldMapEntity>> fieldMapByThirdFieldId = fieldMapList.stream()
+                .collect(Collectors.groupingBy(CfgProcessFieldMapEntity::getThirdFieldId));
+
+        // 打印调试信息
+        System.out.println("表单字段数量: " + formArray.size());
+        System.out.println("字段映射数量: " + fieldMapList.size());
+
+        // 处理表单中的每个字段
+        for (int i = 0; i < formArray.size(); i++) {
+            JSONObject formField = formArray.getJSONObject(i);
+            String fieldId = formField.getStr("id");
+            String fieldType = formField.getStr("type");
+            String fieldName = formField.getStr("name");
+
+            System.out.println("处理字段: " + fieldId + " (" + fieldName + "), 类型: " + fieldType);
+
+            // 处理明细表格
+            if ("fieldList".equals(fieldType)) {
+                // 获取明细表格数据
+                JSONArray detailRows = formField.getJSONArray("value");
+                if (detailRows == null || detailRows.isEmpty()) {
+                    System.out.println("明细表格数据为空: " + fieldId);
+                    continue;
+                }
+
+                // 获取子控件对应的字段映射
+                Map<String, List<CfgProcessFieldMapEntity>> childFieldMaps = new HashMap<>();
+                for (CfgProcessFieldMapEntity fieldMap : fieldMapList) {
+                    if (fieldId.equals(fieldMap.getThirdParentId())) {
+                        String childId = fieldMap.getThirdFieldId();
+                        if (!childFieldMaps.containsKey(childId)) {
+                            childFieldMaps.put(childId, new ArrayList<>());
+                        }
+                        childFieldMaps.get(childId).add(fieldMap);
+                    }
+                }
+
+                if (childFieldMaps.isEmpty()) {
+                    System.out.println("未找到明细表格子控件映射: " + fieldId);
+                    continue;
+                }
+
+                // 获取父级ID（用于entityCode）
+                String sysParentId = null;
+                for (List<CfgProcessFieldMapEntity> childMaps : childFieldMaps.values()) {
+                    if (!childMaps.isEmpty()) {
+                        sysParentId = childMaps.get(0).getSysParentId();
+                        break;
+                    }
+                }
+
+                // 处理每一行明细
+                for (int j = 0; j < detailRows.size(); j++) {
+                    JSONArray rowFields = detailRows.getJSONArray(j);
+
+                    // 处理行中的每个字段
+                    for (int k = 0; k < rowFields.size(); k++) {
+                        JSONObject detailField = rowFields.getJSONObject(k);
+                        String detailFieldId = detailField.getStr("id");
+                        String detailFieldType = detailField.getStr("type");
+
+                        // 获取字段映射
+                        List<CfgProcessFieldMapEntity> detailFieldMapEntities = childFieldMaps.get(detailFieldId);
+                        if (detailFieldMapEntities == null || detailFieldMapEntities.isEmpty()) {
+                            System.out.println("未找到子字段映射: " + detailFieldId);
+                            continue;
+                        }
+
+                        // 获取系统明细数据
+                        Map<String, Object> sysRowData = new HashMap<>();
+                        if (sysParentId != null) {
+                            Object sysDetailObj = variablesMap.get(sysParentId);
+                            if (sysDetailObj instanceof List) {
+                                List<Map<String, Object>> sysDetailList = (List<Map<String, Object>>) sysDetailObj;
+                                if (j < sysDetailList.size()) {
+                                    sysRowData = sysDetailList.get(j);
+                                }
+                            }
+                        }
+
+                        // 处理字段并添加到列表
+                        buildFieldForDTO(detailField, detailFieldType, detailFieldMapEntities, sysRowData, detailList, j, fieldName, sysParentId);
+                    }
+                }
+            } else {
+                // 处理普通字段
+                List<CfgProcessFieldMapEntity> fieldMapEntities = fieldMapByThirdFieldId.get(fieldId);
+                if (fieldMapEntities == null || fieldMapEntities.isEmpty()) {
+                    System.out.println("未找到字段映射: " + fieldId);
+                    continue;
+                }
+
+                buildFieldForDTO(formField, fieldType, fieldMapEntities, variablesMap, detailList, null, null, null);
+            }
+        }
+
+        System.out.println("生成的DTO数量: " + detailList.size());
+        return detailList;
+    }
+
+    /**
+     * 处理字段并生成DTO
+     */
+    private void buildFieldForDTO(
+            JSONObject formField,
+            String fieldType,
+            List<CfgProcessFieldMapEntity> fieldMapEntities,
+            Map<String, Object> dataMap,
+            List<ApproveTaskDetailDTO.AddDTO> detailList,
+            Integer rowIndex,
+            String entityName,
+            String entityCode) {
+
+        String fieldId = formField.getStr("id");
+        String fieldName = formField.getStr("name");
+
+        try {
+            // 处理金额字段
+            if ("amount".equals(fieldType)) {
+                // 金额字段需要处理货币单位和金额值
+                Object thirdValue = formField.get("value");
+                String thirdCurrency = "CNY";
+
+                try {
+                    JSONObject ext = formField.getJSONObject("ext");
+                    if (ext != null) {
+                        thirdCurrency = ext.getStr("currency", "CNY");
+                    }
+                } catch (Exception e) {
+                    System.err.println("获取金额字段货币单位失败: " + e.getMessage());
+                }
+
+                // 排序字段映射，确保顺序一致
+                fieldMapEntities.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex));
+
+                if (fieldMapEntities.size() >= 2) {
+                    // 获取货币和金额的映射
+                    CfgProcessFieldMapEntity currencyObj = fieldMapEntities.get(0);
+                    CfgProcessFieldMapEntity valueObj = fieldMapEntities.get(1);
+
+                    // 获取系统字段名
+                    String currencyField = currencyObj.getSysField();
+                    String valueField = valueObj.getSysField();
+
+                    // 获取系统值
+                    Object sysCurrencyObj = dataMap.get(currencyField);
+                    Object sysValueObj = dataMap.get(valueField);
+
+                    String sysCurrency = sysCurrencyObj != null ? sysCurrencyObj.toString() : "";
+                    String sysValue = sysValueObj != null ? sysValueObj.toString() : "0";
+
+                    // 创建货币单位DTO
+                    ApproveTaskDetailDTO.AddDTO currencyDTO = BeanUtil.copyProperties(currencyObj, ApproveTaskDetailDTO.AddDTO.class);
+                    currencyDTO.setSysFieldValue(sysCurrency);
+                    currencyDTO.setThirdFieldValue(thirdCurrency);
+                    if (rowIndex != null) {
+                        currencyDTO.setIndex(rowIndex);
+                        currencyDTO.setEntityName(entityName);
+                        currencyDTO.setEntityCode(entityCode);
+                    }
+
+                    // 创建金额值DTO
+                    ApproveTaskDetailDTO.AddDTO valueDTO = BeanUtil.copyProperties(valueObj, ApproveTaskDetailDTO.AddDTO.class);
+                    valueDTO.setSysFieldValue(sysValue);
+                    valueDTO.setThirdFieldValue(thirdValue != null ? thirdValue.toString() : "0");
+                    if (rowIndex != null) {
+                        valueDTO.setIndex(rowIndex);
+                        valueDTO.setEntityName(entityName);
+                        valueDTO.setEntityCode(entityCode);
+                    }
+
+                    detailList.add(currencyDTO);
+                    detailList.add(valueDTO);
+                    System.out.println("添加金额字段DTO: 货币=" + thirdCurrency + ", 金额=" + thirdValue);
+                }
+                return;
+            }
+
+            // 处理部门字段
+            if ("department".equals(fieldType)) {
+                CfgProcessFieldMapEntity fieldMap = fieldMapEntities.get(0);
+
+                // 获取系统值
+                String sysField = fieldMap.getSysField();
+                Object sysValue = dataMap.get(sysField);
+
+                // 提取部门ID
+                String thirdValue = "";
+                try {
+                    JSONArray deptValues = formField.getJSONArray("value");
+                    if (deptValues != null && !deptValues.isEmpty()) {
+                        JSONObject dept = deptValues.getJSONObject(0);
+                        if (dept != null) {
+                            thirdValue = dept.getStr("open_id");
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("获取部门字段值失败: " + e.getMessage());
+                }
+
+                // 创建DTO
+                ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+                dto.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+                dto.setThirdFieldValue(thirdValue);
+                if (rowIndex != null) {
+                    dto.setIndex(rowIndex);
+                    dto.setEntityName(entityName);
+                    dto.setEntityCode(entityCode);
+                }
+
+                detailList.add(dto);
+                System.out.println("添加部门字段DTO: " + thirdValue);
+                return;
+            }
+
+            // 处理联系人字段
+            if ("contact".equals(fieldType)) {
+                CfgProcessFieldMapEntity fieldMap = fieldMapEntities.get(0);
+
+                // 获取系统值
+                String sysField = fieldMap.getSysField();
+                Object sysValue = dataMap.get(sysField);
+
+                // 提取联系人ID
+                String thirdValue = "";
+                try {
+                    JSONArray contactValues = formField.getJSONArray("value");
+                    if (contactValues != null && !contactValues.isEmpty()) {
+                        thirdValue = contactValues.getStr(0);
+                    } else {
+                        // 如果没有value，尝试获取open_ids
+                        JSONArray openIds = formField.getJSONArray("open_ids");
+                        if (openIds != null && !openIds.isEmpty()) {
+                            thirdValue = openIds.getStr(0);
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("获取联系人字段值失败: " + e.getMessage());
+                }
+
+                // 创建DTO
+                ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+                dto.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+                dto.setThirdFieldValue(thirdValue);
+                if (rowIndex != null) {
+                    dto.setIndex(rowIndex);
+                    dto.setEntityName(entityName);
+                    dto.setEntityCode(entityCode);
+                }
+
+                detailList.add(dto);
+                System.out.println("添加联系人字段DTO: " + thirdValue);
+                return;
+            }
+
+            // 处理附件和图片字段
+            if ("attachmentV2".equals(fieldType) || "image".equals(fieldType)) {
+                CfgProcessFieldMapEntity fieldMap = fieldMapEntities.get(0);
+
+                // 获取系统值
+                String sysField = fieldMap.getSysField();
+                Object sysValue = dataMap.get(sysField);
+
+                // 提取文件URL
+                String thirdValue = "";
+                try {
+                    JSONArray fileValues = formField.getJSONArray("value");
+                    if (fileValues != null && !fileValues.isEmpty()) {
+                        thirdValue = fileValues.getStr(0);
+                    }
+                } catch (Exception e) {
+                    System.err.println("获取附件字段值失败: " + e.getMessage());
+                }
+
+                // 创建DTO
+                ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+                dto.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+                dto.setThirdFieldValue(thirdValue);
+                if (rowIndex != null) {
+                    dto.setIndex(rowIndex);
+                    dto.setEntityName(entityName);
+                    dto.setEntityCode(entityCode);
+                }
+
+                detailList.add(dto);
+                System.out.println("添加附件字段DTO: " + thirdValue);
+                return;
+            }
+
+            // 处理多选框字段
+            if ("checkboxV2".equals(fieldType)) {
+                CfgProcessFieldMapEntity fieldMap = fieldMapEntities.get(0);
+
+                // 获取系统值
+                String sysField = fieldMap.getSysField();
+                Object sysValue = dataMap.get(sysField);
+
+                // 提取选项值
+                List<String> values = new ArrayList<>();
+                try {
+                    JSONArray checkboxValues = formField.getJSONArray("value");
+                    if (checkboxValues != null) {
+                        for (int i = 0; i < checkboxValues.size(); i++) {
+                            values.add(checkboxValues.getStr(i));
+                        }
+                    }
+                } catch (Exception e) {
+                    System.err.println("获取多选框字段值失败: " + e.getMessage());
+                }
+
+                // 创建DTO
+                ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+                dto.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+                dto.setThirdFieldValue(String.join(",", values));
+                if (rowIndex != null) {
+                    dto.setIndex(rowIndex);
+                    dto.setEntityName(entityName);
+                    dto.setEntityCode(entityCode);
+                }
+
+                detailList.add(dto);
+                System.out.println("添加多选框字段DTO: " + String.join(",", values));
+                return;
+            }
+
+            // 处理单选框字段
+            if ("radioV2".equals(fieldType)) {
+                CfgProcessFieldMapEntity fieldMap = fieldMapEntities.get(0);
+                Object radioValue = formField.get("value");
+
+                // 获取系统值
+                String sysField = fieldMap.getSysField();
+                Object sysValue = dataMap.get(sysField);
+
+                // 创建DTO
+                ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+                dto.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+                dto.setThirdFieldValue(radioValue != null ? radioValue.toString() : "");
+                if (rowIndex != null) {
+                    dto.setIndex(rowIndex);
+                    dto.setEntityName(entityName);
+                    dto.setEntityCode(entityCode);
+                }
+
+                detailList.add(dto);
+                System.out.println("添加单选框字段DTO: " + radioValue);
+                return;
+            }
+
+            // 处理其他普通字段
+            CfgProcessFieldMapEntity fieldMap = fieldMapEntities.get(0);
+            Object thirdValue = formField.get("value");
+
+            // 获取系统值
+            String sysField = fieldMap.getSysField();
+            Object sysValue = dataMap.get(sysField);
+
+            // 创建DTO
+            ApproveTaskDetailDTO.AddDTO dto = BeanUtil.copyProperties(fieldMap, ApproveTaskDetailDTO.AddDTO.class);
+            dto.setSysFieldValue(sysValue != null ? sysValue.toString() : "");
+            dto.setThirdFieldValue(thirdValue != null ? thirdValue.toString() : "");
+            if (rowIndex != null) {
+                dto.setIndex(rowIndex);
+                dto.setEntityName(entityName);
+                dto.setEntityCode(entityCode);
+            }
+
+            detailList.add(dto);
+            System.out.println("添加普通字段DTO: " + thirdValue);
+        } catch (Exception e) {
+            System.err.println("处理字段时出错: " + fieldId + " (" + fieldName + "), 类型: " + fieldType);
+            e.printStackTrace();
+        }
     }
 
     @Override

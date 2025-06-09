@@ -58,5 +58,27 @@ public interface ProcessFormHandler {
      */
     Map<String, Object> constructBill(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList);
 
+    /**
+     * 批量生成taskdetailDto push
+     * @param formArray
+     * @param fieldMapList
+     * @param variablesMap
+     * @return
+     */
+    List<ApproveTaskDetailDTO.AddDTO> generatePushDetailDTO(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, Map<String, Object> variablesMap);
+
+    /**
+     * 批量生成taskdetailDto Pull
+     * @param formArray
+     * @param variablesMap
+     * @param fieldMapList
+     * @return
+     */
+    List<ApproveTaskDetailDTO.AddDTO> generatePullDetailDTO(
+            JSONArray formArray,
+            Map<String, Object> variablesMap,
+            List<CfgProcessFieldMapEntity> fieldMapList);
+
+
     DictBasicEnum getEventType();
 }

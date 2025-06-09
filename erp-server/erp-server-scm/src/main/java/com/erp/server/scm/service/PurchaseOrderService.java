@@ -500,14 +500,4 @@ public interface PurchaseOrderService extends SuperService<PurchaseOrderEntity> 
      * @return ApiResult
      */
     void updateContractStampStatus(PurchaseOrderDTO.ContractStampStatusParamsDTO dto);
-
-    void updatePurchaseOrder(PurchaseOrderEntity purchaseOrderEntity);
-
-    void updatePurchaseOrderByUnique(PurchaseOrderDTO.UpdateContractStampStatusParamsDTO dto);
-
-    void insert(PurchaseOrderDTO.AddDTO dto);
-
-    List<PurchaseOrderEntity> getPurchaseOrderByCode(HashSet<String> strings);
-
-     void updateApproveStatus(PurchaseOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO);
 }

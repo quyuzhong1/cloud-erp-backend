@@ -1450,10 +1450,11 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
     }
 
     @Override
-    public void add(SupplierDTO.InsertDTO addDTO) {
+    public String add(SupplierDTO.InsertDTO addDTO) {
         String id = addSupplier(addDTO);
         //根据id，更新审核状态
         updateApproveStatusForDisApprove(Collections.singletonList(id), addDTO.getApprovalStatus());
+        return id;
     }
 
     @Override

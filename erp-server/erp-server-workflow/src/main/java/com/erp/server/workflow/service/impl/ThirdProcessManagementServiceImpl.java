@@ -2,10 +2,15 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
 import com.erp.server.workflow.mapper.ThirdProcessManagementMapper;
+import com.erp.server.workflow.service.ApproveTaskInfoService;
 import com.erp.server.workflow.service.ThirdProcessManagementService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
@@ -18,9 +23,16 @@ import org.springframework.transaction.annotation.Transactional;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ThirdProcessManagementDTO;
+
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+
+import javax.annotation.Resource;
+
 /**
  * <p>
  *  服务实现类
@@ -34,6 +46,9 @@ import com.common.core.enums.ApiError;
 public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdProcessManagementMapper, ThirdProcessManagementEntity> implements ThirdProcessManagementService {
     @Autowired
     private OperateLogService operateLogService;
+
+    @Resource
+    private ApproveTaskInfoService approveTaskInfoService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -91,8 +106,23 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional
     public void insert(JSONObject jsonObject) {
-        //TODO 解析数据
+        ApproveTaskInfoEntity one = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr("instanceCode")).orderByDesc(ApproveTaskInfoEntity::getCreateTime));
+        JSONArray taskList = jsonObject.getJSONArray("task_list");
         //1、生成主表数据
+        ThirdProcessManagementDTO.AddDTO addDTO = new ThirdProcessManagementDTO.AddDTO();
+        addDTO.setProcessInstanceId(jsonObject.getStr("instance_code"));
+        addDTO.setProcessDefinitionId(jsonObject.getStr("approval_code"));
+        addDTO.setSysUserId(jsonObject.getStr("user_id"));
+        //userId  转换成系统用户id
+        addDTO.setBusinessId(one.getBussinessCode());
+        addDTO.setBusinessCode(one.getBussinessCode());
+        addDTO.setBusinessKey(one.getBussinessKey());
+        addDTO.setStatus("");
+        addDTO.setProcessInstanceName("");
+        addDTO.setSourcePlatform("");
+        //毫秒值转为localdatetime
+        addDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("start_time")), ZoneId.systemDefault()));
+        addDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("end_time")), ZoneId.systemDefault()));
         //2、生成task明细数据
     }
 
