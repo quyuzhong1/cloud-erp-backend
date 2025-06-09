@@ -169,12 +169,17 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         addDTO.getApprove().setNoticeType(CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode());
         addDTO.getApproveResult().setNoticeType(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
         addDTO.getCc().setNoticeType(CfgApproveNoticeNoticeTypeEnum.CC.getCode());
-        addDTO.getTimeoutWarning().setNoticeType(CfgApproveNoticeNoticeTypeEnum.TIMEOUTWARNING.getCode());
         addDTO.getRecall().setNoticeType(CfgApproveNoticeNoticeTypeEnum.RECALL.getCode());
-        List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = Arrays.asList(addDTO.getApprove(),addDTO.getApproveResult(),addDTO.getCc(),addDTO.getTimeoutWarning(),addDTO.getRecall());
+        List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = Arrays.asList(addDTO.getApprove(),addDTO.getApproveResult(),addDTO.getCc(),addDTO.getRecall());
         for (CfgApproveNoticeDTO.NoticeSettingDTO noticeSettingDTO : noticeSettingList) {
             if (Objects.isNull(noticeSettingDTO)) {
                 continue;
+            }
+            //勾选了启用
+            if(noticeSettingDTO.getEnableStatus()){
+                if(CollUtil.isEmpty(noticeSettingDTO.getRoleTypeList()) && CollUtil.isEmpty(noticeSettingDTO.getSpecificPersonList())){
+                    throw new ServiceException(CfgApproveNoticeNoticeTypeEnum.getName(noticeSettingDTO.getNoticeType()) +"勾选了启用请至少选择一个通知人员");
+                }
             }
             noticeSettingDTO.setMainId(id);
             if (CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())) {
@@ -449,12 +454,17 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
         addOrUpdateDTO.getApprove().setNoticeType(CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode());
         addOrUpdateDTO.getApproveResult().setNoticeType(CfgApproveNoticeNoticeTypeEnum.APPROVERESULT.getCode());
         addOrUpdateDTO.getCc().setNoticeType(CfgApproveNoticeNoticeTypeEnum.CC.getCode());
-        addOrUpdateDTO.getTimeoutWarning().setNoticeType(CfgApproveNoticeNoticeTypeEnum.TIMEOUTWARNING.getCode());
         addOrUpdateDTO.getRecall().setNoticeType(CfgApproveNoticeNoticeTypeEnum.RECALL.getCode());
-        List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = Arrays.asList(addOrUpdateDTO.getApprove(),addOrUpdateDTO.getApproveResult(),addOrUpdateDTO.getCc(),addOrUpdateDTO.getTimeoutWarning(),addOrUpdateDTO.getRecall());
+        List<CfgApproveNoticeDTO.NoticeSettingDTO> noticeSettingList = Arrays.asList(addOrUpdateDTO.getApprove(),addOrUpdateDTO.getApproveResult(),addOrUpdateDTO.getCc(),addOrUpdateDTO.getRecall());
         for (CfgApproveNoticeDTO.NoticeSettingDTO noticeSettingDTO : noticeSettingList) {
             if (Objects.isNull(noticeSettingDTO)) {
                 continue;
+            }
+            //勾选了启用
+            if(noticeSettingDTO.getEnableStatus()){
+                if(CollUtil.isEmpty(noticeSettingDTO.getRoleTypeList()) && CollUtil.isEmpty(noticeSettingDTO.getSpecificPersonList())){
+                    throw new ServiceException(CfgApproveNoticeNoticeTypeEnum.getName(noticeSettingDTO.getNoticeType()) +"勾选了启用请至少选择一个通知人员");
+                }
             }
             noticeSettingDTO.setMainId(id);
             if (CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())) {
@@ -689,8 +699,6 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
                     data.setApproveResult(dto);
                 }else if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.CC.getCode())){
                     data.setCc(dto);
-                }else if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.TIMEOUTWARNING.getCode())){
-                    data.setTimeoutWarning(dto);
                 }else if(dto.getNoticeType().equals(CfgApproveNoticeNoticeTypeEnum.RECALL.getCode())){
                     data.setRecall(dto);
                 }

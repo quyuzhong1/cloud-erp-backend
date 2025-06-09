@@ -85,6 +85,12 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(CfgThirdNoticeDTO.AddDTO addDTO) {
+        //校验通知人员不能全部为空
+        List<String> roleTypeList = addDTO.getRoleTypeList();
+        List<String> specificPersonList = addDTO.getSpecificPersonList();
+        List<String> postIdList = addDTO.getPostIdList();
+        checkNoticeUserNotEmpty(roleTypeList, specificPersonList, postIdList);
+
 
         String method = addDTO.getMethod();
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addDTO.getPushMsgList();
@@ -162,6 +168,12 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         return new BaseResultDTO.AddDTO(cfgThirdNoticeEntity.getId(), cfgThirdNoticeEntity.getId());
     }
 
+    private static void checkNoticeUserNotEmpty(List<String> roleTypeList, List<String> specificPersonList, List<String> postIdList) {
+        if(CollUtil.isEmpty(roleTypeList) && CollUtil.isEmpty(specificPersonList) && CollUtil.isEmpty(postIdList)){
+            throw new ServiceException("通知人员不能全部为空");
+        }
+    }
+
     private void handlePushMsg(List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList, String method) {
         if(CollUtil.isEmpty(pushMsgList)){
             return ;
@@ -232,6 +244,12 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean update(CfgThirdNoticeDTO.UpdateDTO addOrUpdateDTO) {
+        //校验通知人员不能全部为空
+        List<String> roleTypeList = addOrUpdateDTO.getRoleTypeList();
+        List<String> specificPersonList = addOrUpdateDTO.getSpecificPersonList();
+        List<String> postIdList = addOrUpdateDTO.getPostIdList();
+        checkNoticeUserNotEmpty(roleTypeList, specificPersonList, postIdList);
+
         String method = addOrUpdateDTO.getMethod();
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addOrUpdateDTO.getPushMsgList();
         //可能存在一条空数据，需要排除掉
