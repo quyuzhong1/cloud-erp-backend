@@ -352,6 +352,9 @@
               WHERE tpm.is_deleted = false
                       ) pp
         WHERE ${params.sqlMap.default}
+        <if test="param.isDelegate != null and param.isDelegate == true">
+            and (pp.label_json ->> 'isDelegate')::boolean is true
+        </if>
         ORDER BY pp.createTime DESC
     </select>
     <select id="getTestList" resultType="java.lang.String">
