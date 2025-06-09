@@ -352,7 +352,7 @@
               WHERE tpm.is_deleted = false
                       ) pp
         WHERE ${params.sqlMap.default}
-        <if test="param.isDelegate != null and param.isDelegate == true">
+        <if test="params.isDelegate != null and params.isDelegate == true">
             and (pp.label_json ->> 'isDelegate')::boolean is true
         </if>
         ORDER BY pp.createTime DESC
