@@ -375,7 +375,7 @@ public class NfeInvoiceService {
             nfeItensDTO.setCfopExterno(invoiceTaxEntity.getDiffStateTaxCode());
             nfeItensDTO.setCfopInterno(invoiceTaxEntity.getSameStateTaxCode());
             nfeItensDTO.setQuantity(detailEntity.getQty());
-            nfeItensDTO.setCoPedClienteApi(detailEntity.getPlatformSkuNo());
+            nfeItensDTO.setCoPedClienteApi(soB2cEntity.getCode());
 
             //产品金额
             nfeItensDTO.setUnitPrice(getUnitPrice(detailEntity,invoiceSettingDetail));
