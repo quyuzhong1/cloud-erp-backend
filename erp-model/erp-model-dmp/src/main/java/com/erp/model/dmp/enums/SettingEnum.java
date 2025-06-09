@@ -77,6 +77,9 @@ public enum SettingEnum {
     AFTER_SALSE_SUBSCRIBE_MSG("afterSaleSubscribeMsg","after_sale","售后微信消息订阅"),
     AFTER_SALSE_ORDER_CANCEL_MSG("afterSaleOrderCancelMsg","after_sale","订单取消通知"),
     AFTER_SALSE_ORDER_APPROVE_MSG("afterSaleOrderApproveMsg","after_sale","审核通过提醒"),
+    
+    //数据查询使用doris
+    DORIS_QUERY_CFG_DMPOUTPUTTASKRECORD("dmpOutputTaskRecord",SettingEnum.DORIS_QUERY_CFG,"中台监控页面"),
     ;
 
     @EnumValue
@@ -169,6 +172,11 @@ public enum SettingEnum {
      * 图片上传大小
      */
     public static final String IMG_UPLOAD_SIZE = "img_upload_size";
+    
+    /**
+     * 数据查询使用doris
+     */
+    public static final String DORIS_QUERY_CFG = "doris_query_cfg";
 
     SettingEnum(String key, String type, String value) {
         this.key = key;

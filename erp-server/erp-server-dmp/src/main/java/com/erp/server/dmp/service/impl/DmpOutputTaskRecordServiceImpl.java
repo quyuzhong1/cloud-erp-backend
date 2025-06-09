@@ -11,7 +11,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.constant.DorisQueryCfg;
 import com.common.business.constant.RedisCacheConstants;
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.DmpSyncMqDTO;

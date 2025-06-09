@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReflectUtil;
+import cn.hutool.core.util.StrUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -20,6 +21,7 @@ import com.common.core.entity.BaseEntity;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.oms.entity.ShopInfoEntity;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.*;
@@ -32,6 +34,8 @@ import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.tms.dto.TmsFirstMileLogisticDTO;
 import com.erp.model.tms.entity.ProductRegistrationEntity;
 import com.erp.model.tms.enums.FmLogisticTrackStatusEnum;
+import com.erp.model.wms.dto.WarehouseLocationReplenishDTO;
+import com.erp.model.wms.enums.ReplenishBillStatusEnum;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.oms.feign.ShopInfoFeign;
@@ -268,10 +272,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 if (StringUtils.isBlank(post) && StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
                     continue;
                 }
-                //目前只支持3种单据
+                //目前只支持几种单据
                 String businessType = noticeEntity.getBusinessType();
                 if(SourceTypeEnum.QC_INFO.getCode().equals(businessType)
                         || SourceTypeEnum.LOGISTICS_BILL.getCode().equals(businessType)
+                        || SourceTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode().equals(businessType)
                         ||SourceTypeEnum.PRODUCT_REGISTRATION.getCode().equals(businessType)){
                 }else {
                     continue;
@@ -319,6 +324,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     sendFmLogisticWarn(noticeEntity,post, roleType, specificPerson, title, now, content, delayLevel);
                 } else if (SourceTypeEnum.PRODUCT_REGISTRATION.getCode().equals(businessType)) { //备案管理
                     sendWhenNotRegistration(noticeEntity,post, roleType, specificPerson, title, content, now, delayLevel);
+                } else if (SourceTypeEnum.WAREHOUSE_LOCATION_REPLENISH.getCode().equals(businessType)){
+                    sendWarehouseLocationReplenish(noticeEntity,post, roleType, specificPerson, title, content, now, delayLevel);
                 }
             }
         }
@@ -334,6 +341,32 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         content = content + "质检通知时间：" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
         foreachSendByNoticeMethod(noticeEntity, userIdList, now, title, content, delayLevel);
 
+    }
+
+    private void sendWarehouseLocationReplenish(CfgThirdNoticeEntity noticeEntity, String post, String roleType, String specificPerson, String title, String content, LocalDateTime now, int delayLevel) {
+        List<String> userIdList = getUserList(post, specificPerson);
+        if (CollUtil.isEmpty(userIdList)) {
+            return;
+        }
+
+        //统计仓位补货的各个类型的数量
+        String waitHandle = "0";
+        String handleIng = "0";
+        List<WarehouseLocationReplenishDTO.TabDTO> tabList = wmsTaskFeign.listTabInfo();
+        if(CollUtil.isNotEmpty(tabList)){
+            for (WarehouseLocationReplenishDTO.TabDTO tab : tabList) {
+                String tabFlag = tab.getTabFlag();
+                if(tabFlag.equals(ReplenishBillStatusEnum.WAIT_HANDLE.getCode())){
+                    waitHandle = tab.getCount()+"";
+                }
+                if(tabFlag.equals(ReplenishBillStatusEnum.HANDLE_ING.getCode())){
+                    handleIng = tab.getCount()+"";
+                }
+            }
+        }
+        //消息体
+        content = content +  StrUtil.format(NoticeMsgConstant.FS_WLR_SETTING_CONTENT,waitHandle,handleIng, now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        foreachSendByNoticeMethod(noticeEntity, userIdList, now, title, content, delayLevel);
     }
 
     private void sendWhenNotRegistration(CfgThirdNoticeEntity noticeEntity, String post, String roleType, String specificPerson, String title, String content, LocalDateTime now, int delayLevel) {
@@ -529,7 +562,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
      * @author jack
      * @date 2025-05-30
      */
-    private List<String> getShopUserList(String roleType, List<String> businessIds) {
+    private List<String> getRoleTypeUserList(String roleType, List<String> businessIds) {
         List<String> resultList = new ArrayList<>();
         //
         if(StringUtils.isNotBlank(roleType)){
