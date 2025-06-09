@@ -375,12 +375,12 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     }
 
     private void fillList(List<CfgThirdNoticeDTO.ListDTO> records) {
+        //单据类型
+        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
         //飞书
         for (CfgThirdNoticeDTO.ListDTO record : records) {
-
-            //单据类型
-            String businessType = record.getBusinessType();
-            record.setBusinessTypeName(SourceTypeEnum.getName(businessType));
+            record.setBusinessTypeName(businessTypeMap.getOrDefault(record.getBusinessType(),""));
 
             String method = record.getMethod();
             record.setMethodName(CfgThirdNoticeMethodEnum.getName(method));
@@ -435,8 +435,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         BeanMapper.copy(entity,data);
 
         //单据类型
-        String businessType = data.getBusinessType();
-        data.setBusinessTypeName(SourceTypeEnum.getName(businessType));
+        List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+        thirdNoticeBusinessType.stream().filter(e -> e.getValue().equals(entity.getBusinessType())).findFirst().ifPresent(e -> data.setBusinessTypeName(e.getName()));
 
         String method = data.getMethod();
         data.setMethodName(CfgThirdNoticeMethodEnum.getName(method));
