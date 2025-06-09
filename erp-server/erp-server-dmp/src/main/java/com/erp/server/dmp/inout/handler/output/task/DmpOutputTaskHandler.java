@@ -345,6 +345,7 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 				|| DmpCfgOutputBlackCompareSignEnum.LIKE.getCode().equals(compareSign)
 				|| DmpCfgOutputBlackCompareSignEnum.NOTLIKE.getCode().equals(compareSign)
 				|| DmpCfgOutputBlackCompareSignEnum.IN.getCode().equals(compareSign)
+				|| DmpCfgOutputBlackCompareSignEnum.NOTIN.getCode().equals(compareSign)
 				|| DmpCfgOutputBlackCompareSignEnum.BE.getCode().equals(compareSign)){
 			if(value != null) {
 				String valueString = value.toString();
@@ -376,6 +377,17 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 								return true;
 							}
 						}
+					}else if(DmpCfgOutputBlackCompareSignEnum.NOTIN.getCode().equals(compareSign)) {
+						String[] fieldValueList = fieldValue.split(",");
+						if(fieldValueList.length == 1) {
+							fieldValueList = fieldValue.split("，");
+						}
+						for(String s : fieldValueList) {
+							if(StringUtils.equals(valueString, s)) {
+								return false;
+							}
+						}
+						return true;
 					}
 				}else if(DmpCfgOutputBlackDataTypeEnum.INT.getCode().equals(dataType)) {
 					Integer intValue = null;
@@ -420,6 +432,23 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 										}
 									}
 								}
+							}else if(DmpCfgOutputBlackCompareSignEnum.NOTIN.getCode().equals(compareSign)) {
+								String[] fieldValueList = fieldValue.split(",");
+								if(fieldValueList.length == 1) {
+									fieldValueList = fieldValue.split("，");
+								}
+								for(String s : fieldValueList) {
+									if(StringUtils.isNotBlank(s)) {
+										fieldIntValue = null;
+										try {
+											fieldIntValue = Integer.valueOf(s);
+										} catch (NumberFormatException e) {}
+										if(fieldIntValue != null && (intValue.compareTo(fieldIntValue) == 0)) {
+											return false;
+										}
+									}
+								}
+								return true;
 							}else if(DmpCfgOutputBlackCompareSignEnum.BE.getCode().equals(compareSign)) {
 								String[] fieldValueList = fieldValue.split(",");
 								if(fieldValueList.length == 1) {
@@ -494,6 +523,23 @@ public abstract class DmpOutputTaskHandler extends DmpOutputHandler{
 										}
 									}
 								}
+							}else if(DmpCfgOutputBlackCompareSignEnum.NOTIN.getCode().equals(compareSign)) {
+								String[] fieldValueList = fieldValue.split(",");
+								if(fieldValueList.length == 1) {
+									fieldValueList = fieldValue.split("，");
+								}
+								for(String s : fieldValueList) {
+									if(StringUtils.isNotBlank(s)) {
+										fieldDateValue = null;
+										try {
+											fieldDateValue = DateUtil.parse(s);
+										} catch (NumberFormatException e) {}
+										if(fieldDateValue != null && (dateValue.compareTo(fieldDateValue) == 0)) {
+											return false;
+										}
+									}
+								}
+								return true;
 							}else if(DmpCfgOutputBlackCompareSignEnum.BE.getCode().equals(compareSign)) {
 								String[] fieldValueList = fieldValue.split(",");
 								if(fieldValueList.length == 1) {
