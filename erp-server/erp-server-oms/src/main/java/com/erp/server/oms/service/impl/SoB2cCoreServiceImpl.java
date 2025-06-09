@@ -13,15 +13,9 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.dmp.entity.DmpOutputTaskRecordEntity;
-import com.erp.model.oms.dto.DictBasicDTO;
-import com.erp.model.oms.dto.ListingInfoParamDTO;
-import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
-import com.erp.model.oms.dto.SoB2cCoreDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
-import com.erp.model.oms.enums.DictBasicTypeEnum;
-import com.erp.model.oms.enums.OrderLogisticTypeEnum;
-import com.erp.model.oms.enums.RuleTypeEnum;
-import com.erp.model.oms.enums.SoB2cBillStatusEnum;
+import com.erp.model.oms.enums.*;
 import com.erp.model.plm.entity.ProductDetailEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.entity.DictCountryEntity;
@@ -36,7 +30,6 @@ import com.erp.rpc.dmp.feign.DmpTaskFeign;
 import com.erp.rpc.wms.feign.WmsVirtualWarehouseFeign;
 import com.erp.server.oms.convert.SoB2cCoreConverter;
 import com.erp.server.oms.service.*;
-import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -80,6 +73,9 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
 
     @Resource
     private WmsVirtualWarehouseFeign wmsVirtualWarehouseFeign;
+
+    @Resource
+    private CfgSettingService cfgSettingService;
 
     @Override
     public List<SoB2cCoreDTO.ListRetryOutstockDTO> listRetryOutstock(BaseIdsDTO.IdsDTO dto) {
@@ -375,5 +371,45 @@ public class SoB2cCoreServiceImpl implements SoB2cCoreService {
             generateB2cList.add(generateB2c);
         }
         return generateB2cList;
+    }
+
+    @Override
+    public Boolean listPayMethodSetting(SoB2cEntity entity) {
+        List<CfgSettingEntity> cfgSettingList = cfgSettingService.listSettingByKey(CfgSettingEnum.PAY_METHOD.getCode());
+        if (CollUtil.isEmpty(cfgSettingList)) {
+            return Boolean.FALSE;
+        }
+        List<CfgSettingDTO.PayMethodDTO> list = cfgSettingList.stream()
+                .filter(obj -> CharSequenceUtil.isNotBlank(obj.getValue()))
+                .map(obj -> JSONUtil.toBean(obj.getValue(), CfgSettingDTO.PayMethodDTO.class))
+                .collect(Collectors.toList());
+        if (CollUtil.isEmpty(list)) {
+            log.error("未找到支付方式，平台：{}，支付方式：{}", entity.getDictPlatform(), entity.getDictPayMethod());
+            return Boolean.FALSE;
+        }
+        Map<String, CfgSettingDTO.PayMethodDTO> map = list.stream().collect(Collectors.toMap(obj -> CharSequenceUtil.format("{}-{}", obj.getPlatform(), obj.getPayMethod()), Function.identity()));
+        CfgSettingDTO.PayMethodDTO payMethodDTO = map.get(CharSequenceUtil.format("{}-{}", entity.getDictPlatform(), entity.getDictPayMethod()));
+        if (ObjUtil.isEmpty(payMethodDTO)) {
+            log.error("未找到支付方式配置，平台：{}，支付方式：{}", entity.getDictPlatform(), entity.getDictPayMethod());
+           return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
+    /**
+     * 付款信息验证
+     * @author will
+     * @date 2025/5/30 15:51
+     * @param entity
+     * @return void
+     */
+    @Override
+    public void checkPayMent(SoB2cEntity entity) {
+        //查询支付方式是否支持继续发货
+        Boolean isFlag = this.listPayMethodSetting(entity);
+        //如果支付状态是待付款，并且支付方式不支持继续发货，则抛出异常
+        if ((ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) && !isFlag) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
+        }
     }
 }

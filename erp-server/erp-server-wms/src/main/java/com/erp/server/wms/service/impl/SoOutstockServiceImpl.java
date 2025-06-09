@@ -1346,7 +1346,13 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if(CollectionUtils.isEmpty(list)){
             return;
         }
-        List<String> soIds = list.stream().map(SoOutstockEntity::getSoId).distinct().collect(Collectors.toList());
+        List<String> soIds = list.stream().map(SoOutstockEntity::getSoId)
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(soIds)) {
+            return;
+        }
         List<SoOutstockEntity> soOutstockList = this.listBySoIds(soIds);
         Map<String,List<SoOutstockEntity>> soOutstockMap = list.stream().collect(Collectors.groupingBy(SoOutstockEntity::getSoId));
         List<String> clearOutDateSoIds = new ArrayList<>();

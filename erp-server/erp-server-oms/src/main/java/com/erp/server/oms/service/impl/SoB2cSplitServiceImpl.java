@@ -120,6 +120,10 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
     @Resource
     private SoB2cRuleService soB2cRuleService;
 
+    @Resource
+    @Lazy
+    private SoB2cCoreService soB2cCoreService;
+
     @Override
     public List<SoB2cDetailDTO.ViewDTO> getBomSplitInfo(List<String> ids) {
         List<SoB2cDetailEntity> detailEntityList = soB2cDetailService.listContainDeleted(ids);
@@ -1057,10 +1061,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         }
 
         //未付款数据不能操作
-        if (ObjectUtil.isEmpty(entity.getPayStatus()) || SoB2cPayStatusEnum.ENUM_PAYMENT.getCode().equals(entity.getPayStatus())) {
-            throw new ServiceException(ApiError.ERROR_SO_B2C_PAYMENT_NOT_OPERATE, entity.getCode());
-        }
-
+        soB2cCoreService.checkPayMent(entity);
         //查询订单是否是合并订单
         List<SoB2cRefEntity> thisRefList = soB2cRefList.stream().filter(obj -> CharSequenceUtil.equals(obj.getTargetId(), entity.getId())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(thisRefList)) {

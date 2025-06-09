@@ -132,7 +132,7 @@ public class OverseasHistoryInventoryServiceImpl extends SuperServiceImpl<Overse
     public List<OverseasHistoryInventoryEntity> listByStartDateAndEndDate(LocalDate startDate, LocalDate endDate) {
         List<OverseasProviderDTO.ListWithWarehouseDTO> listWithWarehouseDTOS = overseasProviderFeign.listAllMatch();
         Map<String, String> warehouseCodeMap = listWithWarehouseDTOS.stream()
-                .collect(Collectors.toMap(v -> v.getCode() + "-" + v.getPlatformWarehouseCode(), OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId));
+                .collect(Collectors.toMap(v -> v.getCode() + "-" + v.getPlatformWarehouseCode(), OverseasProviderDTO.ListWithWarehouseDTO::getWarehouseId,(firstValue, secondValue) -> firstValue));
         Set<String> warehouseCodes = listWithWarehouseDTOS.stream().map(OverseasProviderDTO.ListWithWarehouseDTO::getPlatformWarehouseCode).collect(Collectors.toSet());
         List<OverseasHistoryInventoryEntity> list = baseMapper.listByStartDateAndEndDate(startDate, endDate, warehouseCodes);
         for (OverseasHistoryInventoryEntity entity : list) {

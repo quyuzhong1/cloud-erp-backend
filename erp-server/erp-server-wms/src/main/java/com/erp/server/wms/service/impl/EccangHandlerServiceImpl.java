@@ -8,6 +8,7 @@ import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.entity.DictCityEntity;
+import com.erp.model.wms.dto.OverseasProviderDTO;
 import com.erp.model.wms.dto.third.*;
 import com.erp.model.wms.enums.ThirdWarehouseCancelResultEnum;
 import com.erp.server.wms.convert.OverseasWarehouseInboundConverter;
@@ -144,7 +145,7 @@ public class EccangHandlerServiceImpl extends AbstractThirdWarehouseHandler {
     }
 
     @Override
-    protected Boolean hasWarehouse() {
+    protected Boolean warehouseAuthorize(OverseasProviderDTO.AuthorizeParamDTO dto) {
         AntuResponse<List<AntuWarehouseResp>> response = antuService.getWarehouse(AntuBaseRequest.builder()
                         .pageSize(1)
                         .page(1)

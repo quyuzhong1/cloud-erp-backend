@@ -54,9 +54,6 @@ public class OverseasWarehouseController extends BaseController {
      */
     @PostMapping("/getOverseasWarehouseListByPlatformCodes")
     public List<OverseasProviderWarehouseEntity> getOverseasWarehouseListByPlatformCodes(@RequestParam(value = "warehouseCodeList") List<String> warehouseCodeList, @RequestParam(value = "platform")String platform){
-        if (CollectionUtils.isEmpty(warehouseCodeList)) {
-            return Collections.emptyList();
-        }
         return overseasProviderWarehouseService.listByPlatformWarehouseCode(warehouseCodeList,platform);
     }
 

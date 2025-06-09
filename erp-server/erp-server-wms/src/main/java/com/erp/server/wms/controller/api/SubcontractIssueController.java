@@ -358,11 +358,6 @@ public class SubcontractIssueController extends BaseController {
      * @return ApiResult<PagingVO<SubcontractIssueDTO.SubcontractDetailListDTO>>
      */
     @PostMapping("/listSubcontractDetail")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "wms:subcontractIssue:listSubcontractDetail",
-            tableAlias = ""
-    )
     public ApiResult<List<SubcontractIssueDTO.SubcontractDetailListDTO>> listSubcontractDetail(@RequestBody @Validated SubcontractIssueDTO.DetailPagingParamDTO dto) {
         return success(subcontractIssueService.listSubcontractDetail(dto));
     }
