@@ -262,6 +262,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
             startDTO.setBusinessId(bussinessId);
             startDTO.setRuleType(one.getType());
+
             cfgProcessService.startThirdProcess(startDTO);
         }
         // 绑定流程发起人

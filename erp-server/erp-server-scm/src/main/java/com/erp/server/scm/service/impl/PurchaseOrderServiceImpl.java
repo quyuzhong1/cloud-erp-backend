@@ -136,8 +136,6 @@ import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_OR
 @Slf4j
 @Service
 public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapper, PurchaseOrderEntity> implements PurchaseOrderService {
-    @Resource
-    private MQProducerService mQProducerService;
 
     @Resource
     private SysUserFeign sysUserFeign;
