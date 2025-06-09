@@ -36,4 +36,10 @@ public interface CfgQueryOptionFeign {
      */
     @PostMapping("/feign/cfgQueryOption/getRemoteValues")
     Map<String,String> getRemoteValues(@RequestBody Map<String,String> handlerValueMap);
+
+    /**
+     * 根据单据类型查询配置
+     */
+    @GetMapping("/feign/cfgQueryOption/listByBusinessKey")
+    List<CfgQueryOptionEntity> listByBusinessKey(@RequestParam("businessKey") String businessKey);
 }

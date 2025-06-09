@@ -96,7 +96,7 @@
             cfg_query_option
         WHERE
             is_deleted = FALSE
-          AND bussiness_key IN ( SELECT bussiness_key FROM cfg_query_option WHERE is_deleted = FALSE AND TABLE_NAME = #{params.tableName} AND sys_classify = #{params.sysClassify} LIMIT 1 )
+          AND( bussiness_key IN ( SELECT bussiness_key FROM cfg_query_option WHERE is_deleted = FALSE AND TABLE_NAME = #{params.tableName} AND sys_classify = #{params.sysClassify } LIMIT 1 ) or field_belongs_type = 'common')
     </select>
 
 

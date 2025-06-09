@@ -58,7 +58,7 @@ public class CfgQueryOptionExtServiceImpl extends SuperServiceImpl<CfgQueryOptio
         if(CollUtil.isNotEmpty(list)){
             Map<String,String> result = new HashMap<>();
 
-            Map<String, CfgQueryOptionExtEntity> cfgQueryOptionExtMap = list.stream().collect(Collectors.toMap(CfgQueryOptionExtEntity::getCfgQueryOptionId, e -> e));
+            Map<String, CfgQueryOptionExtEntity> cfgQueryOptionExtMap = list.stream().collect(Collectors.toMap(CfgQueryOptionExtEntity::getCfgQueryOptionId, e -> e,(o1,o2)->o1));
 
             for (Map.Entry<String, String> entry : map.entrySet()) {
                 CfgQueryOptionExtEntity extEntity = cfgQueryOptionExtMap.getOrDefault(entry.getKey(), null);

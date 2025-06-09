@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
  * @since 2025-05-15 12:14:18
  */
 public enum CfgQueryOptionFieldBelongsTypeEnum implements EnumMessage {
-	TABLE("table", "表头"),
+	MAIN("main", "主表"),
 	DETAIL("detail", "明细"),
 	COMMON("common", "共用"),
     ;

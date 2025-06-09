@@ -22,6 +22,7 @@ import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.LoginUser;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.enums.ApiError;
@@ -31,6 +32,10 @@ import com.common.core.utils.BeanMapperUtils;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.common.core.utils.date.DateUtil;
+import com.erp.model.oms.entity.SoB2cDetailEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.erp.model.plm.dto.*;
 import com.erp.model.plm.entity.*;
 import com.erp.model.plm.enums.*;
@@ -44,13 +49,17 @@ import com.erp.model.tms.enums.PilotApplicationTabEnum;
 import com.erp.model.wms.dto.WarehouseDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.dto.ProcessTaskManagementDTO;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.scm.feign.*;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
+import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.server.plm.constant.ProductConstant;
 import com.erp.server.plm.mapper.PilotApplicationMapper;
 import com.erp.server.plm.mapper.ProductDetailMapper;
@@ -131,6 +140,10 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
     private ProductPackService productPackService;
     @Resource
     private ScmTaskFeign scmTaskFeign;
+    @Resource
+    private CfgQueryOptionFeign cfgQueryOptionFeign;
+
+
     private static final String SKUCLASSPATH = String.valueOf(PilotApplicationEntity.class);
 
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -498,14 +511,51 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
      */
     private Map<String,Object> getVariablesMap(PilotApplicationEntity entity) {
         Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
-        if(CollUtil.isEmpty(detailList)){
-           throw new ServiceException(ApiError.ERROR_95281);
+        //获取配置明细
+        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
+        if(CollUtil.isNotEmpty(cfgQueryOptionList)){
+            //根据fieldBelongsType 进行分组
+            Map<String, List<CfgQueryOptionEntity>> fieldBelongsTypeByMap = cfgQueryOptionList.stream().collect(Collectors.groupingBy(CfgQueryOptionEntity::getFieldBelongsType));
+            //获取主表字段配置
+            List<CfgQueryOptionEntity> mainCfgQueryOptionList = fieldBelongsTypeByMap.get(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode());
+
+            //遍历
+            for (Map.Entry<String, List<CfgQueryOptionEntity>> entry : fieldBelongsTypeByMap.entrySet()) {
+                //common和主表不需要再查询
+                if(entry.getKey().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode()) || entry.getKey().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
+                    continue;
+                }
+                List<CfgQueryOptionEntity> value = entry.getValue();
+                //如果存在，则需要找对明细表里的关联字段，并根据该字段来进行FeignQuery查询出对应的明细列表
+                CfgQueryOptionEntity detailEntity = value.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
+                if (Objects.isNull(detailEntity)) {
+                    continue;
+                }
+                //获取关联记录
+                String parentId = detailEntity.getParentId();
+                CfgQueryOptionEntity refEntity = mainCfgQueryOptionList.stream().filter(e -> e.getId().equals(parentId)).findFirst().orElse(null);
+                String refField = refEntity.getConditionField();
+                String refValue = String.valueOf(variablesMap.get(refField));
+
+                String classpath = detailEntity.getClasspath();
+                classpath = classpath.replace("class ", "");
+                Class<BaseEntity> clazz = null;
+                try {
+                    clazz = (Class<BaseEntity>) Class.forName(classpath);
+                } catch (ClassNotFoundException e) {
+                    throw new ServiceException(classpath + "实体不存在");
+                }
+                List<BaseEntity> detailList = FeignQuery.create(clazz)
+                        .eq(detailEntity.getConditionField(), refValue)
+                        .list();
+
+                if (CollUtil.isEmpty(detailList)) {
+                    continue;
+                }
+                //明细数据
+                variablesMap.put(entry.getKey() , BeanUtil.copyToList(detailList,Map.class));
+            }
         }
-        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
-        //SKU
-        String skuNo = detailList.stream().map(PilotApplicationDetailEntity::getSkuNo).collect(Collectors.joining(","));
-        variablesMap.put("skuNo", skuNo);
         return variablesMap;
     }
 
@@ -638,17 +688,32 @@ public class PilotApplicationServiceImpl extends SuperServiceImpl<PilotApplicati
         startDTO.setBusinessKey(SourceTypeEnum.PILOT_APPLICATION.getCode());
         startDTO.setBusinessName(entity.getCode());
         startDTO.setUserId(UserContext.getDefaultLoginUser().getUid());
-        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
-        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
-        if(CollUtil.isNotEmpty(detailList)){
-            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
-        }
-        startDTO.setVariablesMap(variablesMap);
+        startDTO.setVariablesMap(getVariablesMap(entity));
         ApiResult<ProcessManagementDTO.StartResultDTO> result = workflowFeign.start(startDTO);
         if (!result.isSuccess()) {
             throw new ServiceException(result.getMsg());
         }
     }
+
+    /**
+     * variablesMap值赋值
+     * @author will
+     * @date 2025/5/21 10:51
+     * @param entity
+     * @return Map<String,Object>
+     */
+    private Map<String,Object> getVariablesMap(SoB2cEntity entity) {
+        Map<String, Object> variablesMap = BeanUtil.beanToMap(entity);
+
+
+
+        List<PilotApplicationDetailEntity> detailList = pilotApplicationDetailService.lambdaQuery().eq(PilotApplicationDetailEntity::getMainId, entity.getId()).list();
+        if(CollUtil.isNotEmpty(detailList)){
+            variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList,Map.class));
+        }
+        return variablesMap;
+    }
+
 
     private PilotApplicationDTO.ViewDTO fillOne(PilotApplicationEntity pilotApplicationEntity) {
         if (ObjectUtil.isEmpty(pilotApplicationEntity)) {
