@@ -368,6 +368,7 @@ public class DmpOutputErpPushTaskHandler extends DmpOutputTaskHandler{
 				dmpOutputTaskRecordService.lambdaUpdate()
 					.set(DmpOutputTaskRecordEntity::getResponseData, "查询同步后报文属于黑名单")
 					.set(DmpOutputTaskRecordEntity::getUpdateTime, LocalDateTime.now())
+					.set(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
 					.set(DmpOutputTaskRecordEntity::getIsDeleted, true)
 					.eq(DmpOutputTaskRecordEntity::getId, dmpOutputTaskRecordEntity.getId())
 					.ne(DmpOutputTaskRecordEntity::getStatus, DmpOutputTaskRecordStatusEnum.FINISH.getCode())
