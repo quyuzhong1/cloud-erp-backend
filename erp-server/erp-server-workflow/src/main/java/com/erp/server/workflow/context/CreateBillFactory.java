@@ -6,7 +6,7 @@ package com.erp.server.workflow.context;
  * @date: 2025/5/20 12:14
  */
 
-import com.erp.server.workflow.handler.UpdateBillStatusHandler;
+import com.erp.server.workflow.handler.CreateBillHandler;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
@@ -19,16 +19,16 @@ import java.util.List;
  *@Version: 1.0
  */
 @Component
-public class UpdateBillStatusFactory {
+public class CreateBillFactory {
     @Resource
-    private List<UpdateBillStatusHandler> handlers;
+    private List<CreateBillHandler> handlers;
 
     /**
      * 根据事件名获取具体处理对象
      * @param event 事件名，
      */
-    public UpdateBillStatusHandler getUpdateBillStatusHandler(String event) {
-        for (UpdateBillStatusHandler handler : handlers) {
+    public CreateBillHandler getCreateBillHandler(String event) {
+        for (CreateBillHandler handler : handlers) {
             if (handler.isMatch(event)) {
                 return handler;
             }

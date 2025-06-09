@@ -94,7 +94,7 @@ public interface SupplierFeign {
      * add
      */
     @PostMapping("/feign/supplier/add")
-    void add(@RequestBody SupplierDTO.InsertDTO addDTO);
+    String add(@RequestBody SupplierDTO.InsertDTO addDTO);
 
     @PostMapping("/feign/supplier/updateApproveStatus")
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);

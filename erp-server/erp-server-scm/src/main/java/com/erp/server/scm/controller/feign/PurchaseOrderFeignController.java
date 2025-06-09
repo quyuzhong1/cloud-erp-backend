@@ -542,27 +542,11 @@ public class PurchaseOrderFeignController {
         return purchaseOrderService.listAllPurchaseBySkuIdAndSupplier(purchaseCalcQtyParamsDTO);
     }
 
-    @PostMapping("/updatePurchaseOrder")
-    public void updatePurchaseOrder(@RequestBody PurchaseOrderEntity purchaseOrderEntity) {
-        purchaseOrderService.updatePurchaseOrder(purchaseOrderEntity);
-    }
-
-    @PostMapping("/updatePurchaseOrderByUnique")
-    public void updatePurchaseOrderByUnique(PurchaseOrderDTO.UpdateContractStampStatusParamsDTO dto) {
-        purchaseOrderService.updatePurchaseOrderByUnique(dto);
-    }
-    @PostMapping("/add")
-    public void save(@RequestBody PurchaseOrderDTO.AddDTO dto) {
-        purchaseOrderService.insert(dto);
-    }
-
-    @PostMapping("/getPurchaseOrderByCode")
-    public List<PurchaseOrderEntity> getPurchaseOrderByCode(@RequestBody HashSet<String> strings) {
-        return purchaseOrderService.getPurchaseOrderByCode(strings);
-    }
-
-    @PostMapping("/updateApproveStatus")
-    public void updateApproveStatus(@RequestBody PurchaseOrderDTO.UpdateApprovalStatusDTO updateApprovalStatusDTO) {
-        purchaseOrderService.updateApproveStatus(updateApprovalStatusDTO);
+    /**
+     * 根据id更新合同状态
+     */
+    @PostMapping("/updateContractStatusById")
+    public void updateContractStatusById(@RequestBody PurchaseOrderDTO.ContractStampStatusParamsDTO  contractStampStatusParamsDTO) {
+        purchaseOrderService.updateContractStampStatus(contractStampStatusParamsDTO);
     }
 }

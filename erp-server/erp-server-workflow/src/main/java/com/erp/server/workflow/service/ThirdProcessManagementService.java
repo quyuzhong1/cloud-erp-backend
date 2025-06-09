@@ -34,5 +34,9 @@ public interface ThirdProcessManagementService extends SuperService<ThirdProcess
     Boolean update(ThirdProcessManagementDTO.UpdateDTO dto);
 
 
+    /**
+     * add or update
+     * @param jsonObject
+     */
     void insert(JSONObject jsonObject);
 }

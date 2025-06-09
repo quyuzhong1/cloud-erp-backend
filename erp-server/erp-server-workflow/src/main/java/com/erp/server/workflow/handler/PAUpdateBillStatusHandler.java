@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  */
 @Component
 @Slf4j
-public class PAUpdateBillStatusHandler implements UpdateBillStatusHandler {
+public class PAUpdateBillStatusHandler implements CreateBillHandler {
 
     @Resource
     ThirdProcessManagementService thirdProcessManagementService;
@@ -66,7 +66,7 @@ public class PAUpdateBillStatusHandler implements UpdateBillStatusHandler {
 
     @Override
     public boolean isMatch(String event) {
-        return UpdateBillStatusHandler.super.isMatch(event);
+        return CreateBillHandler.super.isMatch(event);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class PAUpdateBillStatusHandler implements UpdateBillStatusHandler {
     }
 
     @Override
-    public void operateType(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity,List<CfgProcessFieldMapEntity> fieldMapList,List<CfgProcessValueMapEntity> valueMapList) {
+    public void createBill(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity,List<CfgProcessFieldMapEntity> fieldMapList,List<CfgProcessValueMapEntity> valueMapList) {
         DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
         ProcessFormHandler constructBillHandler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
 

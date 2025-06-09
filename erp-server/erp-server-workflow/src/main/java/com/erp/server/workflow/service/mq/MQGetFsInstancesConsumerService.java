@@ -1,29 +1,20 @@
 package com.erp.server.workflow.service.mq;
 
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.common.business.vo.LoginUser;
 import com.common.core.exception.ServiceException;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
-import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.entity.*;
-import com.erp.model.workflow.enums.ApproveTaskStatusEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionTypeEnum;
-import com.erp.server.workflow.context.ProcessFormFactory;
-import com.erp.server.workflow.context.UpdateBillStatusFactory;
-import com.erp.server.workflow.handler.ProcessFormHandler;
-import com.erp.server.workflow.handler.UpdateBillStatusHandler;
+import com.erp.server.workflow.context.CreateBillFactory;
+import com.erp.server.workflow.handler.CreateBillHandler;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
@@ -31,9 +22,7 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 import javax.annotation.Resource;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -56,7 +45,7 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
     private ThirdProcessInstanceService thirdProcessInstanceService;
 
     @Resource
-    private UpdateBillStatusFactory updateBillStatusFactory;
+    private CreateBillFactory createBillFactory;
 
     @Resource
     private CfgThirdProcessService cfgThirdProcessService;
@@ -68,7 +57,9 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
     CfgProcessValueMapService  cfgProcessValueMapService;
 
     @Resource
-    ProcessFormFactory processFormFactory;
+    ThirdProcessManagementService thirdProcessManagementService;
+
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -119,6 +110,12 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
     }
 
     private void handleUpdateStatus(JSONObject jsonObject) {
+        //TODO 更新thirdTask
+        thirdProcessManagementService.insert(jsonObject);
+    }
+
+    private void handleAddInstance(JSONObject jsonObject) {
+        // 从 jsonObject 中获取 instanceCode
         CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getBussinessKey, jsonObject.getStr("bussinessKey")).eq(CfgThirdProcessEntity::getIsDeleted, false));
 
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, thirdProcessEntity.getId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
@@ -128,40 +125,6 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIdList).eq(CfgProcessValueMapEntity::getIsDeleted, false));
 
         String instanceCode = jsonObject.getStr("instanceCode");
-
-        // TODO创建三方生成查询记录(处理记录)
-        ApproveTaskInfoEntity taskInfo = approveTaskInfoService.getOne(
-                new LambdaQueryWrapper<ApproveTaskInfoEntity>()
-                        .eq(ApproveTaskInfoEntity::getThirdInstanceId, instanceCode)
-        );
-        if (ObjectUtil.isEmpty(taskInfo)) {
-            // 如果记录不存在，创建新的任务信息
-            ProcessFormHandler handler = processFormFactory.getConstructBillHandler(thirdProcessEntity.getSourcePlatform());
-            Map<String, Object> map = handler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
-
-            UpdateBillStatusHandler billStatusHandler = updateBillStatusFactory.getUpdateBillStatusHandler(thirdProcessEntity.getBussinessKey());
-            billStatusHandler.operateType(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
-        }
-        // 完成新增数据事务提交之后,异步执行
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
-            @Override
-            public void afterCommit() {
-                update(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
-                log.info("飞书审批实例更新单据状态[{}]消息已投递,事务已提交");
-            }
-        });
-    }
-
-    //  处理拉取类型的消息
-    public void update(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity,  List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
-        //使用bussniessKey查询出三方审批生成配置，根据oprateType处理instance
-        UpdateBillStatusHandler updateBillStatusHandler = updateBillStatusFactory.getUpdateBillStatusHandler(thirdProcessEntity.getBussinessKey());
-        updateBillStatusHandler.operateType(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
-    }
-
-    private void handleAddInstance(JSONObject jsonObject) {
-        // 从 jsonObject 中获取 instanceCode
-        String instanceCode = jsonObject.getStr("instanceCode");
         // 根据 instanceCode 查询对应的记录
         ApproveTaskInfoEntity taskInfo = approveTaskInfoService.getOne(
                 new LambdaQueryWrapper<ApproveTaskInfoEntity>()
@@ -169,40 +132,27 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
         );
         // 如果记录不存在，记录日志并返回
         if (taskInfo == null) {
-            log.warn("未找到对应的审批任务记录: instanceCode={}", instanceCode);
+            log.warn("未找到对应的三方生成查询记录: instanceCode={}", instanceCode);
             return;
         }
         // 完成新增数据事务提交之后,异步执行
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
             @Override
             public void afterCommit() {
-                add(jsonObject, taskInfo);
-                log.info("飞书审批实例更新单据状态[{}]消息已投递,事务已提交");
+                add(jsonObject,  thirdProcessEntity, fieldMapList, valueMapList);
+                log.info("飞书审批实例创建单据[{}]消息已投递,事务已提交");
             }
         });
     }
 
     //处理推送类型的消息
-    public void add(JSONObject jsonObject, ApproveTaskInfoEntity taskInfo) {
-        String status = jsonObject.getStr("status");
+    public void add(JSONObject jsonObject, CfgThirdProcessEntity thirdProcessEntity,  List<CfgProcessFieldMapEntity> fieldMapList, List<CfgProcessValueMapEntity> valueMapList) {
         try {
-            //更新状态
-
+            //使用bussniessKey查询出三方审批生成配置，根据oprateType处理instance
+            CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(thirdProcessEntity.getBussinessKey());
+            createBillHandler.createBill(jsonObject, thirdProcessEntity, fieldMapList, valueMapList);
         } catch (Exception e) {
-            throw new ServiceException("单据更新状态异常");
+            throw new ServiceException("创建单据异常");
         }
-        log.info("飞书审批实例更新单据状态[{}]成功", taskInfo.getThirdInstanceId());
     }
 }
-
-//1、单据启动时的数据处理startDTO，表头和明细转map
-
-//2、cfg_query_option中选项类型的数据处理，数据隔离 TODO
-
-//3、飞书推送的审批实例的状态更新
-
-//4、三方审批生成的处理审批实例的业务代码
-
-//5、三方生成查询记录的生成，以及处理逻辑 TODO
-
-//6、所有点串联

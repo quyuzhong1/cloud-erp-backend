@@ -7,6 +7,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * <p>
@@ -106,7 +107,7 @@ public class ThirdProcessManagementDTO implements Serializable {
     @NoArgsConstructor
     public static class AddDTO extends CommonDTO {
 
-
+        List<ThirdProcessTaskManagementDTO> taskList;
     }
 
     /**

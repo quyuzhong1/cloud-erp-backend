@@ -137,9 +137,8 @@ public class SupplierFeignController extends BaseController {
      * 根据供应商编号查询
      */
     @PostMapping("/add")
-    List<SupplierEntity> add(@RequestBody SupplierDTO.InsertDTO addDTO){
-        supplierService.add(addDTO);
-        return null;
+    String add(@RequestBody SupplierDTO.InsertDTO addDTO){
+        return supplierService.add(addDTO);
     }
 
      @PostMapping("/updateApproveStatus")

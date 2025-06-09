@@ -343,7 +343,7 @@ public interface SupplierService extends SuperService<SupplierEntity> {
 
     Boolean updateVoucherNo(List<String> ids, String voucherNo);
 
-    void add(SupplierDTO.InsertDTO addDTO);
+    String add(SupplierDTO.InsertDTO addDTO);
 
     void updateApproveStatus(SupplierDTO.UpdateApproveStatusDTO updateApproveStatusDTO);
 }

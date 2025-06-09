@@ -47,10 +47,7 @@ import com.erp.model.msg.enums.NoticeTypeEnum;
 import com.erp.model.sys.dto.SysFeignDTO;
 import com.erp.model.sys.dto.UserSuperiorDTO;
 import com.erp.model.sys.enums.ChargeSuperiorEnum;
-import com.erp.model.workflow.dto.CamundaDTO;
-import com.erp.model.workflow.dto.CfgApproveSyncDTO;
-import com.erp.model.workflow.dto.EndProcessDTO;
-import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -261,8 +258,16 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         // 查询流程定义
         ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId);
         if (null == processDefinition) {
-            // 流程定义不存在
-            throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            CfgProcessRuleEntity one = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getProcessDefinitionId, processDefinitionId).eq(CfgProcessRuleEntity::getIsDeleted, false));
+            if (null != one){
+                // 流程定义不存在
+                throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            }
+            String bussinessId = one.getId();
+            CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
+            startDTO.setBusinessId(bussinessId);
+            startDTO.setRuleType(one.getType());
+            cfgProcessService.startThirdProcess(startDTO);
         }
         // 流程已修改，且未发布不允许启动
         if(!processDefinition.getIsDeploy()){

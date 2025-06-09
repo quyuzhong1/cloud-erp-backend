@@ -134,14 +134,10 @@ public interface PurchaseOrderFeign {
     List<PurchaseOrderDTO.PurchaseCalcQtyDTO> listAllPurchaseBySkuIdAndSupplier(@RequestBody PurchaseOrderDTO.PurchaseCalcQtyParamsDTO purchaseCalcQtyParamsDTO);
 
     /**
-     * 更新采购订单根据id
-     * @param purchaseOrderEntity
+     * 根据id更新合同状态
      */
-    @PostMapping("/feign/purchaseOrder/updatePurchaseOrder")
-    void updatePurchaseOrder(PurchaseOrderEntity purchaseOrderEntity);
-
-//    @PostMapping("/feign/purchaseOrder/updatePurchaseOrderByUnique")
-//    void updatePurchaseOrderByUnique(String field,String value,PurchaseOrderEntity purchaseOrderEntity);
+    @PostMapping("/feign/purchaseOrder/updateContractStatusById")
+    void updateContractStatusById(@RequestBody PurchaseOrderDTO.ContractStampStatusParamsDTO  contractStampStatusParamsDTO);
 
     @PostMapping("/feign/purchaseOrder/save")
     void save( PurchaseOrderEntity purchaseOrderEntity );
