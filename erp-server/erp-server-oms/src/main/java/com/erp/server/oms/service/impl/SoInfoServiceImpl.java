@@ -2255,9 +2255,6 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         List<String> mainIds = soDetailEntities.stream().map(req -> req.getMainId()).distinct().collect(Collectors.toList());
         checkIfPushDown(mainIds);
         List<SoInfoDTO.GenerateSoReturnView> viewList = baseMapper.generateSoReturnView(detailIds);
-        //获取默认仓库 -- 东莞售后仓库
-        CfgSettingEntity cfgSettingEntity = fgSettingFeign.getByKey(CfgSettingEnum.WAREHOUSE_BY_SO_RETURN.getCode());
-        CfgSettingValueDTO.SoWarehouseDTO soWarehouseDTO = BeanUtil.toBean(cfgSettingEntity.getDataJson(), CfgSettingValueDTO.SoWarehouseDTO.class);
         //获取sku的id集合
         List<String> skuIdList = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSkuId).collect(Collectors.toList());
         //根据ids查询sku信息
@@ -2265,6 +2262,8 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
         //获取出库详情
         List<String> soIds = viewList.stream().map(SoInfoDTO.GenerateSoReturnView::getSoId).distinct().collect(Collectors.toList());
         List<SoOutstockDetailEntity> soOutstockDetailEntities = soOutstockFeign.listDetailBySoIds(soIds);
+        //获取第一个出库单的库粗组织
+        List<SoOutstockEntity> soOutstockEntityList = soOutstockFeign.listBySoIds(soIds);
         List<CustomerInfoEntity> customerInfoEntities = customerInfoService.list();
         for (SoInfoDTO.GenerateSoReturnView view : viewList) {
             ProductDetailEntity productDetailEntity = detailEntityList.stream().filter(entityClass -> entityClass.getId().equals(view.getSkuId())).findFirst().orElse(new ProductDetailEntity());
@@ -2277,11 +2276,10 @@ public class SoInfoServiceImpl extends SuperServiceImpl<SoInfoMapper, SoInfoEnti
             view.setReturnDate(LocalDate.now());
             view.setReturnAmount(view.getAmount());
             view.setTaxReturnAmount(view.getTaxAmount());
-            //限制销售组织下的
-            if(soWarehouseDTO.getOrgId().equals(view.getWarehouseOrgId())){
-                view.setWarehouseId(soWarehouseDTO.getWarehouseId());
-                view.setWarehouseName(soWarehouseDTO.getWarehouseName());
-            }
+            SoOutstockEntity soOutstockEntity = soOutstockEntityList.stream().filter(e -> e.getSoId().equals(view.getSoId())).findFirst().orElse(null);
+            view.setWarehouseOrgId(Objects.nonNull(soOutstockEntity) ? soOutstockEntity.getWarehouseOrgId() : "");
+            view.setWarehouseId(Objects.nonNull(soOutstockEntity) ? soOutstockEntity.getWarehouseId() : "");
+            view.setWarehouseName(Objects.nonNull(soOutstockEntity) ? soOutstockEntity.getWarehouseName() : "");
         }
         return viewList;
     }
