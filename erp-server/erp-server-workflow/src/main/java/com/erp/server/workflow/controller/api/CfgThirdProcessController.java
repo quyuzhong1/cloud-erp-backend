@@ -6,6 +6,7 @@ import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
+import com.erp.server.workflow.handler.CfgProcessQueryHandler;
 import com.erp.server.workflow.handler.CfgThirdProcessQueryHandler;
 import lombok.extern.slf4j.Slf4j;
 
@@ -225,7 +226,7 @@ public class CfgThirdProcessController extends BaseController {
 //            tableAlias = "ctp"
 //    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = CfgThirdProcessQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated CfgThirdProcessDTO.PagingParamDTO dto, HttpServletResponse response) {
         cfgThirdProcessService.exportList(dto, response);
         return success();
