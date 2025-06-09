@@ -242,14 +242,12 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
             }else {
                 nfeInvoiceStatus = entity.getNfeInvoiceStatus();
             }
-        }else {
-            nfeInvoiceStatus = SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode();
+            entity.setNfeInvoiceStatus(nfeInvoiceStatus);
+            soB2cService.lambdaUpdate().eq(SoB2cEntity::getId, entity.getId())
+                    .set(SoB2cEntity::getNfeInvoiceStatus, nfeInvoiceStatus)
+                    .update();
+            operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新平台nfe开票状态：【{}】", SoB2cNfeStatusEnum.getName(nfeInvoiceStatus)),ModuleTypeEnum.SO_B2C.getCode(),entity.getId(),"开票规则匹配");
         }
-        entity.setNfeInvoiceStatus(nfeInvoiceStatus);
-        soB2cService.lambdaUpdate().eq(SoB2cEntity::getId, entity.getId())
-                .set(SoB2cEntity::getNfeInvoiceStatus, nfeInvoiceStatus)
-                .update();
-        operateLogService.addModuleOperateLog(CharSequenceUtil.format("更新平台nfe开票状态：【{}】", SoB2cNfeStatusEnum.getName(nfeInvoiceStatus)),ModuleTypeEnum.SO_B2C.getCode(),entity.getId(),"开票规则匹配");
         //规则是否通过
         resultMap.put("isPass", isPass);
         return resultMap;
