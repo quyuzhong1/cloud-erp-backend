@@ -345,16 +345,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         resultDTO.setShopWarehouseId(shopInfo.getWarehouseId());
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
-
-        Boolean isWarehouseEmpty = detailList.stream().filter(d -> StringUtils.isBlank(d.getWarehouseId())).count() > 0;
+        Boolean isWarehouseEmpty = detailList.stream().anyMatch(d -> StringUtils.isBlank(d.getWarehouseId()));
         resultDTO.setIsWarehouseEmpty(isWarehouseEmpty);
-        resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());
-
         if (CollectionUtils.isEmpty(detailList)){
             // 拆分后无平台来源明细不更新
             log.warn("[B2C订单消费] 平台订单【{}】：拆分后无平台来源明细不更新", dto.getPlatformCode());
             return resultDTO;
         }
+        resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());
         //查询b2c error信息
         SoB2cErrorEntity soB2cError = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
         resultDTO.setSoB2cError(soB2cError);
