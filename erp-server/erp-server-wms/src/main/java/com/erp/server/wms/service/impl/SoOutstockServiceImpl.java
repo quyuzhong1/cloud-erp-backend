@@ -3441,7 +3441,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //待提交
             if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)) {
-                soOutstockService.submit(Collections.singletonList(id));
+                soOutstockService.submitAndApprove(id);
             }
             //审核中
             if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus)) {
