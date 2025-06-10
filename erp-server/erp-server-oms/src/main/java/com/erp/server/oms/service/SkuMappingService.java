@@ -257,7 +257,7 @@ public interface SkuMappingService extends SuperService<SkuMappingEntity> {
      * @Author Jim
      * @since 2023-11-28
      **/
-    ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform);
+    ListingInfoWithSkuMappingDTO checkAndMappingDTO(List<ListingInfoWithSkuMappingDTO> mappingDTOList, String platformSpuNo, String dictPlatform, String platformSkuNo);
 
     /**
      * 根据平台sku记录获取变更历史记录

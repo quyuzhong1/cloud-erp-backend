@@ -6,10 +6,7 @@ import com.erp.model.tms.dto.LogisticsMappingDTO;
 import com.erp.model.tms.entity.LogisticsMappingEntity;
 import com.erp.server.tms.service.LogisticsMappingService;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -40,14 +37,10 @@ public class LogisticsMappingFeignController extends BaseController {
     }
 
     /**
-     * @description: 根据物流渠道id获取物流映射表
-     * @author jack
-     * @date: 2024/10/09
-     * @param id
-     * @return List<LogisticsMappingEntity>
+     * 查询物流渠道映射
      */
-    @PostMapping("/listDbByChannelId")
-    List<LogisticsMappingEntity> listDbByChannelId(@RequestBody String id){
-        return logisticsMappingService.listDbByChannelId(id);
+    @PostMapping("/listByChannelIdAndType")
+    public List<LogisticsMappingDTO.ViewDTO> listByChannelIdAndType(@RequestParam(value = "channelId") String channelId, @RequestParam(value = "type") String type) {
+        return logisticsMappingService.listByChannelIdAndType(channelId,type);
     }
 }

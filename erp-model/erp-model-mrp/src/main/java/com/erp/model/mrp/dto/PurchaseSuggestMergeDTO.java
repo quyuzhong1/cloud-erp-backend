@@ -729,6 +729,14 @@ public class PurchaseSuggestMergeDTO implements Serializable {
          */
         private String skuNo;
         /**
+         * 采购组织id
+         */
+        private String purchaseOrgId;
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
+        /**
          * 产品名称
          */
         private String productName;

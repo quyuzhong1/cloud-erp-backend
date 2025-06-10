@@ -395,6 +395,18 @@ public class InvoiceInfoDTO implements Serializable {
          */
         private String status;
         private String statusName;
+        /**
+         * 序列号
+         */
+        private Integer no;
+        /**
+         * 起始编号
+         */
+        private String startCode;
+        /**
+         * 序列号/序号
+         */
+        private String startCodeStr;
 
         /**
          * 上传时间【可排序】

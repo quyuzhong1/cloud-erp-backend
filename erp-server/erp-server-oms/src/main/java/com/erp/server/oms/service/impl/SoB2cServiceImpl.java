@@ -243,6 +243,8 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
 
     @Resource
     private RuleOrderApprovalService ruleOrderApprovalService;
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @Resource
     private RuleDeliveryWarehouseService ruleDeliveryWarehouseService;
@@ -380,6 +382,12 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     private SoPriceService soPriceService;
     @Resource
     private SyncSoB2cService syncSoB2cService;
+
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
+    @Lazy
+    @Resource
+    private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
 
     @Lazy
     @Resource
@@ -1370,7 +1378,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus(), isMatch);
-
+        if (ApproveStatusEnum.APPROVE.getCode().equals(approveStatus.getStatus())){
+            //生成nf-e发票
+            cfgInvoiceSettingDetailService.generateNfeInvoice (entity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
+        }
 
         //推送到DMP
         soB2cService.syncOrderToDmp(entity.getId(), SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -2175,6 +2186,10 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         SoB2cEntity entity = this.getById(id);
         if (ObjectUtils.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        //已作废订单不能提交发货
+        if (Boolean.TRUE.equals(entity.getInvalidStatus())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_ORDER_STATUS_ERROR, entity.getCode());
         }
         //全托管并且是平台订单就进行校验状态
         if (isFullyManagedOrder(entity.getDictPlatform()) && SourceTypeEnum.SO_B2C.getCode().equals(entity.getSourceType())){
@@ -4933,7 +4948,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         map.put("actualShippingCost", logisticsEntity.getActualShippingCost());
         map.put("estimatedShippingCost", logisticsEntity.getEstimatedShippingCost());
         map.put("dictPlatform", soB2cEntity.getDictPlatform());
-
+        map.put("nfeInvoiceStatus", soB2cEntity.getNfeInvoiceStatus());
         //如果是美客多，取订单标签里面的发货类型标识匹配订单规则
         if (PlatformDictEnum.MERCADOLIBRE.getCode().equals(soB2cEntity.getDictPlatform())
                 || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform())) {
@@ -5328,6 +5343,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
             //物流商id
             String logisticsChannelId = matchResult.getLogisticsChannelId();
             String logisticsChannelName = matchResult.getLogisticsChannelName();
+            resultDTO.setName(matchResult.getName());
             autoGetTrackNo = matchResult.getAutoGetTrackNo();
             autoGetTrackNotOfRangeDelivery = matchResult.getAutoGetTrackNotOfRangeDelivery();
             if (StringUtils.isNotBlank(logisticsChannelId)) {
@@ -5935,6 +5951,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         //新增时用新对象
         if (isAdd) {
             soB2cFinanceEntity = new SoB2cFinanceEntity();
+        }
+        if (Objects.isNull(soB2cFinanceEntity.getShippingCost())){
+            soB2cFinanceEntity.setShippingCost(soB2cEntity.getShippingFee());
         }
 
         //店铺信息
@@ -6793,7 +6812,13 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 addDTO.setRemark("B2C订单平台自动生成");
                 // 平台订单记录历史映射
                 if (entity.hasPlatformWarehouseOrder()) {
-                    List<ListingInfoWithSkuMappingDTO> list = listingInfoWithSkuMappingDTOMap.getOrDefault(detailItem.getPlatformSkuNo(), Collections.emptyList());
+                    List<ListingInfoWithSkuMappingDTO> list;
+                    if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                            || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+                        list = listingInfoWithSkuMappingDTOMap.getOrDefault(detailItem.getPlatformSpuNo(), Collections.emptyList());
+                    }else{
+                        list = listingInfoWithSkuMappingDTOMap.getOrDefault(detailItem.getPlatformSkuNo(), Collections.emptyList());
+                    }
                     List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> historyList = B2cOrderConverter.INSTANCE.skuMappingDTOListToGenDTOList(list);
                     // 按过期时间排序
                     List<SoOutstockDetailDTO.ListingInfoWithSkuMappingGenDTO> sortList = historyList.stream()
@@ -7134,7 +7159,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 Boolean isOutOfRangeDelivery = entity.getIsOutOfRangeDelivery();
                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                    soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+                    soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
                 }
             }
         }
@@ -8112,10 +8137,16 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         for (SoB2cDetailEntity detailEntity : detailList) {
             SoB2cDetailEntity old = new SoB2cDetailEntity();
             BeanMapper.copy(detailEntity, old);
+            List<ListingInfoWithSkuMappingDTO> mappingDTOList;
             // 映射关系
-            List<ListingInfoWithSkuMappingDTO> mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailEntity.getPlatformSkuNo());
+            if(PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(entity.getDictPlatform())
+                    || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(entity.getDictPlatform())){
+                mappingDTOList = listDto.stream().filter(v->v.getPlatformSpuNo().equals(detailEntity.getPlatformSpuNo())).collect(Collectors.toList());
+            }else{
+                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailEntity.getPlatformSkuNo());
+            }
             // 检查和获取映射关系
-            ListingInfoWithSkuMappingDTO skuDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailEntity.getPlatformSpuNo(), entity.getDictPlatform());
+            ListingInfoWithSkuMappingDTO skuDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailEntity.getPlatformSpuNo(), entity.getDictPlatform(),detailEntity.getPlatformSkuNo());
 
             //校验对照表是否有对照关系
             if (ObjectUtil.isNotEmpty(skuDTO)) {
@@ -8303,7 +8334,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
     public List<BatchResultDTO> autoOrderForecast(List<String> soIdList) {
         List<SoB2cEntity> soB2cEntityList = listByIds(soIdList);
         soB2cEntityList = soB2cEntityList.stream().filter(v -> TransferStatusEnum.WAIT.getCode().equals(v.getTransferStatus()) &&
-                SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(v.getBillStatus())).collect(Collectors.toList());
+                SoB2cBillStatusEnum.ENUM_IN_DISTRIBUTION.getCode().equalsIgnoreCase(v.getBillStatus()) && !Boolean.TRUE.equals(v.getInvalidStatus())).collect(Collectors.toList());
         if (CollectionUtils.isEmpty(soB2cEntityList)) {
             return new ArrayList<>();
         }
@@ -10131,7 +10162,6 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 .update();
     }
 
-
     @Override
     @Transactional(rollbackFor = Exception.class)
     @GlobalTransactional(rollbackFor = Exception.class)
@@ -10582,7 +10612,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                                 }
                                 if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                                         || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                                    soB2cService.getLogisticsCode(soB2cEntity.getId(),  Boolean.TRUE);
+                                    soB2cRuleService.handleAutoSubmitDelivery(soB2cEntity.getId(), logisticsRuleResult.getName());
                                 }
                             }
                         }

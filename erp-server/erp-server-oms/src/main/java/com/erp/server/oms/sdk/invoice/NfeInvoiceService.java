@@ -45,10 +45,7 @@ import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -85,6 +82,8 @@ public class NfeInvoiceService {
 
     @Resource
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+    @Resource
+    private CfgInvoiceSettingService cfgInvoiceSettingService;
 
     @Resource
     private OmsAttachmentService omsAttachmentService;
@@ -97,6 +96,8 @@ public class NfeInvoiceService {
 
     @Resource
     private ShopInfoService shopInfoService;
+    @Resource
+    private SoB2cReceiverService soB2cReceiverService;
 
 
     @Transactional(rollbackFor = Exception.class)
@@ -151,12 +152,16 @@ public class NfeInvoiceService {
             log.error("创建发票失败,返回错误信息,返回信息:{}", JSONUtil.toJsonStr(resultDTO));
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE,"未知");
         }
+        //回写序列号和起始编号
+        cfgInvoiceSettingService.updateSerialNoById(invoiceSettingDetail.getMainId(),resultDTO.getSerie(),resultDTO.getNumeroNfe());
         //更新开票状态
         InvoiceInfoEntity invoiceInfoEntity = invoiceInfoService.getInvoicingBySoId(soB2cEntity.getId());
         invoiceInfoEntity.setStatus(invoiceStatus);
         invoiceInfoEntity.setUploadStatus(PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform()) ? InvoiceInfoUploadStatusEnum.NOT_NEED_UPLOAD.getCode() : uploadStatus);
         invoiceInfoEntity.setQueryId(resultDTO.getId());
         invoiceInfoEntity.setPlatformInvoiceNo(resultDTO.getRecibo());
+        invoiceInfoEntity.setNo(resultDTO.getSerie());
+        invoiceInfoEntity.setStartCode(String.valueOf(resultDTO.getNumeroNfe()));
         invoiceInfoService.updateNfeStatusById(invoiceInfoEntity);
 
         //上传xml、pdf
@@ -254,7 +259,12 @@ public class NfeInvoiceService {
                 .eq(DmpSoBillDetailEntity::getSourcePlatform, soB2cEntity.getDictPlatform())
                 .list();
         if (CollUtil.isEmpty(allDmpSoBillDetailEntityList)) {
-           throw new ServiceException("开票地址信息不能为空");
+            if (PlatformDictEnum.ALI_EXPRESS.getCode().equals(soB2cEntity.getDictPlatform())
+                    || (PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equals(soB2cEntity.getDictPlatform()))){
+                throw new ServiceException("开票地址信息不能为空");
+            }
+           //按照销售信息赋值
+            return getNfeClienteDTOBySoB2c(soB2cEntity);
         }
         DmpSoBillDetailEntity dmpSoBillDetailEntity = allDmpSoBillDetailEntityList.get(0);
         NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soBillDetailEntityToNfeCliente(dmpSoBillDetailEntity);
@@ -262,7 +272,7 @@ public class NfeInvoiceService {
         nfeClienteDTO.setCep(newCep);
         //州（省份）二字码缩写
         List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
-                .eq(DictCityEntity::getCountryCode, "BR")
+                .eq(DictCityEntity::getCountryCode, nfeClienteDTO.getCountry())
                 .eq(DictCityEntity::getType,"province")
                 .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "')")
                 .list();
@@ -274,6 +284,34 @@ public class NfeInvoiceService {
         return nfeClienteDTO;
     }
 
+    private NfeInvoiceDTO.NfeClienteDTO getNfeClienteDTOBySoB2c(SoB2cEntity soB2cEntity) {
+        SoB2cReceiverEntity receiverEntity = soB2cReceiverService.getByMainId(soB2cEntity.getId());
+        if (ObjUtil.isEmpty(receiverEntity)) {
+            throw new ServiceException("B2C买家信息记录不存在");
+        }
+        NfeInvoiceDTO.NfeClienteDTO nfeClienteDTO = NfeInvoiceConverter.INSTANCE.soB2cReceiverEntityToNfeCliente(receiverEntity);
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getBairro())){
+            nfeClienteDTO.setBairro(receiverEntity.getCityName());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getMobile())){
+            nfeClienteDTO.setMobile(receiverEntity.getReceiverTelNumber());
+        }
+        if (CharSequenceUtil.isBlank(nfeClienteDTO.getRua())){
+            nfeClienteDTO.setRua(receiverEntity.getFirstAddress() + receiverEntity.getSecondAddress() + receiverEntity.getFullAddress());
+        }
+        //州（省份）二字码缩写
+        List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
+                .eq(DictCityEntity::getCountryCode, nfeClienteDTO.getCountry())
+                .eq(DictCityEntity::getType,"province")
+                .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "')")
+                .list();
+        if (CollUtil.isEmpty(dictCityList)) {
+            throw new ServiceException("开票省份/州二字码未找到");
+        }
+        nfeClienteDTO.setUf(dictCityList.get(0).getCode());
+        nfeClienteDTO.setState(dictCityList.get(0).getCodePt());
+        return nfeClienteDTO;
+    }
 
 
     /**
@@ -328,7 +366,7 @@ public class NfeInvoiceService {
             List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList = listingMap.get(CharSequenceUtil.format("{}-{}-{}", soB2cEntity.getDictPlatform(), detailEntity.getPlatformSkuNo(),soB2cEntity.getShopId()));
             //税务信息
             InvoiceTaxEntity invoiceTaxEntity = CollUtil.isEmpty(listingInfoWithSkuMappingList) ? null : listingInfoWithSkuMappingList.stream().filter(obj -> ObjUtil.isNotEmpty(taxMap.get(obj.getListingId()))).map(obj -> taxMap.get(obj.getListingId())).findFirst().orElse(null);
-            if (ObjUtil.isEmpty(invoiceTaxEntity)) {
+            if (Objects.isNull(invoiceTaxEntity)) {
                 throw new ServiceException(ApiError.ERROR_SKU_INVOICE_TAX_NOT_EXIST,detailEntity.getPlatformSkuNo(),shopInfoEntity.getName());
             }
             nfeItensDTO.setName(invoiceTaxEntity.getInvoiceProductName());
@@ -337,7 +375,7 @@ public class NfeInvoiceService {
             nfeItensDTO.setCfopExterno(invoiceTaxEntity.getDiffStateTaxCode());
             nfeItensDTO.setCfopInterno(invoiceTaxEntity.getSameStateTaxCode());
             nfeItensDTO.setQuantity(detailEntity.getQty());
-            nfeItensDTO.setCoPedClienteApi(detailEntity.getPlatformSkuNo());
+            nfeItensDTO.setCoPedClienteApi(soB2cEntity.getCode());
 
             //产品金额
             nfeItensDTO.setUnitPrice(getUnitPrice(detailEntity,invoiceSettingDetail));
@@ -386,6 +424,12 @@ public class NfeInvoiceService {
     public void cancelInvoice(InvoiceInfoEntity invoiceInfoEntity,NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO) {
         //b2c订单信息
         SoB2cEntity soB2cEntity = soB2cService.getById(invoiceInfoEntity.getSoId());
+        if (Objects.isNull(soB2cEntity)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        if (CharSequenceUtil.isBlank(soB2cEntity.getDictPlatform()) || CharSequenceUtil.isBlank(soB2cEntity.getShopId())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP,soB2cEntity.getCode());
+        }
         //税务信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
         nfeCancelDTO.setTokenEmpresa(invoiceSettingDetail.getToken());

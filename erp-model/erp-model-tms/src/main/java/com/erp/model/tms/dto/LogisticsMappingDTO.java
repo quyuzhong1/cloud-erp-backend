@@ -44,7 +44,7 @@ public class LogisticsMappingDTO implements Serializable {
         /**
          *  物流销售渠道id
          */
-        private String logisticsSaleChannelId;
+        private String platformLogisticsChannelId;
 
         /**
          * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
@@ -60,6 +60,13 @@ public class LogisticsMappingDTO implements Serializable {
          * 承运商代号名称
          */
         private String carrierName;
+
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
     }
 
     /**
@@ -95,22 +102,18 @@ public class LogisticsMappingDTO implements Serializable {
         * 物流渠道id
         */
         @NotBlank(message = "销售的渠道不能为空")
-        private String logisticsSaleChannelId;
+        private String platformLogisticsChannelId;
 
         /**
         * 销售平台
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=channelSalesPlatform
         */
-        @NotBlank(message = "物流平台不能为空")
-        @Size(max = 30,message = "物流平台最大长度不能超过30位")
         private String salesPlatform;
 
         /**
          * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
          * 来源 http://172.16.100.11:3002/project/128/interface/api/25522  key=orderDeliveryMarkType
          */
-        @NotBlank(message = "标发订单类型不能为空")
-        @Size(max = 30,message = "标发订单类型最大长度不能超过32位")
         private String orderDeliveryMarkType;
 
 
@@ -118,8 +121,14 @@ public class LogisticsMappingDTO implements Serializable {
          * 承运商代号(部分速卖通物流渠道必填)
          * <a href="http://172.16.100.11:3002/project/128/interface/api/cat_1635">来源：承运商列表</a>
          */
-        @Size(max = 64,message = "承运商代号最大长度不能超过32位")
         private String carrierCode;
+
+        /**
+         * 仓库id
+         */
+        private String warehouseId;
+
+        private String type;
     }
 
 
