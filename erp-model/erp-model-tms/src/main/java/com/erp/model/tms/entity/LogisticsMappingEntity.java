@@ -33,12 +33,11 @@ public class LogisticsMappingEntity extends BaseEntity<LogisticsMappingEntity> {
     @TableField("sales_platform")
     private String salesPlatform;
 
-
     /**
-     * 销售渠道表id(logistics_sale_channel)
+     * 平台渠道id,type为platform 对应logistics_sale_channel,为warehouse对应logistics_channel的id
      */
-    @TableField("logistics_sale_channel_id")
-    private String logisticsSaleChannelId;
+    @TableField("platform_logistics_channel_id")
+    private String platformLogisticsChannelId;
 
     /**
      * 标记发货订单类型（transportNo运单号、trackNo跟踪号）
@@ -52,6 +51,16 @@ public class LogisticsMappingEntity extends BaseEntity<LogisticsMappingEntity> {
     @TableField("carrier_code")
     private String carrierCode;
 
+    /**
+     * 仓库id
+     */
+    @TableField("warehouse_id")
+    private String warehouseId;
+    /**
+     * 类型,platform:平台，warehouse:仓库
+     */
+    @TableField("type")
+    private String type;
 
     public static final String LOGISTICS_CHANNEL_ID = "logistics_channel_id";
 

@@ -34,7 +34,15 @@
        <result column="is_api_insurance" property="isApiInsurance" />
        <result column="delivery_type" property="deliveryType" />
     </resultMap>
+    <resultMap id="warehouseChannelMap" type="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO">
+        <id  property="overseasWarehouseId" column="overseas_warehouse_id"/>
 
+        <!-- 嵌套 Compare 列表 -->
+        <collection property="channelDTOList" ofType="com.erp.model.tms.dto.LogisticsChannelDTO$WarehouseChannelDTO$ChannelDTO">
+            <result property="platformLogisticsChannelId" column="id"/>
+            <result property="platformLogisticsChannelName" column="name"/>
+        </collection>
+    </resultMap>
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
         id,
@@ -319,6 +327,34 @@
         <if test="params.permissionSql != null and params.permissionSql != ''">
             ${params.permissionSql}
         </if>
+    </select>
+
+    <select id="listWarehouseChannel"
+            resultMap="warehouseChannelMap">
+        SELECT   lcw.overseas_warehouse_id,lc.id,lc.name
+        from logistics_channel lc
+                 inner join logistics_supplier ls on ls.id = lc.main_id
+                 inner join logistics_warehouse lcw on ls.id = lcw.main_id
+        where lc.is_deleted = false and lcw.is_deleted = false
+          and ls.is_deleted = false and lc.disabled = false
+        order by lcw.overseas_warehouse_id
+
+    </select>
+    <select id="listByPlatformCode" resultType="com.erp.model.tms.dto.LogisticsChannelDTO$PlatformChannelDTO">
+        select
+            la.logistics_platform as platformCode,
+            lc.id as platformLogisticsChannelId,
+            lc."name" as platformLogisticsChannelName
+        from logistics_auth la
+                 LEFT JOIN logistics_supplier ls on ls.id = la.main_id and ls.is_deleted= false
+                 LEFT JOIN logistics_channel lc on lc.main_id = ls.id and lc.is_deleted= false
+        where
+            la.is_deleted = false
+          and ls.auth_status='already'
+        and la.logistics_platform in
+        <foreach collection="platformCodeList" separator="," open="(" close=")" item="item">
+            #{item}
+        </foreach>
     </select>
 
 

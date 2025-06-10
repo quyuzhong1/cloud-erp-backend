@@ -7,6 +7,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -29,12 +30,11 @@ public interface LogisticsMappingFeign {
     LogisticsMappingEntity getByLogisticsMappingParam(@RequestBody @Validated LogisticsMappingDTO.SearchParamDTO paramDTO);
 
     /**
-     * @description: 根据物流映射表查询
-     * @author jack
-     * @date: 2024/10/09
-     * @param id
-     * @return List<LogisticsMappingEntity>
+     * 查询物流渠道映射
+     * @param channelId
+     * @param type
+     * @return
      */
-    @PostMapping("feign/logisticsMapping/listDbByChannelId")
-    List<LogisticsMappingEntity> listDbByChannelId(@RequestBody String id);
+    @PostMapping("feign/logisticsMapping/listByChannelIdAndType")
+    List<LogisticsMappingDTO.ViewDTO> listByChannelIdAndType(@RequestParam(value = "channelId") String channelId,@RequestParam(value = "type") String type);
 }

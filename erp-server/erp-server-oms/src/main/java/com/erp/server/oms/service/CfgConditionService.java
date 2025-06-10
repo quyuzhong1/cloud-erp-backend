@@ -80,4 +80,6 @@ public interface CfgConditionService extends SuperService<CfgConditionEntity> {
      * @return List<ListDTO>
      */
     List<CfgConditionDTO.ListDTO> listOrderHandleCondition();
+
+    List<CfgConditionDTO.ListDTO> listInvoiceHandleCondition();
 }

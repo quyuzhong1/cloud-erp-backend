@@ -111,6 +111,8 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
 
     @Resource
     private CfgInvoiceSettingDetailService cfgInvoiceSettingDetailService;
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
 
     @Resource
     private SoB2cCoreService soB2cCoreService;
@@ -236,31 +238,7 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         }
         //生成nf-e发票
-        generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
-    }
-
-    /**
-     * 生成NF-e发票
-     * @author will
-     * @date 2025/4/14 15:52
-     * @param soB2cEntity
-     * @param type
-     * @return void
-     */
-    private void generateNfeInvoice (SoB2cEntity soB2cEntity,String type) {
-        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(),PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())) {
-            return;
-        }
-        CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
-        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
-            return;
-        }
-        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
-            return;
-        }
-        if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
-            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
-        }
+        cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
     }
 
     /**
@@ -366,16 +344,14 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
         resultDTO.setShopWarehouseId(shopInfo.getWarehouseId());
         // 详情更新或保存
         List<SoB2cDetailEntity> detailList = soB2cDetailService.saveOrUpdateEntity(dto, mainEntity, listingInfoWithSkuMappingDTOMap, shopInfo, skuList);
-
-        Boolean isWarehouseEmpty = detailList.stream().filter(d -> StringUtils.isBlank(d.getWarehouseId())).count() > 0;
+        Boolean isWarehouseEmpty = detailList.stream().anyMatch(d -> StringUtils.isBlank(d.getWarehouseId()));
         resultDTO.setIsWarehouseEmpty(isWarehouseEmpty);
-        resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());
-
         if (CollectionUtils.isEmpty(detailList)){
             // 拆分后无平台来源明细不更新
             log.warn("[B2C订单消费] 平台订单【{}】：拆分后无平台来源明细不更新", dto.getPlatformCode());
             return resultDTO;
         }
+        resultDTO.setWarehouseName(detailList.get(MathUtil.ZERO).getWarehouseName());
         //查询b2c error信息
         SoB2cErrorEntity soB2cError = soB2cErrorService.getByMainIdAndType(mainEntity.getId(), SoB2cErrorTypeEnum.ORDER_FETCH.getCode());
         resultDTO.setSoB2cError(soB2cError);
@@ -445,8 +421,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             //同步数帝云
             syncSoB2cService.syncSdyCancelOrder(mainEntity, detailList, SyncOperateEnum.OPERATE_UPDATE.getCode());
         }
+        //校验发票开票规则
+        cfgRuleInvoiceService.invoiceCfgRule(mainEntity,detailList,new HashMap<>());
         //生成Nf-e发票
-        generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
+        cfgInvoiceSettingDetailService.generateNfeInvoice(mainEntity,InvoiceNodeEnum.AFTER_PULL.getCode());
         return resultDTO;
     }
 
