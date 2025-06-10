@@ -2118,7 +2118,7 @@ public class TransferInfoServiceImpl extends SuperServiceImpl<TransferInfoMapper
      */
     private Map<String,Object> getVariablesMap(TransferInfoEntity entity) {
         CfgQueryOptionDTO.VariablesParamsDTO dto = new CfgQueryOptionDTO.VariablesParamsDTO();
-        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.PILOTAPPLICATION.getCode());
+        dto.setBusinessKey(CfgQueryOptionBussinessKeyEnum.TRANSFERINFO.getCode());
         dto.setVariablesMap(BeanUtil.beanToMap(entity));
         Map<String, Object> variablesMap = cfgQueryOptionFeign.getVariablesMapByBusinessKey(dto);
 
