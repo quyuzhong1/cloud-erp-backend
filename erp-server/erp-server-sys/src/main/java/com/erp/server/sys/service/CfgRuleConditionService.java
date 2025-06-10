@@ -44,4 +44,6 @@ public interface CfgRuleConditionService extends SuperService<CfgRuleConditionEn
      * @param cfgRuleIds 规则id
      */
     List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleIds(List<String> cfgRuleIds, String ruleType);
+
+    List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleType(String ruleType);
 }

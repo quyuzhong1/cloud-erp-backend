@@ -63,5 +63,27 @@
         order by crc.index
     </select>
 
+    <select id="listByRuleType" resultType="com.erp.model.sys.dto.CfgRuleConditionDTO$ConditionElementDTO">
+        SELECT
+        crc.id,
+        crc.left_bracket,
+        crc.field,
+        crc.compare,
+        crc.value,
+        crc.right_bracket,
+        crc.logic,
+        crc.rule_id,
+        crc.index,
+        crc.name,
+        cc.value_type
+        FROM
+        cfg_rule_condition AS crc
+        LEFT JOIN cfg_condition AS cc ON cc.condition_field = crc.field
+        AND cc.is_deleted = FALSE
+        WHERE
+        crc.is_deleted = FALSE and cc.rule_type = #{ruleType}
+        order by crc.index
+    </select>
+
 
 </mapper>

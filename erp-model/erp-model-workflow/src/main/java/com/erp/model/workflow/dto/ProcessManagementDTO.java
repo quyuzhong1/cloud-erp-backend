@@ -1241,4 +1241,20 @@ public class ProcessManagementDTO {
         private String taskStatus;
 
     }
+
+    @Data
+    @NoArgsConstructor
+    public static class CheckSubmitByBusinessIdDTO {
+        /**
+         * 业务类型key
+         */
+        private String businessKey;
+
+        /**
+         * 业务id
+         */
+        private String businessId;
+
+
+    }
 }

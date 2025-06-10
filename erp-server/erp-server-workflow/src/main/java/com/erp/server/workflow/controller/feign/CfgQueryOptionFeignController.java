@@ -56,4 +56,14 @@ public class CfgQueryOptionFeignController extends BaseController {
     public Map<String, Object> getVariablesMapByBusinessKey(@RequestBody CfgQueryOptionDTO.VariablesParamsDTO dto){
         return cfgQueryOptionService.getVariablesMapByBusinessKey(dto);
     }
+    /**
+     * 根据字段条件查询配置
+     */
+    @PostMapping("/listExtendByFieldCondition")
+    public List<CfgQueryOptionEntity> listExtendByFieldCondition(@RequestBody List<String> conditionFields){
+        return cfgQueryOptionService.lambdaQuery()
+                .in(CfgQueryOptionEntity::getConditionField, conditionFields)
+                .eq(CfgQueryOptionEntity::getIsExtend,Boolean.TRUE)
+                .list();
+    }
 }

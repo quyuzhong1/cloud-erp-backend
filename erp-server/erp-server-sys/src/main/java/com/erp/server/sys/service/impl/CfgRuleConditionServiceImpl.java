@@ -166,6 +166,11 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
         return baseMapper.listByRuleIds(cfgRuleIds,ruleType);
     }
 
+    @Override
+    public List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleType(String ruleType) {
+        return baseMapper.listByRuleType(ruleType);
+    }
+
 
     /**
      * 新增修改处理数据

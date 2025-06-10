@@ -71,8 +71,8 @@
         ctn.cron as cron,
         ctn.role_type as roleType,
         ctn.specific_person as specificPerson,
-        ctn.notice_method as noticeMethod
-
+        ctn.notice_method as noticeMethod,
+        ctn.post as post
         FROM
         cfg_third_notice AS ctn
         WHERE

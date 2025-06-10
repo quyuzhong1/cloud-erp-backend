@@ -291,4 +291,6 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
     PagingVO<ProcessManagementDTO.MainPagingResultDTO> mainPaging(PagingDTO<ProcessManagementDTO.SearchDTO> dto);
 
     List<String> getTestList(String businessType);
+
+    Boolean checkSubmitByBusinessId(ProcessManagementDTO.CheckSubmitByBusinessIdDTO dto);
 }
