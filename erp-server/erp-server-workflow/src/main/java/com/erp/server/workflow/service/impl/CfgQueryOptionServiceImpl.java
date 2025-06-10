@@ -13,7 +13,6 @@ import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
 import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -70,10 +69,13 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         queryWrapper.orderByDesc(CfgQueryOptionEntity::getFieldBelongsType);
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.selectList(queryWrapper);
         cfgQueryOptionEntities.stream().forEach(item -> {
-            String name = CfgQueryOptionFieldBelongsTypeEnum.getName(item.getFieldBelongsType());
-            item.setConditionFieldName((StringUtils.isNotBlank(name) ? name+"-" : "明细-" )+ item.getConditionFieldName());
+            if(item.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
+                String name = CfgQueryOptionFieldBelongsTypeEnum.getName(item.getFieldBelongsType());
+                item.setConditionFieldName(name +"-"+ item.getConditionFieldName());
+            }else {
+                item.setConditionFieldName(item.getTableCnName() +"-"+ item.getConditionFieldName());
+            }
         });
-
         cfgQueryOptionEntities.addAll(common);
         cfgQueryOptionEntities = cfgQueryOptionEntities.stream()
                 .filter(e -> !e.getConditionField().contains("id") && !e.getConditionField().contains("Id"))
