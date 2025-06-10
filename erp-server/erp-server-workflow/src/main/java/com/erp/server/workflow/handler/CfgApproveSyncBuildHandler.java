@@ -87,6 +87,8 @@ public class CfgApproveSyncBuildHandler {
             approveSyncRecordService.save( syncRecordEntity);
             return null;
         }else{
+            syncRecordEntity.setReceiverId(createUserId);
+            syncRecordEntity.setReceiverName(thirdUnionDTO.getUserName());
             if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId()) && StringUtils.isBlank(thirdUnionDTO.getThirdOpenId())){
                 //todo 推送记录  失败  创建人未绑定飞书
                 errorReason= "创建人未绑定飞书";

@@ -16,27 +16,29 @@ import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeTypeEnum;
 import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.FsBotParamsDTO;
 import com.erp.model.workflow.entity.ApproveSyncRecordEntity;
-import com.erp.model.workflow.enums.ApproveSyncRecordNoticeTypeEnum;
-import com.erp.model.workflow.enums.ApproveSyncRecordStatusEnum;
-import com.erp.model.workflow.enums.CfgApproveNoticeNoticeTypeEnum;
-import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
 import com.erp.server.workflow.handler.CfgApproveSyncSendHandler;
+import com.erp.server.workflow.handler.MQSyncFsHandler;
 import com.erp.server.workflow.mapper.ApproveSyncRecordMapper;
 import com.erp.server.workflow.service.ApproveSyncRecordService;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.erp.server.workflow.service.OperateLogService;
 import com.erp.server.workflow.service.ProcessManagementService;
+import com.erp.server.workflow.service.ProcessTaskManagementService;
+import com.google.gson.Gson;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ApproveSyncRecordDTO;
 import java.util.*;
+import java.util.stream.Collectors;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 
@@ -64,7 +66,12 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     @Resource
     private ProcessManagementService processManagementService;
     @Resource
+    private ProcessTaskManagementService processTaskManagementService;
+    @Resource
     private FsService fsService;
+
+    @Resource
+    private MQSyncFsHandler mqSyncFsHandler;
 
     @Override
     public List<ApproveSyncRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -74,9 +81,9 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         List<ApproveSyncRecordDTO.TabListDTO> result = new ArrayList<>();
         ApproveSyncRecordDTO.TabListDTO enable = list.stream().filter(e -> e.getTabFlag().equals(ApproveSyncRecordStatusEnum.SUCCESS.getCode())).findFirst().orElse(null);
         ApproveSyncRecordDTO.TabListDTO disable = list.stream().filter(e -> e.getTabFlag().equals(ApproveSyncRecordStatusEnum.FAILED.getCode())).findFirst().orElse(null);
-        result.add(new ApproveSyncRecordDTO.TabListDTO("all", "全部" , 0));
+        result.add(new ApproveSyncRecordDTO.TabListDTO("all", "全部", 0));
         result.add(new ApproveSyncRecordDTO.TabListDTO(ApproveSyncRecordStatusEnum.SUCCESS.getCode(), ApproveSyncRecordStatusEnum.SUCCESS.getName(), null == enable ? 0 : enable.getCount()));
-        result.add(new ApproveSyncRecordDTO.TabListDTO(ApproveSyncRecordStatusEnum.FAILED.getCode(),ApproveSyncRecordStatusEnum.FAILED.getName(), null == disable ? 0 : disable.getCount()));
+        result.add(new ApproveSyncRecordDTO.TabListDTO(ApproveSyncRecordStatusEnum.FAILED.getCode(), ApproveSyncRecordStatusEnum.FAILED.getName(), null == disable ? 0 : disable.getCount()));
         return result;
     }
 
@@ -85,13 +92,14 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<ApproveSyncRecordDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        if(CollUtil.isEmpty(pageData.getRecords())) {
+        if (CollUtil.isEmpty(pageData.getRecords())) {
             return new PagingVO(pageData);
         }
         // 数据处理
         fillList(pageData.getRecords());
         return new PagingVO(pageData);
     }
+
     private void fillList(List<ApproveSyncRecordDTO.ListDTO> records) {
         for (ApproveSyncRecordDTO.ListDTO record : records) {
             //单据类型
@@ -117,8 +125,64 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     public BatchResultDTO repush(String id) {
         ApproveSyncRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方推送记录数据"));
         Map<String, Object> dataJson = entity.getDataJson();
-        FsBotParamsDTO.SendParamsDTO params = new FsBotParamsDTO.SendParamsDTO();
-        BeanUtils.copyProperties(dataJson,params);
+        if (CollUtil.isNotEmpty(dataJson)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), "流程未启动");
+        }
+
+        String approveSyncFailedType = String.valueOf(dataJson.get("approveSyncFailedType"));
+        if (StringUtils.isNotBlank(approveSyncFailedType)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推类型不存在");
+        }
+        Gson gson = new Gson();
+        //创建实例失败
+        if (Objects.equals(approveSyncFailedType, ApproveSyncFailedTypeEnum.CREATEINSTANCE.getCode())) {
+            try {
+                CfgApproveSyncDTO.SyncFsProcessToMqDTO dto = gson.fromJson(gson.toJson(dataJson), CfgApproveSyncDTO.SyncFsProcessToMqDTO.class);
+                if (processManagementService.checkTaskByProcessInstanceId(dto.getInstanceId())) {
+                    return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推节点不能小于流程当前节点");
+                }
+
+                log.info("repush 开始");
+                mqSyncFsHandler.handler(dto);
+                log.info("repush 结束");
+            } catch (Exception e) {
+                return BatchResultDTO.fail(entity.getId(), entity.getId(), "创建实例失败");
+            }
+        }
+        //发送消息失败
+        if (Objects.equals(approveSyncFailedType, ApproveSyncFailedTypeEnum.SENDNOTICE.getCode())) {
+            BatchResultDTO failed = getRepushNotice(approveSyncFailedType, gson, dataJson, entity);
+            if (failed != null) return failed;
+        }
+        //发送审批消息失败
+        if (Objects.equals(approveSyncFailedType, ApproveSyncFailedTypeEnum.SENDAPPROVENOTICE.getCode())) {
+            BatchResultDTO failed = getRepushNotice(approveSyncFailedType, gson, dataJson, entity);
+            if (failed != null) return failed;
+        }
+        //更新审批消息失败
+        if (Objects.equals(approveSyncFailedType, ApproveSyncFailedTypeEnum.UPDATEAPPROVENOTICE.getCode())) {
+            String messageId = String.valueOf(dataJson.get("messageId"));
+            String status = String.valueOf(dataJson.get("status"));
+            if(StringUtils.isBlank(messageId) || StringUtils.isBlank(status)){
+                return BatchResultDTO.fail(entity.getId(), entity.getId(), "更新审批消息失败");
+            }
+            Boolean b = fsService.updateApproveMessage(messageId, status);
+            if (Boolean.TRUE.equals(b)) {
+                entity.setErrorReason("");
+                entity.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
+                entity.setMessageId(messageId);
+            }else {
+                return BatchResultDTO.fail(entity.getId(), entity.getId(), "更新审批消息失败");
+            }
+        }
+
+        return BatchResultDTO.success(entity.getId(), entity.getId(), "重推成功");
+    }
+
+
+
+    private BatchResultDTO getRepushNotice(String  approveSyncFailedType , Gson gson, Map<String, Object> dataJson, ApproveSyncRecordEntity entity) {
+        FsBotParamsDTO.SendParamsDTO params = gson.fromJson(gson.toJson(dataJson), FsBotParamsDTO.SendParamsDTO.class);
         String userId = params.getUserId();
         String titleUserId = params.getTitleUserId();
         List<String> allUserIds = new ArrayList<>();
@@ -130,34 +194,42 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         }
         Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
         if(CollUtil.isEmpty(thirdUnionMap)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), "");
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), "飞书未绑定");
         }
 
         if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
             params.setThirdUserId(thirdUnionMap.get(titleUserId).getThirdUserId());
         }
-
-        if(thirdUnionMap.containsKey(userId) && Objects.nonNull(thirdUnionMap.get(userId))){
+        if(thirdUnionMap.containsKey(userId) && StringUtils.isNotBlank(thirdUnionMap.get(userId).getThirdUserId())){
             params.setThirdUserId(thirdUnionMap.get(userId).getThirdUserId());
 
             //构建请求体
-            Map<String, Object> bodyMap = fsService.buildCcBodyMap(params);
-            //发送消息
-            String messageId = fsService.sendErpApproveSyncMessage(bodyMap);
-            if(StringUtils.isNotBlank(messageId)){//发送失败
-                entity.setErrorReason(String.format("飞书消息发送成功messsageId：%s",messageId));
-                entity.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
-                updateById( entity);
+            Map<String, Object>  bodyMap = null;
+            if(Objects.equals(approveSyncFailedType, ApproveSyncFailedTypeEnum.SENDAPPROVENOTICE.getCode())){
+                bodyMap = fsService.buildApproveBodyMap(params);
+            }else if(Objects.equals(approveSyncFailedType, ApproveSyncFailedTypeEnum.SENDNOTICE.getCode())){
+                bodyMap = fsService.buildCcBodyMap(params);
+            }
+            if(Objects.nonNull(bodyMap)){
+                //发送消息
+                String messageId = fsService.sendErpApproveSyncMessage(bodyMap);
+                if(StringUtils.isNotBlank(messageId)){//发送失败
+                    entity.setErrorReason("");
+                    entity.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
+                    entity.setMessageId(messageId);
+                    updateById(entity);
+                }
+            }else {
+                return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推失败");
             }
         }else {
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), "");
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), "飞书未绑定");
         }
-        return BatchResultDTO.success(entity.getId(), entity.getId(), "");
+        return null;
     }
 
     @Override
     public void insertBatch(List<ApproveSyncRecordEntity> list) {
         baseMapper.insertBatch(list);
     }
-
 }
