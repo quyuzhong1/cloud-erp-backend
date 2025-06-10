@@ -235,6 +235,11 @@ public class DmpSoOutstockDTO implements Serializable {
         * 财务组织代码
         */
         private String financialCompanyId;
+
+        /**
+         * 来源类型
+         */
+        private String sourceType;
         
         /**
          * 明细数据

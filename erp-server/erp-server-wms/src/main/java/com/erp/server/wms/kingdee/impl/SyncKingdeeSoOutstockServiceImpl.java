@@ -1554,6 +1554,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	detailView.setRemark(soOutstockDetailEntity.getRemark());
     	detailView.setWarehouseId(entity.getWarehouseId());
     	detailView.setWarehouseName(entity.getWarehouseName());
+        detailView.setPlatformDetailId(soOutstockDetailEntity.getPlatformDetailId());
     	
     	viewDto.setDeliveryTime(entity.getActualDeliveryDate());
     	
