@@ -1470,6 +1470,10 @@ public class SoB2cDTO implements Serializable {
         @NotNull(message = "订单金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal amount;
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFee;
 
         /**
          * 币别（原币）

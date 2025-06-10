@@ -5995,6 +5995,9 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
         if (isAdd) {
             soB2cFinanceEntity = new SoB2cFinanceEntity();
         }
+        if (Objects.isNull(soB2cFinanceEntity.getShippingCost())){
+            soB2cFinanceEntity.setShippingCost(soB2cEntity.getShippingFee());
+        }
 
         //店铺信息
         ShopCostEntity shopCostEntity = shopCostService.getByShopId(soB2cEntity.getShopId());

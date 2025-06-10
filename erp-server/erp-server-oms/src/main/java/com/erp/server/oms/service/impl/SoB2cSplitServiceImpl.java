@@ -827,6 +827,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
         BigDecimal groupAccessoriesNw = BigDecimal.ZERO;
         //分组包装重量
         BigDecimal groupWeight = BigDecimal.ZERO;
+        //物流费用
+        BigDecimal groupShippingFee = BigDecimal.ZERO;
 
         // 使用 Set 存储 platformSkuNo 值
         Set<String> platformSkuNoSet = new HashSet<>();
@@ -923,6 +925,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             BigDecimal actualShippingCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getActualShippingCost());
             BigDecimal accessoriesCost = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesCost());
             BigDecimal accessoriesNw = MathUtil.multiplyWithTwo(rate, soB2cLogisticsEntity.getAccessoriesNw());
+            BigDecimal shippingFee = MathUtil.multiplyWithTwo(rate, entity.getShippingFee());
             //最后一条根据减法计算金额
             if (i == splitList.size() - 1) {
                 amount = MathUtil.subtract(entity.getAmount(), groupAmount);
@@ -931,6 +934,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
                 actualShippingCost = MathUtil.subtract(soB2cLogisticsEntity.getActualShippingCost(), groupActualShippingCost);
                 accessoriesCost = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesCost(), groupAccessoriesCost);
                 accessoriesNw = MathUtil.subtract(soB2cLogisticsEntity.getAccessoriesNw(), groupAccessoriesNw);
+                shippingFee = MathUtil.subtract(entity.getShippingFee(), groupShippingFee);
             }
             //基本信息金额
             addDTO.setAmount(amount);
@@ -952,6 +956,8 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             logisticsAddDTO.setWeight(null);
             logisticsAddDTO.setLogisticsChannelId("");
             addDTO.setLogisticsDTO(logisticsAddDTO);
+            //财务信息
+            addDTO.setShippingFee(shippingFee);
             addDTO.setRemark( CharSequenceUtil.format("【{}】拆分订单", entity.getCode()));
 
             //操作信息
@@ -990,6 +996,7 @@ public class SoB2cSplitServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEn
             groupAccessoriesCost = MathUtil.add(logisticsAddDTO.getAccessoriesCost(), groupAccessoriesCost);
             groupAccessoriesNw = MathUtil.add(logisticsAddDTO.getAccessoriesNw(), groupAccessoriesNw);
             groupWeight = MathUtil.add(logisticsAddDTO.getWeight(), groupWeight);
+            groupShippingFee = MathUtil.add(add.getShippingFee(), groupShippingFee);
             flag++;
         }
         tikTokPramDTO.setSplittableGroups(splittableGroups);
