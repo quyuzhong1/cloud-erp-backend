@@ -6,7 +6,6 @@ package com.erp.server.oms.convert;
  * @date: 2025/4/18 15:08
  */
 
-import com.common.business.mapper.NumberMapperWork;
 import com.common.business.mapper.ObjectMapperWork;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.sdk.third.tf.entity.AddCompanyDTO;
@@ -23,7 +22,7 @@ import org.springframework.stereotype.Component;
  * @Description:
  * @Version: 1.0
  */
-@Mapper(componentModel = "spring",uses = {ObjectMapperWork.class})
+@Mapper(uses = {ObjectMapperWork.class})
 @Component
 public interface InvoiceSettingConverter {
     InvoiceSettingConverter INSTANCE = Mappers.getMapper(InvoiceSettingConverter.class);
