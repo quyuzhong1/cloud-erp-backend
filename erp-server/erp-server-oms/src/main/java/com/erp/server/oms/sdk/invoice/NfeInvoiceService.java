@@ -424,6 +424,12 @@ public class NfeInvoiceService {
     public void cancelInvoice(InvoiceInfoEntity invoiceInfoEntity,NfeInvoiceDTO.NfeCancelDTO nfeCancelDTO) {
         //b2c订单信息
         SoB2cEntity soB2cEntity = soB2cService.getById(invoiceInfoEntity.getSoId());
+        if (Objects.isNull(soB2cEntity)){
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
+        }
+        if (CharSequenceUtil.isBlank(soB2cEntity.getDictPlatform()) || CharSequenceUtil.isBlank(soB2cEntity.getShopId())) {
+            throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST_PLATFORM_SHOP,soB2cEntity.getCode());
+        }
         //税务信息
         CfgInvoiceSettingDetailEntity invoiceSettingDetail = cfgInvoiceSettingDetailService.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
         nfeCancelDTO.setTokenEmpresa(invoiceSettingDetail.getToken());
