@@ -1357,6 +1357,7 @@ public enum ApiError implements Serializable {
     ERROR_SO_PUSH_APPROVE_STATUS(92104,"销售订单【{}】未审核完成不支持下推"),
     ERROR_M_SKU_NOT_EXIST(92104,"系统不存在该平台产品，请确认产品已同步至系统后重试"),
     ERROR_SO_B2C_PLATFORM_ORDER_STATUS_ERROR(92104, "全托管订单【{}】平台状态为已作废不能提交发货"),
+    ERROR_SO_B2C_ORDER_STATUS_ERROR(92104, "订单【{}】已作废不能提交发货"),
 
     ERROR_COUNTRY_COUNT_SHOP_EXIST(92105,"系统已存在【{}】的亚马逊店铺"),
     ERROR_DUPLICATE_MAPPING_SKU_ID(92106,"产品SKU【{}】已在【{}】仓库绑定"),
