@@ -12,13 +12,13 @@ import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.core.entity.BaseEntity;
 import com.common.message.constant.RedisKeyConstant;
+import com.erp.model.oms.entity.RuleLogisticsEntity;
 import com.erp.model.oms.entity.SoB2cEntity;
 import com.erp.model.oms.entity.SoB2cErrorEntity;
+import com.erp.model.oms.entity.SoB2cLogisticsEntity;
 import com.erp.model.oms.enums.SoB2cBillStatusEnum;
 import com.erp.model.oms.enums.SoB2cErrorTypeEnum;
-import com.erp.server.oms.service.SoB2cAbnormalService;
-import com.erp.server.oms.service.SoB2cErrorService;
-import com.erp.server.oms.service.SoB2cService;
+import com.erp.server.oms.service.*;
 import com.xxl.job.core.biz.model.ReturnT;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
@@ -54,6 +54,10 @@ public class SoB2cRetryJob {
     private RedisTemplate<String, String> redisTemplate;
     @Resource
     private SoB2cService soB2cService;
+    @Resource
+    private RuleLogisticsService ruleLogisticsService;
+    @Resource
+    private SoB2cLogisticsService soB2cLogisticsService;
 
     @Value("${spring.cloud.nacos.discovery.namespace}")
     private String namespace;
@@ -100,6 +104,9 @@ public class SoB2cRetryJob {
             if (intervalHour > 0) {
                 todayNoon = LocalDateTime.now().minusHours(intervalHour);
             }
+            //获取符合规则的渠道列表
+            List<RuleLogisticsEntity> ruleLogisticsEntityList = ruleLogisticsService.getChannelListByAutoSubmitDelivery();
+            List<String> channelIdList = ruleLogisticsEntityList.stream().map(RuleLogisticsEntity::getLogisticsChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
             for (String type : typeList) {
                 LambdaQueryWrapper<SoB2cErrorEntity> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(SoB2cErrorEntity::getType, type)
@@ -124,7 +131,8 @@ public class SoB2cRetryJob {
                 Map<String, SoB2cEntity> soMap = soB2cService.listByIds(soIds)
                         .stream()
                         .collect(Collectors.toMap(BaseEntity::getId, Function.identity()));
-
+                Map<String, SoB2cLogisticsEntity> logisticsEntityMap = soB2cLogisticsService.listByMainIds(soIds)
+                        .stream().collect(Collectors.toMap(SoB2cLogisticsEntity::getMainId, Function.identity()));
                 // 根据订单ID分组去重
                 Map<String, SoB2cErrorEntity> gourpErrorMap = list.stream()
                         .collect(Collectors.toMap(
@@ -136,7 +144,7 @@ public class SoB2cRetryJob {
                     SoB2cErrorEntity soB2cErrorEntity = entry.getValue();
                     try {
 
-                        if (checkSignDelivery(soB2cErrorEntity, type, soMap)) {
+                        if (checkSignDelivery(soB2cErrorEntity, type, soMap, logisticsEntityMap,channelIdList)) {
                             XxlJobHelper.log("SoB2cRetryJob 当前任务执行处理：异常记录Id={}, 订单Id={}", soB2cErrorEntity.getId(), soB2cErrorEntity.getMainId());
                             soB2cErrorEntity.setRetryCount(soB2cErrorEntity.getRetryCount() + 1);
                             soB2cErrorService.updateById(soB2cErrorEntity);
@@ -182,7 +190,7 @@ public class SoB2cRetryJob {
     /**
      * 检查当前销售订单是否可标记发货
      */
-    private boolean checkSignDelivery(SoB2cErrorEntity soB2cErrorEntity, String type, Map<String, SoB2cEntity> soMap) {
+    private boolean checkSignDelivery(SoB2cErrorEntity soB2cErrorEntity, String type, Map<String, SoB2cEntity> soMap, Map<String, SoB2cLogisticsEntity> logisticsEntityMap, List<String> channelIdList) {
         if (SoB2cErrorTypeEnum.SIGN_DELIVERY.getCode().equalsIgnoreCase(type)) {
             SoB2cEntity soB2cEntity = soMap.get(soB2cErrorEntity.getMainId());
             if (null == soB2cEntity) {
@@ -221,6 +229,24 @@ public class SoB2cRetryJob {
                 XxlJobHelper.log("SoB2cRetryJob 当前任务销售订单非审核通过-配货中={}", soB2cErrorEntity.getMainId());
                 return true;
             }
+            if (soB2cEntity.getIsOutOfRangeDelivery()){
+                XxlJobHelper.log("SoB2cRetryJob 当前任务超出范围={}", soB2cEntity.getCode());
+                return true;
+            }
+            SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityMap.get(soB2cErrorEntity.getMainId());
+            if (null == soB2cLogisticsEntity) {
+                XxlJobHelper.log("SoB2cRetryJob 当前任务无销售订单物流信息id={}", soB2cErrorEntity.getMainId());
+                return true;
+            }
+            if (CharSequenceUtil.isBlank(soB2cLogisticsEntity.getLogisticsChannelId())) {
+                XxlJobHelper.log("SoB2cRetryJob 当前任务无渠道id={}", soB2cErrorEntity.getMainId());
+                return true;
+            }
+            if (!channelIdList.contains(soB2cLogisticsEntity.getLogisticsChannelId())) {
+                XxlJobHelper.log("SoB2cRetryJob 当前任务物流规则无匹配渠道名称={}", soB2cLogisticsEntity.getLogisticsChannelName());
+                return true;
+            }
+
         }
         return false;
     }
