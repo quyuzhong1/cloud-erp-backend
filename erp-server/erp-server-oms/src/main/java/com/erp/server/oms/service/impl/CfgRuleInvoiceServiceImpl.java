@@ -240,7 +240,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
             if (CharSequenceUtil.isBlank(entity.getNfeInvoiceStatus()) || SoB2cNfeStatusEnum.PENDING.getCode().equals(entity.getNfeInvoiceStatus()) || SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode().equals(entity.getNfeInvoiceStatus())){
                 nfeInvoiceStatus = SoB2cNfeStatusEnum.PENDING.getCode();
             }
-        }else if (CharSequenceUtil.isNotBlank(entity.getNfeInvoiceStatus())){
+        }else if (SoB2cNfeStatusEnum.PENDING.getCode().equals(entity.getNfeInvoiceStatus())){
             nfeInvoiceStatus = CharSequenceUtil.EMPTY;
         }
         entity.setNfeInvoiceStatus(nfeInvoiceStatus);
