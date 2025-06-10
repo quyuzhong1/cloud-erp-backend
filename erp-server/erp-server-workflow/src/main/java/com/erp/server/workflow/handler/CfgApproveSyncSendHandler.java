@@ -1,8 +1,6 @@
 package com.erp.server.workflow.handler;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
@@ -54,15 +52,10 @@ public class CfgApproveSyncSendHandler {
                                 String curTaskId,
                                 List<ProcessTaskManagementEntity> processTaskManagementEntities,
                                 ApproveSyncRecordEntity syncRecordEntity) {
-        if(StringUtils.isBlank(curTaskId)){
-            //根据创建时间来判断最近的节点的taskId
-            //使用stream根据创建时间进行倒序
-            processTaskManagementEntities = processTaskManagementEntities.stream().sorted(Comparator.comparing(ProcessTaskManagementEntity::getCreateTime).reversed())
-                    .collect(Collectors.toList());
-            curTaskId = processTaskManagementEntities.get(0).getTaskId();
-        }
-        String finalCurTaskId = curTaskId;
-        processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> item.getTaskId().equals(finalCurTaskId)).collect(Collectors.toList());
+        //过滤出当前任务ID的审批记录 并且任务状态为通过或者拒绝
+        processTaskManagementEntities = processTaskManagementEntities.stream()
+                .filter(item -> item.getTaskId().equals(curTaskId) && (Objects.equals(item.getTaskStatus(), ApproveStatusEnum.REJECT) || Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE)))
+                .collect(Collectors.toList());
 
         //审批状态
         String approveType = dto.getApproveType();
@@ -101,18 +94,25 @@ public class CfgApproveSyncSendHandler {
                            Map<String, ThirdUnionDTO> thirdUnionMap,
                            List<ProcessTaskManagementEntity> processTaskManagementEntities,
                            ApproveSyncRecordEntity syncRecordEntity) {
+
         //pc地址
         String pcLinkByEnv = cfgSettingService.getPcLinkByEnv();
         List<String> summaries = cfgApproveSyncBuildHandler.getSummaries(fieldMapEntities, remoteValues);
 
+        String processInstanceId = processTaskManagementEntities.get(0).getProcessInstanceId();
+        //过滤出当前任务ID的审批记录 并且任务状态为进行中的 ,并且未推送过审批消息的
+        processTaskManagementEntities = processTaskManagementExtService.listProcessTaskByTaskIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()),processInstanceId);
+
         //审批状态
         String approveType = dto.getApproveType();
         if(StringUtils.isBlank(approveType) || (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus()) && !Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH))){//创建流程
-            //默认发送审核人
-            sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
+            if(CollUtil.isNotEmpty(processTaskManagementEntities)){
+                //默认发送审核人
+                sendApproveNotice(NoticeTemplateEnum.APPROVE,summaries, processTaskManagementEntities, thirdUnionMap, cfgApproveSyncEntity, pcLinkByEnv,syncRecordEntity);
 
-            //发送抄送通知
-            commonSendNotice(NoticeTemplateEnum.CC, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+                //发送抄送通知
+                commonSendNotice(NoticeTemplateEnum.CC, cfgApproveSyncEntity, createUserId, approveIds, ccIds, thirdUnionMap, summaries, pcLinkByEnv,syncRecordEntity);
+            }
         }if (Objects.equals(approveType, ApproveTypeEnum.PASS.getStatus())//审核通过并且流程已经完成
                 && Objects.equals(processManagementEntity.getProcessStatus(), ProcessStatusEnum.FINISH)) {
             //发送审批结果通知
@@ -157,8 +157,9 @@ public class CfgApproveSyncSendHandler {
     }
 
     //更新审批 Bot 消息
-    private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status,ApproveSyncRecordEntity syncRecordEntity) {if(CollUtil.isNotEmpty(processTaskManagementEntities)){
-            List<String> messsageIds = processTaskManagementExtService.listByProcessTaskManagementIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
+    private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status,ApproveSyncRecordEntity syncRecordEntity) {
+        if(CollUtil.isNotEmpty(processTaskManagementEntities)){
+            List<String> messsageIds = processTaskManagementExtService.listMessageIdByTaskIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
             if(CollUtil.isNotEmpty(messsageIds)){
                 List<ApproveSyncRecordEntity> list = new ArrayList<>();
                 for (String messsageId : messsageIds) {
@@ -172,6 +173,7 @@ public class CfgApproveSyncSendHandler {
                         newRecord.setErrorReason(String.format("飞书消息更新成功messsageId：%s",messsageId));
                         newRecord.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
                     }
+                    newRecord.setMessageId(messsageId);
                     list.add(newRecord);
                 }
                 //保存日志
@@ -293,12 +295,11 @@ public class CfgApproveSyncSendHandler {
                                   CfgApproveSyncEntity cfgApproveSyncEntity,
                                   String pcLinkByEnv,
                                   ApproveSyncRecordEntity syncRecordEntity) {
-        processTaskManagementEntities = processTaskManagementEntities.stream().filter(item -> Objects.equals(item.getTaskStatus(), ApproveStatusEnum.APPROVE_ING )).collect(Collectors.toList());
+
+
         if(CollUtil.isNotEmpty(processTaskManagementEntities)){
             List<ApproveSyncRecordEntity> list = new ArrayList<>();
             Map<String , ApproveSyncRecordEntity> map = new HashMap<>();
-            ObjectMapper mapper = new ObjectMapper();
-
             Map<String, Object> dataJson = cfgSettingService.getFsActionCallback();
             List<FsBotParamsDTO.SendParamsDTO> sendParams = new ArrayList<>();
             for (ProcessTaskManagementEntity e : processTaskManagementEntities) {

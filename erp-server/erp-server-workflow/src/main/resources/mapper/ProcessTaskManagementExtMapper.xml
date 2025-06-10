@@ -30,6 +30,46 @@
         is_deleted,
         process_task_management_id, message_id, souce_platform
     </sql>
+    <select id="listByProcessTaskManagementIds" resultType="java.lang.String">
+        SELECT
+            ptme.message_id
+        FROM
+            process_task_management_ext AS ptme
+                LEFT JOIN approve_sync_record asr ON ptme.message_id = asr.message_id
+                AND asr.is_deleted = FALSE
+                AND asr.status != 'success'
+        WHERE
+            ptme.is_deleted = FALSE
+          and ptme.souce_platform = 'feishu'
+          AND ptme.message_id != ''
+          AND ptme.process_task_management_id IN
+                <foreach item="item" index="index" collection="processTaskManagementIds" open="(" separator="," close=")">
+                    #{item}
+                </foreach>
+    </select>
 
-
+    <select id="listProcessTaskByTaskIds" resultType="com.erp.model.workflow.entity.ProcessTaskManagementEntity">
+        SELECT
+            ptm.*
+        FROM
+            process_task_management ptm
+        WHERE
+            ptm.is_deleted = FALSE
+        AND ptm.process_instance_id = #{processInstanceId}
+        AND ptm.task_status ='approveIng'
+        AND ptm.ID NOT IN (
+        SELECT
+            process_task_management_id
+        FROM
+            process_task_management_ext ptme
+        WHERE
+            ptme.souce_platform = 'feishu'
+        AND ptme.message_id != ''
+        AND ptme.is_deleted = FALSE
+        AND ptme.process_task_management_id IN
+        <foreach item="item" index="index" collection="processTaskManagementIds" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        )
+    </select>
 </mapper>

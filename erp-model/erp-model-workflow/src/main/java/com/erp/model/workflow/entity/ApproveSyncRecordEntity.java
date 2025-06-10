@@ -97,6 +97,12 @@ public class ApproveSyncRecordEntity extends BaseEntity<ApproveSyncRecordEntity>
     @TableField(value = "data_json", typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> dataJson;
 
+    /**
+     * message_id
+     */
+    @TableField("message_id")
+    private String messageId;
+
     public static final String CFG_APPROVE_SYNC_ID = "cfg_approve_sync_id";
 
     public static final String NOTICE_TYPE = "notice_type";

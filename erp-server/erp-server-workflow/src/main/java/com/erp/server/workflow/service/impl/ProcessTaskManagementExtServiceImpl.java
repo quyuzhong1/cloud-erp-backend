@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementExtEntity;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.server.workflow.mapper.ProcessTaskManagementExtMapper;
@@ -28,13 +29,18 @@ public class ProcessTaskManagementExtServiceImpl extends SuperServiceImpl<Proces
 
 
     @Override
-    public List<String> listByProcessTaskManagementIds(List<String> processTaskManagementIds) {
-        if(CollUtil.isNotEmpty(processTaskManagementIds)){
-            List<ProcessTaskManagementExtEntity> list = lambdaQuery().in(ProcessTaskManagementExtEntity::getProcessTaskManagementId, processTaskManagementIds)
-                    .eq(ProcessTaskManagementExtEntity::getSoucePlatform, CfgApproveSyncSyncPlatformEnum.FEISHU.getCode())
-                    .list();
-            return list.stream().map(ProcessTaskManagementExtEntity::getMessageId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
+    public List<String> listMessageIdByTaskIds(List<String> processTaskManagementIds) {
+        if(CollUtil.isEmpty(processTaskManagementIds)){
+            return Collections.emptyList();
         }
-        return Collections.emptyList();
+        return baseMapper.listByProcessTaskManagementIds(processTaskManagementIds);
+    }
+
+    @Override
+    public List<ProcessTaskManagementEntity> listProcessTaskByTaskIds(List<String> processTaskManagementIds,String processInstanceId) {
+        if(CollUtil.isEmpty(processTaskManagementIds) || StringUtils.isBlank(processInstanceId)){
+            return Collections.emptyList();
+        }
+        return baseMapper.listProcessTaskByTaskIds(processTaskManagementIds,processInstanceId);
     }
 }

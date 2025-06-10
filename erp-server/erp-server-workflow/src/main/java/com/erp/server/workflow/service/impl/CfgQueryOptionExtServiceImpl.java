@@ -64,7 +64,7 @@ public class CfgQueryOptionExtServiceImpl extends SuperServiceImpl<CfgQueryOptio
                 CfgQueryOptionExtEntity extEntity = cfgQueryOptionExtMap.getOrDefault(entry.getKey(), null);
                 if(Objects.isNull(extEntity)){
                     //设置原始值
-                    result.put(entry.getKey(), entry.getValue());
+                    result.put(entry.getKey(), Objects.isNull(entry.getValue()) ? "" : entry.getValue());
                 }else {
                     String cfgQueryOptionId = extEntity.getCfgQueryOptionId();
                     //设置原始值
