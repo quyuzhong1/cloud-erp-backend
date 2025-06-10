@@ -1025,10 +1025,6 @@ public class SoB2cDTO implements Serializable {
         private String platformOrderCreateTime;
 
         /**
-         * 运费收入
-         */
-        private String shippingFee;
-        /**
          * 扩展字段
          */
         private String extendData;
