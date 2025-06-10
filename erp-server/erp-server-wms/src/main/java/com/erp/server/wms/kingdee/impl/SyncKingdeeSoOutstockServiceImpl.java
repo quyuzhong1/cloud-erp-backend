@@ -1481,6 +1481,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	//默认出库单
     	viewDto.setTradeLabel(convertOutstockTransactionSubType(transactionSubType));
     	viewDto.setPlatformStatus(entity.getApproveStatus().getName());
+        viewDto.setSourceType(entity.getSourceType());
     	detailView.setDataStatus(new ShudiyunB2cOrderDTO().sdyStatusHandle(operate, entity.getVersion(), soOutstockDetailEntity.getVersion()));
     	
     	//客户信息
@@ -1554,6 +1555,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	detailView.setRemark(soOutstockDetailEntity.getRemark());
     	detailView.setWarehouseId(entity.getWarehouseId());
     	detailView.setWarehouseName(entity.getWarehouseName());
+        detailView.setPlatformDetailId(soOutstockDetailEntity.getPlatformDetailId());
     	
     	viewDto.setDeliveryTime(entity.getActualDeliveryDate());
     	

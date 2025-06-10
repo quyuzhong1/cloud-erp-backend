@@ -239,6 +239,11 @@ public class DmpSoOutstockEntity extends BaseEntity<DmpSoOutstockEntity> {
      */
     @TableField(value = "tracking_url")
     private String trackingUrl = "";
+    /**
+     * 来源类型
+     */
+    @TableField(value = "source_type")
+    private String sourceType;
 
     public static final String PLATFORM_CREATE_TIME = "platform_create_time";
 
