@@ -15,6 +15,7 @@ import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
+import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 
 import java.util.List;
 import java.util.Map;
@@ -80,5 +81,5 @@ public interface ProcessFormHandler {
             List<CfgProcessFieldMapEntity> fieldMapList);
 
 
-    DictBasicEnum getEventType();
+    ProcessSourcePlatformEnum getEventType();
 }

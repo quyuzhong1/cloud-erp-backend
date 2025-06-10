@@ -1,21 +1,24 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.conditions.query.QueryChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.erp.model.sys.entity.SysUserThirdEntity;
+import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.model.workflow.dto.ThirdProcessTaskManagementDTO;
 import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.ThirdProcessManagementEntity;
+import com.erp.model.workflow.entity.ThirdProcessTaskManagementEntity;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.server.workflow.mapper.ThirdProcessManagementMapper;
-import com.erp.server.workflow.service.ApproveTaskInfoService;
-import com.erp.server.workflow.service.ThirdProcessManagementService;
+import com.erp.server.workflow.service.*;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
-import com.erp.server.workflow.service.OperateLogService;
-import com.erp.server.workflow.service.CommonService;
 import com.common.core.exception.ServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,6 +52,12 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
 
     @Resource
     private ApproveTaskInfoService approveTaskInfoService;
+
+    @Resource
+    private SysUserFeign sysUserFeign;
+
+    @Resource
+    private ThirdProcessTaskManagementService thirdProcessTaskManagementService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -104,26 +113,77 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    @GlobalTransactional
-    public void insert(JSONObject jsonObject) {
-        ApproveTaskInfoEntity one = approveTaskInfoService.getOne(new LambdaQueryWrapper<ApproveTaskInfoEntity>().eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr("instanceCode")).orderByDesc(ApproveTaskInfoEntity::getCreateTime));
-        JSONArray taskList = jsonObject.getJSONArray("task_list");
-        //1、生成主表数据
+    public void insert(JSONObject jsonObject, String sourcePlatform) {
+        // 1. 通过 instance_code 查询是否已有记录
+        String instanceCode = jsonObject.getStr("instance_code");
+        ThirdProcessManagementEntity thirdProcessManagementEntity = this.lambdaQuery()
+                .eq(ThirdProcessManagementEntity::getProcessInstanceId, instanceCode)
+                .one();
+
+        // 2. 组装主表数据
+        ApproveTaskInfoEntity one = approveTaskInfoService.getOne(
+                new LambdaQueryWrapper<ApproveTaskInfoEntity>()
+                        .eq(ApproveTaskInfoEntity::getThirdInstanceId, jsonObject.getStr("instanceCode"))
+                        .orderByDesc(ApproveTaskInfoEntity::getCreateTime)
+        );
         ThirdProcessManagementDTO.AddDTO addDTO = new ThirdProcessManagementDTO.AddDTO();
-        addDTO.setProcessInstanceId(jsonObject.getStr("instance_code"));
+        addDTO.setProcessInstanceId(instanceCode);
         addDTO.setProcessDefinitionId(jsonObject.getStr("approval_code"));
         addDTO.setSysUserId(jsonObject.getStr("user_id"));
-        //userId  转换成系统用户id
         addDTO.setBusinessId(one.getBussinessCode());
-        addDTO.setBusinessCode(one.getBussinessCode());
+        addDTO.setBusinessCode(one.getBussinessId());
         addDTO.setBusinessKey(one.getBussinessKey());
-        addDTO.setStatus("");
-        addDTO.setProcessInstanceName("");
-        addDTO.setSourcePlatform("");
-        //毫秒值转为localdatetime
+        addDTO.setStatus(jsonObject.getStr("status"));
+        addDTO.setProcessInstanceName(jsonObject.getStr("approval_name"));
+        addDTO.setSourcePlatform(sourcePlatform);
         addDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("start_time")), ZoneId.systemDefault()));
         addDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("end_time")), ZoneId.systemDefault()));
-        //2、生成task明细数据
+
+        if (thirdProcessManagementEntity != null) {
+            // 已有记录，更新
+            BeanMapperUtils.copy(addDTO, thirdProcessManagementEntity);
+            this.updateById(thirdProcessManagementEntity);
+        } else {
+            // 没有记录，新增
+            thirdProcessManagementEntity = BeanUtil.copyProperties(addDTO, ThirdProcessManagementEntity.class);
+            this.save(thirdProcessManagementEntity);
+        }
+
+        // 3. 生成 task 明细数据
+        JSONArray taskList = jsonObject.getJSONArray("task_list");
+        ArrayList<ThirdProcessTaskManagementEntity> arrayList = new ArrayList<>();
+        String id = thirdProcessManagementEntity.getId();
+        taskList.jsonIter().forEach(task -> {
+            ThirdProcessTaskManagementEntity taskDTO = new ThirdProcessTaskManagementEntity();
+            taskDTO.setTaskId(task.getStr("id"));
+            taskDTO.setNodeId(task.getStr("node_id"));
+            taskDTO.setNodeName(task.getStr("node_name"));
+            taskDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(task.getLong("start_time")), ZoneId.systemDefault()));
+            taskDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(task.getLong("end_time")), ZoneId.systemDefault()));
+            taskDTO.setTaskStatus(task.getStr("status"));
+            taskDTO.setThirdUserId(task.getStr("user_id"));
+            SysUserThirdEntity userByThird = sysUserFeign.getUserByThird("fs", task.getStr("user_id"));
+            taskDTO.setSysUserId(userByThird.getUserId());
+            taskDTO.setMainId(id);
+            arrayList.add(taskDTO);
+        });
+        //arrayList根据nodeid更新或插入数据
+        for (ThirdProcessTaskManagementEntity taskEntity : arrayList) {
+            LambdaQueryWrapper<ThirdProcessTaskManagementEntity> queryWrapper = new LambdaQueryWrapper<ThirdProcessTaskManagementEntity>()
+                    .eq(ThirdProcessTaskManagementEntity::getMainId, taskEntity.getMainId())
+                    .eq(ThirdProcessTaskManagementEntity::getNodeId, taskEntity.getNodeId());
+            ThirdProcessTaskManagementEntity exist = thirdProcessTaskManagementService.getOne(queryWrapper);
+            if (exist != null) {
+                // 更新
+                taskEntity.setId(exist.getId());
+                thirdProcessTaskManagementService.updateById(taskEntity);
+            } else {
+                // 插入
+                thirdProcessTaskManagementService.save(taskEntity);
+            }
+        }
+        //TODO 根据status执行后续流程
+
     }
 
 

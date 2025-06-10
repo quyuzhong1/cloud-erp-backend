@@ -22,6 +22,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.model.workflow.enums.ThirdProcessDefinitionStatusEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
@@ -95,7 +96,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         if (null != one){
             CfgProcessRuleEntity rule = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getCfgProcessId, one.getId()).eq(CfgProcessRuleEntity::getType, CfgProcessRuleTypeEnum.ERPPROCESS.getCode()).eq(CfgProcessRuleEntity::getIsDeleted, false));
             if (ObjectUtil.isNotEmpty(rule)){
-                throw new ServiceException("{}已配置流程，不可重复配置",one.getName());
+                throw new ServiceException("{}已配置流程，不可重复配置", CfgQueryOptionBussinessKeyEnum.getByCode(one.getBussinessKey()))   ;
             }
         }
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();

@@ -93,6 +93,11 @@ public class CfgQueryOptionDTO implements Serializable {
         private String conditionField;
 
         private String fieldBelongsType;
+
+        /**
+         * 明细字段所属单据（非字符串类型的）
+         */
+        private String sysParentId;
     }
 
     /**

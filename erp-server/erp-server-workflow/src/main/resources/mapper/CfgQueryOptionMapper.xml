@@ -60,8 +60,10 @@
     </select>
     <select id="getSystemfield" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
         SELECT condition_field,
-               concat(case when field_belongs_type = 'table' then '单据头-' else '单据明细-' end,
-                      condition_field_name) AS condition_field_name,
+               case
+                   when field_belongs_type = 'main' then '单据头-' || condition_field_name
+                   else db.name || '-' || condition_field_name
+                   end AS condition_field_name,
                request_method,
                controls,
                api_url,
@@ -75,9 +77,11 @@
                is_required,
                logic,
                field_belongs_type,
-               bussiness_key
-        FROM cfg_query_option
-        WHERE is_deleted = FALSE
+               bussiness_key,
+               field_belongs_type
+        FROM public.cfg_query_option cqo
+        LEFT JOIN public.dict_basic AS db on db.is_deleted = false and db.type = 'tableName' and cqo.field_belongs_type = db.value
+        WHERE cqo.is_deleted = FALSE
           AND bussiness_key = #{businessKey}
     </select>
     <select id="listByMqParams" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
