@@ -1772,4 +1772,23 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return baseMapper.getTestList(businessType);
     }
 
+    @Override
+    public Boolean checkSubmitByBusinessId(ProcessManagementDTO.CheckSubmitByBusinessIdDTO dto) {
+        //获取创建时间最新的一条数据
+        ProcessManagementEntity processManagementEntity = lambdaQuery()
+                .eq(ProcessManagementEntity::getBusinessKey, dto.getBusinessKey())
+                .eq(ProcessManagementEntity::getBusinessId, dto.getBusinessId())
+                .orderByDesc(ProcessManagementEntity::getCreateTime)
+                .last(SqlConstants.LIMIT_1)
+                .one();
+        if(Objects.isNull(processManagementEntity)){
+            return Boolean.FALSE;
+        }
+        List<ProcessTaskManagementEntity> list = processTaskManagementService.lambdaQuery().eq(ProcessTaskManagementEntity::getProcessInstanceId, processManagementEntity.getProcessInstanceId()).list();
+        if(CollUtil.isEmpty(list)){
+            return Boolean.FALSE;
+        }
+        return list.stream().map(ProcessTaskManagementEntity::getTaskStatus).allMatch(e -> e.equals(ApproveStatusEnum.APPROVE_ING));
+    }
+
 }

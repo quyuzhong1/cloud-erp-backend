@@ -276,4 +276,10 @@ public interface WorkflowFeign {
      */
     @PostMapping("/feign/process/listProcessByBusinessKey")
     List<ProcessTaskManagementEntity> listProcessByBusinessKey(@RequestBody ProcessManagementDTO.TaskKeyInfoDTO dto);
+
+    /**
+     * 根据BusinessKey,businessId判断当前单据是否提审操作
+     */
+    @PostMapping("/feign/process/checkSubmitByBusinessId")
+    Boolean checkSubmitByBusinessId(@RequestBody ProcessManagementDTO.CheckSubmitByBusinessIdDTO dto);
 }

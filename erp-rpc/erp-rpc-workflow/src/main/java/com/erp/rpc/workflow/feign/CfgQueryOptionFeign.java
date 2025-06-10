@@ -42,4 +42,10 @@ public interface CfgQueryOptionFeign {
      */
     @PostMapping("/feign/cfgQueryOption/getVariablesMapByBusinessKey")
     Map<String, Object> getVariablesMapByBusinessKey(@RequestBody CfgQueryOptionDTO.VariablesParamsDTO dto);
+
+    /**
+     * 根据字段条件查询配置
+     */
+    @PostMapping("/feign/cfgQueryOption/listExtendByFieldCondition")
+    List<CfgQueryOptionEntity> listExtendByFieldCondition(@RequestBody List<String> conditionFields);
 }
