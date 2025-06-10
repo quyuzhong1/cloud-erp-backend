@@ -293,4 +293,6 @@ public interface ProcessManagementService extends SuperService<ProcessManagement
     List<String> getTestList(String businessType);
 
     Boolean checkSubmitByBusinessId(ProcessManagementDTO.CheckSubmitByBusinessIdDTO dto);
+
+    Boolean checkTaskByProcessInstanceId(String processInstanceId);
 }

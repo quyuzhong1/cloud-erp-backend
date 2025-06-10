@@ -1801,4 +1801,26 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return list.stream().map(ProcessTaskManagementEntity::getTaskStatus).allMatch(e -> e.equals(ApproveStatusEnum.APPROVE_ING));
     }
 
+    @Override
+    public Boolean checkTaskByProcessInstanceId(String processInstanceId) {
+        ProcessManagementEntity processManagementEntity = lambdaQuery()
+                .eq(ProcessManagementEntity::getProcessInstanceId, processInstanceId)
+                .eq(ProcessManagementEntity::getProcessStatus, ProcessStatusEnum.RUNNING)
+                .last("limit 1")
+                .one();
+        if(Objects.isNull(processManagementEntity)){
+            return Boolean.FALSE;
+        }
+
+        List<ProcessTaskManagementEntity> list = processTaskManagementService.lambdaQuery().eq(ProcessTaskManagementEntity::getProcessInstanceId, processInstanceId).list();
+        if(CollUtil.isEmpty(list)){
+            return Boolean.FALSE;
+        }
+        List<String> taskIds = list.stream().map(ProcessTaskManagementEntity::getTaskId).distinct().collect(Collectors.toList());
+        if(taskIds.size() > 1 ){
+            return Boolean.FALSE;
+        }
+        return Boolean.TRUE;
+    }
+
 }

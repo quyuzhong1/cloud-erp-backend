@@ -3,6 +3,7 @@ package com.erp.server.workflow.service;
 import com.common.business.service.SuperService;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;

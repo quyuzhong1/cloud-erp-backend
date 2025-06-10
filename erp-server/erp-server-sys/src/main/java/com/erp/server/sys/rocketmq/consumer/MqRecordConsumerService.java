@@ -306,7 +306,14 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                                 continue;
                             }
                             //设置原始值
-                            handlerValueMap.put(entity.getFieldId(),String.valueOf(variablesMap.getOrDefault(entity.getFieldSource(), "")));
+                            //设置原始值
+                            Object fieldValue = variablesMap.getOrDefault(entity.getFieldSource(), "");
+                            if(Objects.isNull(fieldValue)){
+                                handlerValueMap.put(entity.getFieldId(),"");
+                            }else {
+                                handlerValueMap.put(entity.getFieldId(),String.valueOf(fieldValue));
+                            }
+//                            handlerValueMap.put(entity.getFieldId(),String.valueOf(variablesMap.getOrDefault(entity.getFieldSource(), "")));
 
                             //判断是类型是common、主表还是明细
                             if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode())

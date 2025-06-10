@@ -13,7 +13,6 @@ import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.entity.WorkMenuEntity;
 import com.erp.server.workflow.mapper.CfgQueryOptionMapper;
 import com.erp.server.workflow.service.CfgQueryOptionService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -70,10 +69,13 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         queryWrapper.orderByDesc(CfgQueryOptionEntity::getFieldBelongsType);
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.selectList(queryWrapper);
         cfgQueryOptionEntities.stream().forEach(item -> {
-            String name = CfgQueryOptionFieldBelongsTypeEnum.getName(item.getFieldBelongsType());
-            item.setConditionFieldName((StringUtils.isNotBlank(name) ? name+"-" : "明细-" )+ item.getConditionFieldName());
+            if(item.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
+                String name = CfgQueryOptionFieldBelongsTypeEnum.getName(item.getFieldBelongsType());
+                item.setConditionFieldName(name +"-"+ item.getConditionFieldName());
+            }else {
+                item.setConditionFieldName(item.getTableCnName() +"-"+ item.getConditionFieldName());
+            }
         });
-
         cfgQueryOptionEntities.addAll(common);
         cfgQueryOptionEntities = cfgQueryOptionEntities.stream()
                 .filter(e -> !e.getConditionField().contains("id") && !e.getConditionField().contains("Id"))
@@ -221,28 +223,35 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
 
 
     private void saveFromSql(String businessKey, String model , String tableName, String fieldBelongsType) {
-        String sql = "SELECT cls.relname, col.attnum AS ordinal_position, col.attname AS COLUMN_NAME, format_type(col.atttypid, col.atttypmod) AS data_type, NOT col.attnotnull AS is_nullable, des.description AS column_comment FROM pg_attribute col JOIN pg_class cls ON col.attrelid = cls.OID JOIN pg_namespace ns ON cls.relnamespace = ns.OID LEFT JOIN pg_description des ON des.objoid = col.attrelid AND des.objsubid = col.attnum WHERE cls.relname = '{}' AND col.attnum > 0 and col.attname not in ('create_user_id','create_user_name','create_time','update_user_id','update_user_name','update_time','version','is_deleted') AND NOT col.attisdropped ORDER BY col.attnum;";
+        //不允许重复添加
+        Integer count = lambdaQuery().eq(CfgQueryOptionEntity::getBussinessKey, businessKey).eq(CfgQueryOptionEntity::getTableName, tableName).count();
+        if(count > 0){
+            return ;
+        }
+
+        String sql = "SELECT obj_description(cls.oid) AS table_comment,cls.relname, col.attnum AS ordinal_position, col.attname AS COLUMN_NAME, format_type(col.atttypid, col.atttypmod) AS data_type, NOT col.attnotnull AS is_nullable, des.description AS column_comment FROM pg_attribute col JOIN pg_class cls ON col.attrelid = cls.OID JOIN pg_namespace ns ON cls.relnamespace = ns.OID LEFT JOIN pg_description des ON des.objoid = col.attrelid AND des.objsubid = col.attnum WHERE cls.relname = '{}' AND col.attnum > 0 and col.attname not in ('create_user_id','create_user_name','create_time','update_user_id','update_user_name','update_time','version','is_deleted') AND NOT col.attisdropped ORDER BY col.attnum;";
 
         String url = "jdbc:postgresql://172.16.100.60:32590/" + StrUtil.format("erp-{}", model) + "?useUnicode=true&characterEncoding=utf8&autoReconnect=true&useSSL=false";
         try {
             List<CfgQueryOptionEntity> results = new ArrayList<>();
             Connection conn = DriverManager.getConnection(url, "postgres", "admin@viji");
             String format = StrUtil.format(sql, tableName);
-
             PreparedStatement stmt = conn.prepareStatement(format);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 String name = rs.getString("column_name");
                 String comment = rs.getString("column_comment");
+                String tableComment = rs.getString("table_comment");
                 CfgQueryOptionEntity cfgQueryOption = new CfgQueryOptionEntity();
                 cfgQueryOption.setConditionField(underlineToCamel(name));
                 cfgQueryOption.setConditionFieldName(Objects.isNull(comment) ? "" : comment);
                 cfgQueryOption.setBussinessKey(businessKey);
                 cfgQueryOption.setFieldBelongsType(fieldBelongsType);
                 cfgQueryOption.setValueType("String");
-                cfgQueryOption.setClasspath("class com.erp.model."+model+".entity."+underlineToCamel(tableName)+"Entity");
+                cfgQueryOption.setClasspath("class com.erp.model."+model+".entity."+underlineToPascal(tableName)+"Entity");
                 cfgQueryOption.setTableName(tableName);
                 cfgQueryOption.setSysClassify(model);
+                cfgQueryOption.setTableCnName(Objects.isNull(tableComment) ? "" : tableComment);
                 results.add(cfgQueryOption);
             }
             saveBatch(results);
@@ -250,6 +259,15 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
             e.printStackTrace();
         }
     }
+
+    /**
+     * 下划线命名转 Pascal 命名（驼峰命名，首字母大写）
+     */
+    public String underlineToPascal(String underScore) {
+        String camel = underlineToCamel(underScore);
+        return Character.toUpperCase(camel.charAt(0)) + camel.substring(1);
+    }
+
     /**
      * 下划线命名转驼峰命名
      */

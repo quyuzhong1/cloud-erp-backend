@@ -128,7 +128,7 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
     @TableField("is_extend")
     private String isExtend;
     /**
-     * 使用类型
+     * 表名
      */
     @TableField("table_name")
     private String tableName;
@@ -137,6 +137,11 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
      */
     @TableField("sys_classify")
     private String sysClassify;
+    /**
+     * 表名(中文)
+     */
+    @TableField("table_cn_name")
+    private String tableCnName;
 
     public static final String Condition_Field_Name = "condition_field_name";
 

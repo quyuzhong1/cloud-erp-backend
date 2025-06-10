@@ -112,11 +112,11 @@ public class ApproveSyncRecordController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/repush")
-    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-            tableField = "create_user_id",
-            menuCode = "workflow:approveSyncRecord:repush",
-            serviceClass = ApproveSyncRecordService.class,
-            keyIdName = "ids")
+//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+//            tableField = "create_user_id",
+//            menuCode = "workflow:approveSyncRecord:repush",
+//            serviceClass = ApproveSyncRecordService.class,
+//            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> repush(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());

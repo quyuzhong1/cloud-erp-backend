@@ -151,8 +151,12 @@ public class MQSyncFsHandler {
                     continue;
                 }
                 //设置原始值
-                handlerValueMap.put(entity.getFieldId(),String.valueOf(variablesMap.getOrDefault(entity.getFieldSource(), "")));
-
+                Object fieldValue = variablesMap.getOrDefault(entity.getFieldSource(), "");
+                if(Objects.isNull(fieldValue)){
+                    handlerValueMap.put(entity.getFieldId(),"");
+                }else {
+                    handlerValueMap.put(entity.getFieldId(),String.valueOf(fieldValue));
+                }
                 //判断是类型是common、主表还是明细
                 if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode())
                         || queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getCode())){
@@ -202,7 +206,15 @@ public class MQSyncFsHandler {
             String msg = String.format("同步三方审批实例失败:code:%s,msg:%s,reqId:%s", resp.getCode(), resp.getMsg(), resp.getRequestId());
             log.error("{}", msg);
             syncRecordEntity.setErrorReason(msg);
-            approveSyncRecordService.save(syncRecordEntity);
+            syncRecordEntity.setReceiverId(createUserId);
+            if(thirdUnionMap.containsKey(createUserId)){
+                syncRecordEntity.setReceiverName(thirdUnionMap.get(createUserId).getUserName());
+            }
+//            CfgApproveSyncDTO.SyncFsProcessToMqDTO dto
+            Map<String, Object> dataJson = BeanUtil.beanToMap(dto);
+            dataJson.put("approveSyncFailedType",ApproveSyncFailedTypeEnum.CREATEINSTANCE.getCode());
+            syncRecordEntity.setDataJson(dataJson);
+            approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
         } else {
             //获取操作的taskId
             String curTaskId = dto.getCurTaskId();

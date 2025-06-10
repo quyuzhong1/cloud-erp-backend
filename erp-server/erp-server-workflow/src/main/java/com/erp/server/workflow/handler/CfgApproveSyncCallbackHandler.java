@@ -192,11 +192,11 @@ public class CfgApproveSyncCallbackHandler {
         try {
             String key = "9527";
             String source ="{\n" +
-                    "  \"action_type\": \"APPROVE\",\n" +
+                    "  \"action_type\": \"REJECT\",\n" +
                     "  \"user_id\": \"1319c76g\",\n" +
-                    "  \"approval_code\": \"233CA06F-68C6-48CB-9B37-8C1B6AD4E504\",\n" +
-                    "  \"message_id\": \"7511621386474717203\",\n" +
-                    "  \"reason\": \"ok\"\n" +
+                    "  \"approval_code\": \"0F625108-DBA7-4B25-B85D-0BBE76CD8ABC\",\n" +
+                    "  \"message_id\": \"7514304574156046364\",\n" +
+                    "  \"reason\": \"1234564894654\"\n" +
                     "}";
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
             messageDigest.reset();
