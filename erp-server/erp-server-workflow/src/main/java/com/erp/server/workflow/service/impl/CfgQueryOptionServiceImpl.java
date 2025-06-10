@@ -240,7 +240,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 cfgQueryOption.setBussinessKey(businessKey);
                 cfgQueryOption.setFieldBelongsType(fieldBelongsType);
                 cfgQueryOption.setValueType("String");
-                cfgQueryOption.setClasspath("class com.erp.model."+model+".entity."+underlineToCamel(tableName)+"Entity");
+                cfgQueryOption.setClasspath("class com.erp.model."+model+".entity."+underlineToPascal(tableName)+"Entity");
                 cfgQueryOption.setTableName(tableName);
                 cfgQueryOption.setSysClassify(model);
                 results.add(cfgQueryOption);
@@ -250,6 +250,15 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
             e.printStackTrace();
         }
     }
+
+    /**
+     * 下划线命名转 Pascal 命名（驼峰命名，首字母大写）
+     */
+    public String underlineToPascal(String underScore) {
+        String camel = underlineToCamel(underScore);
+        return Character.toUpperCase(camel.charAt(0)) + camel.substring(1);
+    }
+
     /**
      * 下划线命名转驼峰命名
      */
