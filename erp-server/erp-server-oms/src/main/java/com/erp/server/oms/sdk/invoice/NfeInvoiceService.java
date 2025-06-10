@@ -302,8 +302,8 @@ public class NfeInvoiceService {
         //州（省份）二字码缩写
         List<DictCityEntity> dictCityList = FeignQuery.create(DictCityEntity.class)
                 .eq(DictCityEntity::getCountryCode, nfeClienteDTO.getCountry())
-                .eq(DictCityEntity::getType,"province")
-                .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "')")
+                .in(DictCityEntity::getType,Arrays.asList("province","city"))
+                .last("and (code_en = '" + nfeClienteDTO.getState() + "' or code_pt = '" + nfeClienteDTO.getState() + "' or code = '"+ nfeClienteDTO.getState() + "')")
                 .list();
         if (CollUtil.isEmpty(dictCityList)) {
             throw new ServiceException("开票省份/州二字码未找到");
