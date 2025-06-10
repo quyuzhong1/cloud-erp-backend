@@ -190,6 +190,10 @@ public class PlatformSoOutStockConsumerService<T extends DmpSyncTaskIdDTO> exten
 
         } catch (Exception e) {
             log.error("[销售出库销售消费服务]:查询销售出库单的基础信息异常：单号={}, error={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+            // 非ServiceException 异常，抛出由中台重试
+            if (! (e instanceof ServiceException)){
+                throw e;
+            }
             // 生成明细异常记录
             List<SoB2cDetailEntity> detailList = soB2cFeign.listDetailByMainIds(Collections.singletonList(soB2cEntity.getId()));
             if (CollectionUtils.isEmpty(detailList)){

@@ -1,6 +1,7 @@
 package com.erp.server.oms.sdk.sob2c;
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.exceptions.ExceptionUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.fastjson.JSON;
@@ -132,7 +133,11 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             if(CollectionUtils.isNotEmpty(aliexpressDeliveryEntities) && aliexpressDeliveryEntities.stream().allMatch(AliexpressDeliveryEntity::getIsOutstock)){
                 return Boolean.TRUE;
             }
-            log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage(), e);
+            log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+            // 非ServiceException 异常，抛出由中台重试
+            if (! (e instanceof ServiceException)){
+                throw e;
+            }
             SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
             addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
             addError.setParamJson("");
@@ -284,7 +289,11 @@ public class AliExpressSoB2cHandle extends AbstractSoB2cHandle {
             try {
                 autoGenerateSalesDelivery(mainEntity, deliveryDTO, mappingViewDTOS);
             }catch (Exception e){
-                log.error("[速卖处理销售出库失败]:order={},msg={}", dto.getPlatformCode(), e.getMessage(), e);
+                log.error("[速卖处理销售明细出库失败]:order={},msg={}", dto.getPlatformCode(), ExceptionUtil.stacktraceToString(e));
+                // 非ServiceException 异常，抛出由中台重试
+                if (! (e instanceof ServiceException)){
+                    throw e;
+                }
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson("");
