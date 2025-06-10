@@ -7,8 +7,6 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
-import com.common.core.anno.LogAction;
-import com.common.core.enums.LogActionEnum;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -25,14 +23,12 @@ import com.erp.model.wms.vo.WarehouseLocationExportVo;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/feign/export")
@@ -926,7 +922,7 @@ public class ExportWmsFeignController {
             warehouseTableField = "fmp.warehouse_id",
             menuCode = "wms:firstMileProcessing:paging"
     )
-    @WebAdvanceQuery
+    @WebAdvanceQuery(handler = FirstMileProcessingQueryHandler.class)
     public PagingVO<FirstMileProcessingDTO.ListDTO> exportFirstMileProcessing(@RequestBody PagingDTO<FirstMileProcessingDTO.PagingParamDTO> dto){
         return firstMileProcessingService.exportPaging(dto);
     }
