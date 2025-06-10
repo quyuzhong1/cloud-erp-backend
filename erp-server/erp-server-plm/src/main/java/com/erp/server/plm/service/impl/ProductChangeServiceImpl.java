@@ -371,7 +371,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException(ApiError.ERROR_95163);
         }
         // 只有审核中的单据允许撤销
-        if (!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING)) {
+        if (!Objects.equals(entity.getState(), ProductChangeStateEnum.AUDIT_ING.getState())) {
             throw new ServiceException(ApiError.ERROR_98007);
         }
         updateForApprove(id, ProductChangeStateEnum.WAIT_SUBMIT.getState(),"");
@@ -394,7 +394,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             throw new ServiceException("未找到产品变更单数据");
         }
         // 待提交或审核不通过并且未作废允许提交
-        if ((!ProductChangeStateEnum.WAIT_SUBMIT.equals(entity.getState()) && !ProductChangeStateEnum.AUDIT_NO_PASS.equals(entity.getState()))) {
+        if ((!ProductChangeStateEnum.WAIT_SUBMIT.getState().equals(entity.getState()) && !ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(entity.getState()))) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
 
