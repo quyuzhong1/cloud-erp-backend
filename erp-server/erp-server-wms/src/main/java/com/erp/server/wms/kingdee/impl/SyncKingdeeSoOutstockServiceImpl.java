@@ -1481,6 +1481,7 @@ public class SyncKingdeeSoOutstockServiceImpl implements SyncKingdeeSoOutstockSe
     	//默认出库单
     	viewDto.setTradeLabel(convertOutstockTransactionSubType(transactionSubType));
     	viewDto.setPlatformStatus(entity.getApproveStatus().getName());
+        viewDto.setSourceType(entity.getSourceType());
     	detailView.setDataStatus(new ShudiyunB2cOrderDTO().sdyStatusHandle(operate, entity.getVersion(), soOutstockDetailEntity.getVersion()));
     	
     	//客户信息
