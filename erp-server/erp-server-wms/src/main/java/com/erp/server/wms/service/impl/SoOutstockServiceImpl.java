@@ -3129,6 +3129,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 }
             } catch (Exception e) {
                 log.warn("自动生成销售出库单失败：dto={}, error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
+                // 非ServiceException 异常，抛出由中台重试
+                if (! (e instanceof ServiceException)){
+                    throw e;
+                }
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
                 addError.setParamJson(JSONUtil.toJsonStr(genDTO));
@@ -3576,6 +3580,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 checkErrorDetailIds.add(detailEntity.getId());
             } catch (Exception e) {
                 log.error("【平台销售出库单生成失败】dto={},error={}", JSONUtil.toJsonStr(dto), ExceptionUtil.stacktraceToString(e));
+                // 非ServiceException 异常，直接抛出由中台重试
+                if (! (e instanceof ServiceException)){
+                    throw e;
+                }
                 // 记录信息(独立事务)
                 SoB2cErrorDTO.AddDTO addError = new SoB2cErrorDTO.AddDTO();
                 addError.setType(SoB2cErrorTypeEnum.GENERATE_OUTSTOCK.getCode());
