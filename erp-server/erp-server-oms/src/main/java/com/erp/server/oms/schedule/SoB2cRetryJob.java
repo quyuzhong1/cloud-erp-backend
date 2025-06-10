@@ -230,7 +230,7 @@ public class SoB2cRetryJob {
                 return true;
             }
             if (soB2cEntity.getIsOutOfRangeDelivery()){
-                XxlJobHelper.log("SoB2cRetryJob 当前任务超出范围={}", soB2cEntity.getCode());
+                XxlJobHelper.log("SoB2cRetryJob 当前任务超出范围={}", soB2cErrorEntity.getMainId());
                 return true;
             }
             SoB2cLogisticsEntity soB2cLogisticsEntity = logisticsEntityMap.get(soB2cErrorEntity.getMainId());
@@ -243,7 +243,7 @@ public class SoB2cRetryJob {
                 return true;
             }
             if (!channelIdList.contains(soB2cLogisticsEntity.getLogisticsChannelId())) {
-                XxlJobHelper.log("SoB2cRetryJob 当前任务物流规则无匹配渠道名称={}", soB2cLogisticsEntity.getLogisticsChannelName());
+                XxlJobHelper.log("SoB2cRetryJob 当前订单【{}】任务物流规则无匹配渠道名称={}", soB2cErrorEntity.getMainId(),soB2cLogisticsEntity.getLogisticsChannelName());
                 return true;
             }
 
