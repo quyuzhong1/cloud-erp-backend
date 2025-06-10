@@ -244,6 +244,12 @@ public class CfgProcessDTO implements Serializable {
         private String ruleType;
 
         /**
+         * 业务表id
+         */
+        @NotBlank(message = "流程配置id不能为空")
+        private String ruleId;
+
+        /**
          *
          */
         @NotBlank(message = "")

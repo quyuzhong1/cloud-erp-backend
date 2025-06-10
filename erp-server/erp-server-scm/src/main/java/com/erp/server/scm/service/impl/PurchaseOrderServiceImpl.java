@@ -73,7 +73,9 @@ import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.QcTypeEnum;
 import com.erp.model.wms.enums.ReturnModeEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
+import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
+import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.rpc.dmp.feign.DmpMqFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
@@ -123,6 +125,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.common.business.constant.ThirdConstants.PURCHASE_ORDER_DETAIL;
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_SCM_PURCHASE_ORDER;
 
 /**
@@ -1853,7 +1856,17 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (CollUtil.isEmpty(detailList)) {
             throw new ServiceException(ApiError.ERROR_98026);
         }
-        variablesMap.put(ThirdConstants.DETAIL_LIST, BeanUtil.copyToList(detailList, Map.class));
+        List<CfgQueryOptionEntity> purchaseOrder = FeignQuery.create(CfgQueryOptionEntity.class).eq(CfgQueryOptionEntity::getBussinessKey, "purchaseOrder").list();
+        HashMap<String, String> stringHashMap = new HashMap<>();
+        purchaseOrder.stream().map(item->{
+            stringHashMap.put(item.getTableName(),item.getFieldBelongsType());
+            return item;
+        });
+        if (stringHashMap==null){
+            throw new ServiceException("未找到明细表对应entityCode");
+        }
+
+        variablesMap.put(stringHashMap.get(PURCHASE_ORDER_DETAIL), BeanUtil.copyToList(detailList, Map.class));
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(), obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);
