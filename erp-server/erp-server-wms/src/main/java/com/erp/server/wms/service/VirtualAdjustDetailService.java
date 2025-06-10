@@ -38,4 +38,8 @@ public interface VirtualAdjustDetailService extends SuperService<VirtualAdjustDe
     void addDetail(String mainId, List<VirtualAdjustDetailDTO.AddDTO> detailList);
 
     void updateDetail(String mainId, List<VirtualAdjustDetailDTO.UpdateDTO> detailList);
+
+    List<VirtualAdjustDetailEntity> listByMainIdList(List<String> mainIdList);
+
+    void removeByMainId(String id);
 }

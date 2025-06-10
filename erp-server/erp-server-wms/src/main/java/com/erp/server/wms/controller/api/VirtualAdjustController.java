@@ -153,7 +153,6 @@ public class VirtualAdjustController extends BaseController {
     public ApiResult<List<BatchResultDTO>> submit(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<VirtualAdjustEntity> list = virtualAdjustService.lambdaQuery().in(VirtualAdjustEntity::getId, ids).list();
 		Map<String, VirtualAdjustEntity> idEntityMap = list.stream().collect(Collectors.toMap(VirtualAdjustEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -192,7 +191,6 @@ public class VirtualAdjustController extends BaseController {
     public ApiResult<List<BatchResultDTO>> approve(@RequestBody @Validated BaseApproveParamDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<VirtualAdjustEntity> list = virtualAdjustService.lambdaQuery().in(VirtualAdjustEntity::getId, ids).list();
 		Map<String, VirtualAdjustEntity> idEntityMap = list.stream().collect(Collectors.toMap(VirtualAdjustEntity::getId, w -> w));
         for (String id : ids) {
@@ -231,7 +229,7 @@ public class VirtualAdjustController extends BaseController {
     public ApiResult<List<BatchResultDTO>> disApprove(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
+		//数据查询放入外层，处理结果统一更新或单条更新
 		List<VirtualAdjustEntity> list = virtualAdjustService.lambdaQuery().in(VirtualAdjustEntity::getId, ids).list();
 		Map<String, VirtualAdjustEntity> idEntityMap = list.stream().collect(Collectors.toMap(VirtualAdjustEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -271,7 +269,6 @@ public class VirtualAdjustController extends BaseController {
     public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<VirtualAdjustEntity> list = virtualAdjustService.lambdaQuery().in(VirtualAdjustEntity::getId, ids).list();
 		Map<String, VirtualAdjustEntity> idEntityMap = list.stream().collect(Collectors.toMap(VirtualAdjustEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -309,7 +306,6 @@ public class VirtualAdjustController extends BaseController {
     public ApiResult<List<BatchResultDTO>> invalid(@RequestBody @Validated BaseIdsDTO.RemarkDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-		// TODO 数据查询放入外层，处理结果统一更新或单条更新
 		List<VirtualAdjustEntity> list = virtualAdjustService.lambdaQuery().in(VirtualAdjustEntity::getId, ids).list();
 		Map<String, VirtualAdjustEntity> idEntityMap = list.stream().collect(Collectors.toMap(VirtualAdjustEntity::getId, w -> w));
         for (String id : dto.getIds()) {
@@ -348,7 +344,6 @@ public class VirtualAdjustController extends BaseController {
     public ApiResult<List<BatchResultDTO>> cancelProcess(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
 		List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
-        // TODO 数据查询放入外层，处理结果统一更新或单条更新
         List<VirtualAdjustEntity> list = virtualAdjustService.lambdaQuery().in(VirtualAdjustEntity::getId, ids).list();
         Map<String, VirtualAdjustEntity> idEntityMap = list.stream().collect(Collectors.toMap(VirtualAdjustEntity::getId, w -> w));
         for (String id : dto.getIds()) {

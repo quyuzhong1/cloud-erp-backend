@@ -144,6 +144,21 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
         }
     }
 
+    @Override
+    public List<VirtualAdjustDetailEntity> listByMainIdList(List<String> mainIdList) {
+        if (CollUtil.isNotEmpty(mainIdList)){
+            return super.list(new LambdaQueryWrapper<VirtualAdjustDetailEntity>().in(VirtualAdjustDetailEntity::getMainId, mainIdList));
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void removeByMainId(String id) {
+        if (CharSequenceUtil.isNotBlank(id)){
+            super.remove(new LambdaQueryWrapper<VirtualAdjustDetailEntity>().eq(VirtualAdjustDetailEntity::getMainId, id));
+        }
+    }
+
     private void handleBatchData(List<VirtualAdjustDetailEntity> detailEntityList, String mainId) {
         //补充sku信息
         List<String> skuIdList = detailEntityList.stream().map(VirtualAdjustDetailEntity::getSkuId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());

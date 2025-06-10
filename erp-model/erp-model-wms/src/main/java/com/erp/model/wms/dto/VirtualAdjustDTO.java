@@ -199,6 +199,7 @@ public class VirtualAdjustDTO implements Serializable {
         * 审核状态 
         */
         private String approveStatus;
+        private String approveStatusName;
 
         /**
         * 单据日期
@@ -234,8 +235,10 @@ public class VirtualAdjustDTO implements Serializable {
         * 备注
         */
         private String remark;
-
-
+        /**
+         * 明细
+         */
+        private List<VirtualAdjustDetailDTO.ViewDTO> detailList;
     }
 
     /**

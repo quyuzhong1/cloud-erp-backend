@@ -65,6 +65,7 @@ public class VirtualAdjustDetailDTO implements Serializable {
         * 库存状态
         */
         private String dictInventoryStatus;
+        private String dictInventoryStatusName;
 
         /**
         * 类型
