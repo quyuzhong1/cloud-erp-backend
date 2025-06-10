@@ -71,4 +71,9 @@ public interface RuleLogisticsService extends SuperService<RuleLogisticsEntity> 
      */
     RuleLogisticsDTO.RuleMatchResultDTO getRuleOrderMatchResult(Map<String,Object> map);
 
+    /**
+     * 获取已开启/自动提交发货的
+     * @return
+     */
+    List<RuleLogisticsEntity> getChannelListByAutoSubmitDelivery();
 }
