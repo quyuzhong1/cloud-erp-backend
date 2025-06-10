@@ -38,5 +38,5 @@ public interface ThirdProcessManagementService extends SuperService<ThirdProcess
      * add or update
      * @param jsonObject
      */
-    void insert(JSONObject jsonObject);
+    void insert(JSONObject jsonObject, String sourcePlatform);
 }

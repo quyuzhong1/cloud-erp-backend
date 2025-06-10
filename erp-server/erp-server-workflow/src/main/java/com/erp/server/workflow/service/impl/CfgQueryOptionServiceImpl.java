@@ -110,7 +110,14 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     @Override
     public List<CfgQueryOptionDTO.ViewDTO> getSystemfield(String bussinessKey) {
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.getSystemfield(bussinessKey);
-        List<CfgQueryOptionDTO.ViewDTO> viewDTOS = BeanUtil.copyToList(cfgQueryOptionEntities, CfgQueryOptionDTO.ViewDTO.class);
+        //field_belongs_type字段我想手动的放到viewDTO里面的字段，怎么处理
+
+        List<CfgQueryOptionDTO.ViewDTO> viewDTOS = cfgQueryOptionEntities.stream().map(item -> {
+            CfgQueryOptionDTO.ViewDTO viewDTO = BeanUtil.copyProperties(item, CfgQueryOptionDTO.ViewDTO.class);
+            viewDTO.setSysParentId(item.getFieldBelongsType());
+            return viewDTO;
+        }).collect(Collectors.toList());
+
         viewDTOS.forEach(item -> {
             if (StrUtil.isNotBlank(item.getFieldType())) {
                 item.setFieldTypeName(CfgQueryOptionFieldTypeEnum.valueOf(item.getFieldType().toUpperCase()).getName());

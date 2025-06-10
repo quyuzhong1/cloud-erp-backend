@@ -89,7 +89,7 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
             if (ThirdProcessDefinitionTypeEnum.PULL.getCode().equals(type)) {
                 handleAddInstance(jsonObject);
             } else {
-                handleUpdateStatus(jsonObject);
+                handleUpdateStatus(jsonObject,match.get().getSourcePlatform());
             }
         } else {
             // 未找到对应定义，是否记录日志或抛出异常？
@@ -109,9 +109,9 @@ public class MQGetFsInstancesConsumerService implements RocketMQListener<JSONObj
         return entity;
     }
 
-    private void handleUpdateStatus(JSONObject jsonObject) {
+    private void handleUpdateStatus(JSONObject jsonObject, String sourcePlatform) {
         //TODO 更新thirdTask
-        thirdProcessManagementService.insert(jsonObject);
+        thirdProcessManagementService.insert(jsonObject,sourcePlatform);
     }
 
     private void handleAddInstance(JSONObject jsonObject) {

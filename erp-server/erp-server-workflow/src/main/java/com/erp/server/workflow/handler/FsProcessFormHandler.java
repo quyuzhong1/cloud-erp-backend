@@ -22,10 +22,7 @@ import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
-import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.DictBasicEnum;
-import com.erp.model.workflow.enums.FsRequestBodyAttributesEnum;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.sys.feign.SysDepartmentThirdFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
@@ -891,6 +888,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
             // 映射值
             Object mappedValue = mapValue(feishuOriginalValue, fieldMap, valueMapsByFieldMapId);
+            //TODO department和 contact进行一次值转换，从系统id转为飞书id
             currentResultMap.put(sysField, mappedValue);
         }
     }
@@ -1034,6 +1032,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         OffsetDateTime offsetDateTime = OffsetDateTime.parse(rfc3339Date);
         return offsetDateTime.toLocalDateTime();
     }
+
+
 
     @Override
     public List<ApproveTaskDetailDTO.AddDTO> generatePushDetailDTO(JSONArray formArray, List<CfgProcessFieldMapEntity> fieldMapList, Map<String, Object> variablesMap) {
@@ -1775,7 +1775,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
     }
 
     @Override
-    public DictBasicEnum getEventType() {
-        return DictBasicEnum.FSAPPROVE;
+    public ProcessSourcePlatformEnum getEventType() {
+        return ProcessSourcePlatformEnum.FS;
     }
 }
