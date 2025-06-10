@@ -27,4 +27,12 @@ public interface CfgRuleConditionMapper extends BaseMapper<CfgRuleConditionEntit
      * @return List<CfgRuleConditionEntity>
      */
     List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleIds(@Param("cfgRuleIds") List<String> cfgRuleIds, @Param("ruleType")String ruleType);
+    /**
+     * 根据ruleType查询
+     * @author jack
+     * @date 2025-06-10
+     * @param ruleType
+     * @return List<CfgRuleConditionEntity>
+     */
+    List<CfgRuleConditionDTO.ConditionElementDTO> listByRuleType( @Param("ruleType")String ruleType);
 }

@@ -286,6 +286,13 @@ public class CfgThirdNoticeDTO implements Serializable {
         private String noticeType;
 
         /**
+         * 岗位
+         */
+        private String post;
+        private List<String> postIdList;
+        private List<String> postNameList;
+
+        /**
          * 项目角色
          */
         private String roleType;
