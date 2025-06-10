@@ -92,8 +92,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Resource
     private SysUserFeign sysUserFeign;
 
-    @Resource
-
 
 
     @Transactional(rollbackFor = Exception.class)
