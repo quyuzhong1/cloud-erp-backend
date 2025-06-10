@@ -411,5 +411,12 @@ public class ProcessFeignController extends BaseController {
     public List<ProcessTaskManagementEntity> listProcessByBusinessKey(@RequestBody ProcessManagementDTO.TaskKeyInfoDTO dto) {
         return processManagementTaskService.listProcessByBusinessKey(dto);
     }
+    /**
+     * 根据BusinessKey,businessId判断当前单据是否提审操作
+     */
+    @PostMapping("/checkSubmitByBusinessId")
+    Boolean checkSubmitByBusinessId(@RequestBody ProcessManagementDTO.CheckSubmitByBusinessIdDTO dto){
+        return processManagementService.checkSubmitByBusinessId(dto);
+    }
 
 }

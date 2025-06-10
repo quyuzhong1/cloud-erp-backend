@@ -1,10 +1,10 @@
 package com.erp.server.sys.rocketmq.consumer;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
-import com.common.business.constant.ThirdConstants;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.entity.BaseEntity;
@@ -12,34 +12,27 @@ import com.common.core.entity.ConditionElement;
 import com.common.core.exception.ServiceException;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
-import com.common.core.utils.StrUtils;
 import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.sys.dto.MqConsumerRecordDTO;
 import com.erp.model.sys.entity.*;
-import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
-import com.erp.model.sys.enums.DictNoticeRoleOptionTableTypeEnum;
-import com.erp.model.sys.enums.ThirdNoticePushRecordNoticeTypeEnum;
-import com.erp.model.sys.enums.ThirdNoticePushRecordStatusEnum;
+import com.erp.model.sys.enums.*;
 import com.erp.model.sys.vo.SendThirdNoticeConsumerDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
+import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
-import com.erp.rpc.oms.feign.ShopInfoFeign;
-import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.sys.feign.SysPostFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
-import com.erp.rpc.workflow.ProcessTaskManagementFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.service.*;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -93,8 +86,8 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     //------tms------
     渠道更换 com.erp.server.tms.service.impl.TmsFirstMileLogisticServiceImpl.updateChannel  / com.erp.server.tms.service.impl.TmsFirstMileLogisticServiceImpl.batchUpdateChannel
 
-    组包预报生成【新增】
-    物流单下单成功【新增】
+    组包预报生成【新增】  --组包称重
+    物流单下单成功【新增】 -- B2C销售订单跟踪号
 */
 
 
@@ -117,15 +110,6 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     private MQProducerService mqProducerService;
 
     @Resource
-    private ProcessTaskManagementFeign processTaskManagementFeign;
-
-    @Resource
-    private PlmTaskFeign plmTaskFeign;
-
-    @Resource
-    private WorkflowFeign workflowFeign;
-
-    @Resource
     private SysUserFeign sysUserFeign;
 
     @Resource
@@ -140,10 +124,9 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     private SysPostFeign sysPostFeign;
 
     @Resource
-    private ShopInfoFeign shopInfoFeign;
-
-    @Resource
     private DictNoticeRoleOptionService dictNoticeRoleOptionService;
+    @Resource
+    private WorkflowFeign workflowFeign;
 
     private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 
@@ -162,7 +145,17 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         dto.setDb(jsonMap.get("db") == null ? "" : String.valueOf(jsonMap.get("db")));
         dto.setTable(jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table")));
         dto.setOperationType(jsonMap.get("P_TAG_IUD") == null ? "" : String.valueOf(jsonMap.get("P_TAG_IUD")));
-        dto.setDataJson((Map<String, Object> )jsonMap.get("dataJson"));
+//        dto.setDataJson((Map<String, Object> )jsonMap.get("dataJson"));
+        //需要把每个字段都转出驼峰
+        Map<String, Object> convertedMap = new HashMap<>();
+        for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+            String originalKey = entry.getKey();
+            Object value = entry.getValue();
+            // 转换为驼峰命名
+            String camelCaseKey = CharSequenceUtil.toCamelCase(originalKey);
+            convertedMap.put(camelCaseKey, value);
+        }
+        dto.setDataJson(convertedMap);
 
         //接收中台发送的ddl变更
         //参数不能为空
@@ -195,7 +188,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         if (CollUtil.isEmpty(cfgQueryOptionList)) {
             return true;
         }
-        CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionList.get(0);
+        CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionList.stream().filter(e -> StringUtils.isNotBlank(e.getBussinessKey())).findFirst().orElse(null);
         //单据类型
         String bussinessKey = cfgQueryOptionEntity.getBussinessKey();
 
@@ -220,9 +213,10 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         //主表map
         Map<String, Object> variablesMap = dto.getDataJson();
         for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeList) {
-
+            //主键id
+            String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
             //校验规则条件
-            if (!checkRule(noticeEntity, ruleConditionMap, variablesMap)) continue;
+            if (!checkRule(dto,noticeEntity, ruleConditionMap, bussinessKey)) continue;
 
             String roleType = noticeEntity.getRoleType();
             String specificPerson = noticeEntity.getSpecificPerson();
@@ -231,7 +225,6 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                 continue;
             }
 
-            String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
             List<String> userIdList = getUserList(post,roleType, specificPerson, businessId);
             if (CollUtil.isEmpty(userIdList)) {
                 continue;
@@ -273,16 +266,16 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                                 continue;
                             }
                             //如果存在，则需要找对明细表里的关联字段，并根据该字段来进行FeignQuery查询出对应的明细列表
-                            CfgQueryOptionEntity detailEntity = value.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
-                            if (Objects.isNull(detailEntity)) {
+                            CfgQueryOptionEntity refEntity = value.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
+                            if (Objects.isNull(refEntity)) {
                                 continue;
                             }
 
                             //获取关联记录
-                            String parentId = detailEntity.getParentId();
-                            CfgQueryOptionEntity refEntity = mainCfgQueryOptionList.stream().filter(e -> e.getId().equals(parentId)).findFirst().orElse(null);
-                            String refField = refEntity.getConditionField();
-                            String refValue = String.valueOf(variablesMap.get(refField));
+                            String parentId = refEntity.getParentId();
+                            CfgQueryOptionEntity mainEntity = mainCfgQueryOptionList.stream().filter(e -> e.getId().equals(parentId)).findFirst().orElse(null);
+                            String mainField = mainEntity.getConditionField();
+                            String mainValue = String.valueOf(variablesMap.get(mainField));
 
                             String classpath = cfgQueryOptionDetail.getClasspath();
                             classpath = classpath.replace("class ", "");
@@ -293,7 +286,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                                 throw new ServiceException(classpath + "实体不存在");
                             }
                             List<BaseEntity> detailList = FeignQuery.create(clazz)
-                                    .eq(detailEntity.getConditionField(), refValue)
+                                    .eq(refEntity.getConditionField(), mainValue)
                                     .list();
 
                             if (CollUtil.isEmpty(detailList)) {
@@ -398,27 +391,64 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         return false;
     }
 
-    //校验规则条件
-    private boolean checkRule(CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, Map<String, Object> dataJson) {
-        Boolean match = Boolean.FALSE;
+    //规则校验
+    private boolean checkRule(MqConsumerRecordDTO.MqDTO dto,CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey) {
         List<CfgRuleConditionEntity> cfgRuleConditionEntities = ruleConditionMap.get(noticeEntity.getId());
         if (CollUtil.isNotEmpty(cfgRuleConditionEntities)) {
-            //封装条件参数
-            Map<String, Object> map = new HashMap<>();
-            for (CfgRuleConditionEntity cfgRuleConditionEntity : cfgRuleConditionEntities) {
-                map.put(cfgRuleConditionEntity.getField(), dataJson.get(cfgRuleConditionEntity.getField()));
-            }
-            // 获取所有符合条件的规则
-            List<CfgRuleConditionEntity> conditionList = cfgRuleConditionEntities.stream()
-                    .sorted(Comparator.comparing(CfgRuleConditionEntity::getIndex))
-                    .collect(Collectors.toList());
-            List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
-            //获取到表达式,判断表达式是否匹配
-            match = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            Map<String, Object> variablesMap = dto.getDataJson();
+            //主键id
+            String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
 
+            List<String> fieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
+            //查询是否有拓展
+            List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listExtendByFieldCondition(fieldList);
+            List<String> cfgQueryOptionfieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
+            if(CollUtil.isNotEmpty(cfgQueryOptionList)){
+                for (CfgQueryOptionEntity cfgQueryOptionEntity : cfgQueryOptionList) {
+                    //仓储管理-头程发货单提审
+                    if("waitSubmitToApproveIng".equals(cfgQueryOptionEntity.getConditionField())){
+                        //提交操作
+                        ProcessManagementDTO.CheckSubmitByBusinessIdDTO checkSubmitByBusinessIdDTO = new ProcessManagementDTO.CheckSubmitByBusinessIdDTO();
+                        checkSubmitByBusinessIdDTO.setBusinessId(businessId);
+                        checkSubmitByBusinessIdDTO.setBusinessKey(bussinessKey);
+                        Boolean allMatch = workflowFeign.checkSubmitByBusinessId(checkSubmitByBusinessIdDTO);
+                        if(Boolean.FALSE.equals(allMatch)){
+                            return Boolean.FALSE;
+                        }
+                    }
+                    //组包预报生成
+                    if("addRecord".equals(cfgQueryOptionEntity.getConditionField())){
+                        //不等于新增则返回false
+                       if(!Objects.equals(ThirdNoticeRecordOperationTypeEnum.INSERT.getCode(), dto.getOperationType())){
+                           return Boolean.FALSE;
+                       }
+                    }
+                }
+            }
+
+            //封装条件参数
+            Map<String, Object> map = cfgRuleConditionEntities.stream()
+                    .filter(e -> Objects.nonNull(e.getField()) && !cfgQueryOptionfieldList.contains(e.getField()))
+                    .collect(Collectors.toMap(
+                            CfgRuleConditionEntity::getField,
+                            e -> variablesMap.get(e.getField())
+                    ));
+            if(CollUtil.isNotEmpty(map)){
+                // 获取所有符合条件的规则
+                List<CfgRuleConditionEntity> conditionList = cfgRuleConditionEntities.stream()
+                        .sorted(Comparator.comparing(CfgRuleConditionEntity::getIndex))
+                        .collect(Collectors.toList());
+                List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
+                //获取到表达式,判断表达式是否匹配
+                Boolean match = spElServer.matchExpressionByConditionList(conditionElementList, map);
+                if(Boolean.FALSE.equals(match)){
+                    return Boolean.FALSE;
+                }
+            }
         }
-        return match;
+        return Boolean.TRUE;
     }
+
 
     private String addMqRecord(MqConsumerRecordDTO.MqDTO dto) {
         Gson gson = new Gson();

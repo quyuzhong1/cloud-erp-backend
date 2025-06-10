@@ -53,6 +53,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
     public List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey,String fieldBelongsType) {
         LambdaQueryWrapper<CfgQueryOptionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode());
+        queryWrapper.eq(CfgQueryOptionEntity::getIsExtend,Boolean.FALSE);
         List<CfgQueryOptionEntity> common = baseMapper.selectList(queryWrapper);
         common.stream().forEach(item -> {
             item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getName()+"-"+item.getConditionFieldName());
@@ -65,11 +66,12 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         if (StringUtils.isNotBlank(bussinessKey)) {
             queryWrapper.eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey);
         }
-        queryWrapper.eq(CfgQueryOptionEntity::getIsDeleted, false);
+        queryWrapper.eq(CfgQueryOptionEntity::getIsExtend,Boolean.FALSE);
         queryWrapper.orderByDesc(CfgQueryOptionEntity::getFieldBelongsType);
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.selectList(queryWrapper);
         cfgQueryOptionEntities.stream().forEach(item -> {
-            item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.getName(item.getFieldBelongsType())+"-"+item.getConditionFieldName());
+            String name = CfgQueryOptionFieldBelongsTypeEnum.getName(item.getFieldBelongsType());
+            item.setConditionFieldName((StringUtils.isNotBlank(name) ? name+"-" : "明细-" )+ item.getConditionFieldName());
         });
 
         cfgQueryOptionEntities.addAll(common);
@@ -163,17 +165,17 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                 }
                 List<CfgQueryOptionEntity> value = entry.getValue();
                 //如果存在，则需要找对明细表里的关联字段，并根据该字段来进行FeignQuery查询出对应的明细列表
-                CfgQueryOptionEntity detailEntity = value.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
-                if (Objects.isNull(detailEntity)) {
+                CfgQueryOptionEntity refEntity = value.stream().filter(e -> StringUtils.isNotBlank(e.getParentId())).findFirst().orElse(null);
+                if (Objects.isNull(refEntity)) {
                     continue;
                 }
                 //获取关联记录
-                String parentId = detailEntity.getParentId();
-                CfgQueryOptionEntity refEntity = mainCfgQueryOptionList.stream().filter(e -> e.getId().equals(parentId)).findFirst().orElse(null);
-                String refField = refEntity.getConditionField();
-                String refValue = String.valueOf(variablesMap.get(refField));
+                String parentId = refEntity.getParentId();
+                CfgQueryOptionEntity mainEntity = mainCfgQueryOptionList.stream().filter(e -> e.getId().equals(parentId)).findFirst().orElse(null);
+                String mainField = mainEntity.getConditionField();
+                String mainValue = String.valueOf(variablesMap.get(mainField));
 
-                String classpath = detailEntity.getClasspath();
+                String classpath = refEntity.getClasspath();
                 classpath = classpath.replace("class ", "");
                 Class<BaseEntity> clazz = null;
                 try {
@@ -182,7 +184,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
                     throw new ServiceException(classpath + "实体不存在");
                 }
                 List<BaseEntity> detailList = FeignQuery.create(clazz)
-                        .eq(detailEntity.getConditionField(), refValue)
+                        .eq(refEntity.getConditionField(), mainValue)
                         .list();
 
                 if (CollUtil.isEmpty(detailList)) {

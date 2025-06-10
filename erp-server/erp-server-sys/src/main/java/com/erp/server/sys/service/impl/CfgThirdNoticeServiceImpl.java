@@ -4,8 +4,10 @@ package com.erp.server.sys.service.impl;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BaseResultDTO;
@@ -18,6 +20,7 @@ import com.common.business.vo.PagingVO;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
+import com.erp.model.dmp.entity.BiDeliveryDetailItemEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.sys.dto.*;
 import com.erp.model.sys.entity.*;
@@ -91,7 +94,6 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         List<String> postIdList = addDTO.getPostIdList();
         checkNoticeUserNotEmpty(roleTypeList, specificPersonList, postIdList);
 
-
         String method = addDTO.getMethod();
         List<CfgApproveSyncFieldMapDTO.NoticeFieldMapDTO> pushMsgList = addDTO.getPushMsgList();
         //可能存在一条空数据，需要排除掉
@@ -100,6 +102,11 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         //可能存在一条空数据，需要排除掉
         List<CfgRuleConditionDTO.Add> conditionList = addDTO.getConditionList();
         handleAddConditionList(conditionList);
+
+        //校验重复
+        String businessType = addDTO.getBusinessType();
+        //相同单据类型 + 通知方式 通知配置
+        checkDuplication("",businessType, method, conditionList);
 
         CfgThirdNoticeEntity cfgThirdNoticeEntity = new CfgThirdNoticeEntity();
         BeanMapperUtils.copy(addDTO, cfgThirdNoticeEntity);
@@ -166,6 +173,37 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             cfgRuleConditionService.saveRuleCondition(id, conditionList, RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
         }
         return new BaseResultDTO.AddDTO(cfgThirdNoticeEntity.getId(), cfgThirdNoticeEntity.getId());
+    }
+
+    private void checkDuplication(String id , String businessType, String method, List<CfgRuleConditionDTO.Add> conditionList) {
+        LambdaQueryWrapper<CfgThirdNoticeEntity> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(CfgThirdNoticeEntity::getBusinessType, businessType);
+        lambdaQueryWrapper.eq(CfgThirdNoticeEntity::getMethod, method);
+        lambdaQueryWrapper.ne(CfgThirdNoticeEntity::getId, id);
+        List<CfgThirdNoticeEntity> oldList = this.list(lambdaQueryWrapper);
+        if(CollUtil.isNotEmpty(oldList)){
+            //新规则条件
+            Set<CompareDTO> newCompareSet = BeanMapper.copyList(conditionList, CompareDTO.class).stream().collect(Collectors.toSet());
+            //旧规则条件
+            List<CfgRuleConditionDTO.ConditionElementDTO> oldConditionList = cfgRuleConditionService.listByRuleType(RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
+            Map<String, List<CfgRuleConditionDTO.ConditionElementDTO>> oldGroup = oldConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionDTO.ConditionElementDTO::getRuleId));
+
+            //单据类型
+            List<DictBasicDTO.ViewDTO> thirdNoticeBusinessType = dictBasicService.listByType("thirdNoticeBusinessType");
+            Map<String, String> businessTypeMap = thirdNoticeBusinessType.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName,(o1,o2) -> o1));
+
+            for (CfgThirdNoticeEntity oldEntity : oldList) {
+                List<CfgRuleConditionDTO.ConditionElementDTO> conditionElementDTOS = oldGroup.get(oldEntity);
+                if(CollUtil.isNotEmpty(conditionElementDTOS)){
+                    List<CompareDTO> oldCompareList = BeanMapper.copyList(conditionElementDTOS, CompareDTO.class);
+                    Set<CompareDTO> oldCompareSet = oldCompareList.stream().collect(Collectors.toSet());
+                    if(newCompareSet.contains(oldCompareSet)){
+                        String msg = StrUtil.format("错误提示：【{}-{}-{}】已存在，不可重复创建",businessTypeMap.getOrDefault(oldEntity.getBusinessType(),"") , CfgThirdNoticeMethodEnum.getName(oldEntity.getMethod()) , oldEntity.getNoticeType());
+                        throw new ServiceException(msg);
+                    }
+                }
+            }
+        }
     }
 
     private static void checkNoticeUserNotEmpty(List<String> roleTypeList, List<String> specificPersonList, List<String> postIdList) {
@@ -262,6 +300,11 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         CfgThirdNoticeEntity old = super.getById(addOrUpdateDTO.getId());
         old = Optional.ofNullable(old).orElseThrow(()->new ServiceException(ApiError.NOT_EXIST_BILL, "三方通知配置"));
         CfgThirdNoticeEntity cfgThirdNoticeEntity =  BeanMapperUtils.map(CfgThirdNoticeEntity.class, addOrUpdateDTO);
+
+        //校验重复
+        String businessType = addOrUpdateDTO.getBusinessType();
+        //相同单据类型 + 通知方式 通知配置
+        checkDuplication(addOrUpdateDTO.getId(),businessType, method, BeanMapper.copyList(conditionList,CfgRuleConditionDTO.Add.class));
 
         if(CollUtil.isNotEmpty(addOrUpdateDTO.getPostIdList())){
             String post = String.join(",", addOrUpdateDTO.getPostIdList());
@@ -360,7 +403,7 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         }
 
         //规则条件
-        cfgRuleConditionService.updateRuleCondition(addOrUpdateDTO.getId(), addOrUpdateDTO.getConditionList(), ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
+        cfgRuleConditionService.updateRuleCondition(addOrUpdateDTO.getId(), conditionList, ModuleTypeEnum.CFG_THIRD_NOTICE.getCode(), RuleTypeEnum.CFG_THIRD_NOTICE.getCode());
 
         return Boolean.TRUE;
     }
@@ -410,6 +453,16 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             }
 
             record.setNoticeStatusName(record.getNoticeStatus().equals(Boolean.FALSE) ? "停用" : "启用");
+            if(StringUtils.isNotBlank(record.getPost())){
+                //岗位id
+                List<String> postIdList = Arrays.asList(record.getPost().split(","));
+                List<SysPostEntity> userEntityList = sysPostFeign.listById(postIdList);
+                Map<String, String> postMap = userEntityList.stream().collect(Collectors.toMap(SysPostEntity::getId, SysPostEntity::getPostName));
+                if(CollUtil.isNotEmpty(postIdList)){
+                    record.setPostIdList(postIdList);
+                    record.setPostNameList(postIdList.stream().map(e -> postMap.get(e)).collect(Collectors.toList()));
+                }
+            }
 
             if (StringUtils.isNotBlank(record.getRoleType())) {
                 List<DictBasicDTO.ViewDTO> noticeItemPeople = dictBasicService.listByType("noticeItemPeople");
