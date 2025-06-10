@@ -208,6 +208,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             // 校验 dto 的 third_field_type 和 sys_field_type
             CfgQueryOptionFieldTypeEnum thirdFieldType = CfgQueryOptionFieldTypeEnum.valueOf(dto.getThirdFieldType().toUpperCase());
             CfgQueryOptionFieldTypeEnum sysFieldType = CfgQueryOptionFieldTypeEnum.valueOf(dto.getSysFieldType().toUpperCase());
+            if (ObjectUtil.isEmpty(thirdFieldType) || ObjectUtil.isEmpty(sysFieldType)) {
+                    throw new ServiceException("请选择正确的第三方字段类型");
+            }
 
             if ((thirdFieldType == CfgQueryOptionFieldTypeEnum.INPUT || thirdFieldType == CfgQueryOptionFieldTypeEnum.TEXTAREA) &&
                     (sysFieldType == CfgQueryOptionFieldTypeEnum.NUMBER || sysFieldType == CfgQueryOptionFieldTypeEnum.ATTACHMENTV2)) {
@@ -229,7 +232,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             if (thirdFieldType == CfgQueryOptionFieldTypeEnum.DATE && sysFieldType != CfgQueryOptionFieldTypeEnum.DATE) {
                 throw new ServiceException("飞书日期仅支持转日期");
             }
-            if (ObjectUtil.isNotEmpty(dto.getIsDetailField()) && dto.getIsDetailField() && !CfgQueryOptionFieldBelongsTypeEnum.DETAIL.getCode().equals(fieldToEntityMap.get(dto.getSysField()).getFieldBelongsType())) {
+            if (ObjectUtil.isNotEmpty(dto.getIsDetailField()) && dto.getIsDetailField() && thirdFieldType==CfgQueryOptionFieldTypeEnum.FIELDLIST) {
                 throw new ServiceException("明细只能对应明细");
             }
             // 判断必填是不是已配置

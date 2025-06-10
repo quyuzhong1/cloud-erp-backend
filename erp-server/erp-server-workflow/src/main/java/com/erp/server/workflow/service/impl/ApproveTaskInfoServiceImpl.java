@@ -4,6 +4,7 @@ package com.erp.server.workflow.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
@@ -24,16 +25,16 @@ import com.erp.model.workflow.dto.ProcessDelegateDTO;
 import com.erp.model.workflow.entity.ApproveTaskDetailEntity;
 import com.erp.model.workflow.entity.ApproveTaskInfoEntity;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
+import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.enums.ApproveTaskStatusEnum;
 import com.erp.model.workflow.enums.ApproveTaskTypeEnum;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.workflow.context.CreateBillFactory;
+import com.erp.server.workflow.handler.CreateBillHandler;
 import com.erp.server.workflow.mapper.ApproveTaskInfoMapper;
-import com.erp.server.workflow.service.ApproveTaskDetailService;
-import com.erp.server.workflow.service.ApproveTaskInfoService;
-import com.erp.server.workflow.service.CfgQueryOptionService;
-import com.erp.server.workflow.service.OperateLogService;
+import com.erp.server.workflow.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,8 +67,15 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
 
     @Resource
     private ApproveTaskDetailService approveTaskDetailService;
+
     @Autowired
     private CfgQueryOptionService cfgQueryOptionService;
+
+    @Resource
+    private CreateBillFactory createBillFactory;
+
+    @Resource
+    private CfgThirdProcessService cfgThirdProcessService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -193,6 +201,41 @@ public class ApproveTaskInfoServiceImpl extends SuperServiceImpl<ApproveTaskInfo
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.PROCESS_APPROVE_TASK_NOT_EXIST);
         }
+        List<ApproveTaskDetailEntity> list = approveTaskDetailService.list(new LambdaQueryWrapper<ApproveTaskDetailEntity>().eq(ApproveTaskDetailEntity::getMianId, id).orderByAsc(ApproveTaskDetailEntity::getIndex));
+        //list首先按照entitycode分组，entitycode为空的使用sysfield，entitycode相同，按照index分组，取sysField和sysFieldvalue,组合成list<Map<String,Obejct>>，entitycode取sysField和sysFieldvalue,组合成map,
+        // list最终处理后的结构是Map,entitycode为空的sysField和sysFieldvalue，不为空的entitycode为key，value是List<Map<sysField,sysFieldvalue>>
+        Map<String, Object> detailMap = new HashMap<>();
+        if (CollUtil.isNotEmpty(list)) {
+            // 按 entityCode 分组
+            Map<String, List<ApproveTaskDetailEntity>> groupMap = list.stream()
+                    .collect(Collectors.groupingBy(e -> ObjectUtil.isEmpty(e.getEntityCode()) ? "" : e.getEntityCode()));
+            for (Map.Entry<String, List<ApproveTaskDetailEntity>> entry : groupMap.entrySet()) {
+                if ("".equals(entry.getKey())) {
+                    // entityCode为空，直接以sysField为key，sysFieldValue为value
+                    for (ApproveTaskDetailEntity e : entry.getValue()) {
+                        detailMap.put(e.getSysField(), e.getSysFieldValue());
+                    }
+                } else {
+                    // entityCode不为空，value为List<Map<sysField, sysFieldValue>>
+                    List<Map<String, Object>> fieldList = entry.getValue().stream()
+                            .collect(Collectors.groupingBy(ApproveTaskDetailEntity::getIndex, LinkedHashMap::new, Collectors.toList()))
+                            .values().stream()
+                            .map(group -> {
+                                Map<String, Object> map = new HashMap<>();
+                                for (ApproveTaskDetailEntity detail : group) {
+                                    map.put(detail.getSysField(), detail.getSysFieldValue());
+                                }
+                                return map;
+                            }).collect(Collectors.toList());
+                    detailMap.put(entry.getKey(), fieldList);
+                }
+            }
+        }
+        //查询关联的三方审批生成
+        CfgThirdProcessEntity thirdProcessEntity = cfgThirdProcessService.getOne(new LambdaQueryWrapper<CfgThirdProcessEntity>().eq(CfgThirdProcessEntity::getThirdProcessDefinitionCode, entity.getBussinessCode()));
+
+        CreateBillHandler createBillHandler = createBillFactory.getCreateBillHandler(entity.getBussinessKey());
+        createBillHandler.afreshGenerate(detailMap, thirdProcessEntity, entity);
         return BatchResultDTO.success(entity.getId(), entity.getBussinessCode(), OperationTypeEnum.REGENERATE);
     }
 

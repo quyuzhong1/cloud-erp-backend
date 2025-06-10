@@ -60,7 +60,11 @@ public class ApproveTaskInfoEntity extends BaseEntity<ApproveTaskInfoEntity> {
     */
     @TableField("bussiness_code")
     private String bussinessCode;
-
+    /**
+     * 数大臣单据id，采购订单id等
+     */
+    @TableField("bussiness_id")
+    private String bussinessId;
     /**
      * 发生时间
      */

@@ -94,7 +94,11 @@ public class ApproveTaskDetailEntity extends BaseEntity<ApproveTaskDetailEntity>
      */
     @TableField("entity_code")
     private String entityCode;
-
+    /**
+     * 上级id
+     */
+    @TableField("parent_id")
+    private String parentId;
 
     public static final String MIAN_ID = "mian_id";
 

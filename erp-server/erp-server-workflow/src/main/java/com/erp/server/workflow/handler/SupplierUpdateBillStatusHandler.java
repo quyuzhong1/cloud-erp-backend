@@ -11,6 +11,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONArray;
 import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.core.exception.ServiceException;
@@ -22,19 +23,11 @@ import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.workflow.dto.ApproveTaskDetailDTO;
 import com.erp.model.workflow.dto.ApproveTaskInfoDTO;
-import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
-import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
-import com.erp.model.workflow.entity.CfgThirdProcessEntity;
-import com.erp.model.workflow.enums.ApproveTaskTypeEnum;
-import com.erp.model.workflow.enums.CfgQueryOptionBussinessKeyEnum;
-import com.erp.model.workflow.enums.DictBasicEnum;
-import com.erp.model.workflow.enums.FSApprovalStatusEnum;
+import com.erp.model.workflow.entity.*;
+import com.erp.model.workflow.enums.*;
 import com.erp.rpc.scm.feign.SupplierFeign;
 import com.erp.server.workflow.context.ProcessFormFactory;
-import com.erp.server.workflow.service.ApproveTaskInfoService;
-import com.erp.server.workflow.service.CfgProcessFieldMapService;
-import com.erp.server.workflow.service.CfgProcessValueMapService;
-import com.erp.server.workflow.service.ThirdProcessManagementService;
+import com.erp.server.workflow.service.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import groovy.util.logging.Slf4j;
 import org.springframework.stereotype.Component;
@@ -66,6 +59,9 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
     @Resource
     ApproveTaskInfoService approveTaskInfoService;
 
+    @Resource
+    ThirdProcessInstanceService thirdProcessInstanceService;
+
     @Override
     public boolean isMatch(String event) {
         return CreateBillHandler.super.isMatch(event);
@@ -94,11 +90,17 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
                 List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray("form"), map, fieldMapList);
                 ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(thirdProcessEntity, addDTOS);
                 taskInfo.setThirdInstanceId(jsonObject.getStr("instance_code"));
-                approveTaskInfoService.add(taskInfo);
+                BaseResultDTO.AddDTO add = approveTaskInfoService.add(taskInfo);
+                //添加
                 String id = supplierFeign.add(addDTO);
+
                 List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class).eq(SupplierEntity::getId, id).list();
                 taskInfo.setBussinessCode(list.get(0).getCode());
-                //id
+                taskInfo.setBussinessId(id);
+                ApproveTaskInfoEntity taskInfoEntity = BeanUtil.copyProperties(taskInfo, ApproveTaskInfoEntity.class);
+                taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
+                taskInfoEntity.setId(add.getId());
+                approveTaskInfoService.updateById(taskInfoEntity);
             }catch (Exception e){
                 throw new RuntimeException("创建供应商失败错误信息：",e);
             }
@@ -114,10 +116,50 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
             }
         }
         //TODO
-        thirdProcessManagementService.insert(jsonObject);
+        thirdProcessManagementService.insert(jsonObject,thirdProcessEntity.getSourcePlatform());
     }
 
-    private static ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(CfgThirdProcessEntity thirdProcessEntity,List<ApproveTaskDetailDTO.AddDTO> addDTOS){
+    @Override
+    public void afreshGenerate(Map<String, Object> map, CfgThirdProcessEntity thirdProcessEntity, ApproveTaskInfoEntity taskInfo) {
+        ThirdProcessInstanceEntity one = thirdProcessInstanceService.getOne(new LambdaQueryWrapper<ThirdProcessInstanceEntity>().eq(ThirdProcessInstanceEntity::getInstanceCode, taskInfo.getThirdInstanceId()));
+        DictBasicEnum dictBasicEnum = DictBasicEnum.getByCode(thirdProcessEntity.getOperateType());
+
+        if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
+            //找到集合中unique为true的元素
+
+        }
+        if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum)) {
+            ObjectMapper objectMapper = new ObjectMapper();
+            SupplierDTO.InsertDTO addDTO = objectMapper.convertValue(map, SupplierDTO.InsertDTO.class);
+            addDTO.setApprovalStatus(ApproveStatusEnum.APPROVE_ING);
+            try {
+                String id = supplierFeign.add(addDTO);
+                List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class).eq(SupplierEntity::getId, id).list();
+                taskInfo.setBussinessCode(list.get(0).getCode());
+                taskInfo.setBussinessId(id);
+            }catch (Exception e){
+                throw new RuntimeException("创建供应商失败错误信息：",e);
+            }
+        }
+        if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
+            //更新单据状态为待审核
+            if (FSApprovalStatusEnum.APPROVED.getCode().equals(one.getStatus())) {
+                ObjectMapper objectMapper = new ObjectMapper();
+                SupplierDTO.InsertDTO addDTO = objectMapper.convertValue(map, SupplierDTO.InsertDTO.class);
+                addDTO.setApprovalStatus(ApproveStatusEnum.APPROVE);
+                String id = supplierFeign.add(addDTO);
+                List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class).eq(SupplierEntity::getId, id).list();
+                taskInfo.setBussinessCode(list.get(0).getCode());
+                taskInfo.setBussinessId(id);
+            }
+        }
+        taskInfo.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
+        approveTaskInfoService.updateById(taskInfo);
+
+    }
+
+    @Override
+    public ApproveTaskInfoDTO.AddDTO buildApproveTaskInfo(CfgThirdProcessEntity thirdProcessEntity,List<ApproveTaskDetailDTO.AddDTO> addDTOS){
         ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
         addDTO.setDetailList(addDTOS);
         addDTO.setType(ApproveTaskTypeEnum.PULL.getCode());

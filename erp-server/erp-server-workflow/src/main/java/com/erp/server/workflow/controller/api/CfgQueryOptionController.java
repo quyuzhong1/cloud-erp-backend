@@ -1,12 +1,10 @@
 package com.erp.server.workflow.controller.api;
 
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
-import com.erp.model.workflow.dto.ProcessDefinitionDTO;
 import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Resource;
 import org.springframework.web.bind.annotation.*;
 import com.common.core.anno.LogSystemModule;
-import com.common.business.dto.base.*;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.common.core.controller.BaseController;
@@ -68,5 +66,13 @@ public class CfgQueryOptionController extends BaseController {
     public ApiResult<List<CfgQueryOptionDTO.TreeDTO>> tree(String bussinessKey) {
         List<CfgQueryOptionDTO.TreeDTO> result = cfgQueryOptionService.tree(bussinessKey);
         return success(result);
+    }
+    /**
+     *
+     *
+     */
+    @PostMapping("/genBySql")
+    public void genBySql(@RequestBody List<CfgQueryOptionDTO.GenListDTO>list ) {
+        cfgQueryOptionService.genBySql(list);
     }
 }

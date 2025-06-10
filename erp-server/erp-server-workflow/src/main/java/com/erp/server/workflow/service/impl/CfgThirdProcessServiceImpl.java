@@ -20,8 +20,8 @@ import com.erp.model.workflow.entity.CfgProcessFieldMapEntity;
 import com.erp.model.workflow.entity.CfgProcessValueMapEntity;
 import com.erp.model.workflow.entity.CfgThirdProcessEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionFieldTypeEnum;
-import com.erp.model.workflow.enums.CfgThirdProcessSourcePlatformEnum;
 import com.erp.model.workflow.enums.DictBasicEnum;
+import com.erp.model.workflow.enums.ProcessSourcePlatformEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.server.workflow.mapper.CfgThirdProcessMapper;
 import com.erp.server.workflow.service.*;
@@ -155,7 +155,7 @@ public class CfgThirdProcessServiceImpl extends SuperServiceImpl<CfgThirdProcess
         pagingParamDTO.getParams().setPermissionSql(pagingParamDTO.getPermissionSql());
         Page query = new Page(pagingParamDTO.getCurrPage(), pagingParamDTO.getPageSize());
         IPage<CfgThirdProcessDTO.ListDTO> pageData = this.baseMapper.paging(query, pagingParamDTO.getParams());
-        String sourcePlatFormName = CfgThirdProcessSourcePlatformEnum.FS_AUDIT.getName();
+        String sourcePlatFormName = ProcessSourcePlatformEnum.FS.getName();
         pageData.getRecords().forEach(
                 e -> {
                     e.setSourcePlatformName(sourcePlatFormName);
