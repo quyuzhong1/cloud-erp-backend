@@ -47,11 +47,6 @@ public class DmpSoOriginalDetailEntity extends BaseEntity<DmpSoOriginalDetailEnt
     @TableField("third_detail_id")
     private String thirdDetailId;
     /**
-     * 平台原始详情id
-     */
-    @TableField("platform_detail_id")
-    private String platformDetailId = "";
-    /**
     * 状态
     */
     @TableField("status")
