@@ -263,11 +263,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 // 流程定义不存在
                 throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
             }
-            String bussinessId = one.getId();
+            String ruleId = one.getId();
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
-            startDTO.setBusinessId(bussinessId);
+            startDTO.setRuleId(ruleId);
             startDTO.setRuleType(one.getType());
-
             cfgProcessService.startThirdProcess(startDTO);
         }
         // 流程已修改，且未发布不允许启动

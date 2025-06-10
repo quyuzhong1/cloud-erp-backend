@@ -17,10 +17,7 @@ import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.workflow.dto.CfgProcessExpDTO;
 import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.CfgProcessRuleDTO;
-import com.erp.model.workflow.entity.CfgProcessRuleEntity;
-import com.erp.model.workflow.entity.ProcessDefinitionEntity;
-import com.erp.model.workflow.entity.ProcessManagementEntity;
-import com.erp.model.workflow.entity.ThirdProcessInstanceEntity;
+import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
 import com.erp.server.workflow.mapper.CfgProcessRuleMapper;
 import com.erp.server.workflow.service.*;
@@ -58,6 +55,10 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     ThirdProcessInstanceService thirdProcessInstanceService;
     @Resource
     ProcessDefinitionService processDefinitionService;
+    @Resource
+    private ThirdProcessManagementService thirdProcessManagementService;
+    @Resource
+    private ThirdProcessDefinitionService thirdProcessDefinitionService;
 
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -179,21 +180,72 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     public void delete(List<String> ids) {
         //删除执行条件
         List<CfgProcessRuleEntity> processRuleEntityList = this.list(new LambdaQueryWrapper<CfgProcessRuleEntity>().in(CfgProcessRuleEntity::getId, ids).eq(CfgProcessRuleEntity::getIsDeleted, false));
-        if (CollUtil.isEmpty(processRuleEntityList)){
+        if (CollUtil.isEmpty(processRuleEntityList)) {
             throw new ServiceException("请选择要删除的流程执行条件");
         }
-        processRuleEntityList.forEach(item -> {
-            if (item.getType().equals(CfgProcessRuleTypeEnum.ERPPROCESS.getCode())) {
-                List<ProcessManagementEntity> processManagementEntities = processManagementService.list(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getActProcessDefinitionId, item.getProcessDefinitionId()).eq(ProcessManagementEntity::getIsDeleted, false));
-                if (processManagementEntities.size() > 0) {
-                    throw new ServiceException("流程已被单据使用，不可删除");
+        //校验是否存在运行中的流程,map,key是getType，value是List<id>
+        Map<String, List<CfgProcessRuleEntity>> map = processRuleEntityList.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getType));
+        StringBuilder errmsg = new StringBuilder();
+        map.forEach((key, value) -> {
+
+            List<String> list = value.stream()
+                    .map(CfgProcessRuleEntity::getProcessDefinitionId)
+                    .collect(Collectors.toList());
+
+            if (CfgProcessRuleTypeEnum.getByCode(key).equals(CfgProcessRuleTypeEnum.ERPPROCESS)) {
+                List<ProcessDefinitionEntity> definitionEntityList = processDefinitionService.listByIds(list);
+                Map<String, String> dIdToNameMap = definitionEntityList.stream()
+                        .collect(Collectors.toMap(ProcessDefinitionEntity::getId, ProcessDefinitionEntity::getProcessName));
+
+                List<ProcessManagementEntity> processManagementEntities = processManagementService.list(
+                        new LambdaQueryWrapper<ProcessManagementEntity>()
+                                .in(ProcessManagementEntity::getProcessDefinitionId, list)
+                                .eq(ProcessManagementEntity::getIsDeleted, Boolean.FALSE));
+
+                // 分组后计算分组的数量
+                Map<String, Long> groupCountMap = processManagementEntities.stream()
+                        .collect(Collectors.groupingBy(ProcessManagementEntity::getProcessDefinitionId, Collectors.counting()));
+
+                for (CfgProcessRuleEntity item : value) {
+                    Long a = groupCountMap.get(item.getProcessDefinitionId());
+                    if (a != null && a.compareTo(0L) > 0) {
+                        errmsg.append(dIdToNameMap.get(item.getProcessDefinitionId()));
+                    }
+                }
+            } else {
+                List<ThirdProcessDefinitionEntity> processDefinitionEntityList = thirdProcessDefinitionService.list(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().in(ThirdProcessDefinitionEntity::getApprovalCode));
+                Map<String, String> collect = processDefinitionEntityList.stream().collect(Collectors.toMap(ThirdProcessDefinitionEntity::getApprovalCode, ThirdProcessDefinitionEntity::getName));
+
+                List<ThirdProcessManagementEntity> processManagementEntityList = thirdProcessManagementService.list(new LambdaQueryWrapper<ThirdProcessManagementEntity>()
+                        .in(ThirdProcessManagementEntity::getProcessDefinitionId, list).eq(ThirdProcessManagementEntity::getIsDeleted, Boolean.FALSE));
+
+                Map<String, Long> thirdIdtoCountMap = processManagementEntityList.stream().collect(Collectors.groupingBy(ThirdProcessManagementEntity::getProcessDefinitionId, Collectors.counting()));
+                for (CfgProcessRuleEntity item : value){
+                    Long a = thirdIdtoCountMap.get(item.getProcessDefinitionId());
+                    if (a != null && a.compareTo(0L) > 0) {
+                        errmsg.append(collect.get(item.getProcessDefinitionId()));
+                    }
                 }
             }
-            List<ThirdProcessInstanceEntity> thirdProcessInstanceEntities = thirdProcessInstanceService.list(new LambdaQueryWrapper<ThirdProcessInstanceEntity>().eq(ThirdProcessInstanceEntity::getApprovalCode, item.getProcessDefinitionId()).eq(ThirdProcessInstanceEntity::getIsDeleted, false));
-            if (thirdProcessInstanceEntities.size() > 0) {
-                throw new ServiceException("流程已被单据使用，不可删除");
-            }
         });
+
+        if (StrUtil.isNotBlank(errmsg)){
+            throw new ServiceException(errmsg+"流程已被单据使用，不可删除");
+        }
+
+        //单次校验
+//        processRuleEntityList.forEach(item -> {
+//            if (item.getType().equals(CfgProcessRuleTypeEnum.ERPPROCESS.getCode())) {
+//                List<ProcessManagementEntity> processManagementEntities = processManagementService.list(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getActProcessDefinitionId, item.getProcessDefinitionId()).eq(ProcessManagementEntity::getIsDeleted, false));
+//                if (processManagementEntities.size() > 0) {
+//                    throw new ServiceException("流程已被单据使用，不可删除");
+//                }
+//            }
+//            List<ThirdProcessInstanceEntity> thirdProcessInstanceEntities = thirdProcessInstanceService.list(new LambdaQueryWrapper<ThirdProcessInstanceEntity>().eq(ThirdProcessInstanceEntity::getApprovalCode, item.getProcessDefinitionId()).eq(ThirdProcessInstanceEntity::getIsDeleted, false));
+//            if (thirdProcessInstanceEntities.size() > 0) {
+//                throw new ServiceException("流程已被单据使用，不可删除");
+//            }
+//        });
         removeByIds(ids);
         cfgProcessExpService.delete(ids);
         cfgProcessFieldMapService.delete(ids);
@@ -224,13 +276,13 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 
     @Override
     public CfgProcessRuleEntity getByDefinitionId(String id) {
-        return lambdaQuery().eq(CfgProcessRuleEntity::getProcessDefinitionId,id).last("limit 1").one();
+        return lambdaQuery().eq(CfgProcessRuleEntity::getProcessDefinitionId, id).last("limit 1").one();
     }
 
     @Override
-    public List<CfgProcessRuleEntity> listByProcessId(String id,String type) {
-        return this.lambdaQuery().eq(CfgProcessRuleEntity::getCfgProcessId,id)
-                .eq(CfgProcessRuleEntity::getType,type)
+    public List<CfgProcessRuleEntity> listByProcessId(String id, String type) {
+        return this.lambdaQuery().eq(CfgProcessRuleEntity::getCfgProcessId, id)
+                .eq(CfgProcessRuleEntity::getType, type)
                 .eq(CfgProcessRuleEntity::getDisabled, Boolean.FALSE)
                 .list();
     }

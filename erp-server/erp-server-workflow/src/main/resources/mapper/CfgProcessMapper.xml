@@ -274,7 +274,7 @@
         WHERE p.id = #{id}
           AND p.is_deleted = false
         ORDER BY p.id ASC,
-                 r.create_time DESC, r.id ASC,
+                 r.create_time ASC, r.id ASC,
                  e.index ASC, e.id ASC,
                  fm.id ASC
     </select>
