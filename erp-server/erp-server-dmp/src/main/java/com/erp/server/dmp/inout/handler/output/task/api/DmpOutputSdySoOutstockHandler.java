@@ -13,9 +13,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import cn.hutool.core.text.CharSequenceUtil;
+import com.common.business.enums.SourceTypeEnum;
+import com.erp.model.dmp.dto.DictBasicDTO;
 import com.erp.model.dmp.entity.*;
 import com.erp.model.dmp.enums.DmpBasicSystemCodeEnum;
 import com.erp.server.dmp.service.CfgTimezoneService;
+import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.DmpAmzSoOutstockDetailService;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -59,6 +63,8 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 	private DmpAmzSoOutstockDetailService dmpAmzSoOutstockDetailService;
 	@Resource
 	private CfgTimezoneService cfgTimezoneService;
+	@Resource
+	private DictBasicService dictBasicService;
 
 	
     @Override
@@ -177,6 +183,13 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 			Map<String, String> amzPlatformSignTimeInfo = queryAndConvertArrivalDate(changeDmpSoOutstockDetailEntity);
 			cfgMaps.put("amzPlatformSignTimeInfo", amzPlatformSignTimeInfo);
 
+			// 旺店通仓库店铺发货类型映射
+			List<DictBasicDTO.ViewDTO> dictbaseList = dictBasicService.getByKey("wdtSdyPlatformDeliveryType");
+			if (CollUtil.isNotEmpty(dictbaseList)) {
+				Map<String, String> deliveryTypeMap = dictbaseList.stream()
+						.collect(Collectors.toMap(e -> CharSequenceUtil.format("{}_{}",e.getName(), e.getValue()), DictBasicDTO.ViewDTO::getValue));
+				cfgMaps.put("wdtSdyPlatformDeliveryType", deliveryTypeMap);
+			}
 		}
         for (String changId : changeIds) {
         	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoOutstockEntityMap.get(changId), dmpSoOutstockDetailEntityMap.get(changId) , cfgOutputId , cfgMaps);
@@ -322,6 +335,10 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 						}
 					}
 				}
+
+				// 添加发货类型
+				boolean isPlatformDelivery = checkPlatformDelivery(dmpSoOutstockEntity, dmpSoOutstockDetailEntity, cfgMaps.get("wdtSdyPlatformDeliveryType"));
+				shudiyunB2cOrderDTO.setFulfillment_type(isPlatformDelivery ? "平台配送":"自发货");
                 
     	        shudiyunB2cOrderDTO.setRoot_node_no(dmpSoOutstockDetailEntity.getThirdOrderCode());
 
@@ -415,6 +432,25 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 			}
 		}
 		return resultMap;
+	}
+
+	/**
+	 * 检查类型是否为平台发货
+	 */
+	private boolean checkPlatformDelivery(DmpSoOutstockEntity dmpSoOutstockEntity, DmpSoOutstockDetailEntity dmpSoOutstockDetailEntity, Map<String, String> wdtSdyPlatformDeliveryType) {
+		if (SourceTypeEnum.PLATFORM_SO_OUT_STOCK.getCode().equals(dmpSoOutstockEntity.getSourceType())) {
+			// 平台出库单
+			return true;
+		} else if (SourceTypeEnum.QIMEN_SO_OUT_STOCK.getCode().equals(dmpSoOutstockEntity.getSourceType())
+			|| SourceTypeEnum.SO_OUTSTOCK.getCode().equals(dmpSoOutstockEntity.getSourceType())
+			|| SourceTypeEnum.WDT_OUT_STOCK.getCode().equals(dmpSoOutstockEntity.getSourceType())
+		) {
+			String key = CharSequenceUtil.format("{}_{}", dmpSoOutstockEntity.getShopId(), dmpSoOutstockDetailEntity.getWarehouseId());
+			return wdtSdyPlatformDeliveryType.containsKey(key);
+		} else {
+			// 其他属于自发货
+			return false;
+		}
 	}
     
     @Override
