@@ -483,7 +483,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
         //当前登录人
         this.lambdaUpdate().eq(BomInfoEntity::getId, id)
                 .set(BomInfoEntity::getState, approveStatus)
-                .set(BomInfoEntity::getRemark, comment)
+                .set(ObjectUtil.isNotEmpty(comment),BomInfoEntity::getRemark, comment)
                 .update();
     }
 
