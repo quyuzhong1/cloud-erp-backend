@@ -72,7 +72,7 @@ public class MQSyncFsHandler {
             errorReason = String.format("【%s】流程不存在", dto.getBusinessCode());
             syncRecordEntity.setErrorReason(errorReason);
             approveSyncRecordService.save(syncRecordEntity);
-            return true;
+            return Boolean.FALSE;
         }
 
         //构建三方审批同步实例请求体
@@ -206,6 +206,20 @@ public class MQSyncFsHandler {
         } else {
             //获取操作的taskId
             String curTaskId = dto.getCurTaskId();
+            if(StringUtils.isBlank(curTaskId)){
+                //根据创建时间来判断最近的节点的taskId
+                //使用stream根据创建时间进行倒序
+                processTaskManagementEntities = processTaskManagementEntities.stream().sorted(Comparator.comparing(ProcessTaskManagementEntity::getCreateTime).reversed())
+                        .collect(Collectors.toList());
+                curTaskId = processTaskManagementEntities.get(0).getTaskId();
+            }
+
+            //过滤出当前任务ID的审批记录
+            String finalCurTaskId = curTaskId;
+            processTaskManagementEntities = processTaskManagementEntities.stream()
+                    .filter(item -> item.getTaskId().equals(finalCurTaskId))
+                    .collect(Collectors.toList());
+
             //更新消息
             cfgApproveSyncSendHandler.updateNotice(dto,curTaskId,processTaskManagementEntities,syncRecordEntity);
 

@@ -469,9 +469,13 @@ public class CfgApproveSyncServiceImpl extends SuperServiceImpl<CfgApproveSyncMa
             noticeSettingDTO.setMainId(id);
             if (CollUtil.isNotEmpty(noticeSettingDTO.getRoleTypeList())) {
                 noticeSettingDTO.setRoleType(noticeSettingDTO.getRoleTypeList().stream().collect(Collectors.joining(",")));
+            }else {
+                noticeSettingDTO.setRoleType("");
             }
             if (CollUtil.isNotEmpty(noticeSettingDTO.getSpecificPersonList())) {
                 noticeSettingDTO.setSpecificPerson(noticeSettingDTO.getSpecificPersonList().stream().collect(Collectors.joining(",")));
+            }else {
+                noticeSettingDTO.setSpecificPerson("");
             }
             CfgApproveNoticeEntity cfgApproveNoticeEntity = new CfgApproveNoticeEntity();
             BeanMapper.copy(noticeSettingDTO,cfgApproveNoticeEntity);
