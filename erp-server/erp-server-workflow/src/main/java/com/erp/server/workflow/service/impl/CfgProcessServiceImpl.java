@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -99,12 +100,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     public BaseResultDTO.AddDTO add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         //
-        CfgProcessEntity one = this.getOne(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
-        if (null != one){
-            CfgProcessRuleEntity rule = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getCfgProcessId, one.getId()).eq(CfgProcessRuleEntity::getType, CfgProcessRuleTypeEnum.ERPPROCESS.getCode()).eq(CfgProcessRuleEntity::getIsDeleted, false));
-            if (ObjectUtil.isNotEmpty(rule)){
-                throw new ServiceException("{}已配置流程，不可重复配置", CfgQueryOptionBussinessKeyEnum.getByCode(one.getBussinessKey()))   ;
-            }
+        List<CfgProcessEntity> list = this.list(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
+        if (CollUtil.isNotEmpty(list) && list.size()>0){
+            throw new ServiceException("{}已配置流程，不可重复配置", CfgQueryOptionBussinessKeyEnum.getByCode(dto.getBussinessKey())!=null ?  CfgQueryOptionBussinessKeyEnum.getByCode(dto.getBussinessKey()).getName():dto.getBussinessKey());
         }
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
