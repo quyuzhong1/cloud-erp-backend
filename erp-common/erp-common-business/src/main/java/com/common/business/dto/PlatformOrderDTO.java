@@ -40,7 +40,7 @@ public class PlatformOrderDTO extends UniqueDto {
     /**
      * NF-E发票状态,nfeInvoiceStatus字典
      */
-    private String nfeInvoiceStatus;
+    private String nfeInvoiceStatus = "";
 
     /**
      * 店铺
