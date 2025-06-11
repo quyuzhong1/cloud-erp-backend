@@ -174,17 +174,20 @@ public class CfgApproveSyncSendHandler {
                         dataJson.put("messageId",messageId);
                         dataJson.put("status",status);
                         dataJson.put("approveSyncFailedType",ApproveSyncFailedTypeEnum.UPDATEAPPROVENOTICE.getCode());
-                        syncRecordEntity.setDataJson(dataJson);
+                        newRecord.setDataJson(dataJson);
+                        list.add(newRecord);
                     }else {
 //                        newRecord.setErrorReason(String.format("飞书消息更新成功messsageId：%s",messsageId));
                         newRecord.setErrorReason("");
                         newRecord.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
                         newRecord.setMessageId(messageId);
+                        approveSyncRecordService.save(newRecord);
                     }
-                    list.add(newRecord);
                 }
-                //保存日志
-                approveSyncRecordService.insertBatch(list);
+                if(CollUtil.isNotEmpty(list)){
+                    //保存日志
+                    approveSyncRecordService.insertBatch(list);
+                }
             }
         }
     }
