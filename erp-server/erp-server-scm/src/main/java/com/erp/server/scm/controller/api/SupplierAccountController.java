@@ -35,7 +35,7 @@ public class SupplierAccountController {
      * @return
      */
     @GetMapping("/getSupplierAccountList")
-    public ApiResult<List<SupplierAccountEntity>> getSupplierAccountList(@RequestParam("supplierId") String supplierId) {
+    public ApiResult<List<SupplierAccountEntity>> getSupplierAccountList(@RequestParam(value = "supplierId", required = false) String supplierId) {
         return ApiResult.success(supplierAccountService.getSupplierAccountList(supplierId));
     }
 }
