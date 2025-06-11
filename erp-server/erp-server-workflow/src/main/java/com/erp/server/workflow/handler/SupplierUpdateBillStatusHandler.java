@@ -82,27 +82,45 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
         }
         if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum)) {
-            Map<String, Object> map = constructBillHandler.constructBill(jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
+            Map<String, Object> map = constructBillHandler.constructBill(
+                    jsonObject.getJSONArray("form"), fieldMapList, valueMapList);
             ObjectMapper objectMapper = new ObjectMapper();
             SupplierDTO.InsertDTO addDTO = objectMapper.convertValue(map, SupplierDTO.InsertDTO.class);
             addDTO.setApprovalStatus(ApproveStatusEnum.APPROVE_ING);
-            try {
-                List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(jsonObject.getJSONArray("form"), map, fieldMapList);
-                ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(thirdProcessEntity, addDTOS);
-                taskInfo.setThirdInstanceId(jsonObject.getStr("instance_code"));
-                BaseResultDTO.AddDTO add = approveTaskInfoService.add(taskInfo);
-                //添加
-                String id = supplierFeign.add(addDTO);
 
-                List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class).eq(SupplierEntity::getId, id).list();
-                taskInfo.setBussinessCode(list.get(0).getCode());
-                taskInfo.setBussinessId(id);
-                ApproveTaskInfoEntity taskInfoEntity = BeanUtil.copyProperties(taskInfo, ApproveTaskInfoEntity.class);
-                taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
-                taskInfoEntity.setId(add.getId());
-                approveTaskInfoService.updateById(taskInfoEntity);
-            }catch (Exception e){
-                throw new RuntimeException("创建供应商失败错误信息：",e);
+            // 第一步：保存taskInfo和Details - 如果失败直接终止
+            List<ApproveTaskDetailDTO.AddDTO> addDTOS = constructBillHandler.generatePullDetailDTO(
+                    jsonObject.getJSONArray("form"), map, fieldMapList);
+            ApproveTaskInfoDTO.AddDTO taskInfo = buildApproveTaskInfo(thirdProcessEntity, addDTOS);
+            taskInfo.setThirdInstanceId(jsonObject.getStr("instance_code"));
+
+            try {
+                BaseResultDTO.AddDTO add = approveTaskInfoService.add(taskInfo);
+                if (add == null || add.getId() == null) {
+                    throw new ServiceException("保存审批任务信息失败");
+                }
+
+                // 第二步：保存供应商信息
+                String id = supplierFeign.add(addDTO);
+                List<SupplierEntity> list = FeignQuery.create(SupplierEntity.class)
+                        .eq(SupplierEntity::getId, id)
+                        .list();
+
+                // 第三步：更新taskInfo
+                if (!CollUtil.isEmpty(list)) {
+                    ApproveTaskInfoEntity taskInfoEntity = BeanUtil.copyProperties(taskInfo, ApproveTaskInfoEntity.class);
+                    taskInfoEntity.setStatus(ApproveTaskStatusEnum.SUCCESS.getCode());
+                    taskInfoEntity.setId(add.getId());
+                    taskInfoEntity.setBussinessCode(list.get(0).getCode());
+                    taskInfoEntity.setBussinessId(id);
+                    approveTaskInfoService.updateById(taskInfoEntity);
+                }
+            } catch (Exception e) {
+                // 只捕获第一步的异常，确保taskInfo保存成功
+                // 后续步骤的失败可以通过Details重试
+                if (e instanceof ServiceException) {
+                    throw e;
+                }
             }
         }
         if (dictBasicEnum != null && DictBasicEnum.CREATEANDUPDATE.equals(dictBasicEnum)) {
@@ -126,7 +144,7 @@ public class SupplierUpdateBillStatusHandler implements CreateBillHandler {
 
         if (dictBasicEnum != null && DictBasicEnum.UPDATEFIELDORSTATUS.equals(dictBasicEnum)) {
             //找到集合中unique为true的元素
-
+            return;
         }
         if (dictBasicEnum != null && DictBasicEnum.CREATE.equals(dictBasicEnum)) {
             ObjectMapper objectMapper = new ObjectMapper();
