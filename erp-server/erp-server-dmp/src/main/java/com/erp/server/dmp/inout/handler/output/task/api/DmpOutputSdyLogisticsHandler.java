@@ -188,26 +188,18 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
     	        shudiyunB2cOrderDTO.setSource_system("SDC");
     	        shudiyunB2cOrderDTO.setRoot_node_no_initial(bizNo);
 
-                List<DmpSoOutstockEntity> soOutstockEntityList = soOutstockEntityMap.get(dmpSoLogisticsEntity.getOutstockCode());
-                if (CollUtil.isNotEmpty(soOutstockEntityList)) {
-                    DmpSoOutstockEntity dmpSoOutstockEntity = soOutstockEntityList.get(0);
-                    shudiyunB2cOrderDTO.setShop_no(dmpSoOutstockEntity.getShopId());
-                    shudiyunB2cOrderDTO.setShop_name(dmpSoOutstockEntity.getShopName());
-                    shudiyunB2cOrderDTO.setRoot_node_no(dmpSoOutstockEntity.getPlatformCode());
+                shudiyunB2cOrderDTO.setShop_no(dmpSoLogisticsEntity.getShopNo());
+                shudiyunB2cOrderDTO.setShop_name(dmpSoLogisticsEntity.getShopName());
+                shudiyunB2cOrderDTO.setRoot_node_no(dmpSoLogisticsEntity.getOrderPlatformCode());
 
-                    List<DmpSoOutstockDetailEntity> outstockDetailEntityList = soOutstockDetailEntityMap.get(dmpSoOutstockEntity.getId());
-                    if (CollUtil.isNotEmpty(outstockDetailEntityList)) {
-                        DmpSoOutstockDetailEntity dmpSoOutstockDetailEntity = outstockDetailEntityList.get(0);
-                        String subPlatformType = dmpSoOutstockDetailEntity.getPlatformType();
-                        if (StringUtils.isNotBlank(subPlatformType)) {
-                            DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(dmpSoOutstockDetailEntity.getPlatformType())).findFirst().orElse(null);
-                            if (null != dictBasicEntity) {
-                                shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
-                                shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
-                                shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
-                                shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
-                            }
-                        }
+                String platformType = dmpSoLogisticsEntity.getPlatformType();
+                if (StringUtils.isNotBlank(platformType)) {
+                    DictBasicEntity dictBasicEntity = dictList.stream().filter(req -> req.getName().equals(platformType)).findFirst().orElse(null);
+                    if (null != dictBasicEntity) {
+                        shudiyunB2cOrderDTO.setPlatform_id(dictBasicEntity.getRemark());
+                        shudiyunB2cOrderDTO.setPlatform_name(dictBasicEntity.getRemark());
+                        shudiyunB2cOrderDTO.setSubplatform_no(dictBasicEntity.getValue());
+                        shudiyunB2cOrderDTO.setSubplatform_name(dictBasicEntity.getValue());
                     }
                 }
 
