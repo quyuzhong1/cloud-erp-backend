@@ -762,7 +762,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
         List<SoInfoEntity> soInfoEntityList = new LinkedList();
         // 查询B2B订单
         List<SoReturnInstockEntity> b2bReturnInstockList = instockGroupMap.get("B2B");
-        if (CollectionUtils.isEmpty(b2bReturnInstockList)){
+        if (CollectionUtils.isNotEmpty(b2bReturnInstockList)){
             List<String> b2bSoIds = b2cReturnInstockList.stream().map(SoReturnInstockEntity::getSoId)
                     .filter(StringUtils::isNotBlank)
                     .distinct()
