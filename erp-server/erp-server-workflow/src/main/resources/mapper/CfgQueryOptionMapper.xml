@@ -61,7 +61,7 @@
     <select id="getSystemfield" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
         SELECT condition_field,
                case
-                   when field_belongs_type = 'main' then '单据头-' || condition_field_name
+                   when field_belongs_type = 'main' then '基础信息-' || condition_field_name
                    else db.name || '-' || condition_field_name
                    end AS condition_field_name,
                request_method,

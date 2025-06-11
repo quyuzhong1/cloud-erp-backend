@@ -137,7 +137,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             }
         }
         if (StrUtil.isNotBlank(errmsg)) {
-
+            throw new ServiceException(errmsg+"流程已被单据使用，不可编辑");
         }
         // 提取 addDTO 中的 id
         Set<String> addDTOIds = addDTO.stream()

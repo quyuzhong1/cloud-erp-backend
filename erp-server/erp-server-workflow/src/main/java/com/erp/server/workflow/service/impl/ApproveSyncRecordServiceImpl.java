@@ -5,6 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
@@ -21,6 +22,7 @@ import com.erp.model.workflow.dto.FsBotParamsDTO;
 import com.erp.model.workflow.entity.ApproveSyncRecordEntity;
 import com.erp.model.workflow.enums.*;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.workflow.handler.CfgApproveSyncBuildHandler;
 import com.erp.server.workflow.handler.CfgApproveSyncSendHandler;
@@ -72,6 +74,8 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
 
     @Resource
     private MQSyncFsHandler mqSyncFsHandler;
+    @Resource
+    private SysUserFeign sysUserFeign;
 
     @Override
     public List<ApproveSyncRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -130,7 +134,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         }
 
         String approveSyncFailedType = String.valueOf(dataJson.get("approveSyncFailedType"));
-        if (StringUtils.isNotBlank(approveSyncFailedType)) {
+        if (StringUtils.isBlank(approveSyncFailedType)) {
             return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推类型不存在");
         }
         Gson gson = new Gson();
@@ -230,6 +234,13 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
 
     @Override
     public void insertBatch(List<ApproveSyncRecordEntity> list) {
-        baseMapper.insertBatch(list);
+        if(CollUtil.isNotEmpty(list)){
+            List<String> userIds = list.stream().map(ApproveSyncRecordEntity::getReceiverId).filter(StringUtils::isBlank).collect(Collectors.toList());
+            Map<String, String> map = sysUserFeign.getUserListByUserIds(userIds).stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (o1, o2) -> o1));
+            for (ApproveSyncRecordEntity approveSyncRecordEntity : list) {
+                approveSyncRecordEntity.setReceiverName(map.getOrDefault(approveSyncRecordEntity.getReceiverId(),""));
+            }
+            baseMapper.insertBatch(list);
+        }
     }
 }
