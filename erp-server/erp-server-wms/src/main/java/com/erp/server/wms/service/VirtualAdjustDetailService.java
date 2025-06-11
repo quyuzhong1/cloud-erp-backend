@@ -3,6 +3,7 @@ import com.erp.model.wms.entity.VirtualAdjustDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualAdjustDetailDTO;
+import com.erp.model.wms.entity.VirtualAdjustEntity;
 
 import java.util.List;
 
@@ -42,4 +43,6 @@ public interface VirtualAdjustDetailService extends SuperService<VirtualAdjustDe
     List<VirtualAdjustDetailEntity> listByMainIdList(List<String> mainIdList);
 
     void removeByMainId(String id);
+
+    void validateSubmit(VirtualAdjustEntity entity);
 }

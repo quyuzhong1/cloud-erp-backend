@@ -592,7 +592,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         if(!ApproveStatusEnum.allowUpdateStatus(entity.getApproveStatus())) {
             throw new ServiceException(ApiError.ERROR_98010);
         }
-        return;
+        virtualAdjustDetailService.validateSubmit(entity);
     }
 
     /**
