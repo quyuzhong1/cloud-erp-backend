@@ -9,6 +9,7 @@ import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
 import com.erp.model.workflow.dto.FsBotParamsDTO;
+import com.erp.model.workflow.dto.ProcessTaskManagementExtDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.*;
 import com.erp.sdk.fs.enmu.FsActionStatusEnum;
@@ -159,12 +160,16 @@ public class CfgApproveSyncSendHandler {
     //更新审批 Bot 消息
     private void commonUpdateNotice(List<ProcessTaskManagementEntity> processTaskManagementEntities,String status,ApproveSyncRecordEntity syncRecordEntity) {
         if(CollUtil.isNotEmpty(processTaskManagementEntities)){
-            List<String> messageIds = processTaskManagementExtService.listMessageIdByTaskIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
-            if(CollUtil.isNotEmpty(messageIds)){
+            List<ProcessTaskManagementExtDTO.MessageDTO> messageDtos = processTaskManagementExtService.listMessageIdByTaskIds(processTaskManagementEntities.stream().map(ProcessTaskManagementEntity::getId).collect(Collectors.toList()));
+            if(CollUtil.isNotEmpty(messageDtos)){
                 List<ApproveSyncRecordEntity> list = new ArrayList<>();
-                for (String messageId : messageIds) {
+                for (ProcessTaskManagementExtDTO.MessageDTO messageDTO : messageDtos) {
+                    String messageId = messageDTO.getMessageId();
                     ApproveSyncRecordEntity newRecord =  new ApproveSyncRecordEntity();
-                    BeanMapper.copy(syncRecordEntity,newRecord);
+                    BeanMapper.copyNonNull(syncRecordEntity,newRecord);
+                    newRecord.setDataJson(syncRecordEntity.getDataJson());
+                    newRecord.setReceiverId(messageDTO.getCurApproveId());
+                    newRecord.setReceiverName(messageDTO.getCurApproveName());
                     Boolean b = fsService.updateApproveMessage(messageId, status);
                     if(Boolean.FALSE.equals(b)){
                         //记录失败
@@ -247,7 +252,8 @@ public class CfgApproveSyncSendHandler {
                 params.setSummaries(summaries);
 
                 ApproveSyncRecordEntity newRecord =  new ApproveSyncRecordEntity();
-                BeanMapper.copy(syncRecordEntity,newRecord);
+                BeanMapper.copyNonNull(syncRecordEntity,newRecord);
+                newRecord.setDataJson(syncRecordEntity.getDataJson());
                 newRecord.setReceiverId(userId);
                 Map<String, Object> dataJson = BeanUtil.beanToMap(params);
                 dataJson.put("approveSyncFailedType",ApproveSyncFailedTypeEnum.SENDNOTICE.getCode());
@@ -330,7 +336,8 @@ public class CfgApproveSyncSendHandler {
                 params.setSummaries(summaries);
 
                 ApproveSyncRecordEntity newRecord =  new ApproveSyncRecordEntity();
-                BeanMapper.copy(syncRecordEntity,newRecord);
+                BeanMapper.copyNonNull(syncRecordEntity,newRecord);
+                newRecord.setDataJson(syncRecordEntity.getDataJson());
                 newRecord.setReceiverId(e.getCurApproveId());
                 Map<String, Object> dataJson = BeanUtil.beanToMap(params);
                 dataJson.put("approveSyncFailedType",ApproveSyncFailedTypeEnum.SENDAPPROVENOTICE.getCode());

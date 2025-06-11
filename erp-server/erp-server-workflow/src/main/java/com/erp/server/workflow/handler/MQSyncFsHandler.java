@@ -210,10 +210,6 @@ public class MQSyncFsHandler {
             if(thirdUnionMap.containsKey(createUserId)){
                 syncRecordEntity.setReceiverName(thirdUnionMap.get(createUserId).getUserName());
             }
-//            CfgApproveSyncDTO.SyncFsProcessToMqDTO dto
-            Map<String, Object> dataJson = BeanUtil.beanToMap(dto);
-            dataJson.put("approveSyncFailedType",ApproveSyncFailedTypeEnum.CREATEINSTANCE.getCode());
-            syncRecordEntity.setDataJson(dataJson);
             approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
         } else {
             //获取操作的taskId
@@ -261,6 +257,9 @@ public class MQSyncFsHandler {
         approveSyncRecordEntity.setTitle(cfgApproveSyncEntity.getTitle());
         approveSyncRecordEntity.setStatus(ApproveSyncRecordStatusEnum.FAILED.getCode());
         approveSyncRecordEntity.setNoticeNode(CfgApproveNoticeNoticeTypeEnum.APPROVE.getCode());
+        Map<String, Object> dataJson = BeanUtil.beanToMap(dto);
+        dataJson.put("approveSyncFailedType",ApproveSyncFailedTypeEnum.CREATEINSTANCE.getCode());
+        approveSyncRecordEntity.setDataJson(dataJson);
         return approveSyncRecordEntity;
     }
 

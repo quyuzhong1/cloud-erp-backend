@@ -108,4 +108,29 @@ public class ProcessTaskManagementExtDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class MessageDTO {
+
+
+        /**
+         * message_id
+         */
+
+        private String messageId;
+
+        /**
+         * curApproveId
+         */
+        private String curApproveId;
+
+        /**
+         * curApproveName
+         */
+        private String curApproveName;
+
+
+    }
+
+
 }

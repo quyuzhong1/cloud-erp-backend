@@ -2,6 +2,7 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import com.erp.model.workflow.dto.ProcessTaskManagementExtDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementExtEntity;
 import com.erp.model.workflow.enums.CfgApproveSyncSyncPlatformEnum;
@@ -29,7 +30,7 @@ public class ProcessTaskManagementExtServiceImpl extends SuperServiceImpl<Proces
 
 
     @Override
-    public List<String> listMessageIdByTaskIds(List<String> processTaskManagementIds) {
+    public List<ProcessTaskManagementExtDTO.MessageDTO> listMessageIdByTaskIds(List<String> processTaskManagementIds) {
         if(CollUtil.isEmpty(processTaskManagementIds)){
             return Collections.emptyList();
         }
