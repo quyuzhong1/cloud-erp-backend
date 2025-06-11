@@ -190,18 +190,56 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
-        // 操作日志 TODO删除返回主表，然后根据主表id判断下是否存在rule，不存在主表同时删除
-        cfgProcessRuleService.delete(ids);
-        List<CfgProcessRuleEntity> processRuleEntityList = cfgProcessRuleService.list(new LambdaQueryWrapper<CfgProcessRuleEntity>().in(CfgProcessRuleEntity::getId, ids).eq(CfgProcessRuleEntity::getIsDeleted, false));
-        Map<String, List<CfgProcessRuleEntity>> collect = processRuleEntityList.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getCfgProcessId));
-        ArrayList<String> processIds = new ArrayList<>();
-        collect.forEach((k, v) -> {
-            if (v.size()==0){
-                processIds.add(k);
-            }
-        });
-        if (processIds.size()>0){
-            cfgProcessRuleService.removeByIds(processIds);
+        if (ObjectUtil.isEmpty(ids)) {
+            return;
+        }
+
+        // 获取规则列表
+        List<CfgProcessRuleEntity> processRuleEntityList = cfgProcessRuleService.list(
+                new LambdaQueryWrapper<CfgProcessRuleEntity>()
+                        .in(CfgProcessRuleEntity::getId, ids)
+                        .eq(CfgProcessRuleEntity::getIsDeleted, false)
+        );
+
+        if (ObjectUtil.isEmpty(processRuleEntityList)) {
+            return;
+        }
+
+        // 删除规则
+        if (!cfgProcessRuleService.delete(ids)) {
+            throw new ServiceException("删除规则失败");
+        }
+
+        // 获取需要删除的流程配置ID
+        List<String> processIds = processRuleEntityList.stream()
+                .map(CfgProcessRuleEntity::getCfgProcessId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 检查哪些流程配置没有规则了
+        List<CfgProcessRuleEntity> remainingRules = cfgProcessRuleService.list(
+                new LambdaQueryWrapper<CfgProcessRuleEntity>()
+                        .in(CfgProcessRuleEntity::getCfgProcessId, processIds)
+                        .eq(CfgProcessRuleEntity::getIsDeleted, false)
+        );
+
+        Set<String> remainingProcessIds = remainingRules.stream()
+                .map(CfgProcessRuleEntity::getCfgProcessId)
+                .collect(Collectors.toSet());
+
+        List<String> processesToDelete = processIds.stream()
+                .filter(id -> !remainingProcessIds.contains(id))
+                .collect(Collectors.toList());
+
+        if (!processesToDelete.isEmpty()) {
+            super.removeByIds(processesToDelete);
+            // 添加操作日志
+            operateLogService.addModuleOperateLog(
+                    String.format("删除流程配置，ID：%s", String.join(",", processesToDelete)),
+                    ModuleTypeEnum.CFG_PROCESS.getCode(),
+                    null,
+                    "删除操作"
+            );
         }
     }
 

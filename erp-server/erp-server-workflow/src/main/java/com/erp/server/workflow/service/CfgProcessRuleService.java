@@ -45,7 +45,7 @@ public interface CfgProcessRuleService extends SuperService<CfgProcessRuleEntity
      * @author hcg
      * @date: 2025-05-13
      */
-    void delete(List<String> ids);
+    boolean delete(List<String> ids);
 
     /**
      * 更新默认
