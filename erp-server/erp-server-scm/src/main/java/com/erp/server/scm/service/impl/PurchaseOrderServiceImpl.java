@@ -1867,6 +1867,14 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
 
         variablesMap.put(stringHashMap.get(PURCHASE_ORDER_DETAIL), BeanUtil.copyToList(detailList, Map.class));
+
+        //供应商map
+        String id = entity.getId();
+        PurchaseOrderSupplierEntity supplier = purchaseOrderSupplierService.getByPurchaseOrderId(id);
+        String accountId = entity.getSupplierAccountId();
+        Map<String, Object> supplierMap = BeanUtil.beanToMap(supplier);
+        supplierMap.put("accountId", accountId);
+        variablesMap.put(stringHashMap.get(ThirdConstants.PURCHASE_ORDER_SUPPLIER), supplierMap);
         //价税合计
         BigDecimal taxPriceTotal = detailList.stream().map(obj -> MathUtil.multiplyWithTwo(obj.getTaxPrice(), obj.getPurchaseQty())).reduce(BigDecimal.ZERO, BigDecimal::add);
         variablesMap.put("taxPriceTotal", taxPriceTotal);

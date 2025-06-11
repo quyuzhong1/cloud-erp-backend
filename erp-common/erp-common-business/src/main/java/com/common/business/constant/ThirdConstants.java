@@ -59,4 +59,8 @@ public class ThirdConstants {
     public static final String DETAIL_LIST = "detailList";
 
     public static final String PURCHASE_ORDER_DETAIL = "purchase_order_detail";
+
+    public static final String PURCHASE_ORDER_SUPPLIER = "purchase_order_supplier";
+
+    
 }
