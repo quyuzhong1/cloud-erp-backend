@@ -80,7 +80,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
         List<String> billIds = detailEntityList.stream().map(LogisticsBillDetailEntity::getMainId).distinct().collect(Collectors.toList());
         List<LogisticsBillEntity> entityList = logisticsBillService.listByIds(billIds);
 
-        Map<String, Pair<String, String>> logisticInfoMaps = syncLogisticsBillService.getLogisticInfo(entityList);
+        Map<String, Map<String, String>> logisticInfoMaps = syncLogisticsBillService.getLogisticInfo(entityList);
         for (DmpSyncMqDTO.SyncParamDetailDTO syncParamDetailDTO :  sourceDetailList) {
             String sourceId = syncParamDetailDTO.getSourceId();
             LogisticsBillDetailEntity detailEntity = detailEntityList.stream().filter(req -> req.getId().equals(sourceId)).findFirst().orElse(null);

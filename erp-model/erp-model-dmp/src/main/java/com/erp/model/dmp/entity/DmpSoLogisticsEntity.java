@@ -101,6 +101,30 @@ public class DmpSoLogisticsEntity extends BaseEntity<DmpSoLogisticsEntity> {
     @TableField("next_level_id")
     private String nextLevelId;
 
+    /**
+     * 店铺对应客户编号
+     */
+    @TableField("shop_no")
+    private String shopNo;
+
+    /**
+     * 店铺对应客户名称
+     */
+    @TableField("shop_name")
+    private String shopName;
+
+    /**
+     * 销售平台单号
+     */
+    @TableField("order_platform_code")
+    private String orderPlatformCode;
+
+    /**
+     * 平台类型
+     */
+    @TableField("platform_type")
+    private String platformType;
+
 
     public static final String SOURCE_SYSTEM = "source_system";
 
