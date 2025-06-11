@@ -155,7 +155,7 @@
         si.warehouse_id as warehouseId,
         si.virtual_warehouse_id as virtualWarehouseId,
         COALESCE(COALESCE(sd.frozen_time,sdn.create_time),sd.create_time) as frozenTime,
-        case when sdn.id is null then sd.frozen_qty else  COALESCE(sdnd.delivery_qty,0) end as frozenQty,
+        case when sdn.id is null then sd.frozen_qty else  COALESCE(sdnd.last_picking_qty,0) end as frozenQty,
         '' as outstockOrderId,
         '' as outstockOrderStatus,
         0 as outstockQty,
