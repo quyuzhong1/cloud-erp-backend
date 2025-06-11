@@ -91,11 +91,6 @@ public class ApproveSyncRecordController extends BaseController {
      * @return
      */
     @PostMapping("/export")
-    @DataPermission(operationType = DataAttributeEnum.LIST,
-            tableField = "create_user_id",
-            menuCode = "workflow:approveSyncRecord:export",
-            tableAlias = "asr"
-    )
     @LogAction(value = LogActionEnum.EXPORT, desc = "导出Excel数据")
     @WebAdvanceQuery(handler = ApproveSyncRecordQueryHandler.class)
     public ApiResult<Object> exportList(@RequestBody @Validated ApproveSyncRecordDTO.PagingParamDTO dto, HttpServletResponse response) {
@@ -112,11 +107,6 @@ public class ApproveSyncRecordController extends BaseController {
      * @return ApiResult<List<BatchResultDTO>>
      */
     @PostMapping("/repush")
-//    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
-//            tableField = "create_user_id",
-//            menuCode = "workflow:approveSyncRecord:repush",
-//            serviceClass = ApproveSyncRecordService.class,
-//            keyIdName = "ids")
     public ApiResult<List<BatchResultDTO>> repush(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         List<String> ids = dto.getIds();
         List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
