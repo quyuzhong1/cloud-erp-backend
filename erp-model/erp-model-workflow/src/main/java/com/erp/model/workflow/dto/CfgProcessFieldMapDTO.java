@@ -261,7 +261,7 @@ public class CfgProcessFieldMapDTO implements Serializable {
          * 第三方字段所属明细控件id
          */
         @Size(max = 255,message = "父控件id最大长度不能超过255位")
-        private String parentId;
+        private String sysParentId;
 
         /**
          * 排序

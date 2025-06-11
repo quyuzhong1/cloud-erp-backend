@@ -66,6 +66,7 @@ public class CfgProcessDTO implements Serializable {
      */
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class AddOrUpdateDTO extends CommonDTO {
 
         /**
