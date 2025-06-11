@@ -1,4 +1,5 @@
 package com.erp.server.workflow.service;
+import com.erp.model.workflow.dto.ProcessTaskManagementExtDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementExtEntity;
 import com.common.business.service.SuperService;
@@ -16,7 +17,7 @@ import java.util.List;
 public interface ProcessTaskManagementExtService extends SuperService<ProcessTaskManagementExtEntity> {
 
 
-    List<String> listMessageIdByTaskIds(List<String> processTaskManagementIds);
+    List<ProcessTaskManagementExtDTO.MessageDTO> listMessageIdByTaskIds(List<String> processTaskManagementIds);
 
     List<ProcessTaskManagementEntity> listProcessTaskByTaskIds(List<String> processTaskManagementIds,String processInstanceId);
 }

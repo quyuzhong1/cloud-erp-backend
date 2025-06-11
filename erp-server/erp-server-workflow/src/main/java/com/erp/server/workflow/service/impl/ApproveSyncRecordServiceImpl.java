@@ -39,6 +39,8 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import lombok.extern.slf4j.Slf4j;
 import com.erp.model.workflow.dto.ApproveSyncRecordDTO;
+
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import javax.annotation.Resource;
@@ -129,12 +131,12 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     public BatchResultDTO repush(String id) {
         ApproveSyncRecordEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到三方推送记录数据"));
         Map<String, Object> dataJson = entity.getDataJson();
-        if (CollUtil.isNotEmpty(dataJson)) {
+        if (CollUtil.isEmpty(dataJson)) {
             return BatchResultDTO.fail(entity.getId(), entity.getId(), "流程未启动");
         }
 
         String approveSyncFailedType = String.valueOf(dataJson.get("approveSyncFailedType"));
-        if (StringUtils.isBlank(approveSyncFailedType)) {
+        if (Objects.isNull(dataJson.get("approveSyncFailedType")) || StringUtils.isBlank(approveSyncFailedType)) {
             return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推类型不存在");
         }
         Gson gson = new Gson();
@@ -142,7 +144,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         if (Objects.equals(approveSyncFailedType, ApproveSyncFailedTypeEnum.CREATEINSTANCE.getCode())) {
             try {
                 CfgApproveSyncDTO.SyncFsProcessToMqDTO dto = gson.fromJson(gson.toJson(dataJson), CfgApproveSyncDTO.SyncFsProcessToMqDTO.class);
-                if (processManagementService.checkTaskByProcessInstanceId(dto.getInstanceId())) {
+                if (!processManagementService.checkTaskByProcessInstanceId(dto.getInstanceId())) {
                     return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推节点不能小于流程当前节点");
                 }
 
@@ -172,9 +174,13 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
             }
             Boolean b = fsService.updateApproveMessage(messageId, status);
             if (Boolean.TRUE.equals(b)) {
-                entity.setErrorReason("");
-                entity.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
-                entity.setMessageId(messageId);
+                lambdaUpdate()
+                        .eq(ApproveSyncRecordEntity::getId,entity.getId())
+                        .set(ApproveSyncRecordEntity::getMessageId,messageId)
+                        .set(ApproveSyncRecordEntity::getStatus,ApproveSyncRecordStatusEnum.SUCCESS.getCode())
+                        .set(ApproveSyncRecordEntity::getErrorReason,"")
+                        .set(ApproveSyncRecordEntity::getSendTime, LocalDateTime.now())
+                        .update();
             }else {
                 return BatchResultDTO.fail(entity.getId(), entity.getId(), "更新审批消息失败");
             }
@@ -218,10 +224,13 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
                 //发送消息
                 String messageId = fsService.sendErpApproveSyncMessage(bodyMap);
                 if(StringUtils.isNotBlank(messageId)){//发送失败
-                    entity.setErrorReason("");
-                    entity.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
-                    entity.setMessageId(messageId);
-                    updateById(entity);
+                    lambdaUpdate()
+                            .eq(ApproveSyncRecordEntity::getId,entity.getId())
+                            .set(ApproveSyncRecordEntity::getMessageId,messageId)
+                            .set(ApproveSyncRecordEntity::getStatus,ApproveSyncRecordStatusEnum.SUCCESS.getCode())
+                            .set(ApproveSyncRecordEntity::getErrorReason,"")
+                            .set(ApproveSyncRecordEntity::getSendTime, LocalDateTime.now())
+                            .update();
                 }
             }else {
                 return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推失败");
@@ -235,7 +244,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
     @Override
     public void insertBatch(List<ApproveSyncRecordEntity> list) {
         if(CollUtil.isNotEmpty(list)){
-            List<String> userIds = list.stream().map(ApproveSyncRecordEntity::getReceiverId).filter(StringUtils::isBlank).collect(Collectors.toList());
+            List<String> userIds = list.stream().map(ApproveSyncRecordEntity::getReceiverId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             Map<String, String> map = sysUserFeign.getUserListByUserIds(userIds).stream().collect(Collectors.toMap(FindUserDTO::getUserId, FindUserDTO::getUserName, (o1, o2) -> o1));
             for (ApproveSyncRecordEntity approveSyncRecordEntity : list) {
                 approveSyncRecordEntity.setReceiverName(map.getOrDefault(approveSyncRecordEntity.getReceiverId(),""));

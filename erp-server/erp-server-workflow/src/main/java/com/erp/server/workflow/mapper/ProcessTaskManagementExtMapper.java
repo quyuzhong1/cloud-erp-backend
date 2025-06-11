@@ -1,4 +1,5 @@
 package com.erp.server.workflow.mapper;
+import com.erp.model.workflow.dto.ProcessTaskManagementExtDTO;
 import com.erp.model.workflow.entity.ProcessTaskManagementEntity;
 import com.erp.model.workflow.entity.ProcessTaskManagementExtEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -20,7 +21,7 @@ import java.util.List;
 @Mapper
 public interface ProcessTaskManagementExtMapper extends BaseMapper<ProcessTaskManagementExtEntity> {
 
-    List<String> listByProcessTaskManagementIds(@Param("processTaskManagementIds") List<String> processTaskManagementIds);
+    List<ProcessTaskManagementExtDTO.MessageDTO> listByProcessTaskManagementIds(@Param("processTaskManagementIds") List<String> processTaskManagementIds);
 
     List<ProcessTaskManagementEntity> listProcessTaskByTaskIds(@Param("processTaskManagementIds") List<String> processTaskManagementIds,@Param("processInstanceId") String processInstanceId);
 }

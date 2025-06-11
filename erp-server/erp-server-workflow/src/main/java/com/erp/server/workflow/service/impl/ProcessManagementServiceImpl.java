@@ -1819,10 +1819,10 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             return Boolean.FALSE;
         }
         List<String> taskIds = list.stream().map(ProcessTaskManagementEntity::getTaskId).distinct().collect(Collectors.toList());
-        if(taskIds.size() > 1 ){
-            return Boolean.FALSE;
+        if(taskIds.size()  ==  1 ){
+            return Boolean.TRUE;
         }
-        return Boolean.TRUE;
+        return Boolean.FALSE;
     }
 
 }
