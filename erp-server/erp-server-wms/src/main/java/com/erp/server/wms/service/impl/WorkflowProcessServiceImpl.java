@@ -48,6 +48,8 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
 
     @Resource
     private TransferOutService transferOutService;
+    @Resource
+    private VirtualAdjustService virtualAdjustService;
 
     @Override
     public Boolean approveEnd(EndProcessDTO dto) {
@@ -96,6 +98,10 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
             case REQUISITION_APPLICATION_CHANGE:
                 //要货申请变更单
                 requisitionApplicationChangeEnd(dto);
+                break;
+            case VIRTUAL_ADJUST:
+                //虚拟库存调整
+                virtualAdjustEnd(dto);
                 break;
             default:
                 break;
@@ -260,6 +266,15 @@ public class WorkflowProcessServiceImpl implements WorkflowProcessService {
         ApproveOneDTO approveOneDTO = new ApproveOneDTO();
         approveOneDTO.setType(dto.getApproveStatus().getStatus());
         return requisitionApplicationChangeService.approveEnd(approveOneDTO,entity);
+    }
+    /**
+     * 虚拟库存调整
+     **/
+    private Boolean virtualAdjustEnd(EndProcessDTO dto) {
+        VirtualAdjustEntity entity = virtualAdjustService.getById(dto.getBusinessId());
+        ApproveOneDTO approveOneDTO = new ApproveOneDTO();
+        approveOneDTO.setType(dto.getApproveStatus().getStatus());
+        return virtualAdjustService.approveEnd(approveOneDTO,entity);
     }
 
 }

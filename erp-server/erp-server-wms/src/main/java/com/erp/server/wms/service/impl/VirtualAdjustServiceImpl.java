@@ -189,25 +189,6 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     public Boolean exportList(VirtualAdjustDTO.ExportDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("发票管理", EXPORT_WMS_VIRTUAL_ADJUST_REPORT.getCode(), param);
         return Boolean.TRUE;
-//
-//        List<VirtualAdjustDTO.ListDTO> list = this.baseMapper.listExport(param);
-//        if(CollUtil.isEmpty(list)) {
-//           return;
-//        }
-//        // 数据处理
-//        fillList(list);
-//
-//        // 导出数据
-//        StringBuffer sb = new StringBuffer();
-//        String excelPath = "excel/virtualAdjust.xlsx";
-//        String name = "虚拟仓调整单主单导出";
-//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-//        sb.append(date).append(name);
-//        try {
-//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-//        } catch (Exception e) {
-//            throw new ServiceException(ApiError.ERROR_1015);
-//        }
     }
 
     @Transactional(rollbackFor = Exception.class)
