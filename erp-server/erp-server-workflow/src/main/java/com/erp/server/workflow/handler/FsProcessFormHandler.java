@@ -536,7 +536,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             prefix = parentName + "-";
         } else {
             // 如果 parentName 不存在，说明是顶层控件，前缀 = "单据头-"
-            prefix = "单据头-";
+            prefix = "基础信息-";
         }
         dto.setThirdField(prefix + currentFieldName);
 
@@ -567,7 +567,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         // 调整子项显示文案、类型、index、cfgType
         // 因为 amountDto.getThirdField() 已经被正确设置，这里会自动拼接出正确结果
         currencyDto.setThirdField(amountDto.getThirdField() + "币种");
-        currencyDto.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
+        currencyDto.setThirdFieldType(CfgQueryOptionFieldTypeEnum.INPUT.getCode());
         currencyDto.setIndex(1);           // 币种一般排前面
         currencyDto.setCfgType("sysCfg");
         return currencyDto;
