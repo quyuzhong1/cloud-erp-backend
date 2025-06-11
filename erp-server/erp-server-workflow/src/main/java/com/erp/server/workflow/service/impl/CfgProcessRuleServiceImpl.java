@@ -161,7 +161,6 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 
         // 删除未包含的记录
         if (!idsToDelete.isEmpty()) {
-            this.removeByIds(idsToDelete);
             log.info("删除流程设置执行条件: {}", idsToDelete);
             delete(idsToDelete);
         }
@@ -245,7 +244,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                     }
                 }
             } else {
-                List<ThirdProcessDefinitionEntity> processDefinitionEntityList = thirdProcessDefinitionService.list(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().in(ThirdProcessDefinitionEntity::getApprovalCode));
+                List<ThirdProcessDefinitionEntity> processDefinitionEntityList = thirdProcessDefinitionService.list(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().in(ThirdProcessDefinitionEntity::getApprovalCode,  list));
                 Map<String, String> collect = processDefinitionEntityList.stream().collect(Collectors.toMap(ThirdProcessDefinitionEntity::getApprovalCode, ThirdProcessDefinitionEntity::getName));
 
                 List<ThirdProcessManagementEntity> processManagementEntityList = thirdProcessManagementService.list(new LambdaQueryWrapper<ThirdProcessManagementEntity>()
