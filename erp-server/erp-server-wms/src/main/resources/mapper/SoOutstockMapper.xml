@@ -63,10 +63,10 @@
         so.logistics_channel_id,
         so.logistics_channel_name
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
         WHERE
         ${params.sqlMap.default}
-        and  so.is_deleted=FALSE
+        and  so.is_deleted=FALSE AND sod.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -131,11 +131,10 @@
         sod.virtual_warehouse_id as virtualWarehouseId,
            sod.warehouse_location AS warehouseLocation
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND  sod.is_deleted=FALSE
-        left join so_b2c sb on sb.id = so.so_id and sb.is_deleted=FALSE
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
         WHERE
             ${params.sqlMap.default}
-          and so.is_deleted=FALSE
+          and so.is_deleted=FALSE AND  sod.is_deleted=FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
@@ -202,16 +201,14 @@
     <select id="listApproveCount" resultType="com.erp.model.wms.dto.SoOutstockDTO$ApproveCountDTO">
           SELECT
             so.approve_status,
-            so.invalid_status,
 	        count(distinct so.id)
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id AND sod.is_deleted=FALSE
-        left join so_b2c sb on sb.id = so.so_id and sb.is_deleted=FALSE
-	     WHERE so.is_deleted=FALSE
+        INNER JOIN so_outstock_detail sod ON so.id=sod.main_id
+	     WHERE so.is_deleted=FALSE AND sod.is_deleted=FALSE and so.invalid_status=false
         <if test="permissionSql!=null and permissionSql!=''">
             ${permissionSql}
         </if>
-         GROUP BY so.approve_status,so.invalid_status
+         GROUP BY so.approve_status
     </select>
     <select id="getIdsByTemp" resultType="java.lang.String">
         SELECT so.id FROM "temp_recovry_record" trr,${tableName} so where trr.code = so.code and so.is_deleted = false
@@ -316,10 +313,10 @@
             sum(sod.plan_qty) as planTotalQty,
             sum(sod.all_amount_local_currency) as totalTaxAmount
         FROM so_outstock so
-        INNER JOIN so_outstock_detail sod ON so.id = sod.main_id AND sod.is_deleted = FALSE
+        INNER JOIN so_outstock_detail sod ON so.id = sod.main_id
         WHERE
         ${params.sqlMap.default}
-           and so.is_deleted = FALSE
+           and so.is_deleted = FALSE AND sod.is_deleted = FALSE
         <!--权限-->
         <if test="params.permissionSql!=null and params.permissionSql!=''">
             ${params.permissionSql}
