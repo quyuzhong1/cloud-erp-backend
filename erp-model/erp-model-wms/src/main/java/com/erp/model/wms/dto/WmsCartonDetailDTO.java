@@ -216,6 +216,26 @@ public class WmsCartonDetailDTO implements Serializable {
          */
         private String boxNo;
         /**
+         * 箱数
+         */
+        private Integer boxQty;
+        /**
+         * 开始箱号
+         */
+        private String startBoxNo;
+        /**
+         * 结束箱号
+         */
+        private String endBoxNo;
+        /**
+         * 导出箱号
+         */
+        private String exportBoxNo;
+        /**
+         * 箱子MD5
+         */
+        private String md5;
+        /**
          * 箱子包装尺寸
          */
         private String boxSize;

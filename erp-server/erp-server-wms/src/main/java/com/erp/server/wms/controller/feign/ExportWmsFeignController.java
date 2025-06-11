@@ -169,6 +169,8 @@ public class ExportWmsFeignController {
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private QcNoticeService qcNoticeService;
+    @Resource
+    private VirtualAdjustService virtualAdjustService;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -473,6 +475,17 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         return packingTaskService.exportPackingTaskDetail(dto);
+    }
+    @PostMapping("/exportPackingTaskDetailMerge")
+    @DataPermission(operationType = DataAttributeEnum.LIST,
+            tableField = "create_user_id",
+            warehouseTableField = "pt.warehouse_id",
+            menuCode = "wms:packingTask:exportPackingDetail",
+            tableAlias = "pt"
+    )
+    @WebAdvanceQuery(handler = FirstMileDeliveryQueryHandler.class)
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(@RequestBody PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        return packingTaskService.exportPackingTaskDetailMerge(dto);
     }
     @PostMapping("/unPackingTaskDetail")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -1018,5 +1031,13 @@ public class ExportWmsFeignController {
     @WebAdvanceQuery(handler = QcNoticeQueryHandler.class)
     public PagingVO<QcNoticeDTO.ListDTO> exportList(@RequestBody PagingDTO<QcNoticeDTO.ExportDTO> dto) {
         return qcNoticeService.exportList(dto);
+    }
+
+    /**
+     * 导出虚拟库存调整
+     */
+    @PostMapping("/exportVirtualAdjust")
+    PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto){
+        return virtualAdjustService.paging(dto);
     }
 }

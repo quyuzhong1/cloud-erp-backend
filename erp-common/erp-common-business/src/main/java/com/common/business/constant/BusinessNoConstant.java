@@ -187,4 +187,5 @@ public interface BusinessNoConstant {
     String LCPZ = "LCPZ";
     //三方审批生成
     String SFSC = "SFSC";
+    String XNKC = "XNKC";
 }

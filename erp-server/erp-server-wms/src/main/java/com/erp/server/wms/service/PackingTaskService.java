@@ -302,4 +302,6 @@ public interface PackingTaskService extends SuperService<PackingTaskEntity> {
     List<WmsCartonDTO.ListPackingCartonDTO> listCartonBySourceCodes(List<String> sourceCodes);
 
     List<PackingTaskEntity> getPackingStatusByFirstMileDelivery(FirstMileDeliveryEntity firstMileDeliveryEntity);
+
+    PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(PagingDTO<PackingTaskDTO.ExportDTO> dto);
 }

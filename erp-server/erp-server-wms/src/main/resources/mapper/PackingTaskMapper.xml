@@ -195,7 +195,9 @@
         SELECT DISTINCT
             wc.id,
             wc.packing_task_id as taskId,
-            pt.source_code,
+            pt.source_code as sourceCode,
+            pt.source_type as sourceType,
+            pt.code as taskCode,
             wc.box_no,
             concat(wcs.box_length, wcs.size_unit,'*', wcs.box_width, wcs.size_unit,'*', wcs.box_height,wcs.size_unit) AS boxSize,
             wcs.package_weight,

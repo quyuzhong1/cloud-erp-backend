@@ -778,7 +778,11 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
 
     @Override
     public void exportPackingDetail(PackingTaskDTO.ExportDTO dto) {
-        downloadTaskFeign.saveDownloadTask("装箱清单导出", EXPORT_WMS_PACKING_TASK_DETAIL.getCode(), dto);
+        if (Objects.isNull(dto.getMergeCarton()) || !dto.getMergeCarton()){
+            downloadTaskFeign.saveDownloadTask("装箱清单导出", EXPORT_WMS_PACKING_TASK_DETAIL.getCode(), dto);
+        }else {
+            downloadTaskFeign.saveDownloadTask("装箱清单导出", EXPORT_WMS_PACKING_TASK_DETAIL_MERGE.getCode(), dto);
+        }
     }
 
     private void buildPackingDetailExportTask(List<WmsCartonDetailDTO.ListPackingDetailDTO> listPackingDetailDTOS) {
@@ -2917,6 +2921,142 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         list.add(id);
         list.add(sourceId);
         return lambdaQuery().in(PackingTaskEntity::getSourceId, list).list();
+    }
+
+    @Override
+    public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
+        dto.getParams().setPermissionSql(dto.getPermissionSql());
+        if (CollectionUtils.isEmpty(dto.getParams().getIds())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(),dto.getParams().getIds(), dto.getPermissionSql());
+        if (CollectionUtils.isEmpty(page.getRecords())) {
+            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
+        }
+        //切换为装箱清单导出
+        List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS = buildPackingDetailExportTaskMerge(page.getRecords());
+        page.setRecords(detailDTOS);
+        return new PagingVO<>(page);
+    }
+
+    private List<WmsCartonDetailDTO.ListPackingDetailDTO> buildPackingDetailExportTaskMerge(List<WmsCartonDetailDTO.ListPackingDetailDTO> records) {
+        if (CollectionUtils.isEmpty(records)){
+            return Collections.emptyList();
+        }
+        records.forEach(detailDTO ->{
+            String md5 = Md5Util.getMd5(detailDTO.getTaskCode() + "-" + detailDTO.getSourceCode() + "-" + detailDTO.getSourceType() + "-"
+                    + detailDTO.getPlatformSku() + "-" + detailDTO.getSkuNo() + "-" + detailDTO.getSku() + "-" + detailDTO.getPackQty());
+            detailDTO.setMd5(md5);
+        });
+        //按照箱号进行分组
+        Map<String, List<WmsCartonDetailDTO.ListPackingDetailDTO>> boxNoMap = records.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getBoxNo));
+        Map<String, Integer> boxTotalQtyMap = records.stream().collect(Collectors.groupingBy(WmsCartonDetailDTO.ListPackingDetailDTO::getId, Collectors.summingInt(WmsCartonDetailDTO.ListPackingDetailDTO::getPackQty)));
+        //遍历map
+        String currentMd5 = "";
+        HashMap<String, String> startBoxNoMap = new HashMap<>();
+        HashMap<String, String> endBoxNoMap = new HashMap<>();
+        //总箱数
+        HashMap<String, Integer> boxQtyMap = new HashMap<>();
+        //装箱总数量
+        HashMap<String, Integer> totalQtyMap = new HashMap<>();
+        LinkedList<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOS = new LinkedList<>();
+        for (String boxNo : boxNoMap.keySet()) {
+            List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOList = boxNoMap.get(boxNo);
+            String md5Str = detailDTOList.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getMd5).sorted().distinct().collect(Collectors.joining(","));
+            //起始箱号
+            if (!startBoxNoMap.containsKey(md5Str)){
+                startBoxNoMap.put(md5Str, boxNo);
+            }
+            //装箱总箱数
+            Integer boxQty = boxQtyMap.getOrDefault(md5Str, 0);
+            boxQtyMap.put(md5Str, boxQty + 1);
+            //装箱总数量
+            Integer totalQty = totalQtyMap.getOrDefault(md5Str, 0);
+            Integer boxTotalQty = boxTotalQtyMap.getOrDefault(detailDTOList.get(0).getId(), 0);
+            totalQtyMap.put(md5Str, totalQty + boxTotalQty);
+            endBoxNoMap.put(md5Str, boxNo);
+            if (CharSequenceUtil.isBlank(currentMd5)){
+                currentMd5 = md5Str;
+                //同箱数据置空相同字段
+                detailDTOS.addAll(removeSameField(detailDTOList,md5Str));
+            }else if (Objects.equals(currentMd5, md5Str)){
+                //同箱数据置空相同字段
+                detailDTOS.addAll(removeField(detailDTOList));
+            }else {
+                currentMd5 = md5Str;
+                //不同箱数据置空相同字段
+                detailDTOS.addAll(removeSameField(detailDTOList, md5Str));
+            }
+        }
+        //遍历list重置箱号
+        detailDTOS.forEach(detailDTO ->{
+            String md5Str = detailDTO.getMd5();
+            if (CharSequenceUtil.isNotBlank(md5Str)){
+                detailDTO.setBoxQty(boxQtyMap.getOrDefault(md5Str, 1));
+                detailDTO.setTotalQty(totalQtyMap.getOrDefault(md5Str, 0));
+                String startNo = startBoxNoMap.getOrDefault(md5Str, "");
+                String endNo = endBoxNoMap.getOrDefault(md5Str, "");
+                if (Objects.equals(startNo, endNo)){
+                    detailDTO.setExportBoxNo(startNo);
+                }else {
+                    detailDTO.setExportBoxNo(startNo + "-" + endNo);
+                }
+            }
+        });
+        return detailDTOS;
+    }
+
+    private List<WmsCartonDetailDTO.ListPackingDetailDTO> removeField(List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOList) {
+        if (CollUtil.isEmpty(detailDTOList)){
+            return Collections.emptyList();
+        }
+        detailDTOList.forEach(detailDTO ->{
+            detailDTO.setTaskCode(null);
+            detailDTO.setSourceCode(null);
+            detailDTO.setSourceType(null);
+            detailDTO.setTotalQty(null);
+            detailDTO.setPlatformSku(null);
+            detailDTO.setFnSku(null);
+            detailDTO.setSku(null);
+            detailDTO.setPackQty(null);
+            detailDTO.setPackageWeight(null);
+            detailDTO.setPackageWeightStr(null);
+            detailDTO.setLength(null);
+            detailDTO.setWidth(null);
+            detailDTO.setHeight(null);
+            detailDTO.setMd5(null);
+        });
+        return detailDTOList;
+    }
+
+    private List<WmsCartonDetailDTO.ListPackingDetailDTO> removeSameField(List<WmsCartonDetailDTO.ListPackingDetailDTO> detailDTOList, String md5Str) {
+        if (CollUtil.isEmpty(detailDTOList)){
+            return Collections.emptyList();
+        }
+        if (detailDTOList.size() == 1){
+            detailDTOList.get(0).setMd5(md5Str);
+            return detailDTOList;
+        }
+        HashMap<String, String> map = new HashMap<>();
+        detailDTOList.forEach(detailDTO ->{
+            if (map.containsKey(detailDTO.getId())){
+                detailDTO.setTaskCode(null);
+                detailDTO.setSourceCode(null);
+                detailDTO.setSourceType(null);
+                detailDTO.setTotalQty(null);
+                detailDTO.setPackageWeight(null);
+                detailDTO.setPackageWeightStr(null);
+                detailDTO.setLength(null);
+                detailDTO.setWidth(null);
+                detailDTO.setHeight(null);
+                detailDTO.setMd5(null);
+            }else {
+                detailDTO.setMd5(md5Str);
+                map.put(detailDTO.getId(), detailDTO.getMd5());
+            }
+
+        });
+        return detailDTOList;
     }
 
 }

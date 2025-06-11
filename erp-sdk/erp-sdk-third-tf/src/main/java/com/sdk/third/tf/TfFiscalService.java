@@ -154,6 +154,7 @@ public class TfFiscalService {
         updateCompanyDTO.setTokenPlataforma(accessToken);
         buildDefaultCompany(updateCompanyDTO);
         updateCompanyDTO.setApiCompleta(null);
+        log.error("请求参数,url:{},data:{}", URL+path, JSONUtil.toJsonStr(updateCompanyDTO));
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(updateCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
         if (!Objects.equals(apiResult.getCode(), 200) && !Objects.equals(apiResult.getCode(), 201)) {

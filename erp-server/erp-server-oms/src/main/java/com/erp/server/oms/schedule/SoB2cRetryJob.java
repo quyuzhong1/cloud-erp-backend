@@ -167,6 +167,7 @@ public class SoB2cRetryJob {
                                 .update();
                         XxlJobHelper.log("SoB2cRetryJob 当前任务执行成功：{}, 重新记录数量结果={}", JSONUtil.toJsonStr(resultDTOS), update);
                     } catch (Exception e) {
+
                         log.error("SoB2cRetryJob 当前任务执行成功异常：soId={}, error={}",
                                 soB2cErrorEntity.getMainId(),
                                 ExceptionUtil.stacktraceToString(e)
@@ -175,6 +176,13 @@ public class SoB2cRetryJob {
                                 soB2cErrorEntity.getMainId(),
                                 ExceptionUtil.stacktraceToString(e)
                         );
+                        // 成功重新记录重试数量任务
+                        boolean update = soB2cErrorService.lambdaUpdate()
+                                .set(SoB2cErrorEntity::getRetryCount, soB2cErrorEntity.getRetryCount() + 1)
+                                .eq(SoB2cErrorEntity::getMainId, soB2cErrorEntity.getMainId())
+                                .eq(SoB2cErrorEntity::getType, soB2cErrorEntity.getType())
+                                .update();
+                        XxlJobHelper.log("SoB2cRetryJob 当前任务执行异常：{}, 重新记录数量结果={}", JSONUtil.toJsonStr(e.getMessage()), update);
                     }
                 }
             }

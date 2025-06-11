@@ -8,7 +8,7 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-//import com.baomidou.dynamic.datasource.annotation.DS;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
@@ -316,7 +316,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         return result;
     }
 
-//    @DS("doris")
+    @DS("doris")
     @Override
     public List<DmpOutputTaskRecordDTO.TabListDTO> dorisTabList(PermissionsDTO dto){
     	return this.tabList(dto);
@@ -348,7 +348,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         return new PagingVO<>(pageData);
     }
     
-//    @DS("doris")
+    @DS("doris")
     @Override
     public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> dorisPaging(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
     	return this.paging(dto);

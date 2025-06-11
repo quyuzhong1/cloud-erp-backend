@@ -150,6 +150,7 @@ public enum ModuleTypeEnum {
     CFG_THIRD_PROCESS("128", "三方审批生成"),
     CFG_THIRD_NOTICE("129", "三方通知配置"),
     SKU_ORG_REF("127", "SKU与采购组织关系"),
+    VIRTUAL_ADJUST("126", "虚拟库存调整"),
     ;
 
 
