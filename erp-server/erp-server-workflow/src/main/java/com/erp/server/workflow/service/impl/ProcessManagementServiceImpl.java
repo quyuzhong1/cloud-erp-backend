@@ -169,7 +169,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-        String processDefinitionId = getProcessDefinitionId(dto);
+//        String processDefinitionId = getProcessDefinitionId(dto);
+        String processDefinitionId = "12E23076-0B9C-4393-97A4-85C411EB42DC";
         if (CharSequenceUtil.isBlank(processDefinitionId)) {
             // 业务无已启用的Erp流程配置
             return new ProcessManagementDTO.StartResultDTO(dto);
@@ -267,7 +268,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
             startDTO.setRuleId(ruleId);
             startDTO.setRuleType(one.getType());
-            cfgProcessService.startThirdProcess(startDTO);
+            return null;
+//            cfgProcessService.startThirdProcess(startDTO);
         }
         // 流程已修改，且未发布不允许启动
         if(!processDefinition.getIsDeploy()){
