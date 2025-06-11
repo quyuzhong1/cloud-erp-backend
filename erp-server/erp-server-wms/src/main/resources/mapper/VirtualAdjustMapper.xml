@@ -52,7 +52,7 @@
             vad.virtual_warehouse_id AS virtualWarehouseId,
             vad.virtual_warehouse_name AS virtualWarehouseName,
             vad.dict_inventory_status AS dictInventoryStatus,
-            vad.qty,
+            vad.qty as qty,
             vad.remark as detailRemark
         FROM virtual_adjust va
         LEFT JOIN virtual_adjust_detail vad on vad.main_id = va.id and vad.is_deleted = false

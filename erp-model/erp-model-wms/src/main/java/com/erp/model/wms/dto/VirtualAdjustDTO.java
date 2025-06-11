@@ -14,6 +14,8 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
 import javax.validation.constraints.NotEmpty;
 import com.common.business.dto.AdvanceQueryDTO;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.util.Map;
 
 /**
@@ -68,7 +70,10 @@ public class VirtualAdjustDTO implements Serializable {
             * sqlMap 默认key default
         */
         private Map<String,String> sqlMap;
-
+         /**
+          * 勾选的id集合
+          */
+         private List<String> ids;
      }
     /**
     * 分页列表
@@ -164,6 +169,10 @@ public class VirtualAdjustDTO implements Serializable {
          * 库存状态名称
          */
         private String dictInventoryStatusName;
+        /**
+         * 调整前数量【可排序】
+         */
+        private Integer qty;
     }
 
     /**
@@ -300,4 +309,31 @@ public class VirtualAdjustDTO implements Serializable {
     }
 
 
+    @Data
+    @NoArgsConstructor
+    public static class ImportDTO {
+        /**
+         * 成功返回数据
+         */
+        private List<VirtualAdjustDetailDTO.AddDTO> successList;
+
+        /**
+         * 错误url
+         */
+        private String errorUrl;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExcelImportDTO {
+        /**
+         * 导入文件
+         */
+        @NotNull(message = "导入文件不能为空")
+        private MultipartFile excelFile;
+        /**
+         * 明细
+         */
+        private List<VirtualAdjustDetailDTO.AddDTO> detailList;
+    }
 }

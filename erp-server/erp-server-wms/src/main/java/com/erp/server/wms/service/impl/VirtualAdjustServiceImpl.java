@@ -1,16 +1,28 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import com.alibaba.excel.EasyExcel;
+import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.tms.dto.InventorySkuCostDTO;
+import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
+import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.wms.dto.VirtualAdjustDetailDTO;
+import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
+import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.entity.VirtualAdjustDetailEntity;
 import com.erp.model.wms.entity.VirtualAdjustEntity;
+import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
+import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
+import com.erp.rpc.file.feign.DownloadTaskFeign;
+import com.erp.server.wms.listener.VirtualAdjustDetailExcelListener;
 import com.erp.server.wms.mapper.VirtualAdjustMapper;
 import com.erp.server.wms.service.VirtualAdjustDetailService;
 import com.erp.server.wms.service.VirtualAdjustService;
@@ -21,6 +33,10 @@ import com.common.core.exception.ServiceException;
 import com.common.business.config.DocNoGenHelper;
 import com.common.core.controller.vo.ApiResult;
 import cn.hutool.core.util.ObjectUtil;
+import com.erp.server.wms.service.VirtualInventoryTransCoreService;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.DefaultResourceLoader;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -36,16 +52,24 @@ import cn.hutool.core.collection.CollUtil;
 import com.erp.model.scm.enums.InvalidStatusEnum;
 import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
-import com.common.core.excel.ExcelPrintUtils;
-import com.common.core.utils.date.DateUtil;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import javax.annotation.Resource;
 import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_ADJUST_REPORT;
+
 /**
  * <p>
  * 虚拟仓调整单主表 服务实现类
@@ -65,7 +89,10 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     private WorkflowFeign workflowFeign;
     @Resource
     private VirtualAdjustDetailService virtualAdjustDetailService;
-
+    @Resource
+    private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
+    @Resource
+    private DownloadTaskFeign downloadTaskFeign;
     @Transactional(rollbackFor = Exception.class)
     @Override
     public BaseResultDTO.AddDTO add(VirtualAdjustDTO.AddDTO addDTO) {
@@ -160,25 +187,28 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     }
 
     @Override
-    public void exportList(VirtualAdjustDTO.ExportDTO param, HttpServletResponse response) {
-        List<VirtualAdjustDTO.ListDTO> list = this.baseMapper.listExport(param);
-        if(CollUtil.isEmpty(list)) {
-           return;
-        }
-        // 数据处理
-        fillList(list);
-
-        // 导出数据
-        StringBuffer sb = new StringBuffer();
-        String excelPath = "excel/virtualAdjust.xlsx";
-        String name = "虚拟仓调整单主单导出";
-        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
-        sb.append(date).append(name);
-        try {
-            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
-        } catch (Exception e) {
-            throw new ServiceException(ApiError.ERROR_1015);
-        }
+    public Boolean exportList(VirtualAdjustDTO.ExportDTO param, HttpServletResponse response) {
+        downloadTaskFeign.saveDownloadTask("发票管理", EXPORT_WMS_VIRTUAL_ADJUST_REPORT.getCode(), param);
+        return Boolean.TRUE;
+//
+//        List<VirtualAdjustDTO.ListDTO> list = this.baseMapper.listExport(param);
+//        if(CollUtil.isEmpty(list)) {
+//           return;
+//        }
+//        // 数据处理
+//        fillList(list);
+//
+//        // 导出数据
+//        StringBuffer sb = new StringBuffer();
+//        String excelPath = "excel/virtualAdjust.xlsx";
+//        String name = "虚拟仓调整单主单导出";
+//        String date = DateUtil.conversionDate(new Date(), DateUtil.DATE_PATTERN_SHORT_YEAR_NO_SP);
+//        sb.append(date).append(name);
+//        try {
+//            new ExcelPrintUtils().patchExport(list, response, sb.toString(), excelPath);
+//        } catch (Exception e) {
+//            throw new ServiceException(ApiError.ERROR_1015);
+//        }
     }
 
     @Transactional(rollbackFor = Exception.class)
@@ -281,7 +311,10 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         validateDisApprove(entity);
         // 更新审核信息
         updateForDisApprove(id, ApproveStatusEnum.WAIT_SUBMIT.getStatus());
-        // TODO 库存反向移动
+        //反审核
+        InventoryBatchUnApproveDTO batchUnApproveDTO = new InventoryBatchUnApproveDTO(InventorySourceTypeEnum.VIRTUAL_ADJUST, Collections.singletonList(entity.getId()));
+        //扣虚拟仓库库存
+        virtualInventoryTransCoreService.batchUnApprove(batchUnApproveDTO);
         // 操作日志
         String msg = StrUtil.format("用户【{}】单号为【{}】的【{}】单据反审核操作 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "虚拟仓调整单主单");
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.VIRTUAL_ADJUST.getCode(), entity.getId(), "反审核操作");
@@ -375,7 +408,101 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         }
         ApproveStatusEnum approveStatus = ApproveStatusEnum.transferApproveType(dto.getType());
         updateForApprove(entity.getId(), approveStatus.getStatus());
+        if (ApproveStatusEnum.APPROVE.equals(approveStatus)) {
+            //虚拟库存调整
+            adjustVirtualInventory(entity);
+        }
         return Boolean.TRUE;
+    }
+
+    @Override
+    public void downloadTemplate(HttpServletResponse response) {
+        String path = "excel/virtualAdjustDetailTemplate.xlsx";
+        String excelName = "虚拟仓调整明细导入模板.xlsx";
+
+        ResourceLoader resourceLoader = new DefaultResourceLoader();
+        try {
+            InputStream inputStream = resourceLoader.getResource(path).getInputStream();
+            XSSFWorkbook wb = new XSSFWorkbook(inputStream);
+            // 输出Excel文件
+            OutputStream output = response.getOutputStream();
+            response.reset();
+            // 设置文件头
+            response.setHeader("Content-Disposition",
+                    "attchement;filename=" + new String(excelName.getBytes("gb2312"), StandardCharsets.ISO_8859_1));
+            response.setContentType("application/msexcel");
+            wb.write(output);
+            wb.close();
+        } catch (Exception e) {
+            throw new ServiceException(ApiError.ERROR_95131);
+        }
+    }
+
+    @Override
+    public VirtualAdjustDTO.ImportDTO importFile(MultipartFile excelFile, List<VirtualAdjustDetailDTO.AddDTO> detailList, HttpServletResponse response) {
+//        VirtualAdjustDetailExcelListener excelListenerUtil = new VirtualAdjustDetailExcelListener(detailList);
+//        try {
+//            EasyExcel.read(excelFile.getInputStream(), VirtualAdjustExcelDTO.class, excelListenerUtil).sheet(0).doRead();
+//        } catch (IOException e) {
+//            log.error("导入错误！", e);
+//            throw new ServiceException(ApiError.ERROR_95124);
+//        } catch (ExcelCommonException e) {
+//            log.error("导入格式错误！", e);
+//            throw new ServiceException(ApiError.ERROR_1016);
+//        }
+//        List<InventorySkuCostDetailExcelDTO> excelDateList = excelListenerUtil.getExcelDateList();
+//        if (CollectionUtils.isEmpty(excelDateList)) {
+//            throw new ServiceException(ApiError.ERROR_95123);
+//        } else if (excelDateList.size() > 5000) {
+//            throw new ServiceException(ApiError.ERROR_EXCEL_IMPORT_SIZE);
+//        }
+//        List<InventorySkuCostDetailExcelDTO> errorList = excelListenerUtil.getErrorList();
+//
+//        List<InventorySkuCostDetailDTO.AddDTO> successList = excelListenerUtil.getSuccessList();
+//
+//        InventorySkuCostDTO.ImportDTO importDTO = new InventorySkuCostDTO.ImportDTO();
+//        String url = "";
+//        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorList)) {
+//            String fileName = "SKU成本错误数据.xlsx";
+//            File file = ExcelUtil.exportFile(fileName, "error", errorList, InventorySkuCostDetailExcelDTO.class);
+//            if (!file.isDirectory()) {
+//                url = FastDFSClientUtil.uploadFile(file, fileName);
+//            }
+//        }
+//        importDTO.setSuccessList(successList);
+//        importDTO.setErrorUrl(url);
+//        return importDTO;
+        return null;
+    }
+
+    private void adjustVirtualInventory(VirtualAdjustEntity entity) {
+        List<VirtualAdjustDetailEntity> detailEntityList = virtualAdjustDetailService.listByMainIdList(Collections.singletonList(entity.getId()));
+        //构建库存调整参数
+        detailEntityList.forEach(e -> {
+            VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+            if (InventoryStatusEnum.USABLE.getCode().equals(e.getDictInventoryStatus())){
+                stockParamDTO.setBusinessType(e.getQty() > 0 ? VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode() : VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
+            }else {
+                stockParamDTO.setBusinessType(e.getQty() > 0? VirtualInventoryBusinessTypeEnum.FREEZE_IN_USABLE.getCode() : VirtualInventoryBusinessTypeEnum.FREEZE_OUT_USABLE.getCode());
+            }
+            stockParamDTO.setParamList(Collections.singletonList(getOutInStockDTO(entity, e)));
+            virtualInventoryTransCoreService.approve(stockParamDTO);
+        });
+    }
+
+    private static VirtualInventoryStockDTO.OutInStockDTO getOutInStockDTO(VirtualAdjustEntity entity, VirtualAdjustDetailEntity e) {
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setBillDate(entity.getBillDate());
+        outInStockDTO.setSourceId(entity.getId());
+        outInStockDTO.setSourceCode(entity.getCode());
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.VIRTUAL_ADJUST);
+        outInStockDTO.setSourceDetailId(e.getId());
+        outInStockDTO.setSkuId(e.getSkuId());
+        outInStockDTO.setSkuNo(e.getSkuNo());
+        outInStockDTO.setWarehouseId(e.getWarehouseId());
+        outInStockDTO.setVirtualWarehouseId(e.getVirtualWarehouseId());
+        outInStockDTO.setQty(e.getQty() > 0 ? e.getQty() : -e.getQty());
+        return outInStockDTO;
     }
 
     @Override
@@ -491,6 +618,8 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     * 新增修改处理数据
     */
     private void handleData(VirtualAdjustEntity virtualAdjustEntity) {
-    // TODO 验证数据 & 数据赋值
+        if (Objects.isNull(virtualAdjustEntity.getApproveStatus())) {
+            virtualAdjustEntity.setApproveStatus(ApproveStatusEnum.WAIT_SUBMIT);
+        }
     }
 }

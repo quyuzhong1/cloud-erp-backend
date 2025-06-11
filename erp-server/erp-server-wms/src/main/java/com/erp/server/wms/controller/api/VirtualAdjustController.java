@@ -1,6 +1,7 @@
 package com.erp.server.wms.controller.api;
 
 
+import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -398,9 +399,34 @@ public class VirtualAdjustController extends BaseController {
             tableAlias = ""
     )
     @LogAction(value = LogActionEnum.EXPORT, desc = "虚拟仓调整单主表导出Excel数据")
-    public void exportList(@RequestBody @Validated VirtualAdjustDTO.ExportDTO dto, HttpServletResponse response) {
-        virtualAdjustService.exportList(dto, response);
+    public ApiResult<Object> exportList(@RequestBody @Validated VirtualAdjustDTO.ExportDTO dto, HttpServletResponse response) {
+        Boolean result = virtualAdjustService.exportList(dto, response);
+        return Boolean.TRUE.equals(result) ? success() : failure();
     }
 
-
+    /**
+     * 下载模板
+     *
+     * @return
+     */
+    @LogAction(value = LogActionEnum.EXPORT, desc = "下载虚拟仓调整导入模板")
+    @GetMapping("/downloadTemplate")
+    public ApiResult<Object> downloadTemplate(HttpServletResponse response) {
+        virtualAdjustService.downloadTemplate(response);
+        return success();
+    }
+    /**
+     * 导入Excel
+     * @author zdy
+     * @date: 2024/8/14 9:39
+     * @param excelImportDTO
+     * @param response
+     * @return ApiResult
+     */
+    @LogAction(value = LogActionEnum.IMPORT, desc = "导入Excel")
+    @PostMapping("/importFile")
+    public ApiResult<VirtualAdjustDTO.ImportDTO> importFile(@ModelAttribute @Validated VirtualAdjustDTO.ExcelImportDTO excelImportDTO, HttpServletResponse response) {
+        VirtualAdjustDTO.ImportDTO dto = virtualAdjustService.importFile(excelImportDTO.getExcelFile(),excelImportDTO.getDetailList(),response);
+        return success(dto);
+    }
 }

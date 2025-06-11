@@ -300,4 +300,9 @@ public interface ExportWmsFeign {
      */
     @PostMapping("/feign/export/exportQcNotice")
     PagingVO<QcNoticeDTO.ListDTO> exportQcNotice(PagingDTO<QcNoticeDTO.ExportDTO> dto);
+    /**
+     * 导出虚拟库存调整
+     */
+    @PostMapping("/feign/export/exportVirtualAdjust")
+    PagingVO<VirtualAdjustDTO.ListDTO> exportVirtualAdjust(PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto);
 }

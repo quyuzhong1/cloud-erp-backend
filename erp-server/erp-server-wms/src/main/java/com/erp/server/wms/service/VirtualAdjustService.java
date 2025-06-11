@@ -1,9 +1,12 @@
 package com.erp.server.wms.service;
+import com.erp.model.wms.dto.VirtualAdjustDetailDTO;
 import com.erp.model.wms.entity.VirtualAdjustEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.wms.dto.VirtualAdjustDTO;
 import com.common.business.vo.PagingVO;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 
@@ -142,7 +145,7 @@ public interface VirtualAdjustService extends SuperService<VirtualAdjustEntity> 
     * @param response
     * @return
     */
-    void exportList(VirtualAdjustDTO.ExportDTO dto, HttpServletResponse response);
+    Boolean exportList(VirtualAdjustDTO.ExportDTO dto, HttpServletResponse response);
 
     /**
     * 审核通过回调方法
@@ -152,4 +155,7 @@ public interface VirtualAdjustService extends SuperService<VirtualAdjustEntity> 
     */
     Boolean approveEnd(ApproveOneDTO dto, VirtualAdjustEntity entity);
 
+    void downloadTemplate(HttpServletResponse response);
+
+    VirtualAdjustDTO.ImportDTO importFile(MultipartFile excelFile, List<VirtualAdjustDetailDTO.AddDTO> detailList, HttpServletResponse response);
 }
