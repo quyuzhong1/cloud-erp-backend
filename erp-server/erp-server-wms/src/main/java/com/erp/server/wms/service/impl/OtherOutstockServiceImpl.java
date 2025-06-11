@@ -536,7 +536,7 @@ public class OtherOutstockServiceImpl extends SuperServiceImpl<OtherOutstockMapp
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.OTHER_OUTSTOCK.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());

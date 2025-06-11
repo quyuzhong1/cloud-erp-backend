@@ -520,7 +520,7 @@ public class OtherInstockServiceImpl extends SuperServiceImpl<OtherInstockMapper
         LoginUser userInfo = UserContext.getDefaultLoginUser();
         ProcessManagementDTO.ApproveDTO approveDTO = new ProcessManagementDTO.ApproveDTO();
         approveDTO.setBusinessId(entity.getId());
-        approveDTO.setBusinessKey(SourceTypeEnum.SUBCONTRACT_ISSUE.getCode());
+        approveDTO.setBusinessKey(SourceTypeEnum.OTHER_INSTOCK.getCode());
         approveDTO.setApproveType(ApproveTypeEnum.getByCode(dto.getType()));
         approveDTO.setComment(dto.getComment());
         approveDTO.setUserId(userInfo.getUid());

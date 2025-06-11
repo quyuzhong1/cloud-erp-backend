@@ -443,7 +443,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         //当前登录人
         this.lambdaUpdate().eq(ProductChangeEntity::getId, id)
                 .set(ProductChangeEntity::getState, approveStatus)
-                .set(ProductChangeEntity::getRemark, comment)
+                .set(ObjectUtil.isNotEmpty(comment),ProductChangeEntity::getRemark, comment)
                 .set(ProductChangeStateEnum.AUDIT_PASS.getState().equals(approveStatus),ProductChangeEntity::getApprovalFinishTime,LocalDateTime.now())
                 .update();
     }
