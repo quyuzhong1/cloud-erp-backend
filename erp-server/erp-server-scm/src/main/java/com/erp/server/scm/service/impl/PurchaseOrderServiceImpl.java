@@ -1858,13 +1858,21 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         }
         List<CfgQueryOptionEntity> purchaseOrder = FeignQuery.create(CfgQueryOptionEntity.class).eq(CfgQueryOptionEntity::getBussinessKey, "purchaseOrder").list();
         HashMap<String, String> stringHashMap = new HashMap<>();
-        purchaseOrder.stream().map(item->{
+        purchaseOrder.forEach(item->{
             stringHashMap.put(item.getTableName(),item.getFieldBelongsType());
-            return item;
         });
         if (stringHashMap==null){
             throw new ServiceException("未找到明细表对应entityCode");
         }
+
+        String id = entity.getId();
+        PurchaseOrderSupplierEntity supplier = purchaseOrderSupplierService.getByPurchaseOrderId(id);
+        List<SupplierAccountDTO.UpdateDTO> account = supplierAccountService.getBySupplierId(supplier.getSupplierId());
+        if (CollectionUtils.isEmpty(account)){
+            throw new ServiceException("供应商账户为空");
+        }
+        Map<String, String> payeeMap = account.stream().collect(Collectors.toMap(SupplierAccountDTO.UpdateDTO::getId, SupplierAccountDTO.UpdateDTO::getPayee));
+
         //税率额外处理
         detailList.forEach(item->{
             //item.getTaxRate() bigdecimal乘以100
@@ -1874,11 +1882,10 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         variablesMap.put(stringHashMap.get(PURCHASE_ORDER_DETAIL), BeanUtil.copyToList(detailList, Map.class));
 
         //供应商map
-        String id = entity.getId();
-        PurchaseOrderSupplierEntity supplier = purchaseOrderSupplierService.getByPurchaseOrderId(id);
         String accountId = entity.getSupplierAccountId();
         Map<String, Object> supplierMap = BeanUtil.beanToMap(supplier);
-        supplierMap.put("accountId", accountId);
+        supplierMap.put("supplierAccountId", payeeMap.get(accountId));
+        log.info("供应商账户,{}",payeeMap.get(accountId));
         List<Map<String, Object>> maps = Arrays.asList(supplierMap);
         variablesMap.put(stringHashMap.get(ThirdConstants.PURCHASE_ORDER_SUPPLIER), maps);
         //价税合计
