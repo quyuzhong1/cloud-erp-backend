@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.threadlocal.UserContext;
 import com.common.core.exception.ServiceException;
@@ -19,6 +20,7 @@ import com.erp.model.workflow.dto.CfgProcessFieldMapDTO;
 import com.erp.model.workflow.dto.CfgProcessRuleDTO;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
+import com.erp.model.workflow.enums.FSApprovalStatusEnum;
 import com.erp.server.workflow.mapper.CfgProcessRuleMapper;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
@@ -107,6 +109,36 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                         .eq(CfgProcessRuleEntity::getIsDeleted, false)
         );
 
+        //校验是否存在运行中的审批实例
+        Map<String, List<CfgProcessRuleEntity>> map = old.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getType));
+        StringBuilder errmsg = new StringBuilder();
+        for (Map.Entry<String, List<CfgProcessRuleEntity>> entry : map.entrySet()) {
+            String key = entry.getKey();
+            List<CfgProcessRuleEntity> value = entry.getValue();
+            if (key.equals(CfgProcessRuleTypeEnum.ERPPROCESS)) {
+                for (CfgProcessRuleEntity ruleEntity : value) {
+                    String definitionId = ruleEntity.getProcessDefinitionId();
+                    ProcessDefinitionEntity entity = processDefinitionService.getById(definitionId);
+                    List<ProcessManagementEntity> processManagementEntities = processManagementService.list(new LambdaQueryWrapper<ProcessManagementEntity>().eq(ProcessManagementEntity::getProcessDefinitionId, definitionId).eq(ProcessManagementEntity::getApproveStatus, ApproveStatusEnum.APPROVE_ING));
+                    if (processManagementEntities.size() > 0) {
+                        errmsg.append(entity.getProcessName());
+                    }
+                }
+                continue;
+            }
+            // 其他处理逻辑
+            for (CfgProcessRuleEntity entity : value) {
+                String approvalCode = entity.getProcessDefinitionId();
+                List<ThirdProcessManagementEntity> list = thirdProcessManagementService.list(new LambdaQueryWrapper<ThirdProcessManagementEntity>().eq(ThirdProcessManagementEntity::getProcessDefinitionId, approvalCode).eq(ThirdProcessManagementEntity::getStatus, FSApprovalStatusEnum.PENDING));
+                ThirdProcessDefinitionEntity thirdProcessDefinition = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getApprovalCode, approvalCode));
+                if (list.size() > 0) {
+                    errmsg.append(thirdProcessDefinition.getName());
+                }
+            }
+        }
+        if (StrUtil.isNotBlank(errmsg)) {
+
+        }
         // 提取 addDTO 中的 id
         Set<String> addDTOIds = addDTO.stream()
                 .map(CfgProcessRuleDTO.AddOrUpdateDTO::getId)
@@ -220,7 +252,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
                         .in(ThirdProcessManagementEntity::getProcessDefinitionId, list).eq(ThirdProcessManagementEntity::getIsDeleted, Boolean.FALSE));
 
                 Map<String, Long> thirdIdtoCountMap = processManagementEntityList.stream().collect(Collectors.groupingBy(ThirdProcessManagementEntity::getProcessDefinitionId, Collectors.counting()));
-                for (CfgProcessRuleEntity item : value){
+                for (CfgProcessRuleEntity item : value) {
                     Long a = thirdIdtoCountMap.get(item.getProcessDefinitionId());
                     if (a != null && a.compareTo(0L) > 0) {
                         errmsg.append(collect.get(item.getProcessDefinitionId()));
@@ -229,8 +261,8 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             }
         });
 
-        if (StrUtil.isNotBlank(errmsg)){
-            throw new ServiceException(errmsg+"流程已被单据使用，不可删除");
+        if (StrUtil.isNotBlank(errmsg)) {
+            throw new ServiceException(errmsg + "流程已被单据使用，不可删除");
         }
 
         //单次校验
