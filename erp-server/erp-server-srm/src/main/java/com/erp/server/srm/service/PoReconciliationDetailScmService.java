@@ -1,6 +1,7 @@
 package com.erp.server.srm.service;
 
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.service.SuperService;
 import com.common.business.vo.PagingVO;
@@ -143,4 +144,28 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
     Integer countSupplierUnConfirmOrderDetail(String supplierId);
 
     PagingVO<PoReconciliationDetailDTO.ListDTO> exportPoReconciliationDetailScm(PagingDTO<PoReconciliationDetailDTO.PagingParamDTO> dto);
+    /**
+     * 手动生成
+     * @author will
+     * @date 2025/6/11 15:49
+     * @param code
+     * @return BatchResultDTO
+     */
+    BatchResultDTO manualGenerate(String code);
+    /**
+     * 状态更新
+     * @author will
+     * @date 2025/6/11 15:51
+     * @param id
+     * @param status
+     * @return BatchResultDTO
+     */
+    BatchResultDTO updateStatus(String id,String status);
+    /**
+     * 添加设置
+     * @author will
+     * @date 2025/6/11 16:00
+     * @return void
+     */
+    Boolean addSetting(PoReconciliationDetailDTO.AddSettingDTO addSettingDTO);
 }

@@ -222,6 +222,11 @@ public class CfgSettingServiceImpl extends SuperServiceImpl<CfgSettingMapper, Cf
         return configList;
     }
 
+    @Override
+    public CfgSettingEntity getByKey(String key) {
+        return lambdaQuery().eq(CfgSettingEntity::getKey,key).last("limit 1").one();
+    }
+
     private void handleViewEnum(CfgSettingEntity cfgSetting, CfgSettingDTO.ViewDTO viewDTO) {
 
         ConfigKeyEnum configKeyEnum = ConfigKeyEnum.getEnum(cfgSetting.getKey());

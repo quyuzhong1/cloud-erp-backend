@@ -5,18 +5,17 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.common.business.dto.base.BaseDropDownDTO;
-import com.common.business.dto.base.BaseIdDTO;
-import com.common.business.dto.base.BaseResultDTO;
-import com.common.business.dto.base.PagingDTO;
-import com.common.business.enums.BooleanEnum;
-import com.common.business.enums.SettleEnum;
+import com.common.business.dto.base.*;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
+import com.common.business.utils.ApplicationContextUtils;
 import com.common.business.vo.PagingVO;
+import com.common.business.wrapper.FeignQuery;
 import com.common.core.enums.ApiError;
 import com.common.core.excel.ExcelPrintUtils;
 import com.common.core.exception.ServiceException;
@@ -35,11 +34,14 @@ import com.erp.model.scm.enums.DictBasicEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.model.srm.dto.PoReconciliationDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
+import com.erp.model.srm.entity.CfgSettingEntity;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
+import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
+import com.erp.model.wms.entity.PoReturnDetailEntity;
 import com.erp.model.wms.entity.PoReturnEntity;
 import com.erp.model.wms.enums.PoReturnConfirmStatusEnum;
 import com.erp.model.wms.enums.ReturnOrderSourceEnum;
@@ -50,10 +52,7 @@ import com.erp.rpc.scm.feign.ScmTaskFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.wms.feign.WmsTaskFeign;
 import com.erp.server.srm.mapper.PoReconciliationDetailMapper;
-import com.erp.server.srm.service.OperateLogService;
-import com.erp.server.srm.service.PoReconciliationDetailScmService;
-import com.erp.server.srm.service.PoReconciliationScmService;
-import com.erp.server.srm.service.UserService;
+import com.erp.server.srm.service.*;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -106,6 +105,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
     private UserService userService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
+    @Autowired
+    private CfgSettingService cfgSettingService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -300,7 +301,6 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             listDTO.setBusinessStatusName(ConfirmStatusEnum.getNameByCode(listDTO.getBusinessStatus()));
             listDTO.setTaxRate(MathUtil.multiplyWithTwo(listDTO.getTaxRate(),MathUtil.BigDecimal_100));
             listDTO.setTaxRateStr( CharSequenceUtil.format("{}%",listDTO.getTaxRate().stripTrailingZeros().toPlainString()));
-            listDTO.setIsAddAccountStr(listDTO.getIsAddAccount() ? BooleanEnum.TRUE.getName() : BooleanEnum.FALSE.getName());
             //产品名称
             String productName = skuList.stream().filter(obj -> CharSequenceUtil.equals(obj.getSkuId(), listDTO.getSkuId())).findFirst()
                     .flatMap(obj -> Optional.ofNullable(obj.getSkuName())).orElse("");
@@ -321,9 +321,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             listDTO.setCurrencySymbol(currencySymbol);
             listDTO.setUnitName("Pcs");
-            listDTO.setQty(SourceTypeEnum.PO_RETURN.getCode().equals(listDTO.getSourceType()) ? listDTO.getReceiveQty() : listDTO.getDeliveryQty());
             //备注
-            listDTO.setRemark( CharSequenceUtil.format("供方备注：{},采方备注：{}",listDTO.getSupplierRemark(),listDTO.getPurchaseRemark()));
             listDTO.setIndex(index);
             index++;
         }
@@ -388,7 +386,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         }
         lambdaUpdate().in(PoReconciliationDetailEntity::getSourceId,sourceIdList)
                 .set(PoReconciliationDetailEntity::getBusinessStatus,statusDTO.getBusinessStatus())
-                .set(PoReturnConfirmStatusEnum.CONFIRM.getCode().equals(statusDTO.getBusinessStatus()),PoReconciliationDetailEntity::getConfirmDate,LocalDate.now())
+                .set(PoReturnConfirmStatusEnum.CONFIRM.getCode().equals(statusDTO.getBusinessStatus()),PoReconciliationDetailEntity::getDate,LocalDate.now())
                 .update();
     }
 
@@ -421,6 +419,106 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             fillList(page.getRecords());
         }
         return new PagingVO<>(page);
+    }
+
+    @Override
+    public BatchResultDTO manualGenerate(String code) {
+        List<PoReconciliationDetailEntity> list = this.listBySourceCode(code);
+        if (CollUtil.isNotEmpty(list)) {
+            return BatchResultDTO.fail(code, code, "已存在待对账明细，不支持再次生成");
+        }
+        autoAddPoReconciliationDetail(code);
+
+        return null;
+    }
+
+    public void autoAddPoReconciliationDetail (String code) {
+
+        List<PoReturnEntity> poReturnEntityList = FeignQuery.create(PoReturnEntity.class).eq(PoReturnEntity::getCode, code).list();
+
+        if (CollectionUtils.isEmpty(poReturnEntityList)) {
+            return;
+        }
+        List<String> ids = poReturnEntityList.stream().map(PoReturnEntity::getId).collect(Collectors.toList());
+        List<PoReturnDetailEntity> poReturnDetailList = FeignQuery.create(PoReturnDetailEntity.class).in(PoReturnDetailEntity::getId,ids).list();
+        if (CollectionUtils.isEmpty(poReturnDetailList)) {
+            throw new ServiceException(ApiError.ERROR_99008);
+        }
+        List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
+        for (PoReturnDetailEntity poReturnDetailEntity : poReturnDetailList) {
+            PoReturnEntity entity = poReturnEntityList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poReturnDetailEntity.getMainId())).findFirst().orElse(null);
+            if (ObjectUtils.isEmpty(entity)) {
+                throw new ServiceException(ApiError.ERROR_99008);
+            }
+            PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
+            addDTO.setPoId(entity.getPurchaseOrderId());
+            addDTO.setPoCode(entity.getPurchaseOrderCode());
+            addDTO.setPoDetailId(poReturnDetailEntity.getPurchaseOrderDetailId());
+            addDTO.setSupplierId(entity.getSupplierId());
+            addDTO.setSupplierName(entity.getSupplierName());
+            addDTO.setSourceId(entity.getId());
+            addDTO.setSourceCode(entity.getCode());
+            addDTO.setSourceDetailId(poReturnDetailEntity.getId());
+            addDTO.setSourceType(SourceTypeEnum.PO_RETURN.getCode());
+            addDTO.setBusinessStatus(entity.getConfirmStatus());
+            addDTO.setDate(entity.getConfirmDate());
+            addDTO.setSkuId(poReturnDetailEntity.getSkuId());
+            addDTO.setQty(poReturnDetailEntity.getReturnQty() * -1);
+            addDTO.setTaxPrice(poReturnDetailEntity.getReturnPrice());
+            addDTO.setSettleOrgId(entity.getPurchaseOrgId());
+            addDTO.setCurrency(poReturnDetailEntity.getCurrency());
+            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            addDTO.setReturnSourceType(returnOrderSourceEnum.getCode());
+            addList.add(addDTO);
+        }
+        this.add(addList);
+    }
+
+    /**
+     * 根据
+     * @author will
+     * @date 2025/6/11 16:50
+     * @param sourceCode
+     * @return List<PoReconciliationDetailEntity>
+     */
+    private List<PoReconciliationDetailEntity> listBySourceCode(String sourceCode) {
+       return lambdaQuery().eq(PoReconciliationDetailEntity::getSourceCode,sourceCode).list();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO updateStatus(String id,String status) {
+        PoReconciliationDetailEntity entity = this.getById(id);
+        if (ObjectUtil.isEmpty(entity)) {
+            throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_DETAIL_NOT_EXIST);
+        }
+        String oldStatus = entity.getStatus();
+        if (CharSequenceUtil.equals(oldStatus,status)) {
+            return BatchResultDTO.fail(entity.getId(), entity.getSourceCode(), "状态未变更，无需更新");
+        }
+        entity.setStatus(status);
+        ApplicationContextUtils.getBean(PoReconciliationDetailScmServiceImpl.class).updateById(entity);
+
+        // 操作日志
+        String msg = StrUtil.format("状态由【{}】更新未【{}】",oldStatus,status);
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.DELIVERY_SUGGEST.getCode(), entity.getId(), "状态更新");
+
+        return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.UPDATE_STATUS);
+    }
+
+    @Override
+    public Boolean addSetting(PoReconciliationDetailDTO.AddSettingDTO addSettingDTO) {
+        PoReconciliationDetailDTO.AddSettingDTO setDTO = new PoReconciliationDetailDTO.AddSettingDTO(addSettingDTO.getPaymentConditionList());
+        CfgSettingEntity cfgSettingEntity = new CfgSettingEntity();
+        cfgSettingEntity.setKey(ConfigKeyEnum.PO_RECONCILIATION.getCode());
+        cfgSettingEntity.setDataJson(JSONUtil.parseObj(setDTO));
+        //查询是否已存在配置
+        CfgSettingEntity oldEntity = cfgSettingService.getByKey(ConfigKeyEnum.PO_RECONCILIATION.getCode());
+        if (ObjectUtil.isNotEmpty(oldEntity)) {
+            cfgSettingEntity.setId(oldEntity.getId());
+        }
+        return cfgSettingService.saveOrUpdate(oldEntity);
     }
 
     /**
@@ -559,13 +657,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             String settleDict = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poSupplierEntity.getPayMethodId()))
                     .map(DictBasicEntity::getValue).findFirst().orElse("");
             detailEntity.setSettleDict(settleDict);
-            /**
-             * 当结算方式为月结/空时候，显示为是
-             * 当结算方式为现结/预付：显示为否
-             */
-            if (StrUtil.isBlank(settleDict) || CharSequenceUtil.equals(SettleEnum.MONTHLY.getCode(),settleDict)) {
-                detailEntity.setIsAddAccount(Boolean.TRUE);
-            }
+
             //组织名称
             String orgName = accountingCompanyList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getSettleOrgId()))
                     .findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
@@ -579,14 +671,14 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 PurchasePriceDTO.SupplierSkuPrice supplierSkuPrice = purchasePriceList.stream().filter(obj ->
                         CharSequenceUtil.equals(obj.getSkuId(), detailEntity.getSkuId())
                                 && CharSequenceUtil.equals(obj.getSupplierId(), detailEntity.getSupplierId())
-                                && Math.abs(detailEntity.getReceiveQty())  > obj.getMinQty()
+                                && Math.abs(detailEntity.getQty())  > obj.getMinQty()
                                 && CharSequenceUtil.equals(obj.getPurchaseOrgId(), purchaseOrgId)
-                                && obj.getMaxQty() >= Math.abs(detailEntity.getReceiveQty())
+                                && obj.getMaxQty() >= Math.abs(detailEntity.getQty())
                 ).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                     detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
                 }
-                detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
+                detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getQty()));
             } else {
                 PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(poDetailEntity)) {
@@ -594,7 +686,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     detailEntity.setTaxRate(poDetailEntity.getTaxRate());
                     detailEntity.setCurrency(poDetailEntity.getCurrency());
                 }
-                detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getReceiveQty()));
+                detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getQty()));
             }
             resultList.add(detailEntity);
         }

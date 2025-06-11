@@ -30,13 +30,11 @@ import com.common.core.utils.ExcelUtil;
 import com.common.core.utils.MathUtil;
 import com.common.core.utils.StrUtils;
 import com.erp.model.plm.vo.SkuVO;
-import com.erp.model.scm.dto.PurchaseOrderSrmDTO;
 import com.erp.model.scm.dto.SupplierDTO;
 import com.erp.model.scm.entity.PurchaseOrderDetailEntity;
 import com.erp.model.scm.entity.PurchaseOrderEntity;
 import com.erp.model.scm.entity.SupplierEntity;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.scm.enums.WaitDeliveryCycleEnum;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.DeliveryOrderDetailDTO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
@@ -768,10 +766,10 @@ public class DeliveryOrderServiceImpl extends SuperServiceImpl<DeliveryOrderMapp
             addDTO.setSourceDetailId(detailEntity.getId());
             addDTO.setSourceCode(deliveryOrderEntity.getCode());
             addDTO.setSourceType(SourceTypeEnum.DELIVERY_ORDER.getCode());
-            addDTO.setConfirmDate(detailEntity.getConfirmReceiveDate());
+            addDTO.setDate(detailEntity.getConfirmReceiveDate());
             addDTO.setSkuId(detailEntity.getSkuId());
             addDTO.setDeliveryQty(detailEntity.getDeliveryQty());
-            addDTO.setReceiveQty(detailEntity.getReceiveQty());
+            addDTO.setQty(detailEntity.getReceiveQty());
             addDTO.setBusinessStatus(PoReturnConfirmStatusEnum.CONFIRM.getCode());
 
             //采购订单
