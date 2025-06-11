@@ -252,6 +252,7 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateSerialNo(CfgInvoiceSettingDTO.UpdateSerialDTO dto) {
         //查询旧数据
         CfgInvoiceSettingEntity old = super.getById(dto.getId());
