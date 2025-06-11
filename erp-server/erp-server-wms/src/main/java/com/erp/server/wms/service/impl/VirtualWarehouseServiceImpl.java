@@ -582,6 +582,14 @@ public class VirtualWarehouseServiceImpl extends SuperServiceImpl<VirtualWarehou
         return baseMapper.listWarehouseInfoByIds(virtualWarehouseIdList);
     }
 
+    @Override
+    public List<VirtualWarehouseEntity> listByNameList(List<String> virtualWarehouseNameList) {
+        if (CollUtil.isEmpty(virtualWarehouseNameList)){
+            return Collections.emptyList();
+        }
+        return this.lambdaQuery().in(VirtualWarehouseEntity::getName, virtualWarehouseNameList).list();
+    }
+
     /**
      * 导出数据处理
      * @param list

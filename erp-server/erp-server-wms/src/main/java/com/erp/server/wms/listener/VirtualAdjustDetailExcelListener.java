@@ -3,26 +3,19 @@ package com.erp.server.wms.listener;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
-import cn.hutool.core.util.ObjectUtil;
+import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.excel.context.AnalysisContext;
 import com.alibaba.excel.event.AnalysisEventListener;
-import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
-import com.common.core.enums.ApiError;
 import com.common.core.utils.FieldValidUtil;
-import com.common.core.utils.StrUtils;
-import com.erp.model.plm.dto.ProductDetailDTO;
-import com.erp.model.wms.dto.WarehouseDTO;
-import com.erp.model.wms.dto.WarehouseLocationDTO;
-import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
-import com.erp.model.wms.dto.excel.VirtualAdjustExcelDTO;
-import com.erp.model.wms.dto.inventory.InventoryDTO;
+import com.erp.model.plm.entity.ProductDetailEntity;
+import com.erp.model.wms.dto.VirtualAdjustDetailDTO;
+import com.erp.model.wms.dto.excel.VirtualAdjustDetailExcelDTO;
+import com.erp.model.wms.entity.VirtualWarehouseEntity;
+import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
-import com.erp.server.wms.service.InventoryService;
-import com.erp.server.wms.service.WarehouseLocationMoveService;
-import com.erp.server.wms.service.WarehouseLocationService;
-import com.erp.server.wms.service.WarehouseService;
+import com.erp.server.wms.service.VirtualWarehouseService;
+import lombok.Getter;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -34,159 +27,76 @@ import java.util.stream.Collectors;
  * @Date 2023-03-22 17:22
  * @Created by yl
  */
-public class VirtualAdjustDetailExcelListener extends AnalysisEventListener<VirtualAdjustExcelDTO> {
-    private WarehouseLocationService warehouseLocationService;
-
-    private InventoryService inventoryService;
-    private WarehouseService warehouseService;
+public class VirtualAdjustDetailExcelListener extends AnalysisEventListener<VirtualAdjustDetailExcelDTO> {
+    private List<VirtualAdjustDetailDTO.AddDTO> detailList;
     /**
      * 导入正确数据
      */
-    private List<WarehouseLocationMoveDTO.DetailViewDTO> successList = new ArrayList<>();
-
+    @Getter
+    private List<VirtualAdjustDetailExcelDTO> successList = new ArrayList<>();
 
     /**
      * 导入数据，用于判断导入是否为空
      */
-    private List<VirtualAdjustExcelDTO> allList = new ArrayList<>();
+    @Getter
+    private List<VirtualAdjustDetailExcelDTO> allList = new ArrayList<>();
     /**
      * 导入错误数据
      */
-    private List<VirtualAdjustExcelDTO> errorList = new ArrayList<>();
+    @Getter
+    private List<VirtualAdjustDetailExcelDTO> errorList = new ArrayList<>();
 
-    private WarehouseLocationMoveService warehouseLocationMoveService;
+    private PlmTaskFeign plmTaskFeign = SpringUtil.getBean(PlmTaskFeign.class);
+    private VirtualWarehouseService virtualWarehouseService = SpringUtil.getBean(VirtualWarehouseService.class);
 
-    private PlmTaskFeign plmTaskFeign;
 
-
-    public VirtualAdjustDetailExcelListener(WarehouseLocationMoveService warehouseLocationMoveService,
-                                            WarehouseService warehouseService, WarehouseLocationService warehouseLocationService,
-                                            PlmTaskFeign plmTaskFeign, InventoryService inventoryService) {
-        this.warehouseLocationMoveService = warehouseLocationMoveService;
-        this.warehouseService = warehouseService;
-        this.warehouseLocationService = warehouseLocationService;
-        this.plmTaskFeign = plmTaskFeign;
-        this.inventoryService = inventoryService;
+    public VirtualAdjustDetailExcelListener(List<VirtualAdjustDetailDTO.AddDTO> detailList) {
+        this.detailList = detailList;
     }
 
     /**
      * 每解析一行数据回调一遍
      *
-     * @param VirtualAdjustExcelDTO
+     * @param excelDTO
      * @param analysisContext
      * @return void
-     * @author hyj
+     * @author zdy
      * @date 2024/4/18 9:09
      */
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void invoke(VirtualAdjustExcelDTO VirtualAdjustExcelDTO, AnalysisContext analysisContext) {
+    public void invoke(VirtualAdjustDetailExcelDTO excelDTO, AnalysisContext analysisContext) {
         //添加数据用于判断是否为空
-        allList.add(VirtualAdjustExcelDTO);
-        List<String> msgList = FieldValidUtil.fieldValid(VirtualAdjustExcelDTO);
-        List<String> errorMsgList = new ArrayList<>();
-        errorMsgList.addAll(msgList);
+        allList.add(excelDTO);
+        List<String> msgList = FieldValidUtil.fieldValid(excelDTO);
+        List<String> errorMsgList = new ArrayList<>(msgList);
         if (CollectionUtils.isNotEmpty(msgList)){
-            VirtualAdjustExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(VirtualAdjustExcelDTO);
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(excelDTO);
             return;
         }
-        WarehouseLocationMoveDTO.PcAddDTO pcAddDTO = new WarehouseLocationMoveDTO.PcAddDTO();
-        if (CharSequenceUtil.isBlank(VirtualAdjustExcelDTO.getSkuNo())) {
-            errorMsgList.add("SKU不能为空");
+        try {
+            String inventoryStatus = InventoryStatusEnum.getCodeByName(excelDTO.getInventoryStatusName());
+            if (CharSequenceUtil.isBlank(inventoryStatus)){
+                errorMsgList.add("库存状态不存在");
+            }else {
+                excelDTO.setInventoryStatus(inventoryStatus);
+            }
+        }catch (Exception e){
+            errorMsgList.add("库存状态不存在");
         }
-        WarehouseLocationMoveDTO.DetailViewDTO pcViewDTO = new WarehouseLocationMoveDTO.DetailViewDTO();
-
-        //查看sku是否存在
-        if (CharSequenceUtil.isNotBlank(VirtualAdjustExcelDTO.getSkuNo())) {
-            //根据sku编号查询sku
-            Map<String, String> skuParams = new HashMap<>();
-            skuParams.put("skuNo", VirtualAdjustExcelDTO.getSkuNo());
-            ProductDetailDTO productDetailDTO = plmTaskFeign.getSkuByParam(skuParams);
-            if (ObjectUtils.isEmpty(productDetailDTO)) {
-                errorMsgList.add("系统中不存在此sku编号");
-            } else {
-                pcViewDTO.setSkuId(productDetailDTO.getId());
-                pcViewDTO.setSkuNo(productDetailDTO.getSkuNo());
-                pcViewDTO.setProductName(productDetailDTO.getName());
-            }
-        }
-
-        if (!StrUtils.isDigit(String.valueOf(VirtualAdjustExcelDTO.getQty())) || ObjectUtil.isEmpty(VirtualAdjustExcelDTO.getQty())) {
-            errorMsgList.add("移动数量只能是数字");
-        }else  if(VirtualAdjustExcelDTO.getQty() < 1 || VirtualAdjustExcelDTO.getQty() >999999999){
-            errorMsgList.add("移动数量范围1-999999999");
-        }
-        if (CharSequenceUtil.isBlank(VirtualAdjustExcelDTO.getWarehouseName())) {
-            errorMsgList.add("仓库名称不能为空");
-        }
-
-        List<WarehouseDTO.ListDTO> warehouseList = warehouseService.listByNames(Collections.singletonList(VirtualAdjustExcelDTO.getWarehouseName()));
-        if (CollectionUtils.isEmpty(warehouseList)) {
-            errorMsgList.add(ApiError.WAREHOUSE_NOT_EXIST_NO_PERMISSION.msg);
-        }else {
-            //根据仓库获取仓位
-            List<WarehouseLocationDTO.LocationListDTO> warehouseLocationList = warehouseLocationService.select(warehouseList.get(0).getId());
-            if (CollUtil.isEmpty(warehouseLocationList)) {
-                errorMsgList.add("当前仓库没有仓位");
-            }
-            Map<String, List<WarehouseLocationDTO.LocationListDTO>> locationMap = warehouseLocationList.stream().collect(Collectors.groupingBy(WarehouseLocationDTO.LocationListDTO::getName));
-            //设置空仓位
-            if (StringUtils.isEmpty(VirtualAdjustExcelDTO.getOutWarehouseLocationName())) {
-                VirtualAdjustExcelDTO.setOutWarehouseLocationName("空仓位");
-            }
-            if (StringUtils.isEmpty(VirtualAdjustExcelDTO.getInWarehouseLocationName())) {
-                VirtualAdjustExcelDTO.setInWarehouseLocationName("空仓位");
-            }
-
-            if (Objects.isNull(locationMap.get(VirtualAdjustExcelDTO.getOutWarehouseLocationName()))) {
-                errorMsgList.add("取货仓位不存在");
-            }
-            if (Objects.isNull(locationMap.get(VirtualAdjustExcelDTO.getInWarehouseLocationName()))) {
-                errorMsgList.add("上架仓位不存在");
-            }
-            pcViewDTO.setOutWarehouseLocation(CharSequenceUtil.isBlank(VirtualAdjustExcelDTO.getOutWarehouseLocationName()) ? ""
-                    : (Objects.nonNull(locationMap) && Objects.nonNull(locationMap.get(VirtualAdjustExcelDTO.getOutWarehouseLocationName()))
-                    && Objects.nonNull(locationMap.get(VirtualAdjustExcelDTO.getOutWarehouseLocationName()).get(0))
-                    && Objects.nonNull(locationMap.get(VirtualAdjustExcelDTO.getOutWarehouseLocationName()).get(0).getId())
-                    ? locationMap.get(VirtualAdjustExcelDTO.getOutWarehouseLocationName()).get(0).getCode() : ""));
-            pcViewDTO.setInWarehouseLocation(CharSequenceUtil.isBlank(VirtualAdjustExcelDTO.getInWarehouseLocationName()) ? ""
-                    : (Objects.nonNull(locationMap) && Objects.nonNull(locationMap.get(VirtualAdjustExcelDTO.getInWarehouseLocationName()))
-                    && Objects.nonNull(locationMap.get(VirtualAdjustExcelDTO.getInWarehouseLocationName()).get(0))
-                    && Objects.nonNull(locationMap.get(VirtualAdjustExcelDTO.getInWarehouseLocationName()).get(0).getId())
-                    ? locationMap.get(VirtualAdjustExcelDTO.getInWarehouseLocationName()).get(0).getCode() : ""));
-        }
-
-        pcAddDTO.setWarehouseId((CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getId());
-        pcViewDTO.setOutWarehouseLocationName(VirtualAdjustExcelDTO.getOutWarehouseLocationName());
-
-        pcViewDTO.setInWarehouseLocationName(VirtualAdjustExcelDTO.getInWarehouseLocationName());
-        pcViewDTO.setSkuNo(VirtualAdjustExcelDTO.getSkuNo());
-        pcViewDTO.setQty(VirtualAdjustExcelDTO.getQty());
-        pcViewDTO.setRemark(VirtualAdjustExcelDTO.getRemark());
-        pcViewDTO.setWarehouseId((CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getId());
-        pcViewDTO.setWarehouseName((CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0))) ? "" : warehouseList.get(0).getName());
-        //设置库存
-        if (CharSequenceUtil.isNotBlank(VirtualAdjustExcelDTO.getSkuNo()) && CharSequenceUtil.isNotBlank(pcViewDTO.getSkuId())
-                && !(CollectionUtils.isEmpty(warehouseList) || Objects.isNull(warehouseList.get(0)))) {
-            InventoryDTO.InventoryBySkuIdAndWarehouseDTO inventoryBySkuIdAndWarehouseDTO = new InventoryDTO.InventoryBySkuIdAndWarehouseDTO();
-            inventoryBySkuIdAndWarehouseDTO.setWarehouseId(warehouseList.get(0).getId());
-            inventoryBySkuIdAndWarehouseDTO.setSkuId(pcViewDTO.getSkuId());
-            inventoryBySkuIdAndWarehouseDTO.setWarehouseLocation(pcViewDTO.getOutWarehouseLocation());
-            List<InventoryDTO.InventoryViewQtyDTO> inventoryQtys = inventoryService.getInventoryQty(Collections.singletonList(inventoryBySkuIdAndWarehouseDTO));
-            inventoryQtys.stream().forEach(inventoryQtyDTO -> {
-                pcViewDTO.setUsableQty(inventoryQtyDTO.getUsableQty());
-                pcViewDTO.setFrozenQty(inventoryQtyDTO.getFrozenQty());
-                pcViewDTO.setRealQty(inventoryQtyDTO.getRealQty());
-            });
+        try {
+            Integer qty = Integer.valueOf(excelDTO.getQtyStr());
+            excelDTO.setQty(qty);
+        }catch (Exception e){
+            errorMsgList.add("数量只能是数字");
         }
         //存在错误数据则直接返回
-        if (errorMsgList.size() > 0) {
-            VirtualAdjustExcelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
-            errorList.add(VirtualAdjustExcelDTO);
+        if (!errorMsgList.isEmpty()) {
+            excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+            errorList.add(excelDTO);
             return;
         }
-        successList.add(pcViewDTO);
     }
 
 
@@ -200,18 +110,46 @@ public class VirtualAdjustDetailExcelListener extends AnalysisEventListener<Virt
      */
     @Override
     public void doAfterAllAnalysed(AnalysisContext analysisContext) {
+        if(CollectionUtils.isEmpty(allList)){
+            return;
+        }
+        List<String> skuNoList = allList.stream().filter(e -> CharSequenceUtil.isBlank(e.getErrorMsg())).map(VirtualAdjustDetailExcelDTO::getSkuNo)
+                .filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<String> virtualWarehouseNameList = allList.stream().filter(e -> CharSequenceUtil.isBlank(e.getErrorMsg()))
+                .map(VirtualAdjustDetailExcelDTO::getVirtualWarehouseName).filter(CharSequenceUtil::isNotBlank).collect(Collectors.toList());
+        List<ProductDetailEntity> skuVOS = CollUtil.isNotEmpty(skuNoList) ? plmTaskFeign.listBySkuNos(skuNoList) : Collections.emptyList();
+        List<VirtualWarehouseEntity> virtualWarehouseEntityList = virtualWarehouseService.listByNameList(virtualWarehouseNameList);
+        for (VirtualAdjustDetailExcelDTO excelDTO : allList) {
+            if (CharSequenceUtil.isNotBlank(excelDTO.getErrorMsg())){
+                continue;
+            }
+            List<String> errorMsgList = new ArrayList<>();
+            ProductDetailEntity productDetail = skuVOS.stream().filter(e -> Objects.equals(e.getSkuNo(), excelDTO.getSkuNo())).findFirst().orElse(null);
+            if (Objects.isNull(productDetail)){
+                errorMsgList.add("SKU不存在");
+            }else {
+                excelDTO.setSkuId(productDetail.getId());
+                excelDTO.setProductName(productDetail.getName());
+            }
+            VirtualWarehouseEntity virtualWarehouseEntity = virtualWarehouseEntityList.stream().filter(e -> Objects.equals(e.getName(), excelDTO.getVirtualWarehouseName())).findFirst().orElse(null);
+            if (Objects.isNull(virtualWarehouseEntity)){
+                errorMsgList.add("虚拟仓库不存在");
+            }else {
+                excelDTO.setVirtualWarehouseId(virtualWarehouseEntity.getId());
+            }
+            //记录是否在明细中存在
+            VirtualAdjustDetailDTO.AddDTO addDTO = detailList.stream().filter(e -> e.getSkuId().equals(excelDTO.getSkuId()) && e.getVirtualWarehouseId().equals(excelDTO.getVirtualWarehouseId()) && e.getDictInventoryStatus().equals(excelDTO.getInventoryStatus())).findFirst().orElse(null);
+            if (Objects.nonNull(addDTO)){
+                errorMsgList.add("该SKU-虚拟仓库-库存状态在明细中已存在");
+            }
+            if (!errorMsgList.isEmpty()) {
+                excelDTO.setErrorMsg(FieldValidUtil.getMsgSort(errorMsgList));
+                errorList.add(excelDTO);
+                return;
+            }
+            successList.add(excelDTO);
+        }
 
     }
 
-    public List<VirtualAdjustExcelDTO> getErrorList() {
-        return errorList;
-    }
-
-    public List<WarehouseLocationMoveDTO.DetailViewDTO> getSuccessList() {
-        return successList;
-    }
-
-    public List<VirtualAdjustExcelDTO> getAllList() {
-        return allList;
-    }
 }

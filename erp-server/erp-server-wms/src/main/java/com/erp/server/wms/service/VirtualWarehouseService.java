@@ -102,4 +102,6 @@ public interface VirtualWarehouseService extends SuperService<VirtualWarehouseEn
     PagingVO<VirtualWarehouseDTO.ExportDTO> exportVirtualWarehouse(PagingDTO<VirtualWarehouseDTO.PagingParamDTO> dto);
 
     List<VirtualWarehouseDTO.ViewWarehouseDTO> listWarehouseInfoByIds(List<String> virtualWarehouseIdList);
+
+    List<VirtualWarehouseEntity> listByNameList(List<String> virtualWarehouseNameList);
 }

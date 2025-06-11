@@ -4,6 +4,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import com.common.business.dto.base.SortDTO;
 import java.util.List;
+
+import com.erp.model.wms.dto.excel.VirtualAdjustDetailExcelDTO;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -316,7 +318,7 @@ public class VirtualAdjustDTO implements Serializable {
         /**
          * 成功返回数据
          */
-        private List<VirtualAdjustDetailDTO.AddDTO> successList;
+        private List<VirtualAdjustDetailExcelDTO> successList;
 
         /**
          * 错误url
