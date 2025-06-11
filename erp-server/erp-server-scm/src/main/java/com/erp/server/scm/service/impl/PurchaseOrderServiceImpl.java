@@ -1865,6 +1865,11 @@ public class PurchaseOrderServiceImpl extends SuperServiceImpl<PurchaseOrderMapp
         if (stringHashMap==null){
             throw new ServiceException("未找到明细表对应entityCode");
         }
+        //税率额外处理
+        detailList.forEach(item->{
+            //item.getTaxRate() bigdecimal乘以100
+            item.setTaxRate(item.getTaxRate().multiply(new BigDecimal(100)));
+        });
 
         variablesMap.put(stringHashMap.get(PURCHASE_ORDER_DETAIL), BeanUtil.copyToList(detailList, Map.class));
 

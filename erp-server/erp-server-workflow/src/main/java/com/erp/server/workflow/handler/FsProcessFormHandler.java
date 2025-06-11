@@ -474,30 +474,37 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         List<CfgProcessFieldMapDTO.ViewDTO> result = new ArrayList<>();
         for (JSONObject field : fields.jsonIter()) {
-            result.addAll(parseField(field, false, null));
+            // 顶层控件调用，父级 ID 和父级 name 均为 null
+            result.addAll(parseField(field, false, null, null));
         }
         return result;
     }
 
     /**
-     * 递归解析单个字段，isDetail=是否明细子项，parentId=父级 ID
-     * 如果是 FIELDLIST，会继续对子节点调用本方法。
-     * 如果是 AMOUNT，会产生额外的“币种”子项。
+     * 递归解析单个字段
+     * @param field 当前字段的 JSON 对象
+     * @param isDetail 是否为明细子项
+     * @param parentId 父级 ID
+     * @param parentName 父级控件的 name（用于构造 thirdField）
+     * @return ViewDTO 列表
      */
     private List<CfgProcessFieldMapDTO.ViewDTO> parseField(
-            JSONObject field, boolean isDetail, String parentId
+            JSONObject field, boolean isDetail, String parentId, String parentName
     ) {
         List<CfgProcessFieldMapDTO.ViewDTO> list = new ArrayList<>();
 
-        // 构造基础 DTO
-        CfgProcessFieldMapDTO.ViewDTO dto = buildBaseDTO(field, isDetail, parentId);
+        // 构造基础 DTO，传入 parentName
+        CfgProcessFieldMapDTO.ViewDTO dto = buildBaseDTO(field, isDetail, parentId, parentName);
 
         String type = dto.getThirdFieldType();
-        // 如果是明细列表（FIELDLIST），则递归解析其 children 并直接返回汇总列表
+        // 如果是明细列表（FIELDLIST），则递归解析其 children
         if (CfgQueryOptionFieldTypeEnum.FIELDLIST.getCode().equals(type)) {
             JSONArray children = field.getJSONArray(FsRequestBodyAttributesEnum.CHILDREN.getCode());
+            // 获取当前明细控件的 name，作为所有子控件的前缀
+            String currentFieldName = field.getStr(FsRequestBodyAttributesEnum.NAME.getCode());
             for (JSONObject child : children.jsonIter()) {
-                list.addAll(parseField(child, true, dto.getThirdFieldId()));
+                // 递归调用，将当前控件的 ID 和 name 作为父级信息传入
+                list.addAll(parseField(child, true, dto.getThirdFieldId(), currentFieldName));
             }
             return list;
         }
@@ -516,30 +523,39 @@ public class FsProcessFormHandler implements ProcessFormHandler {
      * 构造一个最基础的 ViewDTO（不包含“币种”那条）
      */
     private CfgProcessFieldMapDTO.ViewDTO buildBaseDTO(
-            JSONObject field, boolean isDetail, String parentId
+            JSONObject field, boolean isDetail, String parentId, String parentName
     ) {
         CfgProcessFieldMapDTO.ViewDTO dto = new CfgProcessFieldMapDTO.ViewDTO();
 
-        // 设置前缀：单据头 or 单据明细
-        String prefix = isDetail ? "单据明细-" : "单据头-";
-        dto.setThirdField(prefix + field.getStr(FsRequestBodyAttributesEnum.NAME.getCode()));
+        String currentFieldName = field.getStr(FsRequestBodyAttributesEnum.NAME.getCode());
+        String prefix;
+
+        // ✨ 核心改动：根据 parentName 是否为空来决定前缀
+        if (parentName != null && !parentName.isEmpty()) {
+            // 如果 parentName 存在，说明是明细子控件，前缀 = "父控件name-"
+            prefix = parentName + "-";
+        } else {
+            // 如果 parentName 不存在，说明是顶层控件，前缀 = "单据头-"
+            prefix = "单据头-";
+        }
+        dto.setThirdField(prefix + currentFieldName);
 
         dto.setThirdFieldType(field.getStr(FsRequestBodyAttributesEnum.TYPE.getCode()));
         dto.setThirdFieldRequired(field.getBool(FsRequestBodyAttributesEnum.REQUIRED.getCode(), false));
         dto.setThirdFieldId(field.getStr(FsRequestBodyAttributesEnum.ID.getCode()));
         dto.setIsDetailField(isDetail);
         dto.setThirdParentId(parentId);
-        if (!field.getStr("type").toString().equals("fieldList")) {
+        if (!"fieldList".equals(field.getStr("type"))) {
             dto.setGroupType("0");
-            return dto;
+        } else {
+            dto.setGroupType("1");
         }
-        dto.setGroupType("1");
         // 默认 index 可不设，或由调用方根据业务设定
         return dto;
     }
 
     /**
-     * 由一个“金额”类型的 DTO 克隆并生产对应的“币种”子项
+     * 由一个“金额”类型的 DTO 克隆并生产对应的“币种”子项 (此方法无需改动)
      */
     private CfgProcessFieldMapDTO.ViewDTO createAmountField(
             CfgProcessFieldMapDTO.ViewDTO amountDto
@@ -549,9 +565,10 @@ public class FsProcessFormHandler implements ProcessFormHandler {
         BeanUtil.copyProperties(amountDto, currencyDto);
 
         // 调整子项显示文案、类型、index、cfgType
+        // 因为 amountDto.getThirdField() 已经被正确设置，这里会自动拼接出正确结果
         currencyDto.setThirdField(amountDto.getThirdField() + "币种");
         currencyDto.setThirdFieldType(CfgQueryOptionFieldTypeEnum.RADIOV2.getCode());
-        currencyDto.setIndex(1);              // 币种一般排前面
+        currencyDto.setIndex(1);           // 币种一般排前面
         currencyDto.setCfgType("sysCfg");
         return currencyDto;
     }
