@@ -153,6 +153,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
             checkSkuChange(dto.getDetailsJson());
 
         }
+        //处理数据
+        handleData(change,isBom);
 
         Boolean saveResult = this.save(change);
         if (saveResult) {
@@ -168,6 +170,23 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         return saveResult;
     }
 
+    /**
+     * 数据处理
+     * @author will
+     * @date 2025/6/11 17:27
+     * @param change
+     * @param isBom
+     * @return void
+     */
+    private void handleData(ProductChangeEntity change,Boolean isBom) {
+        if (isBom) {
+            BomInfoEntity bomInfoEntity = bomInfoService.getById(change.getSourceId());
+            change.setSourceCode(bomInfoEntity.getSerialNumber());
+        } else {
+            ProductDetailEntity productDetailEntity = productDetailService.getById(change.getSourceId());
+            change.setSourceCode(productDetailEntity.getSkuNo());
+        }
+    }
 
 
     /**
@@ -395,7 +414,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         }
         // 待提交或审核不通过并且未作废允许提交
         if ((!ProductChangeStateEnum.WAIT_SUBMIT.getState().equals(entity.getState()) && !ProductChangeStateEnum.AUDIT_NO_PASS.getState().equals(entity.getState()))) {
-            throw new ServiceException(ApiError.ERROR_98010);
+            throw new ServiceException(ApiError.ERROR_WAIT_SUBMIT_TO_APPROVE_ING);
         }
 
         // 更新单据审核状态

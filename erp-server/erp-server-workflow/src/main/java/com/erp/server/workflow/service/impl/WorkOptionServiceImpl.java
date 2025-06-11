@@ -644,16 +644,16 @@ public class WorkOptionServiceImpl extends SuperServiceImpl<WorkOptionMapper, Wo
                 resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
                 break;
             case OTHER_INSTOCK:
-                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.otherInstockApprove(baseApproveParamDTO);
                 break;
             case OTHER_OUTSTOCK:
-                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_IN:
-                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.otherOutstockApprove(baseApproveParamDTO);
                 break;
             case TRANSFER_OUT:
-                resultDTOList = wmsTaskFeign.requisitionChangeApprove(baseApproveParamDTO);
+                resultDTOList = wmsTaskFeign.transferOutApprove(baseApproveParamDTO);
                 break;
             default:
                 throw new ServiceException(ApiError.ERROR_94006);

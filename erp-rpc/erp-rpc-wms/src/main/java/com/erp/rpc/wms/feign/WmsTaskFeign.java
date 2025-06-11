@@ -368,6 +368,38 @@ public interface WmsTaskFeign {
     List<BatchResultDTO> requisitionChangeApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
 
     /**
+     * 其他入库单
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/otherInstockApprove")
+    List<BatchResultDTO> otherInstockApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 其他出库单
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/otherOutstockApprove")
+    List<BatchResultDTO> otherOutstockApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 分步式调入
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/transferInApprove")
+    List<BatchResultDTO> transferInApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
+     * 分步式调出
+     * @param baseApproveParamDTO
+     * @return
+     */
+    @PostMapping("feign/wmsWorkOption/transferOutApprove")
+    List<BatchResultDTO> transferOutApprove(@RequestBody BaseApproveParamDTO baseApproveParamDTO);
+
+    /**
      * 波次状态自动更新
      * @author jack
      * @date 2024/11/28
