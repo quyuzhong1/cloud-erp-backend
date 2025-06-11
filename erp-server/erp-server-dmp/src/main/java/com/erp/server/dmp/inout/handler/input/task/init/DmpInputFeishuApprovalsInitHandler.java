@@ -56,7 +56,7 @@ public class DmpInputFeishuApprovalsInitHandler extends DmpInputInitHandler{
 					parseObject.put("ulanzi_approval_code", approvalCode);
 					result.add(parseObject);
 				} catch (Exception e) {
-					throw new ServiceException("调用飞书失败");
+					throw new ServiceException("调用飞书失败，{}",e);
 				}
 			}
 		}
