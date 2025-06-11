@@ -62,7 +62,8 @@ public class DmpInputGoodCangInstockTransFlowInitHandler extends DmpInputGoodCan
         // 开始时间=最早退货单号创建时间
         LocalDateTime createDateFrom = null;
         // 结束时间=任务指定结束时间
-        LocalDateTime createDateEnd = parentTaskEntity.getEndTime();
+//        LocalDateTime createDateEnd = parentTaskEntity.getEndTime();
+        LocalDateTime createDateEnd = LocalDateTime.now();
         // 退货单号列表
         List<String> referenceNoList = new LinkedList<>();
         for (Map<String, Object> parentDatum : parentData) {
