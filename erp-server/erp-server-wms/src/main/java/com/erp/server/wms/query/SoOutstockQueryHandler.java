@@ -47,21 +47,23 @@ public class SoOutstockQueryHandler extends AbstractQueryHandler {
             // 待提交
             super.buildSplicingSQLDTO("so.invalid_status", QueryConditionEnum.EQ,false, QueryDataTypeEnum.BOOLEAN);
             if (SearchType.WAIT_SUBMIT.equals(searchType)) {
-                super.buildDefaultDTO("so.approve_status", ApproveStatusEnum.WAIT_SUBMIT.getStatus());
+                super.buildSplicingSQLDTO("so.approve_status", QueryConditionEnum.EQ, ApproveStatusEnum.WAIT_SUBMIT.getStatus(), QueryDataTypeEnum.STRING);
             }
             //待审核
             if (SearchType.WAIT_APPROVE.equals(searchType)) {
-                super.buildDefaultDTO("so.approve_status", ApproveStatusEnum.APPROVE_ING.getStatus());
+                super.buildSplicingSQLDTO("so.approve_status", QueryConditionEnum.EQ, ApproveStatusEnum.APPROVE_ING.getStatus(), QueryDataTypeEnum.STRING);
             }
 
             //已审核
             if (ApproveStatusEnum.APPROVE.getStatus().equals(searchType)) {
-                super.buildDefaultDTO("so.approve_status", ApproveStatusEnum.APPROVE.getStatus());
+                super.buildSplicingSQLDTO("so.approve_status", QueryConditionEnum.EQ, ApproveStatusEnum.APPROVE.getStatus(), QueryDataTypeEnum.STRING);
+
             }
 
             //审核不通过
             if (ApproveStatusEnum.REJECT.getStatus().equals(searchType)) {
-                super.buildDefaultDTO("so.approve_status", ApproveStatusEnum.REJECT.getStatus());
+                super.buildSplicingSQLDTO("so.approve_status", QueryConditionEnum.EQ, ApproveStatusEnum.REJECT.getStatus(), QueryDataTypeEnum.STRING);
+
             }
         }
         if("ci.platform_type".equals(field)){
