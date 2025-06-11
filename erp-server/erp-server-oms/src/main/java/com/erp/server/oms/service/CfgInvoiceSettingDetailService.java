@@ -4,6 +4,7 @@ import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
+import com.erp.model.oms.entity.SoB2cEntity;
 
 import java.util.List;
 
@@ -52,4 +53,11 @@ public interface CfgInvoiceSettingDetailService extends SuperService<CfgInvoiceS
         * @return: void
         **/
     void delateByMainIds(List<String> ids, Boolean aTrue);
+
+    /**
+     * 生成发票
+     * @param soB2cEntity
+     * @param type
+     */
+    void generateNfeInvoice (SoB2cEntity soB2cEntity, String type);
 }

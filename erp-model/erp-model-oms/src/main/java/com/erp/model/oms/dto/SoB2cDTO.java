@@ -1025,10 +1025,6 @@ public class SoB2cDTO implements Serializable {
         private String platformOrderCreateTime;
 
         /**
-         * 运费收入
-         */
-        private String shippingFee;
-        /**
          * 扩展字段
          */
         private String extendData;
@@ -1350,6 +1346,8 @@ public class SoB2cDTO implements Serializable {
     @AllArgsConstructor
     public static class RuleResultDTO{
 
+        private String name;
+
         private Boolean isRuleMatch;
 
         /**
@@ -1373,6 +1371,20 @@ public class SoB2cDTO implements Serializable {
         private Boolean autoGetTrackNotOfRangeDelivery;
     }
 
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InvoiceResult{
+        /**
+         * 销售订单信息
+         */
+        private SoB2cEntity soB2cEntity;
+        /**
+         * 是否通过
+         */
+        private Boolean isPass;
+    }
     /**
      * 修改
      */
@@ -1449,6 +1461,10 @@ public class SoB2cDTO implements Serializable {
         @NotNull(message = "订单金额不能为空")
         @Digits(integer = 12, fraction = 4, message = "订单金额整数位不能超过12位，小数位不能超过4位")
         private BigDecimal amount;
+        /**
+         * 运费
+         */
+        private BigDecimal shippingFee;
 
         /**
          * 币别（原币）

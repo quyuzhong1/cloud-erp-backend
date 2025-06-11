@@ -256,4 +256,8 @@ public interface LogisticsChannelService extends SuperService<LogisticsChannelEn
     PagingVO<LogisticsChannelDTO.PagingViewDTO> paging(PagingDTO<LogisticsChannelDTO.PagingParamDTO> dto);
 
     void platformSignSetting(LogisticsChannelDTO.PlatformSignSettingDTO dto);
+
+    List<LogisticsChannelDTO.WarehouseChannelDTO> listWarehouseChannel();
+
+    List<LogisticsChannelDTO.PlatformChannelDTO> listByPlatformCode(List<String> platformCodeList);
 }

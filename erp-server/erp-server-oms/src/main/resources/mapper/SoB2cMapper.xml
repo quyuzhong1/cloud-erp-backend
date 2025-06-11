@@ -226,7 +226,7 @@
         sb2cd.label_json as labelJson,
         sb2cl.name,
         sb2cl.logistics_channel_name as logisticsChannelName,
-        sb2cl.code as logisticsCode,
+        sb2cl.code as transportNo,
         sb2cl.delivery_time as deliveryTime,
         sb2cl.estimated_shipping_cost as estimatedShippingCost,
         sb2cl.estimated_shipping_currency as estimatedShippingCurrency,
@@ -244,6 +244,7 @@
         sb2cl.height,
         sb2cl.ioss_tax_no,
         sb2cl.logistic_type,
+        sb2cl.track_no as trackNo,
         sb2cr.login_id as loginId,
         sb2cr.name as buyerName,
         sb2cr.email,
@@ -1454,5 +1455,17 @@ SELECT DISTINCT so.* FROM so_b2c so
                 #{item}
             </foreach>
         </if>
+    </select>
+    <select id="listWaitShipByWarehouseIds" resultType="com.erp.model.oms.entity.SoB2cEntity">
+        select sb2c.*
+        from so_b2c sb2c
+        inner join so_b2c_detail sbd on sb2c.id = sbd.main_id and sbd.is_deleted = false
+        where sb2c.is_deleted = false
+          and sb2c.invalid_status = false
+          and sb2c.bill_status = 'waitShipped'
+        and sbd.warehouse_id in
+        <foreach collection="warehouseIds" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
     </select>
 </mapper>

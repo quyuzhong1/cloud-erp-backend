@@ -9,6 +9,7 @@ import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.common.business.service.SuperService;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 服务类
@@ -36,4 +37,8 @@ public interface CfgInvoiceSettingService extends SuperService<CfgInvoiceSetting
      * @date: 2025/4/17 13:22
      **/
     List<CfgInvoiceInvalidDTO.DropDownDTO> getCompanyName();
+
+    void updateSerialNo(CfgInvoiceSettingDTO.UpdateSerialDTO dto);
+
+    void updateSerialNoById(String id, Integer no, Integer startCode);
 }

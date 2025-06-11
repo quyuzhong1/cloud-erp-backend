@@ -85,6 +85,17 @@ public class DmpThirdWarehouseInfoServiceImpl extends SuperServiceImpl<DmpThirdW
         return Boolean.TRUE;
     }
 
+    @Override
+    public List<DmpThirdWarehouseInfoEntity> listByAuthId(String authId) {
+        if (StrUtil.isNotBlank(authId)) {
+            return super.lambdaQuery()
+                    .eq(DmpThirdWarehouseInfoEntity::getAuthId, authId)
+                    .eq(DmpThirdWarehouseInfoEntity::getDisabled, Boolean.FALSE)
+                    .list();
+        }
+        return Collections.emptyList();
+    }
+
 
     /**
     * 新增修改处理数据

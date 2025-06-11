@@ -8,6 +8,7 @@
                fd. businessCode,
                lb.outstock_id outStockId,
                lb.transport_no transportNo,
+               lb.business_code businessCode,
                eb.status,
                lb.shop_id shopId,
                lb.shop_name shopName,

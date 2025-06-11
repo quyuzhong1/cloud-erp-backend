@@ -8,6 +8,7 @@ import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.baomidou.dynamic.datasource.annotation.DS;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.constant.RedisCacheConstants;
@@ -186,6 +187,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 
     @Override
     public List<DmpOutputTaskRecordDTO.TabListDTO> tabList(PermissionsDTO dto) {
+
         List<DmpOutputTaskRecordDTO.TabListDTO> result = new ArrayList<>(8);
         
         Object resultObject = redisUtil.get(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_COUNT);
@@ -311,13 +313,18 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
             redisUtil.set(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_COUNT , JSON.toJSONString(result));
             redisUtil.set(RedisCacheConstants.DMP_OUTPUT_RECORD_ALL_TIME, DateUtil.now() , 30);
     	}
-
         return result;
     }
 
+    @DS("doris")
+    @Override
+    public List<DmpOutputTaskRecordDTO.TabListDTO> dorisTabList(PermissionsDTO dto){
+    	return this.tabList(dto);
+    }
+    
     @Override
     public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> paging(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
-        DmpOutputTaskRecordDTO.PagingParamDTO params = dto.getParams();
+    	DmpOutputTaskRecordDTO.PagingParamDTO params = dto.getParams();
         params.setPermissionSql(dto.getPermissionSql());
         Page query = new Page(dto.getCurrPage(), dto.getPageSize());
         List<AdvanceQueryDTO> advanceQueryDTOList = params.getAdvanceQueryDTOList();
@@ -340,7 +347,13 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
         doOpHandleDmpPushTask(records);
         return new PagingVO<>(pageData);
     }
-
+    
+    @DS("doris")
+    @Override
+    public PagingVO<DmpOutputTaskRecordDTO.PagingDTO> dorisPaging(PagingDTO<DmpOutputTaskRecordDTO.PagingParamDTO> dto) {
+    	return this.paging(dto);
+    }
+    
     private void doOpHandleDmpPushTask(List<DmpOutputTaskRecordDTO.PagingDTO> list) {
         if (CollectionUtils.isEmpty(list)) {
             return;
@@ -750,11 +763,7 @@ public class DmpOutputTaskRecordServiceImpl extends SuperServiceImpl<DmpOutputTa
 			}
 		}
 		
-		List<String> dmpInputMongoDmpRelationList = dmpInputMongoDmpRelationService.lambdaQuery()
-				.lt(DmpInputMongoDmpRelationEntity::getUpdateTime, beforeUpdateTime)
-				.last(" limit " + size + " ")
-				.select(DmpInputMongoDmpRelationEntity::getId)
-				.list().stream().map(DmpInputMongoDmpRelationEntity::getId).collect(Collectors.toList());
+		List<String> dmpInputMongoDmpRelationList = this.getBaseMapper().getDmpRelationMoveToHistoryTable(beforeUpdateTime, size);
 		if(CollUtil.isNotEmpty(dmpInputMongoDmpRelationList)) {
 			List<List<String>> dmpPartition = Lists.partition(dmpInputMongoDmpRelationList, 50000);
 			for(List<String> dmpP : dmpPartition) {

@@ -260,7 +260,9 @@ public class VirtualTransFlowServiceImpl extends SuperServiceImpl<VirtualTransFl
             return;
         }
         //清空数据
-        baseMapper.cleanALlData();
+        if(dto.getIsClean()) {
+            baseMapper.cleanALlData();
+        }
         log.warn("清除数据完成，开始处理虚拟库存流水数据，参数:{}", dto);
         virtualTransFlowDetailService.handleAddTransFlowDetail(virtualTransFlowList);
     }

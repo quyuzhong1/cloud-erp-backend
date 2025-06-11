@@ -2,6 +2,7 @@ package com.erp.server.oms.convert;
 
 import com.erp.model.dmp.entity.DmpSoBillDetailEntity;
 import com.erp.model.oms.entity.InvoiceInfoEntity;
+import com.erp.model.oms.entity.SoB2cReceiverEntity;
 import com.sdk.third.tf.dto.NfeInvoiceDTO;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,7 +17,7 @@ public interface NfeInvoiceConverter {
     NfeInvoiceConverter INSTANCE = Mappers.getMapper(NfeInvoiceConverter.class);
 
     @Mappings({
-            @Mapping(target = "bairro",  source = "state"),
+            @Mapping(target = "bairro", source = "state"),
             @Mapping(target = "cep", source = "postalCode"),
             @Mapping(target = "cityId", source = "city"),
             @Mapping(target = "country", source = "country"),
@@ -28,6 +29,7 @@ public interface NfeInvoiceConverter {
             @Mapping(target = "rua", source = "address1"),
             @Mapping(target = "state", source = "state"),
             @Mapping(target = "ieRg", source = "registrationNo"),
+            @Mapping(target = "uf", ignore = true)
     })
     NfeInvoiceDTO.NfeClienteDTO soBillDetailEntityToNfeCliente(DmpSoBillDetailEntity dmpSoBillDetailEntity);
 
@@ -37,5 +39,20 @@ public interface NfeInvoiceConverter {
             @Mapping(target = "justificativa", source = "cancelReason"),
     })
     NfeInvoiceDTO.NfeCancelDTO invoiceInfoEntityToNfeCancel(InvoiceInfoEntity invoiceInfoEntity);
-
+    @Mappings({
+            @Mapping(target = "bairro", source = "districtName"),
+            @Mapping(target = "cep", source = "postCode"),
+            @Mapping(target = "cityId", source = "cityName"),
+            @Mapping(target = "country", source = "country"),
+            @Mapping(target = "cpfCnpj", source = "receiverTaxNo"),
+            @Mapping(target = "email", source = "email"),
+            @Mapping(target = "mobile", source = "telNumber"),
+            @Mapping(target = "name", source = "name"),
+            @Mapping(target = "numero", constant = "1"),
+            @Mapping(target = "rua", ignore = true),
+            @Mapping(target = "state", source = "provinceName"),
+            @Mapping(target = "ieRg", constant = ""),
+            @Mapping(target = "uf", ignore = true)
+    })
+    NfeInvoiceDTO.NfeClienteDTO soB2cReceiverEntityToNfeCliente(SoB2cReceiverEntity receiverEntity);
 }

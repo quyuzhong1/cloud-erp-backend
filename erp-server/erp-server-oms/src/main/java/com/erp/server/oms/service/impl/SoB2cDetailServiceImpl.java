@@ -7,6 +7,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
 import com.common.business.dto.PlatformOrderDTO;
+import com.common.business.dto.PlatformOrderDetailDTO;
 import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.enums.LogisticsPlatformEnum;
@@ -478,13 +479,16 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
                         .stream()
                         .flatMap(List::stream)
                         .collect(Collectors.toList());;
-            } else {
+            } else if (PlatformDictEnum.MERCADOLIBRE.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())
+                    || PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode().equalsIgnoreCase(mainEntity.getDictPlatform())){
+                mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSpuNo());
+            }else {
                 // 映射关系
                 mappingDTOList = listingInfoWithSkuMappingDTOMap.get(detailDTO.getPlatformSkuNo());
             }
 
             // 检查和获取映射关系
-            ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform());
+            ListingInfoWithSkuMappingDTO mappingDTO = skuMappingService.checkAndMappingDTO(mappingDTOList, detailDTO.getPlatformSpuNo(), mainEntity.getDictPlatform(),detailDTO.getPlatformSkuNo());
 
             String skuId = null == oldEntity ? "" : oldEntity.getSkuId();
             String skuNO= null == oldEntity ? "" : oldEntity.getSkuNo();
@@ -532,7 +536,15 @@ public class SoB2cDetailServiceImpl extends SuperServiceImpl<SoB2cDetailMapper, 
 
         // 其他处理
         consumerHandleDetailList(saveOrUpdateList, mainEntity, skuList);
-
+        //领星把关联不到的明细数量变更为0
+        if(PlatformDictEnum.LING_XING.getCode().equals(mainEntity.getThirdSystem())){
+            List<String> nowSourceDetailIds = dto.getDetails().stream().map(PlatformOrderDetailDTO::getSourceDetailId).collect(Collectors.toList());
+            List<SoB2cDetailEntity> notExist = oldDetailEntityList.stream().filter(v->!nowSourceDetailIds.contains(v.getSourceDetailId())).collect(Collectors.toList());
+            if(CollectionUtils.isNotEmpty(notExist)){
+                notExist.forEach(v-> v.setQty(0));
+                this.saveOrUpdateBatch(notExist);
+            }
+        }
         // 批量保存和更新
          if (!this.saveOrUpdateBatch(saveOrUpdateList)){
             throw new ServiceException(" [SoB2cDetailEntity] 订单明细批量更新或保存失败");

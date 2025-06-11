@@ -1,6 +1,7 @@
 package com.erp.rpc.tms.feign;
 
 import com.erp.model.tms.dto.LogisticsSupplierDTO;
+import com.erp.model.tms.entity.LogisticsAuthFieldEntity;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -52,4 +53,10 @@ public interface LogisticsAuthFeign {
      */
     @PostMapping("/feign/logisticsAuth/listAllChannelByOverseas")
     List<String> listAllChannelByOverseas();
+
+    /**
+     * 获取所有海外仓发货的渠道
+     */
+    @PostMapping("/feign/logisticsAuth/updateLogisticAuthFile")
+    Boolean updateLogisticAuthFile(@RequestBody List<LogisticsAuthFieldEntity> updateLogistic);
 }

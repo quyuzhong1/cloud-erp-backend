@@ -3,8 +3,6 @@ package com.erp.server.oms.controller.api;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
-import com.common.business.annotation.DataPermission;
 import com.common.business.annotation.DistributeLocker;
 import com.common.business.annotation.Idempotent;
 import com.common.business.annotation.WebAdvanceQuery;
@@ -31,26 +29,16 @@ import com.erp.model.workflow.entity.ProcessBusinessEntity;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.oms.query.FullyManagedQueryHandler;
-import com.erp.server.oms.query.SoB2cQueryHandler;
 import com.erp.server.oms.service.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.core.io.DefaultResourceLoader;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.validation.Valid;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -85,6 +73,10 @@ public class FullyManagedOrderController extends BaseController {
     private WorkflowFeign workflowFeign;
     @Resource
     private FullyManagedOrderService fullyManagedOrderService;
+
+    @Resource
+    private SoB2cRuleService soB2cRuleService;
+
     /**
      * 获取状态统计
      *
@@ -141,7 +133,7 @@ public class FullyManagedOrderController extends BaseController {
                 SoB2cEntity entity = soB2cService.getById(id);
                 if ((Objects.nonNull(logisticsRuleResult.getAutoGetTrackNo()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNo()))
                         || (Boolean.FALSE.equals(entity.getIsOutOfRangeDelivery()) && Objects.nonNull(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()) && Boolean.TRUE.equals(logisticsRuleResult.getAutoGetTrackNotOfRangeDelivery()))) {
-                    soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+                    soB2cRuleService.handleAutoSubmitDelivery(id,logisticsRuleResult.getName());
                 }
             }
         }
@@ -276,7 +268,7 @@ public class FullyManagedOrderController extends BaseController {
             Boolean isOutOfRangeDelivery = soB2cService.getById(id).getIsOutOfRangeDelivery();
             if ((Objects.nonNull(autoGetTrackNo) && Boolean.TRUE.equals(autoGetTrackNo))
                     || (Boolean.FALSE.equals(isOutOfRangeDelivery) && Objects.nonNull(autoGetTrackNotOfRangeDelivery) && Boolean.TRUE.equals(autoGetTrackNotOfRangeDelivery))) {
-                soB2cService.getLogisticsCode(id,  Boolean.TRUE);
+                soB2cRuleService.handleAutoSubmitDelivery(id, logisticsRuleResult.getName());
             }
         }
 

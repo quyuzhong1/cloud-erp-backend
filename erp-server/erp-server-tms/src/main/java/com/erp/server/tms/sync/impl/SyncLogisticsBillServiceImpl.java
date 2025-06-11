@@ -1,11 +1,23 @@
 package com.erp.server.tms.sync.impl;
 
+import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjectUtil;
+import com.alibaba.fastjson.JSON;
+import com.common.business.dto.ShudiyunB2cOrderDTO;
+import com.common.business.enums.SourceTypeEnum;
+import com.common.business.enums.SyncOperateEnum;
+import com.erp.model.dmp.dto.DmpSoLogisticsDTO;
+import com.erp.model.dmp.dto.DmpSoLogisticsDetailDTO;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
@@ -31,6 +43,9 @@ import com.erp.server.tms.service.LogisticsChannelService;
 import com.erp.server.tms.service.LogisticsSupplierService;
 import com.erp.server.tms.service.TmsPushMsgService;
 import com.erp.server.tms.sync.SyncLogisticsBillService;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.stereotype.Service;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
@@ -119,38 +134,65 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
         return BeanUtil.beanToMap(shudiyunB2cOrderDTO);
     }
 
+    @Override
+    public Map<String, Object> syncNewDataToSdyFieldHandler(LogisticsBillEntity entity,
+                                                         LogisticsBillDetailEntity logisticsBillDetailEntity,
+                                                         String operate,
+                                                         Map<String, Pair<String, String>> logisticInfoMaps) {
+
+        DmpSoLogisticsDTO.ViewDTO viewDto = new DmpSoLogisticsDTO.ViewDTO();
+
+        String thirdLogisticsId = entity.getId();
+		viewDto.setThirdLogisticsId(thirdLogisticsId);
+        String bizNo = CharSequenceUtil.isBlank(entity.getTransportNo()) ? logisticsBillDetailEntity.getTrackNo() : entity.getTransportNo();
+        viewDto.setThirdLogisticsCode(bizNo);
+        viewDto.setThirdCreateTime(entity.getCreateTime());
+        viewDto.setThirdUpdateTime(entity.getUpdateTime());
+        viewDto.setDeliveryTime(entity.getDeliveryTime());
+        viewDto.setOutstockCode(entity.getOutstockCode());
+        viewDto.setSignTime(logisticsBillDetailEntity.getSignTime());
+
+        String logisticCompanyCode = "";
+        String logisticCompany = "";
+        Pair<String, String> pair = logisticInfoMaps.get(entity.getId());
+        if(pair != null) {
+        	logisticCompanyCode = pair.getKey();
+        	logisticCompany = pair.getValue();
+        }
+        
+        if (CharSequenceUtil.isBlank(logisticCompanyCode)) {
+        	viewDto.setLogisticCompanyCode("无");
+        } else {
+        	viewDto.setLogisticCompanyCode(logisticCompanyCode);
+        }
+        
+        if (CharSequenceUtil.isBlank(logisticCompany)) {
+        	viewDto.setLogisticCompanyName("无");
+        } else {
+        	viewDto.setLogisticCompanyName(logisticCompany);
+        }
+        
+        DmpSoLogisticsDetailDTO.ViewDTO detail = new DmpSoLogisticsDetailDTO.ViewDTO();
+        detail.setThirdLogisticsId(thirdLogisticsId);
+        detail.setThirdLogisticsDetailId(logisticsBillDetailEntity.getId());
+        detail.setThirdDetailCreateTime(logisticsBillDetailEntity.getCreateTime());
+        detail.setThirdDetailUpdateTime(logisticsBillDetailEntity.getUpdateTime());
+        detail.setTrackStatus(LogisticTrackStatusEnum.getName(logisticsBillDetailEntity.getTrackStatus()));
+        detail.setDataStatus(new ShudiyunB2cOrderDTO().sdyStatusHandle(operate, entity.getVersion(), logisticsBillDetailEntity.getVersion()));
+
+        viewDto.setDetailList(Arrays.asList(detail));
+        return BeanUtil.beanToMap(viewDto);
+    }
 
     @Override
     public void syncDataToSdy(LogisticsBillEntity entity,
                               List<LogisticsBillDetailEntity> detailEntityList,
                               String operate,
-                              Map<String, Pair<String, String>> logisticInfoMaps) {
+                              Map<String, Pair<String, String>> logisticInfoMaps , boolean isHistory , boolean isNewQuerySync) {
 
         for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
             String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
-            if (CharSequenceUtil.isBlank(sourceCode)) {
-                continue;
-            }
-            TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
-            tmsPushMsgEntity.setTargetPlatform(DmpBasicSystemCodeEnum.SDY.getCode());
-            tmsPushMsgEntity.setSourceType(SourceTypeEnum.SDY_LOGISTICS_BILL.getCode());
-            tmsPushMsgEntity.setSourceId(billDetailEntity.getId());
-            tmsPushMsgEntity.setSourceCode(sourceCode);
-            tmsPushMsgEntity.setSyncOperate(operate);
-            tmsPushMsgEntity.setPushData(JSON.toJSONString(this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps)));
-            tmsPushMsgService.save(tmsPushMsgEntity);
-        }
-    }
-
-
-    @Override
-    public void syncDataToSdy(LogisticsBillEntity entity,
-                              List<LogisticsBillDetailEntity> detailEntityList,
-                              String operate) {
-
-        for (LogisticsBillDetailEntity billDetailEntity : detailEntityList) {
-            String sourceCode = CharSequenceUtil.isBlank(entity.getTransportNo()) ? billDetailEntity.getTrackNo() : entity.getTransportNo();
-            if (CharSequenceUtil.isBlank(sourceCode)) {
+            if (CharSequenceUtil.isBlank(sourceCode) && !isNewQuerySync) {
                 continue;
             }
             TmsPushMsgEntity tmsPushMsgEntity = new TmsPushMsgEntity();
@@ -160,9 +202,17 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
             tmsPushMsgEntity.setSourceCode(sourceCode);
             tmsPushMsgEntity.setSyncOperate(operate);
             Map<String, Object> map = new HashMap<>();
-            map.put(DmpOutputConstant.IS_QUERY_SYNC, Boolean.TRUE);
-            map.put("detailId", billDetailEntity.getId());
-            map.put("operate", operate);
+            if(!SyncOperateEnum.OPERATE_DELETE.getCode().equals(operate) && !isHistory) {
+            	map.put("isQuerySync", Boolean.TRUE);
+                map.put("detailId", billDetailEntity.getId());
+                map.put("operate", operate);
+            }else {
+            	if(isNewQuerySync) {
+            		map = this.syncNewDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps);
+            	}else {
+            		map = this.syncDataToSdyFieldHandler(entity, billDetailEntity, operate, logisticInfoMaps);
+            	}
+            }
             tmsPushMsgEntity.setPushData(JSON.toJSONString(map));
             tmsPushMsgService.save(tmsPushMsgEntity);
         }

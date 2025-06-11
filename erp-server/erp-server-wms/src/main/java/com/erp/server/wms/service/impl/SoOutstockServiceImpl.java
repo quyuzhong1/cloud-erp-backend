@@ -2958,6 +2958,11 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             soOutstock.setSellerId(Objects.nonNull(customer) ? customer.getSellerId(): CharSequenceUtil.EMPTY);
             soOutstock.setSalesDeptId(Objects.nonNull(customer) ? customer.getSalesDeptId() : CharSequenceUtil.EMPTY);
         }
+        //过滤出库明细中应发和实发为0的数据
+        detailList = detailList.stream().filter(d -> Objects.nonNull(d.getActualQty()) && d.getActualQty() > 0).collect(Collectors.toList());
+        if (CollectionUtils.isEmpty(detailList)) {
+            return "";
+        }
         Boolean addResult = super.save(soOutstock);
         if (addResult) {
             soOutstockDetailService.add(soOutstock.getId(), detailList, OrderTypeEnum.B2C.getCode(), soOutstock);
@@ -3434,7 +3439,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             }
             //待提交
             if (ApproveStatusEnum.WAIT_SUBMIT.equals(approveStatus)) {
-                soOutstockService.submit(Collections.singletonList(id));
+                soOutstockService.submitAndApprove(id);
             }
             //审核中
             if (ApproveStatusEnum.APPROVE_ING.equals(approveStatus)) {

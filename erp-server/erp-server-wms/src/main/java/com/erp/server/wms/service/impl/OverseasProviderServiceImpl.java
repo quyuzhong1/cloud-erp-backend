@@ -51,6 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -122,6 +123,13 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
     private void fillList(List<OverseasProviderDTO.ListDTO> list) {
         for (OverseasProviderDTO.ListDTO listDTO : list) {
             listDTO.setAuthStatusName(AuthStatusEnum.getName(listDTO.getAuthStatus()));
+            Map<String,Object> authMap = listDTO.getAuthJson();
+            if (Objects.nonNull(authMap) && authMap.containsKey("refreshExpireIn")){
+                listDTO.setAuthExpireTime(LocalDateTime.parse(
+                        (String)authMap.get("refreshExpireIn"),
+                        DateTimeFormatter.ISO_LOCAL_DATE_TIME
+                ));
+            }
         }
     }
 
@@ -160,6 +168,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
             entity.setAuthJson(dto.getAuthJson());
             entity.setEnableDate(dto.getEnabledDate());
             this.updateById(entity);
+            dmpTaskFeign.createThirdWarehouseTask(entity);
         }
         return result;
     }
@@ -177,6 +186,7 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         //删除数据同步任务
         String platformCode = this.getPlatFormCodeById(id);
         dmpTaskFeign.removePlatformTask(new PlatformTaskDTO.AddDTO(id,null, platformCode));
+        dmpTaskFeign.removeThirdWarehouseTask(entity);
         return true;
     }
 
@@ -247,6 +257,9 @@ public class OverseasProviderServiceImpl extends SuperServiceImpl<OverseasProvid
         Map<String, Object> authJson = entity.getAuthJson();
         authorizeViewDTO.setAppKey(authJson.get("appKey").toString());
         authorizeViewDTO.setAppToken(authJson.get("appToken").toString());
+        authorizeViewDTO.setEmail(authJson.getOrDefault("email","").toString());
+        authorizeViewDTO.setDomain(authJson.getOrDefault("domain","").toString());
+        authorizeViewDTO.setToken(authJson.getOrDefault("token","").toString());
         return authorizeViewDTO;
     }
 

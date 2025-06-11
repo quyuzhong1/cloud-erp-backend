@@ -48,8 +48,7 @@
             condition_field = #{conditionCode}
     </select>
 
-
-    <select id="listAllCondition" resultType="com.erp.model.oms.dto.CfgConditionDTO$ListDTO">
+    <select id="listConditionByType" resultType="com.erp.model.oms.dto.CfgConditionDTO$ListDTO">
         SELECT
             condition_field ,
             condition_field_name,
@@ -63,40 +62,15 @@
             remote_label
         FROM cfg_condition
         WHERE is_deleted=FALSE
-        ORDER BY index ASC
-    </select>
-    <select id="listDeclareCondition" resultType="com.erp.model.oms.dto.CfgConditionDTO$ListDTO">
-        SELECT
-            condition_field ,
-            condition_field_name,
-            request_method,
-            controls,
-            api_url,
-            param,
-            label,
-            value,
-            search_key,
-            remote_label
-        FROM cfg_condition
-        WHERE is_deleted=FALSE and condition_field in ('dictPlatform','shop','destCountry','skuNo','logisticsChannelId')
-        ORDER BY index ASC
-    </select>
-
-    <!-- 订单处理条件下拉 -->
-    <select id="listOrderHandleCondition" resultType="com.erp.model.oms.dto.CfgConditionDTO$ListDTO">
-        SELECT
-            condition_field ,
-            condition_field_name,
-            request_method,
-            controls,
-            api_url,
-            param,
-            label,
-            value,
-            search_key,
-            remote_label
-        FROM cfg_condition
-        WHERE is_deleted=FALSE and condition_field in ('dictPlatform','shop','destCountry','logisticsChannelId')
+          <if test="codeList != null and codeList.size > 0">
+              and condition_field in
+              <foreach collection="codeList" item="item" open="(" close=")" separator=",">
+                  #{item}
+              </foreach>
+          </if>
+        <if test="sourceType != null and sourceType != ''">
+            and source_type = #{sourceType}
+        </if>
         ORDER BY index ASC
     </select>
 
