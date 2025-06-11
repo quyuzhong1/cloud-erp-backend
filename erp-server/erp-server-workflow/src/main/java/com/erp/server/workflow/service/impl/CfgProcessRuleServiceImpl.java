@@ -339,24 +339,6 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
      * 新增修改处理数据
      */
     private List<CfgProcessRuleEntity> handleData(String cfgProcessId, List<CfgProcessRuleDTO.AddOrUpdateDTO> addDTO) {
-        // TODO 验证数据 & 数据赋值
-        // 校验 type=sysProcess 的数量是否大于1
-        long sysProcessCount = addDTO.stream()
-                .filter(dto -> CfgProcessRuleTypeEnum.ERPPROCESS.getCode().equals(dto.getType()))
-                .count();
-        if (sysProcessCount > 1) {
-            //TODO 单据name
-            throw new ServiceException("{}已配置流程，不可重复配置");
-        }
-
-        // 校验 type=fsProcess 的 processFieldMapDTOList 是否为空
-        addDTO.stream()
-                .filter(dto -> CfgProcessRuleTypeEnum.FSPROCESS.getCode().equals(dto.getType()))
-                .forEach(dto -> {
-                    if (CollectionUtils.isEmpty(dto.getProcessFieldMapDTOList())) {
-                        throw new ServiceException("字段配置必须填写");
-                    }
-                });
         //统计默认条件数
         AtomicInteger count = new AtomicInteger();
         // 转换DTO为Entity
