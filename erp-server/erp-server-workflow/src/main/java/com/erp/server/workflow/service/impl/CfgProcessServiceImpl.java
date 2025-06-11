@@ -20,6 +20,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
@@ -265,7 +266,8 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         String code = cfgProcessRuleEntity.getProcessDefinitionId();
         //
         //查询userid
-        String userId = sysUserFeign.getUserByThird("fs",dto.getUserId()).getThirdUserId();
+        List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("fs", Collections.singletonList(dto.getUserId()));
+        String userId = dtoList.get(0).getThirdUserId();
         //查询字段映射表
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, dto.getBusinessId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
@@ -275,13 +277,16 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
+        try {
         ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(dto.getRuleType()).name());
         JSONArray objects = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
         List<ApproveTaskDetailDTO.AddDTO> addDTOS = handler.generatePushDetailDTO(objects, fieldMapList, dto.getVariablesMap());
+        //验证addDTOS
+        log.info("三方查询生成明细创建失败：",JSONUtil.toJsonStr(addDTOS));
         //插入记录
         ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
         addDTO.setDetailList(addDTOS);
-        approveTaskInfoService.add(addDTO);
+
         String form = JSONUtil.toJsonStr(objects);
         CreateInstanceReq req = CreateInstanceReq.newBuilder()
                 .instanceCreate(InstanceCreate.newBuilder()
@@ -291,7 +296,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                         .build())
                 .build();
 
-        try {
             String instanceCode = fsService.createInstance(req);
             //生成三方查询记录
             addDTO.setThirdInstanceId(instanceCode);
@@ -300,7 +304,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             addDTO.setBussinessId(dto.getBusinessId());
             approveTaskInfoService.add(addDTO);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("飞书创建审批实例失败："+e);
         }
     }
 }
