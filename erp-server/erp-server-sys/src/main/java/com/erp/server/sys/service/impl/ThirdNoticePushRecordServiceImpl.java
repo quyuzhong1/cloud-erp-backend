@@ -364,8 +364,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 }
             }
         }
-        //消息体
-        content = content +  StrUtil.format(NoticeMsgConstant.FS_WLR_SETTING_CONTENT,waitHandle,handleIng, now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        String msgContent = String.format(NoticeMsgConstant.FS_WLR_SETTING_CONTENT,waitHandle,handleIng, LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        content = content + msgContent;
         foreachSendByNoticeMethod(noticeEntity, userIdList, now, title, content, delayLevel);
     }
 
