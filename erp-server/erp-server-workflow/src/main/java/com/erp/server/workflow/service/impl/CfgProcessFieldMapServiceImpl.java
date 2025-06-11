@@ -186,7 +186,6 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         //过滤addDto，thirdField为空的数据
         List<CfgProcessFieldMapDTO.AddOrUpdateDTO> thirdFieldNotEmptyDTO = addDTO.stream().filter(dto -> StrUtil.isNotBlank(dto.getThirdFieldId())).collect(Collectors.toList());
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
-        Map<String, CfgQueryOptionEntity> fieldToEntityMap = cfgQueryOptionEntities.stream().collect(Collectors.toMap(CfgQueryOptionEntity::getConditionField, e -> e));
         //筛选出eq(CfgQueryOptionEntity::getIsRequired, true)
         List<CfgQueryOptionEntity> requiredList = cfgQueryOptionEntities.stream().filter(cfgQueryOptionEntity -> cfgQueryOptionEntity.getIsRequired()).collect(Collectors.toList());
         List<String> fieldList = requiredList.stream().map(CfgQueryOptionEntity::getConditionField).collect(Collectors.toList());

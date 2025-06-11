@@ -1,6 +1,7 @@
 package com.erp.server.workflow.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONArray;
@@ -20,6 +21,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
+import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.*;
 import com.erp.model.workflow.enums.CfgProcessRuleTypeEnum;
@@ -98,12 +100,9 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     public BaseResultDTO.AddDTO add(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
         //
-        CfgProcessEntity one = this.getOne(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
-        if (null != one){
-            CfgProcessRuleEntity rule = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getCfgProcessId, one.getId()).eq(CfgProcessRuleEntity::getType, CfgProcessRuleTypeEnum.ERPPROCESS.getCode()).eq(CfgProcessRuleEntity::getIsDeleted, false));
-            if (ObjectUtil.isNotEmpty(rule)){
-                throw new ServiceException("{}已配置流程，不可重复配置", CfgQueryOptionBussinessKeyEnum.getByCode(one.getBussinessKey()))   ;
-            }
+        List<CfgProcessEntity> list = this.list(new LambdaQueryWrapper<CfgProcessEntity>().eq(CfgProcessEntity::getBussinessKey, dto.getBussinessKey()).eq(CfgProcessEntity::getIsDeleted, false));
+        if (CollUtil.isNotEmpty(list) && list.size()>0){
+            throw new ServiceException("{}已配置流程，不可重复配置", CfgQueryOptionBussinessKeyEnum.getByCode(dto.getBussinessKey())!=null ?  CfgQueryOptionBussinessKeyEnum.getByCode(dto.getBussinessKey()).getName():dto.getBussinessKey());
         }
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
@@ -189,18 +188,56 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void delete(List<String> ids) {
-        // 操作日志 TODO删除返回主表，然后根据主表id判断下是否存在rule，不存在主表同时删除
-        cfgProcessRuleService.delete(ids);
-        List<CfgProcessRuleEntity> processRuleEntityList = cfgProcessRuleService.list(new LambdaQueryWrapper<CfgProcessRuleEntity>().in(CfgProcessRuleEntity::getId, ids).eq(CfgProcessRuleEntity::getIsDeleted, false));
-        Map<String, List<CfgProcessRuleEntity>> collect = processRuleEntityList.stream().collect(Collectors.groupingBy(CfgProcessRuleEntity::getCfgProcessId));
-        ArrayList<String> processIds = new ArrayList<>();
-        collect.forEach((k, v) -> {
-            if (v.size()==0){
-                processIds.add(k);
-            }
-        });
-        if (processIds.size()>0){
-            cfgProcessRuleService.removeByIds(processIds);
+        if (ObjectUtil.isEmpty(ids)) {
+            return;
+        }
+
+        // 获取规则列表
+        List<CfgProcessRuleEntity> processRuleEntityList = cfgProcessRuleService.list(
+                new LambdaQueryWrapper<CfgProcessRuleEntity>()
+                        .in(CfgProcessRuleEntity::getId, ids)
+                        .eq(CfgProcessRuleEntity::getIsDeleted, false)
+        );
+
+        if (ObjectUtil.isEmpty(processRuleEntityList)) {
+            return;
+        }
+
+        // 删除规则
+        if (!cfgProcessRuleService.delete(ids)) {
+            throw new ServiceException("删除规则失败");
+        }
+
+        // 获取需要删除的流程配置ID
+        List<String> processIds = processRuleEntityList.stream()
+                .map(CfgProcessRuleEntity::getCfgProcessId)
+                .distinct()
+                .collect(Collectors.toList());
+
+        // 检查哪些流程配置没有规则了
+        List<CfgProcessRuleEntity> remainingRules = cfgProcessRuleService.list(
+                new LambdaQueryWrapper<CfgProcessRuleEntity>()
+                        .in(CfgProcessRuleEntity::getCfgProcessId, processIds)
+                        .eq(CfgProcessRuleEntity::getIsDeleted, false)
+        );
+
+        Set<String> remainingProcessIds = remainingRules.stream()
+                .map(CfgProcessRuleEntity::getCfgProcessId)
+                .collect(Collectors.toSet());
+
+        List<String> processesToDelete = processIds.stream()
+                .filter(id -> !remainingProcessIds.contains(id))
+                .collect(Collectors.toList());
+
+        if (!processesToDelete.isEmpty()) {
+            super.removeByIds(processesToDelete);
+            // 添加操作日志
+            operateLogService.addModuleOperateLog(
+                    String.format("删除流程配置，ID：%s", String.join(",", processesToDelete)),
+                    ModuleTypeEnum.CFG_PROCESS.getCode(),
+                    null,
+                    "删除操作"
+            );
         }
     }
 
@@ -265,7 +302,8 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         String code = cfgProcessRuleEntity.getProcessDefinitionId();
         //
         //查询userid
-        String userId = sysUserFeign.getUserByThird("fs",dto.getUserId()).getThirdUserId();
+        List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("fs", Collections.singletonList(dto.getUserId()));
+        String userId = dtoList.get(0).getThirdUserId();
         //查询字段映射表
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, dto.getBusinessId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
@@ -275,13 +313,16 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
         JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
+        try {
         ProcessFormHandler handler = processFormFactory.getAssembleFormHandler(CfgProcessRuleTypeEnum.getByCode(dto.getRuleType()).name());
         JSONArray objects = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
         List<ApproveTaskDetailDTO.AddDTO> addDTOS = handler.generatePushDetailDTO(objects, fieldMapList, dto.getVariablesMap());
+        //验证addDTOS
+        log.info("三方查询生成明细创建失败：",JSONUtil.toJsonStr(addDTOS));
         //插入记录
         ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
         addDTO.setDetailList(addDTOS);
-        approveTaskInfoService.add(addDTO);
+
         String form = JSONUtil.toJsonStr(objects);
         CreateInstanceReq req = CreateInstanceReq.newBuilder()
                 .instanceCreate(InstanceCreate.newBuilder()
@@ -291,7 +332,6 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
                         .build())
                 .build();
 
-        try {
             String instanceCode = fsService.createInstance(req);
             //生成三方查询记录
             addDTO.setThirdInstanceId(instanceCode);
@@ -300,7 +340,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             addDTO.setBussinessId(dto.getBusinessId());
             approveTaskInfoService.add(addDTO);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("飞书创建审批实例失败："+e);
         }
     }
 }

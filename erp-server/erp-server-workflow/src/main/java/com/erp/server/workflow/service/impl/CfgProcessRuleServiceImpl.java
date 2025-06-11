@@ -137,7 +137,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             }
         }
         if (StrUtil.isNotBlank(errmsg)) {
-
+            throw new ServiceException(errmsg+"流程已被单据使用，不可编辑");
         }
         // 提取 addDTO 中的 id
         Set<String> addDTOIds = addDTO.stream()
@@ -209,7 +209,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void delete(List<String> ids) {
+    public boolean delete(List<String> ids) {
         //删除执行条件
         List<CfgProcessRuleEntity> processRuleEntityList = this.list(new LambdaQueryWrapper<CfgProcessRuleEntity>().in(CfgProcessRuleEntity::getId, ids).eq(CfgProcessRuleEntity::getIsDeleted, false));
         if (CollUtil.isEmpty(processRuleEntityList)) {
@@ -278,14 +278,24 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
 //                throw new ServiceException("流程已被单据使用，不可删除");
 //            }
 //        });
-        removeByIds(ids);
-        cfgProcessExpService.delete(ids);
-        cfgProcessFieldMapService.delete(ids);
+        if (CollUtil.isNotEmpty(ids)) {
+            try {
+                removeByIds(ids);
+                cfgProcessExpService.delete(ids);
+                cfgProcessFieldMapService.delete(ids);
+            } catch (Exception e) {
+                log.info("删除流程设置执行条件相关数据失败, ids={}", ids, e);
+                throw new ServiceException("删除流程设置执行条件相关数据失败：" + e.getMessage());
+            }
+        } else {
+            log.info("删除流程设置执行条件相关数据时，传入的ids为空");
+        }
         processRuleEntityList.forEach(processRuleEntity -> {
             // 操作日志
             String msg = StrUtil.format("删除【{}】流程设置执行条件", UserContext.getDefaultLoginUser().getUserName(), "流程设置执行条件", "");
             operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_PROCESS.getCode(), processRuleEntity.getCfgProcessId(), "删除操作");
         });
+        return false;
     }
 
     @Override
@@ -329,24 +339,6 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
      * 新增修改处理数据
      */
     private List<CfgProcessRuleEntity> handleData(String cfgProcessId, List<CfgProcessRuleDTO.AddOrUpdateDTO> addDTO) {
-        // TODO 验证数据 & 数据赋值
-        // 校验 type=sysProcess 的数量是否大于1
-        long sysProcessCount = addDTO.stream()
-                .filter(dto -> CfgProcessRuleTypeEnum.ERPPROCESS.getCode().equals(dto.getType()))
-                .count();
-        if (sysProcessCount > 1) {
-            //TODO 单据name
-            throw new ServiceException("{}已配置流程，不可重复配置");
-        }
-
-        // 校验 type=fsProcess 的 processFieldMapDTOList 是否为空
-        addDTO.stream()
-                .filter(dto -> CfgProcessRuleTypeEnum.FSPROCESS.getCode().equals(dto.getType()))
-                .forEach(dto -> {
-                    if (CollectionUtils.isEmpty(dto.getProcessFieldMapDTOList())) {
-                        throw new ServiceException("字段配置必须填写");
-                    }
-                });
         //统计默认条件数
         AtomicInteger count = new AtomicInteger();
         // 转换DTO为Entity
