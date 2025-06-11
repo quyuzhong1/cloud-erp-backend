@@ -235,7 +235,7 @@ public class CfgRuleInvoiceServiceImpl extends SuperServiceImpl<CfgRuleInvoiceMa
         CfgInvoiceSettingDTO.RuleMatchDTO result = this.getRuleInvoiceMatchResult(map);
         Boolean isPass = Objects.nonNull(result) && Objects.nonNull(result.getIsPass()) && result.getIsPass() ? Boolean.TRUE : Boolean.FALSE;
         //匹配通过修改销售订单开票状态
-        String nfeInvoiceStatus = entity.getNfeInvoiceStatus();
+        String nfeInvoiceStatus = CharSequenceUtil.isNotBlank(entity.getNfeInvoiceStatus()) ? entity.getNfeInvoiceStatus() : CharSequenceUtil.EMPTY;
         if (isPass) {
             if (CharSequenceUtil.isBlank(entity.getNfeInvoiceStatus()) || SoB2cNfeStatusEnum.PENDING.getCode().equals(entity.getNfeInvoiceStatus()) || SoB2cNfeStatusEnum.NOT_NEED_INVOICE.getCode().equals(entity.getNfeInvoiceStatus())){
                 nfeInvoiceStatus = SoB2cNfeStatusEnum.PENDING.getCode();
