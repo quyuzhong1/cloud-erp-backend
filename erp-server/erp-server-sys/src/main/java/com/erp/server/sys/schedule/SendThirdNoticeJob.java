@@ -39,7 +39,7 @@ public class SendThirdNoticeJob {
         XxlJobHelper.log("====SendThirdNoticeJob 开始任务=====");
         long start = System.currentTimeMillis();
 
-//        thirdNoticePushRecordService.sendThirdNoticeJob();
+        thirdNoticePushRecordService.sendThirdNoticeJob();
 
         long end = System.currentTimeMillis();
         XxlJobHelper.log("主线程花费时间：{}", (end - start));

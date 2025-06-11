@@ -186,7 +186,7 @@ public class CfgApproveSyncSendHandler {
                         newRecord.setErrorReason("");
                         newRecord.setStatus(ApproveSyncRecordStatusEnum.SUCCESS.getCode());
                         newRecord.setMessageId(messageId);
-                        approveSyncRecordService.save(newRecord);
+                        list.add(newRecord);
                     }
                 }
                 if(CollUtil.isNotEmpty(list)){
