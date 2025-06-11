@@ -57,8 +57,10 @@
         FROM virtual_adjust va
         LEFT JOIN virtual_adjust_detail vad on vad.main_id = va.id and vad.is_deleted = false
         <where>
-            ${params.sqlMap.default}
-            and  va.is_deleted = false
+            va.is_deleted = false
+            <if test="params.sqlMap != null and params.sqlMap.default != null">
+                and ${params.sqlMap.default}
+            </if>
             <if test="params.permissionSql != null and params.permissionSql != ''">
                 ${params.permissionSql}
             </if>

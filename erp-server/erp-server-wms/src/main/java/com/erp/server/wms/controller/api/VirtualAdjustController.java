@@ -1,9 +1,9 @@
 package com.erp.server.wms.controller.api;
 
 
-import com.erp.model.tms.dto.InitFirstMileAllocationDTO;
+import com.common.business.annotation.WebAdvanceQuery;
+import com.erp.server.wms.query.VirtualAdjustQueryHandler;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +18,6 @@ import com.common.core.controller.BaseController;
 import com.erp.server.wms.service.VirtualAdjustService;
 import com.common.core.controller.vo.ApiResult;
 import com.common.business.vo.PagingVO;
-import com.common.business.dto.base.*;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
@@ -102,6 +101,7 @@ public class VirtualAdjustController extends BaseController {
             menuCode = "wms:virtualAdjust:paging",
             tableAlias = "va"
     )
+    @WebAdvanceQuery(handler = VirtualAdjustQueryHandler.class)
     public ApiResult<PagingVO<VirtualAdjustDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<VirtualAdjustDTO.PagingParamDTO> dto) {
         return success(virtualAdjustService.paging(dto));
     }

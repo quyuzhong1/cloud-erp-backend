@@ -1,18 +1,12 @@
 package com.erp.server.wms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.text.CharSequenceUtil;
-import com.alibaba.excel.EasyExcel;
-import com.alibaba.excel.exception.ExcelCommonException;
 import com.common.business.enums.*;
 import com.common.business.vo.LoginUser;
 
 import cn.hutool.core.util.StrUtil;
 import com.common.business.dto.base.BaseResultDTO;
 import com.erp.model.scm.enums.ModuleTypeEnum;
-import com.erp.model.tms.dto.InventorySkuCostDTO;
-import com.erp.model.tms.dto.InventorySkuCostDetailDTO;
-import com.erp.model.tms.dto.excel.InventorySkuCostDetailExcelDTO;
 import com.erp.model.wms.dto.VirtualAdjustDetailDTO;
 import com.erp.model.wms.dto.inventory.InventoryBatchUnApproveDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
@@ -22,7 +16,6 @@ import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
-import com.erp.server.wms.listener.VirtualAdjustDetailExcelListener;
 import com.erp.server.wms.mapper.VirtualAdjustMapper;
 import com.erp.server.wms.service.VirtualAdjustDetailService;
 import com.erp.server.wms.service.VirtualAdjustService;
@@ -54,8 +47,6 @@ import com.common.business.vo.PagingVO;
 import com.common.business.dto.base.*;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -65,7 +56,6 @@ import java.util.stream.Collectors;
 import java.util.*;
 import com.common.core.utils.*;
 import com.common.core.enums.ApiError;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import static com.common.business.enums.FileTaskEventEnum.EXPORT_WMS_VIRTUAL_ADJUST_REPORT;
@@ -97,8 +87,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
     @Override
     public BaseResultDTO.AddDTO add(VirtualAdjustDTO.AddDTO addDTO) {
         VirtualAdjustEntity virtualAdjustEntity = new VirtualAdjustEntity();
-        BeanMapperUtils.copy(addDTO, virtualAdjustEntity);
-
+        BeanUtil.copyProperties(addDTO,virtualAdjustEntity,"approveStatus");
         // 数据处理
         handleData(virtualAdjustEntity);
 
@@ -510,7 +499,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         VirtualAdjustEntity virtualAdjustEntity = super.getByIdOpt(id).orElseThrow(()->new ServiceException("未找到虚拟仓调整单主单数据"));
         VirtualAdjustDTO.ViewDTO data = BeanMapperUtils.map(VirtualAdjustDTO.ViewDTO.class, virtualAdjustEntity);
         // 数据填充处理
-        fillOne(data);
+        fillOne(data, virtualAdjustEntity);
         List<VirtualAdjustDetailEntity> detailEntityList = virtualAdjustDetailService.listByMainIdList(Collections.singletonList(id));
         List<VirtualAdjustDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(VirtualAdjustDetailDTO.ViewDTO.class, detailEntityList);
         detailList.forEach(e -> {
@@ -540,11 +529,13 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
             throw new ServiceException(result.getMsg());
         }
     }
-    private void fillOne(VirtualAdjustDTO.ViewDTO data) {
+    private void fillOne(VirtualAdjustDTO.ViewDTO data, VirtualAdjustEntity virtualAdjustEntity) {
         if (ObjectUtil.isEmpty(data)) {
             return;
         }
-        data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
+        data.setApproveStatus(virtualAdjustEntity.getApproveStatus().getStatus());
+        data.setApproveStatusName(virtualAdjustEntity.getApproveStatus().getName());
+        data.setInvalidStatusName(InvalidStatusEnum.getName(virtualAdjustEntity.getInvalidStatus()));
     }
 
     /**
@@ -600,7 +591,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         for(VirtualAdjustDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            // TODO 其他如需要显示名称的字段赋值
+            data.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(data.getDictInventoryStatus()));
         }
     }
     /**
