@@ -54,7 +54,7 @@
             and lb.order_type = 'firstMile'
         </if>
         <if test="query.trackQueryMode != null and query.trackQueryMode != ''">
-            and lbd.track_query_mode = #{query.trackQueryMode}
+            and (lc.track_query_mode = #{query.trackQueryMode} or lc.track_query_mode is NULL)
         </if>
         <if test="query.registerStatus != null">
             and lbd.register_status = #{query.registerStatus}
