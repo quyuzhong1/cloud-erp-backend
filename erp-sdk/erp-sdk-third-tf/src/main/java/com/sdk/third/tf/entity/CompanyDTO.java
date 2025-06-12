@@ -10,6 +10,8 @@ public class CompanyDTO {
 
     @Alias("ultimo_numero_nfe")
     private String ultimoNumeroNfe;
+    @Alias("token_empresa")
+    private String tokenEmpresa;
     @Alias("token_plataforma")
     private String tokenPlataforma;
     @Alias("telefone")
