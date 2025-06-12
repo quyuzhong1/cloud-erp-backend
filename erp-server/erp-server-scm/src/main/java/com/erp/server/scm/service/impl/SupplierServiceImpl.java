@@ -1415,7 +1415,7 @@ public class SupplierServiceImpl extends SuperServiceImpl<SupplierMapper, Suppli
             exportExcel.setPayMethodName(payMethodName);
             //付款条件
             String paymentCondition = item.getPaymentCondition();
-            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getId().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
+            String paymentConditionName = paymentConditionList.stream().filter(obj -> obj.getCode().equals(paymentCondition)).findFirst().flatMap(obj -> Optional.ofNullable(obj.getName())).orElse("");
             exportExcel.setPaymentConditionName(paymentConditionName);
             //采购员
             exportExcel.setPurchaseUserName(item.getPurchaseUserName());
