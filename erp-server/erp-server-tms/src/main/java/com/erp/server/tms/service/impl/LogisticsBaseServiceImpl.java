@@ -75,6 +75,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     private TikTokFullService tikTokFullService;
     @Resource
     private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     public List<BatchResultDTO> syncLogisticsChannel(String platform) {
@@ -271,6 +273,12 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         if (CollectionUtils.isEmpty(mapList)) {
             return;
         }
+        if (CollectionUtils.isEmpty(records)) {
+            return;
+        }
+        //查询过滤单号开头配置
+        List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList("trackNoFilterPrefix"));
+        List<String> prefixList = dictList.stream().map(DictBasicEntity::getCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         //获取映射信息
         List<String> channelIds = records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
         List<LogisticsThirdChannelRefEntity> refEntityList = logisticsThirdChannelRefService.listByChannelIds(channelIds);
@@ -279,7 +287,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         //跟据类型判断走小包、海运
         ApiResult<List<RegisterResponseVO>> listApiResult;
         if (CharSequenceUtil.equals(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode(),transportType)) {
-            listApiResult = processRegisterExpressDeliveryData(mapList, records, service);
+            listApiResult = processRegisterExpressDeliveryData(mapList, records, service,prefixList);
         } else {
             listApiResult = processRegisterOceanData(mapList,records,service);
         }
@@ -334,20 +342,22 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     }
 
     /**
-     * @description: 获取快递运单轨迹
-     * @author Will
-     * @date: 2024/4/8 14:44
      * @param mapList
      * @param records
      * @param service
-     * @return ApiResult<List<LogisticsTrackEntity>>
+     * @param prefixList
+     * @return ApiResult<List < LogisticsTrackEntity>>
+     * @description: 获取快递运单轨迹
+     * @author Will
+     * @date: 2024/4/8 14:44
      */
-    private ApiResult<List<RegisterResponseVO>> processRegisterExpressDeliveryData  (List<Map<String, String>> mapList,List<LogisticsTrackDTO.UpdateTrackDTO> records,LogisticsService service) {
+    private ApiResult<List<RegisterResponseVO>> processRegisterExpressDeliveryData  (List<Map<String, String>> mapList, List<LogisticsTrackDTO.UpdateTrackDTO> records, LogisticsService service, List<String> prefixList) {
         if (CollectionUtils.isEmpty(records)){
             return ApiResult.success(null);
         }
         List<LogisticsRegisterVO> logisticsRegisterVOS = new ArrayList<>();
         //根据配置进行组装注册数据
+        List<String> detailIds = new ArrayList<>();
         for (LogisticsTrackDTO.UpdateTrackDTO record : records) {
             String trackNo = TrackQueryTypeEnum.TRACK_NO.getCode().equals(record.getTrackQueryType()) && CharSequenceUtil.isNotBlank(record.getTrackNo()) ? record.getTrackNo() : record.getTransportNo();
             if (CharSequenceUtil.isBlank(trackNo) && CharSequenceUtil.isNotBlank(record.getTrackNo())){
@@ -356,12 +366,23 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             if (CharSequenceUtil.isBlank(trackNo)){
                 continue;
             }
+            //根据配置过滤是否符合配置
+            if (CollUtil.isNotEmpty(prefixList)){
+                //判断是否符合配置
+                if (prefixList.stream().anyMatch(trackNo::startsWith)){
+                    detailIds.add(record.getId());
+                    continue;
+                }
+            }
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
                     .trackNo(trackNo)
                     .phoneSuffix(record.getTelNumber())
                     .courierCode(record.getThirdSupplierCode())
                     .isPushMobile(record.getIsPushMobile())
                     .build());
+        }
+        if (CollUtil.isNotEmpty(detailIds)){
+            logisticsBillDetailService.updateTrackEnableByIds(detailIds);
         }
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
             return ApiResult.success(null);

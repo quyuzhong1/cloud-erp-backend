@@ -406,10 +406,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         if(OrderTypeEnum.B2B.getCode().equals(soOutstock.getOrderType())){
             soOutstock.setDeclareStatus(WmsDeclareStatusEnum.WAIT.getCode());
         }
-//        if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType())){
-//            soOutstock.setSellerId(soCustomer.getCustomerSellerId());
-//            soOutstock.setSalesDeptId(soCustomer.getSalesDeptId());
-//        }
+        if(OrderTypeEnum.B2C.getCode().equals(soOutstock.getOrderType()) && CharSequenceUtil.isNotBlank(soOutstock.getSoId())){
+            SoB2cEntity soB2c = soB2cFeign.getById(soOutstock.getSoId());
+            if (Objects.nonNull(soB2c)){
+                soOutstock.setShopId(soB2c.getShopId());
+            }
+        }
         //仓库id
         String warehouseKeeperId = soOutstock.getWarehouseKeeperId();
         String sellerId = soOutstock.getSellerId();
@@ -785,10 +787,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
             this.syncToSdy(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
 
         }
-        if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
-            //订单推送dmp
-            syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
-        }
+//        if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
+//            //订单推送dmp
+//            syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_APPROVE.getCode());
+//        }
         return Boolean.TRUE;
     }
 
@@ -1242,10 +1244,10 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
                 sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
             }
             //订单推送dmp
-            if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
-                //订单推送dmp
-                syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
-            }
+//            if (!SourceTypeEnum.SAL_OUTSTOCK.getCode().equals(entity.getSourceType())) {
+//                //订单推送dmp
+//                syncKingdeeSoOutstockService.syncOrderToDmp(entity, SyncOperateEnum.OPERATE_DISAPPROVE.getCode());
+//            }
             //推送旺店通
             this.syncToWdt(entity,SyncOperateEnum.OPERATE_DISAPPROVE);
 
@@ -1559,8 +1561,7 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
 
     private String getPermissionSql(String permissionSql) {
         //构造店铺权限
-//        String shopPermissionSql = authDataFeign.getShopPermissionSql("so.shop_id");
-        String shopPermissionSql = "";
+        String shopPermissionSql = authDataFeign.getShopPermissionSql("so.shop_id");
         if (CharSequenceUtil.isAllNotBlank(permissionSql,shopPermissionSql)){
             permissionSql = permissionSql + " AND ((so.order_type = 'B2C' " + shopPermissionSql + ") OR (so.order_type = 'B2B'))";
         }else if (CharSequenceUtil.isNotBlank(shopPermissionSql)){

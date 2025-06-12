@@ -240,6 +240,7 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         if (CollectionUtils.isEmpty(shop)) {
             throw new ServiceException(ApiError.ERROR_WDT_NOT_FOUND_SHOP_MAPPING, entity.getShopId());
         }
+        soOutstock.setShopId(shop.get(0).getSysId());
         ShopInfoEntity shopInfo = FeignQuery.getById(ShopInfoEntity.class, shop.get(0).getSysId());
         //查询旺店通对应系统仓库
         List<ThirdMappingEntity> warehouseList = FeignQuery.list(FeignQuery.create(ThirdMappingEntity.class)
@@ -500,6 +501,8 @@ public class SyncB2CSoOutstockServiceImpl implements SyncB2CSoOutstockService {
         soOutstock.setCustomerName(customerName);
         //单据编号
         soOutstock.setCode(code);
+        //金蝶无店铺id
+        soOutstock.setShopId("");
         //运输单号
         soOutstock.setTrackNo(entity.getFCarriageNO());
         //第三方单据编号
