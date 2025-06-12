@@ -164,16 +164,17 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             //保存mq消费记录
             // 将 Map 转换为 JSON 字符串
             String id = addMqRecord( dto);
-            if (StringUtils.isNotBlank(id)) {
-                // 异步执行 sendMsg，不阻塞当前事务
-                new Thread(() -> {
-                    try {
-                        sendMsg(dto);
-                    } catch (Exception e) {
-                        log.error("sendMsg 异常", e);
-                    }
-                }).start();
-            }
+            sendMsg(dto);
+//            if (StringUtils.isNotBlank(id)) {
+//                // 异步执行 sendMsg，不阻塞当前事务
+//                new Thread(() -> {
+//                    try {
+//                        sendMsg(dto);
+//                    } catch (Exception e) {
+//                        log.error("sendMsg 异常", e);
+//                    }
+//                }).start();
+//            }
         }
         log.info("MqRecordConsumerService 结束");
     }
@@ -222,18 +223,8 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             String specificPerson = noticeEntity.getSpecificPerson();
             String post = noticeEntity.getPost();
             if (StringUtils.isBlank(post) && StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
-                ThirdNoticePushRecordEntity recordEntity = new ThirdNoticePushRecordEntity();
-                recordEntity.setCfgThirdNoticeId(noticeEntity.getId());
-                recordEntity.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
-                recordEntity.setBusinessId(businessId);
-                recordEntity.setBusinessType(bussinessKey);
-                recordEntity.setBusinessCode(String.valueOf(variablesMap.getOrDefault("code", "")));
-                recordEntity.setNoticeMethod(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
-                recordEntity.setSendTime(LocalDateTime.now());
-                recordEntity.setTitle(noticeEntity.getTitle());
-                recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
-                recordEntity.setErrorReason("通知人员不能为空");
-                boolean save = thirdNoticePushRecordService.save(recordEntity);
+                String errorReason = "通知人员不能为空";
+                saveFailedRecord(noticeEntity, businessId, bussinessKey,errorReason, variablesMap);
                 continue;
             }
 
@@ -435,6 +426,9 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     private boolean checkRule(MqConsumerRecordDTO.MqDTO dto,CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey) {
         List<CfgRuleConditionEntity> cfgRuleConditionEntities = ruleConditionMap.get(noticeEntity.getId());
         if (CollUtil.isNotEmpty(cfgRuleConditionEntities)) {
+            //规则条件转map
+            Map<String, String> cfgRuleConditionMap = cfgRuleConditionEntities.stream().collect(Collectors.toMap(CfgRuleConditionEntity::getField, CfgRuleConditionEntity::getValue,(o1,o2) -> o2));
+
             Map<String, Object> variablesMap = dto.getDataJson();
             //主键id
             String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
@@ -447,11 +441,12 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             listByFieldDTO.setBusinessType(businessType);
             listByFieldDTO.setFieldList(fieldList);
             List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listExtendByFieldCondition(listByFieldDTO);
-            List<String> cfgQueryOptionfieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(cfgQueryOptionList)){
                 for (CfgQueryOptionEntity cfgQueryOptionEntity : cfgQueryOptionList) {
-                    //仓储管理-头程发货单提审
-                    if("waitSubmitToApproveIng".equals(cfgQueryOptionEntity.getConditionField())){
+                    //规则条件字段对应的值
+                    String feildValue = cfgRuleConditionMap.get(cfgQueryOptionEntity.getConditionField());
+                    //提审
+                    if("waitSubmitToApproveIng".equals(feildValue)){
                         //提交操作
                         ProcessManagementDTO.CheckSubmitByBusinessIdDTO checkSubmitByBusinessIdDTO = new ProcessManagementDTO.CheckSubmitByBusinessIdDTO();
                         checkSubmitByBusinessIdDTO.setBusinessId(businessId);
@@ -461,8 +456,8 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                             return Boolean.FALSE;
                         }
                     }
-                    //组包预报生成
-                    if("addRecord".equals(cfgQueryOptionEntity.getConditionField())){
+                    //新增
+                    if("addRecord".equals(feildValue)){
                         //不等于新增则返回false
                        if(!Objects.equals(ThirdNoticeRecordOperationTypeEnum.INSERT.getCode(), dto.getOperationType())){
                            return Boolean.FALSE;
@@ -471,6 +466,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                 }
             }
 
+            List<String> cfgQueryOptionfieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
             //封装条件参数
             Map<String, Object> map = cfgRuleConditionEntities.stream()
                     .filter(e -> Objects.nonNull(e.getField()) && !cfgQueryOptionfieldList.contains(e.getField()))

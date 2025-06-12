@@ -1,16 +1,20 @@
 package com.erp.server.workflow.controller.feign;
 
+import cn.hutool.core.collection.CollUtil;
 import com.common.core.controller.BaseController;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
 import com.erp.model.workflow.enums.CfgQueryOptionExtendTypeEnum;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * cfgQueryOption Feign
@@ -58,6 +62,10 @@ public class CfgQueryOptionFeignController extends BaseController {
      */
     @PostMapping("/listExtendByFieldCondition")
     public List<CfgQueryOptionEntity> listExtendByFieldCondition(@RequestBody CfgQueryOptionDTO.ListByFieldDTO listByFieldDTO){
+        if(Objects.isNull(listByFieldDTO) || StringUtils.isBlank(listByFieldDTO.getBusinessType()) || CollUtil.isEmpty(listByFieldDTO.getFieldList())){
+            return Collections.emptyList();
+        }
+
         return cfgQueryOptionService.lambdaQuery()
                 .eq(CfgQueryOptionEntity::getBussinessKey, listByFieldDTO.getBusinessType())
                 .in(CfgQueryOptionEntity::getConditionField, listByFieldDTO.getFieldList())
