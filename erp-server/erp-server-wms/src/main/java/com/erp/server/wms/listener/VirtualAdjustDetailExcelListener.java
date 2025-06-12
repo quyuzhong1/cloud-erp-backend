@@ -138,7 +138,7 @@ public class VirtualAdjustDetailExcelListener extends AnalysisEventListener<Virt
                 excelDTO.setVirtualWarehouseId(virtualWarehouseEntity.getId());
             }
             //记录是否在明细中存在
-            VirtualAdjustDetailDTO.AddDTO addDTO = detailList.stream().filter(e -> e.getSkuId().equals(excelDTO.getSkuId()) && e.getVirtualWarehouseId().equals(excelDTO.getVirtualWarehouseId()) && e.getDictInventoryStatus().equals(excelDTO.getInventoryStatus())).findFirst().orElse(null);
+            VirtualAdjustDetailDTO.AddDTO addDTO = detailList.stream().filter(e -> e.getSkuId().equals(excelDTO.getSkuId()) && e.getVirtualWarehouseId().equals(excelDTO.getVirtualWarehouseId()) && e.getInventoryStatus().equals(excelDTO.getInventoryStatus())).findFirst().orElse(null);
             if (Objects.nonNull(addDTO)){
                 errorMsgList.add("该SKU-虚拟仓库-库存状态在明细中已存在");
             }

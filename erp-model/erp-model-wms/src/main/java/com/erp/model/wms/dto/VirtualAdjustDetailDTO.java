@@ -2,9 +2,8 @@ package com.erp.model.wms.dto;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -64,8 +63,8 @@ public class VirtualAdjustDetailDTO implements Serializable {
         /**
         * 库存状态
         */
-        private String dictInventoryStatus;
-        private String dictInventoryStatusName;
+        private String inventoryStatus;
+        private String inventoryStatusName;
 
         /**
         * 类型
@@ -164,7 +163,7 @@ public class VirtualAdjustDetailDTO implements Serializable {
         */
         @NotBlank(message = "库存状态不能为空")
         @Size(max = 32,message = "库存状态最大长度不能超过32位")
-        private String dictInventoryStatus;
+        private String inventoryStatus;
 
         /**
         * 类型  根据数量进行判断

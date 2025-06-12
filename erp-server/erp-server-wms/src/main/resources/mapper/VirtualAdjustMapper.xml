@@ -51,7 +51,7 @@
             vad.product_name AS productName,
             vad.virtual_warehouse_id AS virtualWarehouseId,
             vad.virtual_warehouse_name AS virtualWarehouseName,
-            vad.dict_inventory_status AS dictInventoryStatus,
+            vad.inventory_status AS inventoryStatus,
             vad.qty as qty,
             vad.remark as detailRemark
         FROM virtual_adjust va
