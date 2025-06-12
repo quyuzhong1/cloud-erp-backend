@@ -53,6 +53,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -133,6 +134,9 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private DocNoGenHelper docNoGenHelper;
+    @Lazy
+    @Resource
+    private PurchaseSkuOrgRefService purchaseSkuOrgRefService;
 
     /**
      * 添加采购价目表
@@ -705,6 +709,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
                     obj.setApproveUserName("");
                 }
                 obj.setApproveStatus(statusEnum);
+                //记录sku与采购组织关系
+                purchaseSkuOrgRefService.addByPurchasePrice(obj);
             });
             return this.updateBatchById(list);
         }
@@ -900,6 +906,8 @@ public class PurchasePriceServiceImpl extends SuperServiceImpl<PurchasePriceMapp
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_NOT_DISAPPROVE_CHANGE.msg, entity.getCode()));
         }
         Boolean result = this.updateApproveStatus(Collections.singletonList(entity), ApproveStatusEnum.WAIT_SUBMIT);
+        //反审核时移除sku和采购组织表记录
+        purchaseSkuOrgRefService.removeByPrice(entity);
         if (result) {
             String content = String.format("状态由[%s]变更为[%s]", ApproveStatusEnum.APPROVE.getName(), ApproveStatusEnum.WAIT_SUBMIT.getName());
             moduleOperateLogService.addModuleOperateLog(content, ModuleTypeEnum.SUPPLIER.getCode(), entity.getId(), "状态变更");

@@ -18,4 +18,6 @@ public class ThirdWarehouseCancelInboundReq {
     //第三方仓的入库单号
     private String receivingCode;
 
+    //erp单号
+    private String sourceCode;
 }

@@ -27,10 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -78,6 +75,9 @@ public class SoB2cAbnormalServiceImpl implements SoB2cAbnormalService {
             throw new ServiceException(ApiError.ERROR_SO_B2C_NOT_EXIST);
         }
         SoB2cErrorTypeEnum soB2cErrorTypeEnum = SoB2cErrorTypeEnum.getEnum(soB2cEntity.getSignOrderError());
+        if(Objects.isNull(soB2cErrorTypeEnum)){
+            return resultDTOList;
+        }
         // 重试逻辑
         switch (soB2cErrorTypeEnum) {
             case SUBMIT_DELIVERY:

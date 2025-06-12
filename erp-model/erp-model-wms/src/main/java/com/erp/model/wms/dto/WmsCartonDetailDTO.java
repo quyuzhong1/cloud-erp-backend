@@ -332,6 +332,7 @@ public class WmsCartonDetailDTO implements Serializable {
          * 装箱总数量
          */
         private Integer totalQty = 0;
+        private BigDecimal volumeWeight;
     }
 
     /**

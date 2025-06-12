@@ -2,6 +2,7 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -13,12 +14,11 @@ import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.threadlocal.UserContext;
 import com.common.business.vo.PagingVO;
+import com.common.core.entity.ConditionElement;
 import com.common.core.exception.ServiceException;
+import com.common.core.utils.BeanMapper;
 import com.common.core.utils.BeanMapperUtils;
-import com.erp.model.oms.dto.CfgInvoiceInvalidDTO;
-import com.erp.model.oms.dto.CfgInvoiceSettingDTO;
-import com.erp.model.oms.dto.CfgInvoiceSettingDetailDTO;
-import com.erp.model.oms.dto.OmsAttachmentDTO;
+import com.erp.model.oms.dto.*;
 import com.erp.model.oms.entity.*;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.convert.InvoiceSettingConverter;
@@ -30,6 +30,7 @@ import com.sdk.third.tf.entity.AddCompanyDTO;
 import com.sdk.third.tf.entity.UpdateCompanyDTO;
 import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -63,6 +64,8 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
 
     @Resource
     private TfFiscalService tfFiscalService;
+    @Resource
+    private CfgInvoiceSettingService cfgInvoiceSettingService;
 
     @Override
     public PagingVO<CfgInvoiceSettingDTO.PagingViewDTO> paging(PagingDTO<CfgInvoiceSettingDTO.PagingParamDTO> dto) {
@@ -246,6 +249,53 @@ public class CfgInvoiceSettingServiceImpl extends SuperServiceImpl<CfgInvoiceSet
                 })
                 .collect(Collectors.toList());
         return dropDownList;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateSerialNo(CfgInvoiceSettingDTO.UpdateSerialDTO dto) {
+        //查询旧数据
+        CfgInvoiceSettingEntity old = super.getById(dto.getId());
+        //判断旧数据是否存在
+        if (ObjectUtil.isEmpty(old)) {
+            throw new ServiceException("此发票设置不存在");
+        }
+        Integer oldNo = old.getNo();
+        //- 新序列号：不能与当前序列号一致，只能填入数字
+        if (Objects.equals(oldNo, dto.getNo())) {
+            throw new ServiceException("新序列号与当前序列号一致，无需修改");
+        }
+        String oldStartCode = old.getStartCode();
+        //- 起始编号：只能填入数字
+        if (!StrUtil.isNumeric(dto.getStartCode())) {
+            throw new ServiceException("起始编号只能填入数字");
+        }
+        old.setNo(dto.getNo());
+        old.setStartCode(dto.getStartCode());
+        this.lambdaUpdate().eq(CfgInvoiceSettingEntity::getId, dto.getId())
+                .set(CfgInvoiceSettingEntity::getNo, dto.getNo())
+                .set(CfgInvoiceSettingEntity::getStartCode, dto.getStartCode()).update();
+        //调用TF
+        UpdateCompanyDTO updateCompanyDTO = InvoiceSettingConverter.INSTANCE.invoiceSettinToUpdateCompanyDTOTo(old);
+        updateCompanyDTO.setUsername(updateCompanyDTO.getRazaoSocial().replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5]", ""));
+        tfFiscalService.updateCompany(updateCompanyDTO);
+        //保存日志
+        log.info("序列号修改 开始记录发票设置日志数据，id：【{}】", old.getId());
+        String msg = StrUtil.format("用户【{}】编辑id为【{}】的发票设置单据,新序列号由【{}】改为【{}】，起始编号由【{}】改为【{}】 ", UserContext.getDefaultLoginUser().getUserName(), old.getId(), oldNo,dto.getNo(),oldStartCode,dto.getStartCode());
+        operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.CFG_VAT_INVOICE.getCode(), old.getId(), "序列号修改");
+    }
+
+    @Override
+    public void updateSerialNoById(String id, Integer no, Integer startCode) {
+        if (CharSequenceUtil.isBlank(id)){
+            return;
+        }
+        if (Objects.isNull(no) && Objects.isNull(startCode)){
+            return;
+        }
+        this.lambdaUpdate().eq(CfgInvoiceSettingEntity::getId, id)
+               .set(Objects.nonNull(no),CfgInvoiceSettingEntity::getNo,no)
+               .set(Objects.nonNull(startCode),CfgInvoiceSettingEntity::getStartCode,String.valueOf(startCode + 1)).update();
     }
 
     /**

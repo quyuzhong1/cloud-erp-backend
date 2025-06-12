@@ -74,6 +74,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
     @Resource
     private TikTokFullService tikTokFullService;
     @Resource
+    private LogisticsThirdChannelRefService logisticsThirdChannelRefService;
+    @Resource
     private DictBasicService dictBasicService;
 
     @Override
@@ -277,6 +279,11 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         //查询过滤单号开头配置
         List<DictBasicEntity> dictList = dictBasicService.getByKeyList(Collections.singletonList("trackNoFilterPrefix"));
         List<String> prefixList = dictList.stream().map(DictBasicEntity::getCode).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        //获取映射信息
+        List<String> channelIds = records.stream().map(LogisticsTrackDTO.UpdateTrackDTO::getChannelId).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
+        List<LogisticsThirdChannelRefEntity> refEntityList = logisticsThirdChannelRefService.listByChannelIds(channelIds);
+        //构建注册数据
+        buildRegisterData(records,refEntityList);
         //跟据类型判断走小包、海运
         ApiResult<List<RegisterResponseVO>> listApiResult;
         if (CharSequenceUtil.equals(LogisticsTransportTypeEnum.EXPRESS_DELIVERY.getCode(),transportType)) {
@@ -319,6 +326,21 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
         }
     }
 
+    private void buildRegisterData(List<LogisticsTrackDTO.UpdateTrackDTO> records, List<LogisticsThirdChannelRefEntity> refEntityList) {
+        if (CollUtil.isEmpty(records) || CollUtil.isEmpty(refEntityList)){
+            return;
+        }
+        records.forEach(record -> {
+            LogisticsThirdChannelRefEntity refEntity = refEntityList.stream().filter(e -> e.getLogisticsChannelId().equals(record.getChannelId())).findFirst().orElse(null);
+            if (Objects.nonNull(refEntity)){
+                record.setIsPushMobile(refEntity.getIsPushMobile());
+                record.setThirdSupplierCode(refEntity.getThirdSupplierCode());
+            }else {
+                record.setIsPushMobile(Boolean.FALSE);
+            }
+        });
+    }
+
     /**
      * @param mapList
      * @param records
@@ -355,6 +377,8 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             logisticsRegisterVOS.add(LogisticsRegisterVO.builder()
                     .trackNo(trackNo)
                     .phoneSuffix(record.getTelNumber())
+                    .courierCode(record.getThirdSupplierCode())
+                    .isPushMobile(record.getIsPushMobile())
                     .build());
         }
         if (CollUtil.isNotEmpty(detailIds)){

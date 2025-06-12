@@ -217,30 +217,87 @@
 
     <!-- 查询已审核可生成库龄流水的数据 -->
     <select id="listApproveFlowDetail" resultType="com.erp.model.wms.entity.VirtualTransFlowEntity">
-        select
+        SELECT
             <include refid="Base_Column_List" />
-        from virtual_trans_flow vtf where is_deleted = false and is_unapproved = false
-        and ((
-            (source_type = '' and ((dict_inventory_status = 'usable' ) or (dict_inventory_status = 'frozen' and 0 > qty)) )
-                or (dict_inventory_status = 'usable' and qty > 0 and source_type = 'virtualWarehouseAllocation')
-                or (
-                    (dict_inventory_status = 'usable' and 0 > qty  and source_type in ('virtualWarehouseAllocation','soOutstock'))
-                     or (dict_inventory_status = 'frozen' and 0 > qty and (source_type in ('machineInfo','transferInfo','soOutstock') or (source_type = 'soB2cDelivery' and dict_biz_type = '06')) )
-                    )
-            )
-        or (
-        (dict_inventory_status = 'usable' and qty > 0  and source_type in ('soOutstock') and operation_mode = 'unApprove')
-        or (dict_inventory_status = 'frozen' and qty > 0 and source_type in ('machineInfo','transferInfo','soOutstock') and operation_mode = 'unApprove')
-        ))
+        FROM (
+        -- 场景1
+        SELECT * FROM virtual_trans_flow
+        WHERE is_deleted = false
+        AND is_unapproved = false
+        AND source_type = 'virtualAdjust'
+        AND (
+        (dict_inventory_status = 'usable')
+        OR (dict_inventory_status = 'frozen' AND 0 > qty )
+        )
+
+        UNION ALL
+
+        -- 场景2
+        SELECT * FROM virtual_trans_flow
+        WHERE is_deleted = false
+        AND is_unapproved = false
+        AND dict_inventory_status = 'usable'
+        AND qty > 0
+        AND source_type = 'virtualWarehouseAllocation'
+
+        UNION ALL
+
+        -- 场景3.1
+        SELECT * FROM virtual_trans_flow
+        WHERE is_deleted = false
+        AND is_unapproved = false
+        AND dict_inventory_status = 'usable'
+        AND 0 > qty
+        AND source_type IN ('virtualWarehouseAllocation','soOutstock')
+
+        UNION ALL
+
+        -- 场景3.2
+        SELECT * FROM virtual_trans_flow
+        WHERE is_deleted = false
+        AND is_unapproved = false
+        AND dict_inventory_status = 'frozen'
+        AND 0 > qty
+        AND (
+        source_type IN ('machineInfo','transferInfo','soOutstock')
+        OR (source_type = 'soB2cDelivery' AND dict_biz_type = '06')
+        )
+
+        UNION ALL
+
+        -- 场景4.1
+        SELECT * FROM virtual_trans_flow
+        WHERE is_deleted = false
+        AND is_unapproved = false
+        AND dict_inventory_status = 'usable'
+        AND qty > 0
+        AND source_type = 'soOutstock'
+        AND operation_mode = 'unApprove'
+
+        UNION ALL
+
+        -- 场景4.2
+        SELECT * FROM virtual_trans_flow
+        WHERE is_deleted = false
+        AND is_unapproved = false
+        AND dict_inventory_status = 'frozen'
+        AND qty > 0
+        AND source_type IN ('machineInfo','transferInfo','soOutstock')
+        AND operation_mode = 'unApprove'
+        ) AS vtf
+        WHERE 1=1
         <if test="dto.ids != null and dto.ids.size > 0">
-            and vtf.id in
-            <foreach collection="dto.ids" open="(" close=")" separator="," item="item" >
+            AND vtf.id IN
+            <foreach collection="dto.ids" open="(" close=")" separator="," item="item">
                 #{item}
             </foreach>
         </if>
         <if test="dto.startDate != null">
-            and vtf.bill_date >= #{dto.startDate}
+            AND vtf.bill_date >= #{dto.startDate}::date
         </if>
-        order by vtf.trade_time asc
+        <if test="dto.endDate != null">
+            AND #{dto.endDate}::date > vtf.bill_date
+        </if>
+        ORDER BY vtf.trade_time ASC
     </select>
 </mapper>

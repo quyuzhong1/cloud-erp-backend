@@ -950,6 +950,14 @@ public class SoB2cFeignController extends BaseController {
         return soB2cRefService.getSplitCombination(soId);
     }
 
+    /**
+     * 查询仓库下待发货的订单
+     * */
+    @PostMapping("/listWaitShipByWarehouseIds")
+    public List<SoB2cEntity> listWaitShipByWarehouseIds(@RequestBody List<String> warehouseId){
+        return soB2cService.listWaitShipByWarehouseIds(warehouseId);
+    }
+
 
     /**
      * 更新明细

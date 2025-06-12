@@ -59,20 +59,21 @@ public class DmpInputGoodCangInstockTransFlowInitHandler extends DmpInputGoodCan
         // 父级任务
         DmpInputTaskEntity parentTaskEntity = dmpInputTaskService.getById(dmpInputTaskEntity.getParentTaskId());
 
-        // 开始时间=最早退货单号创建时间
-        LocalDateTime createDateFrom = null;
+        // 开始时间=任务开始时间
+        LocalDateTime createDateFrom = parentTaskEntity.getStartTime();
         // 结束时间=任务指定结束时间
-        LocalDateTime createDateEnd = parentTaskEntity.getEndTime();
+//        LocalDateTime createDateEnd = parentTaskEntity.getEndTime();
+        LocalDateTime createDateEnd = LocalDateTime.now();
         // 退货单号列表
         List<String> referenceNoList = new LinkedList<>();
         for (Map<String, Object> parentDatum : parentData) {
-            String createTime = parentDatum.getOrDefault("create_at", "").toString();
-            if (StringUtils.isNotBlank(createTime)) {
-                LocalDateTime addTime = LocalDateTime.parse(createTime, DATE_FORMATTER);
-                if (createDateFrom == null || addTime.isBefore(createDateFrom)) {
-                    createDateFrom = addTime.minusMinutes(1);
-                }
-            }
+//            String createTime = parentDatum.getOrDefault("create_at", "").toString();
+//            if (StringUtils.isNotBlank(createTime)) {
+//                LocalDateTime addTime = LocalDateTime.parse(createTime, DATE_FORMATTER);
+//                if (createDateFrom == null || addTime.isBefore(createDateFrom)) {
+//                    createDateFrom = addTime.minusMinutes(1);
+//                }
+//            }
             String code = parentDatum.getOrDefault("receiving_code", "").toString();
             if (StringUtils.isNotBlank(code)) {
                 referenceNoList.add(code);

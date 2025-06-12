@@ -138,6 +138,16 @@ public class InvoiceInfoEntity extends BaseEntity<InvoiceInfoEntity> {
      */
     @TableField("invoice_remark")
     private String invoiceRemark;
+    /**
+     * 序列号
+     */
+    @TableField("no")
+    private Integer no;
+    /**
+     * 起始编号
+     */
+    @TableField("start_code")
+    private String startCode;
 
     public static final String CODE = "code";
 

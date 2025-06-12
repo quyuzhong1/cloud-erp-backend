@@ -77,9 +77,13 @@ public class DmpInputErpPushApiInitHandler extends DmpInputInitHandler{
 			}
 			i = i + 1;
 		}
-		dmpInputTaskInitDTO.setMsg(JSON.toJSONString(list));
+		
+		dmpInputTaskInitDTO.setMsg(this.afterQueryData(list));
 		
 		return Collections.singletonList(dmpInputTaskInitDTO);
 	}
 	
+	protected String afterQueryData(List<BaseEntity> list) {
+		return JSON.toJSONString(list);
+	}
 }

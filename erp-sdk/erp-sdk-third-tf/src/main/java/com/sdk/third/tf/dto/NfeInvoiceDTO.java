@@ -344,6 +344,16 @@ public class NfeInvoiceDTO implements Serializable {
          */
         @Alias("link_xml")
         private String link_xml;
+        /**
+         * 序列号
+         */
+        @Alias("serie")
+        private Integer serie;
+        /**
+         * 起始编码
+         */
+        @Alias("numero_nfe")
+        private Integer numeroNfe;
     }
 
     @Data

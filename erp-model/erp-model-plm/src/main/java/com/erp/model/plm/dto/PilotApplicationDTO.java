@@ -508,6 +508,10 @@ public class PilotApplicationDTO implements Serializable {
          * 采购组织ID
          */
         private String purchaseOrgId;
+        /**
+         * 采购组织名称
+         */
+        private String purchaseOrgName;
 
         /**
          * 计划交期

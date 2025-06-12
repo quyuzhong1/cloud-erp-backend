@@ -45,9 +45,9 @@ public class SdyPushCommonServiceImpl implements SdyPushCommonService {
 		String responseData = "";
 		int i = 0;
 		while(is429) {
-			log.warn("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
+//			log.warn("请求地址：{}\n数帝云请求报文：{}" , url , requestData);
 			responseData = HttpUtil.post(url, requestData);
-			log.warn("请求数帝云响应报文：{}" , responseData);
+//			log.warn("请求数帝云响应报文：{}" , responseData);
 			if(StringUtils.isNotBlank(responseData)) {
 				Integer code = JSON.parseObject(responseData).getInteger("code");
 				if(code != null && 429 == code) {

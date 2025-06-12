@@ -89,7 +89,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
     private PlmTaskFeign plmTaskFeign;
     @Resource
     private SoB2cService soB2cService;
-
+    @Resource
+    private CfgRuleInvoiceService cfgRuleInvoiceService;
     @Resource
     private SoB2cDetailService soB2cDetailService;
 
@@ -245,17 +246,14 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         //已存在的记录
         List<InvoiceInfoEntity> existList = this.listBySoIds(Collections.singletonList(id));
         Map<String, List<CfgInvoiceSettingDetailEntity>> map = cfgInvoiceSettingDetailList.stream().collect(Collectors.groupingBy(CfgInvoiceSettingDetailEntity::getShopId));
-
-        if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_GENERATE);
-        }
         //店铺
         List<CfgInvoiceSettingDetailEntity> invoiceSettingDetailList = map.get(soB2cEntity.getShopId());
         if (CollUtil.isEmpty(invoiceSettingDetailList)) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_SHOP_BIND,shopInfo.getName());
         }
         //开票中不再生成
-        InvoiceInfoEntity existInvoiceInfoEntity = existList.stream().filter(e -> e.getSoId().equals(soB2cEntity.getId()) && e.getStatus().equals(InvoiceInfoStatusEnum.INVOICING.getCode())).findFirst().orElse(null);
+        SoB2cEntity finalSoB2cEntity = soB2cEntity;
+        InvoiceInfoEntity existInvoiceInfoEntity = existList.stream().filter(e -> e.getSoId().equals(finalSoB2cEntity.getId()) && e.getStatus().equals(InvoiceInfoStatusEnum.INVOICING.getCode())).findFirst().orElse(null);
         if(Objects.nonNull(existInvoiceInfoEntity)){
             return BatchResultDTO.fail(soB2cEntity.getId(), soB2cEntity.getCode(), "已存在开票中的发票");
         }
@@ -268,10 +266,8 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
         soB2cEntity.setNfeInvoiceStatus(SoB2cNfeStatusEnum.INVOICING.getCode());
         soB2cService.updateById(soB2cEntity);
-
         //异步生成发票,调用第三方
         nfeInvoiceService.createInvoice(soB2cEntity,isAsync);
-
         //添加日志
         operateLogService.addModuleOperateLog(CharSequenceUtil.format("销售订单【{}】生成NF-e发票",soB2cEntity.getCode()), ModuleTypeEnum.SO_B2C.getCode(), invoiceInfoEntity.getId(), "生成NF-e发票操作");
         return BatchResultDTO.success(soB2cEntity.getId(), soB2cEntity.getCode(), "生成发票成功");
@@ -946,7 +942,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
         }
         //销售订单
         List<SoB2cEntity> soB2cEntityList = soB2cService.listByIds(soIdList);
-        soB2cEntityList =  soB2cEntityList.stream().filter(obj -> CharSequenceUtil.isNotBlank(obj.getNfeInvoiceStatus()) && !SoB2cNfeStatusEnum.INVOICING.getCode().equals(obj.getNfeInvoiceStatus())).collect(Collectors.toList());
+        soB2cEntityList =  soB2cEntityList.stream().filter(obj -> !SoB2cNfeStatusEnum.INVOICING.getCode().equals(obj.getNfeInvoiceStatus())).collect(Collectors.toList());
         if (CollUtil.isEmpty(soB2cEntityList)) {
             throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST);
         }
@@ -956,7 +952,7 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
 
         List<SoB2cDetailEntity> soB2cDetailList = soB2cDetailService.listByMainIds(soIdList);
         if (CollUtil.isEmpty(soB2cDetailList)) {
-            throw new ServiceException(ApiError.ERROR_INVOICE_NFE_CREATE_INVOICE_NOT_EXIST);
+            throw new ServiceException(ApiError.ERROR_DETAIL_NOT_EXIST);
         }
         List<String> platformSkuNoList = soB2cDetailList.stream().map(SoB2cDetailEntity::getPlatformSkuNo).filter(CharSequenceUtil::isNotBlank).distinct().collect(Collectors.toList());
 
@@ -1000,9 +996,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 continue;
             }
 
-            if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
-                continue;
-            }
+//            if (!CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.ALI_EXPRESS.getCode()) && !CharSequenceUtil.equals(soB2cEntity.getDictPlatform(), PlatformDictEnum.MERCADOLIBRE_LOCAL.getCode())){
+//                continue;
+//            }
             //listing信息
             List<ListingInfoWithSkuMappingDTO> listingInfoWithSkuMappingList = listingMap.get(CharSequenceUtil.format("{}-{}-{}", soB2cEntity.getDictPlatform(), soB2cDetailEntity.getPlatformSkuNo(),soB2cEntity.getShopId()));
             //税务信息
@@ -1126,6 +1122,9 @@ public class InvoiceInfoServiceImpl extends SuperServiceImpl<InvoiceInfoMapper, 
                 pagingViewDTO.setFileUrl(fdfsPubUrl + pagingViewDTO.getFileUrl());
             }
             pagingViewDTO.setInvoiceNatureName(InvoiceNatureEnum.getName(pagingViewDTO.getInvoiceNature()));
+            if (CharSequenceUtil.isNotBlank(pagingViewDTO.getStartCode())){
+                pagingViewDTO.setStartCodeStr(pagingViewDTO.getNo()+"/"+pagingViewDTO.getStartCode());
+            }
         });
     }
 

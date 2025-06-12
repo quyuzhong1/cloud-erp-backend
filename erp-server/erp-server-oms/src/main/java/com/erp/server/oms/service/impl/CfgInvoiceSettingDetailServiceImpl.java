@@ -3,6 +3,8 @@ package com.erp.server.oms.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
+import cn.hutool.core.util.ObjUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
@@ -15,11 +17,15 @@ import com.erp.model.oms.dto.DictBasicDTO;
 import com.erp.model.oms.entity.CfgInvoiceSettingDetailEntity;
 import com.erp.model.oms.entity.CfgInvoiceSettingEntity;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.oms.entity.SoB2cEntity;
+import com.erp.model.oms.enums.InvoiceNodeEnum;
+import com.erp.model.oms.enums.SoB2cNfeStatusEnum;
 import com.erp.model.scm.enums.ModuleTypeEnum;
 import com.erp.server.oms.mapper.CfgInvoiceSettingDetailMapper;
 import com.erp.server.oms.service.*;
 
 import org.apache.commons.math3.util.Pair;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +62,9 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
 
     @Resource
     ShopInfoService shopInfoService;
+    @Lazy
+    @Resource
+    private InvoiceInfoService invoiceInfoService;
 
     @Override
     public CfgInvoiceSettingDetailDTO.ViewDTO view(CfgInvoiceSettingDetailDTO.ViewParamsDTO dto) {
@@ -148,6 +157,20 @@ public class CfgInvoiceSettingDetailServiceImpl extends SuperServiceImpl<CfgInvo
     public void delateByMainIds(List<String> ids, Boolean aTrue) {
         boolean remove = this.lambdaUpdate().in(CfgInvoiceSettingDetailEntity::getMainId, ids).remove();
         return;
+    }
+
+    @Override
+    public void generateNfeInvoice(SoB2cEntity soB2cEntity, String type) {
+        CfgInvoiceSettingDetailEntity invoiceSettingDetail = this.getInvoiceSettingDetail(soB2cEntity.getDictPlatform(), soB2cEntity.getShopId());
+        if (ObjUtil.isEmpty(invoiceSettingDetail)) {
+            return;
+        }
+        if (CharSequenceUtil.equals(invoiceSettingDetail.getInvoiceNode(), InvoiceNodeEnum.NO_AUTO.getCode()) || !SoB2cNfeStatusEnum.PENDING.getCode().equals(soB2cEntity.getNfeInvoiceStatus())) {
+            return;
+        }
+        if (CharSequenceUtil.equals(type, invoiceSettingDetail.getInvoiceNode())) {
+            invoiceInfoService.batchGenerateNfeInvoice(soB2cEntity.getId(),Boolean.TRUE);
+        }
     }
 
     /**

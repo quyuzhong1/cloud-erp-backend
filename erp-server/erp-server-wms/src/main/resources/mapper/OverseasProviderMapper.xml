@@ -19,6 +19,20 @@
         <result column="auth_json" property="authJson"
                 typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
     </resultMap>
+    <resultMap id="PageResultMap" type="com.erp.model.wms.dto.OverseasProviderDTO$ListDTO">
+        <id  property="id" column="id"/>
+        <result column="code" property="code"/>
+        <result column="name" property="name"/>
+        <result column="platformAccount" property="platformAccount"/>
+        <result column="shortName" property="shortName"/>
+        <result column="authStatus" property="authStatus"/>
+        <result column="authTime" property="authTime"/>
+        <result column="updateTime" property="updateTime"/>
+        <result column="updateUserName" property="updateUserName"/>
+        <result column="updateUserId" property="updateUserId"/>
+        <result column="authJson" property="authJson"
+                typeHandler="com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler"/>
+    </resultMap>
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
@@ -34,11 +48,12 @@
         code, name, auth_status, auth_time, auth_json
     </sql>
 
-    <select id="paging" resultType="com.erp.model.wms.dto.OverseasProviderDTO$ListDTO">
+    <select id="paging" resultMap="PageResultMap">
         SELECT
             id,
             code,
             name,
+            auth_json as authJson,
             platform_account as platformAccount,
             short_name as shortName,
             auth_status AS authStatus,

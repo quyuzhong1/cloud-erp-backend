@@ -129,4 +129,20 @@ public class CfgInvoiceSettingController extends BaseController {
         cfgInvoiceSettingService.updateStatus(dto);
         return success();
     }
+    /**
+     * 序列号修改
+     *
+     * @description:
+     * @author: zdy
+     * @date: 2025/5/23 14:41
+     * @param: dto
+     * @return:
+     **/
+    @PostMapping("/updateSerialNo")
+    @LogAction(value = LogActionEnum.UPDATE, desc = "序列号修改")
+    public ApiResult<?> updateSerialNo(@RequestBody @Validated CfgInvoiceSettingDTO.UpdateSerialDTO dto) {
+        cfgInvoiceSettingService.updateSerialNo(dto);
+        return success();
+    }
+
 }

@@ -12,12 +12,10 @@ import com.common.business.enums.PlatformDictEnum;
 import com.common.business.wrapper.FeignQuery;
 import com.common.business.wrapper.QueryParam;
 import com.common.business.wrapper.QueryTypeEnum;
-import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.MathUtil;
 import com.erp.model.dmp.entity.*;
-import com.erp.model.dmp.enums.DmpOutputTaskRecordStatusEnum;
 import com.erp.model.dmp.enums.ThirdSysTypeEnum;
 import com.erp.model.oms.entity.CustomerInfoEntity;
 import com.erp.model.oms.entity.DictBasicEntity;
@@ -31,7 +29,6 @@ import com.erp.server.dmp.inout.dto.request.DmpOutputHotfixCreateRequest;
 import com.erp.server.dmp.inout.dto.request.DmpOutputTaskRequest;
 import com.erp.server.dmp.inout.dto.response.DmpOutputTaskResponse;
 import com.erp.server.dmp.inout.handler.factory.DmpOutputCreateFactory;
-import com.erp.server.dmp.inout.handler.output.task.DmpOutputTaskHandler;
 import com.erp.server.dmp.push.consumer.sdy.SdyDeliveryOrderConsumer;
 import com.erp.server.dmp.service.DictBasicService;
 import com.erp.server.dmp.service.ThirdMappingService;
@@ -45,9 +42,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -58,7 +53,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Scope("prototype")
-public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
+public class DmpOutputSdyOrderHandler extends DmpOutputSdyBaseTaskHandler {
     @Resource
     private ThirdShopService thirdShopService;
     @Resource
@@ -73,52 +68,11 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
     private DictBasicService dictBasicService;
 
     @Override
-    protected List<DmpOutputTaskRecordEntity> outputData(DmpOutputTaskRequest dmpRequest, DmpOutputTaskResponse dmpResponse) {
-        Map<String, String> map = this.getPushJsonDataMap(dmpRequest, dmpResponse);
-        List<DmpOutputTaskRecordEntity> dmpOutputTaskRecordEntityList = new ArrayList<>();
-        if(!map.isEmpty()) {
-            LocalDateTime now = LocalDateTime.now();
-            int i = 0;
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                String dataId = entry.getKey();
-                String value = entry.getValue();
-                ShudiyunB2cOrderDTO shudiyunB2cOrderDTO = JSON.parseObject(value, ShudiyunB2cOrderDTO.class);
-                DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity = new DmpOutputTaskRecordEntity();
-                String id = identifierGenerator.nextId(dmpOutputTaskRecordEntity).toString();
-                dmpOutputTaskRecordEntity.setId(id);
-                dmpOutputTaskRecordEntity.setMainId(dmpRequest.getOutputTaskId());
-                dmpOutputTaskRecordEntity.setDataId(dataId);
-                dmpOutputTaskRecordEntity.setSourceCode(shudiyunB2cOrderDTO.getBiz_no() + "_" + shudiyunB2cOrderDTO.getMsku_code());
-                dmpOutputTaskRecordEntity.setRequestData(value);
-                dmpOutputTaskRecordEntity.setStatus(DmpOutputTaskRecordStatusEnum.INIT.getCode());
-                LocalDateTime insertTime = now.plus(i, ChronoUnit.MILLIS);
-                dmpOutputTaskRecordEntity.setCreateTime(insertTime);
-                dmpOutputTaskRecordEntity.setUpdateTime(insertTime);
-                dmpOutputTaskRecordEntityList.add(dmpOutputTaskRecordEntity);
-                i = i + 1;
-            }
-        }
-
-        return dmpOutputTaskRecordEntityList;
-    }
-
-    @Override
-    protected void pushData(DmpCfgOutputEntity dmpCfgOutputEntity, DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
-        String id = dmpOutputTaskRecordEntity.getId();
-        String status = "";
-        String requestData = dmpOutputTaskRecordEntity.getRequestData();
-        ApiResult handle = sdyDeliveryOrderConsumer.handle(requestData);
-        if (200 == handle.getCode()) {
-            status = DmpOutputTaskRecordStatusEnum.FINISH.getCode();
-        } else {
-            status = DmpOutputTaskRecordStatusEnum.COSUMERERROR.getCode();
-        }
-
-        dmpOutputUtils.updateStatus(id, status, String.valueOf(handle.getData()) , handle.getMsg());
-
-        //创建旺店通原始订单任务
+    protected void afterPushData(DmpCfgOutputEntity dmpCfgOutputEntity,
+    		DmpOutputTaskRecordEntity dmpOutputTaskRecordEntity) {
+    	//创建旺店通原始订单任务
         List<ShudiyunB2cOrderDTO> shudiyunB2cOrderDTOList = new ArrayList<>();
-
+        String requestData = dmpOutputTaskRecordEntity.getRequestData();
         if(requestData.trim().startsWith("{")) {
             ShudiyunB2cOrderDTO dto = JSON.parseObject(requestData, ShudiyunB2cOrderDTO.class);
             shudiyunB2cOrderDTOList.add(dto);
@@ -142,7 +96,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         });
     }
 
-
     /**
      * 解析订单数据
      **/
@@ -154,11 +107,10 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         if (dmpSoInfoEntity.getPayStatus() == null || !dmpSoInfoEntity.getPayStatus()) {
             return result;
         }
-        Map<String, List<com.erp.model.dmp.entity.DictBasicEntity>> dictBasticMap = dictBasicService.lambdaQuery()
-                .in(com.erp.model.dmp.entity.DictBasicEntity::getType, Arrays.asList("wdtSdyTransType", "wdtSdyTransSubType"))
-                .list()
-                .stream()
-                .collect(Collectors.groupingBy(com.erp.model.dmp.entity.DictBasicEntity::getType));
+
+
+        Map<String, Object> dmpDictBasticMap = queryAndCacheDmpDictBasicEntity(cacheMap);
+
         List<DmpSoDetailEntity> dmpSoDetailEntities = dmpSoDetailEntityList1;
         DateTimeFormatter localDateTime = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -201,14 +153,14 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 shudiyunB2cOrderDTO.setTransaction_type("配货单");
                 shudiyunB2cOrderDTO.setBiz_status(wdtStatusHandler(dmpSoInfoEntity.getOrderStatus()));
                 shudiyunB2cOrderDTO.setPrice(dmpSoDetailEntity.getSellPriceOrigin());
-                List<com.erp.model.dmp.entity.DictBasicEntity> wdtSdyTransTypeList = dictBasticMap.get("wdtSdyTransType");
+                List<com.erp.model.dmp.entity.DictBasicEntity> wdtSdyTransTypeList = (List<com.erp.model.dmp.entity.DictBasicEntity>) dmpDictBasticMap.get("wdtSdyTransType");
                 if (CollectionUtils.isNotEmpty(wdtSdyTransTypeList)) {
                     com.erp.model.dmp.entity.DictBasicEntity dictBasicEntity = wdtSdyTransTypeList.stream().filter(e -> e.getValue().equals(dmpSoInfoEntity.getOrderType())).findFirst().orElse(null);
                     if (null != dictBasicEntity){
                         shudiyunB2cOrderDTO.setTransaction_type(dictBasicEntity.getName());
                     }
                 }
-                List<com.erp.model.dmp.entity.DictBasicEntity> wdtSdyTransSubTypeList = dictBasticMap.get("wdtSdyTransSubType");
+                List<com.erp.model.dmp.entity.DictBasicEntity> wdtSdyTransSubTypeList = (List<com.erp.model.dmp.entity.DictBasicEntity>) dmpDictBasticMap.get("wdtSdyTransSubType");
                 if (CollectionUtils.isNotEmpty(wdtSdyTransSubTypeList)) {
                     com.erp.model.dmp.entity.DictBasicEntity dictBasicEntity = wdtSdyTransSubTypeList.stream().filter(e -> e.getValue().equals(dmpSoInfoEntity.getOrderType())).findFirst().orElse(null);
                     if (null != dictBasicEntity){
@@ -680,8 +632,16 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                 }
             }
 
-            shudiyunB2cOrderDTO.setTaxation(dmpSoInfoEntity.getTotalTaxFee());
-
+            BigDecimal totalTaxFee = dmpSoInfoEntity.getTotalTaxFee();
+            // 配置指定平台税金为0
+            List<com.erp.model.dmp.entity.DictBasicEntity> tax0PlatformTypeList = (List<com.erp.model.dmp.entity.DictBasicEntity>) dmpDictBasticMap.get("tax0PlatformType");
+            if (CollUtil.isNotEmpty(tax0PlatformTypeList)) {
+                boolean hasSetTaxO = tax0PlatformTypeList.stream().anyMatch(e -> e.getValue().equalsIgnoreCase(dmpSoInfoEntity.getSourcePlatform()));
+                if (hasSetTaxO){
+                    totalTaxFee = BigDecimal.ZERO;
+                }
+            }
+            shudiyunB2cOrderDTO.setTaxation(totalTaxFee);
             shudiyunB2cOrderDTO.setRoot_node_no(dmpSoInfoEntity.getThirdCode());
 
             if (dmpSoInfoEntity.getPayTime() != null) {
@@ -725,7 +685,6 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
         }
         return result;
     }
-
 
 
     @Override
@@ -971,6 +930,33 @@ public class DmpOutputSdyOrderHandler extends DmpOutputTaskHandler {
                     .orElse(null);
         }
         return null;
+    }
+
+    private Map<String, Object> queryAndCacheDmpDictBasicEntity(Map<String, Map<String, Object>> cacheMap) {
+        Map<String, Object> dmpDictBasic = cacheMap.getOrDefault("dmpDictBasic", new HashMap<>());
+
+        List<com.erp.model.dmp.entity.DictBasicEntity> wdtSdyTransTypeList= (List<com.erp.model.dmp.entity.DictBasicEntity>) dmpDictBasic.getOrDefault("wdtSdyTransType", new ArrayList<>());
+        List<com.erp.model.dmp.entity.DictBasicEntity>  wdtSdyTransSubTypeList = (List<com.erp.model.dmp.entity.DictBasicEntity>) dmpDictBasic.getOrDefault("wdtSdyTransSubType", new ArrayList<>());
+        List<com.erp.model.dmp.entity.DictBasicEntity>  tax0PlatformDictBasicList = (List<com.erp.model.dmp.entity.DictBasicEntity>)dmpDictBasic.getOrDefault("tax0PlatformType", new ArrayList<>());
+        if (CollUtil.isNotEmpty(tax0PlatformDictBasicList) && CollUtil.isNotEmpty(wdtSdyTransTypeList) && CollUtil.isNotEmpty(wdtSdyTransSubTypeList)) {
+            return dmpDictBasic;
+        }
+        List<com.erp.model.dmp.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.dmp.entity.DictBasicEntity.class)
+                .in(com.erp.model.dmp.entity.DictBasicEntity::getType, Arrays.asList("wdtSdyTransType", "wdtSdyTransSubType", "tax0PlatformType"))
+                .list();
+        if (CollectionUtils.isNotEmpty(dictBasicEntityList)) {
+            Map<String, List<com.erp.model.dmp.entity.DictBasicEntity>> dpSourceMap = dictBasicEntityList
+                    .stream()
+                    .collect(Collectors.groupingBy(com.erp.model.dmp.entity.DictBasicEntity::getType));
+            wdtSdyTransTypeList = dpSourceMap.getOrDefault("wdtSdyTransType", new ArrayList<>());
+            wdtSdyTransSubTypeList = dpSourceMap.getOrDefault("wdtSdyTransSubType", new ArrayList<>());
+            tax0PlatformDictBasicList = dpSourceMap.getOrDefault("tax0PlatformType", new ArrayList<>());
+            dmpDictBasic.put("wdtSdyTransType", wdtSdyTransTypeList);
+            dmpDictBasic.put("wdtSdyTransSubType", wdtSdyTransSubTypeList);
+            dmpDictBasic.put("tax0PlatformType", tax0PlatformDictBasicList);
+            cacheMap.put("dmpDictBasic", dmpDictBasic);
+        }
+        return dmpDictBasic;
     }
 
 }

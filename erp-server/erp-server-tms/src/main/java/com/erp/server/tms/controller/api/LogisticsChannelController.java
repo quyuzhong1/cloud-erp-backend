@@ -270,4 +270,13 @@ public class LogisticsChannelController extends BaseController {
         return success(pagingVO);
     }
 
+    /**
+     * 三方仓仓库渠道关联
+     *
+     */
+    @PostMapping("/listWarehouseChannel")
+    public ApiResult<List<LogisticsChannelDTO.WarehouseChannelDTO>> listWarehouseChannel() {
+        List<LogisticsChannelDTO.WarehouseChannelDTO> pagingVO = logisticsChannelService.listWarehouseChannel();
+        return success(pagingVO);
+    }
 }

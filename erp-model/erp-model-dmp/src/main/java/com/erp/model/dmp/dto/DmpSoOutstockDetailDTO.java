@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
@@ -16,7 +17,7 @@ import javax.validation.constraints.Digits;
  * </p>
  *
  * @author shukai
- * @since 2024-06-26
+ * @since 2025-04-11
 */
 @Data
 @NoArgsConstructor
@@ -157,7 +158,100 @@ public class DmpSoOutstockDetailDTO implements Serializable {
         */
         private String dataEncrypt;
 
+        /**
+        * 备注
+        */
+        private String remark;
 
+        /**
+        * 税率
+        */
+        private BigDecimal taxRate;
+
+        /**
+        * 来源订单明细id
+        */
+        private String srcOrderDetailId;
+
+        /**
+        * 客户名称
+        */
+        private String customerName;
+
+        /**
+        * 平台名称
+        */
+        private String platformName;
+
+        /**
+        * 销售部门名称
+        */
+        private String saleDeptName;
+
+        /**
+        * 销售员名称
+        */
+        private String salesManName;
+
+        /**
+        * 价税合计(本位币)-旺店通用
+        */
+        private BigDecimal allAmountLocalCurrency;
+
+        /**
+        * 币别
+        */
+        private String currency;
+
+        /**
+        * 支付单价
+        */
+        private BigDecimal payAmount;
+
+        /**
+        * 支付币别
+        */
+        private String payCurrency;
+
+        /**
+        * 折扣单价
+        */
+        private BigDecimal discountAmount;
+
+        /**
+        * 折扣币别
+        */
+        private String discountCurrency;
+
+        /**
+        * 明细状态
+        */
+        private String dataStatus;
+
+        /**
+        * 平台类型
+        */
+        private String platformType;
+
+        /**
+        * 是否组合品
+        */
+        private Integer isComb;
+
+        /**
+        * 组合装编码
+        */
+        private String suiteNo;
+
+        /**
+        * 组合装名称
+        */
+        private String suiteName;
+
+        /**
+         * 单据编号（唯一）
+         */
+        private String thirdCode;
     }
 
     /**
@@ -200,14 +294,14 @@ public class DmpSoOutstockDetailDTO implements Serializable {
         * 来源详情id
         */
         @NotBlank(message = "来源详情id不能为空")
-        @Size(max = 64,message = "来源详情id最大长度不能超过64位")
+        @Size(max = 500,message = "来源详情id最大长度不能超过500位")
         private String thirdDetailId;
 
         /**
         * 销售平台原始详情id
         */
         @NotBlank(message = "销售平台原始详情id不能为空")
-        @Size(max = 64,message = "销售平台原始详情id最大长度不能超过64位")
+        @Size(max = 500,message = "销售平台原始详情id最大长度不能超过500位")
         private String platformDetailId;
 
         /**
@@ -303,14 +397,14 @@ public class DmpSoOutstockDetailDTO implements Serializable {
         * 第三方平台订单编号
         */
         @NotBlank(message = "第三方平台订单编号不能为空")
-        @Size(max = 64,message = "第三方平台订单编号最大长度不能超过64位")
+        @Size(max = 500,message = "第三方平台订单编号最大长度不能超过500位")
         private String thirdOrderCode;
 
         /**
         * 销售平台原始订单编号
         */
         @NotBlank(message = "销售平台原始订单编号不能为空")
-        @Size(max = 64,message = "销售平台原始订单编号最大长度不能超过64位")
+        @Size(max = 500,message = "销售平台原始订单编号最大长度不能超过500位")
         private String platformOrderCode;
 
         /**
@@ -343,6 +437,131 @@ public class DmpSoOutstockDetailDTO implements Serializable {
         * 数据字段md5值
         */
         private String dataEncrypt;
+
+        /**
+        * 备注
+        */
+        @NotBlank(message = "备注不能为空")
+        @Size(max = 255,message = "备注最大长度不能超过255位")
+        private String remark;
+
+        /**
+        * 税率
+        */
+        @NotNull(message = "税率不能为空")
+        @Digits(integer = 12, fraction = 4, message = "税率整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal taxRate;
+
+        /**
+        * 来源订单明细id
+        */
+        @NotBlank(message = "来源订单明细id不能为空")
+        @Size(max = 100,message = "来源订单明细id最大长度不能超过100位")
+        private String srcOrderDetailId;
+
+        /**
+        * 客户名称
+        */
+        @NotBlank(message = "客户名称不能为空")
+        @Size(max = 100,message = "客户名称最大长度不能超过100位")
+        private String customerName;
+
+        /**
+        * 平台名称
+        */
+        @NotBlank(message = "平台名称不能为空")
+        @Size(max = 100,message = "平台名称最大长度不能超过100位")
+        private String platformName;
+
+        /**
+        * 销售部门名称
+        */
+        @NotBlank(message = "销售部门名称不能为空")
+        @Size(max = 100,message = "销售部门名称最大长度不能超过100位")
+        private String saleDeptName;
+
+        /**
+        * 销售员名称
+        */
+        @NotBlank(message = "销售员名称不能为空")
+        @Size(max = 100,message = "销售员名称最大长度不能超过100位")
+        private String salesManName;
+
+        /**
+        * 价税合计(本位币)-旺店通用
+        */
+        @NotNull(message = "价税合计(本位币)不能为空")
+        @Digits(integer = 12, fraction = 4, message = "价税合计(本位币)整数位不能超过12位，小数位不能超过4位")
+        private BigDecimal allAmountLocalCurrency;
+
+        /**
+        * 币别
+        */
+        @NotBlank(message = "币别不能为空")
+        @Size(max = 255,message = "币别最大长度不能超过255位")
+        private String currency;
+
+        /**
+        * 支付单价
+        */
+        @NotNull(message = "支付单价不能为空")
+        @Digits(integer = 12, fraction = 6, message = "支付单价整数位不能超过12位，小数位不能超过6位")
+        private BigDecimal payAmount;
+
+        /**
+        * 支付币别
+        */
+        @NotBlank(message = "支付币别不能为空")
+        @Size(max = 255,message = "支付币别最大长度不能超过255位")
+        private String payCurrency;
+
+        /**
+        * 折扣单价
+        */
+        @NotNull(message = "折扣单价不能为空")
+        @Digits(integer = 12, fraction = 6, message = "折扣单价整数位不能超过12位，小数位不能超过6位")
+        private BigDecimal discountAmount;
+
+        /**
+        * 折扣币别
+        */
+        @NotBlank(message = "折扣币别不能为空")
+        @Size(max = 255,message = "折扣币别最大长度不能超过255位")
+        private String discountCurrency;
+
+        /**
+        * 明细状态
+        */
+        @NotBlank(message = "明细状态不能为空")
+        @Size(max = 64,message = "明细状态最大长度不能超过64位")
+        private String detailStatus;
+
+        /**
+        * 平台类型
+        */
+        @NotBlank(message = "平台类型不能为空")
+        @Size(max = 64,message = "平台类型最大长度不能超过64位")
+        private String platformType;
+
+        /**
+        * 是否组合品
+        */
+        @NotNull(message = "是否组合品不能为空")
+        private Integer isComb;
+
+        /**
+        * 组合装编码
+        */
+        @NotBlank(message = "组合装编码不能为空")
+        @Size(max = 64,message = "组合装编码最大长度不能超过64位")
+        private String suiteNo;
+
+        /**
+        * 组合装名称
+        */
+        @NotBlank(message = "组合装名称不能为空")
+        @Size(max = 255,message = "组合装名称最大长度不能超过255位")
+        private String suiteName;
 
 
     }

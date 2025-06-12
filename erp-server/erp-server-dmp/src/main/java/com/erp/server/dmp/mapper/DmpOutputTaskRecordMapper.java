@@ -80,6 +80,8 @@ public interface DmpOutputTaskRecordMapper extends BaseMapper<DmpOutputTaskRecor
     
     List<String> getDmpOutputMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
     
+    List<String> getDmpRelationMoveToHistoryTable(@Param("beforeUpdateTime") String beforeUpdateTime , @Param("size") String size);
+    
     void dmpOutputNoRecordMoveToHistoryTable(@Param("conditionSql") String conditionSql);
     
     List<String> getDmpOutputNoRecordMoveToHistoryTable();
