@@ -409,7 +409,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 		List<DmpAmzSoOutstockDetailEntity> list = dmpAmzSoOutstockDetailService.lambdaQuery()
 				.in(DmpAmzSoOutstockDetailEntity::getShipmentItemId, amzPlatformDetailIdList)
 				.list();
-		if (CollUtil.isNotEmpty(list)) {
+		if (CollUtil.isEmpty(list)) {
 			return new HashMap<>();
 		}
 		Map<String, String> resultMap = new HashMap<>();
