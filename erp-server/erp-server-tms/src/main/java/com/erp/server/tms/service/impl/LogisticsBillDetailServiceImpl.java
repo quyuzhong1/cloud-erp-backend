@@ -1,6 +1,7 @@
 package com.erp.server.tms.service.impl;
 
 
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.common.business.dto.base.BatchResultDTO;
@@ -358,5 +359,14 @@ public class LogisticsBillDetailServiceImpl extends SuperServiceImpl<LogisticsBi
         sucessList.forEach(e ->{
             baseMapper.updateRegisticsStatus(e.getTrackNo(), e.getPlatformOrderNo(), status);
         });
+    }
+
+    @Override
+    public void updateTrackEnableByIds(List<String> detailIds) {
+        if (CollUtil.isEmpty(detailIds)){
+            return;
+        }
+        this.lambdaUpdate().set(LogisticsBillDetailEntity::getTrackEnable, Boolean.FALSE)
+               .in(LogisticsBillDetailEntity::getId, detailIds).update();
     }
 }
