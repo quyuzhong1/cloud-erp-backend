@@ -131,7 +131,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
     private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+//    @Transactional(rollbackFor = Exception.class)
     public void onMessage(String jsonStr) {
         log.info("MqRecordConsumerService 开始");
         if(StringUtils.isBlank(jsonStr)){

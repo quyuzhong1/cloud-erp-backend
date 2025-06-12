@@ -3,6 +3,7 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
+import com.common.business.dto.FindUserDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ThirdpartyPlatformEnum;
 import com.erp.model.sys.vo.ThirdUnionDTO;
@@ -75,6 +76,12 @@ public class CfgApproveSyncBuildHandler {
         //标题
         values.put("@i18n@title",cfgApproveSyncEntity.getTitle());
 
+        syncRecordEntity.setReceiverId(createUserId);
+        FindUserDTO findUserDTO = sysUserFeign.getUserByUserId(createUserId);
+        if(Objects.nonNull(findUserDTO)){
+            syncRecordEntity.setReceiverName(findUserDTO.getUserName());
+        }
+
         //查询飞书的用户信息
         String thirdOpenUserId = "";
         String userName;
@@ -84,7 +91,7 @@ public class CfgApproveSyncBuildHandler {
             //todo 推送记录  失败  创建人未绑定飞书
             errorReason= "创建人未绑定飞书";
             syncRecordEntity.setErrorReason( errorReason);
-            approveSyncRecordService.save( syncRecordEntity);
+            approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
             return null;
         }else{
             syncRecordEntity.setReceiverId(createUserId);
@@ -93,7 +100,8 @@ public class CfgApproveSyncBuildHandler {
                 //todo 推送记录  失败  创建人未绑定飞书
                 errorReason= "创建人未绑定飞书";
                 syncRecordEntity.setErrorReason( errorReason);
-                approveSyncRecordService.save( syncRecordEntity);
+                approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
+                return null;
             }
             thirdOpenUserId = thirdUnionDTO.getThirdOpenId();
             values.put("@i18n@userName", thirdUnionDTO.getUserName());
@@ -136,13 +144,13 @@ public class CfgApproveSyncBuildHandler {
             //todo 推送记录  失败
             errorReason= "审批任务不能为空";
             syncRecordEntity.setErrorReason( errorReason);
-            approveSyncRecordService.save( syncRecordEntity);
+            approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
         }else {
             if(processTaskManagementEntities.size() > 300){
                 //todo 推送记录  失败
                 errorReason= "飞书平台任务列表数不能超过300";
                 syncRecordEntity.setErrorReason( errorReason);
-                approveSyncRecordService.save( syncRecordEntity);
+                approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
             }
 
             String status = mqDto.getFSApprovalStatusEnum().getCode();
@@ -198,7 +206,7 @@ public class CfgApproveSyncBuildHandler {
                 //todo 推送记录  失败
                 errorReason= "飞书平台抄送列表数不能超过200";
                 syncRecordEntity.setErrorReason( errorReason);
-                approveSyncRecordService.save( syncRecordEntity);
+                approveSyncRecordService.insertBatch(Arrays.asList(syncRecordEntity));
                 return null;
             }
 
