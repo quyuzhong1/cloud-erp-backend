@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,6 +31,7 @@ public class DropDownListController extends BaseController {
      * cfgSetting  系统配置
      * poReconciliationStatus 采购对账状态
      * poReconciliationSourceType 对账明细来源类型
+     * poReconciliationDetailStatus 对账单明细对账状态
      * @return
      */
     @GetMapping("/dict/list")
