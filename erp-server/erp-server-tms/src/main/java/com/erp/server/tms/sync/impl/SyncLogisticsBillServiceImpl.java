@@ -255,14 +255,14 @@ public class SyncLogisticsBillServiceImpl implements SyncLogisticsBillService {
 
             List<String> soIdList = idSoOutMaps.values().stream().map(SoOutstockEntity::getSoId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
             if (CollUtil.isNotEmpty(soIdList)) {
-                idSoB2cMaps = FeignQuery.getByIds(SoB2cEntity .class, soIdList)
+                idSoB2cMaps = FeignQuery.getByIds(SoB2cEntity.class, soIdList)
                         .stream()
                         .collect(Collectors.toMap(SoB2cEntity::getId, s -> s));
             }
             Map<String, CustomerInfoEntity> idCustomerInfoMaps = new HashMap<>();
             List<String> customerIdList = idSoOutMaps.values().stream().map(SoOutstockEntity::getCustomerId).filter(StringUtils::isNotBlank).collect(Collectors.toList());
-            if (CollUtil.isNotEmpty(soIdList)) {
-                idCustomerInfoMaps = FeignQuery.getByIds(CustomerInfoEntity .class, customerIdList)
+            if (CollUtil.isNotEmpty(customerIdList)) {
+                idCustomerInfoMaps = FeignQuery.getByIds(CustomerInfoEntity.class, customerIdList)
                         .stream()
                         .collect(Collectors.toMap(CustomerInfoEntity::getId, s -> s));
             }
