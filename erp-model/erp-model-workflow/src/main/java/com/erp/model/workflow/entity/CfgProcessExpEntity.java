@@ -42,7 +42,7 @@ public class CfgProcessExpEntity extends BaseEntity<CfgProcessExpEntity> {
     /**
      * 选择条件字段
      */
-    @TableField("fieldName")
+    @TableField("field_name")
     private String fieldName;
     /**
     * 条件符号
