@@ -244,6 +244,17 @@ public class ProcessManagementController extends BaseController {
     }
 
     /**
+     * 批量查询流程当前审批人
+     */
+    @PostMapping("/getCurApprover")
+    public ApiResult<List<ProcessManagementDTO.CurApproveInfoDTO>> getCurApprover(@RequestBody ProcessManagementDTO.HistoryActivityDTO dto) {
+        ValidList<ProcessManagementDTO.HistoryActivityDTO> dtoList = new ValidList<>();
+        dtoList.add(dto);
+        List<ProcessManagementDTO.CurApproveInfoDTO> resultList = processManagementService.batchCurApprover(dtoList);
+        return success(resultList);
+    }
+
+    /**
      * 批量查询当前待审核业务单据
      */
     @PostMapping("/batchCurApproverByApprove")

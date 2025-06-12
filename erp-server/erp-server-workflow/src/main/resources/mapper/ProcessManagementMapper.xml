@@ -199,8 +199,9 @@
             string_agg(ptm.cur_approve_name,',') AS curApproveName
         FROM process_management pm
         LEFT JOIN process_task_management ptm ON pm.process_instance_id = ptm.process_instance_id AND ptm.is_deleted = false AND ptm.task_status = 'approveIng'
-        WHERE pm.is_deleted = false AND
-            (pm.business_id, pm.business_key) in
+        WHERE pm.is_deleted = false
+              and pm.process_status = 'running'
+              and (pm.business_id, pm.business_key) in
             <foreach collection="list" item="item" open="(" separator="," close=")">
                 (#{item.businessId}, #{item.businessKey})
             </foreach>
@@ -359,6 +360,10 @@
     </select>
     <select id="getTestList" resultType="java.lang.String">
         select id from process_management where business_key = #{businessType} and create_time between '2025-05-12' and '2025-06-06'
+    </select>
+    <select id="getCurApprover" resultType="com.erp.model.workflow.dto.ProcessManagementDTO$CurApproveInfoDTO">
+
+
     </select>
 
 </mapper>

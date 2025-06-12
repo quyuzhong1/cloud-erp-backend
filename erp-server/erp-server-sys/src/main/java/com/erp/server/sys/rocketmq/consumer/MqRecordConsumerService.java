@@ -5,8 +5,11 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReflectUtil;
 import cn.hutool.extra.spring.SpringUtil;
+import com.alibaba.fastjson.JSON;
 import com.common.business.enums.ThirdpartyPlatformEnum;
+import com.common.business.validator.ValidList;
 import com.common.business.wrapper.FeignQuery;
+import com.common.core.controller.vo.ApiResult;
 import com.common.core.entity.BaseEntity;
 import com.common.core.entity.ConditionElement;
 import com.common.core.exception.ServiceException;
@@ -21,6 +24,7 @@ import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.*;
 import com.erp.model.sys.vo.SendThirdNoticeConsumerDTO;
 import com.erp.model.sys.vo.ThirdUnionDTO;
+import com.erp.model.wms.dto.WarehouseLocationDTO;
 import com.erp.model.workflow.dto.CfgQueryOptionDTO;
 import com.erp.model.workflow.dto.ProcessManagementDTO;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
@@ -228,7 +232,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                 continue;
             }
 
-            List<String> userIdList = getUserList(post,roleType, specificPerson, businessId);
+            List<String> userIdList = getUserList(post,roleType, specificPerson, businessId,noticeEntity.getBusinessType());
             if (CollUtil.isEmpty(userIdList)) {
                 //如果没有unionId，则保存失败记录
                 String errorReason = "通知人员id不存在";
@@ -513,7 +517,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
      * @author jack
      * @date 2025-05-30
      */
-    private List<String> getUserList(String post, String roleType, String specificPerson, String businessId) {
+    private List<String> getUserList(String post, String roleType, String specificPerson, String businessId,String businessKey) {
         List<String> resultList = new ArrayList<>();
 
         //具体人员
@@ -540,24 +544,41 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                     String field = optionEntity.getField();
                     String classPath = optionEntity.getClassPath();
                     String refField = optionEntity.getRefField();
-                    if(StringUtils.isNotBlank(field) && StringUtils.isNotBlank(classPath)){
+                    if(StringUtils.isNotBlank(field) && StringUtils.isNotBlank(classPath)) {
                         try {
-                            String ref = "id";
-                            Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
-                            if(StringUtils.isNotBlank(refField) && optionEntity.getTableType().equals(DictNoticeRoleOptionTableTypeEnum.DETAIL.getCode())){
-                                ref = refField;
-                            }
-                            List<BaseEntity> baseEntityList = FeignQuery.create(clazz)
-                                    .eq(ref, businessId)
-                                    .list();
-                            if(CollUtil.isNotEmpty(baseEntityList)){
-                                // 获取字段值
-                                String result = baseEntityList.stream()
-                                        .map(item -> String.valueOf(ReflectUtil.getFieldValue(item, field)))
-                                        .filter(value -> StringUtils.isNotBlank(value))
-                                        .collect(Collectors.joining(","));
-                                if (StringUtils.isNotBlank(result)) {
-                                    resultList.add(result);
+                            //获取当前审批人逻辑需要特殊处理
+                            if (field.equals("approveUserId")) {
+                                String[] split = classPath.split("#");
+                                String controller = split[0];
+                                String methodName = split[1];
+                                ProcessManagementDTO.HistoryActivityDTO dto = new ProcessManagementDTO.HistoryActivityDTO();
+                                dto.setBusinessKey(businessKey);
+                                dto.setBusinessId(businessId);
+                                ApiResult select = FeignQuery.invoke(ApiResult.class, controller, methodName, Arrays.asList(dto));
+                                if(Objects.nonNull(select)){
+                                    List<ProcessManagementDTO.CurApproveInfoDTO> data = JSON.parseArray(JSON.toJSONString(select.getData()), ProcessManagementDTO.CurApproveInfoDTO.class);
+                                    if(CollUtil.isNotEmpty(data)){
+                                        resultList.addAll(Arrays.asList(data.get(0).getCurApproveId().split(",")));
+                                    }
+                                }
+                            } else {
+                                String ref = "id";
+                                Class<BaseEntity> clazz = (Class<BaseEntity>) Class.forName(classPath);
+                                if (StringUtils.isNotBlank(refField) && optionEntity.getTableType().equals(DictNoticeRoleOptionTableTypeEnum.DETAIL.getCode())) {
+                                    ref = refField;
+                                }
+                                List<BaseEntity> baseEntityList = FeignQuery.create(clazz)
+                                        .eq(ref, businessId)
+                                        .list();
+                                if (CollUtil.isNotEmpty(baseEntityList)) {
+                                    // 获取字段值
+                                    String result = baseEntityList.stream()
+                                            .map(item -> String.valueOf(ReflectUtil.getFieldValue(item, field)))
+                                            .filter(value -> StringUtils.isNotBlank(value))
+                                            .collect(Collectors.joining(","));
+                                    if (StringUtils.isNotBlank(result)) {
+                                        resultList.add(result);
+                                    }
                                 }
                             }
                         } catch (ClassNotFoundException e) {
