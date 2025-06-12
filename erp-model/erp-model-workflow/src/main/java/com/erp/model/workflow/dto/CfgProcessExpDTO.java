@@ -51,6 +51,11 @@ public class CfgProcessExpDTO implements Serializable {
         private String field;
 
         /**
+         * 条件字段名
+         */
+        private String fieldName;
+
+        /**
         * 条件符号
         */
         private String compare;
@@ -121,6 +126,12 @@ public class CfgProcessExpDTO implements Serializable {
         */
         @Size(max = 30,message = "选择条件字段最大长度不能超过30位")
         private String field;
+
+        /**
+         * 条件字段名
+         */
+        @Size(max = 30,message = "选择条件字段名最大长度不能超过30位")
+        private String fieldName;
 
         /**
         * 条件符号

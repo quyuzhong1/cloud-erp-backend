@@ -25,7 +25,7 @@ public interface CfgProcessFieldMapService extends SuperService<CfgProcessFieldM
      * @author hcg
      * @date: 2025-05-12
      */
-    BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
+    BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto,String useType);
 
     /**
      * 修改
@@ -35,7 +35,7 @@ public interface CfgProcessFieldMapService extends SuperService<CfgProcessFieldM
      * @author hcg
      * @date: 2025-05-12
      */
-    BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto);
+    BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> dto,String useType);
 
     /**
      * 字段映射详情接口：初次调用解析飞书FormJson

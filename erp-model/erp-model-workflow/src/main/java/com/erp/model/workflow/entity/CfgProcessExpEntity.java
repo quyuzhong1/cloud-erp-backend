@@ -40,6 +40,11 @@ public class CfgProcessExpEntity extends BaseEntity<CfgProcessExpEntity> {
     @TableField("field")
     private String field;
     /**
+     * 选择条件字段
+     */
+    @TableField("fieldName")
+    private String fieldName;
+    /**
     * 条件符号
     */
     @TableField("compare")
@@ -82,6 +87,8 @@ public class CfgProcessExpEntity extends BaseEntity<CfgProcessExpEntity> {
     public static final String LEFT_BRACKET = "left_bracket";
 
     public static final String FIELD = "field";
+
+    public static final String FIELD_NAME = "field_name";
 
     public static final String COMPARE = "compare";
 

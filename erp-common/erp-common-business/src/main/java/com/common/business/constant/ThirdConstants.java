@@ -62,5 +62,7 @@ public class ThirdConstants {
 
     public static final String PURCHASE_ORDER_SUPPLIER = "purchase_order_supplier";
 
-    
+    public static final String CfgProcess = "cfgProcess";
+
+    public static final String CfgThirdProcess = "cfgThirdProcess";
 }
