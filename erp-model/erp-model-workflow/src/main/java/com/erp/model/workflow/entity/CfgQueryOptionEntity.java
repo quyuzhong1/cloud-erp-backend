@@ -122,11 +122,6 @@ public class CfgQueryOptionEntity extends BaseEntity<CfgQueryOptionEntity> {
      */
     @TableField("class_path")
     private String classpath;
-    /**
-     * 使用类型
-     */
-    @TableField("is_extend")
-    private String isExtend;
 
     /**
      * 拓展类型

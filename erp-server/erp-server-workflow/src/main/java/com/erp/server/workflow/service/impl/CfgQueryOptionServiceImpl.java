@@ -47,25 +47,26 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
         return baseMapper.proDropDown(bussinessKey);
     }
 
+    @Override
+    public List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey) {
+        return baseMapper.proDropDownByMain(bussinessKey);
+    }
 
     @Override
     public List<CfgQueryOptionDTO.cfgApproveSyncDropDownDTO> cfgApproveSyncDropDown(String bussinessKey,String fieldBelongsType) {
+        //公共字段
         LambdaQueryWrapper<CfgQueryOptionEntity> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.in(CfgQueryOptionEntity::getFieldBelongsType, CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode());
-        queryWrapper.eq(CfgQueryOptionEntity::getIsExtend,Boolean.FALSE);
         List<CfgQueryOptionEntity> common = baseMapper.selectList(queryWrapper);
-        common.stream().forEach(item -> {
-            item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getName()+"-"+item.getConditionFieldName());
-        });
+        common.stream().forEach(item -> item.setConditionFieldName(CfgQueryOptionFieldBelongsTypeEnum.MAIN.getName()+"-"+item.getConditionFieldName()));
 
+        //查询业务key下的字段
         queryWrapper.clear();
         if (StringUtils.isNotBlank(fieldBelongsType)) {
             queryWrapper.eq(CfgQueryOptionEntity::getFieldBelongsType, fieldBelongsType);
         }
-        if (StringUtils.isNotBlank(bussinessKey)) {
-            queryWrapper.eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey);
-        }
-        queryWrapper.eq(CfgQueryOptionEntity::getIsExtend,Boolean.FALSE);
+        queryWrapper.eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey);
+        queryWrapper.eq(CfgQueryOptionEntity::getExtendType,"");//扩展字段
         queryWrapper.orderByDesc(CfgQueryOptionEntity::getFieldBelongsType);
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = baseMapper.selectList(queryWrapper);
         cfgQueryOptionEntities.stream().forEach(item -> {
@@ -77,6 +78,7 @@ public class CfgQueryOptionServiceImpl extends SuperServiceImpl<CfgQueryOptionMa
             }
         });
         cfgQueryOptionEntities.addAll(common);
+        //移除包含id字段
         cfgQueryOptionEntities = cfgQueryOptionEntities.stream()
                 .filter(e -> !e.getConditionField().contains("id") && !e.getConditionField().contains("Id"))
                 .collect(Collectors.toList());
