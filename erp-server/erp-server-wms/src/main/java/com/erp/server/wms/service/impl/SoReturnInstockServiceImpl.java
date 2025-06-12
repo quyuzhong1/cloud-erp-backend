@@ -88,6 +88,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.omg.CORBA.OBJ_ADAPTER;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
@@ -965,11 +966,18 @@ public class SoReturnInstockServiceImpl extends SuperServiceImpl<SoReturnInstock
                     detailAddDTO.setSourceDetailId(view.getSourceDetailId());
                     detailAddDTO.setSoReturnDetailId(soReturnReceiveDetailEntity.getSourceDetailId());
                 }
-                detailAddDTO.setExchangeRate(view.getExchangeRate());
-                detailAddDTO.setReturnAmount(view.getReturnAmount());
-                detailAddDTO.setTaxReturnAmount(view.getTaxReturnAmount());
-                detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(view.getExchangeRate(), view.getReturnAmount()));
-                detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(view.getExchangeRate(), view.getTaxReturnAmount()));
+                detailAddDTO.setExchangeRate(Objects.nonNull(view.getExchangeRate()) ? view.getExchangeRate() : soReturnReceiveDetailEntity.getExchangeRate());
+                if (Objects.equals(soReturnReceiveDetailEntity.getReceiveQty(), view.getRealQty())) {
+                    detailAddDTO.setReturnAmount(soReturnReceiveDetailEntity.getReturnAmount());
+                    detailAddDTO.setTaxReturnAmount(soReturnReceiveDetailEntity.getTaxReturnAmount());
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnReceiveDetailEntity.getReturnAmountLocalCurrency());
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnReceiveDetailEntity.getTaxReturnAmountLocalCurrency());
+                } else {
+                    detailAddDTO.setReturnAmount(soReturnNoticeService.calReturnAmount(soReturnReceiveDetailEntity.getReturnAmount(), soReturnReceiveDetailEntity.getReceiveQty(), view.getRealQty()));
+                    detailAddDTO.setTaxReturnAmount(soReturnNoticeService.calReturnAmount(soReturnReceiveDetailEntity.getTaxReturnAmount(), soReturnReceiveDetailEntity.getReceiveQty(), view.getRealQty()));
+                    detailAddDTO.setReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnReceiveDetailEntity.getExchangeRate(), detailAddDTO.getReturnAmount()));
+                    detailAddDTO.setTaxReturnAmountLocalCurrency(soReturnNoticeService.calLocalCurrency(soReturnReceiveDetailEntity.getExchangeRate(), detailAddDTO.getTaxReturnAmount()));
+                }
                 detailList.add(detailAddDTO);
             }
             dto.setDetailList(detailList);

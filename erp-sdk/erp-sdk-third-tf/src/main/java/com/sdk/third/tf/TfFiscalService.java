@@ -150,8 +150,8 @@ public class TfFiscalService {
      */
     public void updateCompany(UpdateCompanyDTO updateCompanyDTO){
         String path = "/alterar_empresa";
-        String accessToken = getAccessToken();
-        updateCompanyDTO.setTokenPlataforma(accessToken);
+//        String accessToken = getAccessToken();
+//        updateCompanyDTO.setTokenPlataforma(accessToken);
         buildDefaultCompany(updateCompanyDTO);
         updateCompanyDTO.setApiCompleta(null);
         log.error("请求参数,url:{},data:{}", URL+path, JSONUtil.toJsonStr(updateCompanyDTO));
