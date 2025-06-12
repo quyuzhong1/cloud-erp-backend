@@ -373,4 +373,18 @@ public class CfgQueryOptionDTO implements Serializable {
         private String fieldBelongsType;
 
     }
+    /**
+     *
+     */
+    @Data
+    @NoArgsConstructor
+    public static class ListByFieldDTO  {
+
+        //单据类型
+        private String businessType;
+
+        //条件的字段结合
+        private List<String> fieldList;
+
+    }
 }

@@ -47,5 +47,5 @@ public interface CfgQueryOptionFeign {
      * 根据字段条件查询配置
      */
     @PostMapping("/feign/cfgQueryOption/listExtendByFieldCondition")
-    List<CfgQueryOptionEntity> listExtendByFieldCondition(@RequestBody List<String> conditionFields);
+    List<CfgQueryOptionEntity> listExtendByFieldCondition(@RequestBody CfgQueryOptionDTO.ListByFieldDTO listByFieldDTO);
 }

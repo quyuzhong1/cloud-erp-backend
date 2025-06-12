@@ -43,4 +43,6 @@ public interface CfgQueryOptionService extends SuperService<CfgQueryOptionEntity
     List<CfgQueryOptionEntity> listByMqParams(CfgQueryOptionDTO.MqParamsDTO mqParamsDTO);
 
     Map<String, Object> getVariablesMapByBusinessKey(CfgQueryOptionDTO.VariablesParamsDTO dto);
+
+    List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey);
 }

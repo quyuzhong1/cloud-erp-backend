@@ -25,4 +25,6 @@ public interface CfgQueryOptionMapper extends BaseMapper<CfgQueryOptionEntity> {
     List<CfgQueryOptionEntity> getSystemfield(String bussinessKey);
 
     List<CfgQueryOptionEntity> listByMqParams(@Param("params") CfgQueryOptionDTO.MqParamsDTO mqParamsDTO);
+
+    List<CfgQueryOptionDTO.ListDTO> proDropDownByMain(String bussinessKey);
 }

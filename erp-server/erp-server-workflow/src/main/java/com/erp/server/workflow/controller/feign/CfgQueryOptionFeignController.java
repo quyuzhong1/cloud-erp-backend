@@ -3,17 +3,14 @@ package com.erp.server.workflow.controller.feign;
 import com.common.core.controller.BaseController;
 import com.erp.model.workflow.dto.*;
 import com.erp.model.workflow.entity.CfgQueryOptionEntity;
-import com.erp.model.workflow.enums.CfgQueryOptionFieldBelongsTypeEnum;
+import com.erp.model.workflow.enums.CfgQueryOptionExtendTypeEnum;
 import com.erp.server.workflow.service.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * cfgQueryOption Feign
@@ -60,10 +57,11 @@ public class CfgQueryOptionFeignController extends BaseController {
      * 根据字段条件查询配置
      */
     @PostMapping("/listExtendByFieldCondition")
-    public List<CfgQueryOptionEntity> listExtendByFieldCondition(@RequestBody List<String> conditionFields){
+    public List<CfgQueryOptionEntity> listExtendByFieldCondition(@RequestBody CfgQueryOptionDTO.ListByFieldDTO listByFieldDTO){
         return cfgQueryOptionService.lambdaQuery()
-                .in(CfgQueryOptionEntity::getConditionField, conditionFields)
-                .eq(CfgQueryOptionEntity::getIsExtend,Boolean.TRUE)
+                .eq(CfgQueryOptionEntity::getBussinessKey, listByFieldDTO.getBusinessType())
+                .in(CfgQueryOptionEntity::getConditionField, listByFieldDTO.getFieldList())
+                .eq(CfgQueryOptionEntity::getExtendType, CfgQueryOptionExtendTypeEnum.NOTICENODE.getCode())
                 .list();
     }
 }

@@ -31,16 +31,7 @@
 
     <!-- 通用查询结果列 -->
     <sql id="Base_Column_List">
-        id,
-        create_user_id,
-        create_user_name,
-        create_time,
-        update_user_id,
-        update_user_name,
-        update_time,
-        version,
-        is_deleted,
-        condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic,controls,parent_id,class_path,is_extend,value_type,use_type
+        id,create_user_id,create_user_name,create_time,update_user_id,update_user_name,update_time,version,is_deleted,condition_field_name,api_url,request_method,param,select_label,select_value,select_disabled,search_key_field,api_type,field_type,is_required,bussiness_key,condition_field,field_belongs_type,logic,controls,parent_id,class_path,value_type,use_type,table_name,sys_classify,table_cn_name,extend_type
     </sql>
     <select id="proDropDown" resultType="com.erp.model.workflow.dto.CfgQueryOptionDTO$ListDTO">
         SELECT condition_field,
@@ -86,22 +77,28 @@
     </select>
     <select id="listByMqParams" resultType="com.erp.model.workflow.entity.CfgQueryOptionEntity">
         SELECT
-            id,
-            create_user_id,
-            create_user_name,
-            create_time,
-            update_user_id,
-            update_user_name,
-            update_time,
-            version,
-            is_deleted,
-            condition_field_name, api_url, request_method, param, select_label, select_value, select_disabled, search_key_field, api_type, field_type, is_required, bussiness_key, condition_field, field_belongs_type, logic,controls,parent_id,class_path,is_extend,value_type,use_type
+            <include refid="Base_Column_List"></include>
         FROM
             cfg_query_option
         WHERE
             is_deleted = FALSE
           AND( bussiness_key IN ( SELECT bussiness_key FROM cfg_query_option WHERE is_deleted = FALSE AND TABLE_NAME = #{params.tableName} AND sys_classify = #{params.sysClassify } LIMIT 1 ) or field_belongs_type = 'common')
     </select>
-
-
+    <select id="proDropDownByMain" resultType="com.erp.model.workflow.dto.CfgQueryOptionDTO$ListDTO">
+        SELECT condition_field,
+               condition_field_name,
+               request_method,
+               controls,
+               api_url,
+               param,
+               select_label as label,
+               select_value as value,
+               search_key_field as searchKey,
+               select_value as remoteLabel,
+               value_type as valueType
+        FROM cfg_query_option
+        WHERE is_deleted = FALSE AND bussiness_key = #{businessKey}
+            AND field_belongs_type = 'main'
+        ORDER BY create_time
+    </select>
 </mapper>
