@@ -99,8 +99,6 @@ public class TfFiscalService {
         String path = "/cadastrar_empresa";
         String accessToken = getAccessToken();
         addCompanyDTO.setTokenPlataforma(accessToken);
-        String tokenEmpresa = getTokenEmpresa();
-        addCompanyDTO.setTokenEmpresa(tokenEmpresa);
         buildDefaultCompany(addCompanyDTO);
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(addCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
         log.error("请求结果,code:{},msg:{},data:{}", apiResult.getCode(), apiResult.getMsg(),apiResult.getData());
@@ -152,10 +150,8 @@ public class TfFiscalService {
      */
     public void updateCompany(UpdateCompanyDTO updateCompanyDTO){
         String path = "/alterar_empresa";
-        String accessToken = getAccessToken();
-        updateCompanyDTO.setTokenPlataforma(accessToken);
-        String tokenEmpresa = getTokenEmpresa();
-        updateCompanyDTO.setTokenEmpresa(tokenEmpresa);
+//        String accessToken = getAccessToken();
+//        updateCompanyDTO.setTokenPlataforma(accessToken);
         buildDefaultCompany(updateCompanyDTO);
         updateCompanyDTO.setApiCompleta(null);
         ApiResult apiResult = HttpCommonUtil.sendOkHttpApiResult(URL+path, JSONUtil.toJsonStr(updateCompanyDTO), null, new HashMap<>(), RequestMethod.POST);
@@ -168,14 +164,6 @@ public class TfFiscalService {
             log.error("更新公司失败,{}", apiResult.getData().toString());
             throw new ServiceException("更新公司失败:"+apiResult.getData().toString());
         }
-    }
-
-    private String getTokenEmpresa() {
-        List<DictBasicEntity> dictBasicEntityList = FeignQuery.create(DictBasicEntity.class).eq(DictBasicEntity::getType,"TF-EMPRESA_TOKEN").list();
-        if(CollectionUtils.isEmpty(dictBasicEntityList)){
-            throw new ServiceException("没有找到TF-EMPRESA_TOKEN的字典数据");
-        }
-        return dictBasicEntityList.get(0).getValue();
     }
 
     /**
