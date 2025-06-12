@@ -93,40 +93,10 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
                 .eq(DictBasicEntity::getType, DictBasicTypeEnum.SDY_SUB_PLATFORM.getType())
                 .list();
 
-        List<String> soOutstockCodeList = dmpSoLogisticsEntityMap.values().stream()
-                .map(DmpSoLogisticsEntity::getOutstockCode)
-                .filter(StringUtils::isNotBlank)
-                .collect(Collectors.toList());
-
-        Map<String, List<DmpSoOutstockEntity>> soOutstockEntityMap = new HashMap<>();
-        Map<String, List<DmpSoOutstockDetailEntity>> soOutstockDetailEntityMap = new HashMap<>();
-        if (CollUtil.isNotEmpty(soOutstockCodeList)) {
-            // 出库信息
-            List<DmpSoOutstockEntity> soOutstockEntityList = dmpSoOutstockService.lambdaQuery()
-                    .in(DmpSoOutstockEntity::getThirdBillNo, soOutstockCodeList)
-                    .eq(DmpSoOutstockEntity::getSourceSystem, DmpBasicSystemCodeEnum.ERP.getCode())
-                    .list();
-
-            soOutstockEntityMap = soOutstockEntityList.stream()
-                    .collect(Collectors.groupingBy(DmpSoOutstockEntity::getThirdBillNo));
-            // 出库明细
-            if (CollUtil.isNotEmpty(soOutstockEntityList)) {
-                List<String> erpSoOutstockIds = soOutstockEntityList.stream().map(DmpSoOutstockEntity::getThirdCode)
-                        .filter(StringUtils::isNotBlank)
-                        .collect(Collectors.toList());
-                if (CollUtil.isNotEmpty(erpSoOutstockIds)) {
-                    soOutstockDetailEntityMap = dmpSoOutstockDetailService.lambdaQuery()
-                            .in(DmpSoOutstockDetailEntity::getMainId, erpSoOutstockIds)
-                            .list()
-                            .stream().collect(Collectors.groupingBy(DmpSoOutstockDetailEntity::getMainId));
-                }
-            }
-        }
-
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoLogisticsEntityMap.get(changId), dmpSoLogisticsDetailEntityMap.get(changId), dictList, soOutstockEntityMap, soOutstockDetailEntityMap, cfgOutputId);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoLogisticsEntityMap.get(changId), dmpSoLogisticsDetailEntityMap.get(changId), dictList, cfgOutputId);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -136,7 +106,7 @@ public class DmpOutputSdyLogisticsHandler extends DmpOutputSdyBaseTaskHandler {
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoLogisticsEntity dmpSoLogisticsEntity , List<DmpSoLogisticsDetailEntity> dmpSoLogisticsDetailEntityList , List<DictBasicEntity> dictList, Map<String, List<DmpSoOutstockEntity>> soOutstockEntityMap, Map<String, List<DmpSoOutstockDetailEntity>> soOutstockDetailEntityMap, String cfgOutputId){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoLogisticsEntity dmpSoLogisticsEntity , List<DmpSoLogisticsDetailEntity> dmpSoLogisticsDetailEntityList , List<DictBasicEntity> dictList, String cfgOutputId){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpSoLogisticsEntity != null && CollUtil.isNotEmpty(dmpSoLogisticsDetailEntityList)) {
     		if(validateDataBlack(dmpSoLogisticsEntity, cfgOutputId)) {
