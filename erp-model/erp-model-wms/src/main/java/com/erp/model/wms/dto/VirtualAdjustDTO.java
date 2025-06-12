@@ -10,11 +10,10 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.io.Serializable;
-import java.time.LocalDateTime;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Size;
-import javax.validation.constraints.NotEmpty;
+
 import com.common.business.dto.AdvanceQueryDTO;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -166,11 +165,11 @@ public class VirtualAdjustDTO implements Serializable {
         /**
          * 库存状态【可排序】
          */
-        private String dictInventoryStatus;
+        private String inventoryStatus;
         /**
          * 库存状态名称
          */
-        private String dictInventoryStatusName;
+        private String inventoryStatusName;
         /**
          * 调整前数量【可排序】
          */

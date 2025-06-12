@@ -17,7 +17,7 @@
        <result column="sku_no" property="skuNo" />
        <result column="qty" property="qty" />
        <result column="remark" property="remark" />
-       <result column="dict_inventory_status" property="dictInventoryStatus" />
+       <result column="inventory_status" property="inventoryStatus" />
        <result column="type" property="type" />
        <result column="product_name" property="productName" />
        <result column="warehouse_id" property="warehouseId" />
@@ -37,7 +37,7 @@
         update_user_id,
         version,
         is_deleted,
-        main_id, sku_id, sku_no, qty, remark, dict_inventory_status, type, product_name, warehouse_id, virtual_warehouse_id, virtual_warehouse_name, warehouse_name
+        main_id, sku_id, sku_no, qty, remark, inventory_status, type, product_name, warehouse_id, virtual_warehouse_id, virtual_warehouse_name, warehouse_name
     </sql>
 
 

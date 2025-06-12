@@ -442,9 +442,9 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
 
         VirtualAdjustDTO.ImportDTO importDTO = new VirtualAdjustDTO.ImportDTO();
         String url = "";
-        if (org.apache.commons.collections4.CollectionUtils.isNotEmpty(errorList)) {
-            String fileName = "SKU成本错误数据.xlsx";
-            File file = ExcelUtil.exportFile(fileName, "error", errorList, InventorySkuCostDetailExcelDTO.class);
+        if (CollUtil.isNotEmpty(errorList)) {
+            String fileName = "虚拟库存调整错误数据.xlsx";
+            File file = ExcelUtil.exportFile(fileName, "error", errorList, VirtualAdjustDetailExcelDTO.class);
             if (!file.isDirectory()) {
                 url = FastDFSClientUtil.uploadFile(file, fileName);
             }
@@ -459,7 +459,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         //构建库存调整参数
         detailEntityList.forEach(e -> {
             VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
-            if (InventoryStatusEnum.USABLE.getCode().equals(e.getDictInventoryStatus())){
+            if (InventoryStatusEnum.USABLE.getCode().equals(e.getInventoryStatus())){
                 stockParamDTO.setBusinessType(e.getQty() > 0 ? VirtualInventoryBusinessTypeEnum.IN_USABLE.getCode() : VirtualInventoryBusinessTypeEnum.OUT_USABLE.getCode());
             }else {
                 stockParamDTO.setBusinessType(e.getQty() > 0? VirtualInventoryBusinessTypeEnum.FREEZE_IN_USABLE.getCode() : VirtualInventoryBusinessTypeEnum.FREEZE_OUT_USABLE.getCode());
@@ -493,7 +493,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         List<VirtualAdjustDetailEntity> detailEntityList = virtualAdjustDetailService.listByMainIdList(Collections.singletonList(id));
         List<VirtualAdjustDetailDTO.ViewDTO> detailList = BeanMapperUtils.copyList(VirtualAdjustDetailDTO.ViewDTO.class, detailEntityList);
         detailList.forEach(e -> {
-            e.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(e.getDictInventoryStatus()));
+            e.setInventoryStatusName(InventoryStatusEnum.getNameByCode(e.getInventoryStatus()));
         });
         data.setDetailList(detailList);
         return data;
@@ -581,7 +581,7 @@ public class VirtualAdjustServiceImpl extends SuperServiceImpl<VirtualAdjustMapp
         for(VirtualAdjustDTO.ListDTO data : list) {
             data.setApproveStatusName(ApproveStatusEnum.getName(data.getApproveStatus()));
             data.setInvalidStatusName(InvalidStatusEnum.getName(data.getInvalidStatus()));
-            data.setDictInventoryStatusName(InventoryStatusEnum.getNameByCode(data.getDictInventoryStatus()));
+            data.setInventoryStatusName(InventoryStatusEnum.getNameByCode(data.getInventoryStatus()));
         }
     }
     /**
