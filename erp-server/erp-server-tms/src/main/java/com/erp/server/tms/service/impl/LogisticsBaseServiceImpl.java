@@ -348,7 +348,7 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
             if (CollUtil.isNotEmpty(prefixList)){
                 //判断是否符合配置
                 if (prefixList.stream().anyMatch(trackNo::startsWith)){
-
+                    detailIds.add(record.getId());
                     continue;
                 }
             }
@@ -356,6 +356,9 @@ public class LogisticsBaseServiceImpl implements LogisticsBaseService {
                     .trackNo(trackNo)
                     .phoneSuffix(record.getTelNumber())
                     .build());
+        }
+        if (CollUtil.isNotEmpty(detailIds)){
+            logisticsBillDetailService.updateTrackEnableByIds(detailIds);
         }
         if (CollectionUtils.isEmpty(logisticsRegisterVOS)){
             return ApiResult.success(null);

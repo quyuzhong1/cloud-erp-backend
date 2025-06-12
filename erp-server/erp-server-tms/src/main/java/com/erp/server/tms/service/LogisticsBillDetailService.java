@@ -129,4 +129,6 @@ public interface LogisticsBillDetailService extends SuperService<LogisticsBillDe
      * @param status
      */
     void updateRegisterStatusByParams(List<LogisticsBillDetailDTO.BillDetailDTO> sucessList, int status);
+
+    void updateTrackEnableByIds(List<String> detailIds);
 }
