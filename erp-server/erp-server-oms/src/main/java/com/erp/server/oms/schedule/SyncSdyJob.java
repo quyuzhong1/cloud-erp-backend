@@ -229,7 +229,7 @@ public class SyncSdyJob {
             //产品信息
             List<SkuVO> skuVOList = new ArrayList<>();
             if (CollUtil.isNotEmpty(skuNos)) {
-                skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+                skuVOList = plmTaskFeign.listAllStatusSkuBySkuNos(skuNos);
             }
             List<BomChildrenSkuDTO> bomChildrenSkuDTOS = new ArrayList<>();
             if (CollUtil.isNotEmpty(skuIds)) {
@@ -566,7 +566,7 @@ public class SyncSdyJob {
 
             //产品信息
             List<String> skuNos = soDetailEntities.stream().map(req -> req.getSkuNo()).distinct().collect(Collectors.toList());
-            List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+            List<SkuVO> skuVOList = plmTaskFeign.listAllStatusSkuBySkuNos(skuNos);
             List<String> skuIds = soDetailEntities.stream().map(req -> req.getSkuId()).distinct().collect(Collectors.toList());
             List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
             //父类产品

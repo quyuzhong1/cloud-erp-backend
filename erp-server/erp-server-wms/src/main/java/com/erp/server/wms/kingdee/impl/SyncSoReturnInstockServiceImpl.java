@@ -702,7 +702,7 @@ public class SyncSoReturnInstockServiceImpl implements SyncSoReturnInstockServic
 		Map<String , Map<String, Object>> resultList = new HashMap<>();
 		
 		List<String> skuNos = detailEntityList.stream().map(req -> req.getSkuNo()).collect(Collectors.toList());
-        List<SkuVO> skuVOList = plmTaskFeign.listBySkuNoList(skuNos);
+        List<SkuVO> skuVOList = plmTaskFeign.listAllStatusSkuBySkuNos(skuNos);
         List<String> skuIds = detailEntityList.stream().map(req -> req.getSkuId()).collect(Collectors.toList());
         List<BomChildrenSkuDTO> bomChildrenSkuDTOS = plmTaskFeign.listBomChildBySkuIds(skuIds);
 
