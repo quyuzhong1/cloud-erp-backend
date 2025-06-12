@@ -51,6 +51,7 @@ import com.erp.server.plm.constant.BomConstant;
 import com.erp.server.plm.constant.SearchType;
 import com.erp.server.plm.mapper.ProductChangeMapper;
 import com.erp.server.plm.service.*;
+import io.seata.spring.annotation.GlobalTransactional;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -133,7 +134,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
      * @date 2023-01-14 15:02
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public Boolean add(AddChangeDTO dto) {
         ProductChangeEntity change = new ProductChangeEntity();
         String type = dto.getType();
@@ -264,6 +266,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         //获取到变更信息
         ProductChangeEntity entity = this.getById(dto.getId());
@@ -384,6 +388,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO cancelProcess(String id) {
         ProductChangeEntity entity = this.getById(id);
         if (ObjectUtil.isNotEmpty(entity)) {
@@ -407,6 +413,8 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO submit(String id, Boolean isProcess) {
         ProductChangeEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
@@ -428,7 +436,7 @@ public class ProductChangeServiceImpl extends ServiceImpl<ProductChangeMapper, P
         // 记录操作日志
         log.info("提交 开始记录委外发料单日志数据，id：【{}】", id);
         String msg = CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据提交审核 ", UserContext.getDefaultLoginUser().getUserName(), entity.getSourceCode(), "产品变更单");
-        bomOperateLogService.saveOperate(msg, BomOperationTypeEnum.STATE_CHANGE.getType(),msg);
+        bomOperateLogService.saveOperate(id, BomOperationTypeEnum.STATE_CHANGE.getType(),msg);
         return BatchResultDTO.success(entity.getId(), entity.getSourceCode(), OperationTypeEnum.SUBMIT);
     }
 
