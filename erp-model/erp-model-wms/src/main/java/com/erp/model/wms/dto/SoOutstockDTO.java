@@ -1488,6 +1488,10 @@ public class SoOutstockDTO implements Serializable {
          */
         private String soId;
         /**
+         * 店铺id
+         */
+        private String shopId;
+        /**
          * 销售订单code
          */
         private String soCode;

@@ -303,6 +303,11 @@ public class SoOutstockEntity extends BaseEntity<SoOutstockEntity> {
      */
     @TableField("trade_label")
     private String tradeLabel;
+    /**
+     * 店铺id
+     */
+    @TableField("shop_id")
+    private String shopId;
 
     @TableField(exist = false)
     private List<SoOutstockDetailEntity> detailList;
