@@ -164,21 +164,20 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         //接收中台发送的ddl变更
         //参数不能为空
         if (StringUtils.isNotBlank(dto.getDb()) && StringUtils.isNotBlank(dto.getTable()) && StringUtils.isNotBlank(dto.getOperationType()) && Objects.nonNull(dto.getDataJson())) {
-
             //保存mq消费记录
             // 将 Map 转换为 JSON 字符串
-            String id = addMqRecord( dto);
-            sendMsg(dto);
-//            if (StringUtils.isNotBlank(id)) {
-//                // 异步执行 sendMsg，不阻塞当前事务
-//                new Thread(() -> {
-//                    try {
-//                        sendMsg(dto);
-//                    } catch (Exception e) {
-//                        log.error("sendMsg 异常", e);
-//                    }
-//                }).start();
-//            }
+            String id = addMqRecord(dto);
+            if (StringUtils.isNotBlank(id)) {
+                // 异步执行 sendMsg，不阻塞当前事务
+                new Thread(() -> {
+                    try {
+                        dto.setMqConsumerRecordId(id);
+                        sendMsg(dto);
+                    } catch (Exception e) {
+                        log.error("sendMsg 异常", e);
+                    }
+                }).start();
+            }
         }
         log.info("MqRecordConsumerService 结束");
     }
@@ -221,13 +220,13 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             //主键id
             String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
             //校验规则条件
-            if (!checkRule(dto,noticeEntity, ruleConditionMap, bussinessKey)) continue;
+             if (!checkRule(dto,noticeEntity, ruleConditionMap, bussinessKey)) continue;
 
             String roleType = noticeEntity.getRoleType();
             String specificPerson = noticeEntity.getSpecificPerson();
             String post = noticeEntity.getPost();
             if (StringUtils.isBlank(post) && StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
-                String errorReason = "通知人员不能为空";
+                String errorReason = "通知配置通知人员不能为空";
                 saveFailedRecord(noticeEntity, businessId, bussinessKey,errorReason, variablesMap);
                 continue;
             }
@@ -235,7 +234,7 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             List<String> userIdList = getUserList(post,roleType, specificPerson, businessId,noticeEntity.getBusinessType());
             if (CollUtil.isEmpty(userIdList)) {
                 //如果没有unionId，则保存失败记录
-                String errorReason = "通知人员id不存在";
+                String errorReason = "通知人员不存在";
                 saveFailedRecord(noticeEntity, businessId, bussinessKey,errorReason, variablesMap);
                 continue;
             }
@@ -296,7 +295,9 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                             try {
                                 clazz = (Class<BaseEntity>) Class.forName(classpath);
                             } catch (ClassNotFoundException e) {
-                                throw new ServiceException(classpath + "实体不存在");
+                                String errorReason = "配置实体不存在";
+                                saveFailedRecord(noticeEntity, businessId, bussinessKey,errorReason, variablesMap);
+                                continue;
                             }
                             List<BaseEntity> detailList = FeignQuery.create(clazz)
                                     .eq(refEntity.getConditionField(), mainValue)
@@ -326,7 +327,6 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                             }else {
                                 handlerValueMap.put(entity.getFieldId(),String.valueOf(fieldValue));
                             }
-//                            handlerValueMap.put(entity.getFieldId(),String.valueOf(variablesMap.getOrDefault(entity.getFieldSource(), "")));
 
                             //判断是类型是common、主表还是明细
                             if(queryOptionEntity.getFieldBelongsType().equals(CfgQueryOptionFieldBelongsTypeEnum.COMMON.getCode())
@@ -445,8 +445,11 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             listByFieldDTO.setBusinessType(businessType);
             listByFieldDTO.setFieldList(fieldList);
             List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listExtendByFieldCondition(listByFieldDTO);
+//            List<String> cfgQueryOptionfieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
+            List<String> cfgQueryOptionfieldList = new ArrayList<>();
             if(CollUtil.isNotEmpty(cfgQueryOptionList)){
                 for (CfgQueryOptionEntity cfgQueryOptionEntity : cfgQueryOptionList) {
+                    cfgQueryOptionfieldList.add(cfgQueryOptionEntity.getConditionField());
                     //规则条件字段对应的值
                     String feildValue = cfgRuleConditionMap.get(cfgQueryOptionEntity.getConditionField());
                     //提审
@@ -470,7 +473,6 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                 }
             }
 
-            List<String> cfgQueryOptionfieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
             //封装条件参数
             Map<String, Object> map = cfgRuleConditionEntities.stream()
                     .filter(e -> Objects.nonNull(e.getField()) && !cfgQueryOptionfieldList.contains(e.getField()))
