@@ -382,4 +382,13 @@ public interface WmsTaskFeign {
      */
     @PostMapping("/feign/wmsSyncTask/newFindDataSendSyncTask")
     Map<String, Map<String, Object>> newFindDataSendSyncTask(@RequestBody DmpSyncMqDTO.SyncParamDTO syncParamDTO);
+    /**
+     * 根据ids查询收货信息
+     * @author will
+     * @date 2025/6/12 09:52
+     * @param idList
+     * @return List<ReceiveSourceDTO>
+     */
+    @PostMapping("/feign/warehouseReceive/listReceiveSourceByDetailIds")
+    List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(@RequestBody List<String> idList);
 }

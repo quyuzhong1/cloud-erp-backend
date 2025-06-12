@@ -275,15 +275,15 @@ public class PoReconciliationScmController extends BaseController {
     @LogAction(value = LogActionEnum.RECEIVE, desc = "单据签收")
     @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
             tableField = "create_user_id",
-            menuCode = "srm:poReconciliation:scm:delete",
+            menuCode = "srm:poReconciliation:scm:receive",
             serviceClass = PoReconciliationService.class,
             keyIdName = "ids")
-    public ApiResult<Object> receive(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+    public ApiResult<Object> receive(@RequestBody @Validated BaseIdsDTO.DateDTO dto) {
         List<BatchResultDTO> resultDTOS = new ArrayList<>(dto.getIds().size());
         for (String id : dto.getIds()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = poReconciliationScmService.receive(id);
+                resultDTO = poReconciliationScmService.receive(id,dto.getBillDate());
             }catch (Exception e){
                 log.error("对账单 单据签收失败",e);
                 PoReconciliationEntity entity = poReconciliationScmService.getById(id);

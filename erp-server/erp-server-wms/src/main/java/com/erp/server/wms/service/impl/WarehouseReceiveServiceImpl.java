@@ -2094,4 +2094,12 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             return BatchResultDTO.fail(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
         }
     }
+
+    @Override
+    public List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(List<String> idList) {
+        if (CollUtil.isEmpty(idList)) {
+            return Collections.emptyList();
+        }
+        return baseMapper.listReceiveSourceByDetailIds(idList);
+    }
 }

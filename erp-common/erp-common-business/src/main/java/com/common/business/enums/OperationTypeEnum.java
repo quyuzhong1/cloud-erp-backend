@@ -43,6 +43,8 @@ public enum OperationTypeEnum {
     EXECUTE("execute", "执行"),
 
     LOCKING("locking", "锁定"),
+    MANUAL_GENERATE("manualGenerate", "手动生成"),
+
     ;
     @JsonValue
     @EnumValue

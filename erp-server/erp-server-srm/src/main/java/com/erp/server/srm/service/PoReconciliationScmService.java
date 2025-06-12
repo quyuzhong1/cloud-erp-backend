@@ -12,6 +12,7 @@ import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -88,7 +89,7 @@ public interface PoReconciliationScmService extends SuperService<PoReconciliatio
      * @param id
      * @return BatchResultDTO
      */
-    BatchResultDTO receive(String id);
+    BatchResultDTO receive(String id, LocalDate date);
 
     /**
      * @description: 查看详情(主表)

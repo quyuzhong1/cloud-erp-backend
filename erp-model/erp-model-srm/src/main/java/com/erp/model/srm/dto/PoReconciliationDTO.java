@@ -234,6 +234,10 @@ public class PoReconciliationDTO implements Serializable {
         * 对账金额
         */
         private BigDecimal amount;
+        /**
+         * 预付金额
+         */
+        private BigDecimal totalPrepayAmount;
 
         /**
          * 附件名集合

@@ -95,4 +95,16 @@ public class WarehouseReceiveFeignController {
     public void instockStatusCleanJob(){
         warehouseReceiveService.instockStatusCleanJob();;
     }
+
+    /**
+     * 根据ids查询收货信息
+     * @author will
+     * @date 2025/6/12 09:53
+     * @param idList
+     * @return List<ReceiveSourceDTO>
+     */
+    @PostMapping("/listReceiveSourceByDetailIds")
+    public List<WarehouseReceiveDTO.ReceiveSourceDTO> listReceiveSourceByDetailIds(@RequestBody List<String> idList){
+        return warehouseReceiveService.listReceiveSourceByDetailIds(idList);
+    }
 }

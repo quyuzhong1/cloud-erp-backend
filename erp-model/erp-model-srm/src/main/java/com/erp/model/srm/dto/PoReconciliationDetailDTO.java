@@ -2,6 +2,7 @@ package com.erp.model.srm.dto;
 
 import com.common.business.dto.AdvanceQueryDTO;
 import com.common.business.dto.base.SortDTO;
+import com.common.core.utils.MathUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -212,7 +213,7 @@ public class PoReconciliationDetailDTO implements Serializable {
         private String purchaseRemark;
 
         /**
-         * 供应商备注 + 采购备注
+         * 单据备注
          */
         private String remark;
 
@@ -446,6 +447,10 @@ public class PoReconciliationDetailDTO implements Serializable {
          */
         private BigDecimal discountRate;
         /**
+         * 折扣额
+         */
+        private BigDecimal discountAmount;
+        /**
          * 预付金额
          */
         private BigDecimal prepayAmount;
@@ -453,6 +458,17 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 税价合计（折扣）
          */
         private BigDecimal discountTaxAmount;
+        /**
+         * 单据备注
+         */
+        private String remark;
+
+        /**
+         * 折扣额
+         */
+        public BigDecimal getDiscountAmount () {
+            return MathUtil.multiplyWithFour(discountRate,discountRate);
+        }
     }
 
     /**
@@ -633,6 +649,23 @@ public class PoReconciliationDetailDTO implements Serializable {
          * 退货来源
          */
         private String returnSourceType;
+        /**
+         * 送货单id
+         */
+        private String deliveryId;
+        /**
+         * 送货明细id
+         */
+        private String deliveryDetailId;
+        /**
+         * 送货单编码
+         */
+        private String deliveryCode;
+
+        /**
+         * 单据备注
+         */
+        private String remark;
     }
 
     @Data
@@ -707,10 +740,28 @@ public class PoReconciliationDetailDTO implements Serializable {
          */
         @NotEmpty(message = "入库/退货单号不能为空")
         private List<String> codeList;
-
     }
 
-    /**
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class GenerateParamDTO {
+        /**
+         * 编码
+         */
+        private String code;
+        /**
+         * 明细id
+         */
+        private String detailId;
+
+        public GenerateParamDTO (String code) {
+            this.code = code;
+        }
+    }
+
+
+        /**
      * 添加设置
      */
     @Data

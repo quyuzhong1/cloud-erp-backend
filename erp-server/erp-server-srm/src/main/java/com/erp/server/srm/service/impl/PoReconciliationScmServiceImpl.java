@@ -5,7 +5,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.date.LocalDateTimeUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.ObjectUtils;
@@ -377,13 +376,13 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         log.info("开始删除，id = {}",id);
         //删除
         this.removeById(id);
-        //清除明细主表id
-        poReconciliationDetailScmService.cleanDetailMainId(id);
+        //清除明细主表信息
+        poReconciliationDetailScmService.cleanDetailByMainId(id);
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.DELETE);
     }
 
     @Override
-    public BatchResultDTO receive(String id) {
+    public BatchResultDTO receive(String id, LocalDate date) {
         PoReconciliationEntity entity = getById(id);
         if (ObjectUtil.isEmpty(entity)) {
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
@@ -395,11 +394,11 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
         log.info("开始单据签收，id = {}",id);
         lambdaUpdate().eq(PoReconciliationEntity::getId, id)
                 .set(PoReconciliationEntity::getStatus, PoReconciliationEnum.PoReconciliationStatusEnum.RECEIVED.getCode())
-                .set(PoReconciliationEntity::getReceiveDate, LocalDate.now())
+                .set(PoReconciliationEntity::getReceiveDate, date)
                 .update();
         // 记录操作日志
         log.info("提交 开始记录对账单日志数据，id：【{}】", id);
-        String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据签收 ", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单");
+        String msg =  CharSequenceUtil.format("用户【{}】单号为【{}】的【{}】单据签收,签收日期【{}】", UserContext.getDefaultLoginUser().getUserName(), entity.getCode(), "对账单",date);
         operateLogService.addModuleOperateLog(msg, ModuleTypeEnum.PO_RECONCILIATION.getCode(), entity.getId(), "签收操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), OperationTypeEnum.RECEIVE);
     }
@@ -411,6 +410,9 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             throw new ServiceException(ApiError.ERROR_PO_RECONCILIATION_NOT_EXIST);
         }
         PoReconciliationDTO.ViewDTO viewDTO = BeanMapperUtils.map(PoReconciliationDTO.ViewDTO.class, entity);
+
+        handleViewMain(viewDTO);
+
         viewDTO.setStatusName(PoReconciliationEnum.PoReconciliationStatusEnum.getNameByCode(viewDTO.getStatus()));
 
         //附件信息
@@ -422,6 +424,31 @@ public class PoReconciliationScmServiceImpl extends SuperServiceImpl<PoReconcili
             viewDTO.setAttachNameList(attachNameList);
         }
         return viewDTO;
+    }
+
+    /**
+     * 查看数据处理
+     * @author will
+     * @date 2025/6/12 14:06
+     * @param viewDTO
+     * @return void
+     */
+    private void handleViewMain(PoReconciliationDTO.ViewDTO viewDTO) {
+
+        //查询明细信息
+        List<PoReconciliationDetailEntity> poReconciliationDetailList = poReconciliationDetailScmService.listMainIdList(Collections.singletonList(viewDTO.getId()));
+        //预付金额合计
+        BigDecimal totalPrepayAmount = poReconciliationDetailList.stream().map(PoReconciliationDetailEntity::getPrepayAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        viewDTO.setTotalPrepayAmount(totalPrepayAmount);
+        viewDTO.setStatusName(PoReconciliationEnum.PoReconciliationStatusEnum.getNameByCode(viewDTO.getStatus()));
+        //附件信息
+        List<AttachmentDTO.UpdateDTO> attachmentList = attachmentService.listByBusinessIds(Arrays.asList(viewDTO.getId()));
+        if (CollectionUtils.isNotEmpty(attachmentList)) {
+            List<String> attachUrlList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachUrl).collect(Collectors.toList());
+            viewDTO.setAttachUrlList(attachUrlList);
+            List<String> attachNameList = attachmentList.stream().map(AttachmentDTO.UpdateDTO::getAttachName).collect(Collectors.toList());
+            viewDTO.setAttachNameList(attachNameList);
+        }
     }
 
     @Override

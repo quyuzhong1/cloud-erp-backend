@@ -110,7 +110,15 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @date: 2024/1/27 11:42
      * @param id
      */
-    void cleanDetailMainId(String id);
+    void cleanDetailByMainId(String id);
+    /**
+     * 根据明细id清空明细数据
+     * @author will
+     * @date 2025/6/12 15:16
+     * @param idList
+     * @return void
+     */
+    void cleanDetailByDetailIdList(List<String> idList);
     /**
      * @description: 自动生成对账单
      * @author Will
@@ -148,10 +156,10 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * 手动生成
      * @author will
      * @date 2025/6/11 15:49
-     * @param code
+     * @param paramDTO
      * @return BatchResultDTO
      */
-    BatchResultDTO manualGenerate(String code);
+    BatchResultDTO manualGenerate(PoReconciliationDetailDTO.GenerateParamDTO paramDTO);
     /**
      * 状态更新
      * @author will

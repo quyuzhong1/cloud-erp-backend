@@ -116,7 +116,7 @@ public class PoReconciliationDetailScmController extends BaseController {
         for (String code : dto.getCodeList()) {
             BatchResultDTO resultDTO;
             try {
-                resultDTO = poReconciliationDetailScmService.manualGenerate(code);
+                resultDTO = poReconciliationDetailScmService.manualGenerate(new PoReconciliationDetailDTO.GenerateParamDTO(code));
             }catch (Exception e){
                 log.error("对账单明细 单据手动生成失败",e);
                 resultDTO = BatchResultDTO.fail(code,code, e.getMessage());
