@@ -565,6 +565,13 @@ public class DmpInoutController extends BaseController {
     	sourceSystemMaps = new HashMap<>();
     	sourceSystemMaps.put("1859427581292469023", DmpBasicSystemCodeEnum.WDT.getCode());
     	bizTypeSourceSystemMaps.put("soDeliver", sourceSystemMaps);
+    	
+    	sourceSystemMaps = new HashMap<>();
+    	sourceSystemMaps.put("1801575292597545159", "DmpOutputSdySoDeliveryHandler");
+    	sourceSystemMaps.put("1858458760101669422", "DmpOutputSdySoOutstockHandler");
+    	sourceSystemMaps.put("1858459889228088846", "DmpOutputSdyLogisticsHandler");
+    	sourceSystemMaps.put("1859050822961226666", "DmpOutputSdyReturnInstockHandler");
+    	bizTypeSourceSystemMaps.put("erp", sourceSystemMaps);
 
     	Set<String> cfgOutputIds = dto.getCfgOutputIds();
     	if(CollUtil.isEmpty(cfgOutputIds)) {
@@ -595,6 +602,8 @@ public class DmpInoutController extends BaseController {
 	    					sdyReturnInfo(cfgOutputId, sourceSystem, startTime, endTime);
 	    				}else if(key.equals("soRefund")) {
 	    					sdyRefundInfo(cfgOutputId, sourceSystem, startTime, endTime);
+	    				}else if(key.equals("erp")) {
+	    					sdyErpInfo(cfgOutputId, sourceSystem, startTime, endTime);
 	    				}
 					});
     			}
@@ -685,6 +694,88 @@ public class DmpInoutController extends BaseController {
 			throw e;
 		}
     	log.warn("完成重推数帝云有时间的退款单，系统：" + sourceSystem);
+    }
+    
+    private void sdyErpInfo(String cfgOutputId , String sourceSystem ,LocalDateTime startTime , LocalDateTime endTime) {
+    	if("1801575292597545159".equals(cfgOutputId)) {
+    		log.warn("开始重推数帝云erp配货单，系统：" + sourceSystem);
+        	try {
+    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+    			List<QueryParam> queryParams = new ArrayList<>();
+    			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
+    			queryParams.add(new QueryParam(QueryTypeEnum.GE, "pay_time", startTime));
+    			queryParams.add(new QueryParam(QueryTypeEnum.LT, "pay_time", endTime));
+    			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+    			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    		} catch (Exception e) {
+    			log.warn("失败重推数帝云erp配货单，系统：" + sourceSystem);
+    			throw e;
+    		}
+        	try {
+    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+    			List<QueryParam> queryParams = new ArrayList<>();
+    			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
+    			queryParams.add(new QueryParam(QueryTypeEnum.IS_NULL, "pay_time"));
+    			queryParams.add(new QueryParam(QueryTypeEnum.GE, "third_create_time", startTime));
+    			queryParams.add(new QueryParam(QueryTypeEnum.LT, "third_create_time", endTime));
+    			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+    			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    		} catch (Exception e) {
+    			log.warn("失败重推数帝云erp配货单，系统：" + sourceSystem);
+    			throw e;
+    		}
+        	log.warn("完成重推数帝云erp配货单，系统：" + sourceSystem);
+    	}else if("1858458760101669422".equals(cfgOutputId)) {
+    		log.warn("开始重推数帝云erp出库单，系统：" + sourceSystem);
+        	try {
+    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+    			List<QueryParam> queryParams = new ArrayList<>();
+    			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
+    			queryParams.add(new QueryParam(QueryTypeEnum.GE, "bill_date", startTime));
+    			queryParams.add(new QueryParam(QueryTypeEnum.LT, "bill_date", endTime));
+    			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+    			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    		} catch (Exception e) {
+    			log.warn("失败重推数帝云erp出库单，系统：" + sourceSystem);
+    			throw e;
+    		}
+        	log.warn("完成重推数帝云erp出库单，系统：" + sourceSystem);
+    	}else if("1858459889228088846".equals(cfgOutputId)) {
+    		log.warn("开始重推数帝云erp物流单，系统：" + sourceSystem);
+        	try {
+    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+    			List<QueryParam> queryParams = new ArrayList<>();
+    			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
+    			queryParams.add(new QueryParam(QueryTypeEnum.GE, "delivery_time", startTime));
+    			queryParams.add(new QueryParam(QueryTypeEnum.LT, "delivery_time", endTime));
+    			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+    			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    		} catch (Exception e) {
+    			log.warn("失败重推数帝云erp物流单，系统：" + sourceSystem);
+    			throw e;
+    		}
+        	log.warn("完成重推数帝云erp物流单，系统：" + sourceSystem);
+    	}else if("1859050822961226666".equals(cfgOutputId)) {
+    		log.warn("开始重推数帝云erp退货入库单，系统：" + sourceSystem);
+        	try {
+    			DmpOutputHotfixCreateRequest dmpOutputHotfixCreateRequest = new DmpOutputHotfixCreateRequest();
+    			dmpOutputHotfixCreateRequest.setCfgOutputId(cfgOutputId);
+    			List<QueryParam> queryParams = new ArrayList<>();
+    			queryParams.add(new QueryParam(QueryTypeEnum.EQ, "source_system", "erp"));
+    			queryParams.add(new QueryParam(QueryTypeEnum.GE, "return_instock_time", startTime));
+    			queryParams.add(new QueryParam(QueryTypeEnum.LT, "return_instock_time", endTime));
+    			dmpOutputHotfixCreateRequest.setQueryParams(queryParams);
+    			dmpOutputCreateFactory.doHotfixOutputTask(dmpOutputHotfixCreateRequest);
+    		} catch (Exception e) {
+    			log.warn("失败重推数帝云erp退货入库单，系统：" + sourceSystem);
+    			throw e;
+    		}
+        	log.warn("完成重推数帝云erp退货入库单，系统：" + sourceSystem);
+    	}
     }
 
 }

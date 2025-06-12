@@ -351,7 +351,7 @@
                  LEFT JOIN logistics_channel lc on lc.main_id = ls.id and lc.is_deleted= false
         where
             la.is_deleted = false
-          and ls.auth_status='already'
+          and ls.auth_status='already' and lc.disabled = false
         and la.logistics_platform in
         <foreach collection="platformCodeList" separator="," open="(" close=")" item="item">
             #{item}
