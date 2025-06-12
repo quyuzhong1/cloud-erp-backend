@@ -322,7 +322,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         JSONArray objects = handler.assembleForm(formArray, dto.getVariablesMap(), fieldMapList, valueMapList);
         List<ApproveTaskDetailDTO.AddDTO> addDTOS = handler.generatePushDetailDTO(objects, fieldMapList, dto.getVariablesMap());
         //验证addDTOS
-        log.info("三方查询生成明细创建失败：",JSONUtil.toJsonStr(addDTOS));
+        log.info("三方查询生成明细：",JSONUtil.toJsonStr(addDTOS));
         //插入记录
         ApproveTaskInfoDTO.AddDTO addDTO = new ApproveTaskInfoDTO.AddDTO();
         addDTO.setDetailList(addDTOS);

@@ -170,7 +170,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
         String processDefinitionId = getProcessDefinitionId(dto);
-//        String processDefinitionId = "12E23076-0B9C-4393-97A4-85C411EB42DC";
         if (CharSequenceUtil.isBlank(processDefinitionId)) {
             // 业务无已启用的Erp流程配置
             return new ProcessManagementDTO.StartResultDTO(dto);
@@ -258,24 +257,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 查询流程定义
         ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId);
-        if (null == processDefinition) {
-            CfgProcessRuleEntity one = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getProcessDefinitionId, processDefinitionId).eq(CfgProcessRuleEntity::getIsDeleted, false));
-            if (null != one){
-                // 流程定义不存在
-                throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
-            }
-            String ruleId = one.getId();
-            CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
-            startDTO.setRuleId(ruleId);
-            startDTO.setRuleType(one.getType());
-            log.info("startDTO重要标识:{}",startDTO.toString());
-            cfgProcessService.startThirdProcess(startDTO);
-        }
-        // 流程已修改，且未发布不允许启动
-        if(!processDefinition.getIsDeploy()){
-            // 流程定义未发布，需要先发布
-            throw new ServiceException(ApiError.PROCESS_NOT_DEPLOY);
-        }
 
         // 绑定流程发起人
         identityService.setAuthenticatedUserId(dto.getUserId());
@@ -354,6 +335,21 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
+    private void startFsProcess(ProcessManagementDTO.StartDTO dto,String processDefinitionId) {
+            CfgProcessRuleEntity one = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getProcessDefinitionId, processDefinitionId).eq(CfgProcessRuleEntity::getIsDeleted, false));
+            if (null == one){
+                // 流程定义不存在
+                throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            }
+            String ruleId = one.getId();
+            CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
+            //TODO 获取当前用户
+            startDTO.setUserId("1906628410797510657");
+            startDTO.setRuleId(ruleId);
+            startDTO.setRuleType(one.getType());
+            log.info("startDTO重要标识:{}",startDTO.toString());
+            cfgProcessService.startThirdProcess(startDTO);
+    }
 
     /**
      * 审批任务填充审批信息

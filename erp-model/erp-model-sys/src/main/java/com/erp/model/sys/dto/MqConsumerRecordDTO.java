@@ -143,7 +143,5 @@ public class MqConsumerRecordDTO implements Serializable {
         private String db;
 
         private Map<String, Object> dataJson;
-        //mq消费记录表id
-        private String mqConsumerRecordId;
     }
 }

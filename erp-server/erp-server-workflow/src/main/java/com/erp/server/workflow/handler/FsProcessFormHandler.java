@@ -70,7 +70,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         // —— 动态构建父控件映射：thirdParentId -> sysParentField ——
         Map<String, String> parentFieldMap = fieldMapList.stream()
-                .filter(fm -> "1".equals(fm.getGroupType()))
+                .filter(fm -> StrUtil.isNotBlank(fm.getSysParentId()))
                 .collect(Collectors.toMap(
                         CfgProcessFieldMapEntity::getThirdParentId,
                         fm -> {
@@ -379,7 +379,7 @@ public class FsProcessFormHandler implements ProcessFormHandler {
 
         try {
             // 解析原始时间字符串
-            DateTime hutoolDate = DateUtil.parse(dateValue.toString(), "yyyy-MM-dd HH:mm:ss.SSS");
+            DateTime hutoolDate = DateUtil.parse(dateValue.toString());
 
             // 转换为带时区的时间格式
             ZonedDateTime zonedDateTime = hutoolDate.toInstant().atZone(ZoneId.systemDefault());
@@ -1145,8 +1145,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             BigDecimal thirdValue = jsonObject.getBigDecimal("value", BigDecimal.ZERO);
 
             fieldMapList.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex));
-            CfgProcessFieldMapEntity currencyObj = fieldMapList.get(0);
-            CfgProcessFieldMapEntity thirdValueObj = fieldMapList.get(1);
+            CfgProcessFieldMapEntity currencyObj = fieldMapList.get(1);
+            CfgProcessFieldMapEntity thirdValueObj = fieldMapList.get(0);
 
             String currencyField = currencyObj.getSysField();
             String thirdValueField = thirdValueObj.getSysField();
@@ -1288,8 +1288,8 @@ public class FsProcessFormHandler implements ProcessFormHandler {
             BigDecimal thirdValue = jsonObject.getBigDecimal("value", BigDecimal.ZERO);
 
             fieldMapList.sort(Comparator.comparingInt(CfgProcessFieldMapEntity::getIndex));
-            CfgProcessFieldMapEntity currencyObj = fieldMapList.get(0);
-            CfgProcessFieldMapEntity thirdValueObj = fieldMapList.get(1);
+            CfgProcessFieldMapEntity currencyObj = fieldMapList.get(1);
+            CfgProcessFieldMapEntity thirdValueObj = fieldMapList.get(0);
 
             String currencyField = currencyObj.getSysField();
             String thirdValueField = thirdValueObj.getSysField();
