@@ -251,7 +251,7 @@ public class SyncTaskServiceImpl implements SyncTaskService {
             DmpPushTaskEntity pushTaskEntity = syncKingdeeSoService.syncDataToKingdee(entity, syncParamDetailDTO.getSyncOperate());
             resultList.add(pushTaskEntity);
             //同步订单数据到dmp
-            syncKingdeeSoService.syncOrderToDmp(entity, syncParamDetailDTO.getSyncOperate());
+//            syncKingdeeSoService.syncOrderToDmp(entity, syncParamDetailDTO.getSyncOperate());
         }
         return resultList;
     }
