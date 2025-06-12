@@ -12,6 +12,7 @@ import com.common.business.vo.PagingVO;
 import com.common.core.enums.LogActionEnum;
 import com.erp.model.sys.dto.SysPostDTO;
 import com.erp.model.sys.entity.SysPostEntity;
+import com.erp.model.wms.enums.NoticeUserEnum;
 import com.erp.server.sys.service.SysPostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @Classname SysPostController
@@ -60,6 +62,15 @@ public class SysPostController extends BaseController {
     @RequestMapping("/list")
     public ApiResult list(@RequestBody BaseSearchDTO dto) {
         List<SysPostEntity> list = sysPostService.findPost(dto);
+        return success(list);
+    }
+
+    @RequestMapping("/listByCfgThirdNotice")
+    public ApiResult listByCfgThirdNotice(@RequestBody BaseSearchDTO dto) {
+        List<SysPostEntity> list = sysPostService.findPost(dto);
+        list = list.stream()
+                .filter(e -> !(e.getPostName().equals(NoticeUserEnum.CREATE_USER.getName()) || e.getPostName().equals(NoticeUserEnum.APPROVE_USER.getName()) || e.getPostName().equals(NoticeUserEnum.HANDLE_USER.getName())))
+                .collect(Collectors.toList());
         return success(list);
     }
 

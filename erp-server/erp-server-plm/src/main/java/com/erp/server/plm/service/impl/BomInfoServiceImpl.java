@@ -149,7 +149,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-09 12:18
      */
     @Override
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     public String insert(AddBomDTO dto) {
         //sku信息
         List<BomSkuDTO> bomSkuList = dto.getSkuList();
@@ -352,6 +352,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO approve(ApproveOneDTO dto) {
         ApproveTypeEnum approveType = ApproveTypeEnum.getByCode(dto.getType());
         if(Objects.equals(approveType, ApproveTypeEnum.REJECT) && StrUtils.isEmpty(dto.getComment())) {
@@ -728,6 +730,8 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-13 9:58
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @GlobalTransactional(rollbackFor = Exception.class)
     public BatchResultDTO submitAudit(String bomId,Boolean isStartProcess) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {
@@ -738,7 +742,6 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
             throw new ServiceException(ApiError.ERROR_95098);
         }
         bom.setState(BomStateEnum.AUDIT_ING.getState());
-        List<BomSkuDTO> skuList = bomSkuService.getByBomId(bomId);
         //提交流程
         if (isStartProcess) {
             startProcess(bom);
@@ -783,6 +786,7 @@ public class BomInfoServiceImpl extends ServiceImpl<BomInfoMapper, BomInfoEntity
      * @date 2023-01-13 16:22
      */
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public Boolean freeze(String bomId) {
         BomInfoEntity bom = this.getById(bomId);
         if (Objects.isNull(bom)) {

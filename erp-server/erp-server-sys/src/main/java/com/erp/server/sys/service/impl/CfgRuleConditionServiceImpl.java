@@ -111,19 +111,17 @@ public class CfgRuleConditionServiceImpl extends SuperServiceImpl<CfgRuleConditi
                 .collect(Collectors.toMap(CfgConditionDTO.CommonDTO::getConditionField, CfgConditionDTO.CommonDTO::getConditionFieldName));
         List<String> actionIds = conditionList.stream().map(CfgRuleConditionDTO.Update::getId).collect(Collectors.toList());
         // 处理删除的数据
-        if (!CollectionUtils.isEmpty(actionIds)) {
-            List<String> removeIds = oleConditions.stream()
-                    .map(CfgRuleConditionEntity::getId)
-                    .filter(id -> !actionIds.contains(id))
+        List<String> removeIds = oleConditions.stream()
+                .map(CfgRuleConditionEntity::getId)
+                .filter(id -> !actionIds.contains(id))
+                .collect(Collectors.toList());
+        if (!CollectionUtils.isEmpty(removeIds)) {
+            List<Pair<String, String>> removePairList = oleConditions.stream()
+                    .filter(old -> removeIds.contains(old.getId()))
+                    .map(old -> Pair.create(ruleId, cfgConditionMap.getOrDefault(old.getField(), "")))
                     .collect(Collectors.toList());
-            if (!CollectionUtils.isEmpty(removeIds)) {
-                List<Pair<String, String>> removePairList = oleConditions.stream()
-                        .filter(old -> removeIds.contains(old.getId()))
-                        .map(old -> Pair.create(ruleId, cfgConditionMap.getOrDefault(old.getField(), "")))
-                        .collect(Collectors.toList());
-                removeByIds(removeIds);
-                operateLogService.batchAddModuleOperateLog("删除了一个条件字段【%s】", moduleType, removePairList, "编辑操作");
-            }
+            removeByIds(removeIds);
+            operateLogService.batchAddModuleOperateLog("删除了一个条件字段【%s】", moduleType, removePairList, "编辑操作");
         }
         AtomicInteger index = new AtomicInteger(0);
         List<CfgRuleConditionEntity> ruleConditionEntities = conditionList.stream()

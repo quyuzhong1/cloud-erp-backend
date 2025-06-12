@@ -260,10 +260,19 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         if(CollUtil.isEmpty(conditionList)){
             return ;
         }
+
         CfgRuleConditionDTO.Update conditionDTO = conditionList.stream().filter(e ->StringUtils.isBlank(e.getId()) && StringUtils.isBlank(e.getField()) && StringUtils.isBlank(e.getCompare())).findFirst().orElse(null);
         if(Objects.nonNull(conditionDTO)){
             conditionList.remove(conditionDTO);
         }
+
+        if(conditionList.size() == 1 ){ //表示只有一条，需要判断是需要删除
+            conditionDTO = conditionList.stream().filter(e ->StringUtils.isNotBlank(e.getId()) && StringUtils.isBlank(e.getField()) && StringUtils.isBlank(e.getCompare())).findFirst().orElse(null);
+            if(Objects.nonNull(conditionDTO)){
+                conditionList.remove(conditionDTO);
+            }
+        }
+
         if(CollUtil.isNotEmpty(conditionList)){
             for (CfgRuleConditionDTO.Update condition : conditionList) {
                 Set<ConstraintViolation<CfgRuleConditionDTO.Update>> violations = validator.validate(condition);
@@ -460,7 +469,11 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
                 Map<String, String> postMap = userEntityList.stream().collect(Collectors.toMap(SysPostEntity::getId, SysPostEntity::getPostName));
                 if(CollUtil.isNotEmpty(postIdList)){
                     record.setPostIdList(postIdList);
-                    record.setPostNameList(postIdList.stream().map(e -> postMap.get(e)).collect(Collectors.toList()));
+
+                    List<String> postNameList = postIdList.stream().map(e -> postMap.get(e)).collect(Collectors.toList());
+                    record.setPostNameList(postNameList);
+
+                    record.setPost(postNameList.stream().collect(Collectors.joining(",")));
                 }
             }
 
