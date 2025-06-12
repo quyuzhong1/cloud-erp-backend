@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum CfgQueryOptionFieldBelongsTypeEnum implements EnumMessage {
 	MAIN("main", "主表"),
-	DETAIL("detail", "明细"),
+	DETAIL("detailList", "明细"),
 	COMMON("common", "共用"),
     ;
     /**
