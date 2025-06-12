@@ -426,7 +426,7 @@ public class DmpOutputSdySoOutstockHandler extends DmpOutputSdyBaseTaskHandler {
 				// 设置所有本地时区
 				if (StringUtils.isNotBlank(dmpAmzSoOutstockDetailEntity.getEstimatedArrivalDate())){
 					OffsetDateTime parseDate = OffsetDateTime.parse(dmpAmzSoOutstockDetailEntity.getEstimatedArrivalDate());
-					String lastTime = parseDate.atZoneSameInstant(ZoneId.of(timeZoneEntity.getTimeZone())).toString();
+					String lastTime = parseDate.atZoneSameInstant(ZoneId.of(timeZoneEntity.getTimeZone())).toLocalDateTime().toString();
 					resultMap.put(dmpAmzSoOutstockDetailEntity.getShipmentItemId(), lastTime);
 				}
 			}
