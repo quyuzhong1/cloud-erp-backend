@@ -7,6 +7,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.vo.LoginUser;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -69,9 +70,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
+    public BaseResultDTO.AddDTO add(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO,String useType) {
         try {
-            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO);
+            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO,useType);
             this.saveOrUpdateBatch(entitiesToAddOrUpdate);
         } catch (Exception e) {
             throw new ServiceException("流程设置字段配置新增失败:{}", e.getMessage());
@@ -92,7 +93,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
+    public BaseResultDTO.AddDTO addOrUpdate(String bussinessKey, String cfgProcessId, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO,String useType) {
         // 遍历addDTO，id为空的保存，id不为空的更新，使用ruleId查询ruleId的记录，如果查询的结果数小于addDTO数量，那么找出结果中未包含于addDTO的中的id，然后将此id对应的entiy删除
         // 查询数据库中与 ruleId 关联的记录
         List<CfgProcessFieldMapEntity> existingEntities = this.list(
@@ -102,7 +103,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
         );
         try {
             //校验更新数据
-            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO);
+            List<CfgProcessFieldMapEntity> entitiesToAddOrUpdate = handleData(bussinessKey, ruleId, addDTO, useType);
             // 批量插入和更新
             this.saveOrUpdateBatch(entitiesToAddOrUpdate);
             //更新值映射
@@ -181,8 +182,9 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
 
     /**
      * 新增修改处理数据
+     * useType用于区分流程配置还是三方审批生成
      */
-    private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO) {
+    private List<CfgProcessFieldMapEntity> handleData(String bussinessKey, String ruleId, List<CfgProcessFieldMapDTO.AddOrUpdateDTO> addDTO,String useType) {
         //过滤addDto，thirdField为空的数据
         List<CfgProcessFieldMapDTO.AddOrUpdateDTO> thirdFieldNotEmptyDTO = addDTO.stream().filter(dto -> StrUtil.isNotBlank(dto.getThirdFieldId())).collect(Collectors.toList());
         List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, bussinessKey).eq(CfgQueryOptionEntity::getIsDeleted, false));
@@ -247,7 +249,7 @@ public class CfgProcessFieldMapServiceImpl extends SuperServiceImpl<CfgProcessFi
             entity.setCfgId(ruleId); // 设置关联的 ruleId
             entitiesToAddOrUpdate.add(entity);
         }
-        if (ObjectUtil.isNotEmpty(fieldList) && fieldList.size() > 0) {
+        if (ObjectUtil.isNotEmpty(fieldList) && fieldList.size() > 0 && useType.equals(ThirdConstants.CfgProcess)) {
             //将fieldList转为一个字符串
             String fieldListStr = String.join(",", fieldList);
             throw new ServiceException("存在{}尚未映射，无法提交保存", fieldListStr);

@@ -306,10 +306,10 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         String code = cfgProcessRuleEntity.getProcessDefinitionId();
         //
         //查询userid
-        List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("fs", Collections.singletonList(dto.getUserId()));
+        List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("FS", Collections.singletonList(dto.getUserId()));
         String userId = dtoList.get(0).getThirdUserId();
         //查询字段映射表
-        List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, dto.getBusinessId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
+        List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, dto.getRuleId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));

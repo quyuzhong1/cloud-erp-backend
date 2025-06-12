@@ -8,6 +8,7 @@ import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
+import com.common.business.constant.ThirdConstants;
 import com.common.business.dto.base.BaseResultDTO;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -87,7 +88,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             List<CfgProcessFieldMapDTO.AddOrUpdateDTO> processFieldMapDTOList = dto.getProcessFieldMapDTOList() != null
                     ? dto.getProcessFieldMapDTOList() : Collections.emptyList();
             if (!processFieldMapDTOList.isEmpty()) {
-                cfgProcessFieldMapService.add(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList);
+                cfgProcessFieldMapService.add(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList, ThirdConstants.CfgProcess);
             }
         }
 
@@ -193,7 +194,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
             List<CfgProcessFieldMapDTO.AddOrUpdateDTO> processFieldMapDTOList = dto.getProcessFieldMapDTOList() != null
                     ? dto.getProcessFieldMapDTOList() : Collections.emptyList();
             if (!processFieldMapDTOList.isEmpty()) {
-                cfgProcessFieldMapService.addOrUpdate(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList);
+                cfgProcessFieldMapService.addOrUpdate(bussinessKey, cfgProcessId, ruleId, processFieldMapDTOList, ThirdConstants.CfgProcess);
             }
         }
         // 操作日志，遍历entities，找出old中和entity id相同的
