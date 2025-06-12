@@ -7067,4 +7067,21 @@ public class ProductDetailServiceImpl extends ServiceImpl<ProductDetailMapper, P
         }
     }
 
+    @Override
+    public List<SkuVO> listAllStatusSkuBySkuNos(List<String> skuNoList) {
+        if (CollectionUtils.isEmpty(skuNoList)) {
+            return Collections.emptyList();
+        }
+        List<SkuVO> skuList = baseMapper.getSkuBySkuNos(skuNoList, null);
+        List<DmpSkuCostEntity> dmpSkuCostList = dmpTaskFeign.listRedisBySkuNoList(skuNoList);
+        for (SkuVO skuVO : skuList) {
+            if (CollectionUtils.isNotEmpty(dmpSkuCostList)) {
+                DmpSkuCostEntity dmpSkuCost = dmpSkuCostList.stream().filter(e -> e.getSkuId().equals(skuVO.getSkuId())).findFirst().orElse(null);
+                skuVO.setActualTaxCost(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getCostPrice() : skuVO.getActualTaxCost());
+                skuVO.setNotTaxCostPrice(Objects.nonNull(dmpSkuCost) ? dmpSkuCost.getNotTaxCostPrice() : skuVO.getNotTaxCostPrice());
+            }
+        }
+        return skuList;
+    }
+
 }
