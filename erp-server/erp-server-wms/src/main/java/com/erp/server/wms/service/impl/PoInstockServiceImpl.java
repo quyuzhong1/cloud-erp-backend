@@ -647,6 +647,12 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),ApiError.ERROR_98006.msg);
         }
         List<PoInstockEntity> list = Collections.singletonList(entity);
+        //采购入库单明细
+        List<PoInstockDetailEntity> detailList = poInstockDetailService.listByMainId(entity.getId());
+        if (CollUtil.isEmpty(detailList)) {
+            throw new ServiceException(ApiError.ERROR_98051);
+        }
+
         log.info("采购入库单【{}】，id=【{}】", ApproveTypeEnum.getName(type), entity.getId());
         String msg = "";
         //审核通过
@@ -665,6 +671,8 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             updatePodArrivalState(Collections.singletonList(entity.getId()));
             //修改采购收货单入库状态
             warehouseReceiveService.updateReceiveInStockStatus(Collections.singletonList(entity));
+            //审核生成采购对账单
+            autoGeneratePoReconciliation(entity,detailList);
 
             //审核通过发送金蝶
             sendPushTask(Collections.singletonList(entity),SyncOperateEnum.OPERATE_APPROVE.getCode());
@@ -679,6 +687,18 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
         //操作日志
         operateLogService.addModuleOperateLog(String.format("审核【%s】了一个采购入库单【%s】", ApproveTypeEnum.getName(type), entity.getCode()).concat(CharSequenceUtil.isNotBlank(comment) ? String.format(",意见：%s", comment) : ""), ModuleTypeEnum.PO_INSTOCK.getCode(), entity.getId(), "审核操作");
         return BatchResultDTO.success(entity.getId(), entity.getCode(), "操作成功");
+    }
+
+    /**
+     * 生成采购对账单信息
+     * @author will
+     * @date 2025/6/12 17:21
+     * @param entity
+     * @param detailList
+     * @return void
+     */
+    private void autoGeneratePoReconciliation (PoInstockEntity entity,List<PoInstockDetailEntity> detailList) {
+
     }
 
     /**

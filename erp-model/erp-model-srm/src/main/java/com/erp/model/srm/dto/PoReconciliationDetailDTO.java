@@ -227,6 +227,10 @@ public class PoReconciliationDetailDTO implements Serializable {
          */
         private String status;
         /**
+         * 对账状态名称
+         */
+        private String statusName;
+        /**
          * 送货单id
          */
         private String deliveryId;

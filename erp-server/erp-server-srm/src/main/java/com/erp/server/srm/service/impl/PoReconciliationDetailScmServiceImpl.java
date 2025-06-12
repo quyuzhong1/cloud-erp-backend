@@ -40,6 +40,7 @@ import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 import com.erp.model.srm.entity.PoReconciliationEntity;
 import com.erp.model.srm.enums.ConfigKeyEnum;
 import com.erp.model.srm.enums.ConfirmStatusEnum;
+import com.erp.model.srm.enums.PoReconciliationDetailEnum;
 import com.erp.model.srm.enums.PoReconciliationEnum;
 import com.erp.model.sys.dto.CurrencyDTO;
 import com.erp.model.wms.dto.WarehouseReceiveDTO;
@@ -331,6 +332,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     flatMap(obj -> Optional.ofNullable(obj.getSymbol())).orElse("");
             listDTO.setCurrencySymbol(currencySymbol);
             listDTO.setUnitName("Pcs");
+            listDTO.setStatusName(PoReconciliationDetailEnum.StatusEnum.getNameByCode(listDTO.getStatus()));
             //备注
             listDTO.setIndex(index);
             index++;
