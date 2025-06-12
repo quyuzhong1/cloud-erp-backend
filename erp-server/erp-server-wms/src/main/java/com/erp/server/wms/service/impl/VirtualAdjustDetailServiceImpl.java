@@ -222,21 +222,23 @@ public class VirtualAdjustDetailServiceImpl extends SuperServiceImpl<VirtualAdju
         List<String> inventoryStatusList = Arrays.asList(InventoryStatusEnum.USABLE.getCode(), InventoryStatusEnum.FROZEN.getCode());
         List<InventoryDTO.RealQtyDTO> inventoryRealList = inventoryService.getRealQty(skuIds,warehouseIds,inventoryStatusList);
         //根据仓库+sku分组
-        Map<String, List<VirtualInventoryDTO.ViewQtyDTO>> groupMap = virtualInventoryRealList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId() + item.getSkuId()));
-        groupMap.forEach((key, value) -> {
+        Map<String, List<VirtualAdjustDetailEntity>> groupMap = detailList.stream().collect(Collectors.groupingBy(item -> item.getWarehouseId() + item.getSkuId()));
+        for (String key : groupMap.keySet()) {
             //获取调整单明细数据
-            List<VirtualAdjustDetailEntity> detailEntities = detailList.stream().filter(detail -> detail.getWarehouseId().equals(value.get(0).getWarehouseId()) && detail.getSkuId().equals(value.get(0).getSkuId())).collect(Collectors.toList());
+            List<VirtualAdjustDetailEntity> detailEntityList = groupMap.get(key);
+            String warehouseId = detailEntityList.get(0).getWarehouseId();
+            String skuId = detailEntityList.get(0).getSkuId();
             //调整单明细数据求和
-            Integer adjustQty = detailEntities.stream().mapToInt(VirtualAdjustDetailEntity::getQty).sum();
+            Integer adjustQty = detailEntityList.stream().mapToInt(VirtualAdjustDetailEntity::getQty).sum();
             //虚拟库存求和
-            Integer virtualRealQty = virtualInventoryRealList.stream().mapToInt(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty).sum();
+            Integer virtualRealQty = virtualInventoryRealList.stream().filter(e -> e.getSkuId().equals(skuId) && e.getWarehouseId().equals(warehouseId)).mapToInt(VirtualInventoryDTO.ViewQtyDTO::getToVirtualWarehouseRealQty).sum();
             //实体库存求和
-            Integer realQty = inventoryRealList.stream().mapToInt(InventoryDTO.RealQtyDTO::getRealQty).sum();
+            Integer realQty = inventoryRealList.stream().filter(e -> e.getSkuId().equals(skuId) && e.getWarehouseId().equals(warehouseId)).mapToInt(InventoryDTO.RealQtyDTO::getRealQty).sum();
             //调整虚拟仓库存+虚拟仓实际库存 > 实体库存 报错
             if (adjustQty + virtualRealQty > realQty){
-                throw new ServiceException("调整后的虚拟仓【{}】SKU【{}】虚拟库存大于实体【{}】库存【{}】",detailEntities.get(0).getVirtualWarehouseName(),detailEntities.get(0).getSkuNo(),detailEntities.get(0).getWarehouseName(),realQty);
+                throw new ServiceException("调整后的虚拟仓【{}】SKU【{}】虚拟库存大于实体【{}】库存【{}】",detailEntityList.get(0).getVirtualWarehouseName(),detailEntityList.get(0).getSkuNo(),detailEntityList.get(0).getWarehouseName(),realQty);
             }
-        });
+        }
     }
 
 

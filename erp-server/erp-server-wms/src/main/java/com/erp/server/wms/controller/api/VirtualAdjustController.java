@@ -52,7 +52,8 @@ public class VirtualAdjustController extends BaseController {
     @PostMapping("/add")
     @LogAction(value = LogActionEnum.INSERT, desc = "虚拟仓调整单主表新增")
     public ApiResult<BaseResultDTO.AddDTO> add(@RequestBody @Validated VirtualAdjustDTO.AddDTO dto) {
-        return success(virtualAdjustService.add(dto));
+        BaseResultDTO.AddDTO add = virtualAdjustService.add(dto);
+        return success(add);
     }
 
     /**
