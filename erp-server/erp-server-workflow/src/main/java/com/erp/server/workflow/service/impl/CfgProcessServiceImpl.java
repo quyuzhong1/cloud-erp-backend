@@ -18,6 +18,7 @@ import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.BusinessNoTypeEnum;
 import com.common.business.service.impl.SuperServiceImpl;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.common.core.utils.BeanMapperUtils;
 import com.erp.model.scm.enums.ModuleTypeEnum;
@@ -124,13 +125,16 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
 
     @Override
     public BaseResultDTO.AddDTO update(@RequestBody @Validated CfgProcessDTO.AddOrUpdateDTO dto) {
+        if (dto.getId() == null){
+            throw new ServiceException(ApiError.NOT_EXIST_BILL, "流程配置id不能为空");
+        }
         CfgProcessEntity old = this.getById(dto.getId());
         CfgProcessEntity cfgProcessEntity = new CfgProcessEntity();
         BeanMapperUtils.copy(dto, cfgProcessEntity);
         //code不能修改
         cfgProcessEntity.setCode(old.getCode());
         log.info("开始新增流程配置");
-        boolean save = super.saveOrUpdate(cfgProcessEntity);
+        boolean save = super.updateById(cfgProcessEntity);
         if (!save) {
             throw new ServiceException("流程配置保存失败");
         }

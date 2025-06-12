@@ -222,11 +222,26 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             String specificPerson = noticeEntity.getSpecificPerson();
             String post = noticeEntity.getPost();
             if (StringUtils.isBlank(post) && StringUtils.isBlank(roleType) && StringUtils.isBlank(specificPerson)) {
+                ThirdNoticePushRecordEntity recordEntity = new ThirdNoticePushRecordEntity();
+                recordEntity.setCfgThirdNoticeId(noticeEntity.getId());
+                recordEntity.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
+                recordEntity.setBusinessId(businessId);
+                recordEntity.setBusinessType(bussinessKey);
+                recordEntity.setBusinessCode(String.valueOf(variablesMap.getOrDefault("code", "")));
+                recordEntity.setNoticeMethod(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+                recordEntity.setSendTime(LocalDateTime.now());
+                recordEntity.setTitle(noticeEntity.getTitle());
+                recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
+                recordEntity.setErrorReason("通知人员不能为空");
+                boolean save = thirdNoticePushRecordService.save(recordEntity);
                 continue;
             }
 
             List<String> userIdList = getUserList(post,roleType, specificPerson, businessId);
             if (CollUtil.isEmpty(userIdList)) {
+                //如果没有unionId，则保存失败记录
+                String errorReason = "通知人员id不存在";
+                saveFailedRecord(noticeEntity, businessId, bussinessKey,errorReason, variablesMap);
                 continue;
             }
 
@@ -239,6 +254,9 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
                     if (CfgApproveSyncSyncPlatformEnum.FEISHU.getCode().equals(str)) {
                         List<ThirdUnionDTO> unionList  = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode() , userIdList);
                         if (CollUtil.isEmpty(unionList)) {
+                            //如果没有unionId，则保存失败记录
+                            String errorReason = "通知人员未绑定飞书";
+                            saveFailedRecord(noticeEntity, businessId, bussinessKey,errorReason, variablesMap);
                             continue;
                         }
                         //组装推送消息请求体
@@ -398,6 +416,21 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
         return false;
     }
 
+    private void saveFailedRecord(CfgThirdNoticeEntity noticeEntity, String businessId, String bussinessKey,String errorReason , Map<String, Object> variablesMap) {
+        ThirdNoticePushRecordEntity recordEntity = new ThirdNoticePushRecordEntity();
+        recordEntity.setCfgThirdNoticeId(noticeEntity.getId());
+        recordEntity.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
+        recordEntity.setBusinessId(businessId);
+        recordEntity.setBusinessType(bussinessKey);
+        recordEntity.setBusinessCode(String.valueOf(variablesMap.getOrDefault("code", "")));
+        recordEntity.setNoticeMethod(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
+        recordEntity.setSendTime(LocalDateTime.now());
+        recordEntity.setTitle(noticeEntity.getTitle());
+        recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
+        recordEntity.setErrorReason(errorReason);
+        boolean save = thirdNoticePushRecordService.save(recordEntity);
+    }
+
     //规则校验
     private boolean checkRule(MqConsumerRecordDTO.MqDTO dto,CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey) {
         List<CfgRuleConditionEntity> cfgRuleConditionEntities = ruleConditionMap.get(noticeEntity.getId());
@@ -405,10 +438,15 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             Map<String, Object> variablesMap = dto.getDataJson();
             //主键id
             String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
+            //单据类型
+            String businessType = noticeEntity.getBusinessType();
 
             List<String> fieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
             //查询是否有拓展
-            List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listExtendByFieldCondition(fieldList);
+            CfgQueryOptionDTO.ListByFieldDTO listByFieldDTO = new CfgQueryOptionDTO.ListByFieldDTO();
+            listByFieldDTO.setBusinessType(businessType);
+            listByFieldDTO.setFieldList(fieldList);
+            List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listExtendByFieldCondition(listByFieldDTO);
             List<String> cfgQueryOptionfieldList = cfgRuleConditionEntities.stream().map(CfgRuleConditionEntity::getField).collect(Collectors.toList());
             if(CollUtil.isNotEmpty(cfgQueryOptionList)){
                 for (CfgQueryOptionEntity cfgQueryOptionEntity : cfgQueryOptionList) {

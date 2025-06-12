@@ -38,6 +38,15 @@ public class CfgQueryOptionController extends BaseController {
     }
 
     /**
+     * 查询option配置表下拉（值包含主表和拓展字段）
+     * @return
+     */
+    @GetMapping("/drop/downByMain")
+    public ApiResult<List<CfgQueryOptionDTO.ListDTO>> proDropDownByMain(@RequestParam(value = "bussinessKey") String bussinessKey) {
+        return success(cfgQueryOptionService.proDropDownByMain(bussinessKey));
+    }
+
+    /**
      * 字段配置系统字段下拉
      * @return
      */
