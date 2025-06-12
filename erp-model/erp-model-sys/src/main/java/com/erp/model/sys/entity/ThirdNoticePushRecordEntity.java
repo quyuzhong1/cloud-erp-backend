@@ -1,10 +1,13 @@
 package com.erp.model.sys.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import com.common.core.entity.BaseEntity;
 import java.time.LocalDateTime;
 import com.baomidou.mybatisplus.annotation.TableField;
 import java.io.Serializable;
+import java.util.Map;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Accessors;
@@ -95,6 +98,12 @@ public class ThirdNoticePushRecordEntity extends BaseEntity<ThirdNoticePushRecor
     */
     @TableField("error_reason")
     private String errorReason;
+
+    /**
+     * json数据
+     */
+    @TableField(value = "data_json", typeHandler = JacksonTypeHandler.class)
+    private Map<String, Object> dataJson;
 
 
     public static final String CFG_THIRD_NOTICE_ID = "cfg_third_notice_id";

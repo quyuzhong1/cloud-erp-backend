@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.alibaba.nacos.common.utils.StringUtils;
 import com.common.business.enums.ApproveStatusEnum;
 import com.common.business.enums.ApproveTypeEnum;
+import com.common.core.enums.ApiError;
 import com.common.core.utils.BeanMapper;
 import com.erp.model.sys.vo.ThirdUnionDTO;
 import com.erp.model.workflow.dto.CfgApproveSyncDTO;
@@ -261,7 +262,7 @@ public class CfgApproveSyncSendHandler {
                 if(thirdUnionMap.containsKey(userId)){
                     newRecord.setReceiverName(thirdUnionMap.get(userId).getUserName());
                     if(StringUtils.isBlank(thirdUnionMap.get(userId).getThirdUserId())){
-                        newRecord.setErrorReason("飞书未绑定");
+                        newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
                         list.add(newRecord);
                     }else {
                         if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
@@ -273,7 +274,7 @@ public class CfgApproveSyncSendHandler {
                     }
                 }else{
                     newRecord.setReceiverName("");
-                    newRecord.setErrorReason("飞书未绑定");
+                    newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
                     list.add(newRecord);
                 }
             }
@@ -347,7 +348,7 @@ public class CfgApproveSyncSendHandler {
                     ThirdUnionDTO thirdUnionDTO = thirdUnionMap.get(e.getCurApproveId());
                     newRecord.setReceiverName(thirdUnionDTO.getUserName());
                     if(StringUtils.isBlank(thirdUnionDTO.getThirdUserId())){
-                        newRecord.setErrorReason("飞书未绑定");
+                        newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
                         list.add(newRecord);
                     }else {
                         params.setThirdUserId(thirdUnionDTO.getThirdUserId());
@@ -359,7 +360,7 @@ public class CfgApproveSyncSendHandler {
                     }
                 }else{
                     newRecord.setReceiverName("");
-                    newRecord.setErrorReason("飞书未绑定");
+                    newRecord.setErrorReason(ApiError.FS_USER_NOT_BIND.msg);
                     list.add(newRecord);
                 }
             }
