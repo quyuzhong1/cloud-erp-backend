@@ -23,6 +23,7 @@ import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.oms.entity.ShopInfoEntity;
+import com.erp.model.sys.dto.DictBasicDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.*;
 import com.erp.model.sys.enums.CfgThirdNoticeMethodEnum;
@@ -112,6 +113,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     private WmsTaskFeign wmsTaskFeign;
     @Resource
     private DictNoticeRoleOptionService dictNoticeRoleOptionService;
+    @Resource
+    private DictBasicService dictBasicService;
 
     @Override
     public List<ThirdNoticePushRecordDTO.TabListDTO> tabList(PermissionsDTO param) {
@@ -142,11 +145,16 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     }
 
     private void fillList(List<ThirdNoticePushRecordDTO.ListDTO> records) {
+
+        List<DictBasicDTO.ViewDTO> viewDTOS = dictBasicService.listByType("thirdNoticeBusinessType");
+
+        Map<String, String> map = viewDTOS.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName, (o1, o2) -> o1));
+
         for (ThirdNoticePushRecordDTO.ListDTO record : records) {
 
             //单据类型
             String businessType = record.getBusinessType();
-            record.setBusinessTypeName(SourceTypeEnum.getName(businessType));
+            record.setBusinessTypeName(map.get(businessType));
 
             record.setNoticeTypeName(ThirdNoticePushRecordNoticeTypeEnum.getName(record.getNoticeType()));
 
@@ -161,6 +169,8 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
     public void exportList(ThirdNoticePushRecordDTO.PagingParamDTO param, HttpServletResponse response) {
         downloadTaskFeign.saveDownloadTask("三方通知推送记录导出", EXPORT_SYS_THIRD_NOTICE_RECORD.getCode(), param);
     }
+
+
 
 
     @Override
