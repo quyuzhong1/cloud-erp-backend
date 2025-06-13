@@ -1698,11 +1698,23 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 要货申请id
          */
+        @NotBlank(message = "要货申请id不能为空")
         private String id;
         /**
          * 明细id
          **/
+        @NotBlank(message = "明细id不能为空")
         private String detailId;
+        /**
+         * 发货单id
+         */
+        @NotBlank(message = "发货单id不能为空")
+        private String deliveryId;
+        /**
+         * 发货单明细id
+         */
+        @NotBlank(message = "发货单明细id不能为空")
+        private String deliveryDetailId;
         /**
          * 要货申请编码
          */
@@ -1722,6 +1734,7 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * skuid
          */
+        @NotBlank(message = "skuid不能为空")
         private String skuId;
         private String skuNo;
         /**
@@ -1731,6 +1744,8 @@ public class RequisitionApplicationDTO implements Serializable {
         /**
          * 虚拟仓冻结数量
          */
+        @Min(value = 1, message = "释放数量不能小于1")
+        @NotNull(message = "释放数量不能为空")
         private Integer virtualFrozenQty;
         /**
          * 来源实体仓id

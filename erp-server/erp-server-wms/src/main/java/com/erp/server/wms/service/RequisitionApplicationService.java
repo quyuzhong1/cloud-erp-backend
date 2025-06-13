@@ -282,4 +282,5 @@ public interface RequisitionApplicationService extends SuperService<RequisitionA
     List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow();
 
     List<RequisitionApplicationDTO.InventoryDTO> unLockInventoryView(BaseIdsDTO.IdsDTO dto);
+    BatchResultDTO unLockInventorySave(RequisitionApplicationDTO.InventoryDTO dto);
 }

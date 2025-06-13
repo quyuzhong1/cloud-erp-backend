@@ -55,6 +55,8 @@ import com.erp.model.sys.entity.SysPostEntity;
 import com.erp.model.wms.dto.*;
 import com.erp.model.wms.dto.excel.RequisitionApplicationAssembleExportDTO;
 import com.erp.model.wms.dto.excel.RequisitionApplicationDetailExcelDTO;
+import com.erp.model.wms.dto.inventory.InOutStockDTO;
+import com.erp.model.wms.dto.inventory.InventoryInOutStockDTO;
 import com.erp.model.wms.dto.inventory.VirtualFlowRefactorDTO;
 import com.erp.model.wms.dto.inventory.VirtualInventoryStockDTO;
 import com.erp.model.wms.dto.pickingstrategy.CfgRulePickingDTO;
@@ -62,6 +64,7 @@ import com.erp.model.wms.dto.pickingstrategy.LocationInventoryResultDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.entity.*;
 import com.erp.model.wms.enums.*;
+import com.erp.model.wms.enums.inventory.InventoryBusinessTypeEnum;
 import com.erp.model.wms.enums.inventory.InventorySourceTypeEnum;
 import com.erp.model.wms.enums.inventory.InventoryStatusEnum;
 import com.erp.model.wms.enums.inventory.VirtualInventoryBusinessTypeEnum;
@@ -99,6 +102,8 @@ import sun.misc.BASE64Decoder;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
 import java.io.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -175,7 +180,6 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private VirtualInventoryTransCoreService virtualInventoryTransCoreService;
     @Resource
     private VirtualWarehouseRelationService virtualWarehouseRelationService;
-
     @Resource
     @Lazy
     private RequisitionApplicationServiceImpl service;
@@ -184,49 +188,38 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     private WmsDeliveryPlanService wmsDeliveryPlanService;
     @Resource
     private CfgRulePickingStagingService cfgRulePickingStagingService;
-
     @Resource
     private TransferInfoDetailService transferInfoDetailService;
-
     @Resource
     private FirstMileDeliveryDetailService firstMileDeliveryDetailService;
     @Resource
     private DownloadTaskFeign downloadTaskFeign;
-
     @Resource
     private PackingTaskService packingTaskService;
-
-    @Resource
-    private CfgRuleOutService cfgRuleOutService;
-
     @Resource
     private WmsCartonService cartonService;
-
     @Resource
     private FbaShipmentPackingService fbaShipmentPackingService;
     @Resource
     private LogisticsProductFeign logisticsProductFeign;
-
     @Resource
     private CfgSettingService cfgSettingService;
-
     @Resource
     private MQProducerService<NoticeMsgInfoDTO> mqProducerService;
-
     @Resource
     private SysPostFeign sysPostFeign;
-
     @Resource
     private CfgRulePickingService cfgRulePickingService;
     @Resource
     private WarehouseLocationService warehouseLocationService;
     @Resource
     private FileTemplateFeign fileTemplateFeign;
-
     @Resource
     private RequisitionApplicationChangeService requisitionApplicationChangeService;
     @Resource
     private AuthDataFeign authDataFeign;
+    @Resource
+    private InventoryTransCoreService inventoryTransCoreService;
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
     @Override
@@ -3085,6 +3078,8 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             if (requisitionApplicationDetailEntity != null){
                 inventoryDTOList.stream().filter(g -> g.getId().equals(requisitionApplicationDetailEntity.getMainId()) && g.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).forEach(h ->{
                     h.setDetailId(requisitionApplicationDetailEntity.getId());
+                    h.setDeliveryId(f.getMainId());
+                    h.setDeliveryDetailId(f.getId());
                     h.setToWarehouseId(requisitionApplicationDetailEntity.getToWarehouseId());
                     h.setToWarehouseName(requisitionApplicationDetailEntity.getToWarehouseName());
                     h.setFromWarehouseId(requisitionApplicationDetailEntity.getFromWarehouseId());
@@ -3097,5 +3092,90 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
             }
         });
         return result;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public BatchResultDTO unLockInventorySave(RequisitionApplicationDTO.InventoryDTO dto) {
+        RequisitionApplicationEntity entity = this.getById(dto.getId());
+        if (Objects.isNull(entity)){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"要货申请单不存在");
+        }
+        RequisitionApplicationDetailEntity detailEntity = requisitionApplicationDetailService.getById(dto.getDetailId());
+        if (Objects.isNull(detailEntity)){
+            return BatchResultDTO.fail(detailEntity.getId(),detailEntity.getSkuNo(),"要货申请单明细不存在");
+        }
+        //头程发货单
+        FirstMileDeliveryEntity deliveryEntity = firstMileDeliveryService.getById(dto.getDeliveryId());
+        if (Objects.isNull(deliveryEntity)){
+            return BatchResultDTO.fail(entity.getId(),entity.getCode(),"要货申请单未生成发货单");
+        }
+        if (!ApproveStatusEnum.APPROVE.getStatus().equals(deliveryEntity.getApproveStatus())){
+            return BatchResultDTO.fail(deliveryEntity.getId(),deliveryEntity.getCode(),"要货申请单生成的发货单未审核通过");
+        }
+        FirstMileDeliveryDetailEntity deliveryDetailEntity = firstMileDeliveryDetailService.getById(dto.getDeliveryDetailId());
+        if (Objects.isNull(deliveryDetailEntity)){
+            return BatchResultDTO.fail(deliveryDetailEntity.getId(),deliveryDetailEntity.getSkuNo(),"要货申请单生成的发货单明细不存在");
+        }
+        if (CharSequenceUtil.isNotBlank(deliveryDetailEntity.getFbaShipmentCode())){
+            return BatchResultDTO.fail(deliveryDetailEntity.getId(),deliveryDetailEntity.getSkuNo(),"要货申请单生成的发货单明细已绑定FBA发货单");
+        }
+        //释放数量不能大于冻结数量
+        if (dto.getVirtualFrozenQty() > detailEntity.getVirtualFrozenQty()){
+            return BatchResultDTO.fail(detailEntity.getId(),detailEntity.getSkuNo(),"释放数量不能大于冻结数量");
+        }
+        //更新要货申请释放标识，并更新明细冻结数量
+        updateEntityLockStatus(entity,detailEntity,dto.getVirtualFrozenQty());
+        //虚拟仓库存释放
+        VirtualInventoryStockDTO.StockParamDTO stockParamDTO = new VirtualInventoryStockDTO.StockParamDTO();
+        stockParamDTO.setParamList(lockVirtualInventory(entity,detailEntity,dto.getVirtualFrozenQty()));
+        stockParamDTO.setBusinessType(VirtualInventoryBusinessTypeEnum.REQUISITION_APPLICATION_RETURN_HANDLE.getCode());
+        virtualInventoryTransCoreService.approve(stockParamDTO);
+        //实体库存释放
+        InventoryInOutStockDTO busiParam = new InventoryInOutStockDTO();
+        busiParam.setBusinessType(InventoryBusinessTypeEnum.REQUISITION_APPLICATION_RELEASE.getCode());
+        busiParam.setParamList(listInventory(entity,detailEntity,dto.getVirtualFrozenQty()));
+        inventoryTransCoreService.approveByType(busiParam);
+        return null;
+    }
+
+    private List<InOutStockDTO> listInventory(RequisitionApplicationEntity entity, RequisitionApplicationDetailEntity detailEntity, Integer virtualFrozenQty) {
+        InOutStockDTO inOutStockDTO = new InOutStockDTO();
+        inOutStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
+        inOutStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
+        inOutStockDTO.setSourceId(entity.getId());
+        inOutStockDTO.setSourceCode(entity.getCode());
+        inOutStockDTO.setBillDate(LocalDate.now());
+        inOutStockDTO.setSourceDetailId(detailEntity.getId());
+        inOutStockDTO.setSkuId(detailEntity.getSkuId());
+        inOutStockDTO.setSkuNo(detailEntity.getSkuNo());
+        inOutStockDTO.setQty(virtualFrozenQty);
+        return Collections.singletonList(inOutStockDTO);
+    }
+
+    private void updateEntityLockStatus(RequisitionApplicationEntity entity, RequisitionApplicationDetailEntity detailEntity, Integer virtualFrozenQty) {
+        if (Objects.isNull(entity.getIsUnlockInventory()) || !entity.getIsUnlockInventory()){
+            this.lambdaUpdate().eq(RequisitionApplicationEntity::getId,entity.getId())
+                    .set(RequisitionApplicationEntity::getIsUnlockInventory,true)
+                    .update();
+        }
+        //更新明细冻结数量
+        requisitionApplicationDetailService.lambdaUpdate().eq(RequisitionApplicationDetailEntity::getId,detailEntity.getId())
+                .set(RequisitionApplicationDetailEntity::getVirtualFrozenQty,detailEntity.getVirtualFrozenQty() - virtualFrozenQty).update();
+    }
+
+    private List<VirtualInventoryStockDTO.OutInStockDTO> lockVirtualInventory(RequisitionApplicationEntity entity, RequisitionApplicationDetailEntity detailEntity, Integer virtualFrozenQty) {
+        VirtualInventoryStockDTO.OutInStockDTO outInStockDTO = new VirtualInventoryStockDTO.OutInStockDTO();
+        outInStockDTO.setBillDate(LocalDate.now());
+        outInStockDTO.setSourceId(entity.getId());
+        outInStockDTO.setSourceCode(entity.getCode());
+        outInStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
+        outInStockDTO.setSourceDetailId(detailEntity.getId());
+        outInStockDTO.setSkuId(detailEntity.getSkuId());
+        outInStockDTO.setSkuNo(detailEntity.getSkuNo());
+        outInStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
+        outInStockDTO.setVirtualWarehouseId(detailEntity.getFromVirtualWarehouseId());
+        outInStockDTO.setQty(virtualFrozenQty);
+        return Collections.singletonList(outInStockDTO);
     }
 }

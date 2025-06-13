@@ -16,6 +16,8 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
+import com.erp.model.oms.entity.SoDetailEntity;
+import com.erp.model.oms.entity.SoInfoEntity;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -693,5 +695,33 @@ public class RequisitionApplicationController extends BaseController {
     @PostMapping("/unLockInventoryView")
     public ApiResult<List<RequisitionApplicationDTO.InventoryDTO>> unLockInventoryView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
         return success(requisitionApplicationService.unLockInventoryView(dto));
+    }
+    /**
+     * 库存释放保存
+     * @param validList
+     * @Author zdy
+     * @Date 2025/06/12
+     * @return ApiResult
+     **/
+    @PostMapping("/unLockInventorySave")
+    public ApiResult<List<BatchResultDTO>> unLockInventorySave(@RequestBody @Validated ValidList<RequisitionApplicationDTO.InventoryDTO> validList) {
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(validList.size());
+        for (RequisitionApplicationDTO.InventoryDTO dto : validList) {
+            BatchResultDTO resultDTO;
+            try {
+                resultDTO = requisitionApplicationService.unLockInventorySave(dto);
+            }catch (Exception e){
+                log.error("要货申请释放库存失败",e);
+                RequisitionApplicationEntity entity = requisitionApplicationService.getById(dto.getDetailId());
+                if (ObjectUtil.isEmpty(entity)) {
+                    resultDTO = BatchResultDTO.fail(dto.getCode(), dto.getSkuNo(), "要货申请不存在, 释放库存失败");
+                    resultDTOS.add(resultDTO);
+                    continue;
+                }
+                resultDTO = BatchResultDTO.fail(entity.getId(),  CharSequenceUtil.format("【{}】{}",entity.getCode(),dto.getSkuNo()), e.getMessage());
+            }
+            resultDTOS.add(resultDTO);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
     }
 }
