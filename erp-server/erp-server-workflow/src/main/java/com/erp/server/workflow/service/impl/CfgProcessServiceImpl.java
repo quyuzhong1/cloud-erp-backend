@@ -351,6 +351,7 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
             String instanceCode = fsService.createInstance(req);
             //生成三方查询记录
             addDTO.setThirdInstanceId(instanceCode);
+            addDTO.setThirdInstanceId(code);
             addDTO.setBussinessKey(dto.getBusinessKey());
             addDTO.setBussinessCode(dto.getBusinessCode());
             addDTO.setBussinessId(dto.getBusinessId());
