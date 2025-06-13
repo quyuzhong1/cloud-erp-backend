@@ -330,6 +330,11 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
+    /**
+     * 启动飞书流程
+     * @param dto
+     * @param ruleEntity
+     */
     private void startFsProcess(ProcessManagementDTO.StartDTO dto,CfgProcessRuleEntity ruleEntity) {
             if (null == ruleEntity){
                 // 流程定义不存在
