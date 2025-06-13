@@ -240,9 +240,18 @@ public class PoInstockDTO implements Serializable {
          */
         private String sourceId;
         /**
+         * 来源编码
+         */
+        private String sourceCode;
+        /**
          * 采购订单-来源单类型
          */
         private String sourceType;
+
+        /**
+         * 送货单编码
+         */
+        private String deliveryCode;
         /**
          * 退货方式
          */
@@ -441,6 +450,13 @@ public class PoInstockDTO implements Serializable {
          */
         @NotBlank(message = "来源id不能为空")
         private String sourceId;
+
+        /**
+         * 来源编码
+         */
+        @NotBlank(message = "来源编码不能为空")
+        private String sourceCode;
+
 
         /**
          * 来源 purchaseOrder采购订单

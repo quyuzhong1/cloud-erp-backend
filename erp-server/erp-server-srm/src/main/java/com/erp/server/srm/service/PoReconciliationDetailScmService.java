@@ -176,4 +176,13 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @return void
      */
     Boolean addSetting(PoReconciliationDetailDTO.AddSettingDTO addSettingDTO);
+    /**
+     * 根据来源编码和sku查询
+     * @author will
+     * @date 2025/6/13 15:23
+     * @param sourceCodeList
+     * @param skuNOList
+     * @return List<PoReconciliationDetailEntity>
+     */
+    List<PoReconciliationDetailEntity> listBySourceCodeAndSku(List<String> sourceCodeList, List<String> skuNOList);
 }

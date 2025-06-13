@@ -34,6 +34,7 @@ import com.erp.model.plm.vo.SkuVO;
 import com.erp.model.scm.dto.PurchaseOrderDTO;
 import com.erp.model.scm.entity.*;
 import com.erp.model.scm.enums.*;
+import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.sys.dto.SysDepartmentDTO;
 import com.erp.model.sys.dto.SysDepartmentUserNumberDTO;
 import com.erp.model.wms.dto.*;
@@ -50,6 +51,7 @@ import com.erp.rpc.dmp.feign.DmpThirdMappingFeign;
 import com.erp.rpc.file.feign.DownloadTaskFeign;
 import com.erp.rpc.plm.feign.PlmTaskFeign;
 import com.erp.rpc.scm.feign.ScmTaskFeign;
+import com.erp.rpc.srm.feign.SrmPoReconciliationFeign;
 import com.erp.rpc.sys.feign.SysUserFeign;
 import com.erp.rpc.workflow.WorkflowFeign;
 import com.erp.server.wms.kingdee.SyncKingdeeStockInService;
@@ -151,6 +153,10 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
     private DownloadTaskFeign downloadTaskFeign;
     @Resource
     private AbstractWdtService abstractWdtService;
+
+    @Resource
+    private SrmPoReconciliationFeign srmPoReconciliationFeign;
+
 
     @Override
     public PagingVO<PoInstockDTO.ListDTO> paging(PagingDTO<PoInstockDTO.SearchParamDTO> pagingDTO) {
@@ -694,11 +700,49 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
      * @author will
      * @date 2025/6/12 17:21
      * @param entity
-     * @param detailList
+     * @param poInstockDetailList
      * @return void
      */
-    private void autoGeneratePoReconciliation (PoInstockEntity entity,List<PoInstockDetailEntity> detailList) {
+    private void autoGeneratePoReconciliation (PoInstockEntity entity,List<PoInstockDetailEntity> poInstockDetailList) {
+        //收货单信息
+        List<String> sourceDetailIdList = poInstockDetailList.stream().map(PoInstockDetailEntity::getSourceDetailId).collect(Collectors.toList());
+        List<WarehouseReceiveDTO.ReceiveSourceDTO> receiveList = warehouseReceiveService.listReceiveSourceByDetailIds(sourceDetailIdList);
+        Map<String, WarehouseReceiveDTO.ReceiveSourceDTO> receiveMap = CollUtil.isEmpty(receiveList) ? new HashMap<>() : receiveList.stream().collect(Collectors.toMap(WarehouseReceiveDTO.ReceiveSourceDTO::getDetailId, Function.identity()));
 
+
+        List<PoReconciliationDetailDTO.AddDTO> addList = new ArrayList<>();
+        for (PoInstockDetailEntity poInstockDetailEntity : poInstockDetailList) {
+            PoReconciliationDetailDTO.AddDTO addDTO = new PoReconciliationDetailDTO.AddDTO();
+            //送货单信息
+            WarehouseReceiveDTO.ReceiveSourceDTO receiveSourceDTO = receiveMap.get(poInstockDetailEntity.getId());
+            if (ObjectUtil.isNotEmpty(receiveSourceDTO) && CharSequenceUtil.equals(receiveSourceDTO.getSourceType(),SourceTypeEnum.DELIVERY_ORDER.getCode())) {
+                addDTO.setDeliveryId(receiveSourceDTO.getSourceId());
+                addDTO.setDeliveryCode(receiveSourceDTO.getSourceCode());
+                addDTO.setDeliveryDetailId(receiveSourceDTO.getSourceDetailId());
+            }
+            addDTO.setPoId(entity.getPurchaseOrderId());
+            addDTO.setPoCode(entity.getPurchaseOrderCode());
+            addDTO.setPoDetailId(poInstockDetailEntity.getPurchaseOrderDetailId());
+            addDTO.setSupplierId(entity.getSupplierId());
+            addDTO.setSupplierName(entity.getSupplierName());
+            addDTO.setSourceId(entity.getId());
+            addDTO.setSourceCode(entity.getCode());
+            addDTO.setSourceDetailId(poInstockDetailEntity.getId());
+            addDTO.setSourceType(SourceTypeEnum.PO_INSTOCK.getCode());
+            addDTO.setBusinessStatus(PoReturnConfirmStatusEnum.CONFIRM.getCode());
+            addDTO.setDate(entity.getStockInDate());
+            addDTO.setSkuId(poInstockDetailEntity.getSkuId());
+            addDTO.setQty(poInstockDetailEntity.getStockInQty());
+            addDTO.setTaxPrice(poInstockDetailEntity.getTaxPrice());
+            addDTO.setSettleOrgId(entity.getReceiveOrgId());
+            addDTO.setCurrency(poInstockDetailEntity.getCurrency());
+            ReturnOrderSourceEnum returnOrderSourceEnum = Objects.equals(entity.getSourceType(), SourceTypeEnum.QC_INFO.getCode()) ?
+                    ReturnOrderSourceEnum.QC : ReturnOrderSourceEnum.OTHER;
+            addDTO.setReturnSourceType(returnOrderSourceEnum.getCode());
+            addDTO.setRemark(poInstockDetailEntity.getRemark());
+            addList.add(addDTO);
+        }
+        srmPoReconciliationFeign.add(addList);
     }
 
     /**
@@ -905,6 +949,9 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             String subcontractOrderCodes = issueEntityList.stream().map(SubcontractIssueEntity::getSubcontractOrderCode).collect(Collectors.joining(","));
             return BatchResultDTO.fail(entity.getId(),entity.getCode(),String.format(ApiError.ERROR_PO_INSTOCK_PUSH_SUBCONTRACT_ISSUE.msg, subcontractOrderCodes));
         }
+        //校验是否存在
+
+
         log.info("采购入库单反审核，id=【{}】", entity.getId());
         //更新单据为待提交
         updateApproveStatus(Collections.singletonList(entity.getId()), ApproveStatusEnum.WAIT_SUBMIT.getStatus());
@@ -1368,6 +1415,7 @@ public class PoInstockServiceImpl extends SuperServiceImpl<PoInstockMapper, PoIn
             }
             addDTO.setPurchaseOrderId(purchaseOrderId);
             addDTO.setSourceId(purchaseOrderId);
+            addDTO.setSourceCode(entity.getCode());
             addDTO.setSourceType(SourceTypeEnum.PURCHASE_ORDER.getCode());
             addDTO.setDeliveryWarehouseId(entity.getDeliveryWarehouseId());
             addDTO.setStockInUserId(value.get(0).getStockInUserId());

@@ -632,7 +632,15 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         if (ObjectUtil.isNotEmpty(oldEntity)) {
             cfgSettingEntity.setId(oldEntity.getId());
         }
-        return cfgSettingService.saveOrUpdate(oldEntity);
+        return cfgSettingService.saveOrUpdate(cfgSettingEntity);
+    }
+
+    @Override
+    public List<PoReconciliationDetailEntity> listBySourceCodeAndSku(List<String> sourceCodeList, List<String> skuNOList) {
+        return lambdaQuery().in(PoReconciliationDetailEntity::getSourceCode,sourceCodeList)
+                .in(PoReconciliationDetailEntity::getSkuNo,skuNOList)
+                .eq(PoReconciliationDetailEntity::getMainId,"")
+                .list();
     }
 
     /**
@@ -771,7 +779,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             //供应商名称
             detailEntity.setSupplierName(StrUtil.isBlank(detailEntity.getSupplierName()) ? poSupplierEntity.getSupplierName() : detailEntity.getSupplierName());
             //付款条件
-            detailEntity.setPaymentCondition(poSupplierEntity.getPaymentCondition());
+            detailEntity.setPaymentCondition(CharSequenceUtil.isBlank(poSupplierEntity.getPaymentCondition()) ? entity.getPaymentCondition() : poSupplierEntity.getPaymentCondition());
 
             //结算方式
             String settleDict = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poSupplierEntity.getPayMethodId()))
@@ -794,11 +802,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                                 && Math.abs(detailEntity.getQty())  > obj.getMinQty()
                                 && CharSequenceUtil.equals(obj.getPurchaseOrgId(), purchaseOrgId)
                                 && obj.getMaxQty() >= Math.abs(detailEntity.getQty())
-                ).findFirst().orElse(null);
-                if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
-                    detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
-                }
-
+                ).findFirst().orElse(new PurchasePriceDTO.SupplierSkuPrice());
+                detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
             } else {
                 PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(poDetailEntity)) {
@@ -806,7 +811,12 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                     detailEntity.setTaxRate(poDetailEntity.getTaxRate());
                     detailEntity.setCurrency(poDetailEntity.getCurrency());
                 }
-                detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getQty()));
+            }
+            //对账状态更新
+            if (CollUtil.isNotEmpty(paymentConditionList) && paymentConditionList.contains(detailEntity.getPaymentCondition())) {
+                detailEntity.setStatus(PoReconciliationDetailEnum.StatusEnum.WAIT_RECONCILIATION.getCode());
+            } else {
+                detailEntity.setStatus(PoReconciliationDetailEnum.StatusEnum.NOT_NEED_RECONCILIATION.getCode());
             }
             detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getQty()));
             detailEntity.setDiscountTaxAmount(detailEntity.getTaxAmount());
