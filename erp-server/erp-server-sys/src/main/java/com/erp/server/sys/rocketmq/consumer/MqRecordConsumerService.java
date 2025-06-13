@@ -39,11 +39,14 @@ import com.erp.rpc.workflow.feign.CfgQueryOptionFeign;
 import com.erp.sdk.fs.service.FsService;
 import com.erp.server.sys.service.*;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.apache.rocketmq.spring.core.RocketMQListener;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +54,9 @@ import javax.annotation.Resource;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.stream.Collectors;
 
 /**
@@ -118,89 +124,54 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
 
     private String namespace = SpringUtil.getProperty("spring.cloud.nacos.discovery.namespace");
 
+    @Resource
+    @Qualifier("thirdNoticePushExecutor")
+    private Executor thirdNoticePushExecutor;
+
     @Override
 //    @Transactional(rollbackFor = Exception.class)
     public void onMessage(String jsonStr) {
         log.info("MqRecordConsumerService 开始");
-        if(StringUtils.isBlank(jsonStr)){
-            return ;
+        if (StringUtils.isBlank(jsonStr)) {
+            return;
         }
-
-        MqConsumerRecordDTO.MqDTO dto = new MqConsumerRecordDTO.MqDTO();
         // 创建 Gson 实例
         Gson gson = new Gson();
-        Map<String, Object> jsonMap = gson.fromJson(jsonStr, Map.class);
-        dto.setDb(jsonMap.get("db") == null ? "" : String.valueOf(jsonMap.get("db")));
-        dto.setTable(jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table")));
-        dto.setOperationType(jsonMap.get("P_TAG_IUD") == null ? "" : String.valueOf(jsonMap.get("P_TAG_IUD")));
-//        dto.setDataJson((Map<String, Object> )jsonMap.get("dataJson"));
-        //需要把每个字段都转出驼峰
-        Map<String, Object> convertedMap = new HashMap<>();
-        for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
-            String originalKey = entry.getKey();
-            Object value = entry.getValue();
-            // 转换为驼峰命名
-            String camelCaseKey = CharSequenceUtil.toCamelCase(originalKey);
-            convertedMap.put(camelCaseKey, value);
-        }
-        dto.setDataJson(convertedMap);
+        List<Map<String, Object>> list = gson.fromJson(jsonStr, new TypeToken<List<Map<String, Object>>>(){}.getType());
+        for (Map<String, Object> jsonMap : list) {
+            MqConsumerRecordDTO.MqDTO dto = new MqConsumerRecordDTO.MqDTO();
+            dto.setDb(jsonMap.get("db") == null ? "" : String.valueOf(jsonMap.get("db")));
+            dto.setTable(jsonMap.get("table") == null ? "" : String.valueOf(jsonMap.get("table")));
+            dto.setOperationType(jsonMap.get("P_TAG_IUD") == null ? "" : String.valueOf(jsonMap.get("P_TAG_IUD")));
+            //需要把每个字段都转出驼峰
+            Map<String, Object> convertedMap = convertToCamelCaseMap(jsonMap);
+            dto.setDataJson(convertedMap);
 
-        //接收中台发送的ddl变更
-        //参数不能为空
-        if (StringUtils.isNotBlank(dto.getDb()) && StringUtils.isNotBlank(dto.getTable()) && StringUtils.isNotBlank(dto.getOperationType()) && Objects.nonNull(dto.getDataJson())) {
-            //保存mq消费记录
-            // 将 Map 转换为 JSON 字符串
-            String id = addMqRecord(dto);
-            if (StringUtils.isNotBlank(id)) {
-                // 异步执行 sendMsg，不阻塞当前事务
-                new Thread(() -> {
-                    try {
-                        send(dto);
-                    } catch (Exception e) {
-                        log.error("sendMsg 异常", e);
-                    }
-                }).start();
+            //接收中台发送的ddl变更
+            //参数不能为空
+            if (StringUtils.isNotBlank(dto.getDb()) && StringUtils.isNotBlank(dto.getTable()) && StringUtils.isNotBlank(dto.getOperationType()) && Objects.nonNull(dto.getDataJson())) {
+                //保存mq消费记录
+                // 将 Map 转换为 JSON 字符串
+                String id = addMqRecord(dto);
+                if (StringUtils.isNotBlank(id)) {
+                    dto.setMqConsumerRecordId(id);
+                    thirdNoticePushRecordService.sendThirdNoticeByMqAsync(dto);
+                }
             }
         }
         log.info("MqRecordConsumerService 结束");
     }
 
-    private boolean send(MqConsumerRecordDTO.MqDTO dto) {
-        //根据参数判断一下通知的单据类型
-        CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
-        mqParamsDTO.setTableName(dto.getTable());
-        mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
-        //查询出common 、表头、明细的配置
-        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
-        if (CollUtil.isEmpty(cfgQueryOptionList)) {
-            return true;
-        }
-        CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionList.stream().filter(e -> StringUtils.isNotBlank(e.getBussinessKey())).findFirst().orElse(null);
-        //单据类型
-        String bussinessKey = cfgQueryOptionEntity.getBussinessKey();
 
-        //获取三方通知配置的信息--单条--即时通知
-        List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
-                .eq(CfgThirdNoticeEntity::getBusinessType, bussinessKey)
-                .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
-                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
-                .list();
-        if (CollUtil.isEmpty(cfgThirdNoticeList)) {
-            return true;
+    private Map<String, Object> convertToCamelCaseMap(Map<String, Object> jsonMap) {
+        Map<String, Object> convertedMap = new HashMap<>();
+        for (Map.Entry<String, Object> entry : jsonMap.entrySet()) {
+            String originalKey = entry.getKey();
+            Object value = entry.getValue();
+            String camelCaseKey = CharSequenceUtil.toCamelCase(originalKey);
+            convertedMap.put(camelCaseKey, value);
         }
-
-        List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
-        //三方通知配置--推送消息
-        List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeIdList).list();
-        Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap = fieldMapList.stream().collect(Collectors.groupingBy(CfgApproveSyncFieldMapEntity::getMainId));
-        //三方通知配置--规则条件
-        List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeIdList).list();
-        Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
-
-        for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeList) {
-            thirdNoticePushRecordService.sendMsgByCfg(dto, noticeEntity, ruleConditionMap, bussinessKey, fieldMap, cfgQueryOptionList);
-        }
-        return false;
+        return convertedMap;
     }
 
     private String addMqRecord(MqConsumerRecordDTO.MqDTO dto) {

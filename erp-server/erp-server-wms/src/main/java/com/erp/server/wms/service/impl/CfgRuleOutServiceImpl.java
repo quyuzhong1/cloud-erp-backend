@@ -402,7 +402,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             }
             List<ConditionElement> conditionElementList = BeanMapper.copyList(condition.getConditionDetailList(), ConditionElement.class);
             Map<String,Object> map = this.getConditionMap(dto,b2cAllowableDeviations.isWhenZeroNormalOutSwitch());
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map,"");
             return matchResult;
         }
         return true;
@@ -457,7 +457,7 @@ public class CfgRuleOutServiceImpl extends SuperServiceImpl<CfgRuleOutMapper, Cf
             List<ConditionElement> conditionList = BeanMapper.copyList(transferElementList, ConditionElement.class);
             ConditionElement typeConditionElement = new ConditionElement("(", "type", "==", transferDTO.getType(), ")", "and", "String");
             conditionList.add(0, typeConditionElement);
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionList, map);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionList, map,"");
             if(matchResult){
                 return new CfgRuleOutDTO.MatchTransferResultDTO(Boolean.TRUE,transferDTO.getTransferWarehouseIdList());
             }

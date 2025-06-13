@@ -454,7 +454,7 @@ public class SoB2cErrorServiceImpl extends ServiceImpl<SoB2cErrorMapper, SoB2cEr
                         sorted(Comparator.comparing(RuleConditionEntity::getIndex)).collect(Collectors.toList());
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
                 //获取到表达式
-                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, entry.getValue());
+                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, entry.getValue(),"");
                 if (matchResult) {
                     resultMap.put(entry.getKey(), item);
                     break;

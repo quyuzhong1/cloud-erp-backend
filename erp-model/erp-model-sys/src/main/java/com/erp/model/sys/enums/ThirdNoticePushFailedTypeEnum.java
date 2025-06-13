@@ -14,8 +14,9 @@ import java.util.stream.Collectors;
  * @date 2025-06-10
  */
 public enum ThirdNoticePushFailedTypeEnum implements EnumMessage {
-    NOPERSON("sendNoticeFailed", "人员不存在失败"),
+    NOPERSON("noPerson", "人员不存在失败"),
     SENDNOTICE("sendNoticeFailed", "发送消息失败"),
+    ALL("all", "消费失败"),
     ;
 
     @EnumValue

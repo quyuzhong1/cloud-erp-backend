@@ -6,7 +6,6 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.ReflectUtil;
-import cn.hutool.extra.spring.SpringUtil;
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -25,7 +24,6 @@ import com.common.core.entity.ConditionElement;
 import com.common.core.enums.ApiError;
 import com.common.core.server.rule.SpElServer;
 import com.common.core.utils.BeanMapper;
-import com.common.message.constant.RocketMqConsumerGroup;
 import com.common.message.constant.RocketMqTopic;
 import com.common.message.enums.RocketMqTagEnum;
 import com.common.message.service.mq.MQProducerService;
@@ -66,6 +64,7 @@ import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.executor.CronExpression;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -218,16 +217,21 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
             return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推类型不存在");
         }
 
-        String cfgThirdNoticeId = String.valueOf(dataJson.get("cfgThirdNoticeId"));
-        CfgThirdNoticeEntity noticeEntity = cfgThirdNoticeService.getById(cfgThirdNoticeId);
-        if(Objects.isNull(dataJson.get("cfgThirdNoticeId")) || Objects.isNull(noticeEntity)){
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), "通知配置不存在");
+
+        //获取mq实体类
+        Gson gson = new Gson();
+        MqConsumerRecordDTO.MqDTO dto = gson.fromJson(gson.toJson(dataJson), MqConsumerRecordDTO.MqDTO.class);
+
+        if (Objects.equals(thirdNoticePushFailedType, ThirdNoticePushFailedTypeEnum.ALL.getCode())) {
+            sendThirdNoticeByMq(dto);
         }
 
         if (Objects.equals(thirdNoticePushFailedType, ThirdNoticePushFailedTypeEnum.NOPERSON.getCode())) {
-            //获取mq实体类
-            Gson gson = new Gson();
-            MqConsumerRecordDTO.MqDTO dto = gson.fromJson(gson.toJson(dataJson), MqConsumerRecordDTO.MqDTO.class);
+            String cfgThirdNoticeId = String.valueOf(dataJson.get("cfgThirdNoticeId"));
+            CfgThirdNoticeEntity noticeEntity = cfgThirdNoticeService.getById(cfgThirdNoticeId);
+            if(Objects.isNull(dataJson.get("cfgThirdNoticeId")) || Objects.isNull(noticeEntity)){
+                return BatchResultDTO.fail(entity.getId(), entity.getId(), "通知配置不存在");
+            }
             //根据参数判断一下通知的单据类型
             CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
             mqParamsDTO.setTableName(dto.getTable());
@@ -254,6 +258,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         }
 
         if (Objects.equals(thirdNoticePushFailedType, ThirdNoticePushFailedTypeEnum.SENDNOTICE.getCode())) {
+            String cfgThirdNoticeId = String.valueOf(dataJson.get("cfgThirdNoticeId"));
+            CfgThirdNoticeEntity noticeEntity = cfgThirdNoticeService.getById(cfgThirdNoticeId);
+            if(Objects.isNull(dataJson.get("cfgThirdNoticeId")) || Objects.isNull(noticeEntity)){
+                return BatchResultDTO.fail(entity.getId(), entity.getId(), "通知配置不存在");
+            }
             List<ThirdUnionDTO> unionList  = sysUserFeign.getThirdByUserIds(ThirdpartyPlatformEnum.FS.getCode() , Arrays.asList(entity.getReceiverId()));
             Map<String, ThirdUnionDTO> unionMap = unionList.stream().collect(Collectors.toMap(ThirdUnionDTO::getUserId, e -> e, (o1, o2) -> o1));
             if(!unionMap.containsKey(entity.getReceiverId()) || StringUtils.isBlank(unionMap.get(entity.getReceiverId()).getThirdUnionId())){
@@ -272,15 +281,91 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                     lambdaUpdate()
                             .set(ThirdNoticePushRecordEntity::getStatus, ThirdNoticePushRecordStatusEnum.SUCCESS.getCode())
                             .set(ThirdNoticePushRecordEntity::getSendTime,now)
+                            .set(ThirdNoticePushRecordEntity::getErrorReason,"")
                             .eq(ThirdNoticePushRecordEntity::getId, entity.getId())
                             .update();
                 }
             }
         }
+
         return BatchResultDTO.success(entity.getId(), entity.getId(), "执行成功");
     }
 
+    @Async("thirdNoticePushExecutor")
+    @Transactional(rollbackFor = Exception.class)
     @Override
+    public void sendThirdNoticeByMqAsync(MqConsumerRecordDTO.MqDTO dto) {
+        sendThirdNoticeByMq(dto);
+    }
+
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void sendThirdNoticeByMq(MqConsumerRecordDTO.MqDTO dto) {
+        Map<String, Object> variablesMap = dto.getDataJson();
+        String code = String.valueOf(variablesMap.getOrDefault("code", ""));
+        //主键id
+        String businessId = String.valueOf(variablesMap.getOrDefault("id", ""));
+
+        //根据参数判断一下通知的单据类型
+        CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
+        mqParamsDTO.setTableName(dto.getTable());
+        mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
+        //查询出common 、表头、明细的配置
+        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
+        if (CollUtil.isEmpty(cfgQueryOptionList)) {
+            return;
+        }
+        CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionList.stream().filter(e -> StringUtils.isNotBlank(e.getBussinessKey())).findFirst().orElse(null);
+        //单据类型
+        String bussinessKey = cfgQueryOptionEntity.getBussinessKey();
+
+        //获取三方通知配置的信息--单条--即时通知
+        List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
+                .eq(CfgThirdNoticeEntity::getBusinessType, bussinessKey)
+                .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
+                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
+                .list();
+        if (CollUtil.isEmpty(cfgThirdNoticeList)) {
+            return;
+        }
+
+        try {
+            List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
+            //三方通知配置--推送消息
+            List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeIdList).list();
+            Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap = fieldMapList.stream().collect(Collectors.groupingBy(CfgApproveSyncFieldMapEntity::getMainId));
+            //三方通知配置--规则条件
+            List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeIdList).list();
+            Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
+            for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeList) {
+                sendMsgByCfg(dto, noticeEntity, ruleConditionMap, bussinessKey, fieldMap, cfgQueryOptionList);
+            }
+        } catch (Exception e) {
+            ThirdNoticePushRecordEntity recordEntity = new ThirdNoticePushRecordEntity();
+            recordEntity.setCfgThirdNoticeId("");
+            recordEntity.setNoticeType(ThirdNoticePushRecordNoticeTypeEnum.MESSAGEPUSH.getCode());
+            recordEntity.setBusinessId(businessId);
+            recordEntity.setBusinessType(bussinessKey);
+            recordEntity.setBusinessCode(code);
+            recordEntity.setNoticeMethod("");
+            recordEntity.setReceiverId("");
+            recordEntity.setReceiverName("");
+            recordEntity.setSendTime(LocalDateTime.now());
+            recordEntity.setTitle("");
+            recordEntity.setContent("");
+            recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
+            recordEntity.setErrorReason("sendMsg异常：消费失败");
+            Map<String, Object> dataJson = BeanUtil.beanToMap(dto);
+            dataJson.put("thirdNoticePushFailedType", ThirdNoticePushFailedTypeEnum.ALL.getCode());
+            recordEntity.setDataJson(dataJson);
+            insertBatch(Arrays.asList(recordEntity));
+            log.error("sendMsg 异常", e);
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
     public void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey, Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap, List<CfgQueryOptionEntity> cfgQueryOptionList) {
         Map<String, Object> variablesMap = dto.getDataJson();
         String code = String.valueOf(variablesMap.getOrDefault("code", ""));
@@ -454,8 +539,11 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         recordEntity.setBusinessCode(code);
                         recordEntity.setNoticeMethod(CfgApproveSyncSyncPlatformEnum.FEISHU.getCode());
                         recordEntity.setReceiverId(userId);
+                        recordEntity.setReceiverName("");
                         recordEntity.setSendTime(LocalDateTime.now());
                         recordEntity.setTitle(noticeEntity.getTitle());
+                        recordEntity.setContent(content);
+                        recordEntity.setErrorReason("");
                         recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.SENDING.getCode());
                         contentMap.put("thirdNoticePushFailedType", ThirdNoticePushFailedTypeEnum.SENDNOTICE.getCode());
                         contentMap.put("cfgThirdNoticeId", noticeEntity.getId());
@@ -491,9 +579,12 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
         recordEntity.setBusinessId(businessId);
         recordEntity.setBusinessType(bussinessKey);
         recordEntity.setBusinessCode(code);
+        recordEntity.setReceiverId("");
+        recordEntity.setReceiverName("");
         recordEntity.setNoticeMethod(noticeMethod);
         recordEntity.setSendTime(LocalDateTime.now());
         recordEntity.setTitle(noticeEntity.getTitle());
+        recordEntity.setContent("");
         recordEntity.setStatus(ThirdNoticePushRecordStatusEnum.FAILED.getCode());
         recordEntity.setErrorReason(errorReason);
         Map<String, Object> dataJson = BeanUtil.beanToMap(dto);
@@ -563,9 +654,12 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                 List<CfgRuleConditionEntity> conditionList = cfgRuleConditionEntities.stream()
                         .sorted(Comparator.comparing(CfgRuleConditionEntity::getIndex))
                         .collect(Collectors.toList());
+
+                Map<String, Object> mapContanList = new HashMap<>();
+                mapContanList.put("detailList", Collections.singletonList(map));
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
                 //获取到表达式,判断表达式是否匹配
-                Boolean match = spElServer.matchExpressionByConditionList(conditionElementList, map);
+                Boolean match = spElServer.matchExpressionByConditionList(conditionElementList, mapContanList,"detailList");
                 if(Boolean.FALSE.equals(match)){
                     return Boolean.FALSE;
                 }

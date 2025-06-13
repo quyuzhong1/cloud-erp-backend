@@ -8,6 +8,8 @@ import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.common.business.service.SuperService;
 import com.common.business.dto.base.*;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.List;
@@ -31,6 +33,12 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
     Boolean insertBatch(List<ThirdNoticePushRecordEntity> list);
 
     BatchResultDTO repush(String id);
+
+    @Async("thirdNoticePushExecutor")
+    @Transactional(rollbackFor = Exception.class)
+    void sendThirdNoticeByMqAsync(MqConsumerRecordDTO.MqDTO dto);
+
+    void sendThirdNoticeByMq(MqConsumerRecordDTO.MqDTO dto);
 
     void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey, Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap, List<com.erp.model.workflow.entity.CfgQueryOptionEntity> cfgQueryOptionList);
 

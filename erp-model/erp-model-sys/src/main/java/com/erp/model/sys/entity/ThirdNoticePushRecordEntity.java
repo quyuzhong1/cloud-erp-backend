@@ -25,7 +25,7 @@ import com.common.business.enums.ApproveStatusEnum;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Accessors(chain = true)
-@TableName("third_notice_push_record")
+@TableName(value = "third_notice_push_record", autoResultMap = true)
 public class ThirdNoticePushRecordEntity extends BaseEntity<ThirdNoticePushRecordEntity> {
 
     /**
@@ -105,7 +105,6 @@ public class ThirdNoticePushRecordEntity extends BaseEntity<ThirdNoticePushRecor
     @TableField(value = "data_json", typeHandler = JacksonTypeHandler.class)
     private Map<String, Object> dataJson;
 
-
     public static final String CFG_THIRD_NOTICE_ID = "cfg_third_notice_id";
 
     public static final String NOTICE_TYPE = "notice_type";
@@ -131,6 +130,8 @@ public class ThirdNoticePushRecordEntity extends BaseEntity<ThirdNoticePushRecor
     public static final String STATUS = "status";
 
     public static final String ERROR_REASON = "error_reason";
+
+    public static final String DATA_JSON = "data_json";
 
     @Override
     public Serializable pkVal() {
