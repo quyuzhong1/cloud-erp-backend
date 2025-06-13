@@ -712,7 +712,7 @@ public class RequisitionApplicationController extends BaseController {
                 resultDTO = requisitionApplicationService.unLockInventorySave(dto);
             }catch (Exception e){
                 log.error("要货申请释放库存失败",e);
-                RequisitionApplicationEntity entity = requisitionApplicationService.getById(dto.getDetailId());
+                RequisitionApplicationEntity entity = requisitionApplicationService.getById(dto.getId());
                 if (ObjectUtil.isEmpty(entity)) {
                     resultDTO = BatchResultDTO.fail(dto.getCode(), dto.getSkuNo(), "要货申请不存在, 释放库存失败");
                     resultDTOS.add(resultDTO);

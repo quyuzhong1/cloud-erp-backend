@@ -2453,10 +2453,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetail(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        if (CollectionUtils.isEmpty(dto.getParams().getIds())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(),dto.getParams().getIds(), dto.getPermissionSql());
+        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -2926,10 +2923,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
     @Override
     public PagingVO<WmsCartonDetailDTO.ListPackingDetailDTO> exportPackingTaskDetailMerge(PagingDTO<PackingTaskDTO.ExportDTO> dto) {
         dto.getParams().setPermissionSql(dto.getPermissionSql());
-        if (CollectionUtils.isEmpty(dto.getParams().getIds())) {
-            throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
-        }
-        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams(),dto.getParams().getIds(), dto.getPermissionSql());
+        Page<WmsCartonDetailDTO.ListPackingDetailDTO> page = baseMapper.listPackingDetailBySkuId(new Page<>(dto.getCurrPage(), dto.getPageSize()),dto.getParams());
         if (CollectionUtils.isEmpty(page.getRecords())) {
             throw new ServiceException(ApiError.EXPORT_DATA_EMPTY);
         }
@@ -2943,7 +2937,18 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
         if (CollectionUtils.isEmpty(records)){
             return Collections.emptyList();
         }
+        List<String> sourceIds = records.stream().map(WmsCartonDetailDTO.ListPackingDetailDTO::getSourceId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryEntity> firstMileDeliveryEntityList = this.listFirstMileDeliveryByTask(sourceIds);
+        List<String> deliveryIds = firstMileDeliveryEntityList.stream().map(BaseEntity::getId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(deliveryIds);
         records.forEach(detailDTO ->{
+            FirstMileDeliveryEntity firstMileDeliveryEntity = firstMileDeliveryEntityList.stream().filter(v->v.getSourceId().equals(detailDTO.getSourceId()) || v.getId().equals(detailDTO.getSourceId())).findFirst().orElse(new FirstMileDeliveryEntity());
+            FirstMileDeliveryDetailEntity firstMileDeliveryDetailEntity = firstMileDeliveryDetailEntityList.stream().filter(v->v.getMainId().equals(firstMileDeliveryEntity.getId()) && v.getSkuId().equals(detailDTO.getSkuId())).findFirst().orElse(new FirstMileDeliveryDetailEntity());
+            if(CharSequenceUtil.isNotBlank(firstMileDeliveryDetailEntity.getPlatformSkuNo())){
+                detailDTO.setPlatformSku(firstMileDeliveryDetailEntity.getPlatformSkuNo());
+            }
+            detailDTO.setPackageWeightStr(detailDTO.getPackageWeight().toPlainString());
+            detailDTO.setSourceTypeName(PickingSourceTypeEnum.getName(detailDTO.getSourceType()));
             String md5 = Md5Util.getMd5(detailDTO.getTaskCode() + "-" + detailDTO.getSourceCode() + "-" + detailDTO.getSourceType() + "-"
                     + detailDTO.getPlatformSku() + "-" + detailDTO.getSkuNo() + "-" + detailDTO.getSku() + "-" + detailDTO.getPackQty());
             detailDTO.setMd5(md5);
@@ -3043,6 +3048,7 @@ public class PackingTaskServiceImpl extends SuperServiceImpl<PackingTaskMapper, 
                 detailDTO.setTaskCode(null);
                 detailDTO.setSourceCode(null);
                 detailDTO.setSourceType(null);
+                detailDTO.setSourceTypeName(null);
                 detailDTO.setTotalQty(null);
                 detailDTO.setPackageWeight(null);
                 detailDTO.setPackageWeightStr(null);
