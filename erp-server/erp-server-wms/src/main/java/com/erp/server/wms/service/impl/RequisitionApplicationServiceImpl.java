@@ -3140,8 +3140,14 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     }
 
     private List<InOutStockDTO> listInventory(RequisitionApplicationEntity entity, RequisitionApplicationDetailEntity detailEntity, Integer virtualFrozenQty) {
+        //获取仓库暂存仓位
+        CfgRulePickingStagingEntity stagingEntity = cfgRulePickingStagingService.getByWarehouseId(detailEntity.getFromWarehouseId(),"FBA");
+        if (Objects.isNull(stagingEntity)){
+            throw new ServiceException(ApiError.ERROR_WAREHOUSE_NO_STAGING, detailEntity.getFromWarehouseName());
+        }
         InOutStockDTO inOutStockDTO = new InOutStockDTO();
         inOutStockDTO.setWarehouseId(detailEntity.getFromWarehouseId());
+        inOutStockDTO.setWarehouseLocation(stagingEntity.getWarehouseLocation());
         inOutStockDTO.setSourceType(InventorySourceTypeEnum.REQUISITION_APPLICATION);
         inOutStockDTO.setSourceId(entity.getId());
         inOutStockDTO.setSourceCode(entity.getCode());
