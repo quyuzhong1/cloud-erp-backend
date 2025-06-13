@@ -122,8 +122,8 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
 //    @Transactional(rollbackFor = Exception.class)
     public void onMessage(String jsonStr) {
         log.info("MqRecordConsumerService 开始");
-        if(StringUtils.isBlank(jsonStr)){
-            return ;
+        if (StringUtils.isBlank(jsonStr)) {
+            return;
         }
 
         MqConsumerRecordDTO.MqDTO dto = new MqConsumerRecordDTO.MqDTO();
@@ -154,54 +154,14 @@ public class MqRecordConsumerService implements RocketMQListener<String> {
             if (StringUtils.isNotBlank(id)) {
                 // 异步执行 sendMsg，不阻塞当前事务
                 new Thread(() -> {
-                    try {
-                        send(dto);
-                    } catch (Exception e) {
-                        log.error("sendMsg 异常", e);
-                    }
+                    dto.setMqConsumerRecordId(id);
+                    thirdNoticePushRecordService.sendThirdNoticeByMq(dto);
                 }).start();
             }
         }
         log.info("MqRecordConsumerService 结束");
     }
 
-    private boolean send(MqConsumerRecordDTO.MqDTO dto) {
-        //根据参数判断一下通知的单据类型
-        CfgQueryOptionDTO.MqParamsDTO mqParamsDTO = new CfgQueryOptionDTO.MqParamsDTO();
-        mqParamsDTO.setTableName(dto.getTable());
-        mqParamsDTO.setSysClassify(dto.getDb().replace("erp-", ""));
-        //查询出common 、表头、明细的配置
-        List<CfgQueryOptionEntity> cfgQueryOptionList = cfgQueryOptionFeign.listByMqParams(mqParamsDTO);
-        if (CollUtil.isEmpty(cfgQueryOptionList)) {
-            return true;
-        }
-        CfgQueryOptionEntity cfgQueryOptionEntity = cfgQueryOptionList.stream().filter(e -> StringUtils.isNotBlank(e.getBussinessKey())).findFirst().orElse(null);
-        //单据类型
-        String bussinessKey = cfgQueryOptionEntity.getBussinessKey();
-
-        //获取三方通知配置的信息--单条--即时通知
-        List<CfgThirdNoticeEntity> cfgThirdNoticeList = cfgThirdNoticeService.lambdaQuery()
-                .eq(CfgThirdNoticeEntity::getBusinessType, bussinessKey)
-                .eq(CfgThirdNoticeEntity::getMethod, CfgThirdNoticeMethodEnum.SINGLE.getCode())
-                .eq(CfgThirdNoticeEntity::getNoticeStatus, Boolean.TRUE)
-                .list();
-        if (CollUtil.isEmpty(cfgThirdNoticeList)) {
-            return true;
-        }
-
-        List<String> cfgThirdNoticeIdList = cfgThirdNoticeList.stream().map(CfgThirdNoticeEntity::getId).collect(Collectors.toList());
-        //三方通知配置--推送消息
-        List<CfgApproveSyncFieldMapEntity> fieldMapList = cfgApproveSyncFieldMapService.lambdaQuery().in(CfgApproveSyncFieldMapEntity::getMainId, cfgThirdNoticeIdList).list();
-        Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap = fieldMapList.stream().collect(Collectors.groupingBy(CfgApproveSyncFieldMapEntity::getMainId));
-        //三方通知配置--规则条件
-        List<CfgRuleConditionEntity> ruleConditionList = cfgRuleConditionService.lambdaQuery().in(CfgRuleConditionEntity::getRuleId, cfgThirdNoticeIdList).list();
-        Map<String, List<CfgRuleConditionEntity>> ruleConditionMap = ruleConditionList.stream().collect(Collectors.groupingBy(CfgRuleConditionEntity::getRuleId));
-
-        for (CfgThirdNoticeEntity noticeEntity : cfgThirdNoticeList) {
-            thirdNoticePushRecordService.sendMsgByCfg(dto, noticeEntity, ruleConditionMap, bussinessKey, fieldMap, cfgQueryOptionList);
-        }
-        return false;
-    }
 
     private String addMqRecord(MqConsumerRecordDTO.MqDTO dto) {
         Gson gson = new Gson();

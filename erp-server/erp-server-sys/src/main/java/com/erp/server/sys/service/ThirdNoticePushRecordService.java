@@ -32,6 +32,8 @@ public interface ThirdNoticePushRecordService extends SuperService<ThirdNoticePu
 
     BatchResultDTO repush(String id);
 
+    void sendThirdNoticeByMq(MqConsumerRecordDTO.MqDTO dto);
+
     void sendMsgByCfg(MqConsumerRecordDTO.MqDTO dto, CfgThirdNoticeEntity noticeEntity, Map<String, List<CfgRuleConditionEntity>> ruleConditionMap, String bussinessKey, Map<String, List<CfgApproveSyncFieldMapEntity>> fieldMap, List<com.erp.model.workflow.entity.CfgQueryOptionEntity> cfgQueryOptionList);
 
     List<ThirdNoticePushRecordEntity> listSendingRecord(ThirdNoticePushRecordDTO.ParamsDTO paramsDTO);
