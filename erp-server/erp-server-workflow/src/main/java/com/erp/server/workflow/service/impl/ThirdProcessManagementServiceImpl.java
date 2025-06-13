@@ -115,7 +115,7 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
     @Transactional(rollbackFor = Exception.class)
     public void insert(JSONObject jsonObject, String sourcePlatform) {
         // 1. 通过 instance_code 查询是否已有记录
-        String instanceCode = jsonObject.getStr("instance_code");
+        String instanceCode = jsonObject.getStr("instanceCode");
         ThirdProcessManagementEntity thirdProcessManagementEntity = this.lambdaQuery()
                 .eq(ThirdProcessManagementEntity::getProcessInstanceId, instanceCode)
                 .one();
@@ -128,16 +128,17 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
         );
         ThirdProcessManagementDTO.AddDTO addDTO = new ThirdProcessManagementDTO.AddDTO();
         addDTO.setProcessInstanceId(instanceCode);
-        addDTO.setProcessDefinitionId(jsonObject.getStr("approval_code"));
-        addDTO.setSysUserId(jsonObject.getStr("user_id"));
-        addDTO.setBusinessId(one.getBussinessCode());
-        addDTO.setBusinessCode(one.getBussinessId());
+        addDTO.setProcessDefinitionId(jsonObject.getStr("approvalCode"));
+        SysUserThirdEntity sysUser = sysUserFeign.getUserByThird("FS", jsonObject.getStr("userId"));
+        addDTO.setSysUserId(sysUser.getUserId());
+        addDTO.setBusinessId(one.getBussinessId());
+        addDTO.setBusinessCode(one.getBussinessCode());
         addDTO.setBusinessKey(one.getBussinessKey());
         addDTO.setStatus(jsonObject.getStr("status"));
-        addDTO.setProcessInstanceName(jsonObject.getStr("approval_name"));
+        addDTO.setProcessInstanceName(jsonObject.getStr("approvalName"));
         addDTO.setSourcePlatform(sourcePlatform);
-        addDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("start_time")), ZoneId.systemDefault()));
-        addDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("end_time")), ZoneId.systemDefault()));
+        addDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("startTime")), ZoneId.systemDefault()));
+        addDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(jsonObject.getLong("endTime")), ZoneId.systemDefault()));
 
         if (thirdProcessManagementEntity != null) {
             // 已有记录，更新
@@ -150,7 +151,7 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
         }
 
         // 3. 生成 task 明细数据
-        JSONArray taskList = jsonObject.getJSONArray("task_list");
+        JSONArray taskList = jsonObject.getJSONArray("taskList");
         ArrayList<ThirdProcessTaskManagementEntity> arrayList = new ArrayList<>();
         String id = thirdProcessManagementEntity.getId();
         taskList.jsonIter().forEach(task -> {
@@ -158,11 +159,11 @@ public class ThirdProcessManagementServiceImpl extends SuperServiceImpl<ThirdPro
             taskDTO.setTaskId(task.getStr("id"));
             taskDTO.setNodeId(task.getStr("node_id"));
             taskDTO.setNodeName(task.getStr("node_name"));
-            taskDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(task.getLong("start_time")), ZoneId.systemDefault()));
-            taskDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(task.getLong("end_time")), ZoneId.systemDefault()));
+            taskDTO.setStartTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(task.getLong("startTime")), ZoneId.systemDefault()));
+            taskDTO.setEndTime(LocalDateTime.ofInstant(Instant.ofEpochMilli(task.getLong("endTime")), ZoneId.systemDefault()));
             taskDTO.setTaskStatus(task.getStr("status"));
-            taskDTO.setThirdUserId(task.getStr("user_id"));
-            SysUserThirdEntity userByThird = sysUserFeign.getUserByThird("fs", task.getStr("user_id"));
+            taskDTO.setThirdUserId(task.getStr("userId"));
+            SysUserThirdEntity userByThird = sysUserFeign.getUserByThird("FS", task.getStr("userId"));
             taskDTO.setSysUserId(userByThird.getUserId());
             taskDTO.setMainId(id);
             arrayList.add(taskDTO);
