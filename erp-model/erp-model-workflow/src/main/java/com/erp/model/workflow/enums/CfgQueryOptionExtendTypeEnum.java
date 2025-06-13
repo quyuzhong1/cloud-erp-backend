@@ -14,6 +14,7 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum CfgQueryOptionExtendTypeEnum implements EnumMessage {
 	NOTICENODE("noticeNode", "通知节点"),
+    FSAPPROVE("fsApprove", "飞书审批"),
     ;
     /**
      * 类型
