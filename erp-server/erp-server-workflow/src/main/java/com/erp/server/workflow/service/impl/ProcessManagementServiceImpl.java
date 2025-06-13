@@ -171,7 +171,7 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         //启动飞书流程
         if (CharSequenceUtil.equals(cfgProcessRuleEntity.getType(),CfgProcessRuleTypeEnum.FSPROCESS.getCode())) {
-            return startFsProcess(dto,cfgProcessRuleEntity.getProcessDefinitionId());
+            return startFsProcess(dto,cfgProcessRuleEntity);
         }
         //启动ERP流程
         return startProcess(dto, cfgProcessRuleEntity.getProcessDefinitionId());
@@ -337,21 +337,21 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     /**
      * 启动飞书流程
      */
-    private  ProcessManagementDTO.StartResultDTO startFsProcess(ProcessManagementDTO.StartDTO dto,String processDefinitionId) {
-            CfgProcessRuleEntity one = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getProcessDefinitionId, processDefinitionId).eq(CfgProcessRuleEntity::getIsDeleted, false));
-            if (null == one){
+    private  ProcessManagementDTO.StartResultDTO startFsProcess(ProcessManagementDTO.StartDTO dto,CfgProcessRuleEntity cfgProcessRuleEntity) {
+
+            if (null == cfgProcessRuleEntity){
                 // 流程定义不存在
                 throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
             }
-            String ruleId = one.getId();
+            String ruleId = cfgProcessRuleEntity.getId();
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
             //TODO 获取当前用户
             startDTO.setUserId("1906628410797510657");
             startDTO.setRuleId(ruleId);
-            startDTO.setRuleType(one.getType());
+            startDTO.setRuleType(cfgProcessRuleEntity.getType());
             log.info("startDTO重要标识:{}",startDTO.toString());
             cfgProcessService.startThirdProcess(startDTO);
-            return new ProcessManagementDTO.StartResultDTO(processDefinitionId, "", "", LocalDateTime.now(), dto.getBusinessId(), dto.getBusinessName());
+            return new ProcessManagementDTO.StartResultDTO(cfgProcessRuleEntity.getProcessDefinitionId(), "", "", LocalDateTime.now(), dto.getBusinessId(), dto.getBusinessName());
     }
 
     /**
