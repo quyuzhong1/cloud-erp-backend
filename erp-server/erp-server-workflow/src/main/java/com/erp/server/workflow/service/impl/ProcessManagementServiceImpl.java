@@ -330,18 +330,17 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
-    private void startFsProcess(ProcessManagementDTO.StartDTO dto,String processDefinitionId) {
-            CfgProcessRuleEntity one = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getProcessDefinitionId, processDefinitionId).eq(CfgProcessRuleEntity::getIsDeleted, false));
-            if (null == one){
+    private void startFsProcess(ProcessManagementDTO.StartDTO dto,CfgProcessRuleEntity ruleEntity) {
+            if (null == ruleEntity){
                 // 流程定义不存在
                 throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
             }
-            String ruleId = one.getId();
+            String ruleId = ruleEntity.getId();
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
             //TODO 获取当前用户
             startDTO.setUserId("1906628410797510657");
             startDTO.setRuleId(ruleId);
-            startDTO.setRuleType(one.getType());
+            startDTO.setRuleType(ruleEntity.getType());
             log.info("startDTO重要标识:{}",startDTO.toString());
             cfgProcessService.startThirdProcess(startDTO);
     }
