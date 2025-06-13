@@ -83,6 +83,8 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
     private MQProducerService mqProducerService;
     @Resource
     private SysPostFeign sysPostFeign;
+    @Resource
+    private DictNoticeRoleOptionService dictNoticeRoleOptionService;
 
     @GlobalTransactional(rollbackFor = Exception.class)
     @Transactional(rollbackFor = Exception.class)
@@ -478,13 +480,14 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
             }
 
             if (StringUtils.isNotBlank(record.getRoleType())) {
-                List<DictBasicDTO.ViewDTO> noticeItemPeople = dictBasicService.listByType("noticeItemPeople");
-                Map<String, String> noticeItemPeopleMap = noticeItemPeople.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+
+                List<DictNoticeRoleOptionEntity> list = dictNoticeRoleOptionService.list();
+                Map<String, String> dictNoticeRoleOptionMap = list.stream().collect(Collectors.toMap(DictNoticeRoleOptionEntity::getField, DictNoticeRoleOptionEntity::getFieldName , (o1,o2)-> o1));
                 List<String> roleTypes = Arrays.asList(record.getRoleType().split(","));
                 if (CollUtil.isNotEmpty(roleTypes)) {
                     record.setRoleTypeList(roleTypes);
 
-                    List<String> roleTypeNameList = roleTypes.stream().map(e -> noticeItemPeopleMap.getOrDefault(e, "")).filter(StringUtil::isNotBlank).collect(Collectors.toList());
+                    List<String> roleTypeNameList = roleTypes.stream().map(e -> dictNoticeRoleOptionMap.getOrDefault(e, "")).filter(StringUtil::isNotBlank).collect(Collectors.toList());
                     record.setRoleTypeNameList(roleTypeNameList);
 
                     record.setRoleType(roleTypeNameList.stream().collect(Collectors.joining(",")));
@@ -536,12 +539,13 @@ public class CfgThirdNoticeServiceImpl extends SuperServiceImpl<CfgThirdNoticeMa
         }
 
         if(StringUtils.isNotBlank(data.getRoleType())){
-            List<DictBasicDTO.ViewDTO> noticeItemPeople = dictBasicService.listByType("noticeItemPeople");
-            Map<String, String> noticeItemPeopleMap = noticeItemPeople.stream().collect(Collectors.toMap(DictBasicDTO.ViewDTO::getValue, DictBasicDTO.ViewDTO::getName));
+            List<DictNoticeRoleOptionEntity> list = dictNoticeRoleOptionService.list();
+            Map<String, String> dictNoticeRoleOptionMap = list.stream().collect(Collectors.toMap(DictNoticeRoleOptionEntity::getField, DictNoticeRoleOptionEntity::getFieldName , (o1,o2)-> o1));
             List<String> roleTypes = Arrays.asList(data.getRoleType().split(","));
             if(CollUtil.isNotEmpty(roleTypes)){
                 data.setRoleTypeList(roleTypes);
-                data.setRoleTypeNameList(roleTypes.stream().map(e -> noticeItemPeopleMap.get(e)).collect(Collectors.toList()));
+                List<String> roleTypeNameList = roleTypes.stream().map(e -> dictNoticeRoleOptionMap.getOrDefault(e, "")).filter(StringUtil::isNotBlank).collect(Collectors.toList());
+                data.setRoleTypeNameList(roleTypeNameList);
             }
         }
 
