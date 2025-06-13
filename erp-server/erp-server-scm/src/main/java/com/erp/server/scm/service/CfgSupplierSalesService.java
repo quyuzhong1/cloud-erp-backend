@@ -35,4 +35,6 @@ public interface CfgSupplierSalesService extends SuperService<CfgSupplierSalesEn
 
 
     PagingVO<CfgSupplierSalesDTO.ListDTO> paging(PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> pagingParamDTO);
+
+    BatchResultDTO delete(String id);
 }

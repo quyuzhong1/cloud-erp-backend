@@ -1,8 +1,10 @@
 package com.erp.server.scm.controller.api;
 
 
+import cn.hutool.core.util.ObjectUtil;
 import com.common.business.annotation.WebAdvanceQuery;
 import com.common.business.vo.PagingVO;
+import com.erp.model.scm.entity.CfgSupplierSalesEntity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import javax.annotation.Resource;
@@ -21,6 +23,11 @@ import com.common.core.controller.vo.ApiResult;
 import com.common.business.annotation.DataPermission;
 import com.common.business.enums.DataAttributeEnum;
 import com.erp.model.scm.dto.CfgSupplierSalesDTO;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * 销量设置
@@ -86,6 +93,47 @@ public class CfgSupplierSalesController extends BaseController {
     public ApiResult<PagingVO<CfgSupplierSalesDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<CfgSupplierSalesDTO.PagingParamDTO> pagingParamDTO) {
         return success(cfgSupplierSalesService.paging(pagingParamDTO));
     }
+
+
+
+    /**
+     * 删除
+     * @author jack
+     * @date:  2025-06-13
+     * @param dto
+     * @return ApiResult<List<BatchResultDTO>>
+     */
+    @PostMapping("/delete")
+    @DataPermission(operationType = DataAttributeEnum.CHECK_BY_ID,
+            tableField = "create_user_id",
+            menuCode = "scm:cfgSupplierSales:delete",
+            serviceClass = CfgSupplierSalesService.class,
+            keyIdName = "ids")
+    @LogAction(value = LogActionEnum.DELETE, desc = "销量设置删除")
+    public ApiResult<List<BatchResultDTO>> delete(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        List<String> ids = dto.getIds();
+        List<BatchResultDTO> resultDTOS = new ArrayList<>(ids.size());
+        List<CfgSupplierSalesEntity> list = cfgSupplierSalesService.lambdaQuery().in(CfgSupplierSalesEntity::getId, ids).list();
+        Map<String, CfgSupplierSalesEntity> idEntityMap = list.stream().collect(Collectors.toMap(CfgSupplierSalesEntity::getId, w -> w));
+        for (String id : dto.getIds()) {
+            BatchResultDTO deleteResult;
+            try {
+                deleteResult = cfgSupplierSalesService.delete(id);
+            }catch (Exception e){
+                log.error("销量设置删除删除失败",e);
+                CfgSupplierSalesEntity entity = idEntityMap.get(id);
+                if (ObjectUtil.isEmpty(entity)) {
+                    deleteResult = BatchResultDTO.fail(id, id, "销量设置删除不存在, 删除失败");
+                    resultDTOS.add(deleteResult);
+                    continue;
+                }
+                deleteResult = BatchResultDTO.fail(entity.getId(), entity.getId(), e.getMessage());
+            }
+            resultDTOS.add(deleteResult);
+        }
+        return resultDTOS.stream().allMatch(BatchResultDTO::getSuccess) ? success(resultDTOS) : failure(resultDTOS);
+    }
+
 
 
 

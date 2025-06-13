@@ -6,13 +6,12 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.common.business.dto.base.BaseResultDTO;
+import com.common.business.dto.base.BatchResultDTO;
 import com.common.business.dto.base.PagingDTO;
+import com.common.business.enums.OperationTypeEnum;
 import com.common.business.vo.PagingVO;
 import com.erp.model.scm.entity.CfgSupplierSalesEntity;
-import com.erp.model.scm.enums.CfgSupplierSalesDailySalesTypeEnum;
-import com.erp.model.scm.enums.CfgSupplierSalesDimensionEnum;
-import com.erp.model.scm.enums.CfgSupplierSalesPermissionEnum;
-import com.erp.model.scm.enums.CfgSupplierSalesSalesRatioTypeEnum;
+import com.erp.model.scm.enums.*;
 import com.erp.server.scm.mapper.CfgSupplierSalesMapper;
 import com.erp.server.scm.service.CfgSupplierSalesService;
 import com.common.business.service.impl.SuperServiceImpl;
@@ -103,6 +102,19 @@ public class CfgSupplierSalesServiceImpl extends SuperServiceImpl<CfgSupplierSal
      */
     private void handleData(CfgSupplierSalesEntity cfgSupplierSalesEntity) {
         // TODO 验证数据 & 数据赋值
+    }
+
+    @Override
+    public BatchResultDTO delete(String id) {
+        CfgSupplierSalesEntity entity = super.getByIdOpt(id).orElseThrow(() -> new ServiceException("未找到销量设置数据"));
+        // 删除主单数据
+        super.removeById(id);
+        // 删除子表
+
+        // 删除日志数据
+        String msg = StrUtil.format("用户【{}】操作【{}】单据删除操作 ", UserContext.getDefaultLoginUser().getUserName(), "销量设置");
+        moduleOperateLogService.addModuleOperateLog(msg, null, entity.getId(), "销量设置删除");
+        return BatchResultDTO.success(entity.getId(), entity.getId(), OperationTypeEnum.DELETE);
     }
 
 
