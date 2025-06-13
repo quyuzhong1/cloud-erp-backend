@@ -6302,6 +6302,7 @@ public class SoB2cServiceImpl extends SuperServiceImpl<SoB2cMapper, SoB2cEntity>
                 }
                 oldEntity.setApproveStatus(approveStatusEnum);
             }
+            dto.setNfeInvoiceStatus(oldEntity.getNfeInvoiceStatus());
             //平台订单状态
             String platformOrderStatus = dto.getPlatformOrderStatus();
             // 亚马逊作废保留以前状态
