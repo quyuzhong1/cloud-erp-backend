@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.erp.server.scm.mapper.SalesSharingMapper">
+    <!-- 通用查询映射结果 -->
+    <resultMap id="BaseResultMap" type="com.erp.model.scm.entity.SalesSharingEntity">
+       <result column="id" property="id" />
+       <result column="create_user_id" property="createUserId" />
+       <result column="create_user_name" property="createUserName" />
+       <result column="create_time" property="createTime" />
+       <result column="update_user_id" property="updateUserId" />
+       <result column="update_user_name" property="updateUserName" />
+       <result column="update_time" property="updateTime" />
+       <result column="version" property="version" />
+       <result column="is_deleted" property="isDeleted" />
+       <result column="supplier_id" property="supplierId" />
+       <result column="supplier_code" property="supplierCode" />
+       <result column="supplier_name" property="supplierName" />
+       <result column="product_image" property="productImage" />
+       <result column="product_image_url" property="productImageUrl" />
+       <result column="sku_id" property="skuId" />
+       <result column="sku_no" property="skuNo" />
+       <result column="sku_name" property="skuName" />
+       <result column="sale_state" property="saleState" />
+       <result column="sale_state_name" property="saleStateName" />
+       <result column="saleable_stock" property="saleableStock" />
+       <result column="daily_sales" property="dailySales" />
+       <result column="sales_last_3_days" property="salesLast3Days" />
+       <result column="sales_last_7_days" property="salesLast7Days" />
+       <result column="sales_last_30_days" property="salesLast30Days" />
+       <result column="sales_last_60_days" property="salesLast60Days" />
+       <result column="sales_last_90_days" property="salesLast90Days" />
+       <result column="sales_ratio" property="salesRatio" />
+       <result column="saleable_days" property="saleableDays" />
+    </resultMap>
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        id,
+        create_user_id,
+        create_user_name,
+        create_time,
+        update_user_id,
+        update_user_name,
+        update_time,
+        version,
+        is_deleted,
+        supplier_id, supplier_code, supplier_name, product_image, product_image_url, sku_id, sku_no, sku_name, sale_state, sale_state_name, saleable_stock, daily_sales, sales_last_3_days, sales_last_7_days, sales_last_30_days, sales_last_60_days, sales_last_90_days, sales_ratio, saleable_days
+    </sql>
+
+
+</mapper>
