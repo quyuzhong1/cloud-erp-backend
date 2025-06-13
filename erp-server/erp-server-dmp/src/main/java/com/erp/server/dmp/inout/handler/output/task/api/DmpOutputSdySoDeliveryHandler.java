@@ -3,15 +3,13 @@ package com.erp.server.dmp.inout.handler.output.task.api;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
+import com.common.business.wrapper.FeignQuery;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Service;
 
@@ -87,8 +85,9 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 
         Map<String, String> map = new HashMap<>();
         String cfgOutputId = dmpResponse.getDmpCfgOutputEntity().getId();
+		Map<String, Map<String, Object>> cacheMap = new HashMap<>();
         for (String changId : changeIds) {
-        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoDeliveryEntityMap.get(changId), dmpSoDeliveryDetailEntityMap.get(changId) , cfgOutputId);
+        	Map<String, ShudiyunB2cOrderDTO> result = this.convert(dmpSoDeliveryEntityMap.get(changId), dmpSoDeliveryDetailEntityMap.get(changId) , cfgOutputId, cacheMap);
         	if(!result.isEmpty()) {
             	for(Map.Entry<String, ShudiyunB2cOrderDTO> r : result.entrySet()) {
             		map.put(r.getKey(), JSON.toJSONString(r.getValue()));
@@ -98,7 +97,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
         return map;
     }
     
-    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoDeliveryEntity dmpSoDeliveryEntity , List<DmpSoDeliveryDetailEntity> dmpSoDeliveryDetailEntityList , String cfgOutputId){
+    private Map<String, ShudiyunB2cOrderDTO> convert(DmpSoDeliveryEntity dmpSoDeliveryEntity , List<DmpSoDeliveryDetailEntity> dmpSoDeliveryDetailEntityList , String cfgOutputId, Map<String, Map<String, Object>> cacheMap){
     	Map<String, ShudiyunB2cOrderDTO> result = new HashMap<>();
     	if(dmpSoDeliveryEntity != null && CollUtil.isNotEmpty(dmpSoDeliveryDetailEntityList)) {
     		if(validateDataBlack(dmpSoDeliveryEntity, cfgOutputId)) {
@@ -118,6 +117,8 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		BigDecimal payAmount = dmpSoDeliveryEntity.getPayAmount();
     		BigDecimal shippingAmount = dmpSoDeliveryEntity.getShippingAmount();
     		BigDecimal totalTaxAmount = dmpSoDeliveryEntity.getTotalTaxAmount();
+
+
     		Integer totalQty = dmpSoDeliveryEntity.getTotalQty();
     		Integer cancelQty = dmpSoDeliveryEntity.getCancelQty();
     		Integer shippingQty = dmpSoDeliveryEntity.getShippingQty();
@@ -132,6 +133,9 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     		String shopNo = dmpSoDeliveryEntity.getShopNo();
     		String shopName = dmpSoDeliveryEntity.getShopName();
     		String platformCode = dmpSoDeliveryEntity.getPlatformCode();
+    		if(StringUtils.isBlank(platformCode)) {
+	        	platformCode = thirdDeliveryCode;
+	        }
     		
     		boolean isB2B = "B2B仓".equals(dmpSoDeliveryEntity.getDataSource());
     		String payTimeFormat = null;
@@ -165,6 +169,7 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     	        //默认退货入库单
     	        shudiyunB2cOrderDTO.setTransaction_type(transactionType);
     	        shudiyunB2cOrderDTO.setTransaction_sub_type(transactionSubType);
+    	        
     	        shudiyunB2cOrderDTO.setBiz_status(deliveryStatus);
     	        shudiyunB2cOrderDTO.setStatus(dmpSoDeliveryDetailEntity.getDataStatus());
 
@@ -221,7 +226,16 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
 	            if(!isB2B) {
 	            	shudiyunB2cOrderDTO.setMsku_code(dmpSoDeliveryDetailEntity.getPlatformSkuNo());
 	            	shudiyunB2cOrderDTO.setMsku_name(dmpSoDeliveryDetailEntity.getPlatformSkuName());
-	            	shudiyunB2cOrderDTO.setTaxation(totalTaxAmount);
+					// 配置指定平台税金为0
+					Map<String, Object> dmpDictBasticMap = queryAndCacheDmpDictBasicEntity(cacheMap);
+					List<com.erp.model.dmp.entity.DictBasicEntity> tax0PlatformTypeList = (List<com.erp.model.dmp.entity.DictBasicEntity>) dmpDictBasticMap.get("tax0PlatformType");
+					if (CollUtil.isNotEmpty(tax0PlatformTypeList)) {
+						boolean hasSetTaxO = tax0PlatformTypeList.stream().anyMatch(e -> e.getValue().equalsIgnoreCase(sourcePlatform));
+						if (hasSetTaxO){
+							totalTaxAmount = BigDecimal.ZERO;
+						}
+					}
+					shudiyunB2cOrderDTO.setTaxation(totalTaxAmount);
 	            	shudiyunB2cOrderDTO.setRoot_node_create_time(payTimeFormat);
 	            }else {
 	            	shudiyunB2cOrderDTO.setRoot_node_create_time(thirdCreateTimeFormat);
@@ -263,4 +277,25 @@ public class DmpOutputSdySoDeliveryHandler extends DmpOutputSdyBaseTaskHandler {
     protected List<String> getSourceCodeKeys() {
     	return Arrays.asList("biz_no" , "sku_code");
     }
+
+	private Map<String, Object> queryAndCacheDmpDictBasicEntity(Map<String, Map<String, Object>> cacheMap) {
+		Map<String, Object> dmpDictBasic = cacheMap.getOrDefault("dmpDictBasic", new HashMap<>());
+
+		List<com.erp.model.dmp.entity.DictBasicEntity>  tax0PlatformDictBasicList = (List<com.erp.model.dmp.entity.DictBasicEntity>)dmpDictBasic.getOrDefault("tax0PlatformType", new ArrayList<>());
+		if (CollUtil.isNotEmpty(tax0PlatformDictBasicList)) {
+			return dmpDictBasic;
+		}
+		List<com.erp.model.dmp.entity.DictBasicEntity> dictBasicEntityList = FeignQuery.create(com.erp.model.dmp.entity.DictBasicEntity.class)
+				.in(com.erp.model.dmp.entity.DictBasicEntity::getType, Collections.singletonList("tax0PlatformType"))
+				.list();
+		if (CollectionUtils.isNotEmpty(dictBasicEntityList)) {
+			Map<String, List<com.erp.model.dmp.entity.DictBasicEntity>> dpSourceMap = dictBasicEntityList
+					.stream()
+					.collect(Collectors.groupingBy(com.erp.model.dmp.entity.DictBasicEntity::getType));
+			tax0PlatformDictBasicList = dpSourceMap.getOrDefault("tax0PlatformType", new ArrayList<>());
+			dmpDictBasic.put("tax0PlatformType", tax0PlatformDictBasicList);
+			cacheMap.put("dmpDictBasic", dmpDictBasic);
+		}
+		return dmpDictBasic;
+	}
 }
