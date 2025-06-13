@@ -166,7 +166,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(),pairList,"编辑操作");
             //更新主表id
             if (CollectionUtils.isNotEmpty(deleteList)) {
-                poReconciliationDetailScmService. cleanDetailByDetailIdList(deleteIds);
+                poReconciliationDetailScmService.cleanDetailByDetailIdList(deleteIds);
             }
         }
 
@@ -747,6 +747,11 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
         //供应商信息
         List<SupplierEntity> supplierList = scmTaskFeign.getSupplierByIdList(supplierIdList);
 
+        //获取付款条件设置
+        CfgSettingEntity cfgSettingEntity = cfgSettingService.getByKey(ConfigKeyEnum.PO_RECONCILIATION.getCode());
+        PoReconciliationDetailDTO.AddSettingDTO settingDTO = ObjectUtil.isEmpty(cfgSettingEntity) ? new PoReconciliationDetailDTO.AddSettingDTO() : JSONUtil.toBean(cfgSettingEntity.getDataJson(), PoReconciliationDetailDTO.AddSettingDTO.class);
+        List<String> paymentConditionList = settingDTO.getPaymentConditionList();
+
         for (PoReconciliationDetailEntity detailEntity : poReconciliationDetailList) {
 
             SupplierEntity entity = supplierList.stream().filter(obj -> CharSequenceUtil.equals(detailEntity.getSupplierId(), obj.getId())).findFirst().orElse(null);
@@ -767,6 +772,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
             detailEntity.setSupplierName(StrUtil.isBlank(detailEntity.getSupplierName()) ? poSupplierEntity.getSupplierName() : detailEntity.getSupplierName());
             //付款条件
             detailEntity.setPaymentCondition(poSupplierEntity.getPaymentCondition());
+
             //结算方式
             String settleDict = dictBasicList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), poSupplierEntity.getPayMethodId()))
                     .map(DictBasicEntity::getValue).findFirst().orElse("");
@@ -792,7 +798,7 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 if (ObjectUtils.isNotEmpty(supplierSkuPrice)) {
                     detailEntity.setTaxRate(supplierSkuPrice.getTaxRate());
                 }
-                detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getQty()));
+
             } else {
                 PurchaseOrderDetailEntity poDetailEntity = purchaseOrderDetailList.stream().filter(obj -> CharSequenceUtil.equals(obj.getId(), detailEntity.getPoDetailId())).findFirst().orElse(null);
                 if (ObjectUtils.isNotEmpty(poDetailEntity)) {
@@ -802,6 +808,8 @@ public class PoReconciliationDetailScmServiceImpl extends SuperServiceImpl<PoRec
                 }
                 detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getQty()));
             }
+            detailEntity.setTaxAmount(MathUtil.multiplyWithTwo(detailEntity.getTaxPrice(),detailEntity.getQty()));
+            detailEntity.setDiscountTaxAmount(detailEntity.getTaxAmount());
             resultList.add(detailEntity);
         }
         return resultList;

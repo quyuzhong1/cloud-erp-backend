@@ -173,19 +173,19 @@ public class PoReconciliationDetailEntity extends BaseEntity<PoReconciliationDet
     /**
      * 送货单id
      */
-    @TableField("deliveryId")
+    @TableField("delivery_id")
     private String deliveryId;
 
     /**
      * 送货单明细id
      */
-    @TableField("deliveryDetailId")
+    @TableField("delivery_detail_id")
     private String deliveryDetailId;
 
     /**
      * 送货单号
      */
-    @TableField("deliveryCode")
+    @TableField("delivery_code")
     private String deliveryCode;
 
     /**

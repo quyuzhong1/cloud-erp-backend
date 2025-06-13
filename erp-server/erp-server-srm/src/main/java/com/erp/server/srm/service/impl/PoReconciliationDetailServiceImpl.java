@@ -78,8 +78,7 @@ public class PoReconciliationDetailServiceImpl extends SuperServiceImpl<PoReconc
             operateLogService.batchAddModuleOperateLog("删除了一个SKU【%s】", ModuleTypeEnum.PO_RECONCILIATION.getCode(),pairList,"编辑操作");
             //更新主表id
             if (CollectionUtils.isNotEmpty(deleteList)) {
-                deleteList.stream().forEach(obj -> obj.setMainId(""));
-                list.addAll(deleteList);
+                poReconciliationDetailScmService.cleanDetailByDetailIdList(deleteIds);
             }
         }
 
