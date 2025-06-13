@@ -1,6 +1,7 @@
 package com.common.core.server.impl;
 
 
+import cn.hutool.core.util.StrUtil;
 import com.common.core.dto.SpElAddFieldDTO;
 import com.common.core.dto.SpElExpressionDTO;
 import com.common.core.entity.ConditionElement;
@@ -129,10 +130,13 @@ public class SpElServerImpl implements SpElServer {
      * @return
      */
     @Override
-    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj) {
+    public Boolean matchExpressionByConditionList(List<ConditionElement> conditionList, Map<String, Object> obj, String key) {
+        if (StrUtil.isBlank(key)){
+            key="detailList";
+        }
         SpElExpressionDTO spElDTO = conditionExpressionByMap(conditionList, obj);
         List<SpElAddFieldDTO> addFieldList = spElDTO.getSpElAddFieldList();
-        List<Map<String, Object>> mapList = (List<Map<String, Object>>) obj.get("detailList");
+        List<Map<String, Object>> mapList = (List<Map<String, Object>>) obj.get(key);
         for (SpElAddFieldDTO item : addFieldList) {
             //原始字段
             String originalField = item.getOriginalField();

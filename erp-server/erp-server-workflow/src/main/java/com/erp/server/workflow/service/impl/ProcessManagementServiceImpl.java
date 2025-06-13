@@ -160,6 +160,8 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     private SpElServer spElServer;
     @Resource
     private MQSyncFsHandler mqSyncFsHandler;
+    @Resource
+    private CfgQueryOptionService cfgQueryOptionService;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -221,7 +223,15 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
                 processRuleList.add(cfgProcessRuleEntity);
             } else {
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(processExpList, ConditionElement.class);
-                Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, dto.getVariablesMap());
+                List<CfgQueryOptionEntity> cfgQueryOptionEntities = cfgQueryOptionService.list(new LambdaQueryWrapper<CfgQueryOptionEntity>().eq(CfgQueryOptionEntity::getBussinessKey, cfgProcessEntity.getBussinessKey()).eq(CfgQueryOptionEntity::getIsDeleted, false));
+                Set<String> keySet = cfgQueryOptionEntities.stream().map(CfgQueryOptionEntity::getFieldBelongsType).collect(Collectors.toSet());
+                Boolean matchResult = false;
+                for (String key : keySet) {
+                    if (spElServer.matchExpressionByConditionList(conditionElementList, dto.getVariablesMap(), key)) {
+                        matchResult = true;
+                        break;
+                    }
+                }
                 //匹配上则直接赋值
                 if (Boolean.TRUE.equals(matchResult)) {
                     processRuleList.add(cfgProcessRuleEntity);
@@ -346,7 +356,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             String ruleId = cfgProcessRuleEntity.getId();
             CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
             //TODO 获取当前用户
-            startDTO.setUserId("1906628410797510657");
             startDTO.setRuleId(ruleId);
             startDTO.setRuleType(cfgProcessRuleEntity.getType());
             log.info("startDTO重要标识:{}",startDTO.toString());

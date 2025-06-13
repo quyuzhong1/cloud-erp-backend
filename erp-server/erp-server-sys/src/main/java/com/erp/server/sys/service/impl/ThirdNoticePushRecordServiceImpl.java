@@ -565,7 +565,7 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
                         .collect(Collectors.toList());
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(conditionList, ConditionElement.class);
                 //获取到表达式,判断表达式是否匹配
-                Boolean match = spElServer.matchExpressionByConditionList(conditionElementList, map);
+                Boolean match = spElServer.matchExpressionByConditionList(conditionElementList, map,"");
                 if(Boolean.FALSE.equals(match)){
                     return Boolean.FALSE;
                 }
