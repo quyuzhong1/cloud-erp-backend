@@ -1690,4 +1690,71 @@ public class RequisitionApplicationDTO implements Serializable {
          */
         private Integer printNum;
     }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class InventoryDTO {
+        /**
+         * 要货申请id
+         */
+        private String id;
+        /**
+         * 明细id
+         **/
+        private String detailId;
+        /**
+         * 要货申请编码
+         */
+        private String code;
+        /**
+         * 装箱任务id
+         */
+        private String taskId;
+        /**
+         * 装箱id
+         */
+        private String cartonId;
+        /**
+         * 箱号
+         */
+        private Integer boxNo;
+        /**
+         * skuid
+         */
+        private String skuId;
+        private String skuNo;
+        /**
+         * 已装数量
+         */
+        private Integer packQty;
+        /**
+         * 虚拟仓冻结数量
+         */
+        private Integer virtualFrozenQty;
+        /**
+         * 来源实体仓id
+         */
+        private String fromWarehouseId;
+        /**
+         * 来源实体仓名称
+         */
+        private String fromWarehouseName;
+        /**
+         * 目的实体仓id
+         */
+        private String toWarehouseId;
+        /**
+         * 目的实体仓名称
+         */
+        private String toWarehouseName;
+        /**
+         * 来源虚拟仓id
+         */
+        private String fromVirtualWarehouseId;
+        /**
+         * 来源虚拟仓名称
+         */
+        private String fromVirtualWarehouseName;
+    }
 }

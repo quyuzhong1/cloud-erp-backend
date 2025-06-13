@@ -40,7 +40,6 @@ import com.erp.model.dmp.entity.ThirdMappingEntity;
 import com.erp.model.msg.constant.NoticeMsgConstant;
 import com.erp.model.msg.dto.NoticeMsgInfoDTO;
 import com.erp.model.msg.enums.NoticeTypeEnum;
-import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.oms.dto.ListingInfoParamDTO;
 import com.erp.model.oms.dto.ListingInfoWithSkuMappingDTO;
 import com.erp.model.oms.dto.SkuMappingDTO;
@@ -3052,5 +3051,51 @@ public class RequisitionApplicationServiceImpl extends SuperServiceImpl<Requisit
     @Override
     public List<VirtualFlowRefactorDTO.OutInStockDTO> rebuildFirstMileVirtualFlow() {
         return baseMapper.rebuildFirstMileVirtualFlow();
+    }
+
+    @Override
+    public List<RequisitionApplicationDTO.InventoryDTO> unLockInventoryView(BaseIdsDTO.IdsDTO dto) {
+        //要货申请未关联审核通过的发货单时，不允许操作库存释放
+        List<String> ids = dto.getIds();
+        List<RequisitionApplicationEntity> entityList = this.listByIds(ids);
+        if (CollUtil.isEmpty(entityList)){
+            throw new ServiceException(ApiError.ERROR_SYS_TYPE_NOTFOUND,"要货申请单");
+        }
+        List<RequisitionApplicationDetailEntity> detailEntityList = requisitionApplicationDetailService.listByMainIds(ids);
+        List<FirstMileDeliveryEntity> deliveryEntityList = firstMileDeliveryService.listBySourceIds(ids);
+        List<String> sourceIds = deliveryEntityList.stream().map(FirstMileDeliveryEntity::getSourceId).distinct().collect(Collectors.toList());
+        List<RequisitionApplicationEntity> noDeliveryList = entityList.stream().filter(e -> !sourceIds.contains(e.getId())).collect(Collectors.toList());
+        if (CollUtil.isNotEmpty(noDeliveryList)){
+            throw new ServiceException("要货申请【{}】未生成发货单", noDeliveryList.stream().map(RequisitionApplicationEntity::getCode).collect(Collectors.joining(",")));
+        }
+        boolean hasUnApprove = deliveryEntityList.stream().anyMatch(v -> !ApproveStatusEnum.APPROVE.getCode().equals(v.getApproveStatus()));
+        if (hasUnApprove){
+            throw new ServiceException("发货单【{}】未审核通过", deliveryEntityList.stream().filter(v ->!ApproveStatusEnum.APPROVE.getCode().equals(v.getApproveStatus())).map(FirstMileDeliveryEntity::getCode).collect(Collectors.joining(",")));
+        }
+        //发货单明细
+        List<String> deliveryIds = deliveryEntityList.stream().map(FirstMileDeliveryEntity::getId).distinct().collect(Collectors.toList());
+        List<FirstMileDeliveryDetailEntity> firstMileDeliveryDetailEntityList = firstMileDeliveryDetailService.listByMainIds(deliveryIds);
+        //查询要货申请单的库存信息
+        List<RequisitionApplicationDTO.InventoryDTO> inventoryDTOList = baseMapper.unLockInventoryView(ids);
+        //构造明细数据
+        List<RequisitionApplicationDTO.InventoryDTO> result = new ArrayList<>();
+        List<FirstMileDeliveryDetailEntity> collect = firstMileDeliveryDetailEntityList.stream().filter(e -> CharSequenceUtil.isBlank(e.getFbaShipmentCode())).collect(Collectors.toList());
+        collect.forEach(f ->{
+            RequisitionApplicationDetailEntity requisitionApplicationDetailEntity = detailEntityList.stream().filter(e -> e.getId().equals(f.getSourceDetailId())).findFirst().orElse(null);
+            if (requisitionApplicationDetailEntity != null){
+                inventoryDTOList.stream().filter(g -> g.getId().equals(requisitionApplicationDetailEntity.getMainId()) && g.getSkuId().equals(requisitionApplicationDetailEntity.getSkuId())).forEach(h ->{
+                    h.setDetailId(requisitionApplicationDetailEntity.getId());
+                    h.setToWarehouseId(requisitionApplicationDetailEntity.getToWarehouseId());
+                    h.setToWarehouseName(requisitionApplicationDetailEntity.getToWarehouseName());
+                    h.setFromWarehouseId(requisitionApplicationDetailEntity.getFromWarehouseId());
+                    h.setFromWarehouseName(requisitionApplicationDetailEntity.getFromWarehouseName());
+                    h.setFromVirtualWarehouseId(requisitionApplicationDetailEntity.getFromVirtualWarehouseId());
+                    h.setFromVirtualWarehouseName(requisitionApplicationDetailEntity.getFromVirtualWarehouseName());
+                    h.setVirtualFrozenQty(requisitionApplicationDetailEntity.getVirtualFrozenQty());
+                    result.add(h);
+                });
+            }
+        });
+        return result;
     }
 }

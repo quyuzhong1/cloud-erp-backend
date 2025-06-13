@@ -16,7 +16,6 @@ import com.common.core.controller.BaseController;
 import com.common.core.controller.vo.ApiResult;
 import com.common.core.enums.LogActionEnum;
 import com.common.core.exception.ServiceException;
-import com.erp.model.oms.dto.ListingInfoDTO;
 import com.erp.model.wms.dto.RequisitionApplicationDTO;
 import com.erp.model.wms.dto.WarehouseLocationMoveDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
@@ -682,5 +681,17 @@ public class RequisitionApplicationController extends BaseController {
     @WebAdvanceQuery
     public ApiResult<PagingVO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanDTO>> pagingSkuByDeliveryPlan(@RequestBody @Validated PagingDTO<RequisitionApplicationDTO.PagingSkuByDeliveryPlanParamDTO> dto) {
         return success(requisitionApplicationService.pagingSkuByDeliveryPlan(dto));
+    }
+
+    /**
+     * 库存释放预览
+     * @param dto
+     * @Author zdy
+     * @Date 2025/06/12
+     * @return ApiResult
+     **/
+    @PostMapping("/unLockInventoryView")
+    public ApiResult<List<RequisitionApplicationDTO.InventoryDTO>> unLockInventoryView(@RequestBody @Validated BaseIdsDTO.IdsDTO dto) {
+        return success(requisitionApplicationService.unLockInventoryView(dto));
     }
 }
