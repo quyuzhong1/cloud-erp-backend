@@ -34,6 +34,8 @@ import com.common.core.utils.*;
 
 import javax.annotation.Resource;
 
+import static com.lowagie.text.xml.simpleparser.EntitiesToUnicode.map;
+
 /**
  * <p>
  * cfg_query_option拓展表 服务实现类
@@ -83,7 +85,7 @@ public class CfgQueryOptionExtServiceImpl extends SuperServiceImpl<CfgQueryOptio
                     //布尔
                     //示例list:  [{"label":"已作废","value":true},{"label":"未作废","value":false}]
                     if(CfgQueryOptionExtTypeEnum.BOOL.getCode().equals(type)){
-                        setValueByBool(map, dataJson, cfgQueryOptionId, result);
+                        setValueByBool(entry, dataJson, cfgQueryOptionId, result);
                     }
                     //人员
                     if(CfgQueryOptionExtTypeEnum.USER.getCode().equals(type)){
@@ -113,19 +115,37 @@ public class CfgQueryOptionExtServiceImpl extends SuperServiceImpl<CfgQueryOptio
         }
     }
 
-    private static void setValueByBool(Map<String, String> map, String dataJson, String cfgQueryOptionId, Map<String, String> result) {
+    private static void setValueByBool(Map.Entry<String, String> entry, String dataJson, String cfgQueryOptionId, Map<String, String> result) {
         if(StringUtils.isBlank(dataJson) || Objects.equals(dataJson,"{}")) {
-            if(map.get(cfgQueryOptionId).equals("true")){
-                result.put(cfgQueryOptionId,"是" );
-            }else {
-                result.put(cfgQueryOptionId, "否");
+            String value = entry.getValue();
+            if (StringUtils.isNotBlank(value)) {
+                StringBuffer sb = new StringBuffer();
+                for (String str : value.split(",")) {
+                    if (str.equals("true")) {
+                        sb.append("是");
+                        sb.append(";");
+                    } else {
+                        sb.append("否");
+                        sb.append(";");
+                    }
+                }
+                result.put(cfgQueryOptionId, sb.toString());
             }
         }else {
             Gson gson = new Gson();
             List<CfgQueryOptionExtDTO.BooleanDTO> dtoList = gson.fromJson(dataJson, new TypeToken<List<CfgQueryOptionExtDTO.BooleanDTO>>(){}.getType());
-            CfgQueryOptionExtDTO.BooleanDTO booleanDTO = dtoList.stream().filter(e -> e.getValue().equals(map.get(cfgQueryOptionId))).findFirst().orElse(null);
-            if(Objects.nonNull(booleanDTO)){
-                result.put(cfgQueryOptionId, booleanDTO.getLabel());
+            Map<String, String> boolMap = dtoList.stream().collect(Collectors.toMap(CfgQueryOptionExtDTO.BooleanDTO::getValue, CfgQueryOptionExtDTO.BooleanDTO::getLabel, (o1, o2) -> o1));
+            String value = entry.getValue();
+            if(StringUtils.isNotBlank(value)){
+                StringBuffer sb = new StringBuffer();
+                for (String str : value.split(",")) {
+                    if(boolMap.containsKey(str)){
+                        String name = boolMap.getOrDefault(str, "");
+                        sb.append(name);
+                        sb.append(";");
+                    }
+                }
+                result.put(cfgQueryOptionId, sb.toString());
             }
         }
     }
