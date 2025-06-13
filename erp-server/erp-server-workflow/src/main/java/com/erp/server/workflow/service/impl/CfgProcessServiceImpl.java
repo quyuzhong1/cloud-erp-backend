@@ -307,14 +307,26 @@ public class CfgProcessServiceImpl extends SuperServiceImpl<CfgProcessMapper, Cf
         //
         //查询userid
         List<ThirdUnionDTO> dtoList = sysUserFeign.getThirdByUserIds("FS", Collections.singletonList(dto.getUserId()));
+        if (CollUtil.isEmpty(dtoList) || StrUtil.isEmpty(dtoList.get(0).getThirdUserId())){
+            throw new ServiceException(ApiError.FS_FOUNDER_NOT_EXIST.msg,  "FS用户不存在");
+        }
         String userId = dtoList.get(0).getThirdUserId();
         //查询字段映射表
         List<CfgProcessFieldMapEntity> fieldMapList = cfgProcessFieldMapService.list(new LambdaQueryWrapper<CfgProcessFieldMapEntity>().eq(CfgProcessFieldMapEntity::getCfgId, dto.getRuleId()).eq(CfgProcessFieldMapEntity::getIsDeleted, false));
+        if (CollUtil.isEmpty(fieldMapList)) {
+            throw new ServiceException(ApiError.CFG_PROCESS_FIELD_MAP_NOT_EXIST);
+        }
         List<String> fieldIds = fieldMapList.stream().map(CfgProcessFieldMapEntity::getId).collect(Collectors.toList());
         //查询值映射表
         List<CfgProcessValueMapEntity> valueMapList = cfgProcessValueMapService.list(new LambdaQueryWrapper<CfgProcessValueMapEntity>().in(CfgProcessValueMapEntity::getFieldMapId, fieldIds).eq(CfgProcessValueMapEntity::getIsDeleted, false));
+        if (CollUtil.isEmpty(valueMapList)){
+            throw new ServiceException(ApiError.CFG_PROCESS_FIELD_MAP_NOT_EXIST);
+        }
         //组装form，1、实时获取 2、查询流程定义表
         ThirdProcessDefinitionEntity body = thirdProcessDefinitionService.getOne(new LambdaQueryWrapper<ThirdProcessDefinitionEntity>().eq(ThirdProcessDefinitionEntity::getStatus, ThirdProcessDefinitionStatusEnum.ACTIVE.getCode()).eq(ThirdProcessDefinitionEntity::getApprovalCode, code).eq(ThirdProcessDefinitionEntity::getIsDeleted, false));
+        if (ObjectUtil.isEmpty(body)) {
+            throw new ServiceException(ApiError.FS_PROCESS_DEFINITION_NOT_EXIST);
+        }
         JSONArray formArray = JSONUtil.parseArray(body.getFormJson());
         //组装Json
         try {

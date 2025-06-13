@@ -271,8 +271,10 @@ public enum ApiError implements Serializable {
     PROCESS_DEFINITION_CHANGE_EXIST_NOT_DEPLOY(94051,"流程定义已存在未发布数据不支持再次变更"),
     PROCESS_PROCESS_DELEGATE_OVERLAP(94052,"委托审批单发起人+委托流程+时间区间重复不支持操作"),
     FS_USER_NOT_BIND(94053,"飞书未绑定"),
-
-
+    FS_FOUNDER_NOT_EXIST(94054,"飞书流程发起人未找到:{}"),
+    CFG_PROCESS_FIELD_MAP_NOT_EXIST(94055,"流程字段映射不存在"),
+    CFG_PROCESS_VALUE_MAP_NOT_EXIST(94056,"流程字段值映射不存在"),
+    FS_PROCESS_DEFINITION_NOT_EXIST(94057,"飞书审批不存在"),
 
     /**
      * PLM 错误
