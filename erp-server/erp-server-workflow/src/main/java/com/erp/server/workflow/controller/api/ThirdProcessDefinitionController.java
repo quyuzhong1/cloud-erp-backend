@@ -99,8 +99,7 @@ public class ThirdProcessDefinitionController extends BaseController {
     @PostMapping("/page")
     @WebAdvanceQuery
     public ApiResult<PagingVO<ThirdProcessDefinitionDTO.ListDTO>> paging(@RequestBody @Validated PagingDTO<ThirdProcessDefinitionDTO.PagingParamDTO> pagingParamDTO) {
-        thirdProcessDefinitionService.paging(pagingParamDTO);
-        return success();
+        return success(thirdProcessDefinitionService.paging(pagingParamDTO));
     }
 
     /**
