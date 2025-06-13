@@ -1228,6 +1228,8 @@ public enum ApiError implements Serializable {
     ERROR_92276(92276, "【{}】质检单【{}】调出单已生成分步式调出单审核，不允许撤销质检"),
     ERROR_92277(92277, "【{}】质检单【{}】未质检不能撤销"),
     ERROR_92278(92278, "【{}】质检单【{}】调出单下sku未全部勾选"),
+    ERROR_PO_INSTOCK_PUSH_PO_RECONCILIATION(92278, "采购入库单已对账，不支持反审核"),
+
     /**
      * OMS 错误
      * 从92000 开始  以端口号
@@ -1627,6 +1629,8 @@ public enum ApiError implements Serializable {
 
     ERROR_WAREHOUSE_LOCATION_NOT_FOUND(94102,"【{}】仓位【{}】不存在"),
 
+    ERROR_INSTOCK_ADD_PO_RECONCILIATION_DETAIL(94103,"单据未审核不支持生成待对账明细"),
+    ERROR_RETURN_ADD_PO_RECONCILIATION_DETAIL(94104,"质检退货不支持生成待对账明细"),
 
 
     /**

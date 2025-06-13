@@ -8,7 +8,6 @@ import com.common.business.vo.PagingVO;
 import com.erp.model.srm.dto.PoReconciliationDetailDTO;
 import com.erp.model.srm.entity.PoReconciliationDetailEntity;
 
-import javax.servlet.http.HttpServletResponse;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -56,7 +55,6 @@ public interface PoReconciliationDetailScmService extends SuperService<PoReconci
      * @param dto
      */
     void exportList(PoReconciliationDetailDTO.PagingParamDTO dto);
-    void exportList(PoReconciliationDetailDTO.PagingParamDTO dto, HttpServletResponse response);
     /**
      * @description: 查看详情
      * @author Will

@@ -1047,6 +1047,7 @@ public class WarehouseReceiveServiceImpl extends SuperServiceImpl<WarehouseRecei
             }
             PoInstockDTO.AddDTO addDTO = new PoInstockDTO.AddDTO();
             addDTO.setSourceId(id);
+            addDTO.setSourceCode(entity.getSourceCode());
             addDTO.setSourceType(SourceTypeEnum.PO_RECEIVE.getCode());
             WarehouseReceiveEntity warehouseReceiveEntity = this.getById(id);
 
