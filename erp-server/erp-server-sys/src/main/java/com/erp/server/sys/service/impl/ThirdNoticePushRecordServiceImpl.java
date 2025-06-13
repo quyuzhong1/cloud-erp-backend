@@ -64,6 +64,7 @@ import jodd.util.StringUtil;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.redisson.executor.CronExpression;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
@@ -289,6 +290,14 @@ public class ThirdNoticePushRecordServiceImpl extends SuperServiceImpl<ThirdNoti
 
         return BatchResultDTO.success(entity.getId(), entity.getId(), "执行成功");
     }
+
+    @Async("thirdNoticePushExecutor")
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void sendThirdNoticeByMqAsync(MqConsumerRecordDTO.MqDTO dto) {
+        sendThirdNoticeByMq(dto);
+    }
+
 
     @Override
     @Transactional(rollbackFor = Exception.class)
