@@ -947,7 +947,7 @@ public class FsService {
         CreateInstanceResp resp = client.approval().v4().instance().create(req);
 
         // 处理服务端错误
-        if (resp.getMsg() != null) {
+        if (StrUtil.isNotBlank(resp.getMsg())) {
             System.out.println(String.format("code:%s,msg:%s,reqId:%s, resp:%s",
                     resp.getCode(), resp.getMsg(), resp.getRequestId(), Jsons.createGSON(true, false).toJson(JsonParser.parseString(new String(resp.getRawResponse().getBody(), StandardCharsets.UTF_8)))));
             throw new ServiceException(resp.getMsg());

@@ -248,7 +248,7 @@ public class RuleLogisticsServiceImpl extends SuperServiceImpl<RuleLogisticsMapp
 
             List<ConditionElement> conditionElementList = BeanMapper.copyList(ruleConditionList, ConditionElement.class);
             //获取到表达式,判断表达式是否匹配
-            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map);
+            Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, map,"");
             if (Boolean.TRUE.equals(matchResult)) {
                 //验证渠道下是否设置了仓库
                 List<LogisticsChannelWarehouseEntity> list = FeignQuery.create(LogisticsChannelWarehouseEntity.class)
