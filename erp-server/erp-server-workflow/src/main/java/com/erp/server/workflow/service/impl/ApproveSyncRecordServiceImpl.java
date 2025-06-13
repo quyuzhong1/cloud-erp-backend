@@ -11,6 +11,7 @@ import com.common.business.dto.base.PagingDTO;
 import com.common.business.dto.base.PermissionsDTO;
 import com.common.business.enums.SourceTypeEnum;
 import com.common.business.vo.PagingVO;
+import com.common.core.enums.ApiError;
 import com.common.core.exception.ServiceException;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
@@ -204,7 +205,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
         }
         Map<String, ThirdUnionDTO> thirdUnionMap = cfgApproveSyncBuildHandler.getThirdUnionDTOMap(allUserIds);
         if(CollUtil.isEmpty(thirdUnionMap)) {
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), "飞书未绑定");
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.FS_USER_NOT_BIND.msg);
         }
 
         if(thirdUnionMap.containsKey(titleUserId) && Objects.nonNull(thirdUnionMap.get(titleUserId))){
@@ -236,7 +237,7 @@ public class ApproveSyncRecordServiceImpl extends SuperServiceImpl<ApproveSyncRe
                 return BatchResultDTO.fail(entity.getId(), entity.getId(), "重推失败");
             }
         }else {
-            return BatchResultDTO.fail(entity.getId(), entity.getId(), "飞书未绑定");
+            return BatchResultDTO.fail(entity.getId(), entity.getId(), ApiError.FS_USER_NOT_BIND.msg);
         }
         return null;
     }

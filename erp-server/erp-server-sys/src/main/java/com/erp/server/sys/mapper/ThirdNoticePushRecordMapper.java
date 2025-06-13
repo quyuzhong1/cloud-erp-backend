@@ -1,7 +1,6 @@
 package com.erp.server.sys.mapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
-import com.erp.model.sys.dto.CfgThirdNoticeDTO;
 import com.erp.model.sys.dto.ThirdNoticePushRecordDTO;
 import com.erp.model.sys.entity.ThirdNoticePushRecordEntity;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
@@ -27,4 +26,6 @@ public interface ThirdNoticePushRecordMapper extends BaseMapper<ThirdNoticePushR
 
 
     IPage<ThirdNoticePushRecordDTO.ListDTO> paging(Page query, @Param("params")  ThirdNoticePushRecordDTO.PagingParamDTO params);
+
+    Boolean insertBatch(@Param("list")  List<ThirdNoticePushRecordEntity> list);
 }

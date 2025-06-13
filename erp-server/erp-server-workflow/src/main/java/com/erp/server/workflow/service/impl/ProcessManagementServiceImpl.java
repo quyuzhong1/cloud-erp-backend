@@ -169,14 +169,17 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
     @Override
     @Transactional(rollbackFor = Exception.class)
     public ProcessManagementDTO.StartResultDTO startProcessManagement(ProcessManagementDTO.StartDTO dto) {
-        String processDefinitionId = getProcessDefinitionId(dto);
-//        String processDefinitionId = "12E23076-0B9C-4393-97A4-85C411EB42DC";
-        if (CharSequenceUtil.isBlank(processDefinitionId)) {
+        CfgProcessRuleEntity cfgProcessRuleEntity = getProcessDefinitionId(dto);
+        if (ObjectUtil.isEmpty(cfgProcessRuleEntity)) {
             // 业务无已启用的Erp流程配置
             return new ProcessManagementDTO.StartResultDTO(dto);
         }
-        //启动流程
-        return startProcess(dto, processDefinitionId);
+        //启动飞书流程
+        if (CharSequenceUtil.equals(cfgProcessRuleEntity.getType(),CfgProcessRuleTypeEnum.FSPROCESS.getCode())) {
+            return startFsProcess(dto,cfgProcessRuleEntity);
+        }
+        //启动ERP流程
+        return startProcess(dto, cfgProcessRuleEntity.getProcessDefinitionId());
     }
 
 
@@ -187,19 +190,19 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
      * @param dto
      * @return String
      */
-    private String getProcessDefinitionId(ProcessManagementDTO.StartDTO dto) {
+    private CfgProcessRuleEntity getProcessDefinitionId(ProcessManagementDTO.StartDTO dto) {
         //查询流程配置
         CfgProcessEntity cfgProcessEntity = cfgProcessService.getByBusinessKey(dto.getBusinessKey());
         if (ObjectUtil.isEmpty(cfgProcessEntity)) {
             // 业务无流程配置
             log.warn("业务无流程配置, businessKey={}", dto.getBusinessKey());
-            return "";
+            return null;
         }
         List<CfgProcessRuleEntity> cfgProcessRuleList = cfgProcessRuleService.listByProcessId(cfgProcessEntity.getId(), CfgProcessRuleTypeEnum.ERPPROCESS.getCode());
         if (CollUtil.isEmpty(cfgProcessRuleList)) {
             // 业务无已启用的Erp流程配置
             log.warn("业务无已启用的Erp流程配置, businessKey={}", dto.getBusinessKey());
-            return "";
+            return null;
         }
         //查询rule条件设置
         List<String> ruleIdList = cfgProcessRuleList.stream().map(CfgProcessRuleEntity::getId).distinct().collect(Collectors.toList());
@@ -211,30 +214,30 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
             if (cfgProcessRuleList.size() > MathUtil.ONE) {
                 throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
             }
-            return cfgProcessRuleList.get(0).getProcessDefinitionId();
+            return cfgProcessRuleList.get(0);
         }
         Map<String, List<CfgProcessExpEntity>> expMap = cfgProcessExpList.stream().collect(Collectors.groupingBy(CfgProcessExpEntity::getRuleId));
         //查询传入数据是否有符合条件的流程
-        List<String> processDefinitionIdList = new ArrayList<>();
+        List<CfgProcessRuleEntity> processRuleList = new ArrayList<>();
         for (CfgProcessRuleEntity cfgProcessRuleEntity : cfgProcessRuleList) {
             //对应规则,未发现规则则直接通过
             List<CfgProcessExpEntity> processExpList = expMap.get(cfgProcessRuleEntity.getId());
             if (CollUtil.isEmpty(processExpList)) {
-                processDefinitionIdList.add(cfgProcessRuleEntity.getProcessDefinitionId());
+                processRuleList.add(cfgProcessRuleEntity);
             } else {
                 List<ConditionElement> conditionElementList = BeanMapper.copyList(processExpList, ConditionElement.class);
                 Boolean matchResult = spElServer.matchExpressionByConditionList(conditionElementList, dto.getVariablesMap());
                 //匹配上则直接赋值
-                if (matchResult) {
-                    processDefinitionIdList.add(cfgProcessRuleEntity.getProcessDefinitionId());
+                if (Boolean.TRUE.equals(matchResult)) {
+                    processRuleList.add(cfgProcessRuleEntity);
                 }
             }
         }
         //存在一条以上的规则都匹配数据的时候直接报错
-        if (CollUtil.isNotEmpty(processDefinitionIdList) && processDefinitionIdList.size() > MathUtil.ONE) {
+        if (CollUtil.isNotEmpty(processRuleList) && processRuleList.size() > MathUtil.ONE) {
             throw new ServiceException(ApiError.PROCESS_RULE_REPEAT_ERROR,SourceTypeEnum.getName(cfgProcessEntity.getBussinessKey()));
         }
-        return processDefinitionIdList.get(0);
+        return processRuleList.get(0);
     }
 
 
@@ -258,24 +261,6 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         }
         // 查询流程定义
         ProcessDefinitionEntity processDefinition = processDefinitionService.getIsDeployEntityById(processDefinitionId);
-        if (null == processDefinition) {
-            CfgProcessRuleEntity one = cfgProcessRuleService.getOne(new LambdaQueryWrapper<CfgProcessRuleEntity>().eq(CfgProcessRuleEntity::getProcessDefinitionId, processDefinitionId).eq(CfgProcessRuleEntity::getIsDeleted, false));
-            if (null != one){
-                // 流程定义不存在
-                throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
-            }
-            String ruleId = one.getId();
-            CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
-            startDTO.setRuleId(ruleId);
-            startDTO.setRuleType(one.getType());
-            log.info("startDTO重要标识:{}",startDTO.toString());
-            cfgProcessService.startThirdProcess(startDTO);
-        }
-        // 流程已修改，且未发布不允许启动
-        if(!processDefinition.getIsDeploy()){
-            // 流程定义未发布，需要先发布
-            throw new ServiceException(ApiError.PROCESS_NOT_DEPLOY);
-        }
 
         // 绑定流程发起人
         identityService.setAuthenticatedUserId(dto.getUserId());
@@ -354,6 +339,25 @@ public class ProcessManagementServiceImpl extends SuperServiceImpl<ProcessManage
         return new ProcessManagementDTO.StartResultDTO(processDefinitionId, processInstanceId, taskId, processStartTime, dto.getBusinessId(), dto.getBusinessName());
     }
 
+    /**
+     * 启动飞书流程
+     */
+    private  ProcessManagementDTO.StartResultDTO startFsProcess(ProcessManagementDTO.StartDTO dto,CfgProcessRuleEntity cfgProcessRuleEntity) {
+
+            if (null == cfgProcessRuleEntity){
+                // 流程定义不存在
+                throw new ServiceException(ApiError.PROCESS_DEFINITION_NOT_EXIST);
+            }
+            String ruleId = cfgProcessRuleEntity.getId();
+            CfgProcessDTO.StartDTO startDTO = BeanUtil.copyProperties(dto, CfgProcessDTO.StartDTO.class);
+            //TODO 获取当前用户
+            startDTO.setUserId("1906628410797510657");
+            startDTO.setRuleId(ruleId);
+            startDTO.setRuleType(cfgProcessRuleEntity.getType());
+            log.info("startDTO重要标识:{}",startDTO.toString());
+            cfgProcessService.startThirdProcess(startDTO);
+            return new ProcessManagementDTO.StartResultDTO(cfgProcessRuleEntity.getProcessDefinitionId(), "", "", LocalDateTime.now(), dto.getBusinessId(), dto.getBusinessName());
+    }
 
     /**
      * 审批任务填充审批信息

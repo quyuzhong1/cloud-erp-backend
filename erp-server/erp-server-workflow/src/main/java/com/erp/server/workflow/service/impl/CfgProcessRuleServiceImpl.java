@@ -2,9 +2,9 @@ package com.erp.server.workflow.service.impl;
 
 
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.alibaba.excel.util.CollectionUtils;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.IdWorker;
 import com.baomidou.mybatisplus.extension.conditions.update.LambdaUpdateChainWrapper;
@@ -324,7 +324,7 @@ public class CfgProcessRuleServiceImpl extends SuperServiceImpl<CfgProcessRuleMa
     @Override
     public List<CfgProcessRuleEntity> listByProcessId(String id, String type) {
         return this.lambdaQuery().eq(CfgProcessRuleEntity::getCfgProcessId, id)
-                .eq(CfgProcessRuleEntity::getType, type)
+                .eq(CharSequenceUtil.isNotBlank(type),CfgProcessRuleEntity::getType, type)
                 .eq(CfgProcessRuleEntity::getDisabled, Boolean.FALSE)
                 .list();
     }
