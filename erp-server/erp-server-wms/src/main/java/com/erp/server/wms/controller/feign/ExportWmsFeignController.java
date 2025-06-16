@@ -7,6 +7,7 @@ import com.common.business.dto.base.BaseIdDTO;
 import com.common.business.dto.base.PagingDTO;
 import com.common.business.enums.DataAttributeEnum;
 import com.common.business.vo.PagingVO;
+import com.erp.model.dmp.enums.SettingEnum;
 import com.erp.model.scm.dto.PurchaseBusinessGatherTableDTO;
 import com.erp.model.srm.dto.DeliveryOrderDTO;
 import com.erp.model.srm.dto.excel.DeliveryOrderExportExcelDTO;
@@ -20,6 +21,7 @@ import com.erp.model.wms.dto.inventory.InventoryDTO;
 import com.erp.model.wms.dto.inventory.InventoryReportDTO;
 import com.erp.model.wms.dto.pickingstrategy.PickingListsDTO;
 import com.erp.model.wms.vo.WarehouseLocationExportVo;
+import com.erp.rpc.dmp.feign.DmpInoutTaskFeign;
 import com.erp.server.wms.handler.InventoryQueryHandler;
 import com.erp.server.wms.query.*;
 import com.erp.server.wms.service.*;
@@ -169,6 +171,8 @@ public class ExportWmsFeignController {
     private VirtualWarehouseService virtualWarehouseService;
     @Resource
     private QcNoticeService qcNoticeService;
+    @Resource
+    private DmpInoutTaskFeign dmpInoutTaskFeign;
 
     @PostMapping("/b2cDelivery")
     @DataPermission(operationType = DataAttributeEnum.LIST,
@@ -620,7 +624,13 @@ public class ExportWmsFeignController {
     )
     @WebAdvanceQuery(handler = SoOutstockQueryHandler.class)
     public PagingVO<SoOutstockDTO.PagingViewDTO> exportSoOutStock(@RequestBody PagingDTO<SoOutstockDTO.ExportDTO> dto) {
-        return soOutstockService.exportSoOutStock(dto);
+    	PagingVO<SoOutstockDTO.PagingViewDTO> pagingVO = null;
+    	if(dmpInoutTaskFeign.getQueryDoris(SettingEnum.DORIS_QUERY_CFG_SOOUTSTOCK.getKey())) {
+    		pagingVO = soOutstockService.dorisExportSoOutStock(dto);
+    	}else {
+    		pagingVO = soOutstockService.exportSoOutStock(dto);
+    	}
+        return pagingVO;
     }
 
     @PostMapping("/soReturnInStock")

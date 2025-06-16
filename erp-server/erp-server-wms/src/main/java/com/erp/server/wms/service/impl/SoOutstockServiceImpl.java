@@ -1427,6 +1427,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
         fillPaging(page.getRecords(),true);
         return new PagingVO<>(page);
     }
+    
+    @DS("doris")
+    @Override
+    public PagingVO<SoOutstockDTO.PagingViewDTO> dorisExportSoOutStock(PagingDTO<SoOutstockDTO.ExportDTO> dto) {
+    	return exportSoOutStock(dto);
+    }
 
     /**
      * 作废
@@ -2612,6 +2618,12 @@ public class SoOutstockServiceImpl extends SuperServiceImpl<SoOutstockMapper, So
     public SoOutstockDTO.PagingTotalDTO getTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
         SoOutstockDTO.PagingTotalDTO pagingTotalDTO = baseMapper.getTotalByQuery(params);
         return pagingTotalDTO;
+    }
+    
+    @DS("doris")
+    @Override
+    public SoOutstockDTO.PagingTotalDTO dorisGetTotalByQuery(SoOutstockDTO.PagingParamDTO params) {
+    	return getTotalByQuery(params);
     }
 
     /**
