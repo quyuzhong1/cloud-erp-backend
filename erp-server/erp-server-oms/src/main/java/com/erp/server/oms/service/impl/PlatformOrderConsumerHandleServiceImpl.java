@@ -238,7 +238,10 @@ public class PlatformOrderConsumerHandleServiceImpl implements PlatformOrderCons
             }
         }
         //生成nf-e发票
-        cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
+        SoB2cEntity entity = CharSequenceUtil.isNotBlank(mainEntity.getId()) ? soB2cService.getById(mainEntity.getId()) : null;
+        if (Objects.nonNull(entity) && ApproveStatusEnum.APPROVE.getCode().equals(entity.getApproveStatus().getCode())){
+            cfgInvoiceSettingDetailService.generateNfeInvoice (mainEntity,InvoiceNodeEnum.AFTER_AUDIT.getCode());
+        }
     }
 
     /**
